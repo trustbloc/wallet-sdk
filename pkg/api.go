@@ -12,6 +12,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 )
 
+// KeyHandleWriter defines key handler writer APIs.
 type KeyHandleWriter interface {
 	// Create a new key/keyset/key handle for the type kt
 	// Some key types may require additional attributes described in `opts`
@@ -41,6 +42,7 @@ type KeyHandleWriter interface {
 	Import(privKey interface{}, kt kms.KeyType, opts ...kms.PrivateKeyOpts) (string, interface{}, error)
 }
 
+// KeyHandleReader defines key handler reader APIs.
 type KeyHandleReader interface {
 	// GetKeyHandle key handle for the given keyID
 	// Returns:
@@ -55,16 +57,19 @@ type KeyHandleReader interface {
 	Export(keyID string) ([]byte, kms.KeyType, error)
 }
 
+// DIDCreator defines DID creation APIs.
 type DIDCreator interface {
 	// Create creates a new DID Document.
 	Create(didDocument *did.Doc) (*did.DocResolution, error)
 }
 
+// DIDResolver defines DID resolution APIs.
 type DIDResolver interface {
 	// Resolve resolves a did.
 	Resolve(did string) (*did.DocResolution, error)
 }
 
+// CredentialReader defines credential reader APIs.
 type CredentialReader interface {
 	// Get retrieves a VC.
 	Get(id string) (*verifiable.Credential, error)
@@ -72,6 +77,7 @@ type CredentialReader interface {
 	GetAll() ([]*verifiable.Credential, error)
 }
 
+// CredentialWriter defines credential write APIs.
 type CredentialWriter interface {
 	// Remove removes a VC.
 	Remove(id string) error
@@ -79,6 +85,7 @@ type CredentialWriter interface {
 	Add(vc *verifiable.Credential) error
 }
 
+// ActivityLog defines activity log related APIs.
 type ActivityLog interface {
 	// Log logs an activity.
 	Log(message string)

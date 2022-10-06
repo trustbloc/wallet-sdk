@@ -1,0 +1,103 @@
+#
+# Copyright SecureKey Technologies Inc. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+run:
+  concurrency: 4
+  deadline: 3m
+  issues-exit-code: 1
+  tests: true
+  build-tags: [""]
+  skip-dirs:  [""]
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+    ignore: fmt:.*,io/ioutil:^Read.*
+  govet:
+    check-shadowing: true
+  golint:
+    min-confidence: 0.6
+  gofmt:
+    simplify: true
+  goimports:
+    local-prefixes: github.com/trustbloc/agent-sdk
+  gocyclo:
+    min-complexity: 10
+  maligned:
+    suggest-new: true
+  dupl:
+    threshold: 100
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+  misspell:
+    # default locale is a neutral variety of English.
+    locale:
+    ignore-words: []
+  lll:
+    line-length: 120
+    tab-width: 1
+  unused:
+    check-exported: false
+  unparam:
+    check-exported: false
+  nakedret:
+    max-func-lines: 0
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - performance
+      - style
+      - opinionated
+    disabled-checks:
+      - unnamedResult
+      - whyNoLint # TODO enable https://github.com/trustbloc/agent-sdk/issues/12
+  funlen:
+    lines: 60
+    statements: 40
+  gomoddirectives:
+    replace-local: true
+    replace-allow-list:
+      - github.com/piprate/json-gold
+      - github.com/xeipuuv/gojsonschema
+
+linters:
+  enable-all: true
+  disable:
+    - maligned
+    - prealloc
+    - goerr113 # not good: https://github.com/Djarvur/go-err113/issues/10
+    - paralleltest
+    - exhaustivestruct
+#    - tparallel
+    - interfacer # deprecated by the author https://github.com/mvdan/interfacer#interfacer
+    - scopelint # deprecated by the author https://github.com/kyoh86/scopelint#obsoleted
+    - maligned # deprecated by the author https://github.com/mdempsky/maligned
+    - cyclop # TODO consider replacing gocyclo with cyclop
+    - ifshort # TODO enable
+    - wrapcheck # TODO enable
+    - forbidigo # TODO enable
+    - gci # giving spurious errors for imports of syscall/js
+
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - dupl
+        - funlen
+
+  exclude:
+    # Allow package logger variables (for now)
+    - \`logger\` is a global variable
+    - logger is a global variable
+    -  Line contains TODO/BUG/FIXME
