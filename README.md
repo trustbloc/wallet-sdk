@@ -3,6 +3,13 @@
 # Wallet SDK
 
 
+# Running Test Reference App 
+- Install Ionic if needed: npm install -g @ionic/cli.
+- In a terminal, change directory into the repo: cd test/referenceapp
+- Install all packages: npm install.
+- Run on the web: ionic serve.
+- Run on iOS or Android: [See here](https://ionicframework.com/docs/developing/previewing).
+
 ## Contributing
 Thank you for your interest in contributing. Please see our
 [community contribution guidelines](https://github.com/trustbloc/community/blob/main/CONTRIBUTING.md) for more information.

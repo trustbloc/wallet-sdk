@@ -29,3 +29,15 @@ license:
 .PHONY: unit-test
 unit-test: 
 	@scripts/check_unit.sh
+
+.PHONY: test-reference-app-web
+test-reference-app-web:
+	@cd test/referenceapp && npm install && ionic serve
+
+.PHONY: test-reference-app-ios
+test-reference-app-ios:
+	@cd test/referenceapp && ionic cap open ios
+
+.PHONY: test-reference-app-android
+test-reference-app-android:
+	@cd test/referenceapp && ionic cap open android
