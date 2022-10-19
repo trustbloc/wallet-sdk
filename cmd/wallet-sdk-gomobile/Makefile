@@ -1,0 +1,45 @@
+# Copyright SecureKey Technologies Inc.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+BUILD_PACKAGES := github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/...
+
+.PHONY: generate-all-bindings
+generate-all-bindings: dependencies gomobile-android-bind gomobile-ios-bind
+	@make tidy
+
+.PHONY: generate-android-bindings
+generate-android-bindings: dependencies gomobile-android-bind
+	@make tidy
+
+.PHONY: generate-ios-bindings
+generate-ios-bindings: dependencies gomobile-ios-bind
+	@make tidy
+
+.PHONY: dependencies
+dependencies:
+	@echo 'Adding gomobile dependencies to go.mod...'
+	@go get -u golang.org/x/mobile/cmd/gomobile
+
+.PHONY: gomobile-android-bind
+gomobile-android-bind: dependencies
+	@mkdir -p bindings/android
+	@echo 'Generating Android bindings...'
+	@gomobile bind -androidapi 19 -o bindings/android/walletsdk.aar -target=android $(BUILD_PACKAGES)
+
+.PHONY: gomobile-ios-bind
+gomobile-ios-bind: dependencies
+	@mkdir -p bindings/ios
+	@echo 'Generating iOS bindings...'
+	@gomobile bind -target=ios -o bindings/ios/walletsdk.xcframework $(BUILD_PACKAGES)
+
+.PHONY: tidy
+tidy:
+# Adding the gomobile dependencies causes some new entries to be added to go.mod, however, these dependencies
+# are only required for the gomobile command itself, and not the actual Go code. What this means is that they show
+# up as unused, and so will reappear after generating the bindings and disappear after running go mod tidy.
+# This can be annoying for commits, as it causes the go.mod file to change more times than needed. To make this
+# cleaner/more consistent, we call go mod tidy after we generate the bindings (see the bindings targets above).
+	@echo 'Tidying up go.mod...'
+	@go mod tidy
+
