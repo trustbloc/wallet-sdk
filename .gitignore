@@ -35,3 +35,6 @@ build
 
 deployments/keys
 deployments/demo/openapi/specs
+
+# Built gomobile bindings
+cmd/wallet-sdk-gomobile/bindings
