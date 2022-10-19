@@ -4,6 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+// Package pkg defines wallet-sdk APIs.
 package pkg
 
 import (
@@ -29,9 +30,9 @@ type KeyHandleWriter interface {
 	//  - handle instance (to private key)
 	//  - error if failure
 	Rotate(kt kms.KeyType, keyID string, opts ...kms.KeyOpts) (string, interface{}, error)
-	// Import will import privKey into the KMS storage for the given keyType then returns the new key id and
+	// Import will import privateKey into the KMS storage for the given keyType then returns the new key id and
 	// the newly persisted Handle.
-	// 'privKey' possible types are: *ecdsa.PrivateKey and ed25519.PrivateKey
+	// 'privateKey' possible types are: *ecdsa.PrivateKey and ed25519.PrivateKey
 	// 'kt' possible types are signing key types only (ECDSA keys or Ed25519)
 	// 'opts' allows setting the keysetID of the imported key using WithKeyID() option. If the ID is already used,
 	// then an error is returned.
@@ -39,7 +40,7 @@ type KeyHandleWriter interface {
 	//  - keyID of the handle
 	//  - handle instance (to private key)
 	//  - error if import failure (key empty, invalid, doesn't match keyType, unsupported keyType or storing key failed)
-	Import(privKey interface{}, kt kms.KeyType, opts ...kms.PrivateKeyOpts) (string, interface{}, error)
+	Import(privateKey interface{}, kt kms.KeyType, opts ...kms.PrivateKeyOpts) (string, interface{}, error)
 }
 
 // KeyHandleReader defines key handler reader APIs.
@@ -83,6 +84,20 @@ type CredentialWriter interface {
 	Remove(id string) error
 	// Add adds a VC.
 	Add(vc *verifiable.Credential) error
+}
+
+// Crypto defines various crypto operations that may be used with wallet-sdk APIs.
+type Crypto interface {
+	// Sign will sign msg using a matching signature primitive in kh key handle of a private key
+	// returns:
+	// 		signature in []byte
+	//		error in case of errors
+	Sign(msg []byte, kh interface{}) ([]byte, error)
+	// Verify will verify a signature for the given msg using a matching signature primitive in kh key handle of
+	// a public key
+	// returns:
+	// 		error in case of errors or nil if signature verification was successful
+	Verify(signature, msg []byte, kh interface{}) error
 }
 
 // ActivityLog defines activity log related APIs.
