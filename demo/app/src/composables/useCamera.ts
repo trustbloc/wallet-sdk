@@ -1,3 +1,9 @@
+/*
+Copyright Avast Software. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 import { ref, onMounted, watch } from 'vue';
 import { Capacitor } from '@capacitor/core';
 import {
