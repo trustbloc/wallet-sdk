@@ -25,19 +25,26 @@ lint:
 license:
 	@scripts/check_license.sh
 
-
 .PHONY: unit-test
 unit-test: 
 	@scripts/check_unit.sh
 
-.PHONY: test-reference-app-web
-test-reference-app-web:
-	@cd test/referenceapp && npm install && ionic serve
+.PHONY: generate-android-bindings
+generate-android-bindings:
+	@make generate-android-bindings -C ./cmd/wallet-sdk-gomobile
 
-.PHONY: test-reference-app-ios
-test-reference-app-ios:
-	@cd test/referenceapp && ionic cap open ios
+.PHONY: generate-ios-bindings
+generate-ios-bindings:
+	@make generate-ios-bindings -C ./cmd/wallet-sdk-gomobile
 
-.PHONY: test-reference-app-android
-test-reference-app-android:
-	@cd test/referenceapp && ionic cap open android
+.PHONY: demo-app-web
+demo-app-web:
+	@cd demo/app && npm install && ionic serve
+
+.PHONY: demo-app-ios
+demo-app-ios:
+	@cd demo/app && ionic cap open ios
+
+.PHONY: demo-app-android
+demo-app-android:
+	@cd demo/app && ionic cap open android
