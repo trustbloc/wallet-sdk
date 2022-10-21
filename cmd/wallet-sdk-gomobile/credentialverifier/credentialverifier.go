@@ -7,7 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 // Package credentialverifier contains functionality for doing credential verification.
 package credentialverifier
 
-import "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+import (
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+)
 
 // Verifier is used to verify credentials.
 type Verifier struct {
@@ -43,6 +45,6 @@ type VerifyOpts struct {
 }
 
 // Verify verifies the given credential or presentation. See the VerifyOpts struct for more information.
-func (*Verifier) Verify(verifyOpts VerifyOpts) error {
+func (*Verifier) Verify(verifyOpts *VerifyOpts) error {
 	return nil
 }

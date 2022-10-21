@@ -7,7 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 // Package credentialsigner contains functionality for doing credential signing operations.
 package credentialsigner
 
-import "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+import (
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+)
 
 // Signer is used to do credential signing operations.
 type Signer struct {
@@ -18,8 +20,8 @@ type Signer struct {
 }
 
 // NewSigner returns a new Signer instance.
-func NewSigner(keyHandleReader api.KeyHandleReader, didResolver api.DIDResolver, credentialReader api.CredentialReader,
-	crypto api.Crypto,
+func NewSigner(keyHandleReader api.KeyHandleReader, didResolver api.DIDResolver,
+	credentialReader api.CredentialReader, crypto api.Crypto,
 ) *Signer {
 	return &Signer{
 		keyHandleReader:  keyHandleReader,

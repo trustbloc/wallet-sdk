@@ -7,7 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 // Package openid4ci contains functionality for doing OpenID4CI operations.
 package openid4ci
 
-import "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+import (
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+)
 
 // Instance helps with OpenID4CI operations.
 type Instance struct {

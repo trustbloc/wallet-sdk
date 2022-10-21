@@ -8,19 +8,20 @@
 
 # Wallet SDK
 
-The TrustBloc Wallet SDK repo contains APIs to issue/present [W3C Verifiable Credential(VC)](https://www.w3.org/TR/vc-data-model/) signed/verified with [W3C Decentralized Identifier(DID)](https://www.w3.org/TR/did-core/). These APIs are useful for the holder role defined in W3C VC Specification.
+The TrustBloc Wallet SDK repo contains APIs to issue/present [W3C Verifiable Credentials(VCs)](https://www.w3.org/TR/vc-data-model/) signed/verified using [W3C Decentralized Identifiers(DIDs)](https://www.w3.org/TR/did-core/). These APIs are useful for the holder role defined in the [W3C VC Specification](https://www.w3.org/TR/vc-data-model/#dfn-holders).
 
-This project can be used as a
-- [Golang SDK](./pkg/)
-- [GoMobile Bindings](./cmd/wallet-sdk-gomobile/) 
-  - iOS (generates a .xcframework binary)
-  - Android (generates a .aar binary)
+This project contains:
+- [A Go SDK](pkg)
+  - For building native Go applications.
+- [A gomobile-compatible Go SDK](cmd/wallet-sdk-gomobile)
+  - For generating gomobile-compatible bindings (see below).
+- [Scripts to generate Android and iOS-compatible bindings](cmd/wallet-sdk-gomobile/README.md)
+  - Allows the Go SDK to be used in an Android or iOS app.
 
-The repo also has code to generate [Reference iOS/Android App](demo/app/) built using [Flutter](https://flutter.dev/) framework.
-
+The repo also has code to generate a [Reference iOS or Android App](demo/app/) built using the [Flutter](https://flutter.dev/) framework.
 
 ## Build/Run
-- [GoMobile Bindings (iOS/Android)](./cmd/wallet-sdk-gomobile/README.md)
+- [GoMobile Bindings (iOS/Android)](cmd/wallet-sdk-gomobile/README.md)
 - [Demo/Reference App](demo/app/README.md)
 
 ## Library/Package
@@ -55,6 +56,11 @@ Use the following URL based on snapshot or release dependency:
 SNAPSHOT_REPO_URL=https://maven.pkg.github.com/trustbloc-cicd/snapshot
 RELEASE_REPO_URL=https://maven.pkg.github.com/trustbloc/wallet-sdk
 
+## Project structure
+
+The Go SDK is defined in [pkg](pkg). If you want to build a native Go application, then this is what you'd use.
+
+The `gomobile`-compatible version of the aforementioned Go SDK is defined in [cmd/wallet-sdk-gomobile](cmd/wallet-sdk-gomobile). It's similar to the [Go SDK](pkg), except that the various functions, methods, and interfaces only use a subset of Go types that are compatible with the `gomobile` tool. The `gomobile`-compatible SDK generally acts as a wrapper for the [Go SDK](pkg). Internally, it converts between the `gomobile`-compatible types and the types used by the [Go SDK](pkg) as needed.
 
 ## Contributing
 Thank you for your interest in contributing. Please see our
