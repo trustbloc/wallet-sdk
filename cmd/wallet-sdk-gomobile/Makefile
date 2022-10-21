@@ -26,7 +26,7 @@ dependencies:
 gomobile-android-bind: dependencies
 	@mkdir -p bindings/android
 	@echo 'Generating Android bindings...'
-	@gomobile bind -androidapi 19 -o bindings/android/walletsdk.aar -javapkg=$(ANDROID_JAVA_PKG) -target=android $(BUILD_PACKAGES)
+	@gomobile bind -androidapi 22 -o bindings/android/walletsdk.aar -javapkg=$(ANDROID_JAVA_PKG) -target=android $(BUILD_PACKAGES)
 
 .PHONY: gomobile-ios-bind
 gomobile-ios-bind: dependencies

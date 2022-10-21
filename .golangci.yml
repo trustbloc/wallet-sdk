@@ -87,6 +87,7 @@ linters:
     - wrapcheck # TODO enable
     - forbidigo # TODO enable
     - gci # giving spurious errors for imports of syscall/js
+    - exhaustruct # Results in unneeded struct member declarations
 
 issues:
   exclude-use-default: false

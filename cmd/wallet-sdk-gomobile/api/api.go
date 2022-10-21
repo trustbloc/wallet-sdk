@@ -11,7 +11,6 @@ package api
 type KeyHandle struct {
 	Key     []byte `json:"key,omitempty"`
 	KeyType string `json:"keyType,omitempty"`
-	KeyID   string `json:"keyID,omitempty"` //nolint: tagliatelle //false positive
 }
 
 // A KeyHandleWriter represents a type that is capable of performing certain operations related to writing key data.
@@ -56,15 +55,14 @@ type KeyHandleReader interface {
 
 // CreateDIDOpts represents the various options for the DIDCreator.Create method.
 type CreateDIDOpts struct {
-	// The type of DID to create (i.e. which DID method to use).
-	Method string
+	KeyID string
 }
 
 // DIDCreator defines the method required for a type to create DID documents.
 type DIDCreator interface {
 	// Create creates a new DID Document.
 	// It returns a DID Document Resolution.
-	Create(createDIDOpts CreateDIDOpts) ([]byte, error)
+	Create(method string, createDIDOpts *CreateDIDOpts) ([]byte, error)
 }
 
 // DIDResolver defines the method required for a type to resolve DIDs.

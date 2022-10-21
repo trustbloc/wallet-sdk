@@ -7,7 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 // Package kms contains a KMS implementation.
 package kms
 
-import "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+import (
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+)
 
 // A KeyManager manages key creation, storage, retrieval, and other related functionality.
 type KeyManager struct{}
@@ -24,7 +26,6 @@ func (k *KeyManager) Create(keyType, opts string) (*api.KeyHandle, error) {
 	return &api.KeyHandle{
 		Key:     []byte("Key Bytes"),
 		KeyType: keyType,
-		KeyID:   "SomeKeyID",
 	}, nil
 }
 
@@ -36,7 +37,6 @@ func (k *KeyManager) Rotate(keyType, keyID, opts string) (*api.KeyHandle, error)
 	return &api.KeyHandle{
 		Key:     []byte("Key Bytes"),
 		KeyType: keyType,
-		KeyID:   keyID,
 	}, nil
 }
 
@@ -61,7 +61,6 @@ func (k *KeyManager) GetKeyHandle(keyID string) (*api.KeyHandle, error) {
 	return &api.KeyHandle{
 		Key:     []byte("Key Bytes"),
 		KeyType: "SomeKeyType",
-		KeyID:   keyID,
 	}, nil
 }
 
@@ -74,6 +73,5 @@ func (k *KeyManager) Export(keyID string) (*api.KeyHandle, error) {
 	return &api.KeyHandle{
 		Key:     []byte("SomeKey"),
 		KeyType: "SomeKeyType",
-		KeyID:   keyID,
 	}, nil
 }
