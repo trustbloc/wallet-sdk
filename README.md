@@ -8,7 +8,7 @@
 
 # Wallet SDK
 
-The TrustBloc Wallet SDK repo contains a API to to issue/present [W3C Verifiable Credential(VC)](https://www.w3.org/TR/vc-data-model/) signed/verified with [W3C Decentralized Identifier(DID)](https://www.w3.org/TR/did-core/). These APIs are useful for the holder role defined in W3C VC Specification.
+The TrustBloc Wallet SDK repo contains APIs to issue/present [W3C Verifiable Credential(VC)](https://www.w3.org/TR/vc-data-model/) signed/verified with [W3C Decentralized Identifier(DID)](https://www.w3.org/TR/did-core/). These APIs are useful for the holder role defined in W3C VC Specification.
 
 This project can be used as a
 - [Golang SDK](./pkg/)
