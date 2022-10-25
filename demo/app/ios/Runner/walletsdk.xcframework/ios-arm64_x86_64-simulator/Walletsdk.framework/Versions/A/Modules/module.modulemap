@@ -1,0 +1,20 @@
+framework module "Walletsdk" {
+	header "ref.h"
+    header "Api.objc.h"
+    header "Credentialinquirer.objc.h"
+    header "Credentialschema.objc.h"
+    header "Credentialsigner.objc.h"
+    header "Credentialverifier.objc.h"
+    header "Kms.objc.h"
+    header "Linkeddomains.objc.h"
+    header "Openid4ci.objc.h"
+    header "Openid4vp.objc.h"
+    header "Presentationexchange.objc.h"
+    header "Storage.objc.h"
+    header "Vdr.objc.h"
+    header "Wallethandle.objc.h"
+    header "Universe.objc.h"
+    header "Walletsdk.h"
+
+    export *
+}
