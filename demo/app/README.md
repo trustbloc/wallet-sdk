@@ -2,9 +2,19 @@
 
 TODO: Add introduction
 
-# Build/Run 
-- Install Ionic if needed: npm install -g @ionic/cli.
-- In a terminal, change directory into the repo: cd test/referenceapp
-- Install all packages: npm install.
-- Run on the web: ionic serve.
-- Run on iOS or Android: [See here](https://ionicframework.com/docs/developing/previewing).
+## Getting Started
+
+This project is a starting point for a Flutter application.
+
+A few resources to get you started if this is your first Flutter project:
+
+Download Flutter : https://docs.flutter.dev/get-started/install/
+
+Add export PATH="$PATH:`pwd`/flutter/bin"
+
+- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
