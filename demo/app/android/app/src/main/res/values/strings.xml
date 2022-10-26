@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">TrustBloc DemoApp</string>
-    <string name="title_activity_main">TrustBloc DemoApp</string>
-    <string name="package_name">dev.trustbloc.wallet.demo</string>
-    <string name="custom_url_scheme">dev.trustbloc.wallet.demo</string>
-</resources>

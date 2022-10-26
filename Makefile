@@ -43,8 +43,8 @@ demo-app-web:
 
 .PHONY: demo-app-ios
 demo-app-ios:
-	@cd demo/app && ionic cap open ios
+	@cd demo/app && flutter doctor  && flutter clean && npm install -g ios-sim && ios-sim start --devicetypeid "iPhone-14" && flutter devices && flutter run
 
 .PHONY: demo-app-android
 demo-app-android:
-	@cd demo/app && ionic cap open android
+	@cd demo/app && flutter doctor flutter clean flutter run

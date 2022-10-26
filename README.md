@@ -16,12 +16,12 @@ This project can be used as a
   - iOS (generates a .xcframework binary)
   - Android (generates a .aar binary)
 
-The repo also has code to generate [Reference iOS/Android App](./demo/app/) built using [Ionic](https://ionicframework.com/)/[Capacitor JavaScript](https://capacitorjs.com/) frameworks.
+The repo also has code to generate [Reference iOS/Android App](demo/app/) built using [Ionic](https://ionicframework.com/)/[Capacitor JavaScript](https://capacitorjs.com/) frameworks.
 
 
 ## Build/Run
 - [GoMobile Bindings (iOS/Android)](./cmd/wallet-sdk-gomobile/README.md)
-- [Demo/Reference App](./demo/app/README.md)
+- [Demo/Reference App](demo/app/README.md)
 
 
 ## Contributing
