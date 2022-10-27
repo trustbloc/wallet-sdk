@@ -16,12 +16,44 @@ This project can be used as a
   - iOS (generates a .xcframework binary)
   - Android (generates a .aar binary)
 
-The repo also has code to generate [Reference iOS/Android App](demo/app/) built using [Ionic](https://ionicframework.com/)/[Capacitor JavaScript](https://capacitorjs.com/) frameworks.
+The repo also has code to generate [Reference iOS/Android App](demo/app/) built using [Flutter](https://flutter.dev/) framework.
 
 
 ## Build/Run
 - [GoMobile Bindings (iOS/Android)](./cmd/wallet-sdk-gomobile/README.md)
 - [Demo/Reference App](demo/app/README.md)
+
+## Library/Package
+
+### Android
+The Wallet SDK Android package is available on GitHub Maven Repository. Please check [this page](https://github.com/trustbloc-cicd/snapshot/packages/1690705) for the latest SNAPSHOT versions.
+
+```
+<dependency>
+ <groupId>dev.trustbloc</groupId>
+ <artifactId>vc-wallet-sdk</artifactId>
+ <version>0.1.0-SNAPSHOT-7e3a6ed</version>
+</dependency>
+```
+
+Refer [here](./cmd/wallet-sdk-gomobile/README.md#helpful-tips) for using the android package in your project.
+
+#### Gradle Config
+
+Add the following GitHub maven repository to dependencyResolutionManagement.repositories
+```
+maven {
+  url = $URL
+  credentials {
+    username = $GITHUB_USER
+    password = $GITHUB_TOKEN
+  }
+ }
+```
+
+Use the following URL based on snapshot or release dependency:
+SNAPSHOT_REPO_URL=https://maven.pkg.github.com/trustbloc-cicd/snapshot
+RELEASE_REPO_URL=https://maven.pkg.github.com/trustbloc/wallet-sdk
 
 
 ## Contributing
