@@ -1,0 +1,29 @@
+/*
+# Copyright Avast Software. All Rights Reserved.
+*
+* SPDX-License-Identifier: Apache-2.0
+*/
+
+apply plugin: 'maven-publish' 
+
+publishing {
+  publications {
+    bar(MavenPublication) {
+      groupId System.getenv("ANDROID_GROUP_ID")
+      artifactId System.getenv("ANDROID_ARTIFACT_ID")
+      version System.getenv("ANDROID_VERSION")
+      artifact("./cmd/wallet-sdk-gomobile/bindings/android/walletsdk.aar")
+    }
+  }
+
+  repositories {
+    maven {
+      name = "GitHubPackages"
+      url = uri(System.getenv("PROJECT_PKG_REPO"))
+      credentials {
+        username = System.getenv("USER")
+        password = System.getenv("TOKEN")
+      }
+    }
+  }
+}
