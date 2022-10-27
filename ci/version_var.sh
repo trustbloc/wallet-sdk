@@ -16,7 +16,7 @@ SNAPSHOT_REPO=https://maven.pkg.github.com/trustbloc/wallet-sdk
 
 if [ ${IS_RELEASE} = false ]
 then
-  EXTRA_VERSION=snapshot-$(git rev-parse --short=7 HEAD)
+  EXTRA_VERSION=SNAPSHOT-$(git rev-parse --short=7 HEAD)
   PROJECT_VERSION=${BASE_VERSION}-${EXTRA_VERSION}
   PROJECT_PKG_REPO=${SNAPSHOT_REPO}
 else
