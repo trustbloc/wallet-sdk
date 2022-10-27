@@ -12,7 +12,7 @@ IS_RELEASE=false
 # Project Parameters
 BASE_PKG_NAME=wallet-sdk
 RELEASE_REPO=https://maven.pkg.github.com/trustbloc/wallet-sdk
-SNAPSHOT_REPO=https://maven.pkg.github.com/trustbloc/wallet-sdk
+SNAPSHOT_REPO=https://maven.pkg.github.com/trustbloc-cicd/snapshot
 
 if [ ${IS_RELEASE} = false ]
 then
