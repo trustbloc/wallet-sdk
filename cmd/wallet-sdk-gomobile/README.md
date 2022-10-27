@@ -59,8 +59,8 @@ The generated bindings can be found in the `bindings` folder.
   you import them in a roughly similar way as you would the equivalent Go package:
   ```java
   // Follow the pattern below for other packages/types as well
-  import api.Api;
-  import storage.Provider;
+  import dev.trustbloc.wallet.sdk.api.Api;
+  import dev.trustbloc.wallet.sdk.storage.Provider;
   ```
 * After importing the iOS bindings into Xcode, to use the Wallet SDK in a Swift file, add the following:
   ```swift
