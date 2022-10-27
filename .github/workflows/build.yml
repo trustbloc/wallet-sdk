@@ -116,3 +116,43 @@ jobs:
         with:
           name: ios-binding
           path: ./cmd/wallet-sdk-gomobile/bindings/ios
+
+  PublishAndroidBinding:
+    needs: [Checks, UnitTest, GenerateAndroidBinding, GenerateiOSBinding]
+    if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Generate Binding
+        run: |
+          export PATH=$PATH:$GOPATH/bin
+          echo $PATH
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+          make generate-android-bindings
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOPATH: /home/runner/work/wallet-sdk/go
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: android-binding
+          path: ./cmd/wallet-sdk-gomobile/bindings/android
+      - name: Publish
+        run: |
+          source ci/version_var.sh
+          export USER=$USER
+          export TOKEN=$TOKEN
+          export ANDROID_GROUP_ID=$ANDROID_GROUP_ID
+          export ANDROID_VERSION=$ANDROID_VERSION
+          export PROJECT_PKG_REPO=$PROJECT_PKG_REPO
+          gradle publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USER: ${{ secrets.CR_USER }}
+          TOKEN: ${{ secrets.CR_PAT }}
