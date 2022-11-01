@@ -2,23 +2,19 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'demo_method_channel.dart';
 
-abstract class HelloPlatform extends PlatformInterface {
+abstract class WalletPlatform extends PlatformInterface {
   /// Constructs a HelloPlatform.
-  HelloPlatform() : super(token: _token);
+  WalletPlatform() : super(token: _token);
 
   static final Object _token = Object();
 
-  static HelloPlatform _instance = MethodChannelHello();
-
-  /// The default instance of [HelloPlatform] to use.
-  ///
-  /// Defaults to [MethodChannelHello].
-  static HelloPlatform get instance => _instance;
+  static WalletPlatform _instance = MethodChannelWallet();
+  static WalletPlatform get instance => _instance;
 
   /// Platform-specific implementations should set this with their own
-  /// platform-specific class that extends [HelloPlatform] when
+  /// platform-specific class that extends [WalletPlatform] when
   /// they register themselves.
-  static set instance(HelloPlatform instance) {
+  static set instance(WalletPlatform instance) {
     PlatformInterface.verifyToken(instance, _token);
     _instance = instance;
   }
