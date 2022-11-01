@@ -8,7 +8,7 @@ import Flutter
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
-      SwiftHelloPlugin.register(with: self.registrar(forPlugin: "HelloPlugin")!)
+      SwiftWalletSDKPlugin.register(with: self.registrar(forPlugin: "WalletSDKPlugin")!)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }
