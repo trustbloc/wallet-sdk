@@ -38,3 +38,5 @@ deployments/demo/openapi/specs
 
 # Built gomobile bindings
 cmd/wallet-sdk-gomobile/bindings
+*.aar
+*.xcframework
