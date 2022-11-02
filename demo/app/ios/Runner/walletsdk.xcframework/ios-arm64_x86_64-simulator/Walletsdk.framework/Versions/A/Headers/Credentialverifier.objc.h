@@ -27,8 +27,10 @@
  * NewVerifier returns a new Verifier.
  */
 - (nullable instancetype)init:(id<ApiKeyHandleReader> _Nullable)keyHandleReader didResolver:(id<ApiDIDResolver> _Nullable)didResolver credentialReader:(id<ApiCredentialReader> _Nullable)credentialReader crypto:(id<ApiCrypto> _Nullable)crypto;
-// skipped method Verifier.Verify with unsupported parameter or return types
-
+/**
+ * Verify verifies the given credential or presentation. See the VerifyOpts struct for more information.
+ */
+- (BOOL)verify:(CredentialverifierVerifyOpts* _Nullable)verifyOpts error:(NSError* _Nullable* _Nullable)error;
 @end
 
 /**

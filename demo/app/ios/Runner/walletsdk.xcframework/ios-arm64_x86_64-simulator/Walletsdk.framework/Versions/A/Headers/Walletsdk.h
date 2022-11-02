@@ -6,6 +6,7 @@
 //	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credentialschema
 //	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credentialsigner
 //	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credentialverifier
+//	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did/creator
 //	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/kms
 //	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/linkeddomains
 //	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci
@@ -24,6 +25,7 @@
 #include "Credentialschema.objc.h"
 #include "Credentialsigner.objc.h"
 #include "Credentialverifier.objc.h"
+#include "Creator.objc.h"
 #include "Kms.objc.h"
 #include "Linkeddomains.objc.h"
 #include "Openid4ci.objc.h"

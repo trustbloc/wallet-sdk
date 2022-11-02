@@ -77,8 +77,11 @@ returns:
 @end
 
 @protocol ApiDIDCreator <NSObject>
-// skipped method DIDCreator.Create with unsupported parameter or return types
-
+/**
+ * Create creates a new DID Document.
+It returns a DID Document Resolution.
+ */
+- (NSData* _Nullable)create:(NSString* _Nullable)method createDIDOpts:(ApiCreateDIDOpts* _Nullable)createDIDOpts error:(NSError* _Nullable* _Nullable)error;
 @end
 
 @protocol ApiDIDResolver <NSObject>
@@ -146,10 +149,7 @@ Returns: a key handle, which contains both the new key ID and actual private key
 
 - (nonnull instancetype)initWithRef:(_Nonnull id)ref;
 - (nonnull instancetype)init;
-/**
- * The type of DID to create (i.e. which DID method to use).
- */
-@property (nonatomic) NSString* _Nonnull method;
+@property (nonatomic) NSString* _Nonnull keyID;
 @end
 
 /**
@@ -163,7 +163,6 @@ Returns: a key handle, which contains both the new key ID and actual private key
 - (nonnull instancetype)init;
 @property (nonatomic) NSData* _Nullable key;
 @property (nonatomic) NSString* _Nonnull keyType;
-@property (nonatomic) NSString* _Nonnull keyID;
 @end
 
 @class ApiActivityLog;
@@ -265,8 +264,11 @@ returns:
 @property(strong, readonly) _Nonnull id _ref;
 
 - (nonnull instancetype)initWithRef:(_Nonnull id)ref;
-// skipped method DIDCreator.Create with unsupported parameter or return types
-
+/**
+ * Create creates a new DID Document.
+It returns a DID Document Resolution.
+ */
+- (NSData* _Nullable)create:(NSString* _Nullable)method createDIDOpts:(ApiCreateDIDOpts* _Nullable)createDIDOpts error:(NSError* _Nullable* _Nullable)error;
 @end
 
 /**

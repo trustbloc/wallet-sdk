@@ -5,6 +5,7 @@ framework module "Walletsdk" {
     header "Credentialschema.objc.h"
     header "Credentialsigner.objc.h"
     header "Credentialverifier.objc.h"
+    header "Creator.objc.h"
     header "Kms.objc.h"
     header "Linkeddomains.objc.h"
     header "Openid4ci.objc.h"
