@@ -4,14 +4,20 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package pkg defines wallet-sdk APIs.
-package pkg
+// Package api defines wallet-sdk APIs.
+package api
 
 import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 )
+
+// KeyHandle represents a key with associated metadata.
+type KeyHandle struct {
+	Key     []byte `json:"key,omitempty"` // Raw bytes
+	KeyType string `json:"keyType,omitempty"`
+}
 
 // KeyHandleWriter defines key handler writer APIs.
 type KeyHandleWriter interface {
@@ -45,23 +51,21 @@ type KeyHandleWriter interface {
 
 // KeyHandleReader defines key handler reader APIs.
 type KeyHandleReader interface {
-	// GetKeyHandle key handle for the given keyID
-	// Returns:
-	//  - handle instance (to private key)
-	//  - error if failure
-	GetKeyHandle(keyID string) (interface{}, error)
-	// Export will fetch a key referenced by id then gets its public key in raw bytes and returns it.
-	// The key must be an asymmetric key.
-	// Returns:
-	//  - marshalled public key []byte
-	//  - error if it fails to export the public key bytes
-	Export(keyID string) ([]byte, kms.KeyType, error)
+	// GetKeyHandle returns a key handle stored under the given keyID.
+	GetKeyHandle(keyID string) (*KeyHandle, error)
+	// Export is not yet fully defined. TODO: Define this
+	Export(keyID string) ([]byte, error)
 }
 
-// DIDCreator defines DID creation APIs.
+// CreateDIDOpts represents the various options for the DIDCreator.Create method.
+type CreateDIDOpts struct {
+	KeyID string
+}
+
+// DIDCreator defines the method required for a type to create DID documents.
 type DIDCreator interface {
-	// Create creates a new DID Document.
-	Create(didDocument *did.Doc) (*did.DocResolution, error)
+	// Create creates a new DID Document using the given method.
+	Create(method string, createDIDOpts *CreateDIDOpts) (*did.DocResolution, error)
 }
 
 // DIDResolver defines DID resolution APIs.
