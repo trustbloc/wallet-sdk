@@ -37,7 +37,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   TextEditingController passwordController = TextEditingController();
 
   void _createDid() async {
-    await WalletSDKPlugin.createDID()!;
+   var did = await WalletSDKPlugin.createDID()!;
+   print("created did:$did");
     setState(() {
     });
   }

@@ -23,17 +23,11 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
 
   }
     public func createDid(result: @escaping FlutterResult) {
-        let didCreator = DidNewCreator()
+        let didCreator = CreatorNewDIDCreator(nil)
         do {
             let apiCreate = initializeObject(fromType: ApiCreateDIDOpts.self)
-            apiCreate.method = "key"
-            let byteArray: [UInt8] = [19, 14, 81, 157, 226, 93, 94, 94, 61, 151, 246, 226, 20, 86, 41, 139, 164, 203, 99, 96 ,155 ,5, 156, 244, 198, 141, 99, 6, 19, 130, 72, 46]
-            apiCreate.key = Data(byteArray)
-            print("initializing api create did opts")
-            
-            let doc = try didCreator!.create(apiCreate)
+            let doc = try didCreator!.create("key", createDIDOpts: apiCreate)
             let docString = String(bytes: doc, encoding: .utf8)
-            print("did create" , docString!)
         } catch {
             result(FlutterError.init(code: "NATIVE_ERR",
             message: "error while creating did",
