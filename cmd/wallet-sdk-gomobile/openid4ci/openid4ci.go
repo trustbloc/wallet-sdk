@@ -16,13 +16,13 @@ type Instance struct {
 	initiateIssuanceRequest []byte
 	format                  string
 	clientCredentialReader  api.CredentialReader
-	keyHandleReader         api.KeyHandleReader
+	keyHandleReader         api.KeyReader
 	didResolver             api.DIDResolver
 }
 
 // NewInstance returns a new OpenID4CI Instance.
 func NewInstance(initiateIssuanceRequest []byte, format string, clientCredentialReader api.CredentialReader,
-	keyHandleReader api.KeyHandleReader, didResolver api.DIDResolver,
+	keyHandleReader api.KeyReader, didResolver api.DIDResolver,
 ) *Instance {
 	return &Instance{
 		initiateIssuanceRequest: initiateIssuanceRequest,

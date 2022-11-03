@@ -88,6 +88,7 @@ linters:
     - forbidigo # TODO enable
     - gci # giving spurious errors for imports of syscall/js
     - exhaustruct # Results in unneeded struct member declarations
+    - ireturn # Required by aries-framework-go, a library we use
 
 issues:
   exclude-use-default: false

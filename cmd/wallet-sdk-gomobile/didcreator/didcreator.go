@@ -4,43 +4,41 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package creator contains a DID document creator that can be used to create DIDs using various supported DID methods.
-package creator
+// Package didcreator contains a DID document creator that can be used to create DIDs using various supported DID
+// methods.
+package didcreator
 
 import (
-	"errors"
-	"fmt"
-
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
-
-	"github.com/trustbloc/wallet-sdk/pkg/api"
-	didkeycreator "github.com/trustbloc/wallet-sdk/pkg/did/key"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
+	goapicreator "github.com/trustbloc/wallet-sdk/pkg/did/creator"
 )
 
 const (
 	// DIDMethodKey is the name recognized by the Create method for the did:key method.
-	DIDMethodKey = "key"
+	DIDMethodKey = goapicreator.DIDMethodKey
 	// Ed25519VerificationKey2018 is a supported DID verification type.
-	Ed25519VerificationKey2018 = "Ed25519VerificationKey2018"
+	Ed25519VerificationKey2018 = goapicreator.Ed25519VerificationKey2018
 )
 
 // Creator is used for creating DID Documents using supported DID methods.
 type Creator struct {
-	keyWriter api.KeyWriter
-	keyReader api.KeyReader
+	goAPICreator *goapicreator.Creator
 }
 
 // NewCreatorWithKeyWriter returns a new DID document Creator. A Creator created with this function will automatically
 // generate keys for you when creating new DID documents. Those keys will be generated and stored using the given
 // KeyWriter. See the Create method for more information.
 func NewCreatorWithKeyWriter(keyWriter api.KeyWriter) (*Creator, error) {
-	if keyWriter == nil {
-		return nil, errors.New("a KeyWriter must be specified")
+	gomobileKeyWriterWrapper := &gomobileKeyWriterWrapper{keyWriter: keyWriter}
+
+	goAPICreator, err := goapicreator.NewCreatorWithKeyWriter(gomobileKeyWriterWrapper)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Creator{
-		keyWriter: keyWriter,
+		goAPICreator: goAPICreator,
 	}, nil
 }
 
@@ -48,12 +46,15 @@ func NewCreatorWithKeyWriter(keyWriter api.KeyWriter) (*Creator, error) {
 // create DID documents using your own already-generated keys from the given KeyReader.
 // At least one of keyHandleCreator and keyReader must be provided. See the Create method for more information.
 func NewCreatorWithKeyReader(keyReader api.KeyReader) (*Creator, error) {
-	if keyReader == nil {
-		return nil, errors.New("a KeyReader must be specified")
+	gomobileKeyReaderWrapper := &gomobileKeyReaderWrapper{keyReader: keyReader}
+
+	goAPIDIDCreator, err := goapicreator.NewCreatorWithKeyReader(gomobileKeyReaderWrapper)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Creator{
-		keyReader: keyReader,
+		goAPICreator: goAPIDIDCreator,
 	}, nil
 }
 
@@ -68,40 +69,17 @@ func NewCreatorWithKeyReader(keyReader api.KeyReader) (*Creator, error) {
 //	Ed25519VerificationKey2018.
 //	If the Creator was created using the NewCreatorWithKeyReader function, then you must specify the KeyID and also
 //	the VerificationType in the createDIDOpts object to use for the creation of the DID document.
-func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) (*did.DocResolution, error) {
-	if method == DIDMethodKey {
-		return d.createDIDKeyDoc(createDIDOpts)
+func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) ([]byte, error) {
+	goAPIOpts := convertToGoAPIOpts(createDIDOpts)
+
+	didDocResolution, err := d.goAPICreator.Create(method, goAPIOpts)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, fmt.Errorf("DID method %s not supported", method)
+	return didDocResolution.JSONBytes()
 }
 
-func (d *Creator) createDIDKeyDoc(createDIDOpts *api.CreateDIDOpts) (*did.DocResolution, error) {
-	var key []byte
-
-	var verificationType string
-
-	var err error
-
-	if d.keyReader == nil { // Generate a key and set the verification type in behalf of the caller.
-		_, key, err = d.keyWriter.Create(arieskms.ED25519Type)
-		if err != nil {
-			return nil, err
-		}
-
-		verificationType = Ed25519VerificationKey2018
-	} else { // Use the caller's chosen key and verification type.
-		if createDIDOpts.VerificationType == "" {
-			return nil, errors.New("no verification type specified")
-		}
-
-		key, err = d.keyReader.GetKey(createDIDOpts.KeyID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get key handle: %w", err)
-		}
-
-		verificationType = createDIDOpts.VerificationType
-	}
-
-	return didkeycreator.NewCreator().Create(key, verificationType)
+func convertToGoAPIOpts(createDIDOpts *api.CreateDIDOpts) *goapi.CreateDIDOpts {
+	return &goapi.CreateDIDOpts{KeyID: createDIDOpts.KeyID}
 }

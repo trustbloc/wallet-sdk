@@ -13,14 +13,14 @@ import (
 
 // Signer is used to do credential signing operations.
 type Signer struct {
-	keyHandleReader  api.KeyHandleReader
+	keyHandleReader  api.KeyReader
 	didResolver      api.DIDResolver
 	credentialReader api.CredentialReader // Optional
 	crypto           api.Crypto
 }
 
 // NewSigner returns a new Signer instance.
-func NewSigner(keyHandleReader api.KeyHandleReader, didResolver api.DIDResolver,
+func NewSigner(keyHandleReader api.KeyReader, didResolver api.DIDResolver,
 	credentialReader api.CredentialReader, crypto api.Crypto,
 ) *Signer {
 	return &Signer{

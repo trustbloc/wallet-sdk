@@ -15,11 +15,11 @@ import (
 // Inquirer can perform credential queries.
 type Inquirer struct {
 	credentialReader     api.CredentialReader
-	presentationExchange presentationexchange.Exchange
+	presentationExchange *presentationexchange.Exchange
 }
 
 // NewInquirer returns a new Inquirer.
-func NewInquirer(credentialReader api.CredentialReader, presentationExchange presentationexchange.Exchange) *Inquirer {
+func NewInquirer(credentialReader api.CredentialReader, presentationExchange *presentationexchange.Exchange) *Inquirer {
 	return &Inquirer{
 		credentialReader:     credentialReader,
 		presentationExchange: presentationExchange,

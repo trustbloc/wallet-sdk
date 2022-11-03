@@ -13,14 +13,14 @@ import (
 
 // Verifier is used to verify credentials.
 type Verifier struct {
-	keyHandleReader  api.KeyHandleReader
+	keyHandleReader  api.KeyReader
 	didResolver      api.DIDResolver
 	credentialReader api.CredentialReader
 	crypto           api.Crypto
 }
 
 // NewVerifier returns a new Verifier.
-func NewVerifier(keyHandleReader api.KeyHandleReader, didResolver api.DIDResolver,
+func NewVerifier(keyHandleReader api.KeyReader, didResolver api.DIDResolver,
 	credentialReader api.CredentialReader, crypto api.Crypto,
 ) *Verifier {
 	return &Verifier{
