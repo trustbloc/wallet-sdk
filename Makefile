@@ -37,14 +37,18 @@ generate-android-bindings:
 generate-ios-bindings:
 	@make generate-ios-bindings -C ./cmd/wallet-sdk-gomobile
 
-.PHONY: demo-app-web
-demo-app-web:
-	@cd demo/app && npm install && ionic serve
+.PHONY: copy-android-bindings
+copy-android-bindings:
+	@mkdir -p "demo/app/android/app/libs" && cp -R cmd/wallet-sdk-gomobile/bindings/android/walletsdk.aar demo/app/android/app/libs
+
+.PHONY: copy-ios-bindings
+copy-ios-bindings:
+	@cp -R cmd/wallet-sdk-gomobile/bindings/ios/walletsdk.xcframework demo/app/ios/Runner
 
 .PHONY: demo-app-ios
-demo-app-ios:
+demo-app-ios:generate-ios-bindings copy-ios-bindings
 	@cd demo/app && flutter doctor  && flutter clean && npm install -g ios-sim && ios-sim start --devicetypeid "iPhone-14" && flutter devices && flutter run
 
 .PHONY: demo-app-android
-demo-app-android:
-	@cd demo/app && flutter doctor flutter clean flutter run
+demo-app-android: generate-android-bindings copy-android-bindings
+	@cd demo/app && flutter doctor && flutter clean && flutter run && flutter emulators --launch  Pixel_3a_API_33_arm64-v8a  && flutter run -d Pixel_3a_API_33_arm64-v8a
