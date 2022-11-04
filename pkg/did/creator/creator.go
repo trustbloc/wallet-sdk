@@ -15,7 +15,7 @@ import (
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
-	didkeycreator "github.com/trustbloc/wallet-sdk/pkg/did/key"
+	didkeycreator "github.com/trustbloc/wallet-sdk/pkg/did/creator/key"
 )
 
 const (
