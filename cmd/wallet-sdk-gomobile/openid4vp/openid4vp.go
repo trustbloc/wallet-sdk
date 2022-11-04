@@ -15,14 +15,14 @@ import (
 // Instance is used to help with OpenID4VP operations (TODO: Implement).
 type Instance struct {
 	authorizationRequest []byte
-	keyHandleReader      api.KeyHandleReader
+	keyHandleReader      api.KeyReader
 	didResolver          api.DIDResolver
-	linkedDomains        linkeddomains.LD
+	linkedDomains        *linkeddomains.LD
 }
 
 // NewInstance returns a new OpenID4VP Instance.
-func NewInstance(authorizationRequest []byte, keyHandleReader api.KeyHandleReader,
-	didResolver api.DIDResolver, linkedDomains linkeddomains.LD,
+func NewInstance(authorizationRequest []byte, keyHandleReader api.KeyReader,
+	didResolver api.DIDResolver, linkedDomains *linkeddomains.LD,
 ) (*Instance, error) {
 	return &Instance{
 		authorizationRequest: authorizationRequest,

@@ -7,6 +7,7 @@ module github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile
 go 1.19
 
 require (
+	github.com/hyperledger/aries-framework-go v0.1.9-0.20221028142827-a755fd87d699
 	github.com/stretchr/testify v1.8.1
 	github.com/tidwall/gjson v1.14.3
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
@@ -22,7 +23,6 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/tink/go v1.7.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/hyperledger/aries-framework-go v0.1.9-0.20221028142827-a755fd87d699 // indirect
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20221025204933-b807371b6f1e // indirect
 	github.com/hyperledger/ursa-wrapper-go v0.3.1 // indirect
 	github.com/kilic/bls12-381 v0.1.1-0.20210503002446-7b7597926c69 // indirect

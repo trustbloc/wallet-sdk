@@ -9,66 +9,39 @@ package api
 
 // KeyHandle represents a key with associated metadata.
 type KeyHandle struct {
-	Key     []byte `json:"key,omitempty"`
-	KeyType string `json:"keyType,omitempty"`
+	Key   []byte `json:"key,omitempty"`   // Raw bytes
+	KeyID string `json:"keyID,omitempty"` //nolint: tagliatelle // False positive
 }
 
-// A KeyHandleWriter represents a type that is capable of performing certain operations related to writing key data.
-type KeyHandleWriter interface {
-	// Create a new key/keyset/key handle of type keyType
-	// Some key types may require additional attributes described in `opts`. // TODO: Format of opts to be determined.
-	// Returns a key handle, which contains both the key ID and actual private key bytes
-	Create(keyType, opts string) (*KeyHandle, error)
-	// Rotate a key referenced by keyID and return a new handle of a keyset including old key and
-	// new key of type keyType. It also returns the updated keyID as the first return value
-	// Some key types may require additional attributes described in `opts` // TODO: Format of opts to be determined.
-	// Returns: a key handle, which contains both the new key ID and actual private key bytes
-	Rotate(keyType, keyID string, opts string) (*KeyHandle, error)
-	// Import will import privKey into the KMS storage for the given keyType then returns the new key id and
-	// the newly persisted KeyHandle.
-	// privKey possible types are: *ecdsa.PrivateKey and ed25519.PrivateKey.
-	// TODO: Determine how these restrictions work.
-	// kt possible types are signing key types only (ECDSA keys or Ed25519)
-	// opts allows setting the keysetID of the imported key using WithKeyID() option. If the ID is already used,
-	// then an error is returned. // TODO: Format of opts to be determined.
-	// Returns: a key handle, which contains both the new key ID and actual private key bytes.
-	// An error/exception will be returned/thrown if there is an import failure (key empty, invalid, doesn't match
-	// keyType, unsupported keyType or storing of key failed)
-	// TODO: Consider renaming this method to avoid keyword collision and automatic renaming to _import in Java
-	Import(privateKey *KeyHandle, keyType, opts string) (*KeyHandle, error)
+// KeyWriter represents a type that is capable of performing operations related to key creation and storage within
+// an underlying KMS.
+type KeyWriter interface {
+	// Create creates a keyset of the given keyType and then writes it to storage.
+	// The keyID and raw public key bytes of the newly generated keyset are returned via the KeyHandle object.
+	Create(keyType string) (*KeyHandle, error)
 }
 
-// A KeyHandleReader represents a type that is capable of performing certain operations related to reading key data.
-type KeyHandleReader interface {
-	// GetKeyHandle return the key handle for the given keyID
-	// Returns:
-	//  - The private key handle
-	//  - Error if failure
-	GetKeyHandle(keyID string) (*KeyHandle, error)
-	// Export will fetch a key referenced by id then gets its public key in raw bytes and returns it.
-	// The key must be an asymmetric key.
-	// Returns:
-	//  - A key handle, which contains both the key type and public key bytes
-	//  - Error if it fails to export the public key bytes
-	Export(keyID string) (*KeyHandle, error)
+// KeyReader represents a type that is capable of performing operations related to reading keys from an underlying KMS.
+type KeyReader interface {
+	// GetKey returns the public key associated with the given keyID as raw bytes.
+	GetKey(keyID string) ([]byte, error)
 }
 
 // CreateDIDOpts represents the various options for the DIDCreator.Create method.
 type CreateDIDOpts struct {
-	KeyID string
+	KeyID            string
+	VerificationType string
 }
 
 // DIDCreator defines the method required for a type to create DID documents.
 type DIDCreator interface {
-	// Create creates a new DID Document.
-	// It returns a DID Document Resolution.
+	// Create creates a new DID Document using the given method.
 	Create(method string, createDIDOpts *CreateDIDOpts) ([]byte, error)
 }
 
 // DIDResolver defines the method required for a type to resolve DIDs.
 type DIDResolver interface {
-	// Resolve resolves a did.
-	// It returns a DID Document Resolution.
+	// Resolve resolves a DID. It returns a DID document marshalled as JSON.
 	Resolve(did string) ([]byte, error)
 }
 
