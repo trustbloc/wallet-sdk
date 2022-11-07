@@ -11,12 +11,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/trustbloc/wallet-sdk/pkg/localkms"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
+	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 )
 
 type mockKeyHandleReader struct {
