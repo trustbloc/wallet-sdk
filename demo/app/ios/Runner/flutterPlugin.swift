@@ -23,7 +23,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
 
   }
     public func createDid(result: @escaping FlutterResult) {
-        let didCreator = CreatorNewDIDCreator(nil)
+        let localKMS = LocalkmsNewKMS(nil)
+        let didCreator = DidcreatorNewCreatorWithKeyWriter(localKMS, nil)
         do {
             let apiCreate = initializeObject(fromType: ApiCreateDIDOpts.self)
             let doc = try didCreator!.create("key", createDIDOpts: apiCreate)
@@ -35,8 +36,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
     
     }
-    
-   public func initializeObject<T: ApiCreateDIDOpts>(fromType type: T.Type) -> T {
-        return T.init() //No Error
-    }
+    public func initializeObject<T: ApiCreateDIDOpts>(fromType type: T.Type) -> T {
+         return T.init() //No Error
+     }
 }

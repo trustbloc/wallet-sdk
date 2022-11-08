@@ -3,11 +3,13 @@ package walletsdk.flutter.wallet_sdk_flutter;
 import androidx.annotation.NonNull;
 
 import dev.trustbloc.wallet.sdk.api.CreateDIDOpts;
+import dev.trustbloc.wallet.sdk.didcreator.Creator;
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
-import dev.trustbloc.wallet.sdk.creator.Creator;
-import dev.trustbloc.wallet.sdk.creator.DIDCreator;
+import dev.trustbloc.wallet.sdk.localkms.KMS;
+import dev.trustbloc.wallet.sdk.localkms.Localkms;
+import dev.trustbloc.wallet.sdk.didcreator.Didcreator;
 
 public class MainActivity extends FlutterActivity {
     private static final String CHANNEL = "WalletSDKPlugin";
@@ -19,7 +21,24 @@ public class MainActivity extends FlutterActivity {
                 .setMethodCallHandler(
                         (call, result) -> {
                             if (call.method.equals("createDID")) {
-                              DIDCreator creatorDID =  Creator.newDIDCreator(null);
+                                KMS localKMS;
+                                try {
+                                    localKMS = Localkms.newKMS();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    result.error("Exception", "Error while creating kms", null);
+                                    return;
+                                }
+
+                                Creator creatorDID;
+                                try {
+                                    creatorDID = Didcreator.newCreatorWithKeyWriter(localKMS);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    result.error("Exception", "Error while creating did creator", null);
+                                    return;
+                                }
+
                                 try {
                                   byte[] doc =  creatorDID.create("key", new CreateDIDOpts());
                                   String docString = new String(doc);
