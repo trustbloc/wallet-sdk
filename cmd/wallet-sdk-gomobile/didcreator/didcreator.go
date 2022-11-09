@@ -9,6 +9,8 @@ SPDX-License-Identifier: Apache-2.0
 package didcreator
 
 import (
+	"errors"
+
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	goapicreator "github.com/trustbloc/wallet-sdk/pkg/did/creator"
@@ -30,6 +32,10 @@ type Creator struct {
 // generate keys for you when creating new DID documents. Those keys will be generated and stored using the given
 // KeyWriter. See the Create method for more information.
 func NewCreatorWithKeyWriter(keyWriter api.KeyWriter) (*Creator, error) {
+	if keyWriter == nil {
+		return nil, errors.New("a KeyWriter must be specified")
+	}
+
 	gomobileKeyWriterWrapper := &gomobileKeyWriterWrapper{keyWriter: keyWriter}
 
 	goAPICreator, err := goapicreator.NewCreatorWithKeyWriter(gomobileKeyWriterWrapper)
@@ -46,6 +52,10 @@ func NewCreatorWithKeyWriter(keyWriter api.KeyWriter) (*Creator, error) {
 // create DID documents using your own already-generated keys from the given KeyReader.
 // At least one of keyHandleCreator and keyReader must be provided. See the Create method for more information.
 func NewCreatorWithKeyReader(keyReader api.KeyReader) (*Creator, error) {
+	if keyReader == nil {
+		return nil, errors.New("a KeyReader must be specified")
+	}
+
 	gomobileKeyReaderWrapper := &gomobileKeyReaderWrapper{keyReader: keyReader}
 
 	goAPIDIDCreator, err := goapicreator.NewCreatorWithKeyReader(gomobileKeyReaderWrapper)
@@ -81,5 +91,5 @@ func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) ([]byt
 }
 
 func convertToGoAPIOpts(createDIDOpts *api.CreateDIDOpts) *goapi.CreateDIDOpts {
-	return &goapi.CreateDIDOpts{KeyID: createDIDOpts.KeyID}
+	return &goapi.CreateDIDOpts{KeyID: createDIDOpts.KeyID, VerificationType: createDIDOpts.VerificationType}
 }
