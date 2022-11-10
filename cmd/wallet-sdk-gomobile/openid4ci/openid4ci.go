@@ -4,41 +4,88 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package openid4ci contains functionality for doing OpenID4CI operations.
+// Package openid4ci provides APIs for wallets to receive verifiable credentials via OIDC for Credential Issuance.
 package openid4ci
 
 import (
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"encoding/json"
+
+	openid4cigoapi "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
 
-// Instance helps with OpenID4CI operations.
-type Instance struct {
-	initiateIssuanceRequest []byte
-	format                  string
-	clientCredentialReader  api.CredentialReader
-	keyHandleReader         api.KeyReader
-	didResolver             api.DIDResolver
+// Interaction represents a single OpenID4CI interaction between a wallet and an issuer. The methods defined on this
+// object are used to help guide the calling code through the OpenID4CI flow.
+type Interaction struct {
+	goAPIInteraction *openid4cigoapi.Interaction
 }
 
-// NewInstance returns a new OpenID4CI Instance.
-func NewInstance(initiateIssuanceRequest []byte, format string, clientCredentialReader api.CredentialReader,
-	keyHandleReader api.KeyReader, didResolver api.DIDResolver,
-) *Instance {
-	return &Instance{
-		initiateIssuanceRequest: initiateIssuanceRequest,
-		format:                  format,
-		clientCredentialReader:  clientCredentialReader,
-		keyHandleReader:         keyHandleReader,
-		didResolver:             didResolver,
+// AuthorizeResult is the object returned from the Client.Authorize method.
+// An empty/missing AuthorizationRedirectEndpoint indicates that the wallet is pre-authorized.
+type AuthorizeResult struct {
+	AuthorizationRedirectEndpoint string
+	UserPINRequired               bool
+}
+
+// CredentialRequest represents the data (required and optional) that is used in the final step of the OpenID4CI flow,
+// where the wallet requests the credential from the issuer.
+type CredentialRequest struct {
+	UserPIN string
+}
+
+// NewInteraction creates a new OpenID4CI Interaction.
+// The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
+// Calling this function represents taking the first step in the flow.
+// This function takes in an Initiate Issuance Request object from an Issuer (as defined in
+// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-5.1), encoded using URL query
+// parameters. This object is intended for going through the full flow only once (i.e. one interaction), after which
+// it should be discarded. Any new interactions should use a fresh Interaction instance.
+func NewInteraction(requestURI string) (*Interaction, error) {
+	goAPIInteraction, err := openid4cigoapi.NewInteraction(requestURI)
+	if err != nil {
+		return nil, err
 	}
+
+	return &Interaction{goAPIInteraction: goAPIInteraction}, nil
 }
 
-// Authorize does something (TODO: Implement).
-func (o *Instance) Authorize(preAuthorizedCode, authorizationRedirectEndpoint string) error {
-	return nil
+// Authorize is used by a wallet to authorize an issuer's OIDC Verifiable Credential Issuance Request.
+// After initializing the Interaction object with an Issuance Request, this should be the first method you call in
+// order to continue with the flow.
+// It only supports the pre-authorized flow in its current implementation.
+// Once the authorization flow is implemented, the following section of the spec will be relevant:
+// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-6
+func (i *Interaction) Authorize() (*AuthorizeResult, error) {
+	authorizationResultGoAPI, err := i.goAPIInteraction.Authorize()
+	if err != nil {
+		return nil, err
+	}
+
+	authorizationResult := &AuthorizeResult{
+		AuthorizationRedirectEndpoint: authorizationResultGoAPI.AuthorizationRedirectEndpoint,
+		UserPINRequired:               authorizationResultGoAPI.UserPINRequired,
+	}
+
+	return authorizationResult, nil
 }
 
-// RequestCredential does something (TODO: Implement).
-func (o *Instance) RequestCredential(authCode, kid string) ([]byte, error) {
-	return []byte("Credential"), nil
+// RequestCredential is the final step in the interaction. This is called after the wallet is authorized and is ready
+// to receive credential(s).
+// Relevant sections of the spec:
+// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-7
+// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-8
+// The returned object is an array of Credential Responses as a JSON array.
+func (i *Interaction) RequestCredential(credentialRequest *CredentialRequest) ([]byte, error) {
+	goAPICredentialRequest := &openid4cigoapi.CredentialRequest{UserPIN: credentialRequest.UserPIN}
+
+	credentialResponses, err := i.goAPIInteraction.RequestCredential(goAPICredentialRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	credentialResponsesBytes, err := json.Marshal(credentialResponses)
+	if err != nil {
+		return nil, err
+	}
+
+	return credentialResponsesBytes, nil
 }
