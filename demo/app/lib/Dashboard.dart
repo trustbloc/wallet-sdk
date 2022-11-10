@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'Scanner.dart';
 
 void main() => runApp(const Dashboard());
 
@@ -32,11 +33,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       'Credentials',
       style: optionStyle,
     ),
-    Text(
-      'Scan QR Code',
-      style: optionStyle,
-    ),
-    Text(
+    QRScanner(),
+   Text(
       'Preferences',
       style: optionStyle,
     ),
@@ -79,5 +77,3 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     );
   }
 }
-
-
