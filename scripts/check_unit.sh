@@ -24,4 +24,11 @@ PKGS=`go list github.com/trustbloc/wallet-sdk/... 2> /dev/null | \
 go test $PKGS -count=1 -race -coverprofile=profile.out -covermode=atomic -timeout=10m
 amend_coverage_file
 
+# Running wallet-sdk-gomobile unit tests
+cd cmd/wallet-sdk-gomobile
+PKGS=`go list github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile... 2> /dev/null | \
+                                                  grep -v /mocks`
+go test $PKGS -count=1 -race -coverprofile=profile.out -covermode=atomic -timeout=10m
+amend_coverage_file
+
 cd "$pwd"
