@@ -1,4 +1,5 @@
-package walletsdk.flutter.wallet_sdk_flutter;
+package dev.trustbloc.wallet;
+
 
 import androidx.annotation.NonNull;
 
@@ -40,9 +41,9 @@ public class MainActivity extends FlutterActivity {
                                 }
 
                                 try {
-                                  byte[] doc =  creatorDID.create("key", new CreateDIDOpts());
-                                  String docString = new String(doc);
-                                  result.success(docString);
+                                    byte[] doc = creatorDID.create("key", new CreateDIDOpts());
+                                    String docString = new String(doc);
+                                    result.success(docString);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                     result.error("Exception", "Error while creating did", null);

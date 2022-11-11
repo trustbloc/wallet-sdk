@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="walletsdk.flutter.wallet_sdk_flutter">
+    package="dev.trustbloc.wallet">
    <application
         android:label="TrustBloc"
         android:name="${applicationName}"
