@@ -48,7 +48,12 @@ func (k *LocalKMS) Create(keyType arieskms.KeyType) (string, []byte, error) {
 	return k.ariesLocalKMS.CreateAndExportPubKeyBytes(keyType)
 }
 
-// GetKey returns the public key associated with the given keyID as raw bytes.
-func (k *LocalKMS) GetKey(string) ([]byte, error) {
+// ExportPubKey returns the public key associated with the given keyID as raw bytes.
+func (k *LocalKMS) ExportPubKey(string) ([]byte, error) {
 	return nil, errors.New("not implemented")
+}
+
+// GetSignAlgorithm returns sign algorithm associated with the given keyID.
+func (k *LocalKMS) GetSignAlgorithm(keyID string) (string, error) {
+	return "", errors.New("not implemented")
 }

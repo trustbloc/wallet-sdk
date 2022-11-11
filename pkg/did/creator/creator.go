@@ -95,7 +95,7 @@ func (d *Creator) createDIDKeyDoc(createDIDOpts *api.CreateDIDOpts) (*did.DocRes
 			return nil, errors.New("no verification type specified")
 		}
 
-		key, err = d.keyReader.GetKey(createDIDOpts.KeyID)
+		key, err = d.keyReader.ExportPubKey(createDIDOpts.KeyID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get key handle: %w", err)
 		}

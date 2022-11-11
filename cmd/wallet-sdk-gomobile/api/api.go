@@ -23,8 +23,11 @@ type KeyWriter interface {
 
 // KeyReader represents a type that is capable of performing operations related to reading keys from an underlying KMS.
 type KeyReader interface {
-	// GetKey returns the public key associated with the given keyID as raw bytes.
-	GetKey(keyID string) ([]byte, error)
+	// ExportPubKey returns the public key associated with the given keyID as raw bytes.
+	ExportPubKey(keyID string) ([]byte, error)
+
+	// GetSignAlgorithm returns sign algorithm name assisted with given key type.
+	GetSignAlgorithm(keyID string) (string, error)
 }
 
 // CreateDIDOpts represents the various options for the DIDCreator.Create method.
@@ -64,20 +67,32 @@ type CredentialWriter interface {
 // Crypto defines useful Crypto operations.
 // TODO: Define more precisely the input and output formats.
 type Crypto interface {
-	// Sign will sign msg using a matching signature primitive in kh key handle of a private key
+	// Sign will sign msg using a matching signature primitive in key referenced by keyID
 	// returns:
 	// 		signature as []byte
 	//		error in case of errors
-	Sign(msg []byte, kh *KeyHandle) ([]byte, error)
-	// Verify will verify a signature for the given msg using a matching signature primitive in kh key handle of
-	// a public key
+	Sign(msg []byte, keyID string) ([]byte, error)
+	// Verify will verify a signature for the given msg using a matching signature primitive in key referenced by keyID
 	// returns:
 	// 		error in case of errors or nil if signature verification was successful
-	Verify(signature, msg []byte, kh *KeyHandle) error
+	Verify(signature, msg []byte, keyID string) error
 }
 
 // ActivityLog defines logging functionality.
 type ActivityLog interface {
 	// Log logs an activity.
 	Log(message string)
+}
+
+// LDDocument is linked domains document.
+type LDDocument struct {
+	DocumentURL string `json:"documentUrl,omitempty"`
+	// bytes of json document.
+	Document   []byte `json:"document,omitempty"`
+	ContextURL string `json:"contextUrl,omitempty"`
+}
+
+// LDDocumentLoader is capable of loading linked domains documents.
+type LDDocumentLoader interface {
+	LoadDocument(u string) (*LDDocument, error)
 }

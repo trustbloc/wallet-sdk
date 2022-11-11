@@ -40,7 +40,16 @@ func TestLocalKMS_GetKey(t *testing.T) {
 	localKMS, err := localkms.NewLocalKMS()
 	require.NoError(t, err)
 
-	key, err := localKMS.GetKey("KeyID")
+	key, err := localKMS.ExportPubKey("KeyID")
+	require.EqualError(t, err, "not implemented")
+	require.Empty(t, key)
+}
+
+func TestLocalKMS_GetSignAlgorithm(t *testing.T) {
+	localKMS, err := localkms.NewLocalKMS()
+	require.NoError(t, err)
+
+	key, err := localKMS.GetSignAlgorithm("KeyID")
 	require.EqualError(t, err, "not implemented")
 	require.Empty(t, key)
 }
