@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
-import 'Scanner.dart';
+import 'scanner.dart';
 
 void main() => runApp(const Dashboard());
 
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
 
-  static const String _title = 'Welcome';
-
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: _title,
+    return MaterialApp(
+        theme: ThemeData(
+        primarySwatch: Colors.deepPurple,
+        appBarTheme: const AppBarTheme(
+          centerTitle: true,
+          toolbarHeight: 70,
+        titleTextStyle: TextStyle(fontSize: 28),
+        iconTheme: IconThemeData(color: Colors.white),
+          foregroundColor: Colors.white, //<-- SEE HERE
+    )),
+
       home: MyStatefulWidget(),
     );
   }
@@ -50,7 +57,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Welcome'),
+        title: const Text('Trustbloc Wallet'),
       ),
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
