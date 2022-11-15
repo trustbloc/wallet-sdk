@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:developer';
 
+import 'package:app/credential_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
@@ -52,30 +54,33 @@ class QRScannerState extends State<QRScanner> {
 
   void readQr() async {
     if (result != null) {
-      // Todo Issue 63 - Integrate wallet sdk new interaction function here
-      _invokeNewInteraction(result?.code);
       controller!.pauseCamera();
       controller!.dispose();
-      // TODO Call Authorize function
-      // TODO Check if the user pin is required here
       SchedulerBinding.instance.addPostFrameCallback((_) {
-        _loadDataAndNavigate();
+        _authorize(result?.code);
       });
     } else {
       const Text("Scan QR Code");
     }
   }
 
-  _loadDataAndNavigate() async {
-    // fetch data | await this.service.fetch(x,y)
+  _navigateToOTPScreen() async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const OTP()));
   }
 
-   _invokeNewInteraction(String? qrCode){
-    print("Scanned qr code => $qrCode");
-    return;
-     // Todo #63 invoke sdk open vc api function to pass the qr code
-    /*  var interaction = await WalletSDKPlugin.newInteraction(qrCode);*/
+  _navigateToCredPreviewScreen() async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const CreatePreview()));
+  }
+
+   _authorize(String? qrCode) async {
+    var authorizeResultPinRequired = await WalletSDKPlugin.authorize(qrCode);
+    if (authorizeResultPinRequired == true){
+      _navigateToOTPScreen();
+    } else {
+      // Skip the otp if user pin required is false
+      _navigateToCredPreviewScreen();
+    }
+
   }
 
     @override
