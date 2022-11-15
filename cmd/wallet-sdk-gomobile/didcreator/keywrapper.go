@@ -33,6 +33,10 @@ type gomobileKeyReaderWrapper struct {
 	keyReader api.KeyReader
 }
 
-func (g *gomobileKeyReaderWrapper) GetKey(keyID string) ([]byte, error) {
-	return g.keyReader.GetKey(keyID)
+func (g *gomobileKeyReaderWrapper) ExportPubKey(keyID string) ([]byte, error) {
+	return g.keyReader.ExportPubKey(keyID)
+}
+
+func (g *gomobileKeyReaderWrapper) GetSignAlgorithm(keyID string) (string, error) {
+	return g.keyReader.GetSignAlgorithm(keyID)
 }

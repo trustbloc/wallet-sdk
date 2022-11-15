@@ -9,6 +9,7 @@ package api
 
 import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 )
@@ -23,8 +24,11 @@ type KeyWriter interface {
 
 // KeyReader represents a type that is capable of performing operations related to reading keys from an underlying KMS.
 type KeyReader interface {
-	// GetKey returns the public key associated with the given keyID as raw bytes.
-	GetKey(keyID string) ([]byte, error)
+	// ExportPubKey returns the public key associated with the given keyID as raw bytes.
+	ExportPubKey(keyID string) ([]byte, error)
+
+	// GetSignAlgorithm returns sign algorithm name assisted with given key type.
+	GetSignAlgorithm(keyID string) (string, error)
 }
 
 // CreateDIDOpts represents the various options for the DIDCreator.Create method.
@@ -64,9 +68,16 @@ type CredentialWriter interface {
 // Crypto defines various crypto operations that may be used with wallet-sdk APIs.
 type Crypto interface {
 	// Sign is not yet defined.
-	Sign(msg []byte, kh interface{}) ([]byte, error)
+	Sign(msg []byte, keyID string) ([]byte, error)
 	// Verify is not yet defined.
-	Verify(signature, msg []byte, kh interface{}) error
+	Verify(signature, msg []byte, keyID string) error
+}
+
+// JWTSigner defines interface for JWT signing operation.
+type JWTSigner interface {
+	GetKeyID() string
+	Sign(data []byte) ([]byte, error)
+	Headers() jose.Headers
 }
 
 // ActivityLog defines activity log related APIs.

@@ -24,8 +24,12 @@ type mockKeyHandleReader struct {
 	errGetKeyHandle error
 }
 
-func (m *mockKeyHandleReader) GetKey(string) ([]byte, error) {
+func (m *mockKeyHandleReader) ExportPubKey(string) ([]byte, error) {
 	return m.getKeyReturn, m.errGetKeyHandle
+}
+
+func (m *mockKeyHandleReader) GetSignAlgorithm(string) (string, error) {
+	return "", m.errGetKeyHandle
 }
 
 func TestNewCreatorWithKeyWriter(t *testing.T) {
