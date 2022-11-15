@@ -1,3 +1,4 @@
+import 'package:app/main.dart';
 import 'package:flutter/material.dart';
 import 'credential_preview.dart';
 
@@ -46,17 +47,21 @@ class _OTPPage extends State<OTP> {
             height: 30,
           ),
           ElevatedButton(
-              onPressed: () {
-                // TODO Call request credential method of the wallet sdk
-                const CreatePreviewStatefulWidget();
+              onPressed: () async {
                 setState(() {
                   _otp = _fieldOne.text +
                       _fieldTwo.text +
                       _fieldThree.text +
                       _fieldFour.text;
                 });
-                Navigator.push(
-                    context, MaterialPageRoute(builder: (_) => const CreatePreviewStatefulWidget()));
+                var requestCredentialResp = await WalletSDKPlugin.requestCredential(_otp);
+                print(requestCredentialResp.toString());
+                // Making sure request credential response is not empty
+               if (requestCredentialResp.toString().isNotEmpty) {
+                 _navigateToCredPreviewScreen();
+                } else {
+                 const Text('Failed to get the requested credential', style: TextStyle(color: Colors.red, fontSize: 20));
+               }
               },
 
               child: const Text('Submit', style: TextStyle(fontSize: 20))),
@@ -71,6 +76,9 @@ class _OTPPage extends State<OTP> {
         ],
       ),
     );
+  }
+  _navigateToCredPreviewScreen() async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const CreatePreview()));
   }
 }
 

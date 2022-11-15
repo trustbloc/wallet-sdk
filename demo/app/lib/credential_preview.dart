@@ -1,4 +1,3 @@
-import 'package:app/dashboard.dart';
 import 'package:flutter/material.dart';
 
 void main() => runApp(const CreatePreview());
@@ -16,7 +15,7 @@ class CreatePreview extends StatelessWidget {
             toolbarHeight: 70,
             titleTextStyle: TextStyle(fontSize: 28),
             iconTheme: IconThemeData(color: Colors.white),
-            foregroundColor: Colors.white, //<-- SEE HERE
+            foregroundColor: Colors.white,
           )),
 
       home: const CreatePreviewStatefulWidget(),

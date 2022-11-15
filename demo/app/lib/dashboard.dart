@@ -16,7 +16,7 @@ class Dashboard extends StatelessWidget {
           toolbarHeight: 70,
         titleTextStyle: TextStyle(fontSize: 28),
         iconTheme: IconThemeData(color: Colors.white),
-          foregroundColor: Colors.white, //<-- SEE HERE
+          foregroundColor: Colors.white,
     )),
 
       home: MyStatefulWidget(),
