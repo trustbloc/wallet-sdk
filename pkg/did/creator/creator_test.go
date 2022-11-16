@@ -27,7 +27,7 @@ func (m *mockKeyHandleReader) ExportPubKey(string) ([]byte, error) {
 	return m.getKeyReturn, m.errGetKeyHandle
 }
 
-func (m *mockKeyHandleReader) GetSignAlgorithm(keyID string) (string, error) {
+func (m *mockKeyHandleReader) GetSigningAlgorithm(keyID string) (string, error) {
 	return "", nil
 }
 

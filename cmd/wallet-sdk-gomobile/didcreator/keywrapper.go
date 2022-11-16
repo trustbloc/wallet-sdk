@@ -37,6 +37,6 @@ func (g *gomobileKeyReaderWrapper) ExportPubKey(keyID string) ([]byte, error) {
 	return g.keyReader.ExportPubKey(keyID)
 }
 
-func (g *gomobileKeyReaderWrapper) GetSignAlgorithm(keyID string) (string, error) {
-	return g.keyReader.GetSignAlgorithm(keyID)
+func (g *gomobileKeyReaderWrapper) GetSigningAlgorithm(keyID string) (string, error) {
+	return g.keyReader.GetSigningAlgorithm(keyID)
 }

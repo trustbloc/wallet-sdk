@@ -38,7 +38,7 @@ type Interaction struct {
 
 // NewInteraction creates a new OpenID4VP Interaction.
 // The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
-func NewInteraction(authorizationRequest []byte, keyHandleReader api.KeyReader, crypto api.Crypto,
+func NewInteraction(authorizationRequest string, keyHandleReader api.KeyReader, crypto api.Crypto,
 	didResolver api.DIDResolver, ldDocumentLoader api.LDDocumentLoader,
 ) *Interaction {
 	jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
@@ -69,9 +69,9 @@ func (o *Interaction) GetQuery() ([]byte, error) {
 	return pdBytes, nil
 }
 
-// PresentCredential present credentials to redirect uri from request object.
+// PresentCredential presents credentials to redirect uri from request object.
 func (o *Interaction) PresentCredential(presentation []byte, kid string) error {
-	signAlg, err := o.keyHandleReader.GetSignAlgorithm(kid)
+	signAlg, err := o.keyHandleReader.GetSigningAlgorithm(kid)
 	if err != nil {
 		return fmt.Errorf("get sign algorithm failed: %w", err)
 	}

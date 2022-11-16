@@ -53,7 +53,7 @@ func (k *LocalKMS) ExportPubKey(string) ([]byte, error) {
 	return nil, errors.New("not implemented")
 }
 
-// GetSignAlgorithm returns sign algorithm associated with the given keyID.
-func (k *LocalKMS) GetSignAlgorithm(keyID string) (string, error) {
+// GetSigningAlgorithm returns sign algorithm associated with the given keyID.
+func (k *LocalKMS) GetSigningAlgorithm(keyID string) (string, error) {
 	return "", errors.New("not implemented")
 }
