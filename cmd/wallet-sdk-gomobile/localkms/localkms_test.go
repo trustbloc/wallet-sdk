@@ -20,7 +20,7 @@ func TestLocalKMS_Create(t *testing.T) {
 
 	keyHandle, err := localKMS.Create(localkms.KeyTypeED25519)
 	require.NoError(t, err)
-	require.NotEmpty(t, keyHandle.Key)
+	require.NotEmpty(t, keyHandle.PubKey)
 	require.NotEmpty(t, keyHandle.KeyID)
 }
 
@@ -30,7 +30,7 @@ func TestLocalKMS_ExportPubKey(t *testing.T) {
 
 	keyHandle, err := localKMS.Create(localkms.KeyTypeED25519)
 	require.NoError(t, err)
-	require.NotEmpty(t, keyHandle.Key)
+	require.NotEmpty(t, keyHandle.PubKey)
 	require.NotEmpty(t, keyHandle.KeyID)
 
 	_, err = localKMS.ExportPubKey(keyHandle.KeyID)
@@ -43,7 +43,7 @@ func TestLocalKMS_GetSignAlgorithm(t *testing.T) {
 
 	keyHandle, err := localKMS.Create(localkms.KeyTypeED25519)
 	require.NoError(t, err)
-	require.NotEmpty(t, keyHandle.Key)
+	require.NotEmpty(t, keyHandle.PubKey)
 	require.NotEmpty(t, keyHandle.KeyID)
 
 	_, err = localKMS.GetSignAlgorithm(keyHandle.KeyID)

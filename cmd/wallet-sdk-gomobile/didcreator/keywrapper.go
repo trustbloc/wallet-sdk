@@ -24,7 +24,7 @@ func (g *gomobileKeyWriterWrapper) Create(keyType arieskms.KeyType) (string, []b
 		return "", nil, err
 	}
 
-	return keyHandle.KeyID, keyHandle.Key, nil
+	return keyHandle.KeyID, keyHandle.PubKey, nil
 }
 
 // gomobileKeyReaderWrapper wraps a gomobile-compatible version of a KeyReader and translates methods calls to their

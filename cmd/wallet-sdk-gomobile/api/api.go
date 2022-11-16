@@ -7,10 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 // Package api defines gomobile-compatible wallet-sdk interfaces.
 package api
 
-// KeyHandle represents a key with associated metadata.
+// KeyHandle represents a public key with associated metadata.
 type KeyHandle struct {
-	Key   []byte `json:"key,omitempty"`   // Raw bytes
-	KeyID string `json:"keyID,omitempty"` //nolint: tagliatelle // False positive
+	PubKey []byte `json:"key,omitempty"` // Raw bytes
+	KeyID  string `json:"keyID,omitempty"`
 }
 
 // KeyWriter represents a type that is capable of performing operations related to key creation and storage within
