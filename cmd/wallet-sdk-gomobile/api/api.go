@@ -26,8 +26,8 @@ type KeyReader interface {
 	// ExportPubKey returns the public key associated with the given keyID as raw bytes.
 	ExportPubKey(keyID string) ([]byte, error)
 
-	// GetSignAlgorithm returns sign algorithm name assisted with given key type.
-	GetSignAlgorithm(keyID string) (string, error)
+	// GetSigningAlgorithm returns sign algorithm name assisted with given key type.
+	GetSigningAlgorithm(keyID string) (string, error)
 }
 
 // CreateDIDOpts represents the various options for the DIDCreator.Create method.
@@ -65,14 +65,13 @@ type CredentialWriter interface {
 }
 
 // Crypto defines useful Crypto operations.
-// TODO: Define more precisely the input and output formats.
 type Crypto interface {
-	// Sign will sign msg using a matching signature primitive in key referenced by keyID
+	// Sign will sign msg using a matching signature primitive from key referenced by keyID
 	// returns:
 	// 		signature as []byte
 	//		error in case of errors
 	Sign(msg []byte, keyID string) ([]byte, error)
-	// Verify will verify a signature for the given msg using a matching signature primitive in key referenced by keyID
+	// Verify will verify a signature for the given msg using a matching signature primitive from key referenced by keyID
 	// returns:
 	// 		error in case of errors or nil if signature verification was successful
 	Verify(signature, msg []byte, keyID string) error

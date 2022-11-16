@@ -25,7 +25,7 @@ import (
 
 var (
 	//go:embed test_data/request_object.jwt
-	requestObjectJWT []byte
+	requestObjectJWT string
 
 	//go:embed test_data/presentation.jsonld
 	presentationJSONLD []byte
@@ -172,7 +172,7 @@ func (m *mockKeyHandleReader) ExportPubKey(string) ([]byte, error) {
 	return m.exportPubKeyResult, m.exportPubKeyErr
 }
 
-func (m *mockKeyHandleReader) GetSignAlgorithm(string) (string, error) {
+func (m *mockKeyHandleReader) GetSigningAlgorithm(string) (string, error) {
 	return m.getSignAlgorithmResult, m.getSignAlgorithmErr
 }
 

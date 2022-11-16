@@ -49,7 +49,7 @@ func TestLocalKMS_GetSignAlgorithm(t *testing.T) {
 	localKMS, err := localkms.NewLocalKMS()
 	require.NoError(t, err)
 
-	key, err := localKMS.GetSignAlgorithm("KeyID")
+	key, err := localKMS.GetSigningAlgorithm("KeyID")
 	require.EqualError(t, err, "not implemented")
 	require.Empty(t, key)
 }

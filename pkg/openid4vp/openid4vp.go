@@ -4,7 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package openid4vp Implement openid4vp presentation flow.
+// Package openid4vp implements the OpenID4VP presentation flow.
 package openid4vp
 
 import (
@@ -39,7 +39,7 @@ type httpClient interface {
 
 // Interaction is used to help with OpenID4VP operations.
 type Interaction struct {
-	authorizationRequest []byte
+	authorizationRequest string
 	signatureVerifier    jwtSignatureVerifier
 	httpClient           httpClient
 
@@ -53,7 +53,7 @@ type authorizedResponse struct {
 }
 
 // New creates new openid4vp instance.
-func New(authorizationRequest []byte, signatureVerifier jwtSignatureVerifier, httpClient httpClient) *Interaction {
+func New(authorizationRequest string, signatureVerifier jwtSignatureVerifier, httpClient httpClient) *Interaction {
 	return &Interaction{
 		authorizationRequest: authorizationRequest,
 		signatureVerifier:    signatureVerifier,
@@ -63,7 +63,7 @@ func New(authorizationRequest []byte, signatureVerifier jwtSignatureVerifier, ht
 
 // GetQuery creates query based on authorization request data.
 func (o *Interaction) GetQuery() (*presexch.PresentationDefinition, error) {
-	rawRequestObject, err := fetchRequestObject(o.httpClient, string(o.authorizationRequest))
+	rawRequestObject, err := fetchRequestObject(o.httpClient, o.authorizationRequest)
 	if err != nil {
 		return nil, fmt.Errorf("fetch request object: %w", err)
 	}
@@ -78,7 +78,7 @@ func (o *Interaction) GetQuery() (*presexch.PresentationDefinition, error) {
 	return requestObject.Claims.VPToken.PresentationDefinition, nil
 }
 
-// PresentCredential present credentials to redirect uri from request object.
+// PresentCredential presents credentials to redirect uri from request object.
 func (o *Interaction) PresentCredential(presentation *verifiable.Presentation, jwtSigner api.JWTSigner) error {
 	response, err := createAuthorizedResponse(presentation, o.requestObject, jwtSigner)
 	if err != nil {

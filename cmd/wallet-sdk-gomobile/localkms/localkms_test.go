@@ -46,6 +46,6 @@ func TestLocalKMS_GetSignAlgorithm(t *testing.T) {
 	require.NotEmpty(t, keyHandle.Key)
 	require.NotEmpty(t, keyHandle.KeyID)
 
-	_, err = localKMS.GetSignAlgorithm(keyHandle.KeyID)
+	_, err = localKMS.GetSigningAlgorithm(keyHandle.KeyID)
 	require.Contains(t, err.Error(), "not implemented")
 }

@@ -27,8 +27,8 @@ type KeyReader interface {
 	// ExportPubKey returns the public key associated with the given keyID as raw bytes.
 	ExportPubKey(keyID string) ([]byte, error)
 
-	// GetSignAlgorithm returns sign algorithm name assisted with given key type.
-	GetSignAlgorithm(keyID string) (string, error)
+	// GetSigningAlgorithm returns sign algorithm name associated with given key type.
+	GetSigningAlgorithm(keyID string) (string, error)
 }
 
 // CreateDIDOpts represents the various options for the DIDCreator.Create method.
@@ -67,9 +67,9 @@ type CredentialWriter interface {
 
 // Crypto defines various crypto operations that may be used with wallet-sdk APIs.
 type Crypto interface {
-	// Sign is not yet defined.
+	// Sign will sign msg using a matching signature primitive from key referenced by keyID
 	Sign(msg []byte, keyID string) ([]byte, error)
-	// Verify is not yet defined.
+	// Verify will verify a signature for the given msg using a matching signature primitive from key referenced by keyID
 	Verify(signature, msg []byte, keyID string) error
 }
 

@@ -26,7 +26,7 @@ import (
 
 var (
 	//go:embed test_data/request_object.jwt
-	requestObjectJWT []byte
+	requestObjectJWT string
 
 	//go:embed test_data/presentation.jsonld
 	presentationJSONLD []byte
@@ -42,7 +42,7 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 	})
 
 	t.Run("Fetch Request Object", func(t *testing.T) {
-		instance := New([]byte("openid-vc://?request_uri=https://request-object"),
+		instance := New("openid-vc://?request_uri=https://request-object",
 			&jwtSignatureVerifierMock{},
 			&httpClientMock{
 				Response:         requestObjectJWT,
@@ -57,7 +57,7 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 	})
 
 	t.Run("Fetch Request failed", func(t *testing.T) {
-		instance := New([]byte("openid-vc://?request_uri=https://request-object"),
+		instance := New("openid-vc://?request_uri=https://request-object",
 			&jwtSignatureVerifierMock{},
 			&httpClientMock{
 				Err: errors.New("http error"),
@@ -190,7 +190,7 @@ func (s *jwtSignerMock) Headers() jose.Headers {
 }
 
 type httpClientMock struct {
-	Response         []byte
+	Response         string
 	StatusCode       int
 	Err              error
 	ExpectedEndpoint string
@@ -217,6 +217,6 @@ func (c *httpClientMock) Do(req *http.Request) (*http.Response, error) {
 
 	return &http.Response{
 		StatusCode: c.StatusCode,
-		Body:       io.NopCloser(bytes.NewBuffer(c.Response)),
+		Body:       io.NopCloser(bytes.NewBuffer([]byte(c.Response))),
 	}, nil
 }

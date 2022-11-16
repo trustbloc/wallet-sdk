@@ -54,7 +54,7 @@ func (k *KMS) ExportPubKey(keyID string) ([]byte, error) {
 	return k.goAPILocalKMS.ExportPubKey(keyID)
 }
 
-// GetSignAlgorithm returns signing algorithm associated with the given keyID.
-func (k *KMS) GetSignAlgorithm(keyID string) (string, error) {
-	return k.goAPILocalKMS.GetSignAlgorithm(keyID)
+// GetSigningAlgorithm returns signing algorithm associated with the given keyID.
+func (k *KMS) GetSigningAlgorithm(keyID string) (string, error) {
+	return k.goAPILocalKMS.GetSigningAlgorithm(keyID)
 }
