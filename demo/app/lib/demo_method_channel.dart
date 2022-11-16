@@ -14,12 +14,12 @@ class MethodChannelWallet extends WalletPlatform {
     return createDIDMsg;
   }
 
-  Future<bool?> authorize(String? qrCode) async {
+  Future<bool?> authorize(String qrCode) async {
     final authorizeResult = await methodChannel.invokeMethod<bool>('authorize', <String, dynamic>{'requestURI': qrCode});
     return authorizeResult;
   }
 
-  Future<String?> requestCredential(String? userPinEntered) async {
+  Future<String?> requestCredential(String userPinEntered) async {
     final credentialResponse = await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{'otp': userPinEntered});
     return credentialResponse;
   }

@@ -57,7 +57,7 @@ class QRScannerState extends State<QRScanner> {
       controller!.pauseCamera();
       controller!.dispose();
       SchedulerBinding.instance.addPostFrameCallback((_) {
-        _authorize(result?.code);
+        _authorize(result!.code!);
       });
     } else {
       const Text("Scan QR Code");
@@ -72,7 +72,7 @@ class QRScannerState extends State<QRScanner> {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const CreatePreview()));
   }
 
-   _authorize(String? qrCode) async {
+   _authorize(String qrCode) async {
     var authorizeResultPinRequired = await WalletSDKPlugin.authorize(qrCode);
     if (authorizeResultPinRequired == true){
       _navigateToOTPScreen();
