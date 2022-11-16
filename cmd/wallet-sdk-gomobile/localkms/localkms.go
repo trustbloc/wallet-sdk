@@ -44,8 +44,8 @@ func (k *KMS) Create(keyType string) (*api.KeyHandle, error) {
 	}
 
 	return &api.KeyHandle{
-		Key:   key,
-		KeyID: keyID,
+		PubKey: key,
+		KeyID:  keyID,
 	}, nil
 }
 

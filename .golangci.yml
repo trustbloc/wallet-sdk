@@ -89,6 +89,7 @@ linters:
     - gci # giving spurious errors for imports of syscall/js
     - exhaustruct # Results in unneeded struct member declarations
     - ireturn # Required by aries-framework-go, a library we use
+    - tagliatelle # JSON tags using camel-case required by the specs we implement
 
 issues:
   exclude-use-default: false
@@ -97,6 +98,7 @@ issues:
       linters:
         - dupl
         - funlen
+        - maintidx
 
   exclude:
     # Allow package logger variables (for now)

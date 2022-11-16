@@ -8,29 +8,33 @@ SPDX-License-Identifier: Apache-2.0
 package openid4ci
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"strconv"
-
-	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	"strings"
 )
 
 // NewInteraction creates a new OpenID4CI Interaction.
 // The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
 // Calling this function represents taking the first step in the flow.
-// This function takes in an Initiate Issuance Request object from an Issuer (as defined in
+// This function takes in an Initiate Issuance Request object from an issuer (as defined in
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-5.1), encoded using URL query
 // parameters. This object is intended for going through the full flow only once (i.e. one interaction), after which
 // it should be discarded. Any new interactions should use a fresh Interaction instance.
-func NewInteraction(requestURI string) (*Interaction, error) {
-	requestURIParsed, err := url.Parse(requestURI)
+func NewInteraction(initiateIssuanceURI string) (*Interaction, error) {
+	requestURIParsed, err := url.Parse(initiateIssuanceURI)
 	if err != nil {
 		return nil, err
 	}
 
 	initiationRequest := &InitiationRequest{}
 
-	initiationRequest.Issuer = requestURIParsed.Query().Get("issuer")
+	initiationRequest.IssuerURI = requestURIParsed.Query().Get("issuer")
 	initiationRequest.CredentialTypes = requestURIParsed.Query()["credential_type"]
 	initiationRequest.PreAuthorizedCode = requestURIParsed.Query().Get("pre-authorized_code")
 
@@ -73,17 +77,164 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 // Relevant sections of the spec:
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-7
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-8
-func (i *Interaction) RequestCredential(credentialRequest *CredentialRequest) ([]*CredentialResponse, error) {
-	if i.initiationRequest.UserPINRequired && credentialRequest.UserPIN == "" {
-		return nil, errors.New("PIN required (per initiation request)")
+func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequestOpts) ([]CredentialResponse, error) {
+	if i.initiationRequest.UserPINRequired && credentialRequestOpts.UserPIN == "" {
+		return nil, errors.New("invalid user PIN")
 	}
 
-	return []*CredentialResponse{getSampleCredentialResponse()}, nil
+	metadata, err := i.getIssuerMetadata()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get issuer metadata: %w", err)
+	}
+
+	params := url.Values{}
+	params.Add("grant_type", "urn:ietf:params:oauth:grant-type:pre-authorized_code")
+	params.Add("pre-authorized_code", i.initiationRequest.PreAuthorizedCode)
+	params.Add("user_pin", credentialRequestOpts.UserPIN)
+
+	tokenResp, err := i.getTokenResponse(metadata.TokenEndpoint, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token response: %w", err)
+	}
+
+	credentialResponses := make([]CredentialResponse, len(i.initiationRequest.CredentialTypes))
+
+	for index, credentialType := range i.initiationRequest.CredentialTypes {
+		credentialResponse, err := i.getCredentialResponse(credentialType, metadata.CredentialEndpoint, tokenResp.AccessToken)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get credential response: %w", err)
+		}
+
+		credentialResponses[index] = *credentialResponse
+	}
+
+	return credentialResponses, nil
 }
 
-func getSampleCredentialResponse() *CredentialResponse {
-	return &CredentialResponse{
-		Credential: &verifiable.Credential{ID: "SampleID"},
-		Format:     "SampleFormat",
+func (i *Interaction) getIssuerMetadata() (*issuerMetadata, error) {
+	metadataEndpoint := i.initiationRequest.IssuerURI + "/.well-known/openid-configuration"
+
+	// TODO: Implement trusted list type of mechanism? The gosec warning (correctly) warns about using a variable URL.
+	response, err := http.Get(metadataEndpoint) //nolint: noctx,gosec // TODO: To be re-evaluated later
+	if err != nil {
+		return nil, err
 	}
+
+	responseBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received status code [%d] with body [%s] from issuer's "+
+			"OpenID configuration endpoint", response.StatusCode, string(responseBytes))
+	}
+
+	defer func() {
+		errClose := response.Body.Close()
+		if errClose != nil {
+			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
+		}
+	}()
+
+	var metadata issuerMetadata
+
+	err = json.Unmarshal(responseBytes, &metadata)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response from the issuer's "+
+			"OpenID configuration endpoint: %w", err)
+	}
+
+	return &metadata, err
+}
+
+func (i *Interaction) getTokenResponse(tokenEndpointURL string, params url.Values) (*tokenResponse, error) {
+	// TODO: Implement trusted list type of mechanism? The gosec warning (correctly) warns about using a variable URL.
+	response, err := http.Post(tokenEndpointURL, //nolint: noctx,gosec // TODO: To be re-evaluated later
+		"application/x-www-form-urlencoded", strings.NewReader(params.Encode()))
+	if err != nil {
+		return nil, err
+	}
+
+	responseBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received status code [%d] with body [%s] from issuer's token endpoint",
+			response.StatusCode, string(responseBytes))
+	}
+
+	defer func() {
+		errClose := response.Body.Close()
+		if errClose != nil {
+			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
+		}
+	}()
+
+	var tokenResp tokenResponse
+
+	err = json.Unmarshal(responseBytes, &tokenResp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response from the issuer's token endpoint: %w", err)
+	}
+
+	return &tokenResp, nil
+}
+
+func (i *Interaction) getCredentialResponse(credentialType, credentialEndpoint,
+	accessToken string,
+) (*CredentialResponse, error) {
+	credentialReq := &credentialRequest{
+		Type: credentialType,
+		Proof: proof{
+			ProofType: "jwt", // TODO: support other proof types
+		},
+	}
+
+	credentialReqBytes, err := json.Marshal(credentialReq)
+	if err != nil {
+		return nil, err
+	}
+
+	request, err := http.NewRequest(http.MethodPost, //nolint: noctx // TODO: To be re-evaluated later
+		credentialEndpoint, bytes.NewReader(credentialReqBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Authorization", "BEARER "+accessToken)
+
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+
+	responseBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received status code [%d] with body [%s] from issuer's credential endpoint",
+			response.StatusCode, string(responseBytes))
+	}
+
+	defer func() {
+		errClose := response.Body.Close()
+		if errClose != nil {
+			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
+		}
+	}()
+
+	var credentialResponse CredentialResponse
+
+	err = json.Unmarshal(responseBytes, &credentialResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response from the issuer's credential endpoint: %w", err)
+	}
+
+	return &credentialResponse, nil
 }

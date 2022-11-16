@@ -26,21 +26,21 @@ type AuthorizeResult struct {
 	UserPINRequired               bool
 }
 
-// CredentialRequest represents the data (required and optional) that is used in the final step of the OpenID4CI flow,
-// where the wallet requests the credential from the issuer.
-type CredentialRequest struct {
+// CredentialRequestOpts represents the data (required and optional) that is used in the
+// final step of the OpenID4CI flow, where the wallet requests the credential from the issuer.
+type CredentialRequestOpts struct {
 	UserPIN string
 }
 
 // NewInteraction creates a new OpenID4CI Interaction.
 // The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
 // Calling this function represents taking the first step in the flow.
-// This function takes in an Initiate Issuance Request object from an Issuer (as defined in
+// This function takes in an Initiate Issuance Request object from an issuer (as defined in
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-5.1), encoded using URL query
 // parameters. This object is intended for going through the full flow only once (i.e. one interaction), after which
 // it should be discarded. Any new interactions should use a fresh Interaction instance.
-func NewInteraction(requestURI string) (*Interaction, error) {
-	goAPIInteraction, err := openid4cigoapi.NewInteraction(requestURI)
+func NewInteraction(initiateIssuanceURI string) (*Interaction, error) {
+	goAPIInteraction, err := openid4cigoapi.NewInteraction(initiateIssuanceURI)
 	if err != nil {
 		return nil, err
 	}
@@ -73,9 +73,9 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 // Relevant sections of the spec:
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-7
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-8
-// The returned object is an array of Credential Responses as a JSON array.
-func (i *Interaction) RequestCredential(credentialRequest *CredentialRequest) ([]byte, error) {
-	goAPICredentialRequest := &openid4cigoapi.CredentialRequest{UserPIN: credentialRequest.UserPIN}
+// The returned object is an array of Credential Responses (as a JSON array).
+func (i *Interaction) RequestCredential(credentialRequest *CredentialRequestOpts) ([]byte, error) {
+	goAPICredentialRequest := &openid4cigoapi.CredentialRequestOpts{UserPIN: credentialRequest.UserPIN}
 
 	credentialResponses, err := i.goAPIInteraction.RequestCredential(goAPICredentialRequest)
 	if err != nil {
