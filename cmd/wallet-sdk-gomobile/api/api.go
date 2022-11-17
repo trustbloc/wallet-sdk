@@ -7,6 +7,20 @@ SPDX-License-Identifier: Apache-2.0
 // Package api defines gomobile-compatible wallet-sdk interfaces.
 package api
 
+// JSONObject contains a single JSON object (not an array).
+// It's a simple wrapper around the actual JSON string. Its purpose is to help the
+// caller using the mobile bindings to understand what type of data to expect or pass in.
+type JSONObject struct {
+	Data []byte
+}
+
+// JSONArray contains a JSON array.
+// It's a simple wrapper around the actual JSON string. Its purpose is to help the
+// caller using the mobile bindings to understand what type of data to expect or pass in.
+type JSONArray struct {
+	Data []byte
+}
+
 // KeyHandle represents a public key with associated metadata.
 type KeyHandle struct {
 	PubKey []byte `json:"key,omitempty"` // Raw bytes
@@ -51,17 +65,17 @@ type DIDResolver interface {
 // A CredentialReader is capable of reading VCs from some underlying storage mechanism.
 type CredentialReader interface {
 	// Get retrieves a VC.
-	Get(id string) ([]byte, error)
+	Get(id string) (*JSONObject, error)
 	// GetAll retrieves all VCs.
-	GetAll() ([]byte, error)
+	GetAll() (*JSONArray, error)
 }
 
 // A CredentialWriter is capable of writing VCs to some underlying storage mechanism.
 type CredentialWriter interface {
+	// Add adds a VC.
+	Add(vc *JSONObject) error
 	// Remove removes a VC.
 	Remove(id string) error
-	// Add adds a VC.
-	Add(vc []byte) error
 }
 
 // Crypto defines useful Crypto operations.
