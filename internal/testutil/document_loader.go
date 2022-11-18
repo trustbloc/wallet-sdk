@@ -1,5 +1,5 @@
 /*
-Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -25,6 +25,8 @@ var (
 	vcExamples []byte
 	//go:embed contexts/odrl.jsonld
 	odrl []byte
+	//go:embed contexts/citizenship_v1.jsonld
+	citizenship []byte
 	//go:embed contexts/lds-jws2020-v1.jsonld
 	jws2020 []byte
 )
@@ -63,6 +65,11 @@ func DocumentLoader(t *testing.T, extraContexts ...ldcontext.Document) *ld.Docum
 		{
 			URL:     "https://www.w3.org/ns/odrl.jsonld",
 			Content: odrl,
+		},
+		{
+			URL:         "https://w3id.org/citizenship/v1",
+			DocumentURL: "https://w3c-ccg.github.io/citizenship-vocab/contexts/citizenship-v1.jsonld",
+			Content:     citizenship,
 		},
 		{
 			URL:     "https://w3c-ccg.github.io/lds-jws2020/contexts/lds-jws2020-v1.json",

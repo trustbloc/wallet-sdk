@@ -1,10 +1,10 @@
 /*
-Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package openid4vp
+package gomobilewrappers
 
 import (
 	"fmt"
@@ -14,14 +14,15 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )
 
-// gomobileVDRKeyResolverAdapter wraps a gomobile-compatible version of a DIDResolver and translates methods calls to
+// VDRKeyResolverWrapper wraps a gomobile-compatible version of a DIDResolver and translates methods calls to
 // their corresponding Go API versions.
-type gomobileVDRKeyResolverAdapter struct {
-	didResolver api.DIDResolver
+type VDRKeyResolverWrapper struct {
+	DIDResolver api.DIDResolver
 }
 
-func (a *gomobileVDRKeyResolverAdapter) Resolve(didID string) (*did.DocResolution, error) {
-	docBytes, err := a.didResolver.Resolve(didID)
+// Resolve wraps Resolve of  api.DIDResolver.
+func (a *VDRKeyResolverWrapper) Resolve(didID string) (*did.DocResolution, error) {
+	docBytes, err := a.DIDResolver.Resolve(didID)
 	if err != nil {
 		return nil, err
 	}

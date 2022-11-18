@@ -1,5 +1,5 @@
 /*
-Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -37,7 +37,7 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 			requestObjectJWT,
 			&mockKeyHandleReader{},
 			&mockCrypto{},
-			&mockDIDResolver{},
+			&mocksDIDResolver{},
 			&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)})
 
 		require.NotNil(t, instance)
@@ -176,15 +176,6 @@ func (m *mockKeyHandleReader) GetSigningAlgorithm(string) (string, error) {
 	return m.getSignAlgorithmResult, m.getSignAlgorithmErr
 }
 
-type mockDIDResolver struct {
-	ResolveDocBytes []byte
-	ResolveErr      error
-}
-
-func (m *mockDIDResolver) Resolve(did string) ([]byte, error) {
-	return m.ResolveDocBytes, m.ResolveErr
-}
-
 type mockCrypto struct {
 	SignResult []byte
 	SignErr    error
@@ -214,4 +205,13 @@ func (o *mocGoAPIInteraction) PresentCredential(
 	jwtSigner goapi.JWTSigner,
 ) error {
 	return o.PresentCredentialErr
+}
+
+type mocksDIDResolver struct {
+	ResolveDocBytes []byte
+	ResolveErr      error
+}
+
+func (m *mocksDIDResolver) Resolve(did string) ([]byte, error) {
+	return m.ResolveDocBytes, m.ResolveErr
 }

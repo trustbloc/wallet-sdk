@@ -1,5 +1,5 @@
 /*
-Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -17,6 +17,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	gomobilewrappers2 "github.com/trustbloc/wallet-sdk/internal/gomobilewrappers"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/openid4vp"
@@ -42,8 +43,8 @@ func NewInteraction(authorizationRequest string, keyHandleReader api.KeyReader, 
 	didResolver api.DIDResolver, ldDocumentLoader api.LDDocumentLoader,
 ) *Interaction {
 	jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
-		common.NewVDRKeyResolver(&gomobileVDRKeyResolverAdapter{
-			didResolver: didResolver,
+		common.NewVDRKeyResolver(&gomobilewrappers2.VDRKeyResolverWrapper{
+			DIDResolver: didResolver,
 		}).PublicKeyFetcher()))
 
 	return &Interaction{
@@ -79,7 +80,10 @@ func (o *Interaction) PresentCredential(presentation []byte, kid string) error {
 	parsedPresentation, err := verifiable.ParsePresentation(
 		presentation,
 		verifiable.WithPresDisabledProofCheck(),
-		verifiable.WithPresJSONLDDocumentLoader(&gomobileDocumentLoaderWrapper{o.ldDocumentLoader}))
+		verifiable.WithPresJSONLDDocumentLoader(
+			&gomobilewrappers2.DocumentLoaderWrapper{
+				DocumentLoader: o.ldDocumentLoader,
+			}))
 	if err != nil {
 		return fmt.Errorf("parse presentation failed: %w", err)
 	}

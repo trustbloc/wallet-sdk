@@ -1,4 +1,4 @@
-# Copyright SecureKey Technologies Inc.
+# Copyright Avast Software.
 #
 # SPDX-License-Identifier: Apache-2.0
 
