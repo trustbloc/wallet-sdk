@@ -10,7 +10,6 @@ require (
 	github.com/hyperledger/aries-framework-go v0.1.9-0.20221028142827-a755fd87d699
 	github.com/piprate/json-gold v0.4.2
 	github.com/stretchr/testify v1.8.1
-	github.com/tidwall/gjson v1.14.3
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 )
 
@@ -46,6 +45,7 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/square/go-jose/v3 v3.0.0-20200630053402-0a67ce9b0693 // indirect
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8 // indirect
+	github.com/tidwall/gjson v1.14.3 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect

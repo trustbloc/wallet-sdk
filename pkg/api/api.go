@@ -49,20 +49,20 @@ type DIDResolver interface {
 	Resolve(did string) (*did.DocResolution, error)
 }
 
-// CredentialReader defines credential reader APIs.
+// A CredentialReader is capable of reading VCs from some underlying storage mechanism.
 type CredentialReader interface {
 	// Get retrieves a VC.
 	Get(id string) (*verifiable.Credential, error)
 	// GetAll retrieves all VCs.
-	GetAll() ([]*verifiable.Credential, error)
+	GetAll() ([]verifiable.Credential, error)
 }
 
-// CredentialWriter defines credential write APIs.
+// A CredentialWriter is capable of writing VCs to some underlying storage mechanism.
 type CredentialWriter interface {
-	// Remove removes a VC.
-	Remove(id string) error
 	// Add adds a VC.
 	Add(vc *verifiable.Credential) error
+	// Remove removes a VC.
+	Remove(id string) error
 }
 
 // Crypto defines various crypto operations that may be used with wallet-sdk APIs.
