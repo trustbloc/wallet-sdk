@@ -1,10 +1,10 @@
 /*
-Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package openid4vp //nolint:testpackage
+package gomobilewrappers //nolint:testpackage
 
 import (
 	_ "embed" //nolint:gci // required for go:embed
@@ -19,7 +19,7 @@ var validDocResolution []byte
 
 func TestGomobileVDRKeyResolverAdapter_Resolve(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		resolver := &gomobileVDRKeyResolverAdapter{didResolver: &mockDIDResolver{
+		resolver := &VDRKeyResolverWrapper{DIDResolver: &mocksDIDResolver{
 			ResolveDocBytes: validDocResolution,
 		}}
 
@@ -29,7 +29,7 @@ func TestGomobileVDRKeyResolverAdapter_Resolve(t *testing.T) {
 	})
 
 	t.Run("Resolve failed", func(t *testing.T) {
-		resolver := &gomobileVDRKeyResolverAdapter{didResolver: &mockDIDResolver{
+		resolver := &VDRKeyResolverWrapper{DIDResolver: &mocksDIDResolver{
 			ResolveErr: errors.New("resolve failed"),
 		}}
 
@@ -39,7 +39,7 @@ func TestGomobileVDRKeyResolverAdapter_Resolve(t *testing.T) {
 	})
 
 	t.Run("Parse resolution failed", func(t *testing.T) {
-		resolver := &gomobileVDRKeyResolverAdapter{didResolver: &mockDIDResolver{
+		resolver := &VDRKeyResolverWrapper{DIDResolver: &mocksDIDResolver{
 			ResolveDocBytes: []byte("random string"),
 		}}
 
@@ -47,4 +47,13 @@ func TestGomobileVDRKeyResolverAdapter_Resolve(t *testing.T) {
 		require.Contains(t, err.Error(), "document resolution parsing failed")
 		require.Nil(t, doc)
 	})
+}
+
+type mocksDIDResolver struct {
+	ResolveDocBytes []byte
+	ResolveErr      error
+}
+
+func (m *mocksDIDResolver) Resolve(did string) ([]byte, error) {
+	return m.ResolveDocBytes, m.ResolveErr
 }

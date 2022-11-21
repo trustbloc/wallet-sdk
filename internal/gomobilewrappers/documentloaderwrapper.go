@@ -1,10 +1,11 @@
 /*
-Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package openid4vp
+// Package gomobilewrappers contains wrappers that wraps mobile interfaces to go interfaces.
+package gomobilewrappers
 
 import (
 	"encoding/json"
@@ -15,14 +16,15 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )
 
-// gomobileDocumentLoaderWrapper wraps a gomobile-compatible version of a LDDocumentLoader and translates
+// DocumentLoaderWrapper wraps a gomobile-compatible version of a LDDocumentLoader and translates
 // methods calls to their corresponding Go API versions.
-type gomobileDocumentLoaderWrapper struct {
-	ldDocumentLoader api.LDDocumentLoader
+type DocumentLoaderWrapper struct {
+	DocumentLoader api.LDDocumentLoader
 }
 
-func (l *gomobileDocumentLoaderWrapper) LoadDocument(u string) (*ld.RemoteDocument, error) {
-	doc, err := l.ldDocumentLoader.LoadDocument(u)
+// LoadDocument wraps LoadDocument of api.LDDocumentLoader.
+func (l *DocumentLoaderWrapper) LoadDocument(u string) (*ld.RemoteDocument, error) {
+	doc, err := l.DocumentLoader.LoadDocument(u)
 	if err != nil {
 		return nil, err
 	}
