@@ -9,6 +9,7 @@ package credentialquery_test
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
@@ -51,11 +52,53 @@ func TestInstance_Query(t *testing.T) {
 		credentials = append(credentials, cred)
 	}
 
-	instance := credentialquery.NewInstance(docLoader)
-	presentation, err := instance.Query(pdQuery, credentials)
+	t.Run("Success with vc array", func(t *testing.T) {
+		instance := credentialquery.NewInstance(docLoader)
+		presentation, err := instance.Query(pdQuery, credentialquery.WithCredentialsArray(
+			credentials,
+		))
 
-	require.NoError(t, err)
-	require.NotNil(t, presentation)
+		require.NoError(t, err)
+		require.NotNil(t, presentation)
 
-	require.Len(t, presentation.Credentials(), 1)
+		require.Len(t, presentation.Credentials(), 1)
+	})
+
+	t.Run("Success with reader", func(t *testing.T) {
+		instance := credentialquery.NewInstance(docLoader)
+		presentation, err := instance.Query(pdQuery, credentialquery.WithCredentialReader(
+			&readerMock{
+				credentials: credentials,
+			},
+		))
+
+		require.NoError(t, err)
+		require.NotNil(t, presentation)
+
+		require.Len(t, presentation.Credentials(), 1)
+	})
+
+	t.Run("Reader error", func(t *testing.T) {
+		instance := credentialquery.NewInstance(docLoader)
+		_, err := instance.Query(pdQuery, credentialquery.WithCredentialReader(
+			&readerMock{
+				err: errors.New("get all error"),
+			},
+		))
+
+		require.Error(t, err, "credential reader failed: get all error")
+	})
+}
+
+type readerMock struct {
+	credentials []*verifiable.Credential
+	err         error
+}
+
+func (r *readerMock) Get(id string) (*verifiable.Credential, error) {
+	return nil, r.err
+}
+
+func (r *readerMock) GetAll() ([]*verifiable.Credential, error) {
+	return r.credentials, r.err
 }
