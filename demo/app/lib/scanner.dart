@@ -69,7 +69,7 @@ class QRScannerState extends State<QRScanner> {
   }
 
   _navigateToCredPreviewScreen() async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => const CreatePreview()));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const CreatePreview(credentialResponse: '',)));
   }
 
    _authorize(String qrCode) async {

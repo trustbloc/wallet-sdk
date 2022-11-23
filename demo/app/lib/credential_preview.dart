@@ -1,59 +1,25 @@
+import 'package:app/dashboard.dart';
+import 'package:app/services/storage_service.dart';
+import 'package:app/widgets/add_credential_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
+import 'models/store_credential_data.dart';
 
-void main() => runApp(const CreatePreview());
+class CreatePreview extends StatefulWidget {
+  final String credentialResponse;
+  const CreatePreview({super.key, required this.credentialResponse});
 
-class CreatePreview extends StatelessWidget {
-  const CreatePreview({super.key});
+  @override
+  State<CreatePreview> createState() => CredentialPreviewState();
+}
+
+class CredentialPreviewState extends State<CreatePreview> {
+  final StorageService _storageService = StorageService();
+  var uuid = const Uuid();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-          primarySwatch: Colors.deepPurple,
-          appBarTheme: const AppBarTheme(
-            centerTitle: true,
-            toolbarHeight: 70,
-            titleTextStyle: TextStyle(fontSize: 28),
-            iconTheme: IconThemeData(color: Colors.white),
-            foregroundColor: Colors.white,
-          )),
-
-      home: const CreatePreviewStatefulWidget(),
-    );
-  }
-}
-
-class CreatePreviewStatefulWidget extends StatefulWidget {
-  const CreatePreviewStatefulWidget({super.key});
-
-  @override
-  State<CreatePreviewStatefulWidget> createState() => CredentialPreviewState();
-}
-
-class CredentialPreviewState extends State<CreatePreviewStatefulWidget> {
-  int _selectedIndex = 0;
-  static const TextStyle optionStyle =
-  TextStyle(fontSize: 28, fontWeight: FontWeight.bold);
-  static const List<Widget> _widgetOptions = <Widget>[
-    Text(
-      'Operation is Cancelled',
-      style: optionStyle,
-    ),
-    // TODO Move to save credential page
-    Text(
-      'Credentials',
-      style: optionStyle,
-    ),
-  ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+    widget.credentialResponse;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Credential Preview'),
@@ -90,22 +56,42 @@ class CredentialPreviewState extends State<CreatePreviewStatefulWidget> {
               ],
             )
         ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.cancel),
-            label: 'Cancel',
+      floatingActionButton: SizedBox(
+        width: double.infinity,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(primary: Colors.red),
+                  onPressed: () async {
+                    _navigateToDashboard();
+                  },
+                  child: const Text("Cancel"),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final StorageItem? newItem = await showDialog<StorageItem>(
+                        context: context, builder: (_) => AddDataDialog());
+                    if (newItem != null) {
+                      _storageService.writeSecureData(StorageItem("credential_prefix_${uuid.v1()})", widget.credentialResponse));
+                      _navigateToDashboard();
+                    }
+                  },
+                  child: const Text("Save Credential"),
+                ),
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            backgroundColor: Colors.green,
-            icon: Icon(Icons.add),
-            label: 'Add',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
-        onTap: _onItemTapped,
+        ),
       ),
     );
+  }
+  _navigateToDashboard() async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }
 }

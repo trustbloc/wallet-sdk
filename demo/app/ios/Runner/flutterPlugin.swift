@@ -34,6 +34,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "requestCredential":
             let otp = fetchArgsKeyValue(call, key: "otp")
             requestCredential(otp: otp!, result: result)
+
             
         default:
            print("No call method is found")
@@ -80,7 +81,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
           } catch {
               result(FlutterError.init(code: "NATIVE_ERR",
                                        message: "error while requesting credential",
-                                       details: nil))
+                                       details: error))
           }
         
     }

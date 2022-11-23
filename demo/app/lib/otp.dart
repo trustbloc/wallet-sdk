@@ -55,10 +55,10 @@ class _OTPPage extends State<OTP> {
                       _fieldFour.text;
                 });
                 var requestCredentialResp = await WalletSDKPlugin.requestCredential(_otp!);
-                print(requestCredentialResp.toString());
+                print(requestCredentialResp);
                 // Making sure request credential response is not empty
-               if (requestCredentialResp.toString().isNotEmpty) {
-                 _navigateToCredPreviewScreen();
+               if (requestCredentialResp!.isNotEmpty) {
+                 _navigateToCredPreviewScreen(requestCredentialResp);
                 } else {
                  const Text('Failed to get the requested credential', style: TextStyle(color: Colors.red, fontSize: 20));
                }
@@ -77,8 +77,8 @@ class _OTPPage extends State<OTP> {
       ),
     );
   }
-  _navigateToCredPreviewScreen() async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => const CreatePreview()));
+  _navigateToCredPreviewScreen(String credentialResp) async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePreview(credentialResponse: credentialResp)));
   }
 }
 
