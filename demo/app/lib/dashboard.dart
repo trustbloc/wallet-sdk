@@ -1,45 +1,20 @@
+import 'package:app/credential_list.dart';
 import 'package:flutter/material.dart';
 import 'scanner.dart';
 
-void main() => runApp(const Dashboard());
-
-class Dashboard extends StatelessWidget {
+class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-        theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          toolbarHeight: 70,
-        titleTextStyle: TextStyle(fontSize: 28),
-        iconTheme: IconThemeData(color: Colors.white),
-          foregroundColor: Colors.white,
-    )),
-
-      home: MyStatefulWidget(),
-    );
-  }
+  State<Dashboard> createState() => _DashboardState();
 }
 
-class MyStatefulWidget extends StatefulWidget {
-  const MyStatefulWidget({super.key});
-
-  @override
-  State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
-}
-
-class _MyStatefulWidgetState extends State<MyStatefulWidget> {
+class _DashboardState extends State<Dashboard> {
   int _selectedIndex = 0;
   static const TextStyle optionStyle =
   TextStyle(fontSize: 28, fontWeight: FontWeight.bold);
   static const List<Widget> _widgetOptions = <Widget>[
-    Text(
-      'Credentials',
-      style: optionStyle,
-    ),
+   CredentialList(title: 'Saved Credentials List'),
     QRScanner(),
    Text(
       'Preferences',
@@ -50,6 +25,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+      if (_selectedIndex ==0){
+
+      }
     });
   }
 

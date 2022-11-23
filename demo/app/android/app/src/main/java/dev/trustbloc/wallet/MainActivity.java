@@ -52,7 +52,7 @@ public class MainActivity extends FlutterActivity {
                                         result.success(credentialCreated);
                                         return;
                                     } catch (Exception e) {
-                                        result.error("Exception", "Error while requesting credential", null);
+                                        result.error("Exception", "Error while requesting credential", e);
 
                                     }
                                     break;
