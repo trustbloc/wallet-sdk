@@ -78,7 +78,7 @@ class CredentialPreviewState extends State<CreatePreview> {
                     final StorageItem? newItem = await showDialog<StorageItem>(
                         context: context, builder: (_) => AddDataDialog());
                     if (newItem != null) {
-                      _storageService.writeSecureData(StorageItem("credential_prefix_${uuid.v1()})", widget.credentialResponse));
+                      _storageService.add(StorageItem("credential_prefix_${uuid.v1()})", widget.credentialResponse));
                       _navigateToDashboard();
                     }
                   },

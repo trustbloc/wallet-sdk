@@ -17,7 +17,7 @@ allprojects {
         mavenCentral()
         flatDir {
             dirs 'libs'
-        }
+         }
     }
 }
 
