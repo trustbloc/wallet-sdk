@@ -12,24 +12,41 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/hyperledger/aries-framework-go/pkg/crypto"
+	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto"
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 	arieslocalkms "github.com/hyperledger/aries-framework-go/pkg/kms/localkms"
+
+	"github.com/trustbloc/wallet-sdk/pkg/api"
 )
 
 // LocalKMS is a KMS implementation that uses local storage.
 // It is not intended for production use and may not be secure.
 type LocalKMS struct {
 	ariesLocalKMS *arieslocalkms.LocalKMS
+	ariesCrypto   crypto.Crypto
+}
+
+// Config is config for local kms constructor.
+type Config struct {
+	Storage arieskms.Store
 }
 
 // NewLocalKMS returns a new Local KMS.
-func NewLocalKMS() (*LocalKMS, error) {
-	ariesLocalKMS, err := arieslocalkms.New("ThisIs://Unused", &provider{})
+func NewLocalKMS(cfg *Config) (*LocalKMS, error) {
+	ariesLocalKMS, err := arieslocalkms.New("ThisIs://Unused", &provider{
+		Storage: cfg.Storage,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &LocalKMS{ariesLocalKMS: ariesLocalKMS}, nil
+	ariesCrypto, err := tinkcrypto.New()
+	if err != nil {
+		return nil, err
+	}
+
+	return &LocalKMS{ariesLocalKMS: ariesLocalKMS, ariesCrypto: ariesCrypto}, nil
 }
 
 // Create creates a keyset of the given keyType and then writes it to storage.
@@ -56,4 +73,12 @@ func (k *LocalKMS) ExportPubKey(string) ([]byte, error) {
 // GetSigningAlgorithm returns sign algorithm associated with the given keyID.
 func (k *LocalKMS) GetSigningAlgorithm(keyID string) (string, error) {
 	return "", errors.New("not implemented")
+}
+
+// GetCrypto returns Crypto instance that can perform crypto ops with keys created by this kms.
+func (k *LocalKMS) GetCrypto() api.Crypto {
+	return &AriesCryptoWrapper{
+		cryptosKMS:    k.ariesLocalKMS,
+		wrappedCrypto: k.ariesCrypto,
+	}
 }

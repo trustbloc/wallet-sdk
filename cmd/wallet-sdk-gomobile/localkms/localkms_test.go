@@ -15,7 +15,7 @@ import (
 )
 
 func TestLocalKMS_Create(t *testing.T) {
-	localKMS, err := localkms.NewKMS()
+	localKMS, err := localkms.NewKMS(nil)
 	require.NoError(t, err)
 
 	keyHandle, err := localKMS.Create(localkms.KeyTypeED25519)
@@ -25,7 +25,7 @@ func TestLocalKMS_Create(t *testing.T) {
 }
 
 func TestLocalKMS_ExportPubKey(t *testing.T) {
-	localKMS, err := localkms.NewKMS()
+	localKMS, err := localkms.NewKMS(nil)
 	require.NoError(t, err)
 
 	keyHandle, err := localKMS.Create(localkms.KeyTypeED25519)
@@ -38,7 +38,7 @@ func TestLocalKMS_ExportPubKey(t *testing.T) {
 }
 
 func TestLocalKMS_GetSignAlgorithm(t *testing.T) {
-	localKMS, err := localkms.NewKMS()
+	localKMS, err := localkms.NewKMS(nil)
 	require.NoError(t, err)
 
 	keyHandle, err := localKMS.Create(localkms.KeyTypeED25519)
@@ -48,4 +48,12 @@ func TestLocalKMS_GetSignAlgorithm(t *testing.T) {
 
 	_, err = localKMS.GetSigningAlgorithm(keyHandle.KeyID)
 	require.Contains(t, err.Error(), "not implemented")
+}
+
+func TestLocalKMS_GetCrypto(t *testing.T) {
+	localKMS, err := localkms.NewKMS(nil)
+	require.NoError(t, err)
+
+	crypto := localKMS.GetCrypto()
+	require.NotNil(t, crypto)
 }
