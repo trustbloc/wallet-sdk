@@ -6,10 +6,16 @@ SPDX-License-Identifier: Apache-2.0
 
 package openid4ci
 
+import (
+	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
+)
+
 // Interaction represents a single OpenID4CI interaction between a wallet and an issuer. The methods defined on this
 // object are used to help guide the calling code through the OpenID4CI flow.
 type Interaction struct {
 	initiationRequest *InitiationRequest
+	issuerMetadata    *issuer.Metadata
+	vcs               []string // base64url encoded
 }
 
 // InitiationRequest represents the Issuance Initiation Request object received from an issuer as defined in
@@ -49,16 +55,6 @@ type tokenResponse struct {
 	RefreshToken    string `json:"refresh_token,omitempty"`
 	CNonce          string `json:"c_nonce,omitempty"`
 	CNonceExpiresIn int    `json:"c_nonce_expires_in,omitempty"`
-}
-
-// issuerMetadata represents metadata about an issuer as obtained from their .well-known OpenID configuration.
-type issuerMetadata struct {
-	Issuer                             string `json:"issuer,omitempty"`
-	AuthorizationEndpoint              string `json:"authorization_endpoint,omitempty"`
-	TokenEndpoint                      string `json:"token_endpoint,omitempty"`
-	PushedAuthorizationRequestEndpoint string `json:"pushed_authorization_request_endpoint,omitempty"`
-	RequirePushedAuthorizationRequests bool   `json:"require_pushed_authorization_requests,omitempty"`
-	CredentialEndpoint                 string `json:"credential_endpoint,omitempty"`
 }
 
 type credentialRequest struct {

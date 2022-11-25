@@ -10,6 +10,7 @@ package openid4ci
 import (
 	"encoding/json"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	openid4cigoapi "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
 
@@ -68,8 +69,8 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 	return authorizationResult, nil
 }
 
-// RequestCredential is the final step in the interaction. This is called after the wallet is authorized and is ready
-// to receive credential(s).
+// RequestCredential is the final step (or second last step, if the ResolveDisplay method isn't needed) in the
+// interaction. This is called after the wallet is authorized and is ready to receive credential(s).
 // Relevant sections of the spec:
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-7
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-8
@@ -88,4 +89,21 @@ func (i *Interaction) RequestCredential(credentialRequest *CredentialRequestOpts
 	}
 
 	return credentialResponsesBytes, nil
+}
+
+// ResolveDisplay is the optional final step that can be called after RequestCredential. It resolves display
+// information for the credentials received in this interaction. The CredentialDisplays in the returned
+// object correspond to the VCs received and are in the same order.
+func (i *Interaction) ResolveDisplay() (*api.JSONObject, error) {
+	resolvedDisplayData, err := i.goAPIInteraction.ResolveDisplay()
+	if err != nil {
+		return nil, err
+	}
+
+	resolvedDisplayDataBytes, err := json.Marshal(resolvedDisplayData)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.JSONObject{Data: resolvedDisplayDataBytes}, nil
 }

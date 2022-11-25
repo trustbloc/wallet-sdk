@@ -49,8 +49,11 @@ func TestProvider(t *testing.T) {
 	retrievedVCs, err := provider.GetAll()
 	require.NoError(t, err)
 	require.Len(t, retrievedVCs, 2)
-	require.Equal(t, vcToStore1.ID, retrievedVCs[0].ID)
-	require.Equal(t, vcToStore2.ID, retrievedVCs[1].ID)
+
+	gotExpectedVCsOrder1 := vcToStore1.ID == retrievedVCs[0].ID && vcToStore2.ID == retrievedVCs[1].ID
+	gotExpectedVCsOrder2 := vcToStore1.ID == retrievedVCs[1].ID && vcToStore2.ID == retrievedVCs[0].ID
+
+	require.True(t, gotExpectedVCsOrder1 || gotExpectedVCsOrder2)
 
 	// Remove one of the VCs and verify that it's deleted.
 	err = provider.Remove(vcToStore1.ID)

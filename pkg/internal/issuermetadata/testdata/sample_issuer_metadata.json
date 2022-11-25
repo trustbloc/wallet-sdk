@@ -1,0 +1,72 @@
+{
+  "issuer":"https://server.example.com",
+  "authorization_endpoint":"https://server.example.com/connect/authorize",
+  "token_endpoint":"http://server.example.com/connect/token",
+  "pushed_authorization_request_endpoint":"https://server.example.com/connect/par-authorize",
+  "require_pushed_authorization_requests":false,
+  "credential_endpoint":"http://server.example.com/credential",
+  "credentials_supported": [
+    {
+      "format": "jwt_vc_json",
+      "id": "UniversityDegree_JWT",
+      "types": [
+        "VerifiableCredential",
+        "UniversityDegreeCredential"
+      ],
+      "cryptographic_binding_methods_supported": [
+        "did"
+      ],
+      "cryptographic_suites_supported": [
+        "ES256K"
+      ],
+      "display": [
+        {
+          "name": "University Credential",
+          "locale": "en-US",
+          "logo": {
+            "url": "https://exampleuniversity.com/public/logo.png",
+            "alternative_text": "a square logo of a university"
+          },
+          "background_color": "#12107c",
+          "text_color": "#FFFFFF"
+        }
+      ],
+      "credentialSubject": {
+        "given_name": {
+          "display": [
+            {
+              "name": "Given Name",
+              "locale": "en-US"
+            }
+          ]
+        },
+        "surname": {
+          "display": [
+            {
+              "name": "Surname",
+              "locale": "en-US"
+            }
+          ]
+        },
+        "gpa": {
+          "display": [
+            {
+              "name": "GPA"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "credential_issuer": {
+    "display": [{
+      "name": "Example University",
+      "locale": "en-US"
+    },
+      {
+        "name": "サンプル大学",
+        "locale": "jp-JA"
+      }
+    ]
+  }
+}

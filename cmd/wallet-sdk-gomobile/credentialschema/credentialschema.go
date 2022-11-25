@@ -4,53 +4,62 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package credentialschema contains functionality for doing credential resolution with credential manifests.
+// Package credentialschema contains a function that can be used to resolve display values per the OpenID4CI spec.
+// This implementation follows the 27 October 2022 revision of
+// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-11.2
 package credentialschema
 
-import "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+import (
+	"encoding/json"
 
-// Resolver can resolve credentials.
-type Resolver struct {
-	credentialReader api.CredentialReader
-}
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
+)
 
-// NewResolver creates a new Resolver.
-// If a CredentialReader is specified here, then it will be used as the source for VCs in the Resolve method unless a
-// CredentialReader exists in the ResolveOpts.
-func NewResolver(credentialReader api.CredentialReader) *Resolver {
-	return &Resolver{credentialReader: credentialReader}
-}
-
-// Schema represents the schema options for the Resolve method.
-// Only one out of Schema and CredentialsSupported should be used for a given call to Resolve. If both are specified,
-// then Schema will take precedence.
-type Schema struct {
-	// CredentialManifest is the Credential Manifest to use for resolving descriptors.
-	CredentialManifest []byte
-	// CredentialsSupported is not yet defined (TODO: define).
-	CredentialsSupported []byte
-}
-
-// Credentials represents the different ways that credentials can be passed in to the Resolve method.
-// At most one out of VCs and CredentialReader should be used for a given call to Resolve. If both are specified,
-// then VCs will take precedence. If neither are specified, then the CredentialReader from the constructor (NewResolver)
-// will be used instead.
-// Optionally, CredentialID may be specified if only one VC out of VCs or the CredentialReader should be specified.
+// Credentials represents the different ways that credentials can be passed in to the Resolve function.
+// At most one out of VCs and Reader can be used for a given call to Resolve.
+// If reader is specified, then IDs must also be specified. The corresponding credentials will be
+// retrieved from the credentialReader.
 type Credentials struct {
-	// VCs is a JSON array of Verifiable Credentials. If specified, this takes precedence over the CredentialReader
-	// used in the constructor (NewResolver).
-	VCs []byte
-	// CredentialReader allows for access to a VC storage mechanism. If specified, this takes precedence over the
-	// CredentialReader used in the constructor (NewResolver).
-	CredentialReader api.CredentialReader
-	// CredentialID specifies that only a single credential from VCs or the CredentialReader should be examined.
-	// If not specified, then all credentials from VCs or CredentialReader will be examined.
-	CredentialID string
+	// VCs is an array of Verifiable Credentials.
+	VCs *api.JSONArray
+	// Reader allows for access to VCs stored via some storage mechanism. This is ignored if VCs is set.
+	Reader api.CredentialReader
+	// IDs specifies which credentials should be retrieved from the reader as a JSON array of strings.
+	IDs *api.JSONArray
 }
 
-// Resolve resolves the given credentials and returns resolved descriptors. See the Schema and Credentials structs
-// for more information.
-// Returns a JSON array of resolved descriptors.
-func (c *Resolver) Resolve(schema *Schema, credentials *Credentials) ([]byte, error) {
-	return []byte("Content"), nil
+// IssuerMetadata represents the different ways that issuer metadata can be specified in the Resolve function.
+// At most one out of issuerURI and metadata can be used for a given call to Resolve.
+// Setting issuerURI will cause the Resolve function to fetch an issuer's metadata by doing a lookup on its
+// OpenID configuration endpoint. issuerURI is expected to be the base URL for the issuer.
+// Alternatively, if metadata is set, then it will be used directly.
+type IssuerMetadata struct {
+	IssuerURI string
+	Metadata  *api.JSONObject
+}
+
+// Resolve resolves display information for some issued credentials based on an issuer's metadata.
+// The CredentialDisplays in the returned ResolvedDisplayData object correspond to the VCs passed in and are in the
+// same order.
+// This method requires one VC source and one issuer metadata source.
+func Resolve(credentials *Credentials, issuerMetadata *IssuerMetadata,
+	preferredLocale string,
+) (*api.JSONObject, error) {
+	opts, err := prepareOpts(credentials, issuerMetadata, preferredLocale)
+	if err != nil {
+		return nil, err
+	}
+
+	resolvedDisplayData, err := goapicredentialschema.Resolve(opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	resolvedDisplayDataBytes, err := json.Marshal(resolvedDisplayData)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.JSONObject{Data: resolvedDisplayDataBytes}, nil
 }
