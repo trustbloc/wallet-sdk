@@ -24,8 +24,7 @@ class _CredentialListState extends State<CredentialList> {
   }
 
   void initList() async {
-    _items = await _storageService.readAllSecureData();
-    print("dashboard credential_list, what are all item $_items");
+    _items = await _storageService.retrieveAll();
     _loading = false;
     setState(() {});
   }
@@ -49,7 +48,7 @@ class _CredentialListState extends State<CredentialList> {
                 key: Key(_items[index].toString()),
                 child: CredentialCard(item: _items[index]),
                 onDismissed: (direction) async {
-                  await _storageService.deleteSecureData(_items[index])
+                  await _storageService.deleteData(_items[index])
                       .then((value) => _items.removeAt(index));
                   initList();
                 },
