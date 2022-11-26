@@ -1,4 +1,4 @@
-import 'package:app/credential_list.dart';
+import 'package:app/views/credential_list.dart';
 import 'package:flutter/material.dart';
 import 'scanner.dart';
 

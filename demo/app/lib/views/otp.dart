@@ -78,7 +78,7 @@ class _OTPPage extends State<OTP> {
     );
   }
   _navigateToCredPreviewScreen(String credentialResp) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePreview(credentialResponse: credentialResp)));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialResponse: credentialResp)));
   }
 }
 
