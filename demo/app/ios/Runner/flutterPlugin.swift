@@ -73,7 +73,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     public func requestCredential(otp: String, result: @escaping FlutterResult){
         let newOIDCInteraction = OpenID.NewInteraction(requestURI:  qrCodeData.requestURI)
         do {
-            let credentialRequest = initializeCredentialRequest(fromType: Openid4ciCredentialRequest.self)
+            let credentialRequest = initializeCredentialRequest(fromType: Openid4ciCredentialRequestOpts.self)
             credentialRequest.userPIN = otp
             let credentialResponse  = try newOIDCInteraction?.requestCredential(credentialRequest)
             let credentialResponseData = String(bytes: credentialResponse!, encoding: .utf8)
@@ -90,7 +90,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         return T.init() //No Error
     }
     
-    public func initializeCredentialRequest<T: Openid4ciCredentialRequest>(fromType type: T.Type) -> T {
+    public func initializeCredentialRequest<T: Openid4ciCredentialRequestOpts>(fromType type: T.Type) -> T {
         return T.init() //No Error
     }
     

@@ -1,19 +1,19 @@
-import 'package:app/dashboard.dart';
+import 'package:app/views/dashboard.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:app/widgets/add_credential_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import 'models/store_credential_data.dart';
+import '../models/store_credential_data.dart';
 
-class CreatePreview extends StatefulWidget {
+class CredentialPreview extends StatefulWidget {
   final String credentialResponse;
-  const CreatePreview({super.key, required this.credentialResponse});
+  const CredentialPreview({super.key, required this.credentialResponse});
 
   @override
-  State<CreatePreview> createState() => CredentialPreviewState();
+  State<CredentialPreview> createState() => CredentialPreviewState();
 }
 
-class CredentialPreviewState extends State<CreatePreview> {
+class CredentialPreviewState extends State<CredentialPreview> {
   final StorageService _storageService = StorageService();
   var uuid = const Uuid();
 

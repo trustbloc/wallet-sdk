@@ -10,7 +10,7 @@ import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.didcreator.Didcreator
 import dev.trustbloc.wallet.sdk.openid4ci.Interaction
 import dev.trustbloc.wallet.sdk.openid4ci.AuthorizeResult
-import dev.trustbloc.wallet.sdk.openid4ci.CredentialRequest
+import dev.trustbloc.wallet.sdk.openid4ci.CredentialRequestOpts
 import java.lang.Override
 
 
@@ -72,7 +72,7 @@ class MainActivity : FlutterActivity() {
 
     @Throws(Exception::class)
     fun requestCredential(otp: String?): ByteArray? {
-        val credReq = CredentialRequest()
+        val credReq = CredentialRequestOpts()
         credReq.userPIN = otp
         return newInteraction?.requestCredential(credReq)
     }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'demo_method_channel.dart';
-import 'dashboard.dart';
+import 'views/dashboard.dart';
 
 void main() {
   runApp(const MyApp());
