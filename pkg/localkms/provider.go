@@ -41,9 +41,15 @@ func (k *inMemoryStorageProvider) Delete(keysetID string) error {
 	return nil
 }
 
-type provider struct{}
+type provider struct {
+	Storage arieskms.Store
+}
 
 func (p *provider) StorageProvider() arieskms.Store {
+	if p.Storage != nil {
+		return p.Storage
+	}
+
 	return newInMemoryStorageProvider()
 }
 

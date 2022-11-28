@@ -33,7 +33,7 @@ func (m *mockKeyHandleReader) GetSigningAlgorithm(keyID string) (string, error) 
 
 func TestNewCreatorWithKeyWriter(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		localKMS, err := localkms.NewLocalKMS()
+		localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
 		require.NoError(t, err)
 
 		didCreator, err := creator.NewCreatorWithKeyWriter(localKMS)
@@ -49,7 +49,7 @@ func TestNewCreatorWithKeyWriter(t *testing.T) {
 
 func TestNewCreatorWithKeyReader(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		localKMS, err := localkms.NewLocalKMS()
+		localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
 		require.NoError(t, err)
 
 		didCreator, err := creator.NewCreatorWithKeyReader(localKMS)
@@ -65,7 +65,7 @@ func TestNewCreatorWithKeyReader(t *testing.T) {
 
 func TestCreator_Create(t *testing.T) {
 	t.Run("Using KeyWriter (automatic key generation) - success", func(t *testing.T) {
-		localKMS, err := localkms.NewLocalKMS()
+		localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
 		require.NoError(t, err)
 
 		didCreator, err := creator.NewCreatorWithKeyWriter(localKMS)
@@ -131,7 +131,7 @@ func TestCreator_Create(t *testing.T) {
 		})
 	})
 	t.Run("Unsupported DID method", func(t *testing.T) {
-		localKMS, err := localkms.NewLocalKMS()
+		localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
 		require.NoError(t, err)
 
 		didCreator, err := creator.NewCreatorWithKeyWriter(localKMS)

@@ -18,6 +18,16 @@ import (
 // KeyTypeED25519 is the name recognized by the Create method for creating an ED25519 keyset.
 const KeyTypeED25519 = arieskms.ED25519
 
+// Store defines the storage capability for local KMS.
+type Store interface {
+	// Put stores the given key under the given keysetID.
+	Put(keysetID string, key []byte) error
+	// Get retrieves the key stored under the given keysetID. If no key is found, then an error is returned.
+	Get(keysetID string) (key []byte, err error)
+	// Delete deletes the key stored under the given keysetID.
+	Delete(keysetID string) error
+}
+
 // KMS is a KMS implementation that uses local storage.
 // It is not intended for production use and may not be secure.
 type KMS struct {
@@ -25,8 +35,10 @@ type KMS struct {
 }
 
 // NewKMS returns a new local KMS instance.
-func NewKMS() (*KMS, error) {
-	goAPILocalKMS, err := goapilocalkms.NewLocalKMS()
+func NewKMS(kmsStore Store) (*KMS, error) {
+	goAPILocalKMS, err := goapilocalkms.NewLocalKMS(&goapilocalkms.Config{
+		Storage: kmsStore,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -57,4 +69,9 @@ func (k *KMS) ExportPubKey(keyID string) ([]byte, error) {
 // GetSigningAlgorithm returns signing algorithm associated with the given keyID.
 func (k *KMS) GetSigningAlgorithm(keyID string) (string, error) {
 	return k.goAPILocalKMS.GetSigningAlgorithm(keyID)
+}
+
+// GetCrypto returns Crypto instance that can perform crypto ops with keys created by this kms.
+func (k *KMS) GetCrypto() api.Crypto {
+	return k.goAPILocalKMS.GetCrypto()
 }

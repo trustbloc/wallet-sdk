@@ -34,7 +34,7 @@ func (m *mockKeyHandleReader) GetSigningAlgorithm(string) (string, error) {
 
 func TestNewCreatorWithKeyWriter(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		localKMS, err := localkms.NewKMS()
+		localKMS, err := localkms.NewKMS(nil)
 		require.NoError(t, err)
 
 		didCreator, err := didcreator.NewCreatorWithKeyWriter(localKMS)
@@ -50,7 +50,7 @@ func TestNewCreatorWithKeyWriter(t *testing.T) {
 
 func TestNewCreatorWithKeyReader(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		localKMS, err := localkms.NewKMS()
+		localKMS, err := localkms.NewKMS(nil)
 		require.NoError(t, err)
 
 		didCreator, err := didcreator.NewCreatorWithKeyReader(localKMS)
@@ -66,7 +66,7 @@ func TestNewCreatorWithKeyReader(t *testing.T) {
 
 func TestCreator_Create(t *testing.T) {
 	t.Run("Using KeyWriter (automatic key generation) - success", func(t *testing.T) {
-		localKMS, err := localkms.NewKMS()
+		localKMS, err := localkms.NewKMS(nil)
 		require.NoError(t, err)
 
 		creator, err := didcreator.NewCreatorWithKeyWriter(localKMS)

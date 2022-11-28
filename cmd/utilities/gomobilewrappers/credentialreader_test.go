@@ -13,9 +13,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/trustbloc/wallet-sdk/cmd/utilities/gomobilewrappers"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 
-	"github.com/trustbloc/wallet-sdk/internal/gomobilewrappers"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 )
 
