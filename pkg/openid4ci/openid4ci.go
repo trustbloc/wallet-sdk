@@ -9,6 +9,7 @@ package openid4ci
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,6 +18,12 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	"github.com/piprate/json-gold/ld"
+
+	"github.com/trustbloc/wallet-sdk/pkg/credentialschema"
+	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
 )
 
 // NewInteraction creates a new OpenID4CI Interaction.
@@ -72,8 +79,8 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 	return authorizeResult, nil
 }
 
-// RequestCredential is the final step in the interaction. This is called after the wallet is authorized and is ready
-// to receive credential(s).
+// RequestCredential is the second last step (or last step, if the ResolveDisplay method isn't needed) in the
+// interaction. This is called after the wallet is authorized and is ready to receive credential(s).
 // Relevant sections of the spec:
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-7
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-8
@@ -82,10 +89,12 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 		return nil, errors.New("invalid user PIN")
 	}
 
-	metadata, err := i.getIssuerMetadata()
+	metadata, err := metadatafetcher.Get(i.initiationRequest.IssuerURI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get issuer metadata: %w", err)
 	}
+
+	i.issuerMetadata = metadata
 
 	params := url.Values{}
 	params.Add("grant_type", "urn:ietf:params:oauth:grant-type:pre-authorized_code")
@@ -108,44 +117,42 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 		credentialResponses[index] = *credentialResponse
 	}
 
+	var vcs []string
+
+	for _, credentialResponse := range credentialResponses {
+		vcs = append(vcs, credentialResponse.Credential)
+	}
+
+	i.vcs = vcs
+
 	return credentialResponses, nil
 }
 
-func (i *Interaction) getIssuerMetadata() (*issuerMetadata, error) {
-	metadataEndpoint := i.initiationRequest.IssuerURI + "/.well-known/openid-configuration"
+// ResolveDisplay is the optional final step that can be called after RequestCredential. It resolves display
+// information for the credentials received in this interaction. The CredentialDisplays in the returned
+// credentialschema.ResolvedDisplayData object correspond to the VCs received and are in the same order.
+func (i *Interaction) ResolveDisplay() (*credentialschema.ResolvedDisplayData, error) {
+	var credentials []*verifiable.Credential
 
-	// TODO: Implement trusted list type of mechanism? The gosec warning (correctly) warns about using a variable URL.
-	response, err := http.Get(metadataEndpoint) //nolint: noctx,gosec // TODO: To be re-evaluated later
-	if err != nil {
-		return nil, err
-	}
-
-	responseBytes, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("received status code [%d] with body [%s] from issuer's "+
-			"OpenID configuration endpoint", response.StatusCode, string(responseBytes))
-	}
-
-	defer func() {
-		errClose := response.Body.Close()
-		if errClose != nil {
-			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
+	for _, vc := range i.vcs {
+		decodedVC, err := base64.URLEncoding.DecodeString(vc)
+		if err != nil {
+			return nil, err
 		}
-	}()
 
-	var metadata issuerMetadata
+		credential, err := verifiable.ParseCredential(decodedVC,
+			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
+			verifiable.WithDisabledProofCheck())
+		if err != nil {
+			return nil, err
+		}
 
-	err = json.Unmarshal(responseBytes, &metadata)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response from the issuer's "+
-			"OpenID configuration endpoint: %w", err)
+		credentials = append(credentials, credential)
 	}
 
-	return &metadata, err
+	return credentialschema.Resolve(
+		credentialschema.WithCredentials(credentials),
+		credentialschema.WithIssuerMetadata(i.issuerMetadata))
 }
 
 func (i *Interaction) getTokenResponse(tokenEndpointURL string, params url.Values) (*tokenResponse, error) {
