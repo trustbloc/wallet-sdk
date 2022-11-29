@@ -54,8 +54,7 @@ class _OTPPage extends State<OTP> {
                       _fieldThree.text +
                       _fieldFour.text;
                 });
-                var requestCredentialResp = await WalletSDKPlugin.requestCredential(_otp!).toString();
-                print(requestCredentialResp);
+                var requestCredentialResp = await WalletSDKPlugin.requestCredential(_otp!);
                 // Making sure request credential response is not empty
                if (requestCredentialResp!.isNotEmpty) {
                  _navigateToCredPreviewScreen(requestCredentialResp);
