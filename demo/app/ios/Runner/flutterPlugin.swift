@@ -42,7 +42,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     public func createDid(result: @escaping FlutterResult){
-        let localKMS = LocalkmsNewKMS(nil)
+        let localKMS = LocalkmsNewKMS(nil, nil)
         let didCreator = DidcreatorNewCreatorWithKeyWriter(localKMS, nil)
         do {
             let apiCreate = initializeObject(fromType: ApiCreateDIDOpts.self)
@@ -75,9 +75,14 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         do {
             let credentialRequest = initializeCredentialRequest(fromType: Openid4ciCredentialRequestOpts.self)
             credentialRequest.userPIN = otp
-            let credentialResponse  = try newOIDCInteraction?.requestCredential(credentialRequest)
-            let credentialResponseData = String(bytes: credentialResponse!, encoding: .utf8)
-            result(credentialResponseData)
+            let credResp  = try newOIDCInteraction?.requestCredential(credentialRequest)
+            if (credResp != nil ) {
+                let resolvedDisplayData = try newOIDCInteraction?.resolveDisplay()
+                let rsdResp = initializeApiJSONObject(fromType: ApiJSONObject.self)
+                rsdResp.data = resolvedDisplayData?.data
+                let displayDataResp = String(bytes: rsdResp.data!, encoding: .utf8)
+                result(displayDataResp)
+            }
           } catch {
               result(FlutterError.init(code: "NATIVE_ERR",
                                        message: "error while requesting credential",
@@ -94,6 +99,10 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         return T.init() //No Error
     }
     
+    public func initializeApiJSONObject<T: ApiJSONObject>(fromType type: T.Type) -> T {
+        return T.init() //No Error
+    }
+    
 
     public func fetchArgsKeyValue(_ call: FlutterMethodCall, key: String) -> String? {
         guard let args = call.arguments else {
@@ -101,6 +110,15 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
         let myArgs = args as? [String: Any];
         return myArgs?[key] as? String;
+    }
+   
+    public func dataToJSON(data: Data) -> Any? {
+       do {
+           return try JSONSerialization.jsonObject(with: data, options: .mutableContainers)
+       } catch let myJSONError {
+           print(myJSONError)
+       }
+       return nil
     }
     //Define type method to access the new interaction further in the flow
     class OpenID

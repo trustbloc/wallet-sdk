@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:app/models/credential_preview.dart';
 import 'package:app/views/dashboard.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:app/widgets/add_credential_dialog.dart';
@@ -19,7 +21,10 @@ class CredentialPreviewState extends State<CredentialPreview> {
 
   @override
   Widget build(BuildContext context) {
-    widget.credentialResponse;
+    Map<String, dynamic> issuer = jsonDecode(widget.credentialResponse);
+    final issuerDisplayData = issuer['issuer_display']['name'];
+    final credentialName = issuer['credential_displays'][0]['overview']['name'];
+    final credentialLogoURL = issuer['credential_displays'][0]['overview']['logo']['url'];
     return Scaffold(
       appBar: AppBar(
         title: const Text('Credential Preview'),
@@ -28,26 +33,34 @@ class CredentialPreviewState extends State<CredentialPreview> {
             child:  Column (
               children: [
                 const SizedBox(height: 50),
-                const Text(
-                  'Add a Verified ID',
+                Text(
+                  issuerDisplayData,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 22, color: Colors.black),
+                ),
+                const Text(
+                  'wants to issue the credential',
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 30),
                 MaterialButton(
                   onPressed: () { },
                   padding: const EdgeInsets.all(0.0),
                   child: Ink(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage(credentialLogoURL.toString()),
+                        fit: BoxFit.none,
+                      ),
+                      gradient: const LinearGradient(
                         colors: <Color>[Colors.lightBlueAccent, Colors.blueAccent],
                       ),
                     ),
                     child: Container(
                       constraints: const BoxConstraints(maxWidth: 350, minHeight: 120.0), // min sizes for Material buttons
                       alignment: Alignment.center,
-                      child: const Text(
-                        'Permanent Resident Card',
+                      child: Text(
+                        credentialName,
                         textAlign: TextAlign.center,
                       ),
                     ),
