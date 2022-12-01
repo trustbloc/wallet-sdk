@@ -12,21 +12,25 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/secretlock/noop"
 )
 
-type inMemoryStorageProvider struct {
+// InMemoryStore represents an in-memory database of keysets.
+type InMemoryStore struct {
 	keys map[string][]byte
 }
 
-func newInMemoryStorageProvider() *inMemoryStorageProvider {
-	return &inMemoryStorageProvider{keys: map[string][]byte{}}
+// NewInMemoryStore returns a new InMemoryStore.
+func NewInMemoryStore() *InMemoryStore {
+	return &InMemoryStore{keys: map[string][]byte{}}
 }
 
-func (k *inMemoryStorageProvider) Put(keysetID string, keyset []byte) error {
+// Put stores the given key under the given keysetID.
+func (k *InMemoryStore) Put(keysetID string, keyset []byte) error {
 	k.keys[keysetID] = keyset
 
 	return nil
 }
 
-func (k *inMemoryStorageProvider) Get(keysetID string) ([]byte, error) {
+// Get retrieves the key stored under the given keysetID. If no key is found, then an error is returned.
+func (k *InMemoryStore) Get(keysetID string) ([]byte, error) {
 	key, exists := k.keys[keysetID]
 	if !exists {
 		return nil, arieskms.ErrKeyNotFound
@@ -35,24 +39,34 @@ func (k *inMemoryStorageProvider) Get(keysetID string) ([]byte, error) {
 	return key, nil
 }
 
-func (k *inMemoryStorageProvider) Delete(keysetID string) error {
+// Delete deletes the key stored under the given keysetID.
+func (k *InMemoryStore) Delete(keysetID string) error {
 	delete(k.keys, keysetID)
 
 	return nil
 }
 
-type provider struct {
+// InMemoryStorageProvider represents an in-memory storage provide that can be used to satisfy the Aries KMS
+// Provider interface.
+type InMemoryStorageProvider struct {
 	Storage arieskms.Store
 }
 
-func (p *provider) StorageProvider() arieskms.Store {
+// NewInMemoryStorageProvider returns a new InMemoryStorageProvider.
+func NewInMemoryStorageProvider() *InMemoryStorageProvider {
+	return &InMemoryStorageProvider{Storage: NewInMemoryStore()}
+}
+
+// StorageProvider returns an in-memory arieskms.Store implemenation.
+func (p *InMemoryStorageProvider) StorageProvider() arieskms.Store {
 	if p.Storage != nil {
 		return p.Storage
 	}
 
-	return newInMemoryStorageProvider()
+	return NewInMemoryStore()
 }
 
-func (p *provider) SecretLock() secretlock.Service {
+// SecretLock returns the Aries no-op secretlock.Service implementation.
+func (p *InMemoryStorageProvider) SecretLock() secretlock.Service {
 	return &noop.NoLock{}
 }

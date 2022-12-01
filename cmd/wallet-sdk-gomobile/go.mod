@@ -7,7 +7,7 @@ module github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile
 go 1.19
 
 require (
-	github.com/hyperledger/aries-framework-go v0.1.9-0.20221028142827-a755fd87d699
+	github.com/hyperledger/aries-framework-go v0.1.9-0.20221202141134-083803ecf0a3
 	github.com/piprate/json-gold v0.4.2
 	github.com/stretchr/testify v1.8.1
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000

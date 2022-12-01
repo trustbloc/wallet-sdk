@@ -16,8 +16,15 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
+	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
+	arieslocalkms "github.com/hyperledger/aries-framework-go/pkg/kms/localkms"
 	"github.com/stretchr/testify/require"
 
+	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
+	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 	"github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
@@ -31,6 +38,7 @@ const (
 		`"token_type":"bearer","expires_in":86400,"c_nonce":"tZignsnFbp","c_nonce_expires_in":86400}`
 	sampleCredentialResponse = `{"format":"jwt_vc","credential":"LUpixVCWJk0eOt4CXQe1NXK....WZwmhmn9OQp6YxX0a2L",` +
 		`"c_nonce":"fGFF7UkhLa","c_nonce_expires_in":86400}`
+	mockDID = "did:test:foo"
 )
 
 var (
@@ -46,15 +54,54 @@ func TestNewInteraction(t *testing.T) {
 		newInteraction(t, sampleRequestURI)
 	})
 	t.Run("Fail to parse URI", func(t *testing.T) {
-		interaction, err := openid4ci.NewInteraction("%")
+		config := getTestClientConfig(t)
+
+		interaction, err := openid4ci.NewInteraction("%", config)
 		require.EqualError(t, err, `parse "%": invalid URL escape "%"`)
 		require.Nil(t, interaction)
 	})
 	t.Run("Fail to parse user_pin_required URL query parameter", func(t *testing.T) {
 		requestURI := "openid-vc://initiate_issuance?&user_pin_required=notabool"
 
-		interaction, err := openid4ci.NewInteraction(requestURI)
+		config := getTestClientConfig(t)
+
+		interaction, err := openid4ci.NewInteraction(requestURI, config)
 		require.EqualError(t, err, `strconv.ParseBool: parsing "notabool": invalid syntax`)
+		require.Nil(t, interaction)
+	})
+	t.Run("Missing client config", func(t *testing.T) {
+		interaction, err := openid4ci.NewInteraction("", nil)
+		require.EqualError(t, err, "no client config provided")
+		require.Nil(t, interaction)
+	})
+	t.Run("Missing user DID", func(t *testing.T) {
+		testConfig := &openid4ci.ClientConfig{}
+
+		interaction, err := openid4ci.NewInteraction("", testConfig)
+		require.EqualError(t, err, "no user DID provided")
+		require.Nil(t, interaction)
+	})
+	t.Run("Missing user DID", func(t *testing.T) {
+		testConfig := &openid4ci.ClientConfig{UserDID: "UserDID"}
+
+		interaction, err := openid4ci.NewInteraction("", testConfig)
+		require.EqualError(t, err, "no client ID provided")
+		require.Nil(t, interaction)
+	})
+	t.Run("Missing signer provider", func(t *testing.T) {
+		testConfig := &openid4ci.ClientConfig{UserDID: "UserDID", ClientID: "ClientID"}
+
+		interaction, err := openid4ci.NewInteraction("", testConfig)
+		require.EqualError(t, err, "no signer provider provided")
+		require.Nil(t, interaction)
+	})
+	t.Run("Missing DID resolver", func(t *testing.T) {
+		testConfig := getTestClientConfig(t)
+
+		testConfig.DIDResolver = nil
+
+		interaction, err := openid4ci.NewInteraction("", testConfig)
+		require.EqualError(t, err, "no DID resolver provided")
 		require.Nil(t, interaction)
 	})
 }
@@ -70,7 +117,9 @@ func TestInteraction_Authorize(t *testing.T) {
 	t.Run("Pre-authorized code not provided", func(t *testing.T) {
 		requestURI := "openid-vc://initiate_issuance"
 
-		interaction, err := openid4ci.NewInteraction(requestURI)
+		config := getTestClientConfig(t)
+
+		interaction, err := openid4ci.NewInteraction(requestURI, config)
 		require.NoError(t, err)
 
 		result, err := interaction.Authorize()
@@ -121,6 +170,19 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 	}
 }
 
+type mockResolver struct {
+	keyWriter *arieslocalkms.LocalKMS
+}
+
+func (m *mockResolver) Resolve(string) (*did.DocResolution, error) {
+	didDoc, err := makeMockDoc(m.keyWriter)
+	if err != nil {
+		return nil, err
+	}
+
+	return &did.DocResolution{DIDDocument: didDoc}, err
+}
+
 func TestInteraction_RequestCredential(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{credentialResponse: []byte(sampleCredentialResponse)}
@@ -154,7 +216,9 @@ func TestInteraction_RequestCredential(t *testing.T) {
 	t.Run("PIN required per initiation request, but none provided", func(t *testing.T) {
 		requestURI := "openid-vc://initiate_issuance?&user_pin_required=true"
 
-		interaction, err := openid4ci.NewInteraction(requestURI)
+		config := getTestClientConfig(t)
+
+		interaction, err := openid4ci.NewInteraction(requestURI, config)
 		require.NoError(t, err)
 
 		credentialRequest := &openid4ci.CredentialRequestOpts{}
@@ -259,6 +323,39 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		credentialResponses, err := interaction.RequestCredential(credentialRequest)
 		require.EqualError(t, err, "failed to get token response: failed to unmarshal response from the "+
 			"issuer's token endpoint: invalid character 'i' looking for beginning of value")
+		require.Nil(t, credentialResponses)
+	})
+	t.Run("Fail to create JWT", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{credentialResponse: []byte(sampleCredentialResponse)}
+		server := httptest.NewServer(issuerServerHandler)
+
+		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"issuer":"https://server.example.com",`+
+			`"authorization_endpoint":"https://server.example.com/connect/authorize",`+
+			`"token_endpoint":"%s/connect/token",`+
+			`"pushed_authorization_request_endpoint":"https://server.example.com/connect/par-authorize",`+
+			`"require_pushed_authorization_requests":false,`+
+			`"credential_endpoint":"%s/credential"}`, server.URL, server.URL)
+
+		defer server.Close()
+
+		serverURLEscaped := url.QueryEscape(server.URL)
+
+		requestURI := "openid-vc://initiate_issuance?issuer=" + serverURLEscaped +
+			"&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard" +
+			"&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA" +
+			"&user_pin_required=false"
+
+		config := getTestClientConfig(t)
+		config.DIDResolver = resolver.NewDIDResolver()
+
+		interaction, err := openid4ci.NewInteraction(requestURI, config)
+		require.NoError(t, err)
+
+		credentialRequest := &openid4ci.CredentialRequestOpts{UserPIN: "1234"}
+
+		credentialResponses, err := interaction.RequestCredential(credentialRequest)
+		require.EqualError(t, err, "failed to create JWT: failed to resolve signing DID: resolve UserDID : "+
+			"wrong format did input: UserDID")
 		require.Nil(t, credentialResponses)
 	})
 	t.Run("Fail to get credential response: server failure", func(t *testing.T) {
@@ -493,9 +590,62 @@ func TestInteraction_ResolveDisplay(t *testing.T) {
 func newInteraction(t *testing.T, requestURI string) *openid4ci.Interaction {
 	t.Helper()
 
-	interaction, err := openid4ci.NewInteraction(requestURI)
+	config := getTestClientConfig(t)
+
+	interaction, err := openid4ci.NewInteraction(requestURI, config)
 	require.NoError(t, err)
 	require.NotNil(t, interaction)
 
 	return interaction
+}
+
+func getTestClientConfig(t *testing.T) *openid4ci.ClientConfig {
+	t.Helper()
+
+	ariesLocalKMS, err := arieslocalkms.New("ThisIs://Unused", localkms.NewInMemoryStorageProvider())
+	require.NoError(t, err)
+
+	tinkCrypto, err := tinkcrypto.New()
+	require.NoError(t, err)
+
+	signerProvider := didsignjwt.UseDefaultSigner(ariesLocalKMS, tinkCrypto)
+
+	didResolver := &mockResolver{keyWriter: ariesLocalKMS}
+
+	return &openid4ci.ClientConfig{
+		UserDID:        "UserDID",
+		ClientID:       "ClientID",
+		SignerProvider: signerProvider,
+		DIDResolver:    didResolver,
+	}
+}
+
+// makeMockDoc creates a key in the given KMS and returns a mock DID Doc with a verification method.
+func makeMockDoc(keyManager *arieslocalkms.LocalKMS) (*did.Doc, error) {
+	_, pkb, err := keyManager.CreateAndExportPubKeyBytes(arieskms.ED25519Type)
+	if err != nil {
+		return nil, err
+	}
+
+	vm := &did.VerificationMethod{
+		ID:         "#key-1",
+		Controller: mockDID,
+		Type:       "Ed25519VerificationKey2018",
+		Value:      pkb,
+	}
+
+	newDoc := &did.Doc{
+		ID: mockDID,
+		AssertionMethod: []did.Verification{
+			{
+				VerificationMethod: *vm,
+				Relationship:       did.AssertionMethod,
+			},
+		},
+		VerificationMethod: []did.VerificationMethod{
+			*vm,
+		},
+	}
+
+	return newDoc, nil
 }

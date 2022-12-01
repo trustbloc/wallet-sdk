@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package openid4ci
 
 import (
+	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
@@ -14,8 +15,12 @@ import (
 // object are used to help guide the calling code through the OpenID4CI flow.
 type Interaction struct {
 	initiationRequest *InitiationRequest
+	userDID           string
+	clientID          string
 	issuerMetadata    *issuer.Metadata
 	vcs               []string // base64url encoded
+	signerProvider    didsignjwt.SignerGetter
+	didResolver       *didResolverWrapper
 }
 
 // InitiationRequest represents the Issuance Initiation Request object received from an issuer as defined in

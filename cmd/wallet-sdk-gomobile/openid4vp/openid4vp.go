@@ -43,7 +43,7 @@ func NewInteraction(authorizationRequest string, keyHandleReader api.KeyReader, 
 	didResolver api.DIDResolver, ldDocumentLoader api.LDDocumentLoader,
 ) *Interaction {
 	jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
-		common.NewVDRKeyResolver(&gomobilewrappers.VDRKeyResolverWrapper{
+		common.NewVDRKeyResolver(&gomobilewrappers.VDRResolverWrapper{
 			DIDResolver: didResolver,
 		}).PublicKeyFetcher()))
 

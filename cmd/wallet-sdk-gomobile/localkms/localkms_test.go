@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 )
 
@@ -56,4 +57,38 @@ func TestLocalKMS_GetCrypto(t *testing.T) {
 
 	crypto := localKMS.GetCrypto()
 	require.NotNil(t, crypto)
+}
+
+func TestGetDefaultSignerCreator(t *testing.T) {
+	newSignerCreator(t)
+}
+
+func TestSignerCreator_Create(t *testing.T) {
+	t.Run("Unmarshal failure", func(t *testing.T) {
+		signerCreator := newSignerCreator(t)
+
+		signer, err := signerCreator.Create(&api.JSONObject{})
+		require.EqualError(t, err, "failed to unmarshal verification method JSON into a did.VerificationMethod")
+		require.Nil(t, signer)
+	})
+	t.Run("Failed to create Aries signer", func(t *testing.T) {
+		signerCreator := newSignerCreator(t)
+
+		signer, err := signerCreator.Create(&api.JSONObject{Data: []byte("{}")})
+		require.EqualError(t, err, "failed to create Aries signer: parsing verification method: vm.Type '' not supported")
+		require.Nil(t, signer)
+	})
+}
+
+func newSignerCreator(t *testing.T) *localkms.SignerCreator {
+	t.Helper()
+
+	kms, err := localkms.NewKMS(nil)
+	require.NoError(t, err)
+
+	signerCreator, err := localkms.CreateSignerCreator(kms)
+	require.NoError(t, err)
+	require.NotNil(t, signerCreator)
+
+	return signerCreator
 }

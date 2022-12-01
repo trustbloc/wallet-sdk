@@ -10,7 +10,6 @@ package localkms
 
 import (
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	goapilocalkms "github.com/trustbloc/wallet-sdk/pkg/localkms"
 )

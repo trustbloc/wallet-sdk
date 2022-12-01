@@ -19,7 +19,7 @@ var validDocResolution []byte
 
 func TestGomobileVDRKeyResolverAdapter_Resolve(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		resolver := &VDRKeyResolverWrapper{DIDResolver: &mocksDIDResolver{
+		resolver := &VDRResolverWrapper{DIDResolver: &mocksDIDResolver{
 			ResolveDocBytes: validDocResolution,
 		}}
 
@@ -29,7 +29,7 @@ func TestGomobileVDRKeyResolverAdapter_Resolve(t *testing.T) {
 	})
 
 	t.Run("Resolve failed", func(t *testing.T) {
-		resolver := &VDRKeyResolverWrapper{DIDResolver: &mocksDIDResolver{
+		resolver := &VDRResolverWrapper{DIDResolver: &mocksDIDResolver{
 			ResolveErr: errors.New("resolve failed"),
 		}}
 
@@ -39,7 +39,7 @@ func TestGomobileVDRKeyResolverAdapter_Resolve(t *testing.T) {
 	})
 
 	t.Run("Parse resolution failed", func(t *testing.T) {
-		resolver := &VDRKeyResolverWrapper{DIDResolver: &mocksDIDResolver{
+		resolver := &VDRResolverWrapper{DIDResolver: &mocksDIDResolver{
 			ResolveDocBytes: []byte("random string"),
 		}}
 
