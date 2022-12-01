@@ -8,6 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package didresolver
 
 import (
+	// helps gomobile bind api.DIDResolver interface to Resolver implementation in ios-bindings.
+	_ "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
 )
 
