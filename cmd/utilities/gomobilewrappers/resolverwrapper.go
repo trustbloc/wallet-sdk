@@ -14,14 +14,14 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )
 
-// VDRKeyResolverWrapper wraps a gomobile-compatible version of a DIDResolver and translates methods calls to
+// VDRResolverWrapper wraps a gomobile-compatible version of a DIDResolver and translates methods calls to
 // their corresponding Go API versions.
-type VDRKeyResolverWrapper struct {
+type VDRResolverWrapper struct {
 	DIDResolver api.DIDResolver
 }
 
 // Resolve wraps Resolve of  api.DIDResolver.
-func (a *VDRKeyResolverWrapper) Resolve(didID string) (*did.DocResolution, error) {
+func (a *VDRResolverWrapper) Resolve(didID string) (*did.DocResolution, error) {
 	docBytes, err := a.DIDResolver.Resolve(didID)
 	if err != nil {
 		return nil, err

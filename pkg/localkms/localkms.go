@@ -16,8 +16,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto"
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 	arieslocalkms "github.com/hyperledger/aries-framework-go/pkg/kms/localkms"
-
-	"github.com/trustbloc/wallet-sdk/pkg/api"
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 )
 
 // LocalKMS is a KMS implementation that uses local storage.
@@ -34,7 +33,7 @@ type Config struct {
 
 // NewLocalKMS returns a new Local KMS.
 func NewLocalKMS(cfg *Config) (*LocalKMS, error) {
-	ariesLocalKMS, err := arieslocalkms.New("ThisIs://Unused", &provider{
+	ariesLocalKMS, err := arieslocalkms.New("ThisIs://Unused", &InMemoryStorageProvider{
 		Storage: cfg.Storage,
 	})
 	if err != nil {
@@ -76,9 +75,16 @@ func (k *LocalKMS) GetSigningAlgorithm(keyID string) (string, error) {
 }
 
 // GetCrypto returns Crypto instance that can perform crypto ops with keys created by this kms.
-func (k *LocalKMS) GetCrypto() api.Crypto {
+func (k *LocalKMS) GetCrypto() goapi.Crypto {
 	return &AriesCryptoWrapper{
 		cryptosKMS:    k.ariesLocalKMS,
 		wrappedCrypto: k.ariesCrypto,
 	}
+}
+
+// GetAriesKMS returns the underlying Aries local KMS instance.
+//
+// Deprecated: This method will be removed in a future version.
+func (k *LocalKMS) GetAriesKMS() *arieslocalkms.LocalKMS {
+	return k.ariesLocalKMS
 }

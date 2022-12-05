@@ -9,7 +9,12 @@ package openid4ci
 
 import (
 	"encoding/json"
+	"fmt"
 
+	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
+
+	"github.com/trustbloc/wallet-sdk/cmd/utilities/gomobilewrappers"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	openid4cigoapi "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
@@ -33,6 +38,14 @@ type CredentialRequestOpts struct {
 	UserPIN string
 }
 
+// ClientConfig contains the various required parameters for an OpenID4CI Interaction.
+type ClientConfig struct {
+	UserDID       string
+	ClientID      string
+	SignerCreator api.DIDJWTSignerCreator
+	DIDResolver   api.DIDResolver
+}
+
 // NewInteraction creates a new OpenID4CI Interaction.
 // The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
 // Calling this function represents taking the first step in the flow.
@@ -40,8 +53,10 @@ type CredentialRequestOpts struct {
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-5.1), encoded using URL query
 // parameters. This object is intended for going through the full flow only once (i.e. one interaction), after which
 // it should be discarded. Any new interactions should use a fresh Interaction instance.
-func NewInteraction(initiateIssuanceURI string) (*Interaction, error) {
-	goAPIInteraction, err := openid4cigoapi.NewInteraction(initiateIssuanceURI)
+func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interaction, error) {
+	goAPIClientConfig := unwrapConfig(config)
+
+	goAPIInteraction, err := openid4cigoapi.NewInteraction(initiateIssuanceURI, goAPIClientConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -106,4 +121,27 @@ func (i *Interaction) ResolveDisplay() (*api.JSONObject, error) {
 	}
 
 	return &api.JSONObject{Data: resolvedDisplayDataBytes}, nil
+}
+
+func unwrapConfig(config *ClientConfig) *openid4cigoapi.ClientConfig {
+	goAPISignerGetter := func(vm *did.VerificationMethod) (didsignjwt.Signer, error) {
+		vmBytes, err := json.Marshal(vm)
+		if err != nil {
+			return nil, err
+		}
+
+		goMobileSigner, err := config.SignerCreator.Create(&api.JSONObject{Data: vmBytes})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create gomobile signer: %w", err)
+		}
+
+		return goMobileSigner, nil
+	}
+
+	return &openid4cigoapi.ClientConfig{
+		UserDID:        config.UserDID,
+		ClientID:       config.ClientID,
+		SignerProvider: goAPISignerGetter,
+		DIDResolver:    &gomobilewrappers.VDRResolverWrapper{DIDResolver: config.DIDResolver},
+	}
 }

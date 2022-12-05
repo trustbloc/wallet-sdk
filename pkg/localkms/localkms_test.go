@@ -73,6 +73,14 @@ func TestLocalKMS_GetCrypto(t *testing.T) {
 	require.NotNil(t, crypto)
 }
 
+func TestLocalKMS_GetAriesKMS(t *testing.T) {
+	localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
+	require.NoError(t, err)
+
+	ariesKMS := localKMS.GetAriesKMS()
+	require.NotNil(t, ariesKMS)
+}
+
 type mockStorage struct {
 	keys map[string][]byte
 }

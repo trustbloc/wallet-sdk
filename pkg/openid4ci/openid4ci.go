@@ -18,7 +18,9 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 
@@ -33,7 +35,12 @@ import (
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-5.1), encoded using URL query
 // parameters. This object is intended for going through the full flow only once (i.e. one interaction), after which
 // it should be discarded. Any new interactions should use a fresh Interaction instance.
-func NewInteraction(initiateIssuanceURI string) (*Interaction, error) {
+func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interaction, error) {
+	err := validateClientConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
 	requestURIParsed, err := url.Parse(initiateIssuanceURI)
 	if err != nil {
 		return nil, err
@@ -58,7 +65,13 @@ func NewInteraction(initiateIssuanceURI string) (*Interaction, error) {
 
 	initiationRequest.OpState = requestURIParsed.Query().Get("op_state")
 
-	return &Interaction{initiationRequest: initiationRequest}, nil
+	return &Interaction{
+		initiationRequest: initiationRequest,
+		userDID:           config.UserDID,
+		clientID:          config.ClientID,
+		signerProvider:    config.SignerProvider,
+		didResolver:       &didResolverWrapper{didResolver: config.DIDResolver},
+	}, nil
 }
 
 // Authorize is used by a wallet to authorize an issuer's OIDC Verifiable Credential Issuance Request.
@@ -106,10 +119,24 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 		return nil, fmt.Errorf("failed to get token response: %w", err)
 	}
 
+	claims := map[string]interface{}{
+		"iss":   i.clientID,
+		"aud":   i.issuerMetadata.Issuer,
+		"iat":   time.Now().Unix(),
+		"nonce": tokenResp.CNonce,
+	}
+
+	// didsignjwt.SignJWT will create the headers automatically
+	jwt, err := didsignjwt.SignJWT(nil, claims, i.userDID, i.signerProvider, i.didResolver)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create JWT: %w", err)
+	}
+
 	credentialResponses := make([]CredentialResponse, len(i.initiationRequest.CredentialTypes))
 
 	for index, credentialType := range i.initiationRequest.CredentialTypes {
-		credentialResponse, err := i.getCredentialResponse(credentialType, metadata.CredentialEndpoint, tokenResp.AccessToken)
+		credentialResponse, err := i.getCredentialResponse(credentialType, metadata.CredentialEndpoint,
+			tokenResp.AccessToken, jwt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get credential response: %w", err)
 		}
@@ -191,12 +218,13 @@ func (i *Interaction) getTokenResponse(tokenEndpointURL string, params url.Value
 }
 
 func (i *Interaction) getCredentialResponse(credentialType, credentialEndpoint,
-	accessToken string,
+	accessToken string, jwt string,
 ) (*CredentialResponse, error) {
 	credentialReq := &credentialRequest{
 		Type: credentialType,
 		Proof: proof{
 			ProofType: "jwt", // TODO: support other proof types
+			JWT:       jwt,
 		},
 	}
 
