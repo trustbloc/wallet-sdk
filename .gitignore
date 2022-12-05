@@ -40,3 +40,4 @@ deployments/demo/openapi/specs
 cmd/wallet-sdk-gomobile/bindings
 *.aar
 *.xcframework
+test/integration/fixtures/keys/tls/*

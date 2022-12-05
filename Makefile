@@ -11,6 +11,9 @@ else
 	PATH:=$(PATH);$(subst /,\\,$(GOBIN_PATH))
 endif
 
+ALPINE_VER ?= 3.16
+GO_VER ?= 1.19
+
 .PHONY: all
 all: checks unit-test
 
@@ -52,3 +55,38 @@ demo-app-ios:generate-ios-bindings copy-ios-bindings
 .PHONY: demo-app-android
 demo-app-android: generate-android-bindings copy-android-bindings
 	@cd demo/app && flutter doctor && flutter clean && flutter run && flutter emulators --launch  Pixel_3a_API_33_arm64-v8a  && flutter run -d Pixel_3a_API_33_arm64-v8a
+
+.PHONY: sample-webhook
+sample-webhook:
+	@echo "Building sample webhook server"
+	@mkdir -p ./build/bin
+	@go build -o ./build/bin/webhook-server test/integration/webhook/main.go
+
+.PHONY: sample-webhook-docker
+sample-webhook-docker:
+	@echo "Building sample webhook server docker image"
+	@docker build -f ./images/mocks/webhook/Dockerfile --no-cache -t vcs/sample-webhook:latest \
+	--build-arg GO_VER=$(GO_VER) \
+	--build-arg ALPINE_VER=$(ALPINE_VER) test/integration/webhook
+
+.PHONY: mock-login-consent-docker
+mock-login-consent-docker:
+	@echo "Building mock login consent server"
+	@docker build -f ./images/mocks/loginconsent/Dockerfile --no-cache -t  vcs/mock-login-consent:latest \
+	--build-arg GO_VER=$(GO_VER) \
+	--build-arg ALPINE_VER=$(ALPINE_VER) test/integration/loginconsent
+
+.PHONY: integration-test
+integration-test: sample-webhook-docker mock-login-consent-docker generate-test-keys
+	@cd test/integration && ENABLE_COMPOSITION=true go test -count=1 -v -cover . -p 1 -timeout=10m -race
+
+
+# TODO (#264): frapsoft/openssl only has an amd64 version. While this does work under amd64 and arm64 Mac OS currently,
+#               we should add an arm64 version for systems that can only run arm64 code.
+.PHONY: generate-test-keys
+generate-test-keys:
+	@mkdir -p -p test/integration/fixtures/keys/tls
+	@docker run -i --platform linux/amd64 --rm \
+		-v $(abspath .):/opt/workspace/wallet-sdk \
+		--entrypoint /opt/workspace/wallet-sdk/scripts/generate_test_keys.sh \
+		frapsoft/openssl
