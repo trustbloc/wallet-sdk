@@ -221,7 +221,9 @@ func (i *Interaction) getCredentialResponse(credentialType, credentialEndpoint,
 	accessToken string, jwt string,
 ) (*CredentialResponse, error) {
 	credentialReq := &credentialRequest{
-		Type: credentialType,
+		Type:   credentialType,
+		Format: "jwt_vc",
+		DID:    i.userDID,
 		Proof: proof{
 			ProofType: "jwt", // TODO: support other proof types
 			JWT:       jwt,

@@ -65,6 +65,7 @@ type tokenResponse struct {
 type credentialRequest struct {
 	Type   string `json:"type,omitempty"`
 	Format string `json:"format,omitempty"`
+	DID    string `json:"did,omitempty"`
 	Proof  proof  `json:"proof,omitempty"`
 }
 
