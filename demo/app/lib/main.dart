@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'demo_method_channel.dart';
+import 'models/store_credential_data.dart';
 import 'views/dashboard.dart';
+import 'package:uuid/uuid.dart';
+import 'package:app/services/storage_service.dart';
 
 final WalletSDKPlugin = MethodChannelWallet();
 
@@ -43,8 +46,9 @@ class MyStatefulWidget extends StatefulWidget {
 }
 
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
-  TextEditingController nameController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final StorageService _storageService = StorageService();
+  var uuid = const Uuid();
 
   void _createDid() async {
     var did = await WalletSDKPlugin.createDID();
@@ -63,7 +67,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             Container(
               padding: const EdgeInsets.all(10),
               child: TextField(
-                controller: nameController,
+                controller: _usernameController,
                 style: const TextStyle(fontSize: 20, color: Colors.black),
                 decoration: const InputDecoration(
                   fillColor: Colors.white,
@@ -92,10 +96,13 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       borderRadius: BorderRadius.circular(12), // <-- Radius
                     ),
                   ),
-                  onPressed: () {
-                    _createDid();
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => Dashboard()));
-                    print("did is created successfully");
+                onPressed: () {
+
+                   _createDid();
+                   _storageService.add(StorageItem("username",_usernameController.text));
+                   Navigator.push(
+                       context, MaterialPageRoute(builder: (_) => Dashboard(user: _usernameController.text)));
+                   print("did is created successfully");
                   },
                   child: const Text('Register', style: TextStyle(fontSize: 22, color: Colors.deepPurple)),
                 )),

@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'scanner.dart';
 
 class Dashboard extends StatefulWidget {
-  const Dashboard({super.key});
+  final String? user;
+  const Dashboard({super.key, this.user});
 
   @override
   State<Dashboard> createState() => _DashboardState();
@@ -11,12 +12,18 @@ class Dashboard extends StatefulWidget {
 
 class _DashboardState extends State<Dashboard> {
   int _selectedIndex = 0;
+  static String userIDLoggedIn = '';
+  @override
+  void initState() {
+    super.initState();
+    userIDLoggedIn = widget.user!;
+  }
   static const TextStyle optionStyle =
   TextStyle(fontSize: 28, fontWeight: FontWeight.bold);
-  static const List<Widget> _widgetOptions = <Widget>[
-   CredentialList(title: 'Saved Credentials List'),
-    QRScanner(),
-   Text(
+  static final _widgetOptions = <Widget>[
+   CredentialList(title: 'Saved Credentials List', user: userIDLoggedIn),
+    const QRScanner(),
+   const Text(
       'Preferences',
       style: optionStyle,
     ),
@@ -35,7 +42,7 @@ class _DashboardState extends State<Dashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Trustbloc Wallet'),
+        title: Text('Welcome $userIDLoggedIn'),
       ),
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
