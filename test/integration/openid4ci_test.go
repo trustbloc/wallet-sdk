@@ -7,11 +7,18 @@ SPDX-License-Identifier: Apache-2.0
 package integration
 
 import (
+	"fmt"
 	"testing"
 
+	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/stretchr/testify/require"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didcreator"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didresolver"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
+
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4ci"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/testenv"
 )
@@ -33,7 +40,34 @@ func TestFullFlow(t *testing.T) {
 	initiateIssuanceURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance("bank_issuer")
 	require.NoError(t, err)
 
-	interaction, err := openid4ci.NewInteraction(initiateIssuanceURL)
+	kms, err := localkms.NewKMS(nil)
+	require.NoError(t, err)
+
+	// create DID
+	c, err := didcreator.NewCreatorWithKeyWriter(kms)
+	require.NoError(t, err)
+
+	didDoc, err := c.Create("key", &api.CreateDIDOpts{})
+	require.NoError(t, err)
+
+	fmt.Println(string(didDoc))
+
+	signerCreator, err := localkms.CreateSignerCreator(kms)
+	require.NoError(t, err)
+
+	didResolver := didresolver.NewDIDResolver()
+
+	didDocResolutionParsed, err := diddoc.ParseDocumentResolution(didDoc)
+	require.NoError(t, err)
+
+	clientConfig := openid4ci.ClientConfig{
+		UserDID:       didDocResolutionParsed.DIDDocument.ID,
+		ClientID:      "ClientID",
+		SignerCreator: signerCreator,
+		DIDResolver:   didResolver,
+	}
+
+	interaction, err := openid4ci.NewInteraction(initiateIssuanceURL, &clientConfig)
 	require.NoError(t, err)
 
 	authorizeResult, err := interaction.Authorize()
@@ -42,8 +76,8 @@ func TestFullFlow(t *testing.T) {
 
 	credential, err := interaction.RequestCredential(&openid4ci.CredentialRequestOpts{})
 
-	// TODO: change this to NoError after jwt signing is implemented.
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "property \\\"jwt\\\" is missing")
-	require.Empty(t, credential)
+	require.NoError(t, err)
+	require.NotEmpty(t, credential)
+
+	println("credential:", string(credential))
 }
