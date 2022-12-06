@@ -1,0 +1,171 @@
+/*
+Copyright Avast Software. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
+package oidc4ci
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/cookiejar"
+
+	"github.com/google/uuid"
+	"golang.org/x/oauth2"
+
+	"github.com/trustbloc/wallet-sdk/test/integration/pkg/httprequest"
+	"github.com/trustbloc/wallet-sdk/test/integration/pkg/oauth"
+)
+
+const (
+	vcsAPIGateway                       = "https://localhost:4455"
+	initiateCredentialIssuanceURLFormat = vcsAPIGateway + "/issuer/profiles/%s/interactions/initiate-oidc"
+	vcsAuthorizeEndpoint                = vcsAPIGateway + "/oidc/authorize"
+	vcsTokenEndpoint                    = vcsAPIGateway + "/oidc/token"
+	oidcProviderURL                     = "https://localhost:4444"
+	claimDataURL                        = "https://mock-login-consent.example.com:8099/claim-data"
+)
+
+type initiateOIDC4CIRequest struct {
+	ClaimData                 *map[string]interface{} `json:"claim_data,omitempty"`
+	ClaimEndpoint             string                  `json:"claim_endpoint,omitempty"`
+	ClientInitiateIssuanceUrl string                  `json:"client_initiate_issuance_url,omitempty"`
+	ClientWellknown           string                  `json:"client_wellknown,omitempty"`
+	CredentialTemplateId      string                  `json:"credential_template_id,omitempty"`
+	GrantType                 string                  `json:"grant_type,omitempty"`
+	OpState                   string                  `json:"op_state,omitempty"`
+	ResponseType              string                  `json:"response_type,omitempty"`
+	Scope                     []string                `json:"scope,omitempty"`
+	UserPinRequired           *bool                   `json:"user_pin_required,omitempty"`
+}
+
+type initiateOIDC4CIResponse struct {
+	InitiateIssuanceUrl string `json:"initiate_issuance_url"`
+	TxId                string `json:"tx_id"`
+}
+
+type Setup struct {
+	oauthClient       *oauth2.Config // oauthClient is a public client to vcs oidc provider
+	cookie            *cookiejar.Jar
+	issuerAccessToken string
+
+	httpRequest         *httprequest.Request
+	debug               bool
+	initiateIssuanceURL string
+}
+
+func NewSetup(httpRequest *httprequest.Request) (*Setup, error) {
+	jar, err := cookiejar.New(&cookiejar.Options{})
+	if err != nil {
+		return nil, fmt.Errorf("init cookie jar: %w", err)
+	}
+
+	return &Setup{
+		cookie:      jar,
+		httpRequest: httpRequest,
+	}, nil
+}
+
+func (s *Setup) AuthorizeIssuer(orgID string) error {
+	accessToken, err := oauth.IssueAccessToken(context.Background(), oidcProviderURL,
+		orgID, "test-org-secret", []string{"org_admin"})
+	if err != nil {
+		return err
+	}
+
+	s.issuerAccessToken = accessToken
+
+	return s.registerPublicClient()
+}
+
+func (s *Setup) registerPublicClient() error {
+	// OAuth's clients are imported into vcs from the file (./fixtures/oauth-clients/clients.json)
+	s.oauthClient = &oauth2.Config{
+		ClientID:    "oidc4vc_client",
+		RedirectURL: "https://client.example.com/oauth/redirect",
+		Scopes:      []string{"openid", "profile"},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:   vcsAuthorizeEndpoint,
+			TokenURL:  vcsTokenEndpoint,
+			AuthStyle: oauth2.AuthStyleInHeader,
+		},
+	}
+
+	return nil
+}
+
+func (s *Setup) InitiateCredentialIssuance(issuerProfileID string) (string, error) {
+	endpointURL := fmt.Sprintf(initiateCredentialIssuanceURLFormat, issuerProfileID)
+	token := s.issuerAccessToken
+
+	reqBody, err := json.Marshal(&initiateOIDC4CIRequest{
+		CredentialTemplateId: "templateID",
+		GrantType:            "authorization_code",
+		OpState:              uuid.New().String(),
+		ResponseType:         "code",
+		Scope:                []string{"openid", "profile"},
+		ClaimEndpoint:        claimDataURL,
+	})
+	if err != nil {
+		return "", fmt.Errorf("marshal initiate oidc4ci req: %w", err)
+	}
+
+	var oidc44CIResponse initiateOIDC4CIResponse
+
+	_, err = s.httpRequest.Send(http.MethodPost,
+		endpointURL, "application/json", token, bytes.NewReader(reqBody), &oidc44CIResponse)
+	if err != nil {
+		return "", fmt.Errorf("https do: %w", err)
+	}
+
+	s.initiateIssuanceURL = oidc44CIResponse.InitiateIssuanceUrl
+
+	if s.initiateIssuanceURL == "" {
+		return "", fmt.Errorf("initiate issuance URL is empty")
+	}
+
+	return s.initiateIssuanceURL, nil
+}
+
+func (s *Setup) InitiatePreAuthorizedIssuance(issuerProfileID string) (string, error) {
+	issuanceURL := fmt.Sprintf(initiateCredentialIssuanceURLFormat, issuerProfileID)
+	token := s.issuerAccessToken
+
+	claimData := map[string]interface{}{
+		"displayName":       "John Doe",
+		"givenName":         "John",
+		"jobTitle":          "Software Developer",
+		"surname":           "Doe",
+		"preferredLanguage": "English",
+		"mail":              "john.doe@foo.bar",
+		"photo":             "base64photo",
+	}
+
+	reqBody, err := json.Marshal(&initiateOIDC4CIRequest{
+		ClaimData:            &claimData,
+		CredentialTemplateId: "templateID",
+		GrantType:            "authorization_code",
+		Scope:                []string{"openid", "profile"},
+	})
+	if err != nil {
+		return "", err
+	}
+
+	var oidcInitiateResponse initiateOIDC4CIResponse
+	_, err = s.httpRequest.Send(http.MethodPost, issuanceURL, "application/json", token, bytes.NewReader(reqBody), &oidcInitiateResponse)
+	if err != nil {
+		return "", err
+	}
+
+	s.initiateIssuanceURL = oidcInitiateResponse.InitiateIssuanceUrl
+
+	if s.initiateIssuanceURL == "" {
+		return "", fmt.Errorf("initiate issuance URL is empty")
+	}
+
+	return s.initiateIssuanceURL, nil
+}

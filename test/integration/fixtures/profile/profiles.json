@@ -1,0 +1,524 @@
+{
+  "issuers": [
+    {
+      "issuer": {
+        "id": "i_myprofile_ud_P256k1",
+        "name": "i_myprofile_ud_P256k1",
+        "organizationID": "test_org",
+        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "EcdsaSecp256k1Signature2019",
+          "signatureRepresentation": 1,
+          "keyType": "ECDSASecp256k1IEEEP1363",
+          "format": "ldp",
+          "didMethod": "web",
+          "status": {
+            "type": "StatusList2021Entry"
+          }
+        }
+      },
+      "createDID": true,
+      "didDomain": "https://testnet.orb.local",
+      "didServiceAuthToken": "tk1"
+    },
+    {
+      "issuer": {
+        "id": "i_myprofile_ud_es256_jwt",
+        "name": "i_myprofile_ud_es256_jwt",
+        "organizationID": "test_org",
+        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "ES256",
+          "signatureRepresentation": 1,
+          "keyType": "ECDSAP256DER",
+          "format": "jwt",
+          "didMethod": "orb",
+          "status": {
+            "type": "StatusList2021Entry"
+          }
+        }
+      },
+      "createDID": true,
+      "didDomain": "https://testnet.orb.local",
+      "didServiceAuthToken": "tk1"
+    },
+    {
+      "issuer": {
+        "id": "i_myprofile_ud_es384_jwt",
+        "name": "i_myprofile_ud_es384_jwt",
+        "organizationID": "test_org",
+        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "ES384",
+          "signatureRepresentation": 1,
+          "keyType": "ECDSAP384DER",
+          "format": "jwt",
+          "didMethod": "orb",
+          "status": {
+            "type": "RevocationList2021Status"
+          }
+        }
+      },
+      "createDID": true,
+      "didDomain": "https://testnet.orb.local",
+      "didServiceAuthToken": "tk1"
+    },
+    {
+      "issuer": {
+        "id": "i_myprofile_ud_es256k_jwt",
+        "name": "i_myprofile_ud_es256k_jwt",
+        "organizationID": "test_org",
+        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "ES256K",
+          "signatureRepresentation": 1,
+          "keyType": "ECDSASecp256k1IEEEP1363",
+          "format": "jwt",
+          "didMethod": "orb",
+          "status": {
+            "type": "RevocationList2020Status"
+          }
+        }
+      },
+      "createDID": true,
+      "didDomain": "https://testnet.orb.local",
+      "didServiceAuthToken": "tk1"
+    },
+    {
+      "issuer": {
+        "id": "i_myprofile_ud_p256",
+        "name": "i_myprofile_ud_p256",
+        "organizationID": "test_org",
+        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "JsonWebSignature2020",
+          "signatureRepresentation": 1,
+          "keyType": "ECDSAP256DER",
+          "format": "ldp",
+          "didMethod": "web",
+          "status": {
+            "type": "RevocationList2020Status"
+          }
+        }
+      },
+      "createDID": true,
+      "didDomain": "https://testnet.orb.local",
+      "didServiceAuthToken": "tk1"
+    },
+    {
+      "issuer": {
+        "id": "i_myprofile_prc_P256k1",
+        "name": "i_myprofile_prc_P256k1",
+        "organizationID": "test_org",
+        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "JsonWebSignature2020",
+          "signatureRepresentation": 1,
+          "keyType": "ECDSASecp256k1IEEEP1363",
+          "format": "ldp",
+          "didMethod": "orb",
+          "status": {
+            "type": "StatusList2021Entry"
+          }
+        }
+      },
+      "createDID": true,
+      "didDomain": "https://testnet.orb.local",
+      "didServiceAuthToken": "tk1"
+    },
+    {
+      "issuer": {
+        "id": "i_myprofile_prc_p256",
+        "name": "i_myprofile_prc_p256",
+        "organizationID": "test_org",
+        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "JsonWebSignature2020",
+          "signatureRepresentation": 1,
+          "keyType": "ECDSAP256DER",
+          "format": "ldp",
+          "didMethod": "orb",
+          "status": {
+            "type": "RevocationList2020Status"
+          }
+        }
+      },
+      "createDID": true,
+      "didDomain": "https://testnet.orb.local",
+      "didServiceAuthToken": "tk1"
+    },
+    {
+      "issuer": {
+        "id": "i_myprofile_cp_p384",
+        "name": "i_myprofile_cp_p384",
+        "organizationID": "test_org",
+        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "JsonWebSignature2020",
+          "signatureRepresentation": 1,
+          "keyType": "ECDSAP384DER",
+          "format": "ldp",
+          "didMethod": "orb",
+          "status": {
+            "type": "StatusList2021Entry"
+          }
+        }
+      },
+      "createDID": true,
+      "didDomain": "https://testnet.orb.local",
+      "didServiceAuthToken": "tk1"
+    },
+    {
+      "issuer": {
+        "id": "i_myprofile_cp_p256",
+        "name": "i_myprofile_cp_p256",
+        "organizationID": "test_org",
+        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "JsonWebSignature2020",
+          "signatureRepresentation": 1,
+          "keyType": "ECDSAP256DER",
+          "format": "ldp",
+          "didMethod": "orb",
+          "status": {
+            "type": "RevocationList2020Status"
+          }
+        }
+      },
+      "createDID": true,
+      "didDomain": "https://testnet.orb.local",
+      "didServiceAuthToken": "tk1"
+    },
+    {
+      "issuer": {
+        "id": "i_myprofile_cmtr_p384",
+        "name": "i_myprofile_cmtr_p384",
+        "organizationID": "test_org",
+        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "JsonWebSignature2020",
+          "signatureRepresentation": 1,
+          "keyType": "ECDSAP384DER",
+          "format": "ldp",
+          "didMethod": "key",
+          "status": {
+            "type": "StatusList2021Entry"
+          }
+        }
+      },
+      "createDID": true
+    },
+    {
+      "issuer": {
+        "id": "i_myprofile_cmtr_p256",
+        "name": "i_myprofile_cmtr_p256",
+        "organizationID": "test_org",
+        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "JsonWebSignature2020",
+          "signatureRepresentation": 1,
+          "keyType": "ECDSAP256DER",
+          "format": "ldp",
+          "didMethod": "key",
+          "status": {
+            "type": "RevocationList2020Status"
+          }
+        }
+      },
+      "createDID": true
+    },
+    {
+      "issuer": {
+        "id": "bank_issuer",
+        "name": "Bank Issuer",
+        "organizationID": "test_org",
+        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "JsonWebSignature2020",
+          "signatureRepresentation": 0,
+          "keyType": "ECDSASecp256k1IEEEP1363",
+          "format": "jwt",
+          "didMethod": "orb",
+          "status": {
+            "type": "StatusList2021Entry"
+          }
+        },
+        "oidcConfig": {
+          "client_id": "bank_issuer",
+          "client_secret_handle": "bank-issuer-secret",
+          "scope": [
+            "openid",
+            "profile"
+          ],
+          "redirect_uri": "https://localhost:4455/oidc/redirect",
+          "issuer_well_known": "https://oidc-provider.example.com:4444/.well-known/openid-configuration"
+        },
+        "credentialTemplates": [
+          {
+            "contexts": [
+              "https://www.w3.org/2018/credentials/v1"
+            ],
+            "type": "VerifiedEmployee",
+            "id": "templateID",
+            "issuer": "did:orb:bank_issuer"
+          }
+        ],
+        "credentialMetadata": {
+          "credentials_supported": [
+            {
+              "format": "jwt_vc_json",
+              "id": "VerifiedEmployee_JWT",
+              "types": [
+                "VerifiableCredential",
+                "VerifiedEmployee"
+              ],
+              "display": [
+                {
+                  "name": "Verified Employee",
+                  "locale": "en-US",
+                  "logo": {
+                    "url": "https://example.com/public/logo.png",
+                    "alternative_text": "a square logo of a employee verification"
+                  },
+                  "background_color": "#12107c",
+                  "text_color": "#FFFFFF"
+                }
+              ],
+              "credentialSubject": {
+                "displayName": {
+                  "display": [
+                    {
+                      "name": "Employee",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "givenName": {
+                  "display": [
+                    {
+                      "name": "Given Name",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "jobTitle": {
+                  "display": [
+                    {
+                      "name": "Job Title",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "surname": {
+                  "display": [
+                    {
+                      "name": "Surname",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "preferredLanguage": {
+                  "display": [
+                    {
+                      "name": "Preferred Language",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "mail": {
+                  "display": [
+                    {
+                      "name": "Mail",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "photo": {
+                  "display": [
+                    {
+                      "name": "Photo"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "createDID": true,
+      "didDomain": "https://testnet.orb.local",
+      "didServiceAuthToken": "tk1"
+    }
+  ],
+  "verifiers": [
+    {
+      "verifier": {
+        "id": "v_myprofile_ldp",
+        "name": "v_myprofile_ldp",
+        "organizationID": "test_org",
+        "url": "https://test-verifier.com",
+        "active": true,
+        "webHook": "http://vcs.webhook.example.com:8180",
+        "checks": {
+          "credential": {
+            "format": [
+              "ldp"
+            ],
+            "proof": true,
+            "status": true
+          },
+          "presentation": {
+            "format": [
+              "ldp",
+              "jwt"
+            ],
+            "vcSubject": true,
+            "proof": true
+          }
+        },
+        "oidcConfig": {
+          "roSigningAlgorithm": "EcdsaSecp256k1Signature2019",
+          "keyType": "ECDSASecp256k1IEEEP1363",
+          "didMethod": "orb"
+        },
+        "presentationDefinitions": [
+          {
+            "id": "32f54163-7166-48f1-93d8-ff217bdb0653",
+            "format": {
+              "ldp_vc": {
+                "proof_type": [
+                  "JsonWebSignature2020",
+                  "Ed25519Signature2018",
+                  "EcdsaSecp256k1Signature2019",
+                  "RsaSignature2018"
+                ]
+              },
+              "ldp_vp": {
+                "proof_type": [
+                  "JsonWebSignature2020",
+                  "Ed25519Signature2018",
+                  "EcdsaSecp256k1Signature2019",
+                  "RsaSignature2018"
+                ]
+              },
+              "ldp": {
+                "proof_type": [
+                  "JsonWebSignature2020",
+                  "Ed25519Signature2018",
+                  "EcdsaSecp256k1Signature2019",
+                  "RsaSignature2018"
+                ]
+              }
+            },
+            "input_descriptors": [
+              {
+                "id": "degree",
+                "name": "degree",
+                "purpose": "We can only hire with bachelor degree.",
+                "schema": [
+                  {
+                    "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+                  }
+                ],
+                "constraints": {
+                  "fields": [
+                    {
+                      "path": [
+                        "$.credentialSubject.degree.type",
+                        "$.vc.credentialSubject.degree.type"
+                      ],
+                      "purpose": "We can only hire with bachelor degree.",
+                      "filter": {
+                        "type": "string",
+                        "const": "BachelorDegree"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "createDID": true,
+      "didDomain": "https://testnet.orb.local",
+      "didServiceAuthToken": "tk1"
+    },
+    {
+      "verifier": {
+        "id": "v_myprofile_jwt",
+        "name": "v_myprofile_jwt",
+        "organizationID": "test_org",
+        "url": "https://test-verifier.com",
+        "active": true,
+        "webHook": "http://vcs.webhook.example.com:8180",
+        "checks": {
+          "credential": {
+            "format": [
+              "jwt"
+            ],
+            "proof": true,
+            "status": true
+          },
+          "presentation": {
+            "format": [
+              "jwt"
+            ],
+            "vcSubject": true,
+            "proof": true
+          }
+        },
+        "oidcConfig": {
+          "roSigningAlgorithm": "EcdsaSecp256k1Signature2019",
+          "keyType": "ECDSASecp256k1IEEEP1363",
+          "didMethod": "ion"
+        },
+        "presentationDefinitions": [
+          {
+            "id": "32f54163-7166-48f1-93d8-ff217bdb0653",
+            "input_descriptors": [
+              {
+                "id": "degree",
+                "name": "degree",
+                "purpose": "We can only hire with bachelor degree.",
+                "schema": [
+                  {
+                    "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+                  }
+                ],
+                "constraints": {
+                  "fields": [
+                    {
+                      "path": [
+                        "$.credentialSubject.degree.type",
+                        "$.vc.credentialSubject.degree.type"
+                      ],
+                      "purpose": "We can only hire with bachelor degree.",
+                      "filter": {
+                        "type": "string",
+                        "const": "BachelorDegree"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "createDID": true
+    }
+  ]
+}

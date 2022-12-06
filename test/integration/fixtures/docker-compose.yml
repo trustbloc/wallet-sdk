@@ -1,0 +1,294 @@
+#
+# Copyright Avast Software. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+version: '2'
+
+services:
+  vc-rest-echo.trustbloc.local:
+    container_name: vc-rest-echo.trustbloc.local
+    image: ${VC_REST_IMAGE}:${VC_REST_IMAGE_TAG}
+    environment:
+      - VC_REST_HOST_URL=0.0.0.0:8075
+      - VC_REST_API_GATEWAY_URL=https://localhost:4455
+      - VC_REST_HOST_URL_EXTERNAL=http://vc-rest-echo.trustbloc.local:8075
+      - VC_REST_PROFILES_FILE_PATH=/profile/profiles.json
+      - VC_REST_ORB_DOMAIN=testnet.orb.local
+      - DATABASE_TYPE=mongodb
+      - DATABASE_URL=mongodb://mongodb.example.com:27017
+      - DATABASE_PREFIX=vc_rest_echo_
+      - VC_REST_DEFAULT_KMS_TYPE=aws
+      - VC_REST_DEFAULT_KMS_ENDPOINT=http://aws-kms:8020
+      - VC_REST_DEFAULT_KMS_REGION=ca-central-1
+      - AWS_ACCESS_KEY_ID=mock
+      - AWS_SECRET_ACCESS_KEY=mock
+      - VC_REST_TLS_CACERTS=/etc/tls/ec-cacert.pem
+      - VC_REST_TLS_SYSTEMCERTPOOL=true
+      - VC_REST_API_TOKEN=rw_token
+      - VC_REST_REQUEST_TOKENS=csl=rw_token
+      - VC_REST_CONTEXT_PROVIDER_URL=${CONTEXT_PROVIDER_URL}
+      - VC_REST_DEV_MODE=true
+      - VC_OAUTH_SECRET=secret-for-signing-and-verifying-signatures
+      - VC_METRICS_PROVIDER_NAME=prometheus
+      - VC_PROM_HTTP_URL=vc-rest-echo.trustbloc.local:48127
+      - VC_OAUTH_CLIENTS_FILE_PATH=/oauth-clients/clients.json
+    ports:
+      - "8075:8075"
+      - "48127:48127"
+    depends_on:
+      - did-resolver.trustbloc.local
+      - sidetree
+    entrypoint: ""
+    command: /bin/sh -c "sleep 5;vc-rest start"
+    volumes:
+      - ./keys/tls:/etc/tls
+      - ./profile:/profile/
+      - ./oauth-clients:/oauth-clients/
+      - ./nginx-config/data:/request-objects
+    networks:
+      - bdd_net
+
+  vcs.webhook.example.com:
+    container_name: vcs.webhook.example.com
+    image: ${SAMPLE_WEBHOOK_IMAGE}:${SAMPLE_WEBHOOK_IMAGE_TAG}
+    environment:
+      - WEBHOOK_PORT=8180
+    ports:
+      - 8180:8180
+    networks:
+      - bdd_net
+
+  aws-kms:
+    container_name: aws-kms
+    image: nsmithuk/local-kms:latest
+    environment:
+      - PORT=8020
+      - KMS_REGION=ca-central-1
+      - KMS_ACCOUNT_ID=111122223333
+    ports:
+      - 8020:8020
+    entrypoint: "local-kms"
+    networks:
+      - bdd_net
+
+  did-resolver.trustbloc.local:
+    container_name: did-resolver.trustbloc.local
+    image: ${DID_RESOLVER_IMAGE}:${DID_RESOLVER_IMAGE_TAG}
+    environment:
+      - DID_REST_HOST_URL=${DID_RESOLVER_HOST}:${DID_RESOLVER_PORT}
+      - DID_REST_HOST_URL_EXTERNAL=http://did-resolver.trustbloc.local:${DID_RESOLVER_PORT}
+      - DID_REST_CONFIG_FILE=/opt/did-resolver/config.json
+      - DID_REST_TLS_SYSTEMCERTPOOL=true
+      - DID_REST_TLS_CACERTS=/etc/tls/ec-cacert.pem
+      - DID_REST_DID_DOMAIN=testnet.orb.local
+    ports:
+      - ${DID_RESOLVER_PORT}:${DID_RESOLVER_PORT}
+    command: start
+    volumes:
+      - ./keys/tls:/etc/tls
+      - ./did-resolver/config.json:/opt/did-resolver/config.json
+    networks:
+      - bdd_net
+
+  mongodb.example.com:
+    container_name: mongodb.example.com
+    image: ${MONGODB_IMAGE}:${MONGODB_IMAGE_TAG}
+    ports:
+      - ${MONGODB_PORT}:${MONGODB_PORT}
+    networks:
+      - bdd_net
+
+  sidetree:
+    container_name: testnet.orb.local
+    image: ghcr.io/trustbloc-cicd/orb:v1.0.0-rc4-snapshot-780ce20
+    restart: always
+    environment:
+      - ORB_HOST_URL=0.0.0.0:443
+      - ORB_EXTERNAL_ENDPOINT=https://testnet.orb.local
+      - DID_NAMESPACE=did:orb
+      - ALLOWED_ORIGINS=https://testnet.orb.local
+      - CAS_TYPE=local
+      - ANCHOR_CREDENTIAL_SIGNATURE_SUITE=Ed25519Signature2018
+      - DATABASE_TYPE=mem
+      - ORB_KMS_TYPE=local
+      - KMSSECRETS_DATABASE_TYPE=mem
+      - INCLUDE_PUBLISHED_OPERATIONS_IN_METADATA=true
+      - INCLUDE_UNPUBLISHED_OPERATIONS_IN_METADATA=true
+      - UNPUBLISHED_OPERATION_STORE_ENABLED=true
+      - BATCH_WRITER_TIMEOUT=1
+      - ORB_TLS_CERTIFICATE=/etc/keys/tls/ec-pubCert.pem
+      - ORB_TLS_KEY=/etc/keys/tls/ec-key.pem
+      - ORB_TLS_CACERTS=/etc/keys/tls/ec-cacert.pem
+      - ORB_TLS_SYSTEMCERTPOOL=true
+    ports:
+      - 443:443
+    command: start
+    volumes:
+      - ./keys/tls:/etc/keys/tls
+    networks:
+      - bdd_net
+
+  file-server.trustbloc.local: # file server for hosting static resources (e.g. JSON-LD contexts)
+    container_name: file-server.trustbloc.local
+    image: halverneus/static-file-server:latest
+    environment:
+      - PORT=10096
+      - FOLDER=/data
+      - TLS_CERT=/etc/tls/ec-pubCert.pem
+      - TLS_KEY=/etc/tls/ec-key.pem
+    ports:
+      - "10096:10096"
+    volumes:
+      - ./file-server:/data
+      - ./keys/tls:/etc/tls
+    networks:
+      - bdd_net
+
+  uni-resolver-web:
+    image: universalresolver/uni-resolver-web:v0.4.0-8390e7a
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./universal-resolver/config.json:/opt/uni-resolver-java/uni-resolver-web/config.json
+      - ./universal-resolver/run-uni-resolver-web.sh:/opt/uni-resolver-java/uni-resolver-web/docker/run-uni-resolver-web.sh
+    networks:
+      - bdd_net
+
+  uni-resolver-driver-did-uport:
+    container_name: uni-resolver-did-uport
+    image: uport/uni-resolver-driver-did-uport:latest
+    ports:
+      - "8083:8081"
+    networks:
+      - bdd_net
+
+  uni-resolver-did-v1-driver:
+    container_name: uni-resolver-did-v1
+    image: veresone/uni-resolver-did-v1-driver:latest
+    ports:
+      - "8085:8080"
+    networks:
+      - bdd_net
+
+  vc-openapi.trustbloc.local:
+    container_name: vc-openapi.trustbloc.local
+    image: swaggerapi/swagger-ui
+    environment:
+      - SWAGGER_JSON=/spec/openAPI.yml
+      - BASE_URL=/openapi
+    ports:
+      - "8089:8080"
+    volumes:
+      - ./spec:/spec
+    networks:
+      - bdd_net
+
+  oathkeeper.trustbloc.local:
+    container_name: oathkeeper.trustbloc.local
+    image: oryd/oathkeeper:${OATHKEEPER_IMAGE_TAG}
+    ports:
+      - "4455:4455"
+    command: /bin/sh -c "cp /etc/tls/ec-cacert.pem /usr/local/share/ca-certificates/;update-ca-certificates;oathkeeper serve proxy --config /oathkeeper/config.yaml"
+    user: root
+    entrypoint: ""
+    environment:
+      - LOG_LEVEL=debug
+      - PORT=4455
+      - ISSUER_URL=https://oathkeeper-proxy.trustbloc.local
+      - SERVE_PROXY_TLS_KEY_PATH=/etc/tls/ec-key.pem
+      - SERVE_PROXY_TLS_CERT_PATH=/etc/tls/ec-pubCert.pem
+      - LOG_LEAK_SENSITIVE_VALUES=true
+    volumes:
+      - ./oathkeeper-config:/oathkeeper
+      - ./keys/tls:/etc/tls
+    networks:
+      - bdd_net
+
+  oidc-provider.example.com:
+    container_name: oidc-provider.example.com
+    image: oryd/hydra:${HYDRA_IMAGE_TAG}
+    ports:
+      - "4444:4444"
+      - "4445:4445"
+    command: /bin/sh -c "sleep 20 && hydra migrate sql --read-from-env --yes; (sleep 10; tmp/hydra_configure.sh)& hydra serve all"
+    entrypoint: ""
+    environment:
+      - DSN=mysql://thirdpartyoidc:thirdpartyoidc-secret-pw@tcp(mysql:3306)/thirdpartyoidc?max_conns=20&max_idle_conns=4
+      - URLS_SELF_ISSUER=https://oidc-provider.example.com:4444/
+      - URLS_CONSENT=https://localhost:8099/consent
+      - URLS_LOGIN=https://localhost:8099/login
+      - SECRETS_SYSTEM=testSecretsSystem
+      - OIDC_SUBJECT_TYPES_SUPPORTED=public
+      - OIDC_SUBJECT_TYPE_PAIRWISE_SALT=testSecretsSystem
+      - SERVE_TLS_KEY_PATH=/etc/tls/ec-key.pem
+      - SERVE_TLS_CERT_PATH=/etc/tls/ec-pubCert.pem
+      - SERVE_PUBLIC_PORT=4444
+      - SERVE_ADMIN_PORT=4445
+      - LOG_LEAK_SENSITIVE_VALUES=true
+      - LOG_LEVEL=debug
+    restart: unless-stopped
+    volumes:
+      - ./keys/tls:/etc/tls
+      - ./hydra-config/hydra_configure.sh:/tmp/hydra_configure.sh
+    depends_on:
+      - mysql
+    networks:
+      - bdd_net
+
+  mock-login-consent.example.com: # login/consent mock server for OIDC4VC issuance flow
+    container_name: mock-login-consent.example.com
+    image: vcs/mock-login-consent:latest
+    environment:
+      - LISTEN_ADDR=:8099
+      - HYDRA_ADMIN_URL=https://oidc-provider.example.com:4445
+      - TLS_CERT_PATH=/etc/tls/ec-pubCert.pem
+      - TLS_KEY_PATH=/etc/tls/ec-key.pem
+      - ROOT_CA_CERTS_PATH=/etc/tls/ec-cacert.pem
+    ports:
+      - "8099:8099"
+    volumes:
+      - ./keys/tls:/etc/tls
+    networks:
+      - bdd_net
+
+  mysql:
+    container_name: mysql
+    image: mysql:${MYSQL_IMAGE_TAG}
+    ports:
+      - "3306:3306"
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+    logging:
+      driver: "none"
+    volumes:
+      - ./mysql-config:/docker-entrypoint-initdb.d
+    networks:
+      - bdd_net
+
+  oidc4vp-store.example.com: # oidc4vp request object public store
+    container_name: oidc4vp-store.example.com
+    image: nginx:latest
+    ports:
+      - "8076:8076"
+    volumes:
+      - ./nginx-config/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx-config/data:/var/www/data
+    networks:
+      - bdd_net
+
+  metrics.example.com:
+    container_name: metrics.example.com
+    image: prom/prometheus
+    ports:
+      - 9095:9090
+    volumes:
+      - ./prometheus-config/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - bdd_net
+
+networks:
+  bdd_net:
+    driver: bridge
