@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:app/models/credential_preview.dart';
 import 'package:app/views/dashboard.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:app/widgets/add_credential_dialog.dart';
@@ -18,6 +17,14 @@ class CredentialPreview extends StatefulWidget {
 class CredentialPreviewState extends State<CredentialPreview> {
   final StorageService _storageService = StorageService();
   var uuid = const Uuid();
+  late final String userLoggedIn;
+
+  @override
+  void initState() {
+    super.initState();
+    userLoggedIn = _storageService.retrieve("username").toString();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +98,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
                     final StorageItem? newItem = await showDialog<StorageItem>(
                         context: context, builder: (_) => AddDataDialog());
                     if (newItem != null) {
-                      _storageService.add(StorageItem("credential_prefix_${uuid.v1()})", widget.credentialResponse));
+                      _storageService.add(StorageItem("$userLoggedIn-credential-${uuid.v1()}", widget.credentialResponse));
                       _navigateToDashboard();
                     }
                   },
