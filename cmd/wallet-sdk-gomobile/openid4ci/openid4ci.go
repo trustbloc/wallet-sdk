@@ -90,7 +90,9 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-7
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-8
 // The returned object is an array of Credential Responses (as a JSON array).
-func (i *Interaction) RequestCredential(credentialRequest *CredentialRequestOpts) ([]byte, error) {
+func (i *Interaction) RequestCredential(
+	credentialRequest *CredentialRequestOpts,
+) (*api.VerifiableCredentialsArray, error) {
 	goAPICredentialRequest := &openid4cigoapi.CredentialRequestOpts{UserPIN: credentialRequest.UserPIN}
 
 	credentialResponses, err := i.goAPIInteraction.RequestCredential(goAPICredentialRequest)
@@ -98,12 +100,13 @@ func (i *Interaction) RequestCredential(credentialRequest *CredentialRequestOpts
 		return nil, err
 	}
 
-	credentialResponsesBytes, err := json.Marshal(credentialResponses)
-	if err != nil {
-		return nil, err
+	result := api.NewVerifiableCredentialsArray()
+
+	for _, response := range credentialResponses {
+		result.Add(api.NewVerifiableCredential([]byte(response.Credential)))
 	}
 
-	return credentialResponsesBytes, nil
+	return result, nil
 }
 
 // ResolveDisplay is the optional final step that can be called after RequestCredential. It resolves display

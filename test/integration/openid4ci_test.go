@@ -30,7 +30,7 @@ import (
 // echo '127.0.0.1 oidc-provider.example.com' | sudo tee -a /etc/hosts
 // echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
 
-func TestFullFlow(t *testing.T) {
+func TestOpenID4CIFullFlow(t *testing.T) {
 	oidc4ciSetup, err := oidc4ci.NewSetup(testenv.NewHttpRequest())
 	require.NoError(t, err)
 
@@ -77,7 +77,7 @@ func TestFullFlow(t *testing.T) {
 	credential, err := interaction.RequestCredential(&openid4ci.CredentialRequestOpts{})
 
 	require.NoError(t, err)
-	require.NotEmpty(t, credential)
+	require.NotNil(t, credential)
 
-	println("credential:", string(credential))
+	println("credential:", string(credential.AtIndex(0).Content))
 }
