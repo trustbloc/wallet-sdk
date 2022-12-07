@@ -79,7 +79,7 @@ func NewCreatorWithKeyReader(keyReader api.KeyReader) (*Creator, error) {
 //	Ed25519VerificationKey2018. TODO (#51): Support more key types. ED25519 is the chosen default for now.
 //	If the Creator was created using the NewCreatorWithKeyReader function, then you must specify the KeyID and also
 //	the VerificationType in the createDIDOpts object to use for the creation of the DID document.
-func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) ([]byte, error) {
+func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) (*api.DIDDocResolution, error) {
 	goAPIOpts := convertToGoAPIOpts(createDIDOpts)
 
 	didDocResolution, err := d.goAPICreator.Create(method, goAPIOpts)
@@ -87,7 +87,12 @@ func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) ([]byt
 		return nil, err
 	}
 
-	return didDocResolution.JSONBytes()
+	didDocResolutionBytes, err := didDocResolution.JSONBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.DIDDocResolution{Content: didDocResolutionBytes}, nil
 }
 
 func convertToGoAPIOpts(createDIDOpts *api.CreateDIDOpts) *goapi.CreateDIDOpts {

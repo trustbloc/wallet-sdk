@@ -11,14 +11,14 @@ type VerifiableCredential struct {
 	Content []byte
 }
 
-// NewVerifiableCredential creates new VerifiableCredential.
+// NewVerifiableCredential creates a new VerifiableCredential.
 func NewVerifiableCredential(content []byte) *VerifiableCredential {
 	return &VerifiableCredential{
 		Content: content,
 	}
 }
 
-// VerifiableCredentialsArray ia a wrapper around go array of VerifiableCredential to overcome limitations of gomobile.
+// VerifiableCredentialsArray is a wrapper around go array of VerifiableCredential to overcome limitations of gomobile.
 type VerifiableCredentialsArray struct {
 	credentials []*VerifiableCredential
 }

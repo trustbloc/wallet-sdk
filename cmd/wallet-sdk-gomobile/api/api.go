@@ -53,7 +53,7 @@ type CreateDIDOpts struct {
 // DIDCreator defines the method required for a type to create DID documents.
 type DIDCreator interface {
 	// Create creates a new DID Document using the given method.
-	Create(method string, createDIDOpts *CreateDIDOpts) ([]byte, error)
+	Create(method string, createDIDOpts *CreateDIDOpts) (*DIDDocResolution, error)
 }
 
 // DIDResolver defines the method required for a type to resolve DIDs.
