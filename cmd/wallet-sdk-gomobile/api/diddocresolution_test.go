@@ -34,3 +34,21 @@ func TestDIDDocResolution_ID(t *testing.T) {
 		require.Empty(t, id)
 	})
 }
+
+func TestDIDDocResolution_AssertionMethodKeyID(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		didDocResolution := api.NewDIDDocResolution(sampleDIDDocResolution)
+
+		id, err := didDocResolution.AssertionMethodKeyID()
+		require.NoError(t, err)
+		require.NotEmpty(t, id)
+	})
+	t.Run("Fail to parse DID document resolution content", func(t *testing.T) {
+		didDocResolution := api.NewDIDDocResolution([]byte{})
+
+		id, err := didDocResolution.AssertionMethodKeyID()
+		require.EqualError(t, err, "failed to parse DID document resolution content: "+
+			"unexpected end of JSON input")
+		require.Empty(t, id)
+	})
+}

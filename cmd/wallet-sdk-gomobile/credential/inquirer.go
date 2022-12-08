@@ -28,15 +28,29 @@ type Inquirer struct {
 	goAPICredentialQuery *credentialquery.Instance
 }
 
-// Credentials represents the different ways that credentials can be passed in to the Query method.
+// CredentialsOpt represents the different ways that credentials can be passed in to the Query method.
 // At most one out of VCs and CredentialReader should be used for a given call to Resolve. If both are specified,
 // then VCs will take precedence.
-type Credentials struct {
-	// VCs is a JSON array of Verifiable Credentials. If specified, this takes precedence over the CredentialReader
+type CredentialsOpt struct {
+	// VCs is an array of Verifiable CredentialsOpt. If specified, this takes precedence over the CredentialReader
 	// used in the constructor (NewResolver).
-	VCs *api.JSONArray
+	VCs *api.VerifiableCredentialsArray
 	// CredentialReader allows for access to a VC storage mechanism.
 	CredentialReader api.CredentialReader
+}
+
+// NewCredentialsOpt creates CredentialsOpt from VerifiableCredentialsArray.
+func NewCredentialsOpt(vcArr *api.VerifiableCredentialsArray) *CredentialsOpt {
+	return &CredentialsOpt{
+		VCs: vcArr,
+	}
+}
+
+// NewCredentialsOptFromReader creates CredentialsOpt from CredentialReader.
+func NewCredentialsOptFromReader(credentialReader api.CredentialReader) *CredentialsOpt {
+	return &CredentialsOpt{
+		CredentialReader: credentialReader,
+	}
 }
 
 // NewInquirer returns a new Inquirer.
@@ -52,7 +66,7 @@ func NewInquirer(documentLoader api.LDDocumentLoader) *Inquirer {
 }
 
 // Query returns credentials that match PresentationDefinition.
-func (c *Inquirer) Query(query []byte, contents *Credentials) ([]byte, error) {
+func (c *Inquirer) Query(query []byte, contents *CredentialsOpt) ([]byte, error) {
 	pdQuery := &presexch.PresentationDefinition{}
 
 	err := json.Unmarshal(query, pdQuery)
@@ -72,7 +86,7 @@ func (c *Inquirer) Query(query []byte, contents *Credentials) ([]byte, error) {
 	var credentials []*verifiable.Credential
 
 	if contents.VCs != nil {
-		credentials, err = c.parseVC(contents.VCs.Data)
+		credentials, err = c.parseVC(contents.VCs)
 		if err != nil {
 			return nil, err
 		}
@@ -101,19 +115,11 @@ func (c *Inquirer) Query(query []byte, contents *Credentials) ([]byte, error) {
 	return result, err
 }
 
-func (c *Inquirer) parseVC(data []byte) ([]*verifiable.Credential, error) {
+func (c *Inquirer) parseVC(rawCreds *api.VerifiableCredentialsArray) ([]*verifiable.Credential, error) {
 	var credentials []*verifiable.Credential
 
-	var credsJWTsStrs []string
-
-	err := json.Unmarshal(data, &credsJWTsStrs)
-	if err != nil || len(credsJWTsStrs) == 0 {
-		return nil, fmt.Errorf("unmarshal of credentials array failed, "+
-			"should be json array of jwt strings: %w", err)
-	}
-
-	for _, credContent := range credsJWTsStrs {
-		cred, credErr := verifiable.ParseCredential([]byte(credContent), verifiable.WithDisabledProofCheck(),
+	for i := 0; i < rawCreds.Length(); i++ {
+		cred, credErr := verifiable.ParseCredential(rawCreds.AtIndex(i).Content, verifiable.WithDisabledProofCheck(),
 			verifiable.WithJSONLDDocumentLoader(c.documentLoader))
 		if credErr != nil {
 			return nil, fmt.Errorf("verifiable credential parse failed: %w", credErr)

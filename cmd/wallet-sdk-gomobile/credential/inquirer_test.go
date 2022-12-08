@@ -79,18 +79,6 @@ func TestInstance_Query(t *testing.T) {
 		require.Contains(t, err.Error(), "validation of presentation definition failed:")
 	})
 
-	t.Run("PD parse failed", func(t *testing.T) {
-		query := credential.NewInquirer(&documentLoaderReverseWrapper{
-			DocumentLoader: testutil.DocumentLoader(t),
-		})
-
-		_, err := query.Query(presentationDefinition,
-			&credential.Credentials{VCs: &api.JSONArray{}},
-		)
-
-		require.Contains(t, err.Error(), "unmarshal of credentials array failed, should be json array of jwt strings")
-	})
-
 	t.Run("VC parse failed", func(t *testing.T) {
 		query := credential.NewInquirer(&documentLoaderReverseWrapper{
 			DocumentLoader: testutil.DocumentLoader(t),
@@ -108,21 +96,21 @@ func TestInstance_Query(t *testing.T) {
 			DocumentLoader: testutil.DocumentLoader(t),
 		})
 
-		_, err := query.Query(presentationDefinition, &credential.Credentials{})
+		_, err := query.Query(presentationDefinition, credential.NewCredentialsOptFromReader(nil))
 
 		require.Contains(t, err.Error(), "either credential reader or vc array should be set")
 	})
 }
 
-func createCredJSONArray(t *testing.T, creds []string) *credential.Credentials {
+func createCredJSONArray(t *testing.T, creds []string) *credential.CredentialsOpt {
 	t.Helper()
 
-	arr, err := json.Marshal(creds)
-	require.NoError(t, err)
-
-	return &credential.Credentials{
-		VCs: &api.JSONArray{Data: arr},
+	credsArray := api.NewVerifiableCredentialsArray()
+	for _, credContent := range creds {
+		credsArray.Add(api.NewVerifiableCredential([]byte(credContent)))
 	}
+
+	return credential.NewCredentialsOpt(credsArray)
 }
 
 type documentLoaderReverseWrapper struct {
