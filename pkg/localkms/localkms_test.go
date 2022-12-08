@@ -25,15 +25,6 @@ func TestLocalKMS_Create(t *testing.T) {
 		require.NotEmpty(t, keyID)
 		require.NotEmpty(t, key)
 	})
-	t.Run("Unsupported key type", func(t *testing.T) {
-		localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
-		require.NoError(t, err)
-
-		keyID, key, err := localKMS.Create("SomeUnsupportedKeyType")
-		require.EqualError(t, err, "key type SomeUnsupportedKeyType not supported")
-		require.Empty(t, keyID)
-		require.Empty(t, key)
-	})
 }
 
 func TestLocalKMS_GetKey(t *testing.T) {

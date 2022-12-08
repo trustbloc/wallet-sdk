@@ -10,7 +10,6 @@ package localkms
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto"
@@ -50,17 +49,8 @@ func NewLocalKMS(cfg *Config) (*LocalKMS, error) {
 
 // Create creates a keyset of the given keyType and then writes it to storage.
 // The keyID and raw public key bytes of the newly generated keyset are returned.
-// Currently, this method only supports creating ED25519 keys.
 func (k *LocalKMS) Create(keyType arieskms.KeyType) (string, []byte, error) {
-	// The CreateAndExportPubKeyBytes method we use from the Aries Local KMS implementation returns raw bytes for
-	// some key types, and marshalled key bytes for others. If we want to support other key types in the future
-	// then we will need to ensure that either this method either only returns raw bytes for consistency (by converting
-	// to raw bytes as needed) or that the KeyWriter interface documentation is updated to make the expected key format
-	// clear.
-	if keyType != arieskms.ED25519Type {
-		return "", nil, fmt.Errorf("key type %s not supported", keyType)
-	}
-
+	// TODO: for keys that support afgo JWK, return afgo JWK
 	return k.ariesLocalKMS.CreateAndExportPubKeyBytes(keyType)
 }
 

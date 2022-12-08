@@ -35,6 +35,7 @@ type KeyReader interface {
 type CreateDIDOpts struct {
 	KeyID            string
 	VerificationType string
+	KeyType          kms.KeyType
 }
 
 // DIDCreator defines the method required for a type to create DID documents.
