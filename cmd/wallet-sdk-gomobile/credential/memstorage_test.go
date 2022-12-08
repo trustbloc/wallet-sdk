@@ -4,7 +4,7 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package memstorage_test
+package credential_test
 
 import (
 	_ "embed"
@@ -12,21 +12,22 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/memstorage"
 )
 
 var (
-	//go:embed testdata/credential_university_degree.jsonld
+	//go:embed test_data/credential_university_degree.jsonld
 	universityDegreeVC []byte
-	//go:embed testdata/credential_drivers_license.jsonld
+	//go:embed test_data/credential_drivers_license.jsonld
 	driversLicenseDegreeVC []byte
 )
 
 func TestProvider(t *testing.T) {
-	provider := memstorage.NewProvider()
+	provider := credential.NewInMemoryDB()
 
 	const universityDegreeVCID = "http://example.edu/credentials/1872"
 
@@ -69,7 +70,7 @@ func TestProvider(t *testing.T) {
 }
 
 func TestProvider_Add_Failure_Empty_JSON(t *testing.T) {
-	provider := memstorage.NewProvider()
+	provider := credential.NewInMemoryDB()
 
 	err := provider.Add(&api.JSONObject{})
 	require.EqualError(t, err, "unmarshal new credential: unexpected end of JSON input")

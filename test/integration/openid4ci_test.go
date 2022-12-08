@@ -14,11 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didcreator"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didresolver"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
-
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4ci"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/testenv"
 )
@@ -44,7 +42,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 	require.NoError(t, err)
 
 	// create DID
-	c, err := didcreator.NewCreatorWithKeyWriter(kms)
+	c, err := did.NewCreatorWithKeyWriter(kms)
 	require.NoError(t, err)
 
 	didDoc, err := c.Create("key", &api.CreateDIDOpts{})
@@ -55,7 +53,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 	signerCreator, err := localkms.CreateSignerCreator(kms)
 	require.NoError(t, err)
 
-	didResolver := didresolver.NewDIDResolver()
+	didResolver := did.NewResolver()
 
 	didDocResolutionParsed, err := diddoc.ParseDocumentResolution(didDoc)
 	require.NoError(t, err)

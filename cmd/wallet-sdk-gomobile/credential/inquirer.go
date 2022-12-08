@@ -4,8 +4,9 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package credentialquery allows querying credentials using presentation definition.
-package credentialquery
+// Package credential contains a type that can be used to query for credentials using a presentation definition.
+// It also contains a credential storage implementation using in-memory storage only.
+package credential
 
 import (
 	"encoding/json"
@@ -21,8 +22,8 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/credentialquery"
 )
 
-// Query implements querying credentials using presentation definition.
-type Query struct {
+// Inquirer implements querying credentials using presentation definition.
+type Inquirer struct {
 	documentLoader       ld.DocumentLoader
 	goAPICredentialQuery *credentialquery.Instance
 }
@@ -38,20 +39,20 @@ type Credentials struct {
 	CredentialReader api.CredentialReader
 }
 
-// NewQuery returns new Query.
-func NewQuery(documentLoader api.LDDocumentLoader) *Query {
+// NewInquirer returns a new Inquirer.
+func NewInquirer(documentLoader api.LDDocumentLoader) *Inquirer {
 	wrappedLoader := &gomobilewrappers.DocumentLoaderWrapper{
 		DocumentLoader: documentLoader,
 	}
 
-	return &Query{
+	return &Inquirer{
 		documentLoader:       wrappedLoader,
 		goAPICredentialQuery: credentialquery.NewInstance(wrappedLoader),
 	}
 }
 
 // Query returns credentials that match PresentationDefinition.
-func (c *Query) Query(query []byte, contents *Credentials) ([]byte, error) {
+func (c *Inquirer) Query(query []byte, contents *Credentials) ([]byte, error) {
 	pdQuery := &presexch.PresentationDefinition{}
 
 	err := json.Unmarshal(query, pdQuery)
@@ -100,7 +101,7 @@ func (c *Query) Query(query []byte, contents *Credentials) ([]byte, error) {
 	return result, err
 }
 
-func (c *Query) parseVC(data []byte) ([]*verifiable.Credential, error) {
+func (c *Inquirer) parseVC(data []byte) ([]*verifiable.Credential, error) {
 	var credentials []*verifiable.Credential
 
 	var credsJWTsStrs []string

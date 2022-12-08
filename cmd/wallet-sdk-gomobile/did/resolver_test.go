@@ -4,18 +4,18 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package didresolver_test
+package did_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didresolver"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 )
 
 func TestDIDResolver(t *testing.T) {
-	didResolver := didresolver.NewDIDResolver()
+	didResolver := did.NewResolver()
 
 	didDocResolution, err := didResolver.Resolve("did:key:z6MkjfbzWitsSUyFMTbBUSWNsJBHR7BefFp1WmABE3kRw8Qr")
 	require.NoError(t, err)
@@ -23,7 +23,7 @@ func TestDIDResolver(t *testing.T) {
 }
 
 func TestDIDResolver_InvalidDID(t *testing.T) {
-	didResolver := didresolver.NewDIDResolver()
+	didResolver := did.NewResolver()
 
 	didDocResolution, err := didResolver.Resolve("did:example:abc")
 	require.Error(t, err)

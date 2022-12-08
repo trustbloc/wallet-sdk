@@ -4,8 +4,7 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package didresolver contains functions for resolving DIDs.
-package didresolver
+package did
 
 import (
 	// helps gomobile bind api.DIDResolver interface to Resolver implementation in ios-bindings.
@@ -18,8 +17,8 @@ type Resolver struct {
 	resolver *resolver.DIDResolver
 }
 
-// NewDIDResolver returns a new DIDResolver.
-func NewDIDResolver() *Resolver {
+// NewResolver returns a new Resolver.
+func NewResolver() *Resolver {
 	return &Resolver{resolver: resolver.NewDIDResolver()}
 }
 

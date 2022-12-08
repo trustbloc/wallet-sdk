@@ -4,10 +4,7 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package credentialschema contains a function that can be used to resolve display values per the OpenID4CI spec.
-// This implementation follows the 27 October 2022 revision of
-// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-11.2
-package credentialschema
+package openid4ci
 
 import (
 	"encoding/json"
@@ -39,11 +36,13 @@ type IssuerMetadata struct {
 	Metadata  *api.JSONObject
 }
 
-// Resolve resolves display information for some issued credentials based on an issuer's metadata.
+// ResolveDisplay resolves display information for issued credentials based on an issuer's metadata.
 // The CredentialDisplays in the returned ResolvedDisplayData object correspond to the VCs passed in and are in the
 // same order.
 // This method requires one VC source and one issuer metadata source.
-func Resolve(credentials *Credentials, issuerMetadata *IssuerMetadata,
+// The display values are resolved per the 27 October 2022 revision of the OpenID4CI spec:
+// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-11.2
+func ResolveDisplay(credentials *Credentials, issuerMetadata *IssuerMetadata,
 	preferredLocale string,
 ) (*api.JSONObject, error) {
 	opts, err := prepareOpts(credentials, issuerMetadata, preferredLocale)
