@@ -25,11 +25,15 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     private var didResolver: ApiDIDResolverProtocol?
     private var documentLoader: ApiLDDocumentLoaderProtocol?
     private var crypto: ApiCryptoProtocol?
+    private var signerCreator: LocalkmsSignerCreator?
+    private var didDocRes: ApiDIDDocResolution?
+    private var didDocID: String?
+    
     
     private var openID4VP: OpenID4VP?
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        let arguments = call.arguments as! Dictionary<String, Any>
+        let arguments = call.arguments as? Dictionary<String, Any>
         
         switch call.method {
         case "createDID":
@@ -48,10 +52,10 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             initSDK(result:result)
             
         case "processAuthorizationRequest":
-            processAuthorizationRequest(arguments: arguments, result: result)
+            processAuthorizationRequest(arguments: arguments!, result: result)
             
         case "presentCredential":
-            presentCredential(arguments: arguments, result: result)
+            presentCredential(arguments: arguments!, result: result)
             
         default:
             print("No call method is found")
@@ -63,7 +67,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         didResolver = DidresolverNewDIDResolver()
         crypto = kms?.getCrypto()
         documentLoader = LinkeddomainsNewDocumentLoader()
-        
+        signerCreator = LocalkmsCreateSignerCreator(kms, nil)
         result(true)
     }
     
@@ -148,12 +152,12 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     public func createDid(result: @escaping FlutterResult){
-        let localKMS = LocalkmsNewKMS(nil, nil)
-        let didCreator = DidcreatorNewCreatorWithKeyWriter(localKMS, nil)
+        let didCreator = DidcreatorNewCreatorWithKeyWriter(self.kms, nil)
         do {
             let apiCreate = initializeObject(fromType: ApiCreateDIDOpts.self)
             let doc = try didCreator!.create("key", createDIDOpts: apiCreate)
-            let docString = String(bytes: doc, encoding: .utf8)
+            let docString = String(bytes: doc.content!, encoding: .utf8)
+            didDocID = doc.id_(nil)
             result(docString)
         } catch {
             result(FlutterError.init(code: "NATIVE_ERR",
@@ -163,7 +167,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     public func authorize(requestURI: String, result: @escaping FlutterResult){
-        let newOIDCInteraction = OpenID.NewInteraction(requestURI: requestURI)
+        let clientConfig =  Openid4ciClientConfig( didDocID!,  clientID: "ClientID", signerCreator: self.signerCreator, didRes: self.didResolver)
+        let newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
         do {
             let authorizeResult  = try newOIDCInteraction?.authorize()
             let userPINRequired = authorizeResult?.userPINRequired;
@@ -177,16 +182,16 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     public func requestCredential(otp: String, result: @escaping FlutterResult){
-        let newOIDCInteraction = OpenID.NewInteraction(requestURI:  qrCodeData.requestURI)
+        let clientConfig =  Openid4ciClientConfig( didDocID!,  clientID: "ClientID", signerCreator: self.signerCreator, didRes: self.didResolver)
+        let newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
         do {
-            let credentialRequest = initializeCredentialRequest(fromType: Openid4ciCredentialRequestOpts.self)
+            let credentialRequest = Openid4ciCredentialRequestOpts()
             credentialRequest.userPIN = otp
             let credResp  = try newOIDCInteraction?.requestCredential(credentialRequest)
-            if (credResp != nil ) {
+            // TODO Checking the first credential in the array
+            if (credResp!.length() > 0) {
                 let resolvedDisplayData = try newOIDCInteraction?.resolveDisplay()
-                let rsdResp = initializeApiJSONObject(fromType: ApiJSONObject.self)
-                rsdResp.data = resolvedDisplayData?.data
-                let displayDataResp = String(bytes: rsdResp.data!, encoding: .utf8)
+                let displayDataResp = String(bytes: (resolvedDisplayData?.data)!, encoding: .utf8)
                 result(displayDataResp)
             }
           } catch {
@@ -208,8 +213,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     public func initializeApiJSONObject<T: ApiJSONObject>(fromType type: T.Type) -> T {
         return T.init() //No Error
     }
-
-
+    
+    
     public func fetchArgsKeyValue(_ call: FlutterMethodCall, key: String) -> String? {
         guard let args = call.arguments else {
             return ""
@@ -229,9 +234,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     //Define type method to access the new interaction further in the flow
     class OpenID
     {
-          class func NewInteraction(requestURI: String) -> Openid4ciInteraction?
+        class func NewInteraction(requestURI: String, clientConfig: Openid4ciClientConfig) -> Openid4ciInteraction?
           {
-              return Openid4ciNewInteraction(requestURI, nil)
+              return Openid4ciNewInteraction(requestURI, clientConfig, nil)
           }
         
 

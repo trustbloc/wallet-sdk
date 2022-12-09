@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:app/models/credential_preview.dart';
 import 'package:app/views/dashboard.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:app/widgets/add_credential_dialog.dart';
@@ -22,60 +23,85 @@ class CredentialPreviewState extends State<CredentialPreview> {
   @override
   void initState() {
     super.initState();
-    userLoggedIn = _storageService.retrieve("username").toString();
+    /// Await your Future here (This function only called once after the layout is Complete)
+    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) async {
+      userLoggedIn = (await _storageService.retrieve("username"))!;
+    });
   }
 
-
+  Future<List<CredentialPreviewData>> getData() async {
+    List<CredentialPreviewData> list;
+      var data = json.decode(widget.credentialResponse);
+      var credentialClaimsData = data['credential_displays'][0]['claims'] as List;
+      list = credentialClaimsData.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
+    return list;
+  }
+  Widget listViewWidget(List<CredentialPreviewData> credPrev) {
+    return ListView.builder(
+        itemCount: credPrev.length,
+        scrollDirection: Axis.vertical,
+        shrinkWrap: true,
+        itemBuilder: (context, position) {
+          //TODO Ignoring the photo value for now due to extremely long text need to render in a separate issue-881
+          return (credPrev[position].label != "photo") ? Card(
+            child: ListTile(
+              title: Text(
+                credPrev[position].label,
+                style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontWeight: FontWeight.normal),
+              ),
+              subtitle: Text(
+                credPrev[position].value,
+                style: const TextStyle(
+                    fontSize: 18.0,
+                    color: Colors.green,
+                    fontWeight: FontWeight.normal),
+              ),
+            ),
+          ):
+          Container();
+        });
+  }
   @override
   Widget build(BuildContext context) {
     Map<String, dynamic> issuer = jsonDecode(widget.credentialResponse);
     final issuerDisplayData = issuer['issuer_display']['name'];
-    final credentialName = issuer['credential_displays'][0]['overview']['name'];
-    final credentialLogoURL = issuer['credential_displays'][0]['overview']['logo']['url'];
     return Scaffold(
       appBar: AppBar(
         title: const Text('Credential Preview'),
       ),
-        body: Center(
-            child:  Column (
-              children: [
-                const SizedBox(height: 50),
-                Text(
-                  issuerDisplayData,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 22, color: Colors.black),
-                ),
-                const Text(
-                  'wants to issue the credential',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 30),
-                MaterialButton(
-                  onPressed: () { },
-                  padding: const EdgeInsets.all(0.0),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage(credentialLogoURL.toString()),
-                        fit: BoxFit.none,
-                      ),
-                      gradient: const LinearGradient(
-                        colors: <Color>[Colors.lightBlueAccent, Colors.blueAccent],
-                      ),
-                    ),
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 350, minHeight: 120.0), // min sizes for Material buttons
-                      alignment: Alignment.center,
-                      child: Text(
-                        credentialName,
+      body: FutureBuilder(
+          future: getData(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            } else {
+              return Column(
+                children: [
+                  const SizedBox(height: 50),
+                  SizedBox(
+                    height: 50,
+                    child:  Text(
                         textAlign: TextAlign.center,
-                      ),
-                    ),
+                        style: const TextStyle(fontSize: 22, color: Colors.green, fontWeight: FontWeight.bold),
+                        "$issuerDisplayData"),
                   ),
-                ),
-              ],
-            )
-        ),
+                  const SizedBox(
+                    child:  Text(
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 18, color: Colors.black),
+                        "wants to issue the credential"),
+                  ),
+                  Expanded( // wrap in Expanded
+                    child: listViewWidget(snapshot.data!),
+                  ),
+                ],
+              );
+              }
+          }
+      ),
       floatingActionButton: SizedBox(
         width: double.infinity,
         child: Padding(
@@ -86,7 +112,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(primary: Colors.red),
                   onPressed: () async {
-                    _navigateToDashboard();
+                    _navigateToDashboard(userLoggedIn);
                   },
                   child: const Text("Cancel"),
                 ),
@@ -99,7 +125,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
                         context: context, builder: (_) => AddDataDialog());
                     if (newItem != null) {
                       _storageService.add(StorageItem("$userLoggedIn-credential-${uuid.v1()}", widget.credentialResponse));
-                      _navigateToDashboard();
+                      _navigateToDashboard(userLoggedIn);
                     }
                   },
                   child: const Text("Save Credential"),
@@ -111,7 +137,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
       ),
     );
   }
-  _navigateToDashboard() async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
+  _navigateToDashboard(String userLoggedIn) async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => Dashboard(user: userLoggedIn)));
   }
 }

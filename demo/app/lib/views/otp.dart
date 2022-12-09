@@ -15,6 +15,8 @@ class _OTPPage extends State<OTP> {
   final TextEditingController _fieldTwo = TextEditingController();
   final TextEditingController _fieldThree = TextEditingController();
   final TextEditingController _fieldFour = TextEditingController();
+  final TextEditingController _fieldFive = TextEditingController();
+  final TextEditingController _fieldSix = TextEditingController();
 
   // This is the entered code
   // It will be displayed in a Text widget
@@ -40,7 +42,9 @@ class _OTPPage extends State<OTP> {
               OtpInput(_fieldOne, true), // auto focus
               OtpInput(_fieldTwo, false),
               OtpInput(_fieldThree, false),
-              OtpInput(_fieldFour, false)
+              OtpInput(_fieldFour, false),
+              OtpInput(_fieldFive, false),
+              OtpInput(_fieldSix, false),
             ],
           ),
           const SizedBox(
@@ -52,7 +56,9 @@ class _OTPPage extends State<OTP> {
                   _otp = _fieldOne.text +
                       _fieldTwo.text +
                       _fieldThree.text +
-                      _fieldFour.text;
+                      _fieldFour.text+
+                      _fieldFive.text +
+                      _fieldSix.text;
                 });
                 var requestCredentialResp = await WalletSDKPlugin.requestCredential(_otp!);
                 // Making sure request credential response is not empty
