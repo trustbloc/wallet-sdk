@@ -8,7 +8,6 @@ package openid4ci_test
 
 import (
 	_ "embed"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -468,7 +467,7 @@ func TestInteraction_ResolveDisplay(t *testing.T) {
 		err = json.Unmarshal([]byte(sampleCredentialResponse), &credentialResponse)
 		require.NoError(t, err)
 
-		credentialResponse.Credential = base64.URLEncoding.EncodeToString(credentialUniversityDegree)
+		credentialResponse.Credential = string(credentialUniversityDegree)
 
 		credentialResponseBytes, err := json.Marshal(credentialResponse)
 		require.NoError(t, err)
@@ -493,7 +492,7 @@ func TestInteraction_ResolveDisplay(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resolvedDisplayData)
 	})
-	t.Run("Fail to decode VC", func(t *testing.T) {
+	t.Run("Fail to unmarshal new credential", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{}
 		server := httptest.NewServer(issuerServerHandler)
 
@@ -536,7 +535,7 @@ func TestInteraction_ResolveDisplay(t *testing.T) {
 		require.NoError(t, err)
 
 		resolvedDisplayData, err := interaction.ResolveDisplay()
-		require.EqualError(t, err, "illegal base64 data at input byte 0")
+		require.EqualError(t, err, "unmarshal new credential: invalid character '*' looking for beginning of value")
 		require.Nil(t, resolvedDisplayData)
 	})
 	t.Run("Fail to parse VC", func(t *testing.T) {

@@ -184,13 +184,9 @@ func getTestClientConfig(t *testing.T) *openid4ci.ClientConfig {
 	require.NoError(t, err)
 
 	resolver := &mockResolver{keyWriter: kms}
+	clientConfig := openid4ci.NewClientConfig("UserDID", "ClientID", signerCreator, resolver)
 
-	return &openid4ci.ClientConfig{
-		UserDID:       "UserDID",
-		ClientID:      "ClientID",
-		SignerCreator: signerCreator,
-		DIDResolver:   resolver,
-	}
+	return clientConfig
 }
 
 type mockResolver struct {

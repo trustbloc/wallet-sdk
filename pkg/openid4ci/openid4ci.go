@@ -9,7 +9,6 @@ package openid4ci
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -162,12 +161,7 @@ func (i *Interaction) ResolveDisplay() (*credentialschema.ResolvedDisplayData, e
 	var credentials []*verifiable.Credential
 
 	for _, vc := range i.vcs {
-		decodedVC, err := base64.URLEncoding.DecodeString(vc)
-		if err != nil {
-			return nil, err
-		}
-
-		credential, err := verifiable.ParseCredential(decodedVC,
+		credential, err := verifiable.ParseCredential([]byte(vc),
 			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
 			verifiable.WithDisabledProofCheck())
 		if err != nil {

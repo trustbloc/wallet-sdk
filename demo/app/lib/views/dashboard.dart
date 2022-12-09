@@ -12,11 +12,11 @@ class Dashboard extends StatefulWidget {
 
 class _DashboardState extends State<Dashboard> {
   int _selectedIndex = 0;
-  static String userIDLoggedIn = '';
+  static String? userIDLoggedIn = '';
   @override
   void initState() {
-    super.initState();
     userIDLoggedIn = widget.user!;
+    super.initState();
   }
   static const TextStyle optionStyle =
   TextStyle(fontSize: 28, fontWeight: FontWeight.bold);

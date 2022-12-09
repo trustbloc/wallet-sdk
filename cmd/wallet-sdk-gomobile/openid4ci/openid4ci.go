@@ -46,6 +46,18 @@ type ClientConfig struct {
 	DIDResolver   api.DIDResolver
 }
 
+// NewClientConfig creates the client config object.
+func NewClientConfig(userDID, clientID string, signerCreator api.DIDJWTSignerCreator,
+	didRes api.DIDResolver,
+) *ClientConfig {
+	return &ClientConfig{
+		UserDID:       userDID,
+		ClientID:      clientID,
+		SignerCreator: signerCreator,
+		DIDResolver:   didRes,
+	}
+}
+
 // NewInteraction creates a new OpenID4CI Interaction.
 // The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
 // Calling this function represents taking the first step in the flow.

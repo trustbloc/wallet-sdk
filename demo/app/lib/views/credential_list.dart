@@ -5,7 +5,7 @@ import 'package:app/models/store_credential_data.dart';
 
 class CredentialList extends StatefulWidget {
   final String title;
-  final String user;
+  final String? user;
   const CredentialList({Key? key, required this.title, required this.user}) : super(key: key);
 
   @override
@@ -16,16 +16,17 @@ class _CredentialListState extends State<CredentialList> {
   final StorageService _storageService = StorageService();
   late List<StorageItem> _credentialList;
   bool _loading = true;
-  static String userIDLoggedIn = '';
+  static String? userIDLoggedIn = '';
   @override
   void initState() {
     super.initState();
     userIDLoggedIn = widget.user;
-    initList(userIDLoggedIn);
+    initList(userIDLoggedIn!);
   }
 
-  void initList(String userIDLoggedIn) async {
+  void initList(String? userIDLoggedIn) async {
     var username = await _storageService.retrieve("username");
+    print("username $username");
       _credentialList = await _storageService.retrieveAll();
     var credentialResultFound = _credentialList.where((credential) => credential.key.contains(username!));
     if (credentialResultFound.isEmpty) {
@@ -58,7 +59,7 @@ class _CredentialListState extends State<CredentialList> {
                 onDismissed: (direction) async {
                   await _storageService.deleteData(_credentialList[index]!)
                       .then((value) => _credentialList.removeAt(index));
-                  initList(widget.user);
+                  initList(widget.user!);
                 },
               );
             }),

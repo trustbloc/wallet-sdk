@@ -10,7 +10,7 @@ class MethodChannelWallet extends WalletPlatform {
   final methodChannel = const MethodChannel('WalletSDKPlugin');
 
   Future<void> initSDK() async {
-    await methodChannel.invokeMethod<String>('initSDK');
+    await methodChannel.invokeMethod<bool>('initSDK');
   }
 
   Future<String?> createDID() async {
