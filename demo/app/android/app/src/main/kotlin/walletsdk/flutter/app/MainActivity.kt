@@ -172,7 +172,7 @@ class MainActivity : FlutterActivity() {
                 ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
         val resp = openID4CI.requestCredential(otp) ?: return null
-        return String(resp)
+        return resp
     }
 
     private fun createDID(): String {
