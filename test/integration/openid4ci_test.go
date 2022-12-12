@@ -7,10 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package integration
 
 import (
-	"fmt"
 	"testing"
 
-	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -40,6 +38,8 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 	initiateIssuanceURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance("bank_issuer")
 	require.NoError(t, err)
 
+	println(initiateIssuanceURL)
+
 	kms, err := localkms.NewKMS(nil)
 	require.NoError(t, err)
 
@@ -50,18 +50,16 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 	didDoc, err := c.Create("key", &api.CreateDIDOpts{})
 	require.NoError(t, err)
 
-	fmt.Println(string(didDoc))
-
 	signerCreator, err := localkms.CreateSignerCreator(kms)
 	require.NoError(t, err)
 
 	didResolver := didresolver.NewDIDResolver()
 
-	didDocResolutionParsed, err := diddoc.ParseDocumentResolution(didDoc)
+	didID, err := didDoc.ID()
 	require.NoError(t, err)
 
 	clientConfig := openid4ci.ClientConfig{
-		UserDID:       didDocResolutionParsed.DIDDocument.ID,
+		UserDID:       didID,
 		ClientID:      "ClientID",
 		SignerCreator: signerCreator,
 		DIDResolver:   didResolver,

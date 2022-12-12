@@ -86,7 +86,7 @@ func newSignerCreator(t *testing.T) *localkms.SignerCreator {
 	kms, err := localkms.NewKMS(nil)
 	require.NoError(t, err)
 
-	signerCreator, err := localkms.CreateSignerCreator(kms)
+	signerCreator, err := localkms.NewSignerCreator(kms)
 	require.NoError(t, err)
 	require.NotNil(t, signerCreator)
 

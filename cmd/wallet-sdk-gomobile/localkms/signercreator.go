@@ -28,6 +28,11 @@ func (l *SignerCreator) Create(verificationMethod *api.JSONObject) (api.Signer, 
 	return l.didJWTSignerCreate(verificationMethod)
 }
 
+// NewSignerCreator used to generate constructor for SignerCreator.
+func NewSignerCreator(kms *KMS) (*SignerCreator, error) {
+	return CreateSignerCreator(kms)
+}
+
 // CreateSignerCreator returns a type that can be passed in to an OpenID4CI interaction to facilitate JWT signing.
 // It uses an in-memory KMS and the aries-framework-go Tink crypto implementation for signing operations.
 func CreateSignerCreator(kms *KMS) (*SignerCreator, error) {
