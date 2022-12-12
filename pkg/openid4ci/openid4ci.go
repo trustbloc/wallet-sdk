@@ -157,7 +157,9 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 // ResolveDisplay is the optional final step that can be called after RequestCredential. It resolves display
 // information for the credentials received in this interaction. The CredentialDisplays in the returned
 // credentialschema.ResolvedDisplayData object correspond to the VCs received and are in the same order.
-func (i *Interaction) ResolveDisplay() (*credentialschema.ResolvedDisplayData, error) {
+// If preferredLocale is not specified, then the first locale specified by the issuer's metadata will be used during
+// resolution.
+func (i *Interaction) ResolveDisplay(preferredLocale string) (*credentialschema.ResolvedDisplayData, error) {
 	var credentials []*verifiable.Credential
 
 	for _, vc := range i.vcs {
@@ -173,7 +175,8 @@ func (i *Interaction) ResolveDisplay() (*credentialschema.ResolvedDisplayData, e
 
 	return credentialschema.Resolve(
 		credentialschema.WithCredentials(credentials),
-		credentialschema.WithIssuerMetadata(i.issuerMetadata))
+		credentialschema.WithIssuerMetadata(i.issuerMetadata),
+		credentialschema.WithPreferredLocale(preferredLocale))
 }
 
 func (i *Interaction) getTokenResponse(tokenEndpointURL string, params url.Values) (*tokenResponse, error) {

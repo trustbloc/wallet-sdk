@@ -38,6 +38,11 @@ type CredentialRequestOpts struct {
 	UserPIN string
 }
 
+// NewCredentialRequestOpts returns a new NewCredentialRequestOpts object.
+func NewCredentialRequestOpts(userPIN string) *CredentialRequestOpts {
+	return &CredentialRequestOpts{UserPIN: userPIN}
+}
+
 // ClientConfig contains the various required parameters for an OpenID4CI Interaction.
 type ClientConfig struct {
 	UserDID       string
@@ -126,8 +131,10 @@ func (i *Interaction) RequestCredential(
 // ResolveDisplay is the optional final step that can be called after RequestCredential. It resolves display
 // information for the credentials received in this interaction. The CredentialDisplays in the returned
 // object correspond to the VCs received and are in the same order.
-func (i *Interaction) ResolveDisplay() (*api.JSONObject, error) {
-	resolvedDisplayData, err := i.goAPIInteraction.ResolveDisplay()
+// If preferredLocale is not specified, then the first locale specified by the issuer's metadata will be used during
+// resolution.
+func (i *Interaction) ResolveDisplay(preferredLocale string) (*api.JSONObject, error) {
+	resolvedDisplayData, err := i.goAPIInteraction.ResolveDisplay(preferredLocale)
 	if err != nil {
 		return nil, err
 	}

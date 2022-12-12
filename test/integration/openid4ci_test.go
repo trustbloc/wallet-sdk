@@ -70,7 +70,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, authorizeResult.UserPINRequired)
 
-	credential, err := interaction.RequestCredential(&openid4ci.CredentialRequestOpts{})
+	credential, err := interaction.RequestCredential(openid4ci.NewCredentialRequestOpts(""))
 
 	require.NoError(t, err)
 	require.NotNil(t, credential)
