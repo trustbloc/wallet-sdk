@@ -12,15 +12,19 @@ import (
 	"fmt"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/util/jwkkid"
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
+	didioncreator "github.com/trustbloc/wallet-sdk/pkg/did/creator/ion"
 	didkeycreator "github.com/trustbloc/wallet-sdk/pkg/did/creator/key"
 )
 
 const (
 	// DIDMethodKey is the name recognized by the Create method for the did:key method.
 	DIDMethodKey = "key"
+	// DIDMethodIon is the name recognized by the Create method for the did:ion method.
+	DIDMethodIon = "ion"
 	// Ed25519VerificationKey2018 is a supported DID verification type.
 	Ed25519VerificationKey2018 = "Ed25519VerificationKey2018"
 )
@@ -29,6 +33,18 @@ const (
 type Creator struct {
 	keyWriter api.KeyWriter
 	keyReader api.KeyReader
+}
+
+// NewCreator returns a new DID document Creator. KeyReader is optional.
+func NewCreator(keyWriter api.KeyWriter, keyReader api.KeyReader) (*Creator, error) {
+	if keyWriter == nil {
+		return nil, errors.New("a KeyWriter must be specified")
+	}
+
+	return &Creator{
+		keyReader: keyReader,
+		keyWriter: keyWriter,
+	}, nil
 }
 
 // NewCreatorWithKeyWriter returns a new DID document Creator. A Creator created with this function will automatically
@@ -69,8 +85,11 @@ func NewCreatorWithKeyReader(keyReader api.KeyReader) (*Creator, error) {
 //	If the Creator was created using the NewCreatorWithKeyReader function, then you must specify the KeyID and also
 //	the VerificationType in the createDIDOpts object to use for the creation of the DID document.
 func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) (*did.DocResolution, error) {
-	if method == DIDMethodKey {
+	switch method {
+	case DIDMethodKey:
 		return d.createDIDKeyDoc(createDIDOpts)
+	case DIDMethodIon:
+		return d.createDIDIonLongFormDoc(createDIDOpts)
 	}
 
 	return nil, fmt.Errorf("DID method %s not supported", method)
@@ -83,7 +102,7 @@ func (d *Creator) createDIDKeyDoc(createDIDOpts *api.CreateDIDOpts) (*did.DocRes
 
 	var err error
 
-	if d.keyReader == nil { // Generate a key and set the verification type in behalf of the caller.
+	if d.keyReader == nil { // Generate a key and set the verification type on behalf of the caller.
 		_, key, err = d.keyWriter.Create(arieskms.ED25519Type)
 		if err != nil {
 			return nil, err
@@ -104,4 +123,55 @@ func (d *Creator) createDIDKeyDoc(createDIDOpts *api.CreateDIDOpts) (*did.DocRes
 	}
 
 	return didkeycreator.NewCreator().Create(key, verificationType)
+}
+
+func (d *Creator) createDIDIonLongFormDoc(createDIDOpts *api.CreateDIDOpts) (*did.DocResolution, error) {
+	var (
+		key []byte
+		vm  *did.VerificationMethod
+		err error
+	)
+
+	// TODO: refactor so more code is shared between handlers for different did methods
+	if d.keyReader == nil { //nolint: nestif
+		// Generate a key and set the verification type on behalf of the caller.
+		var keyID string
+
+		keyID, key, err = d.keyWriter.Create(arieskms.ED25519Type)
+		if err != nil {
+			return nil, err
+		}
+
+		vm = &did.VerificationMethod{ID: "#" + keyID, Value: key, Type: Ed25519VerificationKey2018}
+	} else { // Use the caller's chosen key and verification type.
+		if createDIDOpts.VerificationType == "" {
+			return nil, errors.New("no verification type specified")
+		}
+
+		key, err = d.keyReader.ExportPubKey(createDIDOpts.KeyID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get key handle: %w", err)
+		}
+
+		if createDIDOpts.VerificationType == Ed25519VerificationKey2018 {
+			vm = &did.VerificationMethod{ID: "#" + createDIDOpts.KeyID, Value: key, Type: createDIDOpts.VerificationType}
+		} else {
+			pkJWK, e := jwkkid.BuildJWK(key, createDIDOpts.KeyType)
+			if e != nil {
+				return nil, fmt.Errorf("failed to create JWK from public key: %w", e)
+			}
+
+			vm, e = did.NewVerificationMethodFromJWK("#"+createDIDOpts.KeyID, createDIDOpts.VerificationType, "", pkJWK)
+			if e != nil {
+				return nil, fmt.Errorf("creating verification method from JWK: %w", e)
+			}
+		}
+	}
+
+	creator, err := didioncreator.NewCreator(d.keyWriter)
+	if err != nil {
+		return nil, fmt.Errorf("initializing Ion longform DID creator: %w", err)
+	}
+
+	return creator.Create(vm)
 }

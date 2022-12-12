@@ -11,6 +11,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -29,6 +30,22 @@ func (m *mockKeyHandleReader) ExportPubKey(string) ([]byte, error) {
 
 func (m *mockKeyHandleReader) GetSigningAlgorithm(keyID string) (string, error) {
 	return "", nil
+}
+
+func TestNewCreator(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
+		require.NoError(t, err)
+
+		didCreator, err := creator.NewCreator(localKMS, nil)
+		require.NoError(t, err)
+		require.NotNil(t, didCreator)
+	})
+	t.Run("Failure - no KeyWriter specified", func(t *testing.T) {
+		didCreator, err := creator.NewCreator(nil, nil)
+		require.EqualError(t, err, "a KeyWriter must be specified")
+		require.Nil(t, didCreator)
+	})
 }
 
 func TestNewCreatorWithKeyWriter(t *testing.T) {
@@ -76,6 +93,30 @@ func TestCreator_Create(t *testing.T) {
 		didDocResolution, err := didCreator.Create(creator.DIDMethodKey, createDIDOpts)
 		require.NoError(t, err)
 		require.NotEmpty(t, didDocResolution)
+
+		didDocResolution, err = didCreator.Create(creator.DIDMethodIon, createDIDOpts)
+		require.NoError(t, err)
+		require.NotEmpty(t, didDocResolution)
+	})
+	t.Run("Using KeyWriter (automatic key generation) - failure", func(t *testing.T) {
+		expectErr := errors.New("expected error")
+
+		badKMS := mockKeyWriter(func(keyType kms.KeyType) (string, []byte, error) {
+			return "", nil, expectErr
+		})
+
+		didCreator, err := creator.NewCreatorWithKeyWriter(badKMS)
+		require.NoError(t, err)
+
+		createDIDOpts := &api.CreateDIDOpts{}
+
+		didDocResolution, err := didCreator.Create(creator.DIDMethodKey, createDIDOpts)
+		require.ErrorIs(t, err, expectErr)
+		require.Empty(t, didDocResolution)
+
+		didDocResolution, err = didCreator.Create(creator.DIDMethodIon, createDIDOpts)
+		require.ErrorIs(t, err, expectErr)
+		require.Empty(t, didDocResolution)
 	})
 	t.Run("Using KeyReader (caller specified options)", func(t *testing.T) {
 		t.Run("Success", func(t *testing.T) {
@@ -86,7 +127,10 @@ func TestCreator_Create(t *testing.T) {
 				getKeyReturn: key,
 			}
 
-			didCreator, err := creator.NewCreatorWithKeyReader(mockKHR)
+			localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
+			require.NoError(t, err)
+
+			didCreator, err := creator.NewCreator(localKMS, mockKHR)
 			require.NoError(t, err)
 
 			createDIDOpts := &api.CreateDIDOpts{
@@ -95,6 +139,10 @@ func TestCreator_Create(t *testing.T) {
 			}
 
 			didDocResolution, err := didCreator.Create(creator.DIDMethodKey, createDIDOpts)
+			require.NoError(t, err)
+			require.NotEmpty(t, didDocResolution)
+
+			didDocResolution, err = didCreator.Create(creator.DIDMethodIon, createDIDOpts)
 			require.NoError(t, err)
 			require.NotEmpty(t, didDocResolution)
 		})
@@ -109,6 +157,10 @@ func TestCreator_Create(t *testing.T) {
 			}
 
 			didDocResolution, err := didCreator.Create(creator.DIDMethodKey, createDIDOpts)
+			require.EqualError(t, err, "no verification type specified")
+			require.Empty(t, didDocResolution)
+
+			didDocResolution, err = didCreator.Create(creator.DIDMethodIon, createDIDOpts)
 			require.EqualError(t, err, "no verification type specified")
 			require.Empty(t, didDocResolution)
 		})
@@ -128,6 +180,29 @@ func TestCreator_Create(t *testing.T) {
 			didDocResolution, err := didCreator.Create(creator.DIDMethodKey, createDIDOpts)
 			require.EqualError(t, err, "failed to get key handle: test failure")
 			require.Empty(t, didDocResolution)
+
+			didDocResolution, err = didCreator.Create(creator.DIDMethodIon, createDIDOpts)
+			require.EqualError(t, err, "failed to get key handle: test failure")
+			require.Empty(t, didDocResolution)
+		})
+		t.Run("Fail to create jwk", func(t *testing.T) {
+			mockKHR := &mockKeyHandleReader{
+				getKeyReturn: nil,
+			}
+
+			didCreator, err := creator.NewCreatorWithKeyReader(mockKHR)
+			require.NoError(t, err)
+
+			createDIDOpts := &api.CreateDIDOpts{
+				KeyType:          kms.ED25519Type,
+				KeyID:            "SomeKeyID",
+				VerificationType: "JsonWebKey2020",
+			}
+
+			didDocResolution, err := didCreator.Create(creator.DIDMethodIon, createDIDOpts)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "failed to create JWK from public key")
+			require.Empty(t, didDocResolution)
 		})
 	})
 	t.Run("Unsupported DID method", func(t *testing.T) {
@@ -141,4 +216,10 @@ func TestCreator_Create(t *testing.T) {
 		require.EqualError(t, err, "DID method NotAValidDIDMethod not supported")
 		require.Empty(t, didDocResolution)
 	})
+}
+
+type mockKeyWriter func(keyType kms.KeyType) (string, []byte, error)
+
+func (kw mockKeyWriter) Create(keyType kms.KeyType) (string, []byte, error) {
+	return kw(keyType)
 }
