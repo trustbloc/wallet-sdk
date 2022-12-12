@@ -6,6 +6,8 @@ void main() {
   testWidgets('openid4ci', (tester) async {
     final walletSDKPlugin = MethodChannelWallet();
 
+    print("Init SDK");
+
     await walletSDKPlugin.initSDK();
 
     final didContent = await walletSDKPlugin.createDID();

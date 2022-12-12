@@ -17,11 +17,13 @@ import (
 
 const (
 	oidcProviderURL                    = "https://localhost:4444"
-	credentialServiceURL               = "https://localhost:4455"
-	verifierProfileURL                 = credentialServiceURL + "/verifier/profiles"
+	vcsAPIGateway                      = "https://localhost:4455"
+	vcsAPIDirect                       = "http://localhost:8075"
+	verifierProfileURL                 = "%s" + "/verifier/profiles"
 	verifierProfileURLFormat           = verifierProfileURL + "/%s"
 	initiateOidcInteractionURLFormat   = verifierProfileURLFormat + "/interactions/initiate-oidc"
-	retrieveInteractionsClaimURLFormat = credentialServiceURL + "/verifier/interactions/%s/claim"
+	retrieveInteractionsClaimURLFormat = "%s" + "/verifier/interactions/%s/claim"
+	xAPIKey                            = "rw_token"
 )
 
 type initiateOIDC4VPResponse struct {
@@ -31,6 +33,8 @@ type initiateOIDC4VPResponse struct {
 
 type Setup struct {
 	verifierAccessToken string
+	organizationID      string
+	apiURL              string
 	httpRequest         *httprequest.Request
 }
 
@@ -38,6 +42,12 @@ func NewSetup(httpRequest *httprequest.Request) *Setup {
 	return &Setup{
 		httpRequest: httpRequest,
 	}
+}
+
+func (s *Setup) AuthorizeVerifierBypassAuth(orgID string) error {
+	s.organizationID = orgID
+	s.apiURL = vcsAPIDirect
+	return nil
 }
 
 func (e *Setup) AuthorizeVerifier(orgID string) error {
@@ -48,16 +58,17 @@ func (e *Setup) AuthorizeVerifier(orgID string) error {
 	}
 
 	e.verifierAccessToken = accessToken
+	e.apiURL = vcsAPIGateway
 
 	return nil
 }
 
 func (e *Setup) InitiateInteraction(profileName string) (string, error) {
-	endpointURL := fmt.Sprintf(initiateOidcInteractionURLFormat, profileName)
+	endpointURL := fmt.Sprintf(initiateOidcInteractionURLFormat, e.apiURL, profileName)
 
 	result := &initiateOIDC4VPResponse{}
 
-	_, err := e.httpRequest.Send(http.MethodPost, endpointURL, "application/json", e.verifierAccessToken, //nolint: bodyclose
+	_, err := e.httpRequest.Send(http.MethodPost, endpointURL, "application/json", e.getAuthHeaders(), //nolint: bodyclose
 		nil, &result)
 	if err != nil {
 		return "", err
@@ -66,13 +77,26 @@ func (e *Setup) InitiateInteraction(profileName string) (string, error) {
 	return result.AuthorizationRequest, nil
 }
 
-func (e *Setup) RetrieveInteractionsClaim(txID, authToken string) error {
-	endpointURL := fmt.Sprintf(retrieveInteractionsClaimURLFormat, txID)
-	_, err := e.httpRequest.Send(http.MethodGet, endpointURL, "application/json", authToken, //nolint: bodyclose
+func (e *Setup) RetrieveInteractionsClaim(txID string) error {
+	endpointURL := fmt.Sprintf(retrieveInteractionsClaimURLFormat, e.apiURL, txID)
+	_, err := e.httpRequest.Send(http.MethodGet, endpointURL, "application/json", e.getAuthHeaders(), //nolint: bodyclose
 		nil, nil)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (e *Setup) getAuthHeaders() map[string]string {
+	headers := map[string]string{}
+
+	if e.verifierAccessToken != "" {
+		headers["Authorization"] = "Bearer " + e.verifierAccessToken
+	}
+	if e.organizationID != "" {
+		headers["X-User"] = e.organizationID
+		headers["X-API-Key"] = xAPIKey
+	}
+	return headers
 }

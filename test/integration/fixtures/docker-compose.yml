@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-version: '2'
+version: '2.1'
 
 services:
   vc-rest-echo.trustbloc.local:
@@ -12,7 +12,7 @@ services:
     environment:
       - VC_REST_HOST_URL=0.0.0.0:8075
       - VC_REST_API_GATEWAY_URL=https://localhost:4455
-      - VC_REST_HOST_URL_EXTERNAL=http://vc-rest-echo.trustbloc.local:8075
+      - VC_REST_HOST_URL_EXTERNAL=http://localhost:8075
       - VC_REST_PROFILES_FILE_PATH=/profile/profiles.json
       - VC_REST_ORB_DOMAIN=testnet.orb.local
       - DATABASE_TYPE=mongodb
@@ -31,7 +31,7 @@ services:
       - VC_REST_DEV_MODE=true
       - VC_OAUTH_SECRET=secret-for-signing-and-verifying-signatures
       - VC_METRICS_PROVIDER_NAME=prometheus
-      - VC_PROM_HTTP_URL=vc-rest-echo.trustbloc.local:48127
+      - VC_PROM_HTTP_URL=localhost:48127
       - VC_OAUTH_CLIENTS_FILE_PATH=/oauth-clients/clients.json
     ports:
       - "8075:8075"
@@ -145,39 +145,6 @@ services:
     networks:
       - bdd_net
 
-  vc-openapi.trustbloc.local:
-    container_name: vc-openapi.trustbloc.local
-    image: swaggerapi/swagger-ui
-    environment:
-      - SWAGGER_JSON=/spec/openAPI.yml
-      - BASE_URL=/openapi
-    ports:
-      - "8089:8080"
-    volumes:
-      - ./spec:/spec
-    networks:
-      - bdd_net
-
-  oathkeeper.trustbloc.local:
-    container_name: oathkeeper.trustbloc.local
-    image: oryd/oathkeeper:${OATHKEEPER_IMAGE_TAG}
-    ports:
-      - "4455:4455"
-    command: /bin/sh -c "cp /etc/tls/ec-cacert.pem /usr/local/share/ca-certificates/;update-ca-certificates;oathkeeper serve proxy --config /oathkeeper/config.yaml"
-    user: root
-    entrypoint: ""
-    environment:
-      - LOG_LEVEL=debug
-      - PORT=4455
-      - ISSUER_URL=https://oathkeeper-proxy.trustbloc.local
-      - SERVE_PROXY_TLS_KEY_PATH=/etc/tls/ec-key.pem
-      - SERVE_PROXY_TLS_CERT_PATH=/etc/tls/ec-pubCert.pem
-      - LOG_LEAK_SENSITIVE_VALUES=true
-    volumes:
-      - ./oathkeeper-config:/oathkeeper
-      - ./keys/tls:/etc/tls
-    networks:
-      - bdd_net
 
   oidc-provider.example.com:
     container_name: oidc-provider.example.com
@@ -206,7 +173,8 @@ services:
       - ./keys/tls:/etc/tls
       - ./hydra-config/hydra_configure.sh:/tmp/hydra_configure.sh
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
       - bdd_net
 
@@ -235,6 +203,10 @@ services:
     command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: secret
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
     logging:
       driver: "none"
     volumes:

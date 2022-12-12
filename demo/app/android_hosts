@@ -1,8 +1,0 @@
-127.0.0.1       localhost
-::1             ip6-localhost
-
-10.0.2.2 testnet.orb.local
-10.0.2.2 file-server.trustbloc.local
-10.0.2.2 did-resolver.trustbloc.local
-10.0.2.2 oidc-provider.example.com
-10.0.2.2 vc-rest-echo.trustbloc.local

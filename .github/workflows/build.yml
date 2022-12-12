@@ -11,9 +11,9 @@ env:
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   SemanticPullRequest:
@@ -137,8 +137,52 @@ jobs:
           name: ios-binding
           path: ./cmd/wallet-sdk-gomobile/bindings/ios
 
+
+  FlutterIntegrationTest:
+    runs-on: macos-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Setup env for integration test
+        run: |
+          echo '127.0.0.1 testnet.orb.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 file-server.trustbloc.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 did-resolver.trustbloc.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 oidc-provider.example.com' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
+          brew install docker docker-compose colima
+          colima start
+          export PATH=$PATH:$GOPATH/bin
+          echo $PATH
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+          make prepare-integration-test-flutter
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: flutter-actions/setup-flutter@v2
+        with:
+          channel: stable
+          version: 3.3.7
+
+      - name: Run tests on Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -writable-system -noaudio -no-boot-anim
+          script: make integration-test-flutter
+
   PublishAndroidBinding:
-    needs: [Checks, UnitTest, GenerateAndroidBinding, GenerateiOSBinding]
+    needs: [ Checks, UnitTest, GenerateAndroidBinding, GenerateiOSBinding ]
     if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-22.04
     timeout-minutes: 10

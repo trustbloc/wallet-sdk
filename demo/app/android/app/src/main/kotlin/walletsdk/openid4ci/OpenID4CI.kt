@@ -33,12 +33,11 @@ class OpenID4CI constructor(
 
 
     fun requestCredential(otp: String?): String? {
-        val credReq = CredentialRequestOpts()
-        credReq.userPIN = otp
+        val credReq = CredentialRequestOpts(otp)
         val credsArr = newInteraction.requestCredential(credReq)
 
         if (credsArr.length() != 0L) {
-            val resolvedDisplayData = newInteraction.resolveDisplay()
+            val resolvedDisplayData = newInteraction.resolveDisplay("")
             return String(resolvedDisplayData.data)
         }
 
