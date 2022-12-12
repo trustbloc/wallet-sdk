@@ -65,7 +65,9 @@ func NewClientConfig(userDID, clientID string, signerCreator api.DIDJWTSignerCre
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-5.1), encoded using URL query
 // parameters. This object is intended for going through the full flow only once (i.e. one interaction), after which
 // it should be discarded. Any new interactions should use a fresh Interaction instance.
-func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interaction, error) {
+func NewInteraction(
+	initiateIssuanceURI string, config *ClientConfig,
+) (*Interaction, error) {
 	goAPIClientConfig := unwrapConfig(config)
 
 	goAPIInteraction, err := openid4cigoapi.NewInteraction(initiateIssuanceURI, goAPIClientConfig)

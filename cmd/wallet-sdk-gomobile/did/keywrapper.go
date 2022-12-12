@@ -4,7 +4,7 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package didcreator
+package did
 
 import (
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"

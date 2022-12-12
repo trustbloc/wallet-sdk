@@ -4,8 +4,9 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package memstorage contains a credential storage implementation using in-memory storage only.
-package memstorage
+// Package credential contains an in-memory credential storage implementation.
+// It also contains a type that can be used to query for credentials using a presentation definition.
+package credential
 
 import (
 	"encoding/json"
@@ -18,24 +19,24 @@ import (
 	goapimemstorage "github.com/trustbloc/wallet-sdk/pkg/memstorage"
 )
 
-// A Provider allows for credential storage and retrieval using in-memory storage only.
-type Provider struct {
+// A DB allows for credential storage and retrieval using in-memory storage only.
+type DB struct {
 	goAPIProvider  *goapimemstorage.Provider
 	documentLoader ld.DocumentLoader
 }
 
-// NewProvider returns a new Provider.
+// NewInMemoryDB returns a new in-memory credential DB.
 // It uses a network-based JSON-LD document loader.
 // TODO: Support custom document loaders so that contexts can be preloaded.
-func NewProvider() *Provider {
-	return &Provider{
+func NewInMemoryDB() *DB {
+	return &DB{
 		goAPIProvider:  goapimemstorage.NewProvider(),
 		documentLoader: ld.NewDefaultDocumentLoader(http.DefaultClient),
 	}
 }
 
 // Get returns a credential with the given id. An error is returned if no credential exists with the given id.
-func (p *Provider) Get(id string) (*api.JSONObject, error) {
+func (p *DB) Get(id string) (*api.JSONObject, error) {
 	vc, err := p.goAPIProvider.Get(id)
 	if err != nil {
 		return nil, err
@@ -50,7 +51,7 @@ func (p *Provider) Get(id string) (*api.JSONObject, error) {
 }
 
 // GetAll returns all stored credentials.
-func (p *Provider) GetAll() (*api.JSONArray, error) {
+func (p *DB) GetAll() (*api.JSONArray, error) {
 	vcs, err := p.goAPIProvider.GetAll()
 	if err != nil {
 		return nil, err
@@ -65,7 +66,7 @@ func (p *Provider) GetAll() (*api.JSONArray, error) {
 }
 
 // Add stores the given credential.
-func (p *Provider) Add(vc *api.JSONObject) error {
+func (p *DB) Add(vc *api.JSONObject) error {
 	credential, err := verifiable.ParseCredential(vc.Data,
 		verifiable.WithJSONLDDocumentLoader(p.documentLoader),
 		verifiable.WithDisabledProofCheck())
@@ -77,6 +78,6 @@ func (p *Provider) Add(vc *api.JSONObject) error {
 }
 
 // Remove removes the credential with the matching id, if it exists.
-func (p *Provider) Remove(id string) error {
+func (p *DB) Remove(id string) error {
 	return p.goAPIProvider.Remove(id)
 }

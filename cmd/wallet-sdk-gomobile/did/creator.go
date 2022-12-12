@@ -4,9 +4,9 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package didcreator contains a DID document creator that can be used to create DIDs using various supported DID
-// methods.
-package didcreator
+// Package did contains a DID document creator and resolver that can be used to create and resolve DIDs using various
+// supported DID methods.
+package did
 
 import (
 	"errors"
@@ -31,7 +31,9 @@ type Creator struct {
 // NewCreatorWithKeyWriter returns a new DID document Creator. A Creator created with this function will automatically
 // generate keys for you when creating new DID documents. Those keys will be generated and stored using the given
 // KeyWriter. See the Create method for more information.
-func NewCreatorWithKeyWriter(keyWriter api.KeyWriter) (*Creator, error) {
+func NewCreatorWithKeyWriter(
+	keyWriter api.KeyWriter,
+) (*Creator, error) {
 	if keyWriter == nil {
 		return nil, errors.New("a KeyWriter must be specified")
 	}

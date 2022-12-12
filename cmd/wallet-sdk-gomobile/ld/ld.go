@@ -4,8 +4,8 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package linkeddomains contains functionality for dealing with linked domains.
-package linkeddomains
+// Package ld contains functionality for dealing with linked domains.
+package ld
 
 import (
 	"encoding/json"
@@ -16,20 +16,20 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )
 
-// DocumentLoader represents a type that can help with linked domains.
-type DocumentLoader struct {
+// DocLoader represents a type that can help with linked domains.
+type DocLoader struct {
 	documentLoader ld.DocumentLoader
 }
 
-// NewDocumentLoader returns a new DocumentLoader instance.
-func NewDocumentLoader() *DocumentLoader {
-	return &DocumentLoader{
+// NewDocLoader returns a new DocLoader instance.
+func NewDocLoader() *DocLoader {
+	return &DocLoader{
 		documentLoader: ld.NewDefaultDocumentLoader(http.DefaultClient),
 	}
 }
 
 // LoadDocument load linked document by url.
-func (l *DocumentLoader) LoadDocument(u string) (*api.LDDocument, error) {
+func (l *DocLoader) LoadDocument(u string) (*api.LDDocument, error) {
 	doc, err := l.documentLoader.LoadDocument(u)
 	if err != nil {
 		return nil, err
