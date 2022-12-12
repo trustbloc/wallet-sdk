@@ -64,9 +64,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     
     private func initSDK(result: @escaping FlutterResult) {
         kms = LocalkmsNewKMS(nil, nil)
-        didResolver = DidresolverNewDIDResolver()
+        didResolver = DidNewResolver()
         crypto = kms?.getCrypto()
-        documentLoader = LinkeddomainsNewDocumentLoader()
+        documentLoader = LdNewDocLoader()
         signerCreator = LocalkmsCreateSignerCreator(kms, nil)
         result(true)
     }
@@ -152,7 +152,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     public func createDid(result: @escaping FlutterResult){
-        let didCreator = DidcreatorNewCreatorWithKeyWriter(self.kms, nil)
+        let didCreator = DidNewCreatorWithKeyWriter(self.kms, nil)
         do {
             let apiCreate = initializeObject(fromType: ApiCreateDIDOpts.self)
             let doc = try didCreator!.create("key", createDIDOpts: apiCreate)
@@ -190,7 +190,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             let credResp  = try newOIDCInteraction?.requestCredential(credentialRequest)
             // TODO Checking the first credential in the array
             if (credResp!.length() > 0) {
-                let resolvedDisplayData = try newOIDCInteraction?.resolveDisplay()
+                let resolvedDisplayData = try newOIDCInteraction?.resolveDisplay("")
                 let displayDataResp = String(bytes: (resolvedDisplayData?.data)!, encoding: .utf8)
                 result(displayDataResp)
             }
