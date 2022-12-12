@@ -10,9 +10,9 @@ import dev.trustbloc.wallet.sdk.api.Crypto
 import dev.trustbloc.wallet.sdk.api.DIDResolver
 import dev.trustbloc.wallet.sdk.api.KeyReader
 import dev.trustbloc.wallet.sdk.api.LDDocumentLoader
-import dev.trustbloc.wallet.sdk.credentialquery.Credentials
+import dev.trustbloc.wallet.sdk.credential.Credentials
 import dev.trustbloc.wallet.sdk.openid4vp.Interaction;
-import dev.trustbloc.wallet.sdk.credentialquery.Query;
+import dev.trustbloc.wallet.sdk.credential.Inquirer;
 import walletsdk.util.createJsonArray
 import java.lang.Exception
 
@@ -33,7 +33,7 @@ class OpenID4VP constructor(
         val credentials = Credentials();
         credentials.vCs = createJsonArray(storedCredentials)
 
-        verifiablePresentation = Query(documentLoader).query(query, credentials)
+        verifiablePresentation = Inquirer(documentLoader).query(query, credentials)
 
         initiatedInteraction = interaction
 

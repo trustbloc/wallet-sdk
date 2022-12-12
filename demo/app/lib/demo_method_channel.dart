@@ -24,9 +24,14 @@ class MethodChannelWallet extends WalletPlatform {
     return authorizeResult;
   }
 
-  Future<String?> requestCredential(String userPinEntered) async {
+  Future<String> requestCredential(String userPinEntered) async {
     final credentialResponse =
         await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{'otp': userPinEntered});
+
+    if (credentialResponse == null) {
+      throw Exception("Plugin implementation error, response from requestCredential can't be null");
+    }
+
     return credentialResponse;
   }
 

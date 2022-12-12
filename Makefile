@@ -14,6 +14,8 @@ endif
 ALPINE_VER ?= 3.16
 GO_VER ?= 1.19
 
+ANDROID_EMULATOR_NAME ?= WalletSDKDeviceEmulator
+
 .PHONY: all
 all: checks unit-test
 
@@ -80,6 +82,34 @@ mock-login-consent-docker:
 integration-test: sample-webhook-docker mock-login-consent-docker generate-test-keys
 	@cd test/integration && ENABLE_COMPOSITION=true go test -count=1 -v -cover . -p 1 -timeout=10m -race
 
+.PHONY: build-integration-cli
+build-integration-cli:
+	@echo "Building integration cli"
+	@mkdir -p ./build/bin
+	@cd test/integration/cli && go build -o ../../../build/bin/integration-cli main.go
+
+.PHONY: integration-test-flutter
+integration-test-flutter: build-integration-cli
+	@cd test/integration/fixtures && docker-compose -f docker-compose.yml up --force-recreate -d
+	@sleep 30
+	@scripts/flutter_test.sh
+	@cd test/integration/fixtures && docker-compose -f docker-compose.yml down
+
+
+
+.PHONY: start-android-emulator
+start-android-emulator:
+	@emulator -avd $(ANDROID_EMULATOR_NAME) -writable-system -no-snapshot-load -no-cache
+
+.PHONY: prepare-android-emulator
+prepare-android-emulator:
+	@adb root
+	@adb shell avbctl disable-verification
+	@adb reboot
+	@sleep 60
+	@adb root
+	@adb remount
+	@adb push ./demo/app/android_hosts /etc/hosts
 
 # TODO (#264): frapsoft/openssl only has an amd64 version. While this does work under amd64 and arm64 Mac OS currently,
 #               we should add an arm64 version for systems that can only run arm64 code.
