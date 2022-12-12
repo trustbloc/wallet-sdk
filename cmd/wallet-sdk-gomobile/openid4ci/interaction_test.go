@@ -121,7 +121,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		interaction := createInteraction(t, requestURI)
 
-		credentialRequest := &openid4ci.CredentialRequestOpts{}
+		credentialRequest := openid4ci.NewCredentialRequestOpts("")
 
 		result, err := interaction.RequestCredential(credentialRequest)
 		require.NoError(t, err)
@@ -154,7 +154,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		interaction, err := openid4ci.NewInteraction(requestURI, config)
 		require.NoError(t, err)
 
-		credentialRequest := &openid4ci.CredentialRequestOpts{}
+		credentialRequest := openid4ci.NewCredentialRequestOpts("")
 
 		result, err := interaction.RequestCredential(credentialRequest)
 		require.EqualError(t, err, "failed to create JWT: failed to create gomobile signer: test failure")

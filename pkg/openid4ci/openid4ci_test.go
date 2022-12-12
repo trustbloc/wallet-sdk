@@ -488,7 +488,7 @@ func TestInteraction_ResolveDisplay(t *testing.T) {
 		_, err = interaction.RequestCredential(credentialRequest)
 		require.NoError(t, err)
 
-		resolvedDisplayData, err := interaction.ResolveDisplay()
+		resolvedDisplayData, err := interaction.ResolveDisplay("")
 		require.NoError(t, err)
 		require.NotNil(t, resolvedDisplayData)
 	})
@@ -534,7 +534,7 @@ func TestInteraction_ResolveDisplay(t *testing.T) {
 		_, err = interaction.RequestCredential(credentialRequest)
 		require.NoError(t, err)
 
-		resolvedDisplayData, err := interaction.ResolveDisplay()
+		resolvedDisplayData, err := interaction.ResolveDisplay("")
 		require.EqualError(t, err, "unmarshal new credential: invalid character '*' looking for beginning of value")
 		require.Nil(t, resolvedDisplayData)
 	})
@@ -580,7 +580,7 @@ func TestInteraction_ResolveDisplay(t *testing.T) {
 		_, err = interaction.RequestCredential(credentialRequest)
 		require.NoError(t, err)
 
-		resolvedDisplayData, err := interaction.ResolveDisplay()
+		resolvedDisplayData, err := interaction.ResolveDisplay("")
 		require.EqualError(t, err, "unmarshal new credential: unexpected end of JSON input")
 		require.Nil(t, resolvedDisplayData)
 	})
