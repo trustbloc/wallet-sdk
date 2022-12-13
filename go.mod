@@ -9,7 +9,7 @@ go 1.19
 require (
 	github.com/google/tink/go v1.7.0
 	github.com/hyperledger/aries-framework-go v0.1.9-0.20221202141134-083803ecf0a3
-	github.com/hyperledger/aries-framework-go-ext/component/vdr/longform v0.0.0-20221111130946-12fe918c98bb
+	github.com/hyperledger/aries-framework-go-ext/component/vdr/longform v0.0.0-20221209153644-5a3273a805c1
 	github.com/piprate/json-gold v0.4.2
 	github.com/stretchr/testify v1.8.1
 )

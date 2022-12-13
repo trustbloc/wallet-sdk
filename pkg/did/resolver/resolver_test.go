@@ -14,7 +14,8 @@ import (
 )
 
 func TestDIDResolver(t *testing.T) {
-	didResolver := resolver.NewDIDResolver()
+	didResolver, err := resolver.NewDIDResolver()
+	require.NoError(t, err)
 
 	didDocResolution, err := didResolver.Resolve("did:key:z6MkjfbzWitsSUyFMTbBUSWNsJBHR7BefFp1WmABE3kRw8Qr")
 	require.NoError(t, err)
@@ -22,7 +23,8 @@ func TestDIDResolver(t *testing.T) {
 }
 
 func TestDIDResolver_InvalidDID(t *testing.T) {
-	didResolver := resolver.NewDIDResolver()
+	didResolver, err := resolver.NewDIDResolver()
+	require.NoError(t, err)
 
 	didDocResolution, err := didResolver.Resolve("did:example:abc")
 	require.Error(t, err)

@@ -51,7 +51,8 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 	signerCreator, err := localkms.CreateSignerCreator(kms)
 	require.NoError(t, err)
 
-	didResolver := did.NewResolver()
+	didResolver, err := did.NewResolver()
+	require.NoError(t, err)
 
 	didID, err := didDoc.ID()
 	require.NoError(t, err)

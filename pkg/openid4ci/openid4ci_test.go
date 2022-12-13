@@ -345,7 +345,10 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			"&user_pin_required=false"
 
 		config := getTestClientConfig(t)
-		config.DIDResolver = resolver.NewDIDResolver()
+
+		var err error
+		config.DIDResolver, err = resolver.NewDIDResolver()
+		require.NoError(t, err)
 
 		interaction, err := openid4ci.NewInteraction(requestURI, config)
 		require.NoError(t, err)
