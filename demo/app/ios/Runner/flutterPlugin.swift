@@ -185,12 +185,11 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         let clientConfig =  Openid4ciClientConfig(didDocID!,  clientID: "ClientID", signerCreator: self.signerCreator, didRes: self.didResolver)
         let newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
         do {
-            let credentialRequest = Openid4ciCredentialRequestOpts()
-            credentialRequest.userPIN = otp
+            let credentialRequest = Openid4ciNewCredentialRequestOpts( otp )
             let credResp  = try newOIDCInteraction?.requestCredential(credentialRequest)
             // TODO Checking the first credential in the array
             if (credResp!.length() > 0) {
-                let resolvedDisplayData = try newOIDCInteraction?.resolveDisplay()
+                let resolvedDisplayData = try newOIDCInteraction?.resolveDisplay("")
                 let displayDataResp = String(bytes: (resolvedDisplayData?.data)!, encoding: .utf8)
                 result(displayDataResp)
             }
