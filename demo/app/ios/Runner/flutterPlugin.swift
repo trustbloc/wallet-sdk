@@ -64,9 +64,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     
     private func initSDK(result: @escaping FlutterResult) {
         kms = LocalkmsNewKMS(nil, nil)
-        didResolver = DidresolverNewDIDResolver()
+        didResolver = DidNewResolver()
         crypto = kms?.getCrypto()
-        documentLoader = LinkeddomainsNewDocumentLoader()
+        documentLoader = LdNewDocLoader()
         signerCreator = LocalkmsCreateSignerCreator(kms, nil)
         result(true)
     }
@@ -152,7 +152,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     public func createDid(result: @escaping FlutterResult){
-        let didCreator = DidcreatorNewCreatorWithKeyWriter(self.kms, nil)
+        let didCreator = DidNewCreatorWithKeyWriter(self.kms, nil)
         do {
             let apiCreate = initializeObject(fromType: ApiCreateDIDOpts.self)
             let doc = try didCreator!.create("key", createDIDOpts: apiCreate)
@@ -182,7 +182,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     public func requestCredential(otp: String, result: @escaping FlutterResult){
-        let clientConfig =  Openid4ciClientConfig( didDocID!,  clientID: "ClientID", signerCreator: self.signerCreator, didRes: self.didResolver)
+        let clientConfig =  Openid4ciClientConfig(didDocID!,  clientID: "ClientID", signerCreator: self.signerCreator, didRes: self.didResolver)
         let newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
         do {
             let credentialRequest = Openid4ciCredentialRequestOpts()
