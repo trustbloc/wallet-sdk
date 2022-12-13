@@ -46,6 +46,10 @@ make generate-ios-bindings
 
 The generated bindings can be found in the `bindings` folder.
 
+## SDK Usage
+
+For usage documentation + examples, see [here](docs/usage.md).
+
 ## Helpful Tips
 
 * After importing `walletsdk.aar` into your Android project, to use the Wallet SDK packages in a Kotlin or 

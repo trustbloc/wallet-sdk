@@ -15,6 +15,7 @@ This project contains:
   - For building native Go applications.
 - [A gomobile-compatible Go SDK](cmd/wallet-sdk-gomobile)
   - For generating gomobile-compatible bindings (see below).
+  - To jump straight to usage documentation, see [here](cmd/wallet-sdk-gomobile/docs/usage.md).
 - [Scripts to generate Android and iOS-compatible bindings](cmd/wallet-sdk-gomobile/README.md)
   - Allows the Go SDK to be used in an Android or iOS app.
 

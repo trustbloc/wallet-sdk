@@ -4,8 +4,9 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package localkms contains a KMS implementation that uses local storage.
-// It is not intended for production use and may not be secure.
+// Package localkms contains a KMS implementation that uses Google's Tink crypto library.
+// Private keys may intermittently reside in local memory with this implementation so
+// keep this consideration in mind when deciding whether to use this or not.
 package localkms
 
 import (
@@ -27,8 +28,9 @@ type Store interface {
 	Delete(keysetID string) error
 }
 
-// KMS is a KMS implementation that uses local storage.
-// It is not intended for production use and may not be secure.
+// KMS is a KMS implementation that uses Google's Tink crypto library.
+// Private keys may intermittently reside in local memory with this implementation so
+// keep this consideration in mind when deciding whether to use this or not.
 type KMS struct {
 	goAPILocalKMS *goapilocalkms.LocalKMS
 }
