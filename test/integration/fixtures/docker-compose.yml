@@ -145,32 +145,6 @@ services:
     networks:
       - bdd_net
 
-  uni-resolver-web:
-    image: universalresolver/uni-resolver-web:v0.4.0-8390e7a
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./universal-resolver/config.json:/opt/uni-resolver-java/uni-resolver-web/config.json
-      - ./universal-resolver/run-uni-resolver-web.sh:/opt/uni-resolver-java/uni-resolver-web/docker/run-uni-resolver-web.sh
-    networks:
-      - bdd_net
-
-  uni-resolver-driver-did-uport:
-    container_name: uni-resolver-did-uport
-    image: uport/uni-resolver-driver-did-uport:latest
-    ports:
-      - "8083:8081"
-    networks:
-      - bdd_net
-
-  uni-resolver-did-v1-driver:
-    container_name: uni-resolver-did-v1
-    image: veresone/uni-resolver-did-v1-driver:latest
-    ports:
-      - "8085:8080"
-    networks:
-      - bdd_net
-
   vc-openapi.trustbloc.local:
     container_name: vc-openapi.trustbloc.local
     image: swaggerapi/swagger-ui
