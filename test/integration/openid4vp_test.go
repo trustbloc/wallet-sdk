@@ -36,7 +36,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 	initiateURL, err := setup.InitiateInteraction("v_myprofile_jwt")
 	require.NoError(t, err)
 
-	didResolver, err := did.NewResolver()
+	didResolver, err := did.NewResolver("")
 	require.NoError(t, err)
 
 	interaction := openid4vp.NewInteraction(
@@ -97,7 +97,7 @@ func (h *vpTestHelper) issueCredentials(t *testing.T) *api.VerifiableCredentials
 		signerCreator, err := localkms.CreateSignerCreator(h.KMS)
 		require.NoError(t, err)
 
-		didResolver, err := did.NewResolver()
+		didResolver, err := did.NewResolver("")
 		require.NoError(t, err)
 
 		didID, err := h.DIDDoc.ID()
