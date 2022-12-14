@@ -34,3 +34,22 @@ func (d *DIDDocResolution) ID() (string, error) {
 
 	return didDocResolutionParsed.DIDDocument.ID, nil
 }
+
+// AssertionMethodKeyID returns the id of the key that was used for assertion verification.
+func (d *DIDDocResolution) AssertionMethodKeyID() (string, error) {
+	didDocResolutionParsed, err := diddoc.ParseDocumentResolution(d.Content)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse DID document resolution content: %w", err)
+	}
+
+	// look for assertion method
+	verificationMethods := didDocResolutionParsed.DIDDocument.VerificationMethods(diddoc.AssertionMethod)
+
+	if len(verificationMethods[diddoc.AssertionMethod]) > 0 {
+		vm := verificationMethods[diddoc.AssertionMethod][0].VerificationMethod
+
+		return vm.ID, nil
+	}
+
+	return "", fmt.Errorf("DID provided has no assertion method to use as a default signing key")
+}

@@ -31,6 +31,15 @@
         "publicKeyHex": "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
       }
     ],
+    "assertionMethod": [
+      "did:example:123456789abcdefghi#keys-1",
+      {
+        "id": "did:example:123456789abcdefghs#key3",
+        "type": "RsaVerificationKey2018",
+        "controller": "did:example:123456789abcdefghs",
+        "publicKeyHex": "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
+      }
+    ],
     "service": [
       {
         "id": "did:example:123456789abcdefghi#inbox",
