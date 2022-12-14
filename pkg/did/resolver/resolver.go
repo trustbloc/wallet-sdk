@@ -10,6 +10,7 @@ package resolver
 import (
 	"fmt"
 
+	"github.com/hyperledger/aries-framework-go-ext/component/vdr/longform"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/key"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/web"
 
@@ -23,13 +24,19 @@ type DIDResolver struct {
 }
 
 // NewDIDResolver new DID Resolver instance.
-func NewDIDResolver() *DIDResolver {
+func NewDIDResolver() (*DIDResolver, error) {
+	ion, err := longform.New()
+	if err != nil {
+		return nil, fmt.Errorf("initializing did:ion longform resolver: %w", err)
+	}
+
 	return &DIDResolver{
 		vdr: vdr.New(
 			vdr.WithVDR(key.New()),
 			vdr.WithVDR(web.New()),
+			vdr.WithVDR(ion),
 		),
-	}
+	}, nil
 }
 
 // Resolve resolves a DID.

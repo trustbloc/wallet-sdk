@@ -18,8 +18,13 @@ type Resolver struct {
 }
 
 // NewResolver returns a new Resolver.
-func NewResolver() *Resolver {
-	return &Resolver{resolver: resolver.NewDIDResolver()}
+func NewResolver() (*Resolver, error) {
+	didResolver, err := resolver.NewDIDResolver()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Resolver{resolver: didResolver}, nil
 }
 
 // Resolve resolves a DID.
