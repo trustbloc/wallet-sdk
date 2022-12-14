@@ -162,7 +162,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         } catch {
             result(FlutterError.init(code: "NATIVE_ERR",
                                      message: "error while creating did",
-                                     details: nil))
+                                     details: error))
         }
     }
     
@@ -177,7 +177,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
           } catch {
               result(FlutterError.init(code: "NATIVE_ERR",
                                        message: "error while creating new OIDC interaction",
-                                       details: nil))
+                                       details: error))
           }
     }
     
@@ -193,10 +193,11 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 let displayDataResp = String(bytes: (resolvedDisplayData?.data)!, encoding: .utf8)
                 result(displayDataResp)
             }
-          } catch {
-              result(FlutterError.init(code: "NATIVE_ERR",
+          } catch let error as NSError{
+              print("printing error")
+              result(FlutterError.init(code: "Exception",
                                        message: "error while requesting credential",
-                                       details: error))
+                                       details: error.description))
           }
         
     }

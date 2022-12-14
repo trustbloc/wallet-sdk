@@ -1,5 +1,6 @@
 import 'package:app/main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'credential_preview.dart';
 
 class OTP extends StatefulWidget {
@@ -8,7 +9,6 @@ class OTP extends StatefulWidget {
   @override
   State<OTP> createState() => _OTPPage();
 }
-
 class _OTPPage extends State<OTP> {
   // 4 text editing controllers that associate with the 4 input fields
   final TextEditingController _fieldOne = TextEditingController();
@@ -21,6 +21,8 @@ class _OTPPage extends State<OTP> {
   // This is the entered code
   // It will be displayed in a Text widget
   String? _otp;
+  String _requestCredentialErrorMsg = '';
+  String? actionText = 'Submit';
 
   @override
   Widget build(BuildContext context) {
@@ -60,16 +62,21 @@ class _OTPPage extends State<OTP> {
                       _fieldFive.text +
                       _fieldSix.text;
                 });
-                var requestCredentialResp = await WalletSDKPlugin.requestCredential(_otp!);
-                // Making sure request credential response is not empty
-               if (requestCredentialResp!.isNotEmpty) {
-                 _navigateToCredPreviewScreen(requestCredentialResp);
-                } else {
-                 const Text('Failed to get the requested credential', style: TextStyle(color: Colors.red, fontSize: 20));
-               }
+                  var requestCredentialResp =  await WalletSDKPlugin.requestCredential(_otp!);
+                  // Making sure request credential response doesn't contain error
+                  if (!requestCredentialResp!.contains("generic-error")) {
+                    _navigateToCredPreviewScreen(requestCredentialResp);
+                  } else {
+                    setState(() {
+                      _requestCredentialErrorMsg = requestCredentialResp.toString();
+                      actionText = 'Re-enter';
+                      _clearOTPInput();
+                    });
+                  }
               },
 
-              child: const Text('Submit', style: TextStyle(fontSize: 20))),
+              child: Text(actionText!, style: const TextStyle(fontSize: 20))
+          ),
           const SizedBox(
             height: 30,
           ),
@@ -77,13 +84,23 @@ class _OTPPage extends State<OTP> {
           Text(
             _otp ?? '',
             style: const TextStyle(fontSize: 30),
-          )
+          ),
+          Text(_requestCredentialErrorMsg ?? '', style: const TextStyle(fontSize: 12, color: Colors.redAccent)),
         ],
       ),
     );
   }
   _navigateToCredPreviewScreen(String credentialResp) async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialResponse: credentialResp)));
+  }
+
+  _clearOTPInput(){
+    _fieldOne.clear();
+    _fieldTwo.clear();
+    _fieldThree.clear();
+    _fieldFour.clear();
+    _fieldFive.clear();
+    _fieldSix.clear();
   }
 }
 
