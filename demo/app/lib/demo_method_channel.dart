@@ -8,6 +8,7 @@ import 'demo_platform_interface.dart';
 class MethodChannelWallet extends WalletPlatform {
   @visibleForTesting
   final methodChannel = const MethodChannel('WalletSDKPlugin');
+  final errorCode = 'Exception';
 
   Future<void> initSDK() async {
     await methodChannel.invokeMethod<bool>('initSDK');
@@ -24,15 +25,17 @@ class MethodChannelWallet extends WalletPlatform {
     return authorizeResult;
   }
 
-  Future<String> requestCredential(String userPinEntered) async {
-    final credentialResponse =
-        await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{'otp': userPinEntered});
-
-    if (credentialResponse == null) {
-      throw Exception("Plugin implementation error, response from requestCredential can't be null");
+  Future<String?> requestCredential(String userPinEntered) async {
+    try {
+      final credentialResponse =
+      await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{'otp': userPinEntered});
+      return credentialResponse;
+    } on PlatformException catch (error) {
+      if (error.code == errorCode) {
+        return error.details.toString();
+      }
     }
-
-    return credentialResponse;
+    return null;
   }
 
   // TODO: return credentials display information after it implemented in go sdk
