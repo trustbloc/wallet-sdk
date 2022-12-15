@@ -347,7 +347,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		config := getTestClientConfig(t)
 
 		var err error
-		config.DIDResolver, err = resolver.NewDIDResolver()
+		config.DIDResolver, err = resolver.NewDIDResolver("")
 		require.NoError(t, err)
 
 		interaction, err := openid4ci.NewInteraction(requestURI, config)

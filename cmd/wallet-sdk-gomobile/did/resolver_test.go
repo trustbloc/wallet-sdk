@@ -15,16 +15,25 @@ import (
 )
 
 func TestDIDResolver(t *testing.T) {
-	didResolver, err := did.NewResolver()
-	require.NoError(t, err)
+	t.Run("success", func(t *testing.T) {
+		didResolver, err := did.NewResolver("")
+		require.NoError(t, err)
 
-	didDocResolution, err := didResolver.Resolve("did:key:z6MkjfbzWitsSUyFMTbBUSWNsJBHR7BefFp1WmABE3kRw8Qr")
-	require.NoError(t, err)
-	require.NotEmpty(t, didDocResolution)
+		didDocResolution, err := didResolver.Resolve("did:key:z6MkjfbzWitsSUyFMTbBUSWNsJBHR7BefFp1WmABE3kRw8Qr")
+		require.NoError(t, err)
+		require.NotEmpty(t, didDocResolution)
+	})
+
+	t.Run("fail to initialize with invalid resolver server URI", func(t *testing.T) {
+		didResolver, err := did.NewResolver("not a uri")
+		require.Error(t, err)
+		require.Nil(t, didResolver)
+		require.Contains(t, err.Error(), "failed to initialize client for DID resolution server")
+	})
 }
 
 func TestDIDResolver_InvalidDID(t *testing.T) {
-	didResolver, err := did.NewResolver()
+	didResolver, err := did.NewResolver("")
 	require.NoError(t, err)
 
 	didDocResolution, err := didResolver.Resolve("did:example:abc")
