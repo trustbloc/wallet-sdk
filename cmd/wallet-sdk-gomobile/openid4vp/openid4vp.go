@@ -10,7 +10,6 @@ package openid4vp
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
@@ -51,7 +50,7 @@ func NewInteraction(authorizationRequest string, keyHandleReader api.KeyReader, 
 		keyHandleReader:  keyHandleReader,
 		ldDocumentLoader: ldDocumentLoader,
 		crypto:           crypto,
-		goAPIOpenID4VP:   openid4vp.New(authorizationRequest, jwtVerifier, &http.Client{}),
+		goAPIOpenID4VP:   openid4vp.New(authorizationRequest, jwtVerifier, common.DefaultHTTPClient()),
 	}
 }
 
