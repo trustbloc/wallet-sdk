@@ -22,6 +22,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 
 	"github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
@@ -164,7 +165,7 @@ func (i *Interaction) ResolveDisplay(preferredLocale string) (*credentialschema.
 
 	for _, vc := range i.vcs {
 		credential, err := verifiable.ParseCredential([]byte(vc),
-			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
+			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
 			verifiable.WithDisabledProofCheck())
 		if err != nil {
 			return nil, err
@@ -241,7 +242,7 @@ func (i *Interaction) getCredentialResponse(credentialType, credentialEndpoint,
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("Authorization", "BEARER "+accessToken)
 
-	response, err := http.DefaultClient.Do(request)
+	response, err := common.DefaultHTTPClient().Do(request)
 	if err != nil {
 		return nil, err
 	}

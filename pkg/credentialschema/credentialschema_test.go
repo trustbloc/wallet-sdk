@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/memstorage"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
@@ -53,7 +54,7 @@ func TestResolve(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Run("Credentials supported object contains display info for the given VC", func(t *testing.T) {
 			credential, err := verifiable.ParseCredential(credentialUniversityDegree,
-				verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
+				verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
 				verifiable.WithDisabledProofCheck())
 			require.NoError(t, err)
 
@@ -214,7 +215,7 @@ func TestResolve(t *testing.T) {
 			})
 			t.Run("VC does not have the subject fields specified by the claim display info", func(t *testing.T) {
 				credential, err := verifiable.ParseCredential(credentialUniversityDegree,
-					verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
+					verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
 					verifiable.WithDisabledProofCheck())
 				require.NoError(t, err)
 
@@ -316,7 +317,7 @@ func TestResolve(t *testing.T) {
 	t.Run("Unsupported VC", func(t *testing.T) {
 		t.Run("Unsupported subject type", func(t *testing.T) {
 			credential, err := verifiable.ParseCredential(unsupportedCredentialStringSubject,
-				verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
+				verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
 				verifiable.WithDisabledProofCheck())
 			require.NoError(t, err)
 
@@ -333,7 +334,7 @@ func TestResolve(t *testing.T) {
 		})
 		t.Run("Multiple subjects", func(t *testing.T) {
 			credential, err := verifiable.ParseCredential(unsupportedCredentialMultipleSubjects,
-				verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
+				verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
 				verifiable.WithDisabledProofCheck())
 			require.NoError(t, err)
 

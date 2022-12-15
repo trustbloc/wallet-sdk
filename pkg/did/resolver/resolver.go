@@ -16,6 +16,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/key"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/web"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 )
 
 // DIDResolver is used for resolving DID using supported DID methods.
@@ -39,10 +40,11 @@ func NewDIDResolver(resolverServerURI string) (*DIDResolver, error) {
 	}
 
 	if resolverServerURI != "" {
-		httpVDR, err := httpbinding.New(resolverServerURI, httpbinding.WithAccept(func(method string) bool {
-			// For now, let the resolver server act as a fallback for all DID methods the sdk does not recognize.
-			return true
-		}))
+		httpVDR, err := httpbinding.New(resolverServerURI, httpbinding.WithHTTPClient(common.DefaultHTTPClient()),
+			httpbinding.WithAccept(func(method string) bool {
+				// For now, let the resolver server act as a fallback for all DID methods the sdk does not recognize.
+				return true
+			}))
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize client for DID resolution server: %w", err)
 		}

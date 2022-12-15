@@ -10,10 +10,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 
 	"github.com/trustbloc/wallet-sdk/cmd/utilities/gomobilewrappers"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -94,7 +94,7 @@ func generateWithCredentialsOpt(vcs *api.JSONArray) (goapicredentialschema.Resol
 		}
 
 		credential, err := verifiable.ParseCredential(vcBytes,
-			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
+			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
 			verifiable.WithDisabledProofCheck())
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse credential: %w", err)
@@ -118,7 +118,7 @@ func generateWithCredentialReaderOpt(credentials *Credentials) (goapicredentials
 
 	opt := goapicredentialschema.WithCredentialReader(&gomobilewrappers.CredentialReaderWrapper{
 		CredentialReader: credentials.Reader,
-		DocumentLoader:   ld.NewDefaultDocumentLoader(http.DefaultClient),
+		DocumentLoader:   ld.NewDefaultDocumentLoader(common.DefaultHTTPClient()),
 	}, ids)
 
 	return opt, nil

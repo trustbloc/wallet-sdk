@@ -10,10 +10,10 @@ package credential
 
 import (
 	"encoding/json"
-	"net/http"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	goapimemstorage "github.com/trustbloc/wallet-sdk/pkg/memstorage"
@@ -31,7 +31,7 @@ type DB struct {
 func NewInMemoryDB() *DB {
 	return &DB{
 		goAPIProvider:  goapimemstorage.NewProvider(),
-		documentLoader: ld.NewDefaultDocumentLoader(http.DefaultClient),
+		documentLoader: ld.NewDefaultDocumentLoader(common.DefaultHTTPClient()),
 	}
 }
 
