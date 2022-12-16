@@ -5,7 +5,7 @@
         "id": "i_myprofile_ud_P256k1",
         "name": "i_myprofile_ud_P256k1",
         "organizationID": "test_org",
-        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
           "signingAlgorithm": "EcdsaSecp256k1Signature2019",
@@ -27,7 +27,7 @@
         "id": "i_myprofile_ud_es256_jwt",
         "name": "i_myprofile_ud_es256_jwt",
         "organizationID": "test_org",
-        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
           "signingAlgorithm": "ES256",
@@ -49,7 +49,7 @@
         "id": "i_myprofile_ud_es384_jwt",
         "name": "i_myprofile_ud_es384_jwt",
         "organizationID": "test_org",
-        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
           "signingAlgorithm": "ES384",
@@ -71,7 +71,7 @@
         "id": "i_myprofile_ud_es256k_jwt",
         "name": "i_myprofile_ud_es256k_jwt",
         "organizationID": "test_org",
-        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
           "signingAlgorithm": "ES256K",
@@ -93,7 +93,7 @@
         "id": "i_myprofile_ud_p256",
         "name": "i_myprofile_ud_p256",
         "organizationID": "test_org",
-        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",
@@ -115,7 +115,7 @@
         "id": "i_myprofile_prc_P256k1",
         "name": "i_myprofile_prc_P256k1",
         "organizationID": "test_org",
-        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",
@@ -137,7 +137,7 @@
         "id": "i_myprofile_prc_p256",
         "name": "i_myprofile_prc_p256",
         "organizationID": "test_org",
-        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",
@@ -159,7 +159,7 @@
         "id": "i_myprofile_cp_p384",
         "name": "i_myprofile_cp_p384",
         "organizationID": "test_org",
-        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",
@@ -181,7 +181,7 @@
         "id": "i_myprofile_cp_p256",
         "name": "i_myprofile_cp_p256",
         "organizationID": "test_org",
-        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",
@@ -203,7 +203,7 @@
         "id": "i_myprofile_cmtr_p384",
         "name": "i_myprofile_cmtr_p384",
         "organizationID": "test_org",
-        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",
@@ -223,7 +223,7 @@
         "id": "i_myprofile_cmtr_p256",
         "name": "i_myprofile_cmtr_p256",
         "organizationID": "test_org",
-        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",
@@ -243,7 +243,7 @@
         "id": "bank_issuer",
         "name": "Bank Issuer",
         "organizationID": "test_org",
-        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",

@@ -23,11 +23,13 @@ import (
 
 const (
 	vcsAPIGateway                       = "https://localhost:4455"
-	initiateCredentialIssuanceURLFormat = vcsAPIGateway + "/issuer/profiles/%s/interactions/initiate-oidc"
-	vcsAuthorizeEndpoint                = vcsAPIGateway + "/oidc/authorize"
-	vcsTokenEndpoint                    = vcsAPIGateway + "/oidc/token"
+	vcsAPIDirect                        = "http://localhost:8075"
+	initiateCredentialIssuanceURLFormat = "%s" + "/issuer/profiles/%s/interactions/initiate-oidc"
+	vcsAuthorizeEndpoint                = "%s" + "/oidc/authorize"
+	vcsTokenEndpoint                    = "%s" + "/oidc/token"
 	oidcProviderURL                     = "https://localhost:4444"
 	claimDataURL                        = "https://mock-login-consent.example.com:8099/claim-data"
+	xAPIKey 							= "rw_token"
 )
 
 type initiateOIDC4CIRequest struct {
@@ -52,6 +54,8 @@ type Setup struct {
 	oauthClient       *oauth2.Config // oauthClient is a public client to vcs oidc provider
 	cookie            *cookiejar.Jar
 	issuerAccessToken string
+	organizationID    string
+	apiURL            string
 
 	httpRequest         *httprequest.Request
 	debug               bool
@@ -70,6 +74,12 @@ func NewSetup(httpRequest *httprequest.Request) (*Setup, error) {
 	}, nil
 }
 
+func (s *Setup) AuthorizeIssuerBypassAuth(orgID string) error {
+	s.organizationID = orgID
+	s.apiURL = vcsAPIDirect
+	return nil
+}
+
 func (s *Setup) AuthorizeIssuer(orgID string) error {
 	accessToken, err := oauth.IssueAccessToken(context.Background(), oidcProviderURL,
 		orgID, "test-org-secret", []string{"org_admin"})
@@ -78,6 +88,7 @@ func (s *Setup) AuthorizeIssuer(orgID string) error {
 	}
 
 	s.issuerAccessToken = accessToken
+	s.apiURL = vcsAPIGateway
 
 	return s.registerPublicClient()
 }
@@ -99,8 +110,7 @@ func (s *Setup) registerPublicClient() error {
 }
 
 func (s *Setup) InitiateCredentialIssuance(issuerProfileID string) (string, error) {
-	endpointURL := fmt.Sprintf(initiateCredentialIssuanceURLFormat, issuerProfileID)
-	token := s.issuerAccessToken
+	endpointURL := fmt.Sprintf(initiateCredentialIssuanceURLFormat, s.apiURL, issuerProfileID)
 
 	reqBody, err := json.Marshal(&initiateOIDC4CIRequest{
 		CredentialTemplateId: "templateID",
@@ -117,7 +127,7 @@ func (s *Setup) InitiateCredentialIssuance(issuerProfileID string) (string, erro
 	var oidc44CIResponse initiateOIDC4CIResponse
 
 	_, err = s.httpRequest.Send(http.MethodPost,
-		endpointURL, "application/json", token, bytes.NewReader(reqBody), &oidc44CIResponse)
+		endpointURL, "application/json", s.getAuthHeaders(), bytes.NewReader(reqBody), &oidc44CIResponse)
 	if err != nil {
 		return "", fmt.Errorf("https do: %w", err)
 	}
@@ -132,8 +142,7 @@ func (s *Setup) InitiateCredentialIssuance(issuerProfileID string) (string, erro
 }
 
 func (s *Setup) InitiatePreAuthorizedIssuance(issuerProfileID string) (string, error) {
-	issuanceURL := fmt.Sprintf(initiateCredentialIssuanceURLFormat, issuerProfileID)
-	token := s.issuerAccessToken
+	issuanceURL := fmt.Sprintf(initiateCredentialIssuanceURLFormat, s.apiURL, issuerProfileID)
 
 	claimData := map[string]interface{}{
 		"displayName":       "John Doe",
@@ -156,7 +165,8 @@ func (s *Setup) InitiatePreAuthorizedIssuance(issuerProfileID string) (string, e
 	}
 
 	var oidcInitiateResponse initiateOIDC4CIResponse
-	_, err = s.httpRequest.Send(http.MethodPost, issuanceURL, "application/json", token, bytes.NewReader(reqBody), &oidcInitiateResponse)
+	_, err = s.httpRequest.Send(http.MethodPost, issuanceURL, "application/json",
+		s.getAuthHeaders(), bytes.NewReader(reqBody), &oidcInitiateResponse)
 	if err != nil {
 		return "", err
 	}
@@ -168,4 +178,17 @@ func (s *Setup) InitiatePreAuthorizedIssuance(issuerProfileID string) (string, e
 	}
 
 	return s.initiateIssuanceURL, nil
+}
+
+func (s *Setup) getAuthHeaders() map[string]string {
+	headers := map[string]string{}
+
+	if s.issuerAccessToken != "" {
+		headers["Authorization"] = "Bearer " + s.issuerAccessToken
+	}
+	if s.organizationID != "" {
+		headers["X-User"] = s.organizationID
+		headers["X-API-Key"] = xAPIKey
+	}
+	return headers
 }

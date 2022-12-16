@@ -33,10 +33,12 @@ public class OpenID4VP {
         
         
         let query = try? interaction?.getQuery()
-        let creds = CredentialCredentials()
-        creds.vCs = createJsonArray(objs: storedCredentials)
-        
-        verifiablePresentation = try? CredentialNewInquirer(documentLoader)?.query(query, contents: creds)
+        let creds = ApiVerifiableCredentialsArray()
+        for cred in storedCredentials {
+            creds?.add(ApiVerifiableCredential(cred.data(using: String.Encoding.utf8)))
+        }
+
+        verifiablePresentation = try? CredentialNewInquirer(documentLoader)?.query(query, contents: CredentialCredentialsOpt(creds))
         initiatedInteraction = interaction
     }
     

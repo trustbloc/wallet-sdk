@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4ci"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/testenv"
@@ -27,7 +28,14 @@ func initiatePreAuthorizedIssuance() {
 		panic(err)
 	}
 
-	err = oidc4ciSetup.AuthorizeIssuer("test_org")
+	for i := 0; i < 120; i++ {
+		err = oidc4ciSetup.AuthorizeIssuerBypassAuth("test_org")
+		if err == nil {
+			break
+		}
+		println(err.Error())
+		time.Sleep(10 * time.Second)
+	}
 	if err != nil {
 		panic(err)
 	}

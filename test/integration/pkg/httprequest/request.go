@@ -20,7 +20,7 @@ func NewWithHttpClient(client *http.Client) *Request {
 }
 
 // Send send https request
-func (r *Request) Send(method, url, contentType, token string, body io.Reader, responseJSON interface{}) (*http.Response, error) {
+func (r *Request) Send(method, url, contentType string, headers map[string]string, body io.Reader, responseJSON interface{}) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
@@ -30,8 +30,8 @@ func (r *Request) Send(method, url, contentType, token string, body io.Reader, r
 		req.Header.Add("Content-Type", contentType)
 	}
 
-	if token != "" {
-		req.Header.Add("Authorization", "Bearer "+token)
+	for key, val := range headers {
+		req.Header.Add(key, val)
 	}
 
 	resp, err := r.client.Do(req)
@@ -47,7 +47,9 @@ func (r *Request) Send(method, url, contentType, token string, body io.Reader, r
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, expectedStatusCodeError(http.StatusOK, resp.StatusCode, responseBody)
+		return nil,
+			fmt.Errorf("(%s) expected status code %d but got status code %d with response body %s instead",
+				url, http.StatusOK, resp.StatusCode, responseBody)
 	}
 
 	if responseJSON != nil {
@@ -64,9 +66,4 @@ func closeResponseBody(respBody io.Closer) {
 	if err != nil {
 		logger.Error("Failed to close response body", log.WithError(err))
 	}
-}
-
-func expectedStatusCodeError(expected, actual int, respBytes []byte) error {
-	return fmt.Errorf("expected status code %d but got status code %d with response body %s instead",
-		expected, actual, respBytes)
 }

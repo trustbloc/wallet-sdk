@@ -97,7 +97,7 @@ class MainActivity : FlutterActivity() {
 
     private fun initSDK() {
         val kms = Localkms.newKMS(null)
-        didResolver = Resolver()
+        didResolver = Resolver("")
         crypto = kms.crypto
         documentLoader = DocLoader()
         signerCreator = Localkms.createSignerCreator(kms)

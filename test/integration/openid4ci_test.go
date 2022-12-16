@@ -30,7 +30,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 	oidc4ciSetup, err := oidc4ci.NewSetup(testenv.NewHttpRequest())
 	require.NoError(t, err)
 
-	err = oidc4ciSetup.AuthorizeIssuer("test_org")
+	err = oidc4ciSetup.AuthorizeIssuerBypassAuth("test_org")
 	require.NoError(t, err)
 
 	initiateIssuanceURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance("bank_issuer")

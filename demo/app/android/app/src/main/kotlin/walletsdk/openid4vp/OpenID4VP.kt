@@ -6,14 +6,10 @@ SPDX-License-Identifier: Apache-2.0
 
 package walletsdk.openid4vp
 
-import dev.trustbloc.wallet.sdk.api.Crypto
-import dev.trustbloc.wallet.sdk.api.DIDResolver
-import dev.trustbloc.wallet.sdk.api.KeyReader
-import dev.trustbloc.wallet.sdk.api.LDDocumentLoader
-import dev.trustbloc.wallet.sdk.credential.Credentials
+import dev.trustbloc.wallet.sdk.api.*
+import dev.trustbloc.wallet.sdk.credential.CredentialsOpt
 import dev.trustbloc.wallet.sdk.openid4vp.Interaction;
 import dev.trustbloc.wallet.sdk.credential.Inquirer;
-import walletsdk.util.createJsonArray
 import java.lang.Exception
 
 class OpenID4VP constructor(
@@ -30,8 +26,13 @@ class OpenID4VP constructor(
 
         val query = interaction.getQuery()
 
-        val credentials = Credentials();
-        credentials.vCs = createJsonArray(storedCredentials)
+        val credArray = VerifiableCredentialsArray()
+        for (cred in storedCredentials) {
+            credArray.add(VerifiableCredential(cred.toByteArray()))
+        }
+
+
+        val credentials = CredentialsOpt(credArray)
 
         verifiablePresentation = Inquirer(documentLoader).query(query, credentials)
 

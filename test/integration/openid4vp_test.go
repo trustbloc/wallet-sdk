@@ -30,7 +30,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 	setup := oidc4vp.NewSetup(testenv.NewHttpRequest())
 
-	err := setup.AuthorizeVerifier("test_org")
+	err := setup.AuthorizeVerifierBypassAuth("test_org")
 	require.NoError(t, err)
 
 	initiateURL, err := setup.InitiateInteraction("v_myprofile_jwt")
@@ -85,7 +85,7 @@ func (h *vpTestHelper) issueCredentials(t *testing.T) *api.VerifiableCredentials
 	oidc4ciSetup, err := oidc4ci.NewSetup(testenv.NewHttpRequest())
 	require.NoError(t, err)
 
-	err = oidc4ciSetup.AuthorizeIssuer("test_org")
+	err = oidc4ciSetup.AuthorizeIssuerBypassAuth("test_org")
 	require.NoError(t, err)
 
 	credentials := api.NewVerifiableCredentialsArray()

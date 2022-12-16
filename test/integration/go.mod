@@ -11,7 +11,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/trustbloc/cmdutil-go v0.0.0-20221125151303-09d42adcc811
 	github.com/trustbloc/logutil-go v0.0.0-20221124174025-c46110e3ea42
-	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile v0.0.0-20221125140656-aa1c5329d343
+	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile v0.0.0-20221214133234-f978c0b91715
 	go.uber.org/zap v1.23.0
 	golang.org/x/oauth2 v0.1.0
 )
