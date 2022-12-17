@@ -235,6 +235,34 @@ let createDIDOpts = ApiCreateDIDOpts(keyID: keyHandle.keyID, verificationType: D
 let didDocResolution = didCreator.create("key", createDIDOpts) // Create a did:key doc
 ```
 
+## DID Service Validation
+
+Note the following limitations:
+* The DID document associated with the DID you want to check must specify only a single service.
+* If there are multiple URLs for a given service, only the first will be checked.
+
+### Examples
+
+#### Kotlin (Android)
+
+```kotlin
+import dev.trustbloc.wallet.sdk.did.*
+
+val didResolver = did.Resolver()
+
+val validationResult = did.ValidateService("YourDIDHere", didResolver)
+```
+
+#### Swift (iOS)
+
+```swift
+import Walletsdk
+
+let didResolver = DidNewResolver()
+
+let validationResult = DidValidateService("YourDIDHere", didResolver)
+```
+
 ## OpenID4CI
 
 The OpenID4CI package contains an API that can be used by a [holder](https://www.w3.org/TR/vc-data-model/#dfn-holders)
