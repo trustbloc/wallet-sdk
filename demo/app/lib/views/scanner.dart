@@ -1,12 +1,13 @@
 import 'dart:developer';
-
-import 'package:app/views/credential_preview.dart';
+import 'package:app/models/credential_data_object.dart';
 import 'package:app/views/presentation_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:app/views/otp.dart';
 import 'package:app/demo_method_channel.dart';
+import '../services/storage_service.dart';
+import 'dashboard.dart';
 
 class QRScanner extends StatefulWidget {
   const QRScanner({Key? key}) : super(key: key);
@@ -43,7 +44,8 @@ class QRScannerState extends State<QRScanner> {
 
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
-    controller.scannedDataStream.listen((scanData) {
+    controller.scannedDataStream.listen((scanData) async {
+      controller.dispose();
       _authorize(scanData.code!);
     });
   }
@@ -65,35 +67,32 @@ class QRScannerState extends State<QRScanner> {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const PresentationPreview()));
   }
 
-  _navigateToCredPreviewScreen() async {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => const CredentialPreview(
-                  credentialResponse: '',
-                )));
+  // Skip the otp if user pin required is false
+  _navigateToDashboard(String userLoggedIn) async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => Dashboard(user: userLoggedIn)));
   }
 
-  _authorize(String qrCode) async {
-    print("what is qr code $qrCode");
+  _authorize(String qrCodeURL) async {
+    final StorageService storageService = StorageService();
+    late List<CredentialDataObject> storedCredentials;
+    log('received qr code url - $qrCodeURL');
+    if (!qrCodeURL.contains("openid-vc")) {
+      var authorizeResultPinRequired = await WalletSDKPlugin.authorize(qrCodeURL);
+      if (authorizeResultPinRequired == true) {
+        _navigateToOTPScreen();
+        return;
+      }
+    } else {
     // Check if the flow is for the verifiable presentation or for issuance.
-    if (qrCode.contains("presentation_definition") || qrCode.contains("presentationdefs")) {
+      var username = await storageService.retrieve("username");
+      storedCredentials = await storageService.retrieveCredentials(username!);
+      var credentials = storedCredentials.map((e) => e.value.rawCredential).toList();
+      await WalletSDKPlugin.processAuthorizationRequest(
+          authorizationRequest: qrCodeURL, storedCredentials: credentials);
+      // TODO if the creds returned in the process authorize request matches anything in the retrieved credentials
+      await WalletSDKPlugin.presentCredential(signingKeyId: "");
       _navigateToPresentationPreviewScreen();
       return;
-    }
-    var authorizeResultPinRequired = await WalletSDKPlugin.authorize(qrCode);
-    if (authorizeResultPinRequired == true) {
-      _navigateToOTPScreen();
-    } else {
-      // Skip the otp if user pin required is false
-      _navigateToCredPreviewScreen();
+      }
     }
   }
-
-  @override
-  void dispose() {
-    controller!.stopCamera();
-    controller!.dispose();
-    super.dispose();
-  }
-}
