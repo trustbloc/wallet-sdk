@@ -52,6 +52,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
 
   void _createDid() async {
     var did = await WalletSDKPlugin.createDID();
+    // persist the did
     print("created did:$did");
     setState(() {});
   }

@@ -3,6 +3,8 @@ import 'package:app/widgets/credential_card.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/store_credential_data.dart';
 
+import '../models/credential_data_object.dart';
+
 class CredentialList extends StatefulWidget {
   final String title;
   final String? user;
@@ -14,7 +16,8 @@ class CredentialList extends StatefulWidget {
 
 class _CredentialListState extends State<CredentialList> {
   final StorageService _storageService = StorageService();
-  late List<StorageItem> _credentialList;
+ // late List<StorageItem> _credentialList;
+  late List<CredentialDataObject> _credentialList;
   bool _loading = true;
   static String? userIDLoggedIn = '';
   @override
@@ -27,13 +30,11 @@ class _CredentialListState extends State<CredentialList> {
   void initList(String? userIDLoggedIn) async {
     var username = await _storageService.retrieve("username");
     print("username $username");
-      _credentialList = await _storageService.retrieveAll();
-    var credentialResultFound = _credentialList.where((credential) => credential.key.contains(username!));
-    if (credentialResultFound.isEmpty) {
+      _credentialList = await _storageService.retrieveCredentials(username!);
+    if (_credentialList.isEmpty) {
       _loading = true;
       _credentialList.clear();
     }
-    _credentialList = credentialResultFound.toList();
     _loading = false;
     setState(() {});
   }
@@ -55,9 +56,9 @@ class _CredentialListState extends State<CredentialList> {
             itemBuilder: (_, index) {
               return Dismissible(
                 key: Key(_credentialList[index].toString()),
-                child: CredentialCard(item: _credentialList[index]),
+                child: CredentialCard(item: _credentialList[index].value),
                 onDismissed: (direction) async {
-                  await _storageService.deleteData(_credentialList[index]!)
+                  await _storageService.deleteData(_credentialList[index])
                       .then((value) => _credentialList.removeAt(index));
                   initList(widget.user!);
                 },

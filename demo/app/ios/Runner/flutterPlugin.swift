@@ -28,7 +28,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     private var signerCreator: LocalkmsSignerCreator?
     private var didDocRes: ApiDIDDocResolution?
     private var didDocID: String?
-    
+    private var newOIDCInteraction: Openid4ciInteraction?
     
     private var openID4VP: OpenID4VP?
     
@@ -47,6 +47,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "requestCredential":
             let otp = fetchArgsKeyValue(call, key: "otp")
             requestCredential(otp: otp!, result: result)
+        
+        case "resolveCredentialDisplay":
+            resolveCredentialDisplay(result: result)
             
         case "initSDK":
             initSDK(result:result)
@@ -64,7 +67,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     
     private func initSDK(result: @escaping FlutterResult) {
         kms = LocalkmsNewKMS(nil, nil)
-        didResolver = DidNewResolver()
+        didResolver = DidNewResolver("", nil)
         crypto = kms?.getCrypto()
         documentLoader = LdNewDocLoader()
         signerCreator = LocalkmsCreateSignerCreator(kms, nil)
@@ -122,8 +125,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     
     public func presentCredential(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
         do {
-            
-            guard let signingKeyId = arguments["signingKeyId"] as? String else{
+            guard var signingKeyId = arguments["signingKeyId"] as? String else{
                 return  result(FlutterError.init(code: "NATIVE_ERR",
                                                  message: "error while process present credential",
                                                  details: "parameter signingKeyId is missed"))
@@ -135,7 +137,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                  details: "OpenID4VP interaction is not initialted"))
             }
             
-            
+            if signingKeyId == "" {
+                signingKeyId = (didDocRes?.id_(nil))!
+            }
             
             try openID4VP.presentCredential(signingKeyId: signingKeyId)
             
@@ -168,7 +172,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     
     public func authorize(requestURI: String, result: @escaping FlutterResult){
         let clientConfig =  Openid4ciClientConfig( didDocID!,  clientID: "ClientID", signerCreator: self.signerCreator, didRes: self.didResolver)
-        let newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
+        newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
         do {
             let authorizeResult  = try newOIDCInteraction?.authorize()
             let userPINRequired = authorizeResult?.userPINRequired;
@@ -183,18 +187,13 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     
     public func requestCredential(otp: String, result: @escaping FlutterResult){
         let clientConfig =  Openid4ciClientConfig(didDocID!,  clientID: "ClientID", signerCreator: self.signerCreator, didRes: self.didResolver)
-        let newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
+        newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
         do {
             let credentialRequest = Openid4ciNewCredentialRequestOpts( otp )
             let credResp  = try newOIDCInteraction?.requestCredential(credentialRequest)
-            // TODO Checking the first credential in the array
-            if (credResp!.length() > 0) {
-                let resolvedDisplayData = try newOIDCInteraction?.resolveDisplay("")
-                let displayDataResp = String(bytes: (resolvedDisplayData?.data)!, encoding: .utf8)
-                result(displayDataResp)
-            }
+            let credentialData = String(data: Data((credResp?.atIndex(0)!.content)!), encoding: .utf8)
+            result(credentialData!)
           } catch let error as NSError{
-              print("printing error")
               result(FlutterError.init(code: "Exception",
                                        message: "error while requesting credential",
                                        details: error.description))
@@ -202,15 +201,21 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         
     }
     
+    public func resolveCredentialDisplay(result: @escaping FlutterResult){
+        do {
+            let resolvedDisplayData = try newOIDCInteraction?.resolveDisplay("")
+            let displayDataResp = String(bytes: (resolvedDisplayData?.data)!, encoding: .utf8)
+            result(displayDataResp)
+        } catch let error as NSError{
+                print("printing error")
+                result(FlutterError.init(code: "Exception",
+                                         message: "error while resolving credential",
+                                         details: error.description))
+            }
+    }
+
+    
     public func initializeObject<T: ApiCreateDIDOpts>(fromType type: T.Type) -> T {
-        return T.init() //No Error
-    }
-    
-    public func initializeCredentialRequest<T: Openid4ciCredentialRequestOpts>(fromType type: T.Type) -> T {
-        return T.init() //No Error
-    }
-    
-    public func initializeApiJSONObject<T: ApiJSONObject>(fromType type: T.Type) -> T {
         return T.init() //No Error
     }
     
@@ -241,6 +246,5 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         
 
     }
-
 }
 

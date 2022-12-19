@@ -29,6 +29,20 @@ class MethodChannelWallet extends WalletPlatform {
     try {
       final credentialResponse =
       await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{'otp': userPinEntered});
+      print("request credential");
+      return credentialResponse;
+    } on PlatformException catch (error) {
+      if (error.code == errorCode) {
+        return error.details.toString();
+      }
+    }
+    return null;
+  }
+
+  Future<String?> resolveCredentialDisplay() async {
+    try {
+      final credentialResponse =
+      await methodChannel.invokeMethod<String>('resolveCredentialDisplay');
       return credentialResponse;
     } on PlatformException catch (error) {
       if (error.code == errorCode) {

@@ -1,15 +1,18 @@
 import 'dart:convert';
+import 'package:app/models/credential_data.dart';
 import 'package:app/models/credential_preview.dart';
 import 'package:app/views/dashboard.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:app/widgets/add_credential_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import '../models/credential_data_object.dart';
 import '../models/store_credential_data.dart';
 
 class CredentialPreview extends StatefulWidget {
-  final String credentialResponse;
-  const CredentialPreview({super.key, required this.credentialResponse});
+  final String rawCredential;
+  final String credentialDisplay;
+  const CredentialPreview({super.key, required this.rawCredential, required this.credentialDisplay});
 
   @override
   State<CredentialPreview> createState() => CredentialPreviewState();
@@ -31,7 +34,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
 
   Future<List<CredentialPreviewData>> getData() async {
     List<CredentialPreviewData> list;
-      var data = json.decode(widget.credentialResponse);
+      var data = json.decode(widget.credentialDisplay);
       var credentialClaimsData = data['credential_displays'][0]['claims'] as List;
       list = credentialClaimsData.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
     return list;
@@ -66,7 +69,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
   }
   @override
   Widget build(BuildContext context) {
-    Map<String, dynamic> issuer = jsonDecode(widget.credentialResponse);
+    Map<String, dynamic> issuer = jsonDecode(widget.credentialDisplay);
     final issuerDisplayData = issuer['issuer_display']['name'];
     return Scaffold(
       appBar: AppBar(
@@ -124,8 +127,8 @@ class CredentialPreviewState extends State<CredentialPreview> {
                     final StorageItem? newItem = await showDialog<StorageItem>(
                         context: context, builder: (_) => AddDataDialog());
                     if (newItem != null) {
-                      _storageService.add(StorageItem("$userLoggedIn-credential-${uuid.v1()}", widget.credentialResponse));
-                      _navigateToDashboard(userLoggedIn);
+                       _storageService.addCredential(CredentialDataObject("$userLoggedIn-${uuid.v1()}",CredentialData(rawCredential: widget.rawCredential, credentialDisplayData: widget.credentialDisplay)));
+                       _navigateToDashboard(userLoggedIn);
                     }
                   },
                   child: const Text("Save Credential"),

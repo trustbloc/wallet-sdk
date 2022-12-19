@@ -1,12 +1,13 @@
 import 'dart:convert';
 
+import 'package:app/models/credential_data.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/store_credential_data.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:app/models/credential_preview.dart';
 
 class CredentialCard extends StatefulWidget {
-  StorageItem item;
+  CredentialData item;
 
   CredentialCard({required this.item, Key? key}) : super(key: key);
 
@@ -19,7 +20,7 @@ class _CredentialCardState extends State<CredentialCard> {
 
   Widget getCredentialDetails() {
     List<CredentialPreviewData> list;
-    var data = json.decode(widget.item.value);
+    var data = json.decode(widget.item.credentialDisplayData);
     var credentialClaimsData = data['credential_displays'][0]['claims'] as List;
     list = credentialClaimsData.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
     return listViewWidget(list);
@@ -55,7 +56,7 @@ class _CredentialCardState extends State<CredentialCard> {
 
   @override
   Widget build(BuildContext context) {
-    Map<String, dynamic> issuer = jsonDecode(widget.item.value);
+    Map<String, dynamic> issuer = jsonDecode(widget.item.credentialDisplayData);
     final credentialDisplayName = issuer['credential_displays'][0]['overview']['name'];
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
