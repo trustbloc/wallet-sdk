@@ -10,8 +10,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -46,14 +48,12 @@ func CreateSignerCreator(kms *KMS) (*SignerCreator, error) {
 	ariesSignerCreator := didsignjwt.UseDefaultSigner(ariesKMS, tinkCrypto)
 
 	gomobileSignerCreator := func(verificationMethod *api.JSONObject) (api.Signer, error) {
-		var vm did.VerificationMethod
-
-		err := json.Unmarshal(verificationMethod.Data, &vm)
+		vm, err := workaroundUnmarshalVM(verificationMethod.Data)
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal verification method JSON into a did.VerificationMethod")
 		}
 
-		ariesSigner, err := ariesSignerCreator(&vm)
+		ariesSigner, err := ariesSignerCreator(vm)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create Aries signer: %w", err)
 		}
@@ -62,4 +62,51 @@ func CreateSignerCreator(kms *KMS) (*SignerCreator, error) {
 	}
 
 	return &SignerCreator{didJWTSignerCreate: gomobileSignerCreator}, nil
+}
+
+func workaroundUnmarshalVM(vmBytes []byte) (*did.VerificationMethod, error) {
+	vmMap := map[string]json.RawMessage{}
+
+	err := json.Unmarshal(vmBytes, &vmMap)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		jsonKey    jwk.JWK
+		id         string
+		typ        string
+		controller string
+		value      []byte
+	)
+
+	id = stringEntry(vmMap["id"])
+	typ = stringEntry(vmMap["type"])
+	controller = stringEntry(vmMap["controller"])
+
+	rawValue := stringEntry(vmMap["publicKeyBase58"])
+	if rawValue != "" {
+		value = base58.Decode(rawValue)
+	}
+
+	if jwkBytes, ok := vmMap["publicKeyJwk"]; ok {
+		err = json.Unmarshal(jwkBytes, &jsonKey)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if jsonKey.Valid() {
+		return did.NewVerificationMethodFromJWK(id, typ, controller, &jsonKey)
+	}
+
+	return did.NewVerificationMethodFromBytes(id, typ, controller, value), nil
+}
+
+func stringEntry(entry json.RawMessage) string {
+	if len(entry) > 1 {
+		return string(entry[1 : len(entry)-1])
+	}
+
+	return ""
 }

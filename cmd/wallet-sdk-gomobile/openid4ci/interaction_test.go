@@ -15,8 +15,11 @@ import (
 	"testing"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk/jwksupport"
+	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
+	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
@@ -127,6 +130,42 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 	})
+	t.Run("Success with jwk public key", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{}
+		server := httptest.NewServer(issuerServerHandler)
+
+		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"issuer":"https://server.example.com",`+
+			`"authorization_endpoint":"https://server.example.com/connect/authorize",`+
+			`"token_endpoint":"%s/connect/token",`+
+			`"pushed_authorization_request_endpoint":"https://server.example.com/connect/par-authorize",`+
+			`"require_pushed_authorization_requests":false,`+
+			`"credential_endpoint":"%s/credential"}`, server.URL, server.URL)
+
+		defer server.Close()
+
+		serverURLEscaped := url.QueryEscape(server.URL)
+
+		requestURI := "openid-vc://initiate_issuance?issuer=" + serverURLEscaped +
+			"&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard" +
+			"&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA" +
+			"&user_pin_required=false"
+
+		config := getTestClientConfig(t, func(handle *api.KeyHandle, kt string) (*did.VerificationMethod, error) {
+			jwk, err := jwksupport.PubKeyBytesToJWK(handle.PubKey, arieskms.KeyType(kt))
+			require.NoError(t, err)
+
+			return did.NewVerificationMethodFromJWK(handle.KeyID, creator.JSONWebKey2020, mockDID, jwk)
+		})
+
+		interaction, err := openid4ci.NewInteraction(requestURI, config)
+		require.NoError(t, err)
+
+		credentialRequest := openid4ci.NewCredentialRequestOpts("")
+
+		result, err := interaction.RequestCredential(credentialRequest)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+	})
 	t.Run("Fail to create gomobile signer", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{}
 		server := httptest.NewServer(issuerServerHandler)
@@ -174,7 +213,8 @@ func createInteraction(t *testing.T, requestURI string) *openid4ci.Interaction {
 	return interaction
 }
 
-func getTestClientConfig(t *testing.T) *openid4ci.ClientConfig {
+// getTestClientConfig accepts one optional mockVMCreator.
+func getTestClientConfig(t *testing.T, useMockVM ...mockVMCreator) *openid4ci.ClientConfig {
 	t.Helper()
 
 	kms, err := localkms.NewKMS(nil)
@@ -184,45 +224,50 @@ func getTestClientConfig(t *testing.T) *openid4ci.ClientConfig {
 	require.NoError(t, err)
 
 	resolver := &mockResolver{keyWriter: kms}
+
+	if len(useMockVM) > 0 {
+		resolver.makeVM = useMockVM[0]
+	}
+
 	clientConfig := openid4ci.NewClientConfig("UserDID", "ClientID", signerCreator, resolver)
 
 	return clientConfig
 }
 
+type mockVMCreator func(handle *api.KeyHandle, keyType string) (*did.VerificationMethod, error)
+
 type mockResolver struct {
 	keyWriter *localkms.KMS
+	makeVM    mockVMCreator
 }
 
 func (m *mockResolver) Resolve(string) ([]byte, error) {
-	didDoc, err := makeMockDoc(m.keyWriter)
+	keyHandle, err := m.keyWriter.Create(localkms.KeyTypeED25519)
 	if err != nil {
 		return nil, err
 	}
 
-	didDocResolution := &did.DocResolution{DIDDocument: didDoc}
+	if m.makeVM == nil {
+		m.makeVM = func(handle *api.KeyHandle, _ string) (*did.VerificationMethod, error) {
+			return &did.VerificationMethod{
+				ID:         "#key-1",
+				Controller: mockDID,
+				Type:       "Ed25519VerificationKey2018",
+				Value:      handle.PubKey,
+			}, nil
+		}
+	}
 
-	didDocResolutionBytes, err := didDocResolution.JSONBytes()
+	vm, err := m.makeVM(keyHandle, localkms.KeyTypeED25519)
 	if err != nil {
 		return nil, err
 	}
 
-	return didDocResolutionBytes, err
+	return mockDocResolution(vm)
 }
 
-// makeMockDoc creates a key in the given KMS and returns a mock DID Doc with a verification method.
-func makeMockDoc(keyManager *localkms.KMS) (*did.Doc, error) {
-	keyHandle, err := keyManager.Create(localkms.KeyTypeED25519)
-	if err != nil {
-		return nil, err
-	}
-
-	vm := &did.VerificationMethod{
-		ID:         "#key-1",
-		Controller: mockDID,
-		Type:       "Ed25519VerificationKey2018",
-		Value:      keyHandle.PubKey,
-	}
-
+// mockDocResolution returns a mock DID Doc Resolution with the given verification method.
+func mockDocResolution(vm *did.VerificationMethod) ([]byte, error) {
 	newDoc := &did.Doc{
 		Context: "https://w3id.org/did/v1",
 		ID:      mockDID,
@@ -237,5 +282,7 @@ func makeMockDoc(keyManager *localkms.KMS) (*did.Doc, error) {
 		},
 	}
 
-	return newDoc, nil
+	didDocResolution := &did.DocResolution{DIDDocument: newDoc}
+
+	return didDocResolution.JSONBytes()
 }

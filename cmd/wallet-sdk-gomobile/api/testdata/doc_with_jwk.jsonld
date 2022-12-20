@@ -1,0 +1,24 @@
+{
+  "@context": "https://w3id.org/did-resolution/v1",
+  "didDocument": {
+    "@context": [
+      "https://www.w3.org/ns/did/v1",
+      "https://w3id.org/security/suites/jws-2020/v1"
+     ],
+    "id": "did:example:foo123",
+    "verificationMethod": [
+      {
+        "controller":"did:example:foo123",
+        "id": "#O6J3tndxXb9k73LxVtxxeH0wot0eIC5jPOrNk5EX7zg",
+        "publicKeyJwk": {
+          "kty": "OKP",
+          "crv": "Ed25519",
+          "x": "56VwrWF6RJ_CI5rkVMFvW52H6w5B-Juf5AvEyH4PxJ8"
+        },
+        "type": "JsonWebKey2020"
+      }
+    ],
+    "authentication": [ "#O6J3tndxXb9k73LxVtxxeH0wot0eIC5jPOrNk5EX7zg" ],
+    "assertionMethod": [ "#O6J3tndxXb9k73LxVtxxeH0wot0eIC5jPOrNk5EX7zg" ]
+  }
+}
