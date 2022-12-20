@@ -98,5 +98,9 @@ func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) (*api.
 }
 
 func convertToGoAPIOpts(createDIDOpts *api.CreateDIDOpts) *goapi.CreateDIDOpts {
-	return &goapi.CreateDIDOpts{KeyID: createDIDOpts.KeyID, VerificationType: createDIDOpts.VerificationType}
+	return &goapi.CreateDIDOpts{
+		KeyID:            createDIDOpts.KeyID,
+		VerificationType: createDIDOpts.VerificationType,
+		KeyType:          createDIDOpts.KeyType,
+	}
 }

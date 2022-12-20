@@ -136,6 +136,7 @@ func TestCreator_Create(t *testing.T) {
 			createDIDOpts := &api.CreateDIDOpts{
 				KeyID:            "SomeKeyID",
 				VerificationType: creator.Ed25519VerificationKey2018,
+				KeyType:          kms.ED25519Type,
 			}
 
 			didDocResolution, err := didCreator.Create(creator.DIDMethodKey, createDIDOpts)
@@ -196,7 +197,7 @@ func TestCreator_Create(t *testing.T) {
 			createDIDOpts := &api.CreateDIDOpts{
 				KeyType:          kms.ED25519Type,
 				KeyID:            "SomeKeyID",
-				VerificationType: "JsonWebKey2020",
+				VerificationType: creator.JSONWebKey2020,
 			}
 
 			didDocResolution, err := didCreator.Create(creator.DIDMethodIon, createDIDOpts)

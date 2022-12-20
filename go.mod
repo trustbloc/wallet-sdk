@@ -8,7 +8,7 @@ go 1.19
 
 require (
 	github.com/google/tink/go v1.7.0
-	github.com/hyperledger/aries-framework-go v0.1.9-0.20221202141134-083803ecf0a3
+	github.com/hyperledger/aries-framework-go v0.1.9-0.20221219221222-fdd5069d178e
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/longform v0.0.0-20221209153644-5a3273a805c1
 	github.com/piprate/json-gold v0.4.2
 	github.com/stretchr/testify v1.8.1
@@ -23,6 +23,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/evanphx/json-patch v4.1.0+incompatible // indirect
+	github.com/go-jose/go-jose/v3 v3.0.1-0.20221117193127-916db76e8214 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
