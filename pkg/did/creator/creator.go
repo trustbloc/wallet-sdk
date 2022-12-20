@@ -27,6 +27,8 @@ const (
 	DIDMethodIon = "ion"
 	// Ed25519VerificationKey2018 is a supported DID verification type.
 	Ed25519VerificationKey2018 = "Ed25519VerificationKey2018"
+	// JSONWebKey2020 is a supported DID verification type.
+	JSONWebKey2020 = "JsonWebKey2020"
 )
 
 // Creator is used for creating DID Documents using supported DID methods.
@@ -127,22 +129,23 @@ func (d *Creator) createDIDKeyDoc(createDIDOpts *api.CreateDIDOpts) (*did.DocRes
 
 func (d *Creator) createDIDIonLongFormDoc(createDIDOpts *api.CreateDIDOpts) (*did.DocResolution, error) {
 	var (
-		key []byte
-		vm  *did.VerificationMethod
-		err error
+		key              []byte
+		keyID            string
+		keyType          arieskms.KeyType
+		verificationType string
+		vm               *did.VerificationMethod
+		err              error
 	)
 
 	// TODO: refactor so more code is shared between handlers for different did methods
-	if d.keyReader == nil { //nolint: nestif
-		// Generate a key and set the verification type on behalf of the caller.
-		var keyID string
-
+	if d.keyReader == nil { // Generate a key and set the verification type on behalf of the caller.
 		keyID, key, err = d.keyWriter.Create(arieskms.ED25519Type)
 		if err != nil {
 			return nil, err
 		}
 
-		vm = &did.VerificationMethod{ID: "#" + keyID, Value: key, Type: Ed25519VerificationKey2018}
+		keyType = arieskms.ED25519Type
+		verificationType = JSONWebKey2020
 	} else { // Use the caller's chosen key and verification type.
 		if createDIDOpts.VerificationType == "" {
 			return nil, errors.New("no verification type specified")
@@ -153,19 +156,19 @@ func (d *Creator) createDIDIonLongFormDoc(createDIDOpts *api.CreateDIDOpts) (*di
 			return nil, fmt.Errorf("failed to get key handle: %w", err)
 		}
 
-		if createDIDOpts.VerificationType == Ed25519VerificationKey2018 {
-			vm = &did.VerificationMethod{ID: "#" + createDIDOpts.KeyID, Value: key, Type: createDIDOpts.VerificationType}
-		} else {
-			pkJWK, e := jwkkid.BuildJWK(key, createDIDOpts.KeyType)
-			if e != nil {
-				return nil, fmt.Errorf("failed to create JWK from public key: %w", e)
-			}
+		keyID = createDIDOpts.KeyID
+		keyType = createDIDOpts.KeyType
+		verificationType = createDIDOpts.VerificationType
+	}
 
-			vm, e = did.NewVerificationMethodFromJWK("#"+createDIDOpts.KeyID, createDIDOpts.VerificationType, "", pkJWK)
-			if e != nil {
-				return nil, fmt.Errorf("creating verification method from JWK: %w", e)
-			}
-		}
+	pkJWK, e := jwkkid.BuildJWK(key, keyType)
+	if e != nil {
+		return nil, fmt.Errorf("failed to create JWK from public key: %w", e)
+	}
+
+	vm, e = did.NewVerificationMethodFromJWK("#"+keyID, verificationType, "", pkJWK)
+	if e != nil {
+		return nil, fmt.Errorf("creating verification method from JWK: %w", e)
 	}
 
 	creator, err := didioncreator.NewCreator(d.keyWriter)
