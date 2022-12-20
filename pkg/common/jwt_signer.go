@@ -7,9 +7,13 @@ SPDX-License-Identifier: Apache-2.0
 package common
 
 import (
+	cryptolib "crypto"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/util/jwkkid"
+	"github.com/hyperledger/aries-framework-go/pkg/kms"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
@@ -28,6 +32,7 @@ const (
 type JWSSigner struct {
 	keyID     string
 	algorithm string
+	cryptoKID string
 	crypto    api.Crypto
 }
 
@@ -38,11 +43,38 @@ func NewJWSSigner(vm *models.VerificationMethod, crypto api.Crypto) (*JWSSigner,
 		return nil, err
 	}
 
+	cryptoKID, err := thumbprint(vm)
+	if err != nil {
+		return nil, fmt.Errorf("creating crypto thumbprint for public key: %w", err)
+	}
+
 	return &JWSSigner{
 		keyID:     vm.ID,
 		algorithm: algorithm,
 		crypto:    crypto,
+		cryptoKID: cryptoKID,
 	}, nil
+}
+
+func thumbprint(vm *models.VerificationMethod) (string, error) {
+	if vm.Type == Ed25519VerificationKey2018 {
+		return jwkkid.CreateKID(vm.Key.Raw, kms.ED25519Type)
+	}
+
+	if vm.Type == JSONWebKey2020 {
+		if vm.Key.JSONWebKey == nil {
+			return "", fmt.Errorf("jwk verification method missing jwk")
+		}
+
+		tpBytes, err := vm.Key.JSONWebKey.Thumbprint(cryptolib.SHA256)
+		if err != nil {
+			return "", err
+		}
+
+		return base64.RawURLEncoding.EncodeToString(tpBytes), nil
+	}
+
+	return "", fmt.Errorf("verification method type '%s' not supported", vm.Type)
 }
 
 // GetKeyID return id of key used for signing.

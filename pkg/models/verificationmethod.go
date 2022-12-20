@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package models
 
 import (
+	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
 )
 
@@ -39,6 +40,24 @@ func NewVerificationMethod(keyID, vmType string, opt ...VerificationMethodOption
 	}
 
 	return vm
+}
+
+// VerificationMethodFromDoc initializes a VerificationMethod from the DID Doc Verification Method type.
+func VerificationMethodFromDoc(docVM *did.VerificationMethod) *VerificationMethod {
+	jsonWebKey := docVM.JSONWebKey()
+	if jsonWebKey != nil {
+		return &VerificationMethod{
+			ID:   docVM.ID,
+			Type: docVM.Type,
+			Key:  VerificationKey{JSONWebKey: jsonWebKey},
+		}
+	}
+
+	return &VerificationMethod{
+		ID:   docVM.ID,
+		Type: docVM.Type,
+		Key:  VerificationKey{Raw: docVM.Value},
+	}
 }
 
 // WithRawKey initializes the VerificationMethod with public key in raw []byte format.
