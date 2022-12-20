@@ -26,9 +26,6 @@ type KeyWriter interface {
 type KeyReader interface {
 	// ExportPubKey returns the public key associated with the given keyID as raw bytes.
 	ExportPubKey(keyID string) ([]byte, error)
-
-	// GetSigningAlgorithm returns sign algorithm name associated with given key type.
-	GetSigningAlgorithm(keyID string) (string, error)
 }
 
 // CreateDIDOpts represents the various options for the DIDCreator.Create method.

@@ -16,6 +16,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto"
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 	arieslocalkms "github.com/hyperledger/aries-framework-go/pkg/kms/localkms"
+
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 )
 
@@ -59,11 +60,6 @@ func (k *LocalKMS) Create(keyType arieskms.KeyType) (string, []byte, error) {
 // ExportPubKey returns the public key associated with the given keyID as raw bytes.
 func (k *LocalKMS) ExportPubKey(string) ([]byte, error) {
 	return nil, errors.New("not implemented")
-}
-
-// GetSigningAlgorithm returns sign algorithm associated with the given keyID.
-func (k *LocalKMS) GetSigningAlgorithm(keyID string) (string, error) {
-	return "", errors.New("not implemented")
 }
 
 // GetCrypto returns Crypto instance that can perform crypto ops with keys created by this kms.

@@ -70,10 +70,10 @@ func (o *Interaction) GetQuery() ([]byte, error) {
 }
 
 // PresentCredential presents credentials to redirect uri from request object.
-func (o *Interaction) PresentCredential(presentation []byte, kid string) error {
-	signAlg, err := o.keyHandleReader.GetSigningAlgorithm(kid)
+func (o *Interaction) PresentCredential(presentation []byte, vm *api.VerificationMethod) error {
+	signer, err := common.NewJWSSigner(vm.ID, vm.Type, o.crypto)
 	if err != nil {
-		return fmt.Errorf("get sign algorithm failed: %w", err)
+		return fmt.Errorf("create signer failed: %w", err)
 	}
 
 	parsedPresentation, err := verifiable.ParsePresentation(
@@ -87,5 +87,5 @@ func (o *Interaction) PresentCredential(presentation []byte, kid string) error {
 		return fmt.Errorf("parse presentation failed: %w", err)
 	}
 
-	return o.goAPIOpenID4VP.PresentCredential(parsedPresentation, common.NewJWSSigner(kid, signAlg, o.crypto))
+	return o.goAPIOpenID4VP.PresentCredential(parsedPresentation, signer)
 }

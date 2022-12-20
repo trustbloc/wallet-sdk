@@ -28,7 +28,7 @@ public class OpenID4VP {
         self.crypto = crypto
     }
     
-    func processAuthorizationRequest(authorizationRequest: String, storedCredentials: Array<String>) throws {
+    func processAuthorizationRequest(authorizationRequest: String, storedCredentials: Array<String>) :storedCredentials: Array<String> throws {
         let interaction = Openid4vpInteraction(authorizationRequest, keyHandle: keyReader, crypto: crypto, didResolver: didResolver, ldDocumentLoader: documentLoader)
         
         
@@ -40,6 +40,8 @@ public class OpenID4VP {
 
         verifiablePresentation = try? CredentialNewInquirer(documentLoader)?.query(query, contents: CredentialCredentialsOpt(creds))
         initiatedInteraction = interaction
+
+        return verifiablePresentation.Credentials()
     }
     
     func presentCredential(signingKeyId: String) throws {

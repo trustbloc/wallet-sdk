@@ -145,7 +145,7 @@ func (d *Creator) createDIDIonLongFormDoc(createDIDOpts *api.CreateDIDOpts) (*di
 		}
 
 		keyType = arieskms.ED25519Type
-		verificationType = JSONWebKey2020
+		verificationType = Ed25519VerificationKey2018
 	} else { // Use the caller's chosen key and verification type.
 		if createDIDOpts.VerificationType == "" {
 			return nil, errors.New("no verification type specified")

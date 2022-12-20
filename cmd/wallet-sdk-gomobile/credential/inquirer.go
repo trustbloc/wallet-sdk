@@ -53,6 +53,37 @@ func NewCredentialsOptFromReader(credentialReader api.CredentialReader) *Credent
 	}
 }
 
+// VerifiablePresentation typed wrapper around go implementation of verifiable presentation.
+type VerifiablePresentation struct {
+	wrapped *verifiable.Presentation
+}
+
+// WrapVerifiablePresentation wraps go implementation of verifiable presentation into gomobile compatible struct.
+func WrapVerifiablePresentation(vp *verifiable.Presentation) *VerifiablePresentation {
+	return &VerifiablePresentation{wrapped: vp}
+}
+
+// Content return marshaled representation of verifiable presentation.
+func (vp *VerifiablePresentation) Content() ([]byte, error) {
+	return vp.wrapped.MarshalJSON()
+}
+
+// Credentials returns marshaled representation of credentials from this verifiable presentation.
+func (vp *VerifiablePresentation) Credentials() (*api.VerifiableCredentialsArray, error) {
+	result := api.NewVerifiableCredentialsArray()
+
+	credentialsRaw, err := vp.wrapped.MarshalledCredentials()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, cred := range credentialsRaw {
+		result.Add(api.NewVerifiableCredential(unQuote(string(cred))))
+	}
+
+	return result, nil
+}
+
 // NewInquirer returns a new Inquirer.
 func NewInquirer(documentLoader api.LDDocumentLoader) *Inquirer {
 	wrappedLoader := &gomobilewrappers.DocumentLoaderWrapper{
@@ -66,7 +97,7 @@ func NewInquirer(documentLoader api.LDDocumentLoader) *Inquirer {
 }
 
 // Query returns credentials that match PresentationDefinition.
-func (c *Inquirer) Query(query []byte, contents *CredentialsOpt) ([]byte, error) {
+func (c *Inquirer) Query(query []byte, contents *CredentialsOpt) (*VerifiablePresentation, error) {
 	pdQuery := &presexch.PresentationDefinition{}
 
 	err := json.Unmarshal(query, pdQuery)
@@ -107,26 +138,35 @@ func (c *Inquirer) Query(query []byte, contents *CredentialsOpt) ([]byte, error)
 		return nil, fmt.Errorf("query is failed: %w", err)
 	}
 
-	result, err := presentation.MarshalJSON()
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal presentation: %w", err)
-	}
-
-	return result, err
+	return WrapVerifiablePresentation(presentation), err
 }
 
 func (c *Inquirer) parseVC(rawCreds *api.VerifiableCredentialsArray) ([]*verifiable.Credential, error) {
 	var credentials []*verifiable.Credential
 
 	for i := 0; i < rawCreds.Length(); i++ {
-		cred, credErr := verifiable.ParseCredential(rawCreds.AtIndex(i).Content, verifiable.WithDisabledProofCheck(),
+		content := rawCreds.AtIndex(i).Content
+
+		cred, credErr := verifiable.ParseCredential([]byte(content), verifiable.WithDisabledProofCheck(),
 			verifiable.WithJSONLDDocumentLoader(c.documentLoader))
 		if credErr != nil {
-			return nil, fmt.Errorf("verifiable credential parse failed: %w", credErr)
+			return nil, fmt.Errorf("verifiable credential parse failed: %s %w", content, credErr)
 		}
 
 		credentials = append(credentials, cred)
 	}
 
 	return credentials, nil
+}
+
+func unQuote(s string) string {
+	if len(s) <= 1 {
+		return s
+	}
+
+	if s[0] == '"' && s[len(s)-1] == '"' {
+		return s[1 : len(s)-1]
+	}
+
+	return s
 }

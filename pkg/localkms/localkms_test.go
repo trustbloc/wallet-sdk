@@ -47,15 +47,6 @@ func TestLocalKMS_CustomStore(t *testing.T) {
 	require.Empty(t, key)
 }
 
-func TestLocalKMS_GetSignAlgorithm(t *testing.T) {
-	localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
-	require.NoError(t, err)
-
-	key, err := localKMS.GetSigningAlgorithm("KeyID")
-	require.EqualError(t, err, "not implemented")
-	require.Empty(t, key)
-}
-
 func TestLocalKMS_GetCrypto(t *testing.T) {
 	localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
 	require.NoError(t, err)

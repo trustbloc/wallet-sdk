@@ -25,18 +25,15 @@ class MethodChannelWallet extends WalletPlatform {
     return authorizeResult;
   }
 
-  Future<String?> requestCredential(String userPinEntered) async {
+  Future<String> requestCredential(String userPinEntered) async {
     try {
       final credentialResponse =
-      await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{'otp': userPinEntered});
-      print("request credential");
-      return credentialResponse;
+          await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{'otp': userPinEntered});
+      return credentialResponse!;
     } on PlatformException catch (error) {
-      if (error.code == errorCode) {
-        return error.details.toString();
-      }
+      debugPrint(error.toString());
+      rethrow;
     }
-    return null;
   }
 
   Future<String?> resolveCredentialDisplay() async {
@@ -52,14 +49,15 @@ class MethodChannelWallet extends WalletPlatform {
     return null;
   }
 
-  // TODO: return credentials display information after it implemented in go sdk
-  Future<void> processAuthorizationRequest(
+  Future<List<String>> processAuthorizationRequest(
       {required String authorizationRequest, required List<String> storedCredentials}) async {
-    await methodChannel.invokeMethod<String>('processAuthorizationRequest',
-        <String, dynamic>{'authorizationRequest': authorizationRequest, 'storedCredentials': storedCredentials});
+    return (await methodChannel.invokeMethod<List>('processAuthorizationRequest',
+            <String, dynamic>{'authorizationRequest': authorizationRequest, 'storedCredentials': storedCredentials}))!
+        .map((e) => e!.toString())
+        .toList();
   }
 
-  Future<void> presentCredential({required String signingKeyId}) async {
-    await methodChannel.invokeMethod<String>('presentCredential', <String, dynamic>{'signingKeyId': signingKeyId});
+  Future<void> presentCredential() async {
+    await methodChannel.invokeMethod<String>('presentCredential', <String, dynamic>{});
   }
 }

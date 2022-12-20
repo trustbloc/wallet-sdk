@@ -90,7 +90,7 @@ class QRScannerState extends State<QRScanner> {
       await WalletSDKPlugin.processAuthorizationRequest(
           authorizationRequest: qrCodeURL, storedCredentials: credentials);
       // TODO if the creds returned in the process authorize request matches anything in the retrieved credentials
-      await WalletSDKPlugin.presentCredential(signingKeyId: "");
+      await WalletSDKPlugin.presentCredential();
       _navigateToPresentationPreviewScreen();
       return;
       }

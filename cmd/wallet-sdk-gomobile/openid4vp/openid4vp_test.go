@@ -76,9 +76,7 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 func TestOpenID4VP_PresentCredential(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		instance := &Interaction{
-			keyHandleReader: &mockKeyHandleReader{
-				getSignAlgorithmResult: "RS256",
-			},
+			keyHandleReader:  &mockKeyHandleReader{},
 			crypto:           &mockCrypto{},
 			ldDocumentLoader: &documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
 			goAPIOpenID4VP: &mocGoAPIInteraction{
@@ -86,15 +84,14 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			},
 		}
 
-		err := instance.PresentCredential(presentationJSONLD, "did:example:12345#testId")
+		err := instance.PresentCredential(presentationJSONLD,
+			api.NewVerificationMethod("did:example:12345#testId", "Ed25519VerificationKey2018"))
 		require.NoError(t, err)
 	})
 
 	t.Run("Fail to get signature algorithm", func(t *testing.T) {
 		instance := &Interaction{
-			keyHandleReader: &mockKeyHandleReader{
-				getSignAlgorithmErr: errors.New("failed"),
-			},
+			keyHandleReader:  &mockKeyHandleReader{},
 			crypto:           &mockCrypto{},
 			ldDocumentLoader: &documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
 			goAPIOpenID4VP: &mocGoAPIInteraction{
@@ -102,15 +99,14 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			},
 		}
 
-		err := instance.PresentCredential(presentationJSONLD, "did:example:12345#testId")
-		require.Contains(t, err.Error(), "get sign algorithm failed")
+		err := instance.PresentCredential(presentationJSONLD,
+			&api.VerificationMethod{ID: "did:example:12345#testId", Type: "Invalid"})
+		require.Contains(t, err.Error(), "create signer failed")
 	})
 
 	t.Run("parse presentation failed", func(t *testing.T) {
 		instance := &Interaction{
-			keyHandleReader: &mockKeyHandleReader{
-				getSignAlgorithmResult: "RS256",
-			},
+			keyHandleReader:  &mockKeyHandleReader{},
 			crypto:           &mockCrypto{},
 			ldDocumentLoader: &documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
 			goAPIOpenID4VP: &mocGoAPIInteraction{
@@ -118,15 +114,14 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			},
 		}
 
-		err := instance.PresentCredential([]byte("random value"), "did:example:12345#testId")
+		err := instance.PresentCredential([]byte("random value"),
+			&api.VerificationMethod{ID: "did:example:12345#testId", Type: "Ed25519VerificationKey2018"})
 		require.Contains(t, err.Error(), "parse presentation failed")
 	})
 
 	t.Run("Present credentials failed", func(t *testing.T) {
 		instance := &Interaction{
-			keyHandleReader: &mockKeyHandleReader{
-				getSignAlgorithmResult: "RS256",
-			},
+			keyHandleReader:  &mockKeyHandleReader{},
 			crypto:           &mockCrypto{},
 			ldDocumentLoader: &documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
 			goAPIOpenID4VP: &mocGoAPIInteraction{
@@ -134,7 +129,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			},
 		}
 
-		err := instance.PresentCredential(presentationJSONLD, "did:example:12345#testId")
+		err := instance.PresentCredential(presentationJSONLD,
+			&api.VerificationMethod{ID: "did:example:12345#testId", Type: "Ed25519VerificationKey2018"})
 		require.Contains(t, err.Error(), "present credentials failed")
 	})
 }
@@ -162,18 +158,12 @@ func (dl *documentLoaderWrapper) LoadDocument(u string) (*api.LDDocument, error)
 }
 
 type mockKeyHandleReader struct {
-	exportPubKeyResult     []byte
-	exportPubKeyErr        error
-	getSignAlgorithmResult string
-	getSignAlgorithmErr    error
+	exportPubKeyResult []byte
+	exportPubKeyErr    error
 }
 
 func (m *mockKeyHandleReader) ExportPubKey(string) ([]byte, error) {
 	return m.exportPubKeyResult, m.exportPubKeyErr
-}
-
-func (m *mockKeyHandleReader) GetSigningAlgorithm(string) (string, error) {
-	return m.getSignAlgorithmResult, m.getSignAlgorithmErr
 }
 
 type mockCrypto struct {

@@ -42,9 +42,6 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 	interaction := openid4vp.NewInteraction(
 		initiateURL, testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver, ld.NewDocLoader())
 
-	// TODO: remove after ion resolution is added.
-	t.SkipNow()
-
 	query, err := interaction.GetQuery()
 	require.NoError(t, err)
 
@@ -52,10 +49,19 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		Query(query, credential.NewCredentialsOpt(issuedCredentials))
 	require.NoError(t, err)
 
-	keyID, err := testHelper.DIDDoc.AssertionMethodKeyID()
+	matchedCreds, err := verifiablePres.Credentials()
 	require.NoError(t, err)
 
-	err = interaction.PresentCredential(verifiablePres, keyID)
+	require.Equal(t, issuedCredentials.Length(), matchedCreds.Length())
+	require.Equal(t, string(issuedCredentials.AtIndex(0).Content), string(matchedCreds.AtIndex(0).Content))
+
+	verifiablePresContent, err := verifiablePres.Content()
+	require.NoError(t, err)
+
+	vm, err := testHelper.DIDDoc.AssertionMethod()
+	require.NoError(t, err)
+
+	err = interaction.PresentCredential(verifiablePresContent, vm)
 	require.NoError(t, err)
 }
 
@@ -72,7 +78,7 @@ func newVPTestHelper(t *testing.T) *vpTestHelper {
 	c, err := did.NewCreatorWithKeyWriter(kms)
 	require.NoError(t, err)
 
-	didDoc, err := c.Create("key", &api.CreateDIDOpts{})
+	didDoc, err := c.Create("ion", &api.CreateDIDOpts{})
 	require.NoError(t, err)
 
 	return &vpTestHelper{
@@ -123,6 +129,7 @@ func (h *vpTestHelper) issueCredentials(t *testing.T) *api.VerifiableCredentials
 		require.NotEmpty(t, result)
 
 		for i := 0; i < result.Length(); i++ {
+			println(string(result.AtIndex(i).Content))
 			credentials.Add(result.AtIndex(i))
 		}
 

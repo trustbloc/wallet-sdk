@@ -27,10 +27,6 @@ func (m *mockKeyHandleReader) ExportPubKey(string) ([]byte, error) {
 	return m.getKeyReturn, m.errGetKeyHandle
 }
 
-func (m *mockKeyHandleReader) GetSigningAlgorithm(string) (string, error) {
-	return "", m.errGetKeyHandle
-}
-
 func TestNewCreatorWithKeyWriter(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		localKMS, err := localkms.NewKMS(nil)
