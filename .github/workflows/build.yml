@@ -64,9 +64,9 @@ jobs:
     runs-on: ubuntu-20.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Run Integration tests
@@ -137,15 +137,13 @@ jobs:
           name: ios-binding
           path: ./cmd/wallet-sdk-gomobile/bindings/ios
 
-
   FlutterIntegrationTest:
-    runs-on: macos-latest
+    runs-on: macOS-12
     steps:
       - name: checkout
         uses: actions/checkout@v3
-
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup env for integration test
@@ -162,18 +160,15 @@ jobs:
           go install golang.org/x/mobile/cmd/gomobile@latest
           gomobile init
           make prepare-integration-test-flutter
-
       - uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: '17'
-
       - name: Setup Flutter SDK
         uses: flutter-actions/setup-flutter@v2
         with:
           channel: stable
           version: 3.3.7
-
       - name: Run tests on Emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
