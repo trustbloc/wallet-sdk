@@ -19,7 +19,7 @@ public class OpenID4VP {
     private var crypto: ApiCryptoProtocol
     
     private var initiatedInteraction: Openid4vpInteraction?
-    private var verifiablePresentation: Data?
+    private var verifiablePresentation: CredentialVerifiablePresentation?
     
     init (keyReader:LocalkmsKMS, didResolver: ApiDIDResolverProtocol, documentLoader: ApiLDDocumentLoaderProtocol, crypto: ApiCryptoProtocol) {
         self.keyReader = keyReader
@@ -28,23 +28,29 @@ public class OpenID4VP {
         self.crypto = crypto
     }
     
-    func processAuthorizationRequest(authorizationRequest: String, storedCredentials: Array<String>) :storedCredentials: Array<String> throws {
+    func processAuthorizationRequest(authorizationRequest: String, storedCredentials: Array<String>) throws -> Array<String> {
         let interaction = Openid4vpInteraction(authorizationRequest, keyHandle: keyReader, crypto: crypto, didResolver: didResolver, ldDocumentLoader: documentLoader)
         
-        
         let query = try? interaction?.getQuery()
+
         let creds = ApiVerifiableCredentialsArray()
         for cred in storedCredentials {
-            creds?.add(ApiVerifiableCredential(cred.data(using: String.Encoding.utf8)))
+            creds?.add(ApiVerifiableCredential(cred))
         }
+ 
+        verifiablePresentation = try CredentialNewInquirer(documentLoader)?.query(query, contents: CredentialCredentialsOpt(creds))
+        
+        let matchedCreds = try verifiablePresentation?.credentials()
 
-        verifiablePresentation = try? CredentialNewInquirer(documentLoader)?.query(query, contents: CredentialCredentialsOpt(creds))
         initiatedInteraction = interaction
+        
+        var credList = [String]()
+        credList.append((matchedCreds?.atIndex(0)!.content)!)
 
-        return verifiablePresentation.Credentials()
+        return credList
     }
     
-    func presentCredential(signingKeyId: String) throws {
+    func presentCredential(didVerificationMethod: ApiVerificationMethod) throws {
         guard let verifiablePresentation = self.verifiablePresentation else {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         }
@@ -54,6 +60,6 @@ public class OpenID4VP {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         }
         
-        try initiatedInteraction.presentCredential(verifiablePresentation, kid: signingKeyId)
+        try initiatedInteraction.presentCredential(verifiablePresentation.content(), vm: didVerificationMethod)
     }
 }

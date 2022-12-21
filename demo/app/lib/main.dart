@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'demo_method_channel.dart';
 import 'models/store_credential_data.dart';
@@ -53,7 +55,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   void _createDid() async {
     var did = await WalletSDKPlugin.createDID();
     // persist the did
-    print("created did:$did");
+    log("created did:$did");
     setState(() {});
   }
 
