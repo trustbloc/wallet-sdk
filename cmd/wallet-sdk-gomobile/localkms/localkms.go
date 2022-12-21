@@ -11,6 +11,7 @@ package localkms
 
 import (
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
+
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	goapilocalkms "github.com/trustbloc/wallet-sdk/pkg/localkms"
 )
@@ -65,11 +66,6 @@ func (k *KMS) Create(keyType string) (*api.KeyHandle, error) {
 // ExportPubKey returns the public key associated with the given keyID as raw bytes.
 func (k *KMS) ExportPubKey(keyID string) ([]byte, error) {
 	return k.goAPILocalKMS.ExportPubKey(keyID)
-}
-
-// GetSigningAlgorithm returns signing algorithm associated with the given keyID.
-func (k *KMS) GetSigningAlgorithm(keyID string) (string, error) {
-	return k.goAPILocalKMS.GetSigningAlgorithm(keyID)
 }
 
 // GetCrypto returns Crypto instance that can perform crypto ops with keys created by this kms.

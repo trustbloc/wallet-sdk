@@ -42,6 +42,14 @@ func TestInstance_Query(t *testing.T) {
 		)
 		require.NoError(t, err)
 		require.NotNil(t, presentation)
+
+		content, err := presentation.Content()
+		require.NoError(t, err)
+		require.NotNil(t, content)
+
+		credentials, err := presentation.Credentials()
+		require.NoError(t, err)
+		require.Equal(t, 1, credentials.Length())
 	})
 
 	t.Run("No matched credential", func(t *testing.T) {
@@ -107,7 +115,7 @@ func createCredJSONArray(t *testing.T, creds []string) *credential.CredentialsOp
 
 	credsArray := api.NewVerifiableCredentialsArray()
 	for _, credContent := range creds {
-		credsArray.Add(api.NewVerifiableCredential([]byte(credContent)))
+		credsArray.Add(api.NewVerifiableCredential(credContent))
 	}
 
 	return credential.NewCredentialsOpt(credsArray)

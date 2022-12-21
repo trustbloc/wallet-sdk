@@ -25,13 +25,13 @@ var (
 func TestVerifiableCredential(t *testing.T) {
 	vcArray := api.NewVerifiableCredentialsArray()
 
-	universityDegreeVC := api.NewVerifiableCredential(universityDegreeCredential)
+	universityDegreeVC := api.NewVerifiableCredential(string(universityDegreeCredential))
 
 	vcArray.Add(universityDegreeVC)
 
 	require.Equal(t, 1, vcArray.Length())
 
-	driversLicenceVC := api.NewVerifiableCredential(driversLicenceCredential)
+	driversLicenceVC := api.NewVerifiableCredential(string(driversLicenceCredential))
 
 	vcArray.Add(driversLicenceVC)
 

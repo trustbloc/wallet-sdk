@@ -37,8 +37,7 @@ class OpenID4CI constructor(
         val credsArr = newInteraction.requestCredential(credReq)
 
         if (credsArr.length() != 0L) {
-            val resolvedDisplayData = newInteraction.resolveDisplay("")
-            return String(resolvedDisplayData.data)
+            return credsArr.atIndex(0).content
         }
 
         return null

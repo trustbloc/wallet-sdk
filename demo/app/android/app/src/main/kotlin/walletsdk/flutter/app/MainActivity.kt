@@ -26,6 +26,7 @@ class MainActivity : FlutterActivity() {
     private var documentLoader: LDDocumentLoader? = null
     private var crypto: Crypto? = null
     private var didDocID: String? = null
+    private var didVerificationMethod: VerificationMethod? = null
 
     @Override
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -76,8 +77,8 @@ class MainActivity : FlutterActivity() {
 
                         "processAuthorizationRequest" -> {
                             try {
-                                processAuthorizationRequest(call);
-                                result.success(null)
+                                val creds = processAuthorizationRequest(call);
+                                result.success(creds)
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while processing authorization request", e)
                             }
@@ -105,25 +106,26 @@ class MainActivity : FlutterActivity() {
         this.kms = kms
     }
 
-    private fun processAuthorizationRequest(call: MethodCall) {
+    private fun processAuthorizationRequest(call: MethodCall): List<String> {
         val openID4VP = createOpenID4VP()
         val authorizationRequest = call.argument<String>("authorizationRequest")
                 ?: throw java.lang.Exception("authorizationRequest params is missed")
         val storedCredentials = call.argument<ArrayList<String>>("storedCredentials")
                 ?: throw java.lang.Exception("storedCredentials params is missed")
 
-        openID4VP.processAuthorizationRequest(authorizationRequest, storedCredentials)
         this.openID4VP = openID4VP
+
+        return openID4VP.processAuthorizationRequest(authorizationRequest, storedCredentials)
     }
 
     private fun presentCredential(call: MethodCall) {
         val openID4VP = this.openID4VP
                 ?: throw java.lang.Exception("OpenID4VP not initiated. Call processAuthorizationRequest before this.")
 
-        val signingKeyId = call.argument<String>("signingKeyId")
-                ?: throw java.lang.Exception("signingKeyId params is missed")
+        val didVerificationMethod = this.didVerificationMethod
+                ?: throw java.lang.Exception("DID should be created first")
 
-        openID4VP.presentCredential(signingKeyId)
+        openID4VP.presentCredential(didVerificationMethod)
     }
 
 
@@ -180,9 +182,10 @@ class MainActivity : FlutterActivity() {
 
         val creatorDID = Creator(kms as KeyWriter)
 
-        val doc = creatorDID.create("key", CreateDIDOpts())
+        val doc = creatorDID.create("ion", CreateDIDOpts())
 
         didDocID = doc.id()
+        didVerificationMethod = doc.assertionMethod()
 
         return String(doc.content)
     }

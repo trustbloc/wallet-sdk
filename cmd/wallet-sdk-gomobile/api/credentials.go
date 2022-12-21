@@ -8,11 +8,11 @@ package api
 
 // VerifiableCredential typed wrapper around verifiable credentials content.
 type VerifiableCredential struct {
-	Content []byte
+	Content string
 }
 
 // NewVerifiableCredential creates a new VerifiableCredential.
-func NewVerifiableCredential(content []byte) *VerifiableCredential {
+func NewVerifiableCredential(content string) *VerifiableCredential {
 	return &VerifiableCredential{
 		Content: content,
 	}

@@ -8,6 +8,7 @@ package localkms
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
@@ -29,6 +30,11 @@ func NewAriesCryptoWrapper(cryptosKMS kms.KeyManager, wrappedCrypto crypto.Crypt
 
 // Sign gets key from kms using keyID and use it to sign data.
 func (c *AriesCryptoWrapper) Sign(msg []byte, keyID string) ([]byte, error) {
+	kidParts := strings.Split(keyID, "#")
+	if len(kidParts) == 2 { //nolint: gomnd
+		keyID = kidParts[1]
+	}
+
 	kh, err := c.cryptosKMS.Get(keyID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid key id %q: %w", keyID, err)

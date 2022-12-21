@@ -40,6 +40,24 @@ func TestAriesCryptoWrapper(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("Success did key id", func(t *testing.T) {
+		wrapper := localkms.NewAriesCryptoWrapper(
+			&kms.KeyManager{
+				GetKeyValue: &keyset.Handle{},
+				GetKeyErr:   nil,
+			},
+			&crypto.Crypto{
+				SignValue: []byte("test signature"),
+				SignErr:   nil,
+				VerifyErr: nil,
+			},
+		)
+
+		signature, err := wrapper.Sign([]byte("test data"), "did:some:example#testID")
+		require.NoError(t, err)
+		require.Equal(t, []byte("test signature"), signature)
+	})
+
 	t.Run("Invalid key id", func(t *testing.T) {
 		wrapper := localkms.NewAriesCryptoWrapper(
 			&kms.KeyManager{

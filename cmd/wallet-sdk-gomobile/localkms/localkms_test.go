@@ -38,19 +38,6 @@ func TestLocalKMS_ExportPubKey(t *testing.T) {
 	require.Contains(t, err.Error(), "not implemented")
 }
 
-func TestLocalKMS_GetSignAlgorithm(t *testing.T) {
-	localKMS, err := localkms.NewKMS(nil)
-	require.NoError(t, err)
-
-	keyHandle, err := localKMS.Create(localkms.KeyTypeED25519)
-	require.NoError(t, err)
-	require.NotEmpty(t, keyHandle.PubKey)
-	require.NotEmpty(t, keyHandle.KeyID)
-
-	_, err = localKMS.GetSigningAlgorithm(keyHandle.KeyID)
-	require.Contains(t, err.Error(), "not implemented")
-}
-
 func TestLocalKMS_GetCrypto(t *testing.T) {
 	localKMS, err := localkms.NewKMS(nil)
 	require.NoError(t, err)

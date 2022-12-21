@@ -159,7 +159,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         let didCreator = DidNewCreatorWithKeyWriter(self.kms, nil)
         do {
             let apiCreate = initializeObject(fromType: ApiCreateDIDOpts.self)
-            let doc = try didCreator!.create("key", createDIDOpts: apiCreate)
+            let doc = try didCreator!.create("ion", createDIDOpts: apiCreate)
             let docString = String(bytes: doc.content!, encoding: .utf8)
             didDocID = doc.id_(nil)
             result(docString)

@@ -45,7 +45,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 	c, err := did.NewCreatorWithKeyWriter(kms)
 	require.NoError(t, err)
 
-	didDoc, err := c.Create("key", &api.CreateDIDOpts{})
+	didDoc, err := c.Create("ion", &api.CreateDIDOpts{})
 	require.NoError(t, err)
 
 	signerCreator, err := localkms.CreateSignerCreator(kms)
