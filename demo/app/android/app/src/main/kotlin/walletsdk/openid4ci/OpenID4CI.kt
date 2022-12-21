@@ -42,4 +42,9 @@ class OpenID4CI constructor(
 
         return null
     }
+
+    fun resolveCredentialDisplay(): String? {
+        val resolvedDisplayData = newInteraction.resolveDisplay("")
+        return String(resolvedDisplayData.data)
+    }
 }

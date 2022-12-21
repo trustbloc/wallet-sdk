@@ -75,6 +75,16 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
+                        "resolveCredentialDisplay" -> {
+                            try {
+                                val credentialDisplay = resolveCredentialDisplay(call)
+                                result.success(credentialDisplay)
+
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while resolving credential display", e)
+                            }
+                        }
+
                         "processAuthorizationRequest" -> {
                             try {
                                 val creds = processAuthorizationRequest(call);
@@ -177,7 +187,17 @@ class MainActivity : FlutterActivity() {
         return resp
     }
 
-    private fun createDID(): String {
+    public fun resolveCredentialDisplay(call: MethodCall) : String?{
+        val openID4CI = this.openID4CI
+            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+
+        val resp = openID4CI.resolveCredentialDisplay() ?: return null
+
+        return resp
+    }
+
+
+       private fun createDID(): String {
         val kms = this.kms ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
         val creatorDID = Creator(kms as KeyWriter)

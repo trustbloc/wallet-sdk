@@ -29,6 +29,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     private var didDocRes: ApiDIDDocResolution?
     private var didDocID: String?
     private var newOIDCInteraction: Openid4ciInteraction?
+    private var didVerificationMethod: ApiVerificationMethod?
     
     private var openID4VP: OpenID4VP?
     
@@ -107,10 +108,10 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             }
             
             let openID4VP = try createOpenID4VP()
-            
-            try openID4VP.processAuthorizationRequest(authorizationRequest: authorizationRequest, storedCredentials: storedCredentials)
-            
             self.openID4VP = openID4VP
+            
+            let matchedCredentials = try openID4VP.processAuthorizationRequest(authorizationRequest: authorizationRequest, storedCredentials: storedCredentials)
+            result(matchedCredentials)
             
         } catch OpenID4VPError.runtimeError(let errorMsg){
             result(FlutterError.init(code: "NATIVE_ERR",
@@ -141,7 +142,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 signingKeyId = (didDocRes?.id_(nil))!
             }
             
-            try openID4VP.presentCredential(signingKeyId: signingKeyId)
+            try openID4VP.presentCredential(didVerificationMethod: didVerificationMethod!)
             
             
         } catch OpenID4VPError.runtimeError(let errorMsg){
@@ -162,6 +163,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             let doc = try didCreator!.create("ion", createDIDOpts: apiCreate)
             let docString = String(bytes: doc.content!, encoding: .utf8)
             didDocID = doc.id_(nil)
+            didVerificationMethod = try doc.assertionMethod()
             result(docString)
         } catch {
             result(FlutterError.init(code: "NATIVE_ERR",
@@ -191,7 +193,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         do {
             let credentialRequest = Openid4ciNewCredentialRequestOpts( otp )
             let credResp  = try newOIDCInteraction?.requestCredential(credentialRequest)
-            let credentialData = String(data: Data((credResp?.atIndex(0)!.content)!), encoding: .utf8)
+            let credentialData = credResp?.atIndex(0)!.content;
             result(credentialData!)
           } catch let error as NSError{
               result(FlutterError.init(code: "Exception",

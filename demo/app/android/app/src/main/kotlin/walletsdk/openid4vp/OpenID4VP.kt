@@ -42,8 +42,8 @@ class OpenID4VP constructor(
         this.verifiablePresentation = verifiablePresentation
         initiatedInteraction = interaction
 
-        return List<String>(matchedCreds.length().toInt(),
-                { i: Int -> matchedCreds.atIndex(i.toLong()).content })
+        return List<String>(matchedCreds.length().toInt()
+        ) { i: Int -> matchedCreds.atIndex(i.toLong()).content }
     }
 
     fun presentCredential(didVerificationMethod: VerificationMethod) {
