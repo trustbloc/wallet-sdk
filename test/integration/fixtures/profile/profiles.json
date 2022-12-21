@@ -250,31 +250,16 @@
         "presentationDefinitions": [
           {
             "id": "32f54163-7166-48f1-93d8-ff217bdb0653",
-            "input_descriptors": [
+            "input_descriptors":[
               {
-                "id": "SoftwareDeveloper",
-                "name": "SoftwareDeveloper",
-                "purpose": "We can only hire software developers.",
-                "schema": [
+                "id":"VerifiableCredential",
+                "name":"VerifiableCredential",
+                "purpose":"So we can see that you are an expert.",
+                "schema":[
                   {
-                    "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+                    "uri":"VerifiableCredential"
                   }
-                ],
-                "constraints": {
-                  "fields": [
-                    {
-                      "path": [
-                        "$.credentialSubject.jobTitle",
-                        "$.vc.credentialSubject.jobTitle"
-                      ],
-                      "purpose": "We can only hire software developers.",
-                      "filter": {
-                        "type": "string",
-                        "const": "Software Developer"
-                      }
-                    }
-                  ]
-                }
+                ]
               }
             ]
           }

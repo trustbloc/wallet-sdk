@@ -76,6 +76,11 @@ func (c *Instance) Query(
 		}
 	}
 
+	// TODO: remove this code after to re enable Schema check.
+	for i := range query.InputDescriptors {
+		query.InputDescriptors[i].Schema = nil
+	}
+
 	return query.CreateVP(credentials, c.documentLoader, verifiable.WithDisabledProofCheck(),
 		verifiable.WithJSONLDDocumentLoader(c.documentLoader))
 }
