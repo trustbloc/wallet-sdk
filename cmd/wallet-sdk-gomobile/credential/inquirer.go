@@ -150,7 +150,7 @@ func (c *Inquirer) parseVC(rawCreds *api.VerifiableCredentialsArray) ([]*verifia
 		cred, credErr := verifiable.ParseCredential([]byte(content), verifiable.WithDisabledProofCheck(),
 			verifiable.WithJSONLDDocumentLoader(c.documentLoader))
 		if credErr != nil {
-			return nil, fmt.Errorf("verifiable credential parse failed: %s %w", content, credErr)
+			return nil, fmt.Errorf("verifiable credential parse failed: %w", credErr)
 		}
 
 		credentials = append(credentials, cred)
