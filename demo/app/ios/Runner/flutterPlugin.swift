@@ -59,7 +59,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             processAuthorizationRequest(arguments: arguments!, result: result)
             
         case "presentCredential":
-            presentCredential(arguments: arguments!, result: result)
+            presentCredential(result: result)
             
         default:
             print("No call method is found")
@@ -124,7 +124,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
     }
     
-    public func presentCredential(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
+    public func presentCredential(result: @escaping FlutterResult) {
         do {
             guard let openID4VP = self.openID4VP else{
                 return  result(FlutterError.init(code: "NATIVE_ERR",
@@ -133,7 +133,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             }
 
             try openID4VP.presentCredential(didVerificationMethod: didVerificationMethod!)
-            
+            result(true);
             
         } catch OpenID4VPError.runtimeError(let errorMsg){
             result(FlutterError.init(code: "NATIVE_ERR",

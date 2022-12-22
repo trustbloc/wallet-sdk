@@ -58,6 +58,6 @@ class MethodChannelWallet extends WalletPlatform {
   }
 
   Future<void> presentCredential() async {
-    await methodChannel.invokeMethod<String>('presentCredential', <String, dynamic>{});
+    await methodChannel.invokeMethod('presentCredential');
   }
 }
