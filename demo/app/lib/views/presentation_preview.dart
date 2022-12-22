@@ -4,8 +4,9 @@ import 'package:app/views/credential_shared.dart';
 import 'package:app/views/dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import '../models/credential_preview.dart';
-import '../services/storage_service.dart';
+import 'package:app/main.dart';
+import 'package:app/models/credential_preview.dart';
+import 'package:app/services/storage_service.dart';
 
 class PresentationPreview extends StatefulWidget {
   final String matchedCredential;
@@ -21,7 +22,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
   var uuid = const Uuid();
   late final String userLoggedIn;
   // Todo fetch the name of the  verifier name from the presentation
-  late String verifierName = 'Utopian Background Check';
+  late String verifierName = 'Verifier';
 
   @override
   void initState() {
@@ -122,6 +123,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () async {
+                    await WalletSDKPlugin.presentCredential();
                     _navigateToCredentialShareSuccess(verifierName);
                   },
                   child: const Text("Share Credential"),

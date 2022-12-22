@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/storage_service.dart';
+import 'package:app/services/storage_service.dart';
 import 'dashboard.dart';
 
 class CredentialShared extends StatefulWidget {

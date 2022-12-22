@@ -38,15 +38,22 @@ public class OpenID4VP {
             creds?.add(ApiVerifiableCredential(cred))
         }
  
-        verifiablePresentation = try CredentialNewInquirer(documentLoader)?.query(query, contents: CredentialCredentialsOpt(creds))
+        let  verifiablePresentation = try CredentialNewInquirer(documentLoader)?.query(query, contents: CredentialCredentialsOpt(creds))
+       
+        self.verifiablePresentation = verifiablePresentation
         
-        let matchedCreds = try verifiablePresentation?.credentials()
+        let matchedCreds = try verifiablePresentation!.credentials()
 
         initiatedInteraction = interaction
-        //Todo loop through matched credentials
-        var credlist :[String] = [(matchedCreds?.atIndex(0)?.content)!]
         
-        return credlist
+        var credList: [String] = []
+        
+        for i in 0...(matchedCreds.length()-1) {
+            credList.append((matchedCreds.atIndex(i)?.content)!)
+        }
+        
+        
+        return credList
     }
     
     func presentCredential(didVerificationMethod: ApiVerificationMethod) throws {
@@ -58,7 +65,7 @@ public class OpenID4VP {
         guard let initiatedInteraction = self.initiatedInteraction else {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         }
-        
+                
         try initiatedInteraction.presentCredential(verifiablePresentation.content(), vm: didVerificationMethod)
     }
 }

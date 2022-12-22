@@ -2,11 +2,10 @@ import 'dart:developer';
 import 'package:app/models/credential_data_object.dart';
 import 'package:app/views/presentation_preview.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:app/views/otp.dart';
 import 'package:app/demo_method_channel.dart';
-import '../services/storage_service.dart';
+import 'package:app/services/storage_service.dart';
 import 'dashboard.dart';
 
 class QRScanner extends StatefulWidget {
@@ -90,15 +89,14 @@ class QRScannerState extends State<QRScanner> {
       var matchedCred = await WalletSDKPlugin.processAuthorizationRequest(
           authorizationRequest: qrCodeURL, storedCredentials: credentials);
       // todo check the resolve display of the matched credential.
-      var resolveDisplayData = storedCredentials.map((e) => e.value.credentialDisplayData);
-      log(resolveDisplayData.toString());
-      if (matchedCred.length > 1 ) {
-        await WalletSDKPlugin.presentCredential();
-      }
+      var credentialDisplayData = storedCredentials.where((element) => matchedCred.contains(element.value.rawCredential)).map((e) => e.value.credentialDisplayData);
+      log(matchedCred.length.toString());
       // TODO if the creds returned in the process authorize request matches anything in the retrieved credentials
-      print("navigating to presentation");
-      _navigateToPresentationPreviewScreen(matchedCred.first, resolveDisplayData.first);
-      return;
+      if (matchedCred.isNotEmpty) {
+        //TODO: in future we can show all the credential
+        _navigateToPresentationPreviewScreen(matchedCred.first, credentialDisplayData.first);
+        return;
+       }
       }
     }
   }
