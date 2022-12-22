@@ -43,11 +43,10 @@ public class OpenID4VP {
         let matchedCreds = try verifiablePresentation?.credentials()
 
         initiatedInteraction = interaction
+        //Todo loop through matched credentials
+        var credlist :[String] = [(matchedCreds?.atIndex(0)?.content)!]
         
-        var credList = [String]()
-        credList.append((matchedCreds?.atIndex(0)!.content)!)
-
-        return credList
+        return credlist
     }
     
     func presentCredential(didVerificationMethod: ApiVerificationMethod) throws {

@@ -126,22 +126,12 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     
     public func presentCredential(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
         do {
-            guard var signingKeyId = arguments["signingKeyId"] as? String else{
-                return  result(FlutterError.init(code: "NATIVE_ERR",
-                                                 message: "error while process present credential",
-                                                 details: "parameter signingKeyId is missed"))
-            }
-            
             guard let openID4VP = self.openID4VP else{
                 return  result(FlutterError.init(code: "NATIVE_ERR",
                                                  message: "error while process present credential",
                                                  details: "OpenID4VP interaction is not initialted"))
             }
-            
-            if signingKeyId == "" {
-                signingKeyId = (didDocRes?.id_(nil))!
-            }
-            
+
             try openID4VP.presentCredential(didVerificationMethod: didVerificationMethod!)
             
             
