@@ -10,12 +10,15 @@ package openid4vp
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
@@ -85,10 +88,12 @@ func (o *Interaction) PresentCredential(presentation *verifiable.Presentation, j
 		return fmt.Errorf("create authorized response failed: %w", err)
 	}
 
-	responseBody := fmt.Sprintf("id_token=%s&vp_token=%s&state=%s",
-		response.IDTokenJWS, response.VPTokenJWS, response.State)
+	data := url.Values{}
+	data.Set("id_token", response.IDTokenJWS)
+	data.Set("vp_token", response.VPTokenJWS)
+	data.Set("state", response.State)
 
-	err = sendAuthorizedResponse(o.httpClient, responseBody, o.requestObject.RedirectURI)
+	err = sendAuthorizedResponse(o.httpClient, data.Encode(), o.requestObject.RedirectURI)
 	if err != nil {
 		return fmt.Errorf("send authorized response failed: %w", err)
 	}
@@ -111,8 +116,8 @@ func fetchRequestObject(httpClient httpClient, authorizationRequest string) (str
 	return string(respBytes), nil
 }
 
-func doHTTPRequest(httpClient httpClient, method, url, contentType string, body io.Reader) ([]byte, error) {
-	req, err := http.NewRequestWithContext(context.Background(), method, url, body)
+func doHTTPRequest(httpClient httpClient, method, endpointURL, contentType string, body io.Reader) ([]byte, error) {
+	req, err := http.NewRequestWithContext(context.Background(), method, endpointURL, body)
 	if err != nil {
 		return nil, err
 	}
@@ -172,6 +177,7 @@ func verifyTokenSignature(rawJwt string, claims interface{}, verifier jose.Signa
 	return nil
 }
 
+//nolint:funlen
 func createAuthorizedResponse(
 	presentation *verifiable.Presentation,
 	requestObject *requestObject,
@@ -185,14 +191,42 @@ func createAuthorizedResponse(
 	did := kidParts[0]
 	presentationSubmission := presentation.CustomFields["presentation_submission"]
 
+	// TODO The following code adds jwt format along with nestedPath for vc. Remove these
+	// changes once AFG PEx has this support.
+	presSubBytes, err := json.Marshal(presentationSubmission)
+	if err != nil {
+		return nil, fmt.Errorf("marshal pb error: %w", err)
+	}
+
+	var presSub *presexch.PresentationSubmission
+
+	err = json.Unmarshal(presSubBytes, &presSub)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal pb error: %w", err)
+	}
+
+	if presSub != nil {
+		presSub.DescriptorMap[0].Format = "jwt_vp"
+		presSub.DescriptorMap[0].Path = "$"
+		presSub.DescriptorMap[0].PathNested = &presexch.InputDescriptorMapping{
+			ID:     presSub.DefinitionID,
+			Format: "jwt_vc",
+			Path:   "$.verifiableCredential[0]",
+		}
+	}
+
 	idToken := &idTokenClaims{
 		VPToken: idTokenVPToken{
-			PresentationSubmission: presentationSubmission,
+			PresentationSubmission: presSub,
 		},
 		Nonce: requestObject.Nonce,
 		Exp:   time.Now().Unix() + tokenLiveTimeSec,
 		Iss:   "https://self-issued.me/v2/openid-vc",
 		Sub:   did,
+		Aud:   requestObject.ClientID,
+		Nbf:   time.Now().Unix(),
+		Iat:   time.Now().Unix(),
+		Jti:   uuid.NewString(),
 	}
 
 	presentation.CustomFields["presentation_submission"] = nil
@@ -202,6 +236,10 @@ func createAuthorizedResponse(
 		Nonce: requestObject.Nonce,
 		Exp:   time.Now().Unix() + tokenLiveTimeSec,
 		Iss:   did,
+		Aud:   requestObject.ClientID,
+		Nbf:   time.Now().Unix(),
+		Iat:   time.Now().Unix(),
+		Jti:   uuid.NewString(),
 	}
 
 	idTokenJWS, err := signToken(idToken, signer)
