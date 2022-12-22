@@ -63,8 +63,8 @@ class QRScannerState extends State<QRScanner> {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const OTP()));
   }
 
-  _navigateToPresentationPreviewScreen() async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => const PresentationPreview()));
+  _navigateToPresentationPreviewScreen(String matchedCredential, String credentialDisplayData) async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => PresentationPreview(matchedCredential: matchedCredential, credentialDisplay: credentialDisplayData)));
   }
 
   // Skip the otp if user pin required is false
@@ -87,11 +87,17 @@ class QRScannerState extends State<QRScanner> {
       var username = await storageService.retrieve("username");
       storedCredentials = await storageService.retrieveCredentials(username!);
       var credentials = storedCredentials.map((e) => e.value.rawCredential).toList();
-      await WalletSDKPlugin.processAuthorizationRequest(
+      var matchedCred = await WalletSDKPlugin.processAuthorizationRequest(
           authorizationRequest: qrCodeURL, storedCredentials: credentials);
+      // todo check the resolve display of the matched credential.
+      var resolveDisplayData = storedCredentials.map((e) => e.value.credentialDisplayData);
+      log(resolveDisplayData.toString());
+      if (matchedCred.length > 1 ) {
+        await WalletSDKPlugin.presentCredential();
+      }
       // TODO if the creds returned in the process authorize request matches anything in the retrieved credentials
-      await WalletSDKPlugin.presentCredential();
-      _navigateToPresentationPreviewScreen();
+      print("navigating to presentation");
+      _navigateToPresentationPreviewScreen(matchedCred.first, resolveDisplayData.first);
       return;
       }
     }
