@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:app/services/storage_service.dart';
+import 'package:app/models/store_credential_data.dart';
 import 'dashboard.dart';
 
 class CredentialShared extends StatefulWidget {
@@ -11,7 +11,6 @@ class CredentialShared extends StatefulWidget {
 }
 
 class CredentialSharedState extends State<CredentialShared> {
-  final StorageService _storageService = StorageService();
   late final String userLoggedIn;
 
   @override
@@ -19,7 +18,8 @@ class CredentialSharedState extends State<CredentialShared> {
     super.initState();
     /// Await your Future here (This function only called once after the layout is Complete)
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) async {
-      userLoggedIn = (await _storageService.retrieve("username"))!;
+      UserLoginDetails userLoginDetails =  await getUser();
+      userLoggedIn = userLoginDetails.username!;
     });
   }
 
@@ -88,6 +88,6 @@ class CredentialSharedState extends State<CredentialShared> {
     );
   }
   _navigateToDashboard(String userLoggedIn) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => Dashboard(user: userLoggedIn)));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }
 }

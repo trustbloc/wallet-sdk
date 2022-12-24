@@ -1,10 +1,11 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'demo_method_channel.dart';
 import 'models/store_credential_data.dart';
 import 'views/dashboard.dart';
-import 'package:uuid/uuid.dart';
 import 'package:app/services/storage_service.dart';
 
 final WalletSDKPlugin = MethodChannelWallet();
@@ -50,13 +51,16 @@ class MyStatefulWidget extends StatefulWidget {
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   final TextEditingController _usernameController = TextEditingController();
   final StorageService _storageService = StorageService();
-  var uuid = const Uuid();
+  final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
+  var userDIDId = '';
 
-  void _createDid() async {
-    var did = await WalletSDKPlugin.createDID();
-    // persist the did
-    log("created did:$did");
-    setState(() {});
+  Future<String?> _createDid() async {
+    var didID = await WalletSDKPlugin.createDID();
+    setState(() {
+      userDIDId = didID!;
+    });
+    log("created didID :$didID");
+    return didID;
   }
 
   @override
@@ -99,17 +103,24 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       borderRadius: BorderRadius.circular(12), // <-- Radius
                     ),
                   ),
-                onPressed: () {
-
-                   _createDid();
-                   _storageService.add(StorageItem("username",_usernameController.text));
-                   Navigator.push(
-                       context, MaterialPageRoute(builder: (_) => Dashboard(user: _usernameController.text)));
-                   print("did is created successfully");
+                onPressed: () async {
+                 final SharedPreferences pref = await prefs;
+                 String? userLoggedIn =  pref.getString("userLoggedIn");
+                    if (_usernameController.text == userLoggedIn.toString()){
+                      _navigateToDashboard();
+                    } else {
+                       await _createDid();
+                       pref.setString('userLoggedIn', _usernameController.text);
+                       pref.setString('userDID', userDIDId);
+                      _navigateToDashboard();
+                    }
                   },
                   child: const Text('Register', style: TextStyle(fontSize: 22, color: Colors.deepPurple)),
                 )),
           ],
         ));
+  }
+  _navigateToDashboard() async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const  Dashboard()));
   }
 }

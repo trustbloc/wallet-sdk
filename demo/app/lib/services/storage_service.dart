@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:core';
 
 import 'package:app/models/credential_data_object.dart';
 import 'package:app/models/credential_data.dart';
@@ -13,10 +14,6 @@ class StorageService {
         encryptedSharedPreferences: true,
       );
 
-  Future<void> add(StorageItem newItem) async {
-    debugPrint("Adding new data having key ${newItem.key}");
-    await _secureStorage.write(key: newItem.key, value: newItem.value, aOptions: _getAndroidOptions());
-  }
 
   Future<void> addCredential(CredentialDataObject newItem) async {
     debugPrint("Adding new data having key ${newItem.key}");
@@ -32,12 +29,6 @@ class StorageService {
         .map((e) => CredentialDataObject(e.key, CredentialData.fromJson(jsonDecode(e.value))))
         .toList();
     return list;
-  }
-
-  Future<String?> retrieve(String key) async {
-    debugPrint("Retrieve data having key $key");
-    var readData = await _secureStorage.read(key: key, aOptions: _getAndroidOptions());
-    return readData;
   }
 
   Future<void> deleteData(CredentialDataObject item) async {

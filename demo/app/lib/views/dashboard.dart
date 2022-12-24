@@ -1,10 +1,12 @@
+import 'dart:developer';
+
 import 'package:app/views/credential_list.dart';
+import 'package:app/views/settings.dart';
 import 'package:flutter/material.dart';
 import 'scanner.dart';
 
 class Dashboard extends StatefulWidget {
-  final String? user;
-  const Dashboard({super.key, this.user});
+  const Dashboard({super.key});
 
   @override
   State<Dashboard> createState() => _DashboardState();
@@ -12,38 +14,22 @@ class Dashboard extends StatefulWidget {
 
 class _DashboardState extends State<Dashboard> {
   int _selectedIndex = 0;
-  static String? userIDLoggedIn = '';
-  @override
-  void initState() {
-    userIDLoggedIn = widget.user!;
-    super.initState();
-  }
-  static const TextStyle optionStyle =
-  TextStyle(fontSize: 28, fontWeight: FontWeight.bold);
+
   static final _widgetOptions = <Widget>[
-   CredentialList(title: 'Saved Credentials List', user: userIDLoggedIn),
+    const CredentialList(title: 'Saved Credentials List'),
     const QRScanner(),
-   const Text(
-      'Preferences',
-      style: optionStyle,
-    ),
+    const Settings(),
   ];
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
-      if (_selectedIndex ==0){
-
-      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Welcome $userIDLoggedIn'),
-      ),
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
@@ -63,7 +49,7 @@ class _DashboardState extends State<Dashboard> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
+        selectedItemColor: const Color(0xffEC857C),
         onTap: _onItemTapped,
       ),
     );

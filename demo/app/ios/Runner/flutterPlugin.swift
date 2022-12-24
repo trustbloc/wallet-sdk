@@ -154,7 +154,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             let docString = String(bytes: doc.content!, encoding: .utf8)
             didDocID = doc.id_(nil)
             didVerificationMethod = try doc.assertionMethod()
-            result(docString)
+            result(didDocID)
         } catch {
             result(FlutterError.init(code: "NATIVE_ERR",
                                      message: "error while creating did",

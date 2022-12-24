@@ -6,6 +6,7 @@ import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:app/views/otp.dart';
 import 'package:app/demo_method_channel.dart';
 import 'package:app/services/storage_service.dart';
+import '../models/store_credential_data.dart';
 import 'dashboard.dart';
 
 class QRScanner extends StatefulWidget {
@@ -66,11 +67,6 @@ class QRScannerState extends State<QRScanner> {
     Navigator.push(context, MaterialPageRoute(builder: (context) => PresentationPreview(matchedCredential: matchedCredential, credentialDisplay: credentialDisplayData)));
   }
 
-  // Skip the otp if user pin required is false
-  _navigateToDashboard(String userLoggedIn) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => Dashboard(user: userLoggedIn)));
-  }
-
   _authorize(String qrCodeURL) async {
     final StorageService storageService = StorageService();
     late List<CredentialDataObject> storedCredentials;
@@ -83,15 +79,14 @@ class QRScannerState extends State<QRScanner> {
       }
     } else {
     // Check if the flow is for the verifiable presentation or for issuance.
-      var username = await storageService.retrieve("username");
+      UserLoginDetails userLoginDetails =  await getUser();
+      var username = userLoginDetails.username!;
       storedCredentials = await storageService.retrieveCredentials(username!);
       var credentials = storedCredentials.map((e) => e.value.rawCredential).toList();
       var matchedCred = await WalletSDKPlugin.processAuthorizationRequest(
           authorizationRequest: qrCodeURL, storedCredentials: credentials);
-      // todo check the resolve display of the matched credential.
       var credentialDisplayData = storedCredentials.where((element) => matchedCred.contains(element.value.rawCredential)).map((e) => e.value.credentialDisplayData);
       log(matchedCred.length.toString());
-      // TODO if the creds returned in the process authorize request matches anything in the retrieved credentials
       if (matchedCred.isNotEmpty) {
         //TODO: in future we can show all the credential
         _navigateToPresentationPreviewScreen(matchedCred.first, credentialDisplayData.first);
