@@ -132,7 +132,7 @@
         "organizationID": "test_org",
         "url": "https://test-verifier.com",
         "active": true,
-        "webHook": "http://vcs.webhook.example.com:8180",
+        "webHook": "",
         "checks": {
           "credential": {
             "format": [
@@ -225,7 +225,7 @@
         "organizationID": "test_org",
         "url": "https://test-verifier.com",
         "active": true,
-        "webHook": "http://vcs.webhook.example.com:8180",
+        "webHook": "",
         "checks": {
           "credential": {
             "format": [
