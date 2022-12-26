@@ -64,22 +64,8 @@ sample-webhook:
 	@mkdir -p ./build/bin
 	@go build -o ./build/bin/webhook-server test/integration/webhook/main.go
 
-.PHONY: sample-webhook-docker
-sample-webhook-docker:
-	@echo "Building sample webhook server docker image"
-	@docker build -f ./images/mocks/webhook/Dockerfile --no-cache -t vcs/sample-webhook:latest \
-	--build-arg GO_VER=$(GO_VER) \
-	--build-arg ALPINE_VER=$(ALPINE_VER) test/integration/webhook
-
-.PHONY: mock-login-consent-docker
-mock-login-consent-docker:
-	@echo "Building mock login consent server"
-	@docker build -f ./images/mocks/loginconsent/Dockerfile --no-cache -t  vcs/mock-login-consent:latest \
-	--build-arg GO_VER=$(GO_VER) \
-	--build-arg ALPINE_VER=$(ALPINE_VER) test/integration/loginconsent
-
 .PHONY: integration-test
-integration-test: sample-webhook-docker mock-login-consent-docker generate-test-keys
+integration-test: generate-test-keys
 	@cd test/integration $$ go mod tidy && ENABLE_COMPOSITION=true go test -count=1 -v -cover . -p 1 -timeout=10m -race
 
 .PHONY: build-integration-cli
@@ -89,7 +75,7 @@ build-integration-cli:
 	@cd test/integration/cli && go build -o ../../../build/bin/integration-cli main.go
 
 .PHONY: prepare-integration-test-flutter
-prepare-integration-test-flutter: build-integration-cli sample-webhook-docker mock-login-consent-docker generate-test-keys generate-android-bindings copy-android-bindings
+prepare-integration-test-flutter: build-integration-cli generate-test-keys generate-android-bindings copy-android-bindings
 	@cd test/integration/fixtures && docker-compose -f docker-compose.yml up --force-recreate -d
 
 .PHONY: integration-test-flutter
