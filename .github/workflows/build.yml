@@ -155,6 +155,14 @@ jobs:
             ~/.android/adb*
           key: avd-29
 
+      - name: Cache Android build files
+        uses: actions/cache@v3
+        with:
+          key: android-build-files
+          path: |
+            demo/app/build
+            demo/app/android/.gradle
+
       - name: create AVD and generate snapshot for caching
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
