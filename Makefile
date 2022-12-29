@@ -82,6 +82,10 @@ prepare-integration-test-flutter: build-integration-cli generate-test-keys gener
 integration-test-flutter:
 	@scripts/flutter_test.sh
 
+.PHONY: integration-test-flutter-ios
+integration-test-flutter-ios:
+	@scripts/flutter_test_ios.sh
+
 .PHONY: start-android-emulator
 start-android-emulator:
 	@emulator -avd $(ANDROID_EMULATOR_NAME) -writable-system -no-snapshot-load -no-cache

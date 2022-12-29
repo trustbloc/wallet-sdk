@@ -137,7 +137,7 @@ jobs:
           name: ios-binding
           path: ./cmd/wallet-sdk-gomobile/bindings/ios
 
-  FlutterIntegrationTest:
+  FlutterIntegrationAndroid:
     runs-on: macOS-12
     steps:
       - name: checkout
@@ -208,6 +208,60 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: make integration-test-flutter
+
+  FlutterIntegrationIos:
+    runs-on: macOS-12
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '14.2'
+      - name: Setup env for integration test
+        run: |          
+          echo $PATH
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+          make build-integration-cli generate-ios-bindings copy-ios-bindings
+
+#      - name: Set up Go
+#        uses: actions/setup-go@v3
+#        with:
+#          go-version: ${{ env.GO_VERSION }}
+#      - name: Setup env for integration test
+#        run: |
+#          echo '127.0.0.1 testnet.orb.local' | sudo tee -a /etc/hosts
+#          echo '127.0.0.1 file-server.trustbloc.local' | sudo tee -a /etc/hosts
+#          echo '127.0.0.1 did-resolver.trustbloc.local' | sudo tee -a /etc/hosts
+#          echo '127.0.0.1 oidc-provider.example.com' | sudo tee -a /etc/hosts
+#          echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
+#          brew install docker docker-compose colima
+#          colima start
+#          export PATH=$PATH:$GOPATH/bin
+#          echo $PATH
+#          go install golang.org/x/mobile/cmd/gomobile@latest
+#          gomobile init
+#          make prepare-integration-test-flutter
+#      - uses: actions/setup-java@v3
+#        with:
+#          distribution: 'zulu'
+#          java-version: '17'
+      - name: Setup Flutter SDK
+        uses: flutter-actions/setup-flutter@v2
+        with:
+          channel: stable
+          version: 3.3.7
+      - name: Run iOS Simulator
+        uses: futureware-tech/simulator-action@v2
+        with:
+          model: 'iPhone 12'
+      - name: Run test on simulator
+        run: make integration-test-flutter-ios
 
   PublishAndroidBinding:
     needs: [ Checks, UnitTest, GenerateAndroidBinding, GenerateiOSBinding ]
