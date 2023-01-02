@@ -8,6 +8,8 @@ import 'package:app/main.dart';
 import 'package:app/models/credential_preview.dart';
 import 'package:app/services/storage_service.dart';
 
+import '../models/store_credential_data.dart';
+
 class PresentationPreview extends StatefulWidget {
   final String matchedCredential;
   final String credentialDisplay;
@@ -27,9 +29,9 @@ class PresentationPreviewState extends State<PresentationPreview> {
   @override
   void initState() {
     super.initState();
-    /// Await your Future here (This function only called once after the layout is Complete)
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) async {
-      userLoggedIn = (await _storageService.retrieve("username"))!;
+      UserLoginDetails userLoginDetails =  await getUser();
+      userLoggedIn = userLoginDetails.username!;
     });
   }
 
@@ -136,7 +138,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
     );
   }
   _navigateToDashboard(String userLoggedIn) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => Dashboard(user: userLoggedIn)));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }
   _navigateToCredentialShareSuccess(String verifierName) async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialShared(verifierName: verifierName)));

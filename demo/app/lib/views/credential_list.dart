@@ -1,14 +1,16 @@
+import 'dart:developer';
+
 import 'package:app/services/storage_service.dart';
 import 'package:app/widgets/credential_card.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/store_credential_data.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/credential_data_object.dart';
 
 class CredentialList extends StatefulWidget {
   final String title;
-  final String? user;
-  const CredentialList({Key? key, required this.title, required this.user}) : super(key: key);
+  const CredentialList({Key? key, required this.title}) : super(key: key);
 
   @override
   State<CredentialList> createState() => _CredentialListState();
@@ -19,17 +21,18 @@ class _CredentialListState extends State<CredentialList> {
  // late List<StorageItem> _credentialList;
   late List<CredentialDataObject> _credentialList;
   bool _loading = true;
-  static String? userIDLoggedIn = '';
+  static String? username = '';
   @override
   void initState() {
     super.initState();
-    userIDLoggedIn = widget.user;
-    initList(userIDLoggedIn!);
+    initList();
   }
 
-  void initList(String? userIDLoggedIn) async {
-    var username = await _storageService.retrieve("username");
-    print("username $username");
+  void initList() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final SharedPreferences p = prefs;
+    username =  p.getString("userLoggedIn");
+    log("list - $username");
       _credentialList = await _storageService.retrieveCredentials(username!);
     if (_credentialList.isEmpty) {
       _loading = true;
@@ -60,7 +63,7 @@ class _CredentialListState extends State<CredentialList> {
                 onDismissed: (direction) async {
                   await _storageService.deleteData(_credentialList[index])
                       .then((value) => _credentialList.removeAt(index));
-                  initList(widget.user!);
+                  initList();
                 },
               );
             }),

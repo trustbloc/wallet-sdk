@@ -28,7 +28,8 @@ class CredentialPreviewState extends State<CredentialPreview> {
     super.initState();
     /// Await your Future here (This function only called once after the layout is Complete)
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) async {
-      userLoggedIn = (await _storageService.retrieve("username"))!;
+      UserLoginDetails userLoginDetails =  await getUser();
+      userLoggedIn = userLoginDetails.username!;
     });
   }
 
@@ -141,6 +142,6 @@ class CredentialPreviewState extends State<CredentialPreview> {
     );
   }
   _navigateToDashboard(String userLoggedIn) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => Dashboard(user: userLoggedIn)));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }
 }
