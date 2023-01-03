@@ -185,7 +185,7 @@ jobs:
           echo '127.0.0.1 oidc-provider.example.com' | sudo tee -a /etc/hosts
           echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
           brew install docker docker-compose colima
-          colima start
+          colima start --memory 8
           export PATH=$PATH:$GOPATH/bin
           echo $PATH
           go install golang.org/x/mobile/cmd/gomobile@latest
