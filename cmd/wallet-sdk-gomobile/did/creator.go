@@ -4,8 +4,7 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package did contains a DID document creator and resolver that can be used to create and resolve DIDs using various
-// supported DID methods.
+// Package did contains functionality related to DIDs.
 package did
 
 import (
