@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package integration
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -24,45 +25,66 @@ import (
 )
 
 func TestOpenID4VPFullFlow(t *testing.T) {
-	testHelper := newVPTestHelper(t)
+	type test struct {
+		issuerProfileID   string
+		walletDIDMethod   string
+		verifierProfileID string
+		verifierDIDMethod string
+	}
 
-	issuedCredentials := testHelper.issueCredentials(t)
+	tests := []test{
+		{
+			issuerProfileID:   "bank_issuer",
+			walletDIDMethod:   "ion",
+			verifierProfileID: "v_myprofile_jwt",
+			verifierDIDMethod: "ion",
+		},
+	}
 
-	setup := oidc4vp.NewSetup(testenv.NewHttpRequest())
+	for _, tc := range tests {
+		fmt.Println(fmt.Sprintf("running tests with issuerProfileID=%s walletDIDMethod=%s verifierDIDMethod=%s",
+			tc.issuerProfileID, tc.walletDIDMethod, tc.verifierDIDMethod))
 
-	err := setup.AuthorizeVerifierBypassAuth("test_org")
-	require.NoError(t, err)
+		testHelper := newVPTestHelper(t, tc.walletDIDMethod)
 
-	initiateURL, err := setup.InitiateInteraction("v_myprofile_jwt")
-	require.NoError(t, err)
+		issuedCredentials := testHelper.issueCredentials(t, tc.issuerProfileID)
 
-	didResolver, err := did.NewResolver("")
-	require.NoError(t, err)
+		setup := oidc4vp.NewSetup(testenv.NewHttpRequest())
 
-	interaction := openid4vp.NewInteraction(
-		initiateURL, testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver, ld.NewDocLoader())
+		err := setup.AuthorizeVerifierBypassAuth("test_org")
+		require.NoError(t, err)
 
-	query, err := interaction.GetQuery()
-	require.NoError(t, err)
+		initiateURL, err := setup.InitiateInteraction(tc.verifierProfileID)
+		require.NoError(t, err)
 
-	verifiablePres, err := credential.NewInquirer(ld.NewDocLoader()).
-		Query(query, credential.NewCredentialsOpt(issuedCredentials))
-	require.NoError(t, err)
+		didResolver, err := did.NewResolver("")
+		require.NoError(t, err)
 
-	matchedCreds, err := verifiablePres.Credentials()
-	require.NoError(t, err)
+		interaction := openid4vp.NewInteraction(
+			initiateURL, testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver, ld.NewDocLoader())
 
-	require.Equal(t, issuedCredentials.Length(), matchedCreds.Length())
-	require.Equal(t, string(issuedCredentials.AtIndex(0).Content), string(matchedCreds.AtIndex(0).Content))
+		query, err := interaction.GetQuery()
+		require.NoError(t, err)
 
-	verifiablePresContent, err := verifiablePres.Content()
-	require.NoError(t, err)
+		verifiablePres, err := credential.NewInquirer(ld.NewDocLoader()).
+			Query(query, credential.NewCredentialsOpt(issuedCredentials))
+		require.NoError(t, err)
 
-	vm, err := testHelper.DIDDoc.AssertionMethod()
-	require.NoError(t, err)
+		matchedCreds, err := verifiablePres.Credentials()
+		require.NoError(t, err)
 
-	err = interaction.PresentCredential(verifiablePresContent, vm)
-	require.NoError(t, err)
+		require.Equal(t, issuedCredentials.Length(), matchedCreds.Length())
+		require.Equal(t, string(issuedCredentials.AtIndex(0).Content), string(matchedCreds.AtIndex(0).Content))
+
+		verifiablePresContent, err := verifiablePres.Content()
+		require.NoError(t, err)
+
+		vm, err := testHelper.DIDDoc.AssertionMethod()
+		require.NoError(t, err)
+
+		err = interaction.PresentCredential(verifiablePresContent, vm)
+		require.NoError(t, err)
+	}
 }
 
 type vpTestHelper struct {
@@ -70,7 +92,7 @@ type vpTestHelper struct {
 	DIDDoc *api.DIDDocResolution
 }
 
-func newVPTestHelper(t *testing.T) *vpTestHelper {
+func newVPTestHelper(t *testing.T, didMethod string) *vpTestHelper {
 	kms, err := localkms.NewKMS(nil)
 	require.NoError(t, err)
 
@@ -78,7 +100,7 @@ func newVPTestHelper(t *testing.T) *vpTestHelper {
 	c, err := did.NewCreatorWithKeyWriter(kms)
 	require.NoError(t, err)
 
-	didDoc, err := c.Create("ion", &api.CreateDIDOpts{})
+	didDoc, err := c.Create(didMethod, &api.CreateDIDOpts{})
 	require.NoError(t, err)
 
 	return &vpTestHelper{
@@ -87,7 +109,7 @@ func newVPTestHelper(t *testing.T) *vpTestHelper {
 	}
 }
 
-func (h *vpTestHelper) issueCredentials(t *testing.T) *api.VerifiableCredentialsArray {
+func (h *vpTestHelper) issueCredentials(t *testing.T, issuerProfileID string) *api.VerifiableCredentialsArray {
 	oidc4ciSetup, err := oidc4ci.NewSetup(testenv.NewHttpRequest())
 	require.NoError(t, err)
 
@@ -97,7 +119,7 @@ func (h *vpTestHelper) issueCredentials(t *testing.T) *api.VerifiableCredentials
 	credentials := api.NewVerifiableCredentialsArray()
 
 	for i := 0; i < 2; i++ {
-		initiateIssuanceURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance("bank_issuer")
+		initiateIssuanceURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileID)
 		require.NoError(t, err)
 
 		signerCreator, err := localkms.CreateSignerCreator(h.KMS)
