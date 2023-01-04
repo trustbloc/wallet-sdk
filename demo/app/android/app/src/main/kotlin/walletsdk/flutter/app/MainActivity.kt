@@ -45,7 +45,7 @@ class MainActivity : FlutterActivity() {
 
                         "createDID" -> {
                             try {
-                                val didCreated = createDID()
+                                val didCreated = createDID(call)
                                 result.success(didCreated)
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while creating did creator", e)
@@ -197,12 +197,12 @@ class MainActivity : FlutterActivity() {
     }
 
 
-       private fun createDID(): String {
+       private fun createDID(call: MethodCall): String {
         val kms = this.kms ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
         val creatorDID = Creator(kms as KeyWriter)
-
-        val doc = creatorDID.create("ion", CreateDIDOpts())
+        val didMethodType = call.argument<String>("didMethodType")
+        val doc = creatorDID.create(didMethodType, CreateDIDOpts())
 
         didDocID = doc.id()
         didVerificationMethod = doc.assertionMethod()

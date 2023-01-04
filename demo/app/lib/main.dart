@@ -55,7 +55,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   var userDIDId = '';
 
   Future<String?> _createDid() async {
-    var didID = await WalletSDKPlugin.createDID();
+    var didID = await WalletSDKPlugin.createDID("ion");
     setState(() {
       userDIDId = didID!;
     });

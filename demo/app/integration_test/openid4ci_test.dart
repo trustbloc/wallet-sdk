@@ -10,7 +10,7 @@ void main() async {
   await walletSDKPlugin.initSDK();
 
   testWidgets('openid4ci-vp', (tester) async {
-    final didContent = await walletSDKPlugin.createDID();
+    final didContent = await walletSDKPlugin.createDID("ion");
     print("didContent : $didContent");
 
     const issuanceURL = String.fromEnvironment("INITIATE_ISSUANCE_URL");
