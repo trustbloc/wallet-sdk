@@ -38,7 +38,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         
         switch call.method {
         case "createDID":
-            createDid(result: result)
+            let didMethodType = fetchArgsKeyValue(call, key: "didMethodType")
+            createDid(didMethodType: didMethodType!, result: result)
             
         case "authorize":
             let requestURI = fetchArgsKeyValue(call, key: "requestURI")
@@ -146,11 +147,11 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
     }
     
-    public func createDid(result: @escaping FlutterResult){
+    public func createDid(didMethodType: String, result: @escaping FlutterResult){
         let didCreator = DidNewCreatorWithKeyWriter(self.kms, nil)
         do {
             let apiCreate = initializeObject(fromType: ApiCreateDIDOpts.self)
-            let doc = try didCreator!.create("ion", createDIDOpts: apiCreate)
+            let doc = try didCreator!.create(didMethodType, createDIDOpts: apiCreate)
             let docString = String(bytes: doc.content!, encoding: .utf8)
             didDocID = doc.id_(nil)
             didVerificationMethod = try doc.assertionMethod()
