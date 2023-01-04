@@ -9,20 +9,19 @@ package issuer
 
 // Metadata represents metadata about an issuer as obtained from their .well-known OpenID configuration.
 type Metadata struct {
-	Issuer                             string                `json:"issuer,omitempty"`
-	AuthorizationEndpoint              string                `json:"authorization_endpoint,omitempty"`
-	TokenEndpoint                      string                `json:"token_endpoint,omitempty"`
-	PushedAuthorizationRequestEndpoint string                `json:"pushed_authorization_request_endpoint,omitempty"`
-	RequirePushedAuthorizationRequests bool                  `json:"require_pushed_authorization_requests,omitempty"`
-	CredentialEndpoint                 string                `json:"credential_endpoint,omitempty"`
-	CredentialsSupported               []SupportedCredential `json:"credentials_supported,omitempty"`
-	CredentialIssuer                   *CredentialIssuer     `json:"credential_issuer,omitempty"`
+	Issuer                    string                         `json:"issuer,omitempty"`
+	AuthorizationEndpoint     string                         `json:"authorization_endpoint,omitempty"`
+	TokenEndpoint             string                         `json:"token_endpoint,omitempty"`
+	PushedAuthRequestEndpoint string                         `json:"pushed_authorization_request_endpoint,omitempty"`
+	RequirePushedAuthRequests bool                           `json:"require_pushed_authorization_requests,omitempty"`
+	CredentialEndpoint        string                         `json:"credential_endpoint,omitempty"`
+	CredentialsSupported      map[string]SupportedCredential `json:"credentials_supported,omitempty"`
+	CredentialIssuer          *CredentialIssuer              `json:"credential_issuer,omitempty"`
 }
 
 // SupportedCredential represents metadata about a credential type that a credential issuer can issue.
 type SupportedCredential struct {
 	Format                                string              `json:"format,omitempty"`
-	ID                                    string              `json:"id,omitempty"`
 	Types                                 []string            `json:"types,omitempty"`
 	CryptographicBindingsMethodsSupported []string            `json:"cryptographic_bindings_methods_supported,omitempty"`
 	CryptographicSuitesSupported          []string            `json:"cryptographic_suites_supported,omitempty"`

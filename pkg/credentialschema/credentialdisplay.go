@@ -17,7 +17,7 @@ import (
 
 const localeNotApplicable = "N/A"
 
-func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported []issuer.SupportedCredential,
+func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported map[string]issuer.SupportedCredential,
 	preferredLocale string,
 ) ([]CredentialDisplay, error) {
 	var credentialDisplays []CredentialDisplay
@@ -30,9 +30,13 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 
 		var foundMatchingType bool
 
-		for i := range credentialsSupported {
-			if haveMatchingTypes(&credentialsSupported[i], vc) {
-				credentialDisplay := buildCredentialDisplay(&credentialsSupported[i], subject, preferredLocale)
+		// Note that the actual ID here isn't important here - what matters are the types listed within the
+		// supported credential object.
+		for id := range credentialsSupported {
+			supportedCredential := credentialsSupported[id]
+
+			if haveMatchingTypes(&supportedCredential, vc) {
+				credentialDisplay := buildCredentialDisplay(&supportedCredential, subject, preferredLocale)
 
 				credentialDisplays = append(credentialDisplays, *credentialDisplay)
 
@@ -136,7 +140,9 @@ func resolveClaims(supportedCredential *issuer.SupportedCredential, credentialSu
 
 		resolvedClaim := resolveClaim(fieldName, &claim, credentialSubject, preferredLocale)
 
-		resolvedClaims = append(resolvedClaims, *resolvedClaim)
+		if resolvedClaim != nil {
+			resolvedClaims = append(resolvedClaims, *resolvedClaim)
+		}
 	}
 
 	return resolvedClaims
@@ -146,7 +152,7 @@ func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *veri
 	preferredLocale string,
 ) *ResolvedClaim {
 	if len(claim.Displays) == 0 {
-		return &ResolvedClaim{}
+		return nil
 	}
 
 	name, nameLocale := getLocalizedName(preferredLocale, claim)
