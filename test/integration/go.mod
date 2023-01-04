@@ -8,10 +8,13 @@ go 1.19
 
 require (
 	github.com/google/uuid v1.3.0
+	github.com/hyperledger/aries-framework-go v0.1.9-0.20221219221222-fdd5069d178e
+	github.com/piprate/json-gold v0.4.2
 	github.com/stretchr/testify v1.8.1
 	github.com/trustbloc/cmdutil-go v0.0.0-20221125151303-09d42adcc811
 	github.com/trustbloc/logutil-go v0.0.0-20221124174025-c46110e3ea42
-	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile v0.0.0-20221214133234-f978c0b91715
+	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
+	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile v0.0.0-20230102235937-82237ea9dde3
 	go.uber.org/zap v1.23.0
 	golang.org/x/oauth2 v0.1.0
 )
@@ -29,7 +32,6 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/tink/go v1.7.0 // indirect
-	github.com/hyperledger/aries-framework-go v0.1.9-0.20221219221222-fdd5069d178e // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/longform v0.0.0-20221209153644-5a3273a805c1 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v1.0.0-rc3.0.20221104150937-07bfbe450122 // indirect
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220610133818-119077b0ec85 // indirect
@@ -48,7 +50,6 @@ require (
 	github.com/multiformats/go-multibase v0.1.1 // indirect
 	github.com/multiformats/go-multihash v0.0.14 // indirect
 	github.com/multiformats/go-varint v0.0.6 // indirect
-	github.com/piprate/json-gold v0.4.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
@@ -61,7 +62,6 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
 	github.com/trustbloc/sidetree-core-go v1.0.0-rc3.0.20221028171319-8d44bd1cace7 // indirect
-	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000 // indirect
 	github.com/trustbloc/wallet-sdk/cmd/utilities v0.0.0-00010101000000-000000000000 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
