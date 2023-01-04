@@ -7,14 +7,21 @@ class Settings extends StatefulWidget {
 
   @override
   SettingsState createState() => SettingsState();
+
 }
 
 class SettingsState extends State<Settings> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _userDIDController = TextEditingController();
+
+  @override
+  initState() {
+    super.initState();
+    getUserDetails();
+  }
+
   @override
   Widget build(BuildContext context) {
-    getUserDetails();
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -64,7 +71,7 @@ class SettingsState extends State<Settings> {
             decoration: const InputDecoration(
               fillColor:  Color(0xff8D8A8E),
               border: UnderlineInputBorder(),
-              labelText: 'DID ID',
+              labelText: 'Decentralized Identifier (DID)',
               labelStyle: TextStyle(color: Color(0xff190C21), fontWeight: FontWeight.w700,
                   fontFamily: 'SF Pro', fontSize: 16, fontStyle: FontStyle.normal ),
             )
