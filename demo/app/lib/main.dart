@@ -1,12 +1,12 @@
-import 'dart:convert';
 import 'dart:developer';
 
+import 'package:app/widgets/primary_input_field.dart';
+import 'package:app/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'demo_method_channel.dart';
-import 'models/store_credential_data.dart';
 import 'views/dashboard.dart';
-import 'package:app/services/storage_service.dart';
 
 final WalletSDKPlugin = MethodChannelWallet();
 
@@ -27,30 +27,55 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: Image.asset('lib/assets/images/logo.png', fit: BoxFit.scaleDown),
-          toolbarHeight: 120.0,
-          leadingWidth: 80,
-          centerTitle: true,
-          backgroundColor: Colors.deepPurple[800],
+          systemOverlayStyle: SystemUiOverlayStyle.light, // 2
+          automaticallyImplyLeading:false,
+          title: Image.asset('lib/assets/images/logo.png',    fit: BoxFit.contain,
+            height: 24, width: 144.6,),
+          backgroundColor: const Color(0xffEEEAEE),
+          flexibleSpace: Container(
+            height: 130,
+            decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: ExactAssetImage('lib/assets/images/glow.png'),
+                  opacity: 0.6,
+                  alignment: Alignment.topCenter,
+                  fit: BoxFit.fill,
+                ),
+                gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: <Color>[
+                      Color(0xff100716),
+                      Color(0xff261131),
+                    ])
+            ),
+          ),
         ),
-        body: const MyStatefulWidget(),
-        backgroundColor: Colors.deepPurple[800],
+        body: Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: ExactAssetImage('lib/assets/images/background.png'),
+                alignment: Alignment.topLeft
+              ),
+            ),
+            child: const MainWidget(),
+        ),
+        backgroundColor: const Color(0xffF4F1F5),
       ),
       debugShowCheckedModeBanner: false, //Removing Debug Banner
     );
   }
 }
 
-class MyStatefulWidget extends StatefulWidget {
-  const MyStatefulWidget({Key? key}) : super(key: key);
+class MainWidget extends StatefulWidget {
+  const MainWidget({Key? key}) : super(key: key);
 
   @override
-  State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
+  State<MainWidget> createState() => _MainWidgetState();
 }
 
-class _MyStatefulWidgetState extends State<MyStatefulWidget> {
+class _MainWidgetState extends State<MainWidget> {
   final TextEditingController _usernameController = TextEditingController();
-  final StorageService _storageService = StorageService();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   var userDIDId = '';
 
@@ -65,60 +90,49 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
 
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
-    return Padding(
-        padding: const EdgeInsets.all(10),
+    return Center(
         child: ListView(
+          shrinkWrap: true,
           children: <Widget>[
-            SizedBox(height: size.height * 0.02),
             Container(
-              padding: const EdgeInsets.all(10),
-              child: TextField(
-                controller: _usernameController,
-                style: const TextStyle(fontSize: 20, color: Colors.black),
-                decoration: const InputDecoration(
-                  fillColor: Colors.white,
-                  filled: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(10.0),
-                    ),
-                    borderSide: BorderSide(
-                      width: 0,
-                      style: BorderStyle.none,
-                    ),
-                  ),
-                  labelText: 'Enter Username',
-                ),
-              ),
+              padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
+              child: const Text('Trustbloc Sign In',
+                  textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, fontFamily: 'SF Pro' )),
             ),
-            SizedBox(height: size.height * 0.02),
             Container(
-                height: 50,
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12), // <-- Radius
-                    ),
-                  ),
-                onPressed: () async {
-                 final SharedPreferences pref = await prefs;
-                 String? userLoggedIn =  pref.getString("userLoggedIn");
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+              child: PrimaryInputField(textController: _usernameController, titleTextAlign: TextAlign.center, labelText: 'Username',),
+            ),
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                child:   PrimaryButton(
+                  width: double.infinity,
+                  onPressed: () async {
+                    final SharedPreferences pref = await prefs;
+                    String? userLoggedIn =  pref.getString("userLoggedIn");
                     if (_usernameController.text == userLoggedIn.toString()){
                       _navigateToDashboard();
                     } else {
-                       await _createDid();
-                       pref.setString('userLoggedIn', _usernameController.text);
-                       pref.setString('userDID', userDIDId);
+                      await _createDid();
+                      pref.setString('userLoggedIn', _usernameController.text);
+                      pref.setString('userDID', userDIDId);
                       _navigateToDashboard();
                     }
                   },
-                  child: const Text('Register', style: TextStyle(fontSize: 22, color: Colors.deepPurple)),
-                )),
+                  child: const Text('Sign In ', style: TextStyle(fontSize: 16, color: Colors.white)),
+                ),
+              ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+              child: const Text('This is a reference app and not to be used for production use cases.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.normal, fontSize: 14, fontFamily: 'SF Pro', color: Color(0xff6C6D7C) )),
+            ),
+
           ],
-        ));
+        )
+      );
   }
   _navigateToDashboard() async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const  Dashboard()));
