@@ -5,76 +5,76 @@
   "pushed_authorization_request_endpoint":"https://server.example.com/connect/par-authorize",
   "require_pushed_authorization_requests":false,
   "credential_endpoint":"http://server.example.com/credential",
-  "credentials_supported": [
-    {
-      "format": "jwt_vc_json",
-      "id": "UniversityDegree_JWT",
-      "types": [
+  "credentials_supported":{
+    "UniversityDegree":{
+      "format":"jwt_vc_json",
+      "types":[
         "VerifiableCredential",
         "UniversityDegreeCredential"
       ],
-      "cryptographic_binding_methods_supported": [
+      "cryptographic_binding_methods_supported":[
         "did"
       ],
-      "cryptographic_suites_supported": [
+      "cryptographic_suites_supported":[
         "ES256K"
       ],
-      "display": [
+      "display":[
         {
-          "name": "University Credential",
-          "locale": "en-US",
-          "logo": {
-            "url": "https://exampleuniversity.com/public/logo.png",
-            "alternative_text": "a square logo of a university"
+          "name":"University Credential",
+          "locale":"en-US",
+          "logo":{
+            "url":"https://exampleuniversity.com/public/logo.png",
+            "alternative_text":"a square logo of a university"
           },
-          "background_color": "#12107c",
-          "text_color": "#FFFFFF"
+          "background_color":"#12107c",
+          "text_color":"#FFFFFF"
         }
       ],
-      "credentialSubject": {
-        "id": {
-          "display": [
+      "credentialSubject":{
+        "id":{
+          "display":[
             {
-              "name": "ID",
-              "locale": "en-US"
+              "name":"ID",
+              "locale":"en-US"
             }
           ]
         },
-        "given_name": {
-          "display": [
+        "given_name":{
+          "display":[
             {
-              "name": "Given Name",
-              "locale": "en-US"
+              "name":"Given Name",
+              "locale":"en-US"
             }
           ]
         },
-        "surname": {
-          "display": [
+        "surname":{
+          "display":[
             {
-              "name": "Surname",
-              "locale": "en-US"
+              "name":"Surname",
+              "locale":"en-US"
             }
           ]
         },
-        "gpa": {
-          "display": [
+        "gpa":{
+          "display":[
             {
-              "name": "GPA",
-              "locale": "en-US"
+              "name":"GPA",
+              "locale":"en-US"
             }
           ]
         }
       }
     }
-  ],
-  "credential_issuer": {
-    "display": [{
-      "name": "Example University",
-      "locale": "en-US"
-    },
+  },
+  "credential_issuer":{
+    "display":[
       {
-        "name": "サンプル大学",
-        "locale": "jp-JA"
+        "name":"Example University",
+        "locale":"en-US"
+      },
+      {
+        "name":"サンプル大学",
+        "locale":"jp-JA"
       }
     ]
   }

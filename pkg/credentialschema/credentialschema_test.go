@@ -126,7 +126,7 @@ func TestResolve(t *testing.T) {
 				err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
 				require.NoError(t, err)
 
-				issuerMetadata.CredentialsSupported[0].Types[1] = "SomeOtherType"
+				issuerMetadata.CredentialsSupported["UniversityDegree"].Types[1] = "SomeOtherType"
 
 				resolvedDisplayData, errResolve := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
@@ -176,8 +176,7 @@ func TestResolve(t *testing.T) {
 				require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Overview.Logo.AltText)
 				require.Equal(t, "#12107c", resolvedDisplayData.CredentialDisplays[0].Overview.BackgroundColor)
 				require.Equal(t, "#FFFFFF", resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
-				require.Len(t, resolvedDisplayData.CredentialDisplays[0].Claims, 1)
-				require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Claims[0])
+				require.Nil(t, resolvedDisplayData.CredentialDisplays[0].Claims)
 			})
 			t.Run("Issuer metadata does not have the optional issuer display info", func(t *testing.T) {
 				var issuerMetadata issuer.Metadata
@@ -301,18 +300,6 @@ func TestResolve(t *testing.T) {
 				` dial tcp: lookup BadURL:`)
 			require.Nil(t, resolvedDisplayData)
 		})
-	})
-	t.Run("Invalid supported credentials object", func(t *testing.T) {
-		metadata := issuer.Metadata{
-			CredentialsSupported: []issuer.SupportedCredential{{ID: "SomeID"}, {ID: "SomeID"}},
-		}
-
-		resolvedDisplayData, err := credentialschema.Resolve(
-			credentialschema.WithCredentials([]*verifiable.Credential{{}}),
-			credentialschema.WithIssuerMetadata(&metadata))
-		require.EqualError(t, err, "issuer metadata's supported credentials object is invalid: "+
-			"the ID SomeID appears in multiple supported credential objects")
-		require.Nil(t, resolvedDisplayData)
 	})
 	t.Run("Unsupported VC", func(t *testing.T) {
 		t.Run("Unsupported subject type", func(t *testing.T) {
