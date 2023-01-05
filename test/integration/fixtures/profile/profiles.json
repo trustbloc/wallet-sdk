@@ -10,7 +10,7 @@
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",
           "signatureRepresentation": 0,
-          "keyType": "ECDSASecp256k1IEEEP1363",
+          "keyType": "ECDSASecp256k1DER",
           "format": "jwt",
           "didMethod": "orb",
           "status": {
@@ -38,8 +38,8 @@
           }
         ],
         "credentialMetadata": {
-          "credentials_supported": [
-            {
+          "credentials_supported": {
+            "VerifiedEmployee": {
               "format": "jwt_vc_json",
               "id": "VerifiedEmployee_JWT",
               "types": [
@@ -116,7 +116,7 @@
                 }
               }
             }
-          ]
+          }
         }
       },
       "createDID": true,
@@ -133,7 +133,7 @@
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",
           "signatureRepresentation": 0,
-          "keyType": "ECDSASecp256k1IEEEP1363",
+          "keyType": "ECDSASecp256k1DER",
           "format": "jwt",
           "didMethod": "ion",
           "status": {
@@ -161,8 +161,8 @@
           }
         ],
         "credentialMetadata": {
-          "credentials_supported": [
-            {
+          "credentials_supported": {
+            "VerifiedEmployee": {
               "format": "jwt_vc_json",
               "id": "VerifiedEmployee_JWT",
               "types": [
@@ -239,7 +239,7 @@
                 }
               }
             }
-          ]
+          }
         }
       },
       "createDID": true
@@ -273,7 +273,7 @@
         },
         "oidcConfig": {
           "roSigningAlgorithm": "EcdsaSecp256k1Signature2019",
-          "keyType": "ECDSASecp256k1IEEEP1363",
+          "keyType": "ECDSASecp256k1DER",
           "didMethod": "orb"
         },
         "presentationDefinitions": [
@@ -365,7 +365,7 @@
         },
         "oidcConfig": {
           "roSigningAlgorithm": "EcdsaSecp256k1Signature2019",
-          "keyType": "ECDSASecp256k1IEEEP1363",
+          "keyType": "ECDSASecp256k1DER",
           "didMethod": "ion"
         },
         "presentationDefinitions": [
