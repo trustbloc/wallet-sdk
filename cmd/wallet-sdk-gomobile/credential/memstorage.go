@@ -37,7 +37,7 @@ func NewInMemoryDB() *DB {
 }
 
 // Get returns a credential with the given id. An error is returned if no credential exists with the given id.
-func (p *DB) Get(id string) (*api.JSONObject, error) {
+func (p *DB) Get(id string) (*api.VerifiableCredential, error) {
 	vc, err := p.goAPIProvider.Get(id)
 	if err != nil {
 		return nil, err
@@ -48,27 +48,33 @@ func (p *DB) Get(id string) (*api.JSONObject, error) {
 		return nil, err
 	}
 
-	return &api.JSONObject{Data: vcBytes}, nil
+	return api.NewVerifiableCredential(vcBytes), nil
 }
 
 // GetAll returns all stored credentials.
-func (p *DB) GetAll() (*api.JSONArray, error) {
+func (p *DB) GetAll() (*api.VerifiableCredentialsArray, error) {
 	vcs, err := p.goAPIProvider.GetAll()
 	if err != nil {
 		return nil, err
 	}
 
-	vcsBytes, err := json.Marshal(vcs)
-	if err != nil {
-		return nil, err
+	gomobileVCs := api.NewVerifiableCredentialsArray()
+
+	for i := range vcs {
+		vcBytes, err := vcs[i].MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+
+		gomobileVCs.Add(api.NewVerifiableCredential(vcBytes))
 	}
 
-	return &api.JSONArray{Data: vcsBytes}, nil
+	return gomobileVCs, nil
 }
 
 // Add stores the given credential.
-func (p *DB) Add(vc *api.JSONObject) error {
-	credential, err := verifiable.ParseCredential(vc.Data,
+func (p *DB) Add(vc *api.VerifiableCredential) error {
+	credential, err := verifiable.ParseCredential(vc.Content,
 		verifiable.WithJSONLDDocumentLoader(p.documentLoader),
 		verifiable.WithDisabledProofCheck())
 	if err != nil {

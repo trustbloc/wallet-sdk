@@ -78,7 +78,8 @@ func (vp *VerifiablePresentation) Credentials() (*api.VerifiableCredentialsArray
 	}
 
 	for _, cred := range credentialsRaw {
-		result.Add(api.NewVerifiableCredential(unQuote(string(cred))))
+		unquotedCred := unQuote(string(cred))
+		result.Add(api.NewVerifiableCredential([]byte(unquotedCred)))
 	}
 
 	return result, nil
@@ -147,7 +148,7 @@ func (c *Inquirer) parseVC(rawCreds *api.VerifiableCredentialsArray) ([]*verifia
 	for i := 0; i < rawCreds.Length(); i++ {
 		content := rawCreds.AtIndex(i).Content
 
-		cred, credErr := verifiable.ParseCredential([]byte(content), verifiable.WithDisabledProofCheck(),
+		cred, credErr := verifiable.ParseCredential(content, verifiable.WithDisabledProofCheck(),
 			verifiable.WithJSONLDDocumentLoader(c.documentLoader))
 		if credErr != nil {
 			return nil, fmt.Errorf("verifiable credential parse failed: %w", credErr)

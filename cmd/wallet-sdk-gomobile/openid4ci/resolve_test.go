@@ -26,7 +26,7 @@ var (
 	sampleIssuerMetadata []byte
 
 	//go:embed testdata/credential_university_degree.jsonld
-	credentialUniversityDegree string
+	credentialUniversityDegree []byte
 )
 
 func TestResolve(t *testing.T) {
@@ -49,7 +49,7 @@ func TestResolve(t *testing.T) {
 		t.Run("With credential reader", func(t *testing.T) {
 			memProvider := credential.NewInMemoryDB()
 
-			vc := &api.JSONObject{Data: []byte(credentialUniversityDegree)}
+			vc := api.NewVerifiableCredential(credentialUniversityDegree)
 
 			err := memProvider.Add(vc)
 			require.NoError(t, err)
@@ -125,7 +125,7 @@ func TestResolve(t *testing.T) {
 	t.Run("Credential IDs are nil", func(t *testing.T) {
 		memProvider := credential.NewInMemoryDB()
 
-		vc := &api.JSONObject{Data: []byte(credentialUniversityDegree)}
+		vc := api.NewVerifiableCredential(credentialUniversityDegree)
 
 		err := memProvider.Add(vc)
 		require.NoError(t, err)
