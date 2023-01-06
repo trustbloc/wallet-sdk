@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api/vcparse"
+
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
 
@@ -25,10 +27,10 @@ var (
 	presentationDefinition []byte
 
 	//go:embed test_data/university_degree.jwt
-	universityDegreeVCJWT string
+	universityDegreeVCJWT []byte
 
 	//go:embed test_data/permanent_resident_card.jwt
-	permanentResidentCardVC string
+	permanentResidentCardVC []byte
 )
 
 func TestInstance_Query(t *testing.T) {
@@ -38,7 +40,7 @@ func TestInstance_Query(t *testing.T) {
 		})
 
 		presentation, err := query.Query(presentationDefinition,
-			createCredJSONArray(t, []string{universityDegreeVCJWT, permanentResidentCardVC}),
+			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
 		)
 		require.NoError(t, err)
 		require.NotNil(t, presentation)
@@ -58,7 +60,7 @@ func TestInstance_Query(t *testing.T) {
 		})
 
 		_, err := query.Query(presentationDefinition,
-			createCredJSONArray(t, []string{permanentResidentCardVC}),
+			createCredJSONArray(t, [][]byte{permanentResidentCardVC}),
 		)
 		require.Contains(t, err.Error(), "credentials do not satisfy requirements")
 	})
@@ -69,7 +71,7 @@ func TestInstance_Query(t *testing.T) {
 		})
 
 		_, err := query.Query(nil,
-			createCredJSONArray(t, []string{universityDegreeVCJWT, permanentResidentCardVC}),
+			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
 		)
 
 		require.Contains(t, err.Error(), "unmarshal of presentation definition failed:")
@@ -81,22 +83,10 @@ func TestInstance_Query(t *testing.T) {
 		})
 
 		_, err := query.Query([]byte("{}"),
-			createCredJSONArray(t, []string{universityDegreeVCJWT, permanentResidentCardVC}),
+			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
 		)
 
 		require.Contains(t, err.Error(), "validation of presentation definition failed:")
-	})
-
-	t.Run("VC parse failed", func(t *testing.T) {
-		query := credential.NewInquirer(&documentLoaderReverseWrapper{
-			DocumentLoader: testutil.DocumentLoader(t),
-		})
-
-		_, err := query.Query(presentationDefinition,
-			createCredJSONArray(t, []string{"{}"}),
-		)
-
-		require.Contains(t, err.Error(), "verifiable credential parse failed")
 	})
 
 	t.Run("Nil credentials and nil reader", func(t *testing.T) {
@@ -110,12 +100,16 @@ func TestInstance_Query(t *testing.T) {
 	})
 }
 
-func createCredJSONArray(t *testing.T, creds []string) *credential.CredentialsOpt {
+func createCredJSONArray(t *testing.T, creds [][]byte) *credential.CredentialsOpt {
 	t.Helper()
 
 	credsArray := api.NewVerifiableCredentialsArray()
+
 	for _, credContent := range creds {
-		credsArray.Add(api.NewVerifiableCredential(credContent))
+		vc, err := vcparse.Parse(string(credContent), &vcparse.Opts{DisableProofCheck: true})
+		require.NoError(t, err)
+
+		credsArray.Add(vc)
 	}
 
 	return credential.NewCredentialsOpt(credsArray)

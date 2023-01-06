@@ -46,9 +46,6 @@ func TestSigner_Issue(t *testing.T) {
 		Issued: util.NewTime(time.Now()),
 	}
 
-	mockCredBytes, err := mockCredential.MarshalJSON()
-	require.NoError(t, err)
-
 	t.Run("success", func(t *testing.T) {
 		t.Run("given raw credential", func(t *testing.T) {
 			s, err := NewSigner(
@@ -59,41 +56,27 @@ func TestSigner_Issue(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			issuedCred, err := s.Issue(&api.JSONObject{Data: mockCredBytes}, mockKID)
+			issuedCred, err := s.Issue(api.NewVerifiableCredential(mockCredential), "", mockKID)
 			require.NoError(t, err)
 			require.NotNil(t, issuedCred)
 		})
 
 		t.Run("given credential ID", func(t *testing.T) {
 			s, err := NewSigner(
-				&mockReader{GetVal: mockCredBytes},
+				&mockReader{getVal: api.NewVerifiableCredential(mockCredential)},
 				&mockResolver{ResolveVal: mockDocResolution(t)},
 				&mockCrypto{SignVal: []byte("foo")},
 				&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)},
 			)
 			require.NoError(t, err)
 
-			issuedCred, err := s.Issue(&api.JSONObject{Data: []byte("\"" + credID + "\"")}, mockKID)
+			issuedCred, err := s.Issue(nil, credID, mockKID)
 			require.NoError(t, err)
 			require.NotNil(t, issuedCred)
 		})
 	})
 
 	t.Run("failure", func(t *testing.T) {
-		t.Run("parsing credential", func(t *testing.T) {
-			s, err := NewSigner(
-				&mockReader{},
-				&mockResolver{ResolveVal: mockDocResolution(t)},
-				&mockCrypto{SignVal: []byte("foo")},
-				&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)},
-			)
-			require.NoError(t, err)
-
-			_, err = s.Issue(&api.JSONObject{Data: []byte("blah")}, mockKID)
-			require.Error(t, err)
-			require.Contains(t, err.Error(), "parsing input credential")
-		})
-
 		t.Run("signing credential", func(t *testing.T) {
 			s, err := NewSigner(
 				&mockReader{},
@@ -103,7 +86,7 @@ func TestSigner_Issue(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			_, err = s.Issue(&api.JSONObject{Data: mockCredBytes}, "")
+			_, err = s.Issue(api.NewVerifiableCredential(mockCredential), "", "")
 			require.Error(t, err)
 			require.Contains(t, err.Error(), "signing credential")
 			require.ErrorIs(t, err, expectErr)
@@ -155,16 +138,17 @@ func makeDoc(vm *did.VerificationMethod) *did.Doc {
 }
 
 type mockReader struct {
-	GetVal []byte
-	GetErr error
+	getVal    *api.VerifiableCredential
+	getAllVal *api.VerifiableCredentialsArray
+	getErr    error
 }
 
-func (m *mockReader) Get(string) (*api.JSONObject, error) {
-	return &api.JSONObject{Data: m.GetVal}, m.GetErr
+func (m *mockReader) Get(string) (*api.VerifiableCredential, error) {
+	return m.getVal, m.getErr
 }
 
-func (m *mockReader) GetAll() (*api.JSONArray, error) {
-	return &api.JSONArray{Data: append(append([]byte("["), m.GetVal...), byte(']'))}, m.GetErr
+func (m *mockReader) GetAll() (*api.VerifiableCredentialsArray, error) {
+	return m.getAllVal, m.getErr
 }
 
 type mockResolver struct {

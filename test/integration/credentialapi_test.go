@@ -100,19 +100,19 @@ func TestCredentialAPI(t *testing.T) {
 				Issued: util.NewTime(time.Now()),
 			}
 
-			credBytes, err := templateCredential.MarshalJSON()
+			err = credStore.Add(api.NewVerifiableCredential(templateCredential))
 			require.NoError(t, err)
 
-			err = credStore.Add(&api.JSONObject{Data: credBytes})
-			require.NoError(t, err)
-
-			credData := credBytes
+			var cred *api.VerifiableCredential
+			var credID string
 
 			if tc.getCredByName {
-				credData = []byte("\"" + templateCredential.ID + "\"")
+				credID = templateCredential.ID
+			} else {
+				cred = api.NewVerifiableCredential(templateCredential)
 			}
 
-			issuedCred, err := signer.Issue(&api.JSONObject{Data: credData}, docID)
+			issuedCred, err := signer.Issue(cred, credID, docID)
 			require.NoError(t, err)
 
 			require.NoError(t, verifier.verify(issuedCred))

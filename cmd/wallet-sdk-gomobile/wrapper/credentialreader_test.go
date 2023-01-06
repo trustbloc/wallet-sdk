@@ -8,9 +8,10 @@ package wrapper_test
 
 import (
 	_ "embed"
-	"encoding/json"
 	"errors"
 	"testing"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api/vcparse"
 
 	"github.com/stretchr/testify/require"
 
@@ -29,9 +30,12 @@ var (
 
 func TestCredentialReaderWrapper_Get(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
+		vc, err := vcparse.Parse(universityDegreeVC, &vcparse.Opts{DisableProofCheck: true})
+		require.NoError(t, err)
+
 		reader := wrapper.CredentialReaderWrapper{
 			CredentialReader: &readerMock{
-				content: []byte(universityDegreeVC),
+				getReturn: vc,
 			},
 			DocumentLoader: testutil.DocumentLoader(t),
 		}
@@ -52,25 +56,24 @@ func TestCredentialReaderWrapper_Get(t *testing.T) {
 		_, err := reader.Get("test")
 		require.Contains(t, err.Error(), "reader error")
 	})
-
-	t.Run("Parse credential error", func(t *testing.T) {
-		reader := wrapper.CredentialReaderWrapper{
-			CredentialReader: &readerMock{
-				content: []byte("[[["),
-			},
-			DocumentLoader: testutil.DocumentLoader(t),
-		}
-
-		_, err := reader.Get("test")
-		require.Contains(t, err.Error(), "verifiable credential parse failed")
-	})
 }
 
 func TestCredentialReaderWrapper_GetAll(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
+		prCardVC, err := vcparse.Parse(permanentResidentCardVC, &vcparse.Opts{DisableProofCheck: true})
+		require.NoError(t, err)
+
+		uniDegreeVC, err := vcparse.Parse(universityDegreeVC, &vcparse.Opts{DisableProofCheck: true})
+		require.NoError(t, err)
+
+		vcArray := api.NewVerifiableCredentialsArray()
+
+		vcArray.Add(prCardVC)
+		vcArray.Add(uniDegreeVC)
+
 		reader := wrapper.CredentialReaderWrapper{
 			CredentialReader: &readerMock{
-				content: createCredJSONArray(t, []string{permanentResidentCardVC, universityDegreeVC}),
+				getAllReturn: vcArray,
 			},
 			DocumentLoader: testutil.DocumentLoader(t),
 		}
@@ -91,38 +94,18 @@ func TestCredentialReaderWrapper_GetAll(t *testing.T) {
 		_, err := reader.GetAll()
 		require.Contains(t, err.Error(), "reader error")
 	})
-
-	t.Run("Parse credential error", func(t *testing.T) {
-		reader := wrapper.CredentialReaderWrapper{
-			CredentialReader: &readerMock{
-				content: []byte("[]"),
-			},
-			DocumentLoader: testutil.DocumentLoader(t),
-		}
-
-		_, err := reader.GetAll()
-		require.Contains(t, err.Error(), "unmarshal of credentials array failed")
-	})
 }
 
 type readerMock struct {
-	content []byte
-	err     error
+	getReturn    *api.VerifiableCredential
+	getAllReturn *api.VerifiableCredentialsArray
+	err          error
 }
 
-func (r *readerMock) Get(id string) (*api.JSONObject, error) {
-	return &api.JSONObject{Data: r.content}, r.err
+func (r *readerMock) Get(id string) (*api.VerifiableCredential, error) {
+	return r.getReturn, r.err
 }
 
-func (r *readerMock) GetAll() (*api.JSONArray, error) {
-	return &api.JSONArray{Data: r.content}, r.err
-}
-
-func createCredJSONArray(t *testing.T, creds []string) []byte {
-	t.Helper()
-
-	arr, err := json.Marshal(creds)
-	require.NoError(t, err)
-
-	return arr
+func (r *readerMock) GetAll() (*api.VerifiableCredentialsArray, error) {
+	return r.getAllReturn, r.err
 }

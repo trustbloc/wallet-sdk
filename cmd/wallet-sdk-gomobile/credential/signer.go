@@ -7,9 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package credential
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
@@ -41,21 +41,20 @@ func NewSigner(
 	}, nil
 }
 
-// Issue accepts either a JSON Verifiable Credential, or a JSON-string ID for a Verifiable Credential, and signs it with
-// the key identified by keyID, returning a serialized JWTVC.
-func (s *Signer) Issue(credential *api.JSONObject, keyID string) ([]byte, error) {
+// Issue signs the given Verifiable Credential with the key identified by keyID, returning a serialized JWT VC.
+// The Verifiable Credential can either be provided directly or it can be specified by credID, in which case it will be
+// retrieved from this Signer's CredentialReader.
+func (s *Signer) Issue(credential *api.VerifiableCredential, credID, keyID string) ([]byte, error) {
 	var credOpt credentialsigner.CredentialOpt
 
-	if isQuoted(string(credential.Data)) {
-		credOpt = credentialsigner.GivenCredentialID(unQuote(string(credential.Data)))
-	} else {
-		cred, err := verifiable.ParseCredential(credential.Data,
-			verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(s.ldLoader))
-		if err != nil {
-			return nil, fmt.Errorf("parsing input credential: %w", err)
-		}
+	if credential == nil && credID == "" {
+		return nil, errors.New("no credential specified")
+	}
 
-		credOpt = credentialsigner.GivenCredential(cred)
+	if credential != nil {
+		credOpt = credentialsigner.GivenCredential(credential.VC)
+	} else {
+		credOpt = credentialsigner.GivenCredentialID(credID)
 	}
 
 	signedCred, err := s.signer.Issue(credOpt, &credentialsigner.ProofOptions{
@@ -72,8 +71,4 @@ func (s *Signer) Issue(credential *api.JSONObject, keyID string) ([]byte, error)
 	}
 
 	return marshalledCred, nil
-}
-
-func isQuoted(s string) bool {
-	return len(s) > 1 && s[0] == '"' && s[len(s)-1] == '"'
 }

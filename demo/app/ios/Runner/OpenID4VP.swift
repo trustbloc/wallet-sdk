@@ -28,14 +28,14 @@ public class OpenID4VP {
         self.crypto = crypto
     }
     
-    func processAuthorizationRequest(authorizationRequest: String, storedCredentials: Array<String>) throws -> Array<String> {
+    func processAuthorizationRequest(authorizationRequest: String, storedCredentials: Array<ApiVerifiableCredential>) throws -> Array<String> {
         let interaction = Openid4vpInteraction(authorizationRequest, keyHandle: keyReader, crypto: crypto, didResolver: didResolver, ldDocumentLoader: documentLoader)
         
         let query = try? interaction?.getQuery()
 
         let creds = ApiVerifiableCredentialsArray()
         for cred in storedCredentials {
-            creds?.add(ApiVerifiableCredential(cred))
+            creds?.add(cred)
         }
  
         let  verifiablePresentation = try CredentialNewInquirer(documentLoader)?.query(query, contents: CredentialCredentialsOpt(creds))
@@ -49,7 +49,7 @@ public class OpenID4VP {
         var credList: [String] = []
         
         for i in 0...(matchedCreds.length()-1) {
-            credList.append((matchedCreds.atIndex(i)?.content)!)
+            credList.append((matchedCreds.atIndex(i))!)
         }
         
         

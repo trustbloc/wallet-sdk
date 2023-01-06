@@ -62,4 +62,8 @@ func TestProvider(t *testing.T) {
 	retrievedVC, err = provider.Get(vcToStore1.ID)
 	require.EqualError(t, err, fmt.Sprintf("no credential with an id of %s was found", vcToStore1.ID))
 	require.Nil(t, retrievedVC)
+
+	// Attempt to store a nil VC
+	err = provider.Add(nil)
+	require.EqualError(t, err, "VC cannot be nil")
 }

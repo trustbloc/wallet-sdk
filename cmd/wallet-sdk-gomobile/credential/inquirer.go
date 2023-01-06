@@ -39,7 +39,7 @@ type CredentialsOpt struct {
 	CredentialReader api.CredentialReader
 }
 
-// NewCredentialsOpt creates CredentialsOpt from VerifiableCredentialsArray.
+// NewCredentialsOpt creates CredentialsOpt from VCs.
 func NewCredentialsOpt(vcArr *api.VerifiableCredentialsArray) *CredentialsOpt {
 	return &CredentialsOpt{
 		VCs: vcArr,
@@ -72,13 +72,17 @@ func (vp *VerifiablePresentation) Content() ([]byte, error) {
 func (vp *VerifiablePresentation) Credentials() (*api.VerifiableCredentialsArray, error) {
 	result := api.NewVerifiableCredentialsArray()
 
-	credentialsRaw, err := vp.wrapped.MarshalledCredentials()
-	if err != nil {
-		return nil, err
-	}
+	vp.wrapped.Credentials()
 
-	for _, cred := range credentialsRaw {
-		result.Add(api.NewVerifiableCredential(unQuote(string(cred))))
+	credentialsRaw := vp.wrapped.Credentials()
+
+	for i := range credentialsRaw {
+		cred, ok := credentialsRaw[i].(*verifiable.Credential)
+		if !ok {
+			return nil, fmt.Errorf("credential at index %d could not be asserted as a *verifiable.Credential", i)
+		}
+
+		result.Add(api.NewVerifiableCredential(cred))
 	}
 
 	return result, nil
@@ -117,10 +121,7 @@ func (c *Inquirer) Query(query []byte, contents *CredentialsOpt) (*VerifiablePre
 	var credentials []*verifiable.Credential
 
 	if contents.VCs != nil {
-		credentials, err = c.parseVC(contents.VCs)
-		if err != nil {
-			return nil, err
-		}
+		credentials = unwrapVCs(contents.VCs)
 	}
 
 	presentation, err := c.goAPICredentialQuery.Query(pdQuery,
@@ -137,32 +138,12 @@ func (c *Inquirer) Query(query []byte, contents *CredentialsOpt) (*VerifiablePre
 	return wrapVerifiablePresentation(presentation), err
 }
 
-func (c *Inquirer) parseVC(rawCreds *api.VerifiableCredentialsArray) ([]*verifiable.Credential, error) {
+func unwrapVCs(vcs *api.VerifiableCredentialsArray) []*verifiable.Credential {
 	var credentials []*verifiable.Credential
 
-	for i := 0; i < rawCreds.Length(); i++ {
-		content := rawCreds.AtIndex(i).Content
-
-		cred, credErr := verifiable.ParseCredential([]byte(content), verifiable.WithDisabledProofCheck(),
-			verifiable.WithJSONLDDocumentLoader(c.documentLoader))
-		if credErr != nil {
-			return nil, fmt.Errorf("verifiable credential parse failed: %w", credErr)
-		}
-
-		credentials = append(credentials, cred)
+	for i := 0; i < vcs.Length(); i++ {
+		credentials = append(credentials, vcs.AtIndex(i).VC)
 	}
 
-	return credentials, nil
-}
-
-func unQuote(s string) string {
-	if len(s) <= 1 {
-		return s
-	}
-
-	if s[0] == '"' && s[len(s)-1] == '"' {
-		return s[1 : len(s)-1]
-	}
-
-	return s
+	return credentials
 }

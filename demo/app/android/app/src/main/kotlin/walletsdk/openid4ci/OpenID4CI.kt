@@ -2,6 +2,7 @@ package walletsdk.openid4ci
 
 import dev.trustbloc.wallet.sdk.api.DIDJWTSignerCreator
 import dev.trustbloc.wallet.sdk.api.DIDResolver
+import dev.trustbloc.wallet.sdk.api.VerifiableCredential
 import dev.trustbloc.wallet.sdk.openid4ci.AuthorizeResult
 import dev.trustbloc.wallet.sdk.openid4ci.ClientConfig
 import dev.trustbloc.wallet.sdk.openid4ci.CredentialRequestOpts
@@ -32,12 +33,12 @@ class OpenID4CI constructor(
     }
 
 
-    fun requestCredential(otp: String?): String? {
+    fun requestCredential(otp: String?): VerifiableCredential? {
         val credReq = CredentialRequestOpts(otp)
         val credsArr = newInteraction.requestCredential(credReq)
 
         if (credsArr.length() != 0L) {
-            return credsArr.atIndex(0).content
+            return credsArr.atIndex(0)
         }
 
         return null

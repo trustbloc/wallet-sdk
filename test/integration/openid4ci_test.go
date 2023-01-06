@@ -11,14 +11,12 @@ import (
 	"testing"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
-	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
-	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4ci"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/testenv"
 )
@@ -95,16 +93,16 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, credential)
 
-		println("credential:", credential.AtIndex(0).Content)
-		vc, err := verifiable.ParseCredential(
-			[]byte(credential.AtIndex(0).Content),
-			verifiable.WithDisabledProofCheck(),
-			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
-		)
-		require.NoError(t, err)
-		require.Contains(t, vc.Issuer.ID, tc.issuerDIDMethod)
+		vc := credential.AtIndex(0)
 
-		subID, err := verifiable.SubjectID(vc.Subject)
+		serializedVC, err := vc.Serialize()
+		require.NoError(t, err)
+
+		println("credential:", serializedVC)
+		require.NoError(t, err)
+		require.Contains(t, vc.VC.Issuer.ID, tc.issuerDIDMethod)
+
+		subID, err := verifiable.SubjectID(vc.VC.Subject)
 		require.Contains(t, subID, didID)
 	}
 }

@@ -8,6 +8,7 @@ package openid4ci
 
 import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
@@ -18,7 +19,7 @@ type Interaction struct {
 	userDID           string
 	clientID          string
 	issuerMetadata    *issuer.Metadata
-	vcs               []string // base64url encoded
+	vcs               []*verifiable.Credential
 	signerProvider    didsignjwt.SignerGetter
 	didResolver       *didResolverWrapper
 }

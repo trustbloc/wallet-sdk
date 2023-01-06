@@ -75,8 +75,9 @@ class MainActivity : FlutterActivity() {
                         "requestCredential" -> {
                             try {
                                 val credentialCreated = requestCredential(call)
-                                result.success(credentialCreated)
+                                val serializedCredential = credentialCreated!!.serialize()
 
+                                result.success(serializedCredential)
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while requesting credential", e)
                             }
@@ -85,6 +86,7 @@ class MainActivity : FlutterActivity() {
                         "resolveCredentialDisplay" -> {
                             try {
                                 val credentialDisplay = resolveCredentialDisplay(call)
+
                                 result.success(credentialDisplay)
 
                             } catch (e: Exception) {
@@ -95,6 +97,7 @@ class MainActivity : FlutterActivity() {
                         "processAuthorizationRequest" -> {
                             try {
                                 val creds = processAuthorizationRequest(call);
+
                                 result.success(creds)
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while processing authorization request", e)
@@ -184,7 +187,7 @@ class MainActivity : FlutterActivity() {
         return authRes.userPINRequired
     }
 
-    private fun requestCredential(call: MethodCall): String? {
+    private fun requestCredential(call: MethodCall): VerifiableCredential? {
         val otp = call.argument<String>("otp")
 
         val openID4CI = this.openID4CI
