@@ -10,6 +10,8 @@ package did
 import (
 	"errors"
 
+	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
+
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	goapicreator "github.com/trustbloc/wallet-sdk/pkg/did/creator"
@@ -100,6 +102,6 @@ func convertToGoAPIOpts(createDIDOpts *api.CreateDIDOpts) *goapi.CreateDIDOpts {
 	return &goapi.CreateDIDOpts{
 		KeyID:            createDIDOpts.KeyID,
 		VerificationType: createDIDOpts.VerificationType,
-		KeyType:          createDIDOpts.KeyType,
+		KeyType:          arieskms.KeyType(createDIDOpts.KeyType),
 	}
 }
