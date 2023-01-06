@@ -17,7 +17,7 @@ GO_VER ?= 1.19
 ANDROID_EMULATOR_NAME ?= WalletSDKDeviceEmulator
 
 .PHONY: all
-all: checks unit-test
+all: checks unit-test integration-test
 
 .PHONY: checks
 checks: license lint
@@ -75,12 +75,16 @@ build-integration-cli:
 	@cd test/integration/cli && go build -o ../../../build/bin/integration-cli main.go
 
 .PHONY: prepare-integration-test-flutter
-prepare-integration-test-flutter: build-integration-cli generate-test-keys generate-android-bindings copy-android-bindings
+prepare-integration-test-flutter: build-integration-cli generate-test-keys
 	@cd test/integration/fixtures && docker-compose -f docker-compose.yml up --force-recreate -d
 
 .PHONY: integration-test-flutter
 integration-test-flutter:
 	@scripts/flutter_test.sh
+
+.PHONY: install-flutter-dependencies
+install-flutter-dependencies:
+	@cd demo/app && flutter pub get
 
 .PHONY: start-android-emulator
 start-android-emulator:

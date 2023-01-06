@@ -60,7 +60,7 @@ jobs:
         env:
           CODECOV_UPLOAD_TOKEN: ${{ secrets.CODECOV_UPLOAD_TOKEN }}
 
-  IntegrationTest:
+  SDKIntegrationTest:
     runs-on: ubuntu-20.04
     timeout-minutes: 30
     steps:
@@ -80,44 +80,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  GenerateAndroidBinding:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
+  iOSFlutterIntegrationTest:
+    runs-on: macos-12
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
-      - name: Generate Binding
-        run: |
-          export PATH=$PATH:$GOPATH/bin
-          echo $PATH
-          go install golang.org/x/mobile/cmd/gomobile@latest
-          gomobile init
-          make generate-android-bindings
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOPATH: /home/runner/work/wallet-sdk/go
-      - uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: android-binding
-          path: ./cmd/wallet-sdk-gomobile/bindings/android
-
-  GenerateiOSBinding:
-    runs-on: macos-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v3
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Generate Binding
+      - name: Generate and copy iOS Binding
         run: |
           echo $PATH
           echo ${{ github.workspace }}
@@ -128,24 +100,47 @@ jobs:
           go install golang.org/x/mobile/cmd/gomobile@latest
           gomobile init
           make generate-ios-bindings
+          make copy-ios-bindings
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: /Users/runner/work/wallet-sdk/go
-      - uses: actions/upload-artifact@v3
-        if: always()
+      - name: Setup env for integration test
+        run: |
+          echo '127.0.0.1 testnet.orb.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 file-server.trustbloc.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 did-resolver.trustbloc.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 oidc-provider.example.com' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
+          brew install docker docker-compose
+          colima start
+          export PATH=$PATH:$GOPATH/bin
+          echo $PATH
+          make prepare-integration-test-flutter
+      - name: Setup Flutter SDK
+        uses: flutter-actions/setup-flutter@v2
         with:
-          name: ios-binding
-          path: ./cmd/wallet-sdk-gomobile/bindings/ios
+          channel: stable
+          version: 3.3.7
+      - name: Install flutter app dependencies
+        run: make install-flutter-dependencies
+      - name: Run iOS Simulator
+        uses: futureware-tech/simulator-action@v2
+        with:
+          model: 'iPhone 14'
+      - name: Remove AppIcon contents file (Simulator build fails with this file)
+        run: |
+          rm -rf demo/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json
+          rm -rf demo/app/ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json
+      - name: Run tests on Simulator
+        run: make integration-test-flutter
 
-  FlutterIntegrationTest:
+  AndroidFlutterIntegrationTest:
     runs-on: macOS-12
     steps:
       - name: checkout
         uses: actions/checkout@v3
-
       - name: Gradle cache
         uses: gradle/gradle-build-action@v2
-
       - name: AVD cache
         uses: actions/cache@v3
         id: avd-cache
@@ -154,7 +149,6 @@ jobs:
             ~/.android/avd/*
             ~/.android/adb*
           key: avd-29
-
       - name: Cache Android build files
         uses: actions/cache@v3
         with:
@@ -162,8 +156,7 @@ jobs:
           path: |
             demo/app/build
             demo/app/android/.gradle
-
-      - name: create AVD and generate snapshot for caching
+      - name: Create AVD and generate snapshot for caching
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -172,11 +165,25 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: false
           script: echo "Generated AVD snapshot for caching."
-
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
+      - name: Generate and copy Android Binding
+        run: |
+          echo $PATH
+          echo ${{ github.workspace }}
+          echo ${GOPATH}
+          echo ${GOROOT}
+          export PATH=$PATH:$GOPATH/bin
+          echo $PATH
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+          make generate-android-bindings
+          make copy-android-bindings
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOPATH: /Users/runner/work/wallet-sdk/go
       - name: Setup env for integration test
         run: |
           echo '127.0.0.1 testnet.orb.local' | sudo tee -a /etc/hosts
@@ -184,7 +191,7 @@ jobs:
           echo '127.0.0.1 did-resolver.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 oidc-provider.example.com' | sudo tee -a /etc/hosts
           echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
-          brew install docker docker-compose colima
+          brew install docker docker-compose
           colima start
           export PATH=$PATH:$GOPATH/bin
           echo $PATH
@@ -200,6 +207,12 @@ jobs:
         with:
           channel: stable
           version: 3.3.7
+      - name: Install flutter app dependencies
+        run: make install-flutter-dependencies
+      - name: Build APK in Debug mode
+        run: |
+          cd demo/app
+          flutter build apk --debug
       - name: Run tests on Emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -207,10 +220,10 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: make integration-test-flutter
+          script: adb reverse tcp:8075 tcp:8075 && make integration-test-flutter
 
   PublishAndroidBinding:
-    needs: [ Checks, UnitTest, GenerateAndroidBinding, GenerateiOSBinding ]
+    needs: [ Checks, UnitTest, SDKIntegrationTest]
     if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-22.04
     timeout-minutes: 10
