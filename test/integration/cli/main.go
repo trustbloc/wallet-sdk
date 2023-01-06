@@ -33,19 +33,21 @@ func initiatePreAuthorizedIssuance() {
 		panic(err)
 	}
 
-	for i := 0; i < 120; i++ {
-		err = oidc4ciSetup.AuthorizeIssuerBypassAuth("test_org")
-		if err == nil {
-			break
-		}
-		println(err.Error())
-		time.Sleep(10 * time.Second)
-	}
+	err = oidc4ciSetup.AuthorizeIssuerBypassAuth("test_org")
 	if err != nil {
 		panic(err)
 	}
 
-	initiateIssuanceURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance("bank_issuer")
+	initiateIssuanceURL := ""
+
+	for i := 0; i < 120; i++ {
+		initiateIssuanceURL, err = oidc4ciSetup.InitiatePreAuthorizedIssuance("bank_issuer")
+		if err == nil {
+			break
+		}
+		println(err.Error())
+		time.Sleep(5 * time.Second)
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -61,19 +63,21 @@ func initiatePreAuthorizedVerification() {
 
 	oidc4vpSetup := oidc4vp.NewSetup(testenv.NewHttpRequest())
 
-	for i := 0; i < 120; i++ {
-		err = oidc4vpSetup.AuthorizeVerifierBypassAuth("test_org")
-		if err == nil {
-			break
-		}
-		println(err.Error())
-		time.Sleep(10 * time.Second)
-	}
+	err = oidc4vpSetup.AuthorizeVerifierBypassAuth("test_org")
 	if err != nil {
 		panic(err)
 	}
 
-	initiateIssuanceURL, err := oidc4vpSetup.InitiateInteraction("v_myprofile_jwt")
+	initiateIssuanceURL := ""
+
+	for i := 0; i < 120; i++ {
+		initiateIssuanceURL, err = oidc4vpSetup.InitiateInteraction("v_myprofile_jwt")
+		if err == nil {
+			break
+		}
+		println(err.Error())
+		time.Sleep(5 * time.Second)
+	}
 	if err != nil {
 		panic(err)
 	}
