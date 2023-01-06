@@ -47,7 +47,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
         shrinkWrap: true,
         itemBuilder: (context, position) {
           //TODO Ignoring the photo value for now due to extremely long text need to render in a separate issue-881
-          return (credPrev[position].label != "photo") ? Card(
+          return (credPrev[position].label != "Photo") ? Card(
             child: ListTile(
               title: Text(
                 credPrev[position].label,

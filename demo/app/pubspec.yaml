@@ -80,6 +80,7 @@ flutter:
    - lib/assets/images/logo.png
    - lib/assets/images/background.png
    - lib/assets/images/glow.png
+   - lib/assets/images/genericCredential.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

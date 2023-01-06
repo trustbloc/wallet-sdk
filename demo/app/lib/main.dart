@@ -1,9 +1,9 @@
 import 'dart:developer';
 
+import 'package:app/widgets/common_appbar.dart';
 import 'package:app/widgets/primary_input_field.dart';
 import 'package:app/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'demo_method_channel.dart';
 import 'views/dashboard.dart';
@@ -26,31 +26,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(
-          systemOverlayStyle: SystemUiOverlayStyle.light, // 2
-          automaticallyImplyLeading:false,
-          title: Image.asset('lib/assets/images/logo.png',    fit: BoxFit.contain,
-            height: 24, width: 144.6,),
-          backgroundColor: const Color(0xffEEEAEE),
-          flexibleSpace: Container(
-            height: 130,
-            decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: ExactAssetImage('lib/assets/images/glow.png'),
-                  opacity: 0.6,
-                  alignment: Alignment.topCenter,
-                  fit: BoxFit.fill,
-                ),
-                gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: <Color>[
-                      Color(0xff100716),
-                      Color(0xff261131),
-                    ])
-            ),
-          ),
-        ),
+        appBar: CustomAppBar(),
         body: Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -96,7 +72,7 @@ class _MainWidgetState extends State<MainWidget> {
           children: <Widget>[
             Container(
               padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
-              child: const Text('Trustbloc Sign In',
+              child: const Text('TrustBloc Sign In',
                   textAlign: TextAlign.center,
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, fontFamily: 'SF Pro' )),
             ),
