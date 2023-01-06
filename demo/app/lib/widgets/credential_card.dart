@@ -2,8 +2,6 @@ import 'dart:convert';
 
 import 'package:app/models/credential_data.dart';
 import 'package:flutter/material.dart';
-import 'package:app/models/store_credential_data.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:app/models/credential_preview.dart';
 
 class CredentialCard extends StatefulWidget {
@@ -31,8 +29,8 @@ class _CredentialCardState extends State<CredentialCard> {
         itemCount: credPrev.length,
         scrollDirection: Axis.vertical,
         itemBuilder: (context, position) {
-          //TODO Ignoring the photo value for now due to extremely long text need to render in a separate issue-881
-          return (credPrev[position].label != "photo") ? Card(
+          //TODO Ignoring the photo value for now due to extremely long text need to render in a separate issue-150
+          return (credPrev[position].label != "Photo") ? Card(
             child: ListTile(
               title: Text(
                 credPrev[position].label,
@@ -59,11 +57,11 @@ class _CredentialCardState extends State<CredentialCard> {
     Map<String, dynamic> issuer = jsonDecode(widget.item.credentialDisplayData);
     final credentialDisplayName = issuer['credential_displays'][0]['overview']['name'];
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
       child: Container(
           decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
                     offset: const Offset(3, 3),
@@ -79,8 +77,11 @@ class _CredentialCardState extends State<CredentialCard> {
             title: Text(
               credentialDisplayName,
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Color(0xff190C21),
               ),
+              textAlign: TextAlign.start,
             ),
             subtitle: Visibility(
               visible: _visibility,
@@ -95,9 +96,15 @@ class _CredentialCardState extends State<CredentialCard> {
                 ),
               ),
             ),
-            leading: const Icon(Icons.card_membership_outlined, size: 30),
+            //TODO need to add fallback and network image url
+            leading: const Image(
+                image: AssetImage('lib/assets/images/genericCredential.png'),
+                width: 47,
+                height: 47,
+                fit: BoxFit.cover,
+            ),
             trailing: IconButton(
-              icon: const Icon(Icons.arrow_downward),
+              icon: const Icon(Icons.arrow_circle_right, size: 32, color: Color(0xffB6B7C7)),
               onPressed: () async {
 
               },

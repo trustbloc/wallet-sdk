@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:app/views/credential_list.dart';
 import 'package:app/views/settings.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +14,7 @@ class _DashboardState extends State<Dashboard> {
   int _selectedIndex = 0;
 
   static final _widgetOptions = <Widget>[
-    const CredentialList(title: 'Saved Credentials List'),
+    const CredentialList(),
     const QRScanner(),
     const Settings(),
   ];
@@ -34,14 +32,14 @@ class _DashboardState extends State<Dashboard> {
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
+        items:  const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.credit_card),
-            label: 'Credentials',
+              icon: Icon(Icons.home),
+              label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.camera_enhance_outlined),
-            label: 'Scan QR Code',
+            icon: Icon(Icons.qr_code),
+            label: 'Scan QR',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
@@ -49,7 +47,8 @@ class _DashboardState extends State<Dashboard> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xffEC857C),
+        selectedLabelStyle: const TextStyle(fontFamily: 'SF Pro', fontSize: 14, fontWeight: FontWeight.bold),
+        selectedItemColor: const Color(0xff190C21),
         onTap: _onItemTapped,
       ),
     );
