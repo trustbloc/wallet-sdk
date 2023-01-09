@@ -222,13 +222,16 @@ jobs:
           disable-animations: true
           script: adb reverse tcp:8075 tcp:8075 && make integration-test-flutter
 
-  PublishAndroidBinding:
+  PublishSnapshotAndroidSDK:
     needs: [ Checks, UnitTest, SDKIntegrationTest]
     if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
@@ -248,14 +251,32 @@ jobs:
         with:
           name: android-binding
           path: ./cmd/wallet-sdk-gomobile/bindings/android
+      - name: Get current published version
+        run: |
+          TAG=$(git describe --tags --always `git rev-list --tags --max-count=1`)
+          VERSION=$(git rev-parse --short=7 HEAD)
+          echo "repoTag=${TAG} repoVersion=${VERSION}"
+          if [[ $TAG == $VERSION ]]; then
+              TAG=v0.0.0
+          fi
+          echo "CURRENT_SEMVER=${TAG:1}" >> $GITHUB_ENV
+          echo "repoTag=${TAG} repoVersion=${VERSION} currentSemVer=${TAG:1}"
+      - name: Bump published version
+        id: bump_version
+        uses: christian-draeger/increment-semantic-version@1.0.2
+        with:
+          current-version: '${{ env.CURRENT_SEMVER }}'
+          # TODO: needs to be configurable https://github.com/christian-draeger/increment-semantic-version#input--output-examples
+          version-fragment: 'bug'
       - name: Publish
         run: |
-          source ci/version_var.sh
           export USER=$USER
           export TOKEN=$TOKEN
-          export ANDROID_GROUP_ID=$ANDROID_GROUP_ID
-          export ANDROID_VERSION=$ANDROID_VERSION
-          export PROJECT_PKG_REPO=$PROJECT_PKG_REPO
+          export ANDROID_GROUP_ID=dev.trustbloc
+          export ANDROID_ARTIFACT_ID=vc-wallet-sdk
+          export ANDROID_VERSION=v${{ steps.bump_version.outputs.next-version }}-SNAPSHOT-$(git rev-parse --short=7 HEAD)
+          export PROJECT_PKG_REPO=https://maven.pkg.github.com/trustbloc-cicd/snapshot
+          echo $ANDROID_VERSION
           gradle publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
