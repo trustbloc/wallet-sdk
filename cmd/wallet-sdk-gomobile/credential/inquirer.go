@@ -58,8 +58,8 @@ type VerifiablePresentation struct {
 	wrapped *verifiable.Presentation
 }
 
-// WrapVerifiablePresentation wraps go implementation of verifiable presentation into gomobile compatible struct.
-func WrapVerifiablePresentation(vp *verifiable.Presentation) *VerifiablePresentation {
+// wrapVerifiablePresentation wraps go implementation of verifiable presentation into gomobile compatible struct.
+func wrapVerifiablePresentation(vp *verifiable.Presentation) *VerifiablePresentation {
 	return &VerifiablePresentation{wrapped: vp}
 }
 
@@ -138,7 +138,7 @@ func (c *Inquirer) Query(query []byte, contents *CredentialsOpt) (*VerifiablePre
 		return nil, fmt.Errorf("query is failed: %w", err)
 	}
 
-	return WrapVerifiablePresentation(presentation), err
+	return wrapVerifiablePresentation(presentation), err
 }
 
 func (c *Inquirer) parseVC(rawCreds *api.VerifiableCredentialsArray) ([]*verifiable.Credential, error) {

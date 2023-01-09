@@ -7,10 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 // Package api defines gomobile-compatible wallet-sdk interfaces.
 package api
 
-import (
-	"github.com/hyperledger/aries-framework-go/pkg/kms"
-)
-
 // JSONObject contains a single JSON object (not an array).
 // It's a simple wrapper around the actual JSON string. Its purpose is to help the
 // caller using the mobile bindings to understand what type of data to expect or pass in.
@@ -49,7 +45,7 @@ type KeyReader interface {
 type CreateDIDOpts struct {
 	KeyID            string
 	VerificationType string
-	KeyType          kms.KeyType
+	KeyType          string
 }
 
 // DIDCreator defines the method required for a type to create DID documents.
