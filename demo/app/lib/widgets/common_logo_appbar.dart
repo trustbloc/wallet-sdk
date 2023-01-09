@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class CustomAppBar extends AppBar {
+class CustomLogoAppBar extends AppBar {
 
-  CustomAppBar({super.key})
+  CustomLogoAppBar({super.key})
       : super(
       systemOverlayStyle: SystemUiOverlayStyle.light, // 2
       automaticallyImplyLeading:false,

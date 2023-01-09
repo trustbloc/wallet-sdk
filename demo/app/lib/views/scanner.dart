@@ -1,12 +1,14 @@
 import 'dart:developer';
 import 'package:app/models/credential_data_object.dart';
 import 'package:app/views/presentation_preview.dart';
+import 'package:app/widgets/common_title_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:app/views/otp.dart';
 import 'package:app/demo_method_channel.dart';
 import 'package:app/services/storage_service.dart';
-import '../models/store_credential_data.dart';
+import 'package:app/models/store_credential_data.dart';
+import 'package:app/widgets/common_logo_appbar.dart';
 import 'dashboard.dart';
 
 class QRScanner extends StatefulWidget {
@@ -27,15 +29,16 @@ class QRScannerState extends State<QRScanner> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: CustomTitleAppBar(pageTitle: 'Scan QR'),
       body: QRView(
         key: qrKey,
         onQRViewCreated: _onQRViewCreated,
         overlay: QrScannerOverlayShape(
-          borderColor: Colors.green,
-          borderRadius: 10,
+          borderColor: const Color(0xffE74577),
+          borderRadius: 24,
           borderLength: 30,
           borderWidth: 10,
-          cutOutSize: 250,
+          cutOutSize: 256,
         ),
         onPermissionSet: (ctrl, p) => _onPermissionSet(context, ctrl, p),
       ),

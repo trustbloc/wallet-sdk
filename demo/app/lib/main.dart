@@ -1,6 +1,6 @@
 import 'dart:developer';
 
-import 'package:app/widgets/common_appbar.dart';
+import 'package:app/widgets/common_logo_appbar.dart';
 import 'package:app/widgets/primary_input_field.dart';
 import 'package:app/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
@@ -20,13 +20,12 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: CustomAppBar(),
+        appBar: CustomLogoAppBar(),
         body: Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
