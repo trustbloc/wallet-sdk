@@ -5,7 +5,7 @@ import 'package:app/widgets/credential_card.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app/models/credential_data_object.dart';
-import 'package:app/widgets/common_appbar.dart';
+import 'package:app/widgets/common_logo_appbar.dart';
 
 class CredentialList extends StatefulWidget {
   const CredentialList({super.key});
@@ -44,7 +44,7 @@ class _CredentialListState extends State<CredentialList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(),
+      appBar: CustomLogoAppBar(),
       body: Center(
         child: Stack(
           children: <Widget>[

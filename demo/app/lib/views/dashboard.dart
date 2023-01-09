@@ -48,7 +48,7 @@ class _DashboardState extends State<Dashboard> {
         ],
         currentIndex: _selectedIndex,
         selectedLabelStyle: const TextStyle(fontFamily: 'SF Pro', fontSize: 14, fontWeight: FontWeight.bold),
-        selectedItemColor: const Color(0xff190C21),
+        selectedItemColor: const Color(0xffEC857C),
         onTap: _onItemTapped,
       ),
     );

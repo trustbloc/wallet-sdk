@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:developer';
+import 'dart:typed_data';
 import 'package:app/models/credential_data.dart';
 import 'package:app/models/credential_preview.dart';
 import 'package:app/views/dashboard.dart';
@@ -51,21 +53,52 @@ class CredentialPreviewState extends State<CredentialPreview> {
             child: ListTile(
               title: Text(
                 credPrev[position].label,
-                style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                    fontWeight: FontWeight.normal),
+                style: const TextStyle(fontSize: 14, fontFamily: 'SF Pro', fontWeight: FontWeight.w400, color: Color(0xff6C6D7C))
               ),
               subtitle: Text(
                 credPrev[position].value,
                 style: const TextStyle(
-                    fontSize: 18.0,
-                    color: Colors.green,
+                    fontSize: 16,
+                    color: Color(0xff190C21),
+                    fontFamily: 'SF Pro',
                     fontWeight: FontWeight.normal),
               ),
             ),
           ):
-          Container();
+          Card(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(credPrev[position].label, style: const TextStyle(fontSize: 14, fontFamily: 'SF Pro', fontWeight: FontWeight.w400, color: Color(0xff6C6D7C)),),
+                      ],
+                    ),
+                  ),
+                ),
+                Flexible(
+                  fit: FlexFit.tight,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                    Image.memory(const Base64Decoder().convert(credPrev[position].value.split(',').last), width: 80, height: 80,),
+                     ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
         });
   }
   @override
