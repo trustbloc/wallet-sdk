@@ -23,7 +23,7 @@ dependencies:
 gomobile-android-bind: dependencies
 	@mkdir -p bindings/android
 	@echo 'Generating Android bindings...'
-	@scripts/build_android_bindings.sh
+	@scripts/generate_package_list.sh
 
 .PHONY: gomobile-ios-bind
 gomobile-ios-bind: dependencies

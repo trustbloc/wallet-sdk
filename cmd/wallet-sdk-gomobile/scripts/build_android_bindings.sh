@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright Avast Software. All Rights Reserved.
 #

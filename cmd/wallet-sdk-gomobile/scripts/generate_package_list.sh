@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright Avast Software. All Rights Reserved.
 #
@@ -8,11 +9,33 @@
 
 all_packages=$(go list ./...)
 
+echo "all_packages"
+
+
+echo ${all_packages}
+
+echo "-----------------"
+
+
 all_packages_space_separated="${all_packages//$'\n'/ }"
+
+echo "all_packages_space_separated"
+
+
+echo ${all_packages_space_separated}
+
+
+
+echo "-----------------"
+
 
 # Only used internally. This package contains exported functions that are not gomobile compatible, and we don't want or need this to be exposed to the user of the SDK
 package_to_remove="github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 
 packages_for_bindings="${all_packages_space_separated//$package_to_remove/}"
 
+echo "packages_for_bindings"
+
+
 echo ${packages_for_bindings}
+
