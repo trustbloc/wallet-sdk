@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 
@@ -149,7 +150,7 @@ func (i *Interaction) ResolveDisplay(preferredLocale string) (*api.JSONObject, e
 
 func unwrapConfig(config *ClientConfig) *openid4cigoapi.ClientConfig {
 	goAPISignerGetter := func(vm *did.VerificationMethod) (didsignjwt.Signer, error) {
-		vmBytes, err := json.Marshal(vm)
+		vmBytes, err := workaroundMarshalVM(vm)
 		if err != nil {
 			return nil, err
 		}
@@ -168,4 +169,26 @@ func unwrapConfig(config *ClientConfig) *openid4cigoapi.ClientConfig {
 		SignerProvider: goAPISignerGetter,
 		DIDResolver:    &gomobilewrappers.VDRResolverWrapper{DIDResolver: config.DIDResolver},
 	}
+}
+
+func workaroundMarshalVM(vm *did.VerificationMethod) ([]byte, error) {
+	rawVM := map[string]interface{}{
+		"id":         vm.ID,
+		"type":       vm.Type,
+		"controller": vm.Controller,
+	}
+
+	jsonKey := vm.JSONWebKey()
+	if jsonKey != nil {
+		jwkBytes, err := jsonKey.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+
+		rawVM["publicKeyJwk"] = json.RawMessage(jwkBytes)
+	} else {
+		rawVM["publicKeyBase58"] = base58.Encode(vm.Value)
+	}
+
+	return json.Marshal(rawVM)
 }

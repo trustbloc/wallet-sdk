@@ -71,7 +71,7 @@ func (o *Interaction) GetQuery() ([]byte, error) {
 
 // PresentCredential presents credentials to redirect uri from request object.
 func (o *Interaction) PresentCredential(presentation []byte, vm *api.VerificationMethod) error {
-	signer, err := common.NewJWSSigner(vm.ID, vm.Type, o.crypto)
+	signer, err := common.NewJWSSigner(vm.ToSDKVerificationMethod(), o.crypto)
 	if err != nil {
 		return fmt.Errorf("create signer failed: %w", err)
 	}

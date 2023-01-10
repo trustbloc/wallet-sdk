@@ -10,20 +10,29 @@ import (
 	"fmt"
 
 	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
+
+	"github.com/trustbloc/wallet-sdk/pkg/models"
 )
 
 // VerificationMethod represents a DID verification method.
 type VerificationMethod struct {
 	ID   string
 	Type string
+	Key  models.VerificationKey
+}
+
+// ToSDKVerificationMethod returns this VerificationMethod as a models.VerificationMethod.
+func (vm *VerificationMethod) ToSDKVerificationMethod() *models.VerificationMethod {
+	return &models.VerificationMethod{
+		ID:   vm.ID,
+		Type: vm.Type,
+		Key:  vm.Key,
+	}
 }
 
 // NewVerificationMethod creates VerificationMethod.
 func NewVerificationMethod(keyID, vmType string) *VerificationMethod {
-	return &VerificationMethod{
-		ID:   keyID,
-		Type: vmType,
-	}
+	return &VerificationMethod{ID: keyID, Type: vmType}
 }
 
 // DIDDocResolution represents a DID document resolution object.
@@ -62,7 +71,12 @@ func (d *DIDDocResolution) AssertionMethod() (*VerificationMethod, error) {
 	if len(verificationMethods[diddoc.AssertionMethod]) > 0 {
 		vm := verificationMethods[diddoc.AssertionMethod][0].VerificationMethod
 
-		return NewVerificationMethod(vm.ID, vm.Type), nil
+		vmJWK := vm.JSONWebKey()
+		if vmJWK != nil {
+			return &VerificationMethod{ID: vm.ID, Type: vm.Type, Key: models.VerificationKey{JSONWebKey: vmJWK}}, nil
+		}
+
+		return &VerificationMethod{ID: vm.ID, Type: vm.Type, Key: models.VerificationKey{Raw: vm.Value}}, nil
 	}
 
 	return nil, fmt.Errorf("DID provided has no assertion method to use as a default signing key")

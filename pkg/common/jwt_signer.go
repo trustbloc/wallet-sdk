@@ -12,12 +12,14 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/models"
 )
 
 const (
 	// Ed25519VerificationKey2018 is a supported DID verification type.
 	Ed25519VerificationKey2018 = "Ed25519VerificationKey2018"
-
+	// JSONWebKey2020 is a supported DID verification type.
+	JSONWebKey2020 = "JsonWebKey2020"
 	// EdDSA is  signature algorithm for Ed25519VerificationKey2018.
 	EdDSA = "EdDSA"
 )
@@ -30,14 +32,14 @@ type JWSSigner struct {
 }
 
 // NewJWSSigner creates jwt signer.
-func NewJWSSigner(keyID, verificationType string, crypto api.Crypto) (*JWSSigner, error) {
-	algorithm, err := getSignAlgorithmForVerificationType(verificationType)
+func NewJWSSigner(vm *models.VerificationMethod, crypto api.Crypto) (*JWSSigner, error) {
+	algorithm, err := getSignAlgorithmForVerificationMethod(vm)
 	if err != nil {
 		return nil, err
 	}
 
 	return &JWSSigner{
-		keyID:     keyID,
+		keyID:     vm.ID,
 		algorithm: algorithm,
 		crypto:    crypto,
 	}, nil
@@ -61,10 +63,17 @@ func (s *JWSSigner) Headers() jose.Headers {
 	}
 }
 
-func getSignAlgorithmForVerificationType(verificationType string) (string, error) {
-	if verificationType == Ed25519VerificationKey2018 {
+func getSignAlgorithmForVerificationMethod(vm *models.VerificationMethod) (string, error) {
+	if vm.Type == Ed25519VerificationKey2018 {
 		return EdDSA, nil
 	}
 
-	return "", fmt.Errorf("jwt signer: currently only %s is supported", Ed25519VerificationKey2018)
+	if vm.Type == JSONWebKey2020 && vm.Key.JSONWebKey != nil {
+		// TODO: handle more key types
+		if vm.Key.JSONWebKey.Crv == "Ed25519" {
+			return EdDSA, nil
+		}
+	}
+
+	return "", fmt.Errorf("jwt signer: currently only Ed25519 is supported")
 }
