@@ -11,8 +11,8 @@ import (
 
 	"github.com/hyperledger/aries-framework-go/pkg/client/didconfig"
 
-	"github.com/trustbloc/wallet-sdk/cmd/utilities/gomobilewrappers"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	goapiwellknown "github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
 )
@@ -40,7 +40,7 @@ func validateLinkedDomains(did string, resolver api.DIDResolver,
 		return nil, errors.New("no resolver provided")
 	}
 
-	vdrWrapper := &gomobilewrappers.VDRResolverWrapper{DIDResolver: resolver}
+	vdrWrapper := &wrapper.VDRResolverWrapper{DIDResolver: resolver}
 
 	valid, uri, err := goapiwellknown.ValidateLinkedDomains(did, vdrWrapper, client)
 	if err != nil {

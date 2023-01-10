@@ -2,9 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-BUILD_PACKAGES := github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/...
-ANDROID_JAVA_PKG = dev.trustbloc.wallet.sdk
-
 .PHONY: generate-all-bindings
 generate-all-bindings: dependencies gomobile-android-bind gomobile-ios-bind
 	@make tidy
@@ -26,13 +23,13 @@ dependencies:
 gomobile-android-bind: dependencies
 	@mkdir -p bindings/android
 	@echo 'Generating Android bindings...'
-	@gomobile bind -androidapi 22 -o bindings/android/walletsdk.aar -javapkg=$(ANDROID_JAVA_PKG) -target=android $(BUILD_PACKAGES)
+	@scripts/build_android_bindings.sh
 
 .PHONY: gomobile-ios-bind
 gomobile-ios-bind: dependencies
 	@mkdir -p bindings/ios
 	@echo 'Generating iOS bindings...'
-	@gomobile bind -target=ios -o bindings/ios/walletsdk.xcframework $(BUILD_PACKAGES)
+	@scripts/build_ios_bindings.sh
 
 .PHONY: tidy
 tidy:

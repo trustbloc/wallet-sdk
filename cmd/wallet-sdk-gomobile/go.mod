@@ -11,7 +11,6 @@ require (
 	github.com/piprate/json-gold v0.4.2
 	github.com/stretchr/testify v1.8.1
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
-	github.com/trustbloc/wallet-sdk/cmd/utilities v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -69,5 +68,3 @@ require (
 )
 
 replace github.com/trustbloc/wallet-sdk => ../../
-
-replace github.com/trustbloc/wallet-sdk/cmd/utilities => ../../cmd/utilities

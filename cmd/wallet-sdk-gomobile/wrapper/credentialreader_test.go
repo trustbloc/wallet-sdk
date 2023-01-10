@@ -4,7 +4,7 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package gomobilewrappers_test
+package wrapper_test
 
 import (
 	_ "embed"
@@ -14,9 +14,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/trustbloc/wallet-sdk/cmd/utilities/gomobilewrappers"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 )
 
@@ -30,7 +29,7 @@ var (
 
 func TestCredentialReaderWrapper_Get(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		reader := gomobilewrappers.CredentialReaderWrapper{
+		reader := wrapper.CredentialReaderWrapper{
 			CredentialReader: &readerMock{
 				content: []byte(universityDegreeVC),
 			},
@@ -43,7 +42,7 @@ func TestCredentialReaderWrapper_Get(t *testing.T) {
 	})
 
 	t.Run("Reader error", func(t *testing.T) {
-		reader := gomobilewrappers.CredentialReaderWrapper{
+		reader := wrapper.CredentialReaderWrapper{
 			CredentialReader: &readerMock{
 				err: errors.New("reader error"),
 			},
@@ -55,7 +54,7 @@ func TestCredentialReaderWrapper_Get(t *testing.T) {
 	})
 
 	t.Run("Parse credential error", func(t *testing.T) {
-		reader := gomobilewrappers.CredentialReaderWrapper{
+		reader := wrapper.CredentialReaderWrapper{
 			CredentialReader: &readerMock{
 				content: []byte("[[["),
 			},
@@ -69,7 +68,7 @@ func TestCredentialReaderWrapper_Get(t *testing.T) {
 
 func TestCredentialReaderWrapper_GetAll(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		reader := gomobilewrappers.CredentialReaderWrapper{
+		reader := wrapper.CredentialReaderWrapper{
 			CredentialReader: &readerMock{
 				content: createCredJSONArray(t, []string{permanentResidentCardVC, universityDegreeVC}),
 			},
@@ -82,7 +81,7 @@ func TestCredentialReaderWrapper_GetAll(t *testing.T) {
 	})
 
 	t.Run("Reader error", func(t *testing.T) {
-		reader := gomobilewrappers.CredentialReaderWrapper{
+		reader := wrapper.CredentialReaderWrapper{
 			CredentialReader: &readerMock{
 				err: errors.New("reader error"),
 			},
@@ -94,7 +93,7 @@ func TestCredentialReaderWrapper_GetAll(t *testing.T) {
 	})
 
 	t.Run("Parse credential error", func(t *testing.T) {
-		reader := gomobilewrappers.CredentialReaderWrapper{
+		reader := wrapper.CredentialReaderWrapper{
 			CredentialReader: &readerMock{
 				content: []byte("[]"),
 			},

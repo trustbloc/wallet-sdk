@@ -15,8 +15,8 @@ import (
 	"github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 
-	"github.com/trustbloc/wallet-sdk/cmd/utilities/gomobilewrappers"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
@@ -116,7 +116,7 @@ func generateWithCredentialReaderOpt(credentials *Credentials) (goapicredentials
 		}
 	}
 
-	opt := goapicredentialschema.WithCredentialReader(&gomobilewrappers.CredentialReaderWrapper{
+	opt := goapicredentialschema.WithCredentialReader(&wrapper.CredentialReaderWrapper{
 		CredentialReader: credentials.Reader,
 		DocumentLoader:   ld.NewDefaultDocumentLoader(common.DefaultHTTPClient()),
 	}, ids)

@@ -15,8 +15,8 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 
-	"github.com/trustbloc/wallet-sdk/cmd/utilities/gomobilewrappers"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	openid4cigoapi "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
 
@@ -167,7 +167,7 @@ func unwrapConfig(config *ClientConfig) *openid4cigoapi.ClientConfig {
 		UserDID:        config.UserDID,
 		ClientID:       config.ClientID,
 		SignerProvider: goAPISignerGetter,
-		DIDResolver:    &gomobilewrappers.VDRResolverWrapper{DIDResolver: config.DIDResolver},
+		DIDResolver:    &wrapper.VDRResolverWrapper{DIDResolver: config.DIDResolver},
 	}
 }
 
