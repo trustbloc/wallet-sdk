@@ -1,6 +1,9 @@
 # Demo/Reference App
 
-TODO: Add introduction
+The TrustBloc Demo app demonstrates the wallet-sdk API usage. At a high level, the app uses the following APIs.
+- Create a Decentralized Identifier (DID) API
+- OpenID4CI Issuance APIs
+- OpenID4VP Presentation APIs 
 
 ## Getting Started
 

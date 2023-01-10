@@ -53,7 +53,8 @@ func NewLocalKMS(cfg *Config) (*LocalKMS, error) {
 // Create creates a keyset of the given keyType and then writes it to storage.
 // The keyID and raw public key bytes of the newly generated keyset are returned.
 func (k *LocalKMS) Create(keyType arieskms.KeyType) (string, []byte, error) {
-	// TODO: for keys that support afgo JWK, return afgo JWK
+	// TODO: https://github.com/trustbloc/wallet-sdk/issues/164 for keys that
+	// support afgo JWK, return afgo JWK
 	return k.ariesLocalKMS.CreateAndExportPubKeyBytes(keyType)
 }
 

@@ -76,7 +76,7 @@ func (c *Instance) Query(
 		}
 	}
 
-	// TODO: remove this code after to re enable Schema check.
+	// TODO: https://github.com/trustbloc/wallet-sdk/issues/165 remove this code after to re enable Schema check.
 	for i := range query.InputDescriptors {
 		query.InputDescriptors[i].Schema = nil
 	}

@@ -21,8 +21,7 @@ import (
 func Get(issuerURI string) (*issuer.Metadata, error) {
 	metadataEndpoint := issuerURI + "/.well-known/openid-configuration"
 
-	// TODO: Implement trusted list type of mechanism? The gosec warning (correctly) warns about using a variable URL.
-	response, err := http.Get(metadataEndpoint) //nolint: noctx,gosec // TODO: To be re-evaluated later
+	response, err := http.Get(metadataEndpoint) //nolint: noctx,gosec
 	if err != nil {
 		return nil, err
 	}
