@@ -69,7 +69,7 @@ func getSignAlgorithmForVerificationMethod(vm *models.VerificationMethod) (strin
 	}
 
 	if vm.Type == JSONWebKey2020 && vm.Key.JSONWebKey != nil {
-		// TODO: handle more key types
+		// TODO: https://github.com/trustbloc/wallet-sdk/issues/161 handle more key types
 		if vm.Key.JSONWebKey.Crv == "Ed25519" {
 			return EdDSA, nil
 		}

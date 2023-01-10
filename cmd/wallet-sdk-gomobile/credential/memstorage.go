@@ -27,7 +27,8 @@ type DB struct {
 
 // NewInMemoryDB returns a new in-memory credential DB.
 // It uses a network-based JSON-LD document loader.
-// TODO: Support custom document loaders so that contexts can be preloaded.
+// TODO: https://github.com/trustbloc/wallet-sdk/issues/160 Support custom document
+// loaders so that contexts can be preloaded.
 func NewInMemoryDB() *DB {
 	return &DB{
 		goAPIProvider:  goapimemstorage.NewProvider(),

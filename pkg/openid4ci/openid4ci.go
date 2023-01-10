@@ -181,8 +181,7 @@ func (i *Interaction) ResolveDisplay(preferredLocale string) (*credentialschema.
 }
 
 func (i *Interaction) getTokenResponse(tokenEndpointURL string, params url.Values) (*tokenResponse, error) {
-	// TODO: Implement trusted list type of mechanism? The gosec warning (correctly) warns about using a variable URL.
-	response, err := http.Post(tokenEndpointURL, //nolint: noctx,gosec // TODO: To be re-evaluated later
+	response, err := http.Post(tokenEndpointURL, //nolint: noctx,gosec
 		"application/x-www-form-urlencoded", strings.NewReader(params.Encode()))
 	if err != nil {
 		return nil, err
@@ -223,7 +222,7 @@ func (i *Interaction) getCredentialResponse(credentialType, credentialEndpoint,
 		Format: "jwt_vc",
 		DID:    i.userDID,
 		Proof: proof{
-			ProofType: "jwt", // TODO: support other proof types
+			ProofType: "jwt", // TODO: https://github.com/trustbloc/wallet-sdk/issues/159 support other proof types
 			JWT:       jwt,
 		},
 	}
@@ -233,7 +232,7 @@ func (i *Interaction) getCredentialResponse(credentialType, credentialEndpoint,
 		return nil, err
 	}
 
-	request, err := http.NewRequest(http.MethodPost, //nolint: noctx // TODO: To be re-evaluated later
+	request, err := http.NewRequest(http.MethodPost, //nolint: noctx
 		credentialEndpoint, bytes.NewReader(credentialReqBytes))
 	if err != nil {
 		return nil, err

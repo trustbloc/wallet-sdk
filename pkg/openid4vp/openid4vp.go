@@ -191,8 +191,8 @@ func createAuthorizedResponse(
 	did := kidParts[0]
 	presentationSubmission := presentation.CustomFields["presentation_submission"]
 
-	// TODO The following code adds jwt format along with nestedPath for vc. Remove these
-	// changes once AFG PEx has this support.
+	// TODO https://github.com/trustbloc/wallet-sdk/issues/158 The following code adds jwt format
+	// along with nestedPath for vc. Remove these changes once AFG PEx has this support.
 	presSubBytes, err := json.Marshal(presentationSubmission)
 	if err != nil {
 		return nil, fmt.Errorf("marshal pb error: %w", err)

@@ -137,7 +137,8 @@ func (d *Creator) createDIDIonLongFormDoc(createDIDOpts *api.CreateDIDOpts) (*di
 		err              error
 	)
 
-	// TODO: refactor so more code is shared between handlers for different did methods
+	// TODO: https://github.com/trustbloc/wallet-sdk/issues/162 refactor so more code is
+	// shared between handlers for different did methods
 	if d.keyReader == nil { // Generate a key and set the verification type on behalf of the caller.
 		keyID, key, err = d.keyWriter.Create(arieskms.ED25519Type)
 		if err != nil {
