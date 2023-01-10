@@ -4,7 +4,7 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package gomobilewrappers_test
+package wrapper_test
 
 import (
 	"errors"
@@ -12,13 +12,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/trustbloc/wallet-sdk/cmd/utilities/gomobilewrappers"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 )
 
 func TestDocumentLoaderWrapper_LoadDocument(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		wrapper := gomobilewrappers.DocumentLoaderWrapper{
+		documentLoaderWrapper := wrapper.DocumentLoaderWrapper{
 			DocumentLoader: &documentLoaderMock{
 				LoadResult: &api.LDDocument{
 					DocumentURL: "testURL",
@@ -28,7 +28,7 @@ func TestDocumentLoaderWrapper_LoadDocument(t *testing.T) {
 			},
 		}
 
-		resultDoc, err := wrapper.LoadDocument("testUrl")
+		resultDoc, err := documentLoaderWrapper.LoadDocument("testUrl")
 		require.NoError(t, err)
 		require.NotNil(t, resultDoc.Document)
 		require.Equal(t, "testURL", resultDoc.DocumentURL)
@@ -36,19 +36,19 @@ func TestDocumentLoaderWrapper_LoadDocument(t *testing.T) {
 	})
 
 	t.Run("Load failed", func(t *testing.T) {
-		wrapper := gomobilewrappers.DocumentLoaderWrapper{
+		documentLoaderWrapper := wrapper.DocumentLoaderWrapper{
 			DocumentLoader: &documentLoaderMock{
 				LoadErr: errors.New("load failed"),
 			},
 		}
 
-		_, err := wrapper.LoadDocument("testUrl")
+		_, err := documentLoaderWrapper.LoadDocument("testUrl")
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "load failed")
 	})
 
 	t.Run("DOc parse failed", func(t *testing.T) {
-		wrapper := gomobilewrappers.DocumentLoaderWrapper{
+		documentLoaderWrapper := wrapper.DocumentLoaderWrapper{
 			DocumentLoader: &documentLoaderMock{
 				LoadResult: &api.LDDocument{
 					DocumentURL: "testURL",
@@ -58,7 +58,7 @@ func TestDocumentLoaderWrapper_LoadDocument(t *testing.T) {
 			},
 		}
 
-		_, err := wrapper.LoadDocument("testUrl")
+		_, err := documentLoaderWrapper.LoadDocument("testUrl")
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "fail to unmarshal ld document bytes")
 	})

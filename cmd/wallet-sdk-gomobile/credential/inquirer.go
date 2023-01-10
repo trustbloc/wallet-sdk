@@ -17,8 +17,8 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 
-	gomobilewrappers "github.com/trustbloc/wallet-sdk/cmd/utilities/gomobilewrappers"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialquery"
 )
 
@@ -86,7 +86,7 @@ func (vp *VerifiablePresentation) Credentials() (*api.VerifiableCredentialsArray
 
 // NewInquirer returns a new Inquirer.
 func NewInquirer(documentLoader api.LDDocumentLoader) *Inquirer {
-	wrappedLoader := &gomobilewrappers.DocumentLoaderWrapper{
+	wrappedLoader := &wrapper.DocumentLoaderWrapper{
 		DocumentLoader: documentLoader,
 	}
 
@@ -125,7 +125,7 @@ func (c *Inquirer) Query(query []byte, contents *CredentialsOpt) (*VerifiablePre
 
 	presentation, err := c.goAPICredentialQuery.Query(pdQuery,
 		credentialquery.WithCredentialsArray(credentials),
-		credentialquery.WithCredentialReader(&gomobilewrappers.CredentialReaderWrapper{
+		credentialquery.WithCredentialReader(&wrapper.CredentialReaderWrapper{
 			CredentialReader: contents.CredentialReader,
 			DocumentLoader:   c.documentLoader,
 		}),

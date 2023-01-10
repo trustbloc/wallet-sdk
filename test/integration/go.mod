@@ -62,7 +62,6 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
 	github.com/trustbloc/sidetree-core-go v1.0.0-rc3.0.20221028171319-8d44bd1cace7 // indirect
-	github.com/trustbloc/wallet-sdk/cmd/utilities v0.0.0-00010101000000-000000000000 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
@@ -78,7 +77,5 @@ require (
 )
 
 replace github.com/trustbloc/wallet-sdk => ../../
-
-replace github.com/trustbloc/wallet-sdk/cmd/utilities => ../../cmd/utilities
 
 replace github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile => ../../cmd/wallet-sdk-gomobile

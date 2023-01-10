@@ -15,8 +15,8 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 
-	gomobilewrappers "github.com/trustbloc/wallet-sdk/cmd/utilities/gomobilewrappers"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/openid4vp"
@@ -42,7 +42,7 @@ func NewInteraction(authorizationRequest string, keyHandleReader api.KeyReader, 
 	didResolver api.DIDResolver, ldDocumentLoader api.LDDocumentLoader,
 ) *Interaction {
 	jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
-		common.NewVDRKeyResolver(&gomobilewrappers.VDRResolverWrapper{
+		common.NewVDRKeyResolver(&wrapper.VDRResolverWrapper{
 			DIDResolver: didResolver,
 		}).PublicKeyFetcher()))
 
@@ -80,7 +80,7 @@ func (o *Interaction) PresentCredential(presentation []byte, vm *api.Verificatio
 		presentation,
 		verifiable.WithPresDisabledProofCheck(),
 		verifiable.WithPresJSONLDDocumentLoader(
-			&gomobilewrappers.DocumentLoaderWrapper{
+			&wrapper.DocumentLoaderWrapper{
 				DocumentLoader: o.ldDocumentLoader,
 			}))
 	if err != nil {

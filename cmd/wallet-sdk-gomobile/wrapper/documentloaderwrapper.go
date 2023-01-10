@@ -4,8 +4,7 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package gomobilewrappers contains wrappers that wraps mobile interfaces to go interfaces.
-package gomobilewrappers
+package wrapper
 
 import (
 	"encoding/json"

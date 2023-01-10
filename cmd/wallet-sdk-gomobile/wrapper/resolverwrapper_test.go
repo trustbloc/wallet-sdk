@@ -4,7 +4,7 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package gomobilewrappers //nolint:testpackage
+package wrapper //nolint:testpackage
 
 import (
 	_ "embed" //nolint:gci // required for go:embed

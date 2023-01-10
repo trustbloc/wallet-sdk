@@ -1,3 +1,7 @@
+// Copyright Avast Software. All Rights Reserved.
+//
+// SPDX-License-Identifier: Apache-2.0
+
 module github.com/trustbloc/wallet-sdk/test/integration/helper
 
 go 1.19
@@ -19,8 +23,6 @@ require (
 )
 
 replace github.com/trustbloc/wallet-sdk/test/integration => ../
-
-replace github.com/trustbloc/wallet-sdk/cmd/utilities => ../../../cmd/utilities
 
 replace github.com/trustbloc/wallet-sdk => ../../../
 
