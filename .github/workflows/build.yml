@@ -222,7 +222,7 @@ jobs:
           disable-animations: true
           script: adb reverse tcp:8075 tcp:8075 && make integration-test-flutter
 
-  PublishSnapshotAndroidSDK:
+  PublishAndroidSDKSnapshot:
     needs: [ Checks, UnitTest, SDKIntegrationTest]
     if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-22.04
