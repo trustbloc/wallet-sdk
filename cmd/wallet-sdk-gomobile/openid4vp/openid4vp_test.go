@@ -7,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package openid4vp //nolint: testpackage
 
 import (
+	"crypto/ed25519"
+	"crypto/rand"
 	_ "embed" //nolint:gci // required for go:embed
 	"encoding/json"
 	"errors"
@@ -17,6 +19,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
+	"github.com/trustbloc/wallet-sdk/pkg/models"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
@@ -74,6 +77,9 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 }
 
 func TestOpenID4VP_PresentCredential(t *testing.T) {
+	mockKey, _, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+
 	t.Run("Success", func(t *testing.T) {
 		instance := &Interaction{
 			keyHandleReader:  &mockKeyHandleReader{},
@@ -84,8 +90,13 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			},
 		}
 
-		err := instance.PresentCredential(presentationJSONLD,
-			api.NewVerificationMethod("did:example:12345#testId", "Ed25519VerificationKey2018"))
+		err := instance.PresentCredential(
+			presentationJSONLD,
+			&api.VerificationMethod{
+				ID:   "did:example:12345#testId",
+				Type: "Ed25519VerificationKey2018",
+				Key:  models.VerificationKey{Raw: mockKey},
+			})
 		require.NoError(t, err)
 	})
 
@@ -114,8 +125,13 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			},
 		}
 
-		err := instance.PresentCredential([]byte("random value"),
-			&api.VerificationMethod{ID: "did:example:12345#testId", Type: "Ed25519VerificationKey2018"})
+		err := instance.PresentCredential(
+			[]byte("random value"),
+			&api.VerificationMethod{
+				ID:   "did:example:12345#testId",
+				Type: "Ed25519VerificationKey2018",
+				Key:  models.VerificationKey{Raw: mockKey},
+			})
 		require.Contains(t, err.Error(), "parse presentation failed")
 	})
 
@@ -129,8 +145,13 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			},
 		}
 
-		err := instance.PresentCredential(presentationJSONLD,
-			&api.VerificationMethod{ID: "did:example:12345#testId", Type: "Ed25519VerificationKey2018"})
+		err := instance.PresentCredential(
+			presentationJSONLD,
+			&api.VerificationMethod{
+				ID:   "did:example:12345#testId",
+				Type: "Ed25519VerificationKey2018",
+				Key:  models.VerificationKey{Raw: mockKey},
+			})
 		require.Contains(t, err.Error(), "present credentials failed")
 	})
 }
