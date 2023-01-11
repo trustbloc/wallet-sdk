@@ -88,6 +88,32 @@ func TestInstance_Query(t *testing.T) {
 
 		require.Error(t, err, "credential reader failed: get all error")
 	})
+
+	t.Run("Credential reader not set.", func(t *testing.T) {
+		instance := credentialquery.NewInstance(docLoader)
+		_, err := instance.Query(pdQuery)
+
+		testutil.RequireErrorContains(t, err, "CREDENTIAL_READER_NOT_SET")
+	})
+
+	t.Run("No Credentials", func(t *testing.T) {
+		instance := credentialquery.NewInstance(docLoader)
+		_, err := instance.Query(pdQuery, credentialquery.WithCredentialsArray(
+			[]*verifiable.Credential{{}},
+		))
+
+		testutil.RequireErrorContains(t, err, "NO_CREDENTIAL_SATISFY_REQUIREMENTS")
+	})
+
+	t.Run("Create vp failed", func(t *testing.T) {
+		instance := credentialquery.NewInstance(docLoader)
+
+		_, err := instance.Query(&presexch.PresentationDefinition{}, credentialquery.WithCredentialsArray(
+			credentials,
+		))
+
+		testutil.RequireErrorContains(t, err, "CREATE_VP_FAILED")
+	})
 }
 
 type readerMock struct {

@@ -25,6 +25,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 const (
@@ -68,12 +69,20 @@ func New(authorizationRequest string, signatureVerifier jwtSignatureVerifier, ht
 func (o *Interaction) GetQuery() (*presexch.PresentationDefinition, error) {
 	rawRequestObject, err := fetchRequestObject(o.httpClient, o.authorizationRequest)
 	if err != nil {
-		return nil, fmt.Errorf("fetch request object: %w", err)
+		return nil, walleterror.NewExecutionError(
+			module,
+			RequestObjectFetchFailedCode,
+			RequestObjectFetchFailedError,
+			fmt.Errorf("fetch request object: %w", err))
 	}
 
 	requestObject, err := verifyAuthorizationRequestAndDecodeClaims(rawRequestObject, o.signatureVerifier)
 	if err != nil {
-		return nil, fmt.Errorf("verify authorization request: %w", err)
+		return nil, walleterror.NewExecutionError(
+			module,
+			VerifyAuthorizationRequestFailedCode,
+			VerifyAuthorizationRequestFailedError,
+			fmt.Errorf("verify authorization request: %w", err))
 	}
 
 	o.requestObject = requestObject
@@ -85,7 +94,11 @@ func (o *Interaction) GetQuery() (*presexch.PresentationDefinition, error) {
 func (o *Interaction) PresentCredential(presentation *verifiable.Presentation, jwtSigner api.JWTSigner) error {
 	response, err := createAuthorizedResponse(presentation, o.requestObject, jwtSigner)
 	if err != nil {
-		return fmt.Errorf("create authorized response failed: %w", err)
+		return walleterror.NewExecutionError(
+			module,
+			CreateAuthorizedResponseFailedCode,
+			CreateAuthorizedResponseFailedError,
+			fmt.Errorf("create authorized response failed: %w", err))
 	}
 
 	data := url.Values{}
@@ -95,7 +108,11 @@ func (o *Interaction) PresentCredential(presentation *verifiable.Presentation, j
 
 	err = sendAuthorizedResponse(o.httpClient, data.Encode(), o.requestObject.RedirectURI)
 	if err != nil {
-		return fmt.Errorf("send authorized response failed: %w", err)
+		return walleterror.NewExecutionError(
+			module,
+			SendAuthorizedResponseFailedCode,
+			SendAuthorizedResponseFailedError,
+			fmt.Errorf("send authorized response failed: %w", err))
 	}
 
 	return nil

@@ -112,7 +112,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 		err := instance.PresentCredential(presentationJSONLD,
 			&api.VerificationMethod{ID: "did:example:12345#testId", Type: "Invalid"})
-		require.Contains(t, err.Error(), "create signer failed")
+		require.Contains(t, err.Error(), "UNSUPPORTED_ALGORITHM")
 	})
 
 	t.Run("parse presentation failed", func(t *testing.T) {
@@ -132,7 +132,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 				Type: "Ed25519VerificationKey2018",
 				Key:  models.VerificationKey{Raw: mockKey},
 			})
-		require.Contains(t, err.Error(), "parse presentation failed")
+		require.Contains(t, err.Error(), "CREDENTIAL_PARSE_FAILED")
 	})
 
 	t.Run("Present credentials failed", func(t *testing.T) {

@@ -38,6 +38,11 @@ func TestDIDResolver_InvalidDID(t *testing.T) {
 
 	didDocResolution, err := didResolver.Resolve("did:example:abc")
 	require.Error(t, err)
-	require.EqualError(t, err, "resolve did:example:abc : did method example not supported for vdr")
+	requireErrorContains(t, err, "DID_RESOLUTION_FAILED")
 	require.Empty(t, didDocResolution)
+}
+
+func requireErrorContains(t *testing.T, err error, errString string) { //nolint:thelper
+	require.Error(t, err)
+	require.Contains(t, err.Error(), errString)
 }

@@ -17,6 +17,7 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 const (
@@ -40,7 +41,12 @@ type JWSSigner struct {
 func NewJWSSigner(vm *models.VerificationMethod, crypto api.Crypto) (*JWSSigner, error) {
 	algorithm, cryptoKID, err := algAndThumbprint(vm)
 	if err != nil {
-		return nil, err
+		return nil, walleterror.NewValidationError(
+			module,
+			UnsupportedAlgorithmCode,
+			UnsupportedAlgorithmError,
+			err,
+		)
 	}
 
 	return &JWSSigner{

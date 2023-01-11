@@ -16,10 +16,12 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/openid4vp"
+	gowalleterror "github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 type goAPIOpenID4VP interface {
@@ -58,12 +60,13 @@ func NewInteraction(authorizationRequest string, keyHandleReader api.KeyReader, 
 func (o *Interaction) GetQuery() ([]byte, error) {
 	presentationDefinition, err := o.goAPIOpenID4VP.GetQuery()
 	if err != nil {
-		return nil, err
+		return nil, walleterror.ToMobileError(err)
 	}
 
 	pdBytes, err := json.Marshal(presentationDefinition)
 	if err != nil {
-		return nil, fmt.Errorf("presentation definition marshal: %w", err)
+		return nil, walleterror.ToMobileError(
+			fmt.Errorf("presentation definition marshal: %w", err))
 	}
 
 	return pdBytes, nil
@@ -73,7 +76,7 @@ func (o *Interaction) GetQuery() ([]byte, error) {
 func (o *Interaction) PresentCredential(presentation []byte, vm *api.VerificationMethod) error {
 	signer, err := common.NewJWSSigner(vm.ToSDKVerificationMethod(), o.crypto)
 	if err != nil {
-		return fmt.Errorf("create signer failed: %w", err)
+		return walleterror.ToMobileError(err)
 	}
 
 	parsedPresentation, err := verifiable.ParsePresentation(
@@ -84,8 +87,14 @@ func (o *Interaction) PresentCredential(presentation []byte, vm *api.Verificatio
 				DocumentLoader: o.ldDocumentLoader,
 			}))
 	if err != nil {
-		return fmt.Errorf("parse presentation failed: %w", err)
+		return walleterror.ToMobileError(
+			gowalleterror.NewValidationError(module,
+				CredentialParseFailedCode,
+				CredentialParseFailedError,
+				err,
+			),
+		)
 	}
 
-	return o.goAPIOpenID4VP.PresentCredential(parsedPresentation, signer)
+	return walleterror.ToMobileError(o.goAPIOpenID4VP.PresentCredential(parsedPresentation, signer))
 }

@@ -10,7 +10,6 @@ package credential
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
@@ -18,6 +17,7 @@ import (
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialquery"
 )
@@ -131,11 +131,7 @@ func (c *Inquirer) Query(query []byte, contents *CredentialsOpt) (*VerifiablePre
 		}),
 	)
 	if err != nil {
-		if errors.Is(err, presexch.ErrNoCredentials) {
-			return nil, err
-		}
-
-		return nil, fmt.Errorf("query is failed: %w", err)
+		return nil, walleterror.ToMobileError(err)
 	}
 
 	return wrapVerifiablePresentation(presentation), err
