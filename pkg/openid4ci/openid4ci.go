@@ -22,7 +22,9 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
+
 	"github.com/trustbloc/wallet-sdk/pkg/common"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 
 	"github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
@@ -82,7 +84,10 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-6
 func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 	if i.initiationRequest.PreAuthorizedCode == "" {
-		return nil, errors.New("pre-authorized code is required (authorization flow not implemented)")
+		return nil, walleterror.New(
+			PreAuthorizedCodeRequiredCode,
+			PreAuthorizedCodeRequiredError,
+			errors.New("pre-authorized code is required (authorization flow not implemented)"))
 	}
 
 	authorizeResult := &AuthorizeResult{
