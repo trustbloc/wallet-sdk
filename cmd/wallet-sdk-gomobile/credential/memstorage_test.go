@@ -8,7 +8,6 @@ package credential_test
 
 import (
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -32,10 +31,10 @@ func TestProvider(t *testing.T) {
 	const universityDegreeVCID = "http://example.edu/credentials/1872"
 
 	// Store two VCs.
-	err := provider.Add(&api.JSONObject{Data: universityDegreeVC})
+	err := provider.Add(api.NewVerifiableCredential(universityDegreeVC))
 	require.NoError(t, err)
 
-	err = provider.Add(&api.JSONObject{Data: driversLicenseDegreeVC})
+	err = provider.Add(api.NewVerifiableCredential(driversLicenseDegreeVC))
 	require.NoError(t, err)
 
 	// Get each VC individually.
@@ -48,17 +47,12 @@ func TestProvider(t *testing.T) {
 	require.NotNil(t, retrievedVC)
 
 	// Retrieve both VCs in one call.
-	retrievedVCsJSONArray, err := provider.GetAll()
+	retrievedVCs, err := provider.GetAll()
 	require.NoError(t, err)
 
-	var retrievedVCs []interface{}
-
-	err = json.Unmarshal(retrievedVCsJSONArray.Data, &retrievedVCs)
-	require.NoError(t, err)
-
-	require.Len(t, retrievedVCs, 2)
-	require.NotNil(t, retrievedVCs[0])
-	require.NotNil(t, retrievedVCs[1])
+	require.Equal(t, 2, retrievedVCs.Length())
+	require.NotNil(t, retrievedVCs.AtIndex(0))
+	require.NotNil(t, retrievedVCs.AtIndex(1))
 
 	// Remove one of the VCs and verify that it's deleted.
 	err = provider.Remove(universityDegreeVCID)
@@ -69,9 +63,9 @@ func TestProvider(t *testing.T) {
 	require.Nil(t, retrievedVC)
 }
 
-func TestProvider_Add_Failure_Empty_JSON(t *testing.T) {
+func TestProvider_Add_Failure_Empty_Credential(t *testing.T) {
 	provider := credential.NewInMemoryDB()
 
-	err := provider.Add(&api.JSONObject{})
+	err := provider.Add(api.NewVerifiableCredential(nil))
 	require.EqualError(t, err, "unmarshal new credential: unexpected end of JSON input")
 }

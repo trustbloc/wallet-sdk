@@ -123,7 +123,7 @@ func (i *Interaction) RequestCredential(
 	result := api.NewVerifiableCredentialsArray()
 
 	for _, response := range credentialResponses {
-		result.Add(api.NewVerifiableCredential(response.Credential))
+		result.Add(api.NewVerifiableCredential([]byte(response.Credential)))
 	}
 
 	return result, nil

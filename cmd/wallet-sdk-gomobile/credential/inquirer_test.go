@@ -25,10 +25,10 @@ var (
 	presentationDefinition []byte
 
 	//go:embed test_data/university_degree.jwt
-	universityDegreeVCJWT string
+	universityDegreeVCJWT []byte
 
 	//go:embed test_data/permanent_resident_card.jwt
-	permanentResidentCardVC string
+	permanentResidentCardVC []byte
 )
 
 func TestInstance_Query(t *testing.T) {
@@ -38,7 +38,7 @@ func TestInstance_Query(t *testing.T) {
 		})
 
 		presentation, err := query.Query(presentationDefinition,
-			createCredJSONArray(t, []string{universityDegreeVCJWT, permanentResidentCardVC}),
+			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
 		)
 		require.NoError(t, err)
 		require.NotNil(t, presentation)
@@ -58,7 +58,7 @@ func TestInstance_Query(t *testing.T) {
 		})
 
 		_, err := query.Query(presentationDefinition,
-			createCredJSONArray(t, []string{permanentResidentCardVC}),
+			createCredJSONArray(t, [][]byte{permanentResidentCardVC}),
 		)
 		require.Contains(t, err.Error(), "credentials do not satisfy requirements")
 	})
@@ -69,7 +69,7 @@ func TestInstance_Query(t *testing.T) {
 		})
 
 		_, err := query.Query(nil,
-			createCredJSONArray(t, []string{universityDegreeVCJWT, permanentResidentCardVC}),
+			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
 		)
 
 		require.Contains(t, err.Error(), "unmarshal of presentation definition failed:")
@@ -81,7 +81,7 @@ func TestInstance_Query(t *testing.T) {
 		})
 
 		_, err := query.Query([]byte("{}"),
-			createCredJSONArray(t, []string{universityDegreeVCJWT, permanentResidentCardVC}),
+			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
 		)
 
 		require.Contains(t, err.Error(), "validation of presentation definition failed:")
@@ -93,7 +93,7 @@ func TestInstance_Query(t *testing.T) {
 		})
 
 		_, err := query.Query(presentationDefinition,
-			createCredJSONArray(t, []string{"{}"}),
+			createCredJSONArray(t, [][]byte{[]byte("{}")}),
 		)
 
 		require.Contains(t, err.Error(), "verifiable credential parse failed")
@@ -110,7 +110,7 @@ func TestInstance_Query(t *testing.T) {
 	})
 }
 
-func createCredJSONArray(t *testing.T, creds []string) *credential.CredentialsOpt {
+func createCredJSONArray(t *testing.T, creds [][]byte) *credential.CredentialsOpt {
 	t.Helper()
 
 	credsArray := api.NewVerifiableCredentialsArray()
