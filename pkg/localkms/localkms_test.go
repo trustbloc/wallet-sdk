@@ -25,6 +25,14 @@ func TestLocalKMS_Create(t *testing.T) {
 		require.NotEmpty(t, keyID)
 		require.NotEmpty(t, key)
 	})
+
+	t.Run("Invalid key type", func(t *testing.T) {
+		localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
+		require.NoError(t, err)
+
+		_, _, err = localKMS.Create("INVALID")
+		require.Error(t, err)
+	})
 }
 
 func TestLocalKMS_GetKey(t *testing.T) {
