@@ -1,22 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class PrimaryInputField extends StatelessWidget {
   const PrimaryInputField(
-      {super.key, this.labelText = '',
+      {super.key,
+        this.labelText = '',
+        this.textInputType = TextInputType.text,
+        this.maxLength = 12,
+        required this.textInputFormatter,
         this.titleTextAlign = TextAlign.center,
         required this.textController});
 
   final String labelText;
+  final int maxLength;
   final TextAlign titleTextAlign;
   final TextEditingController textController;
+  final TextInputType  textInputType;
+  final TextInputFormatter textInputFormatter;
 
   @override
   Widget build(BuildContext context) {
     final labelText = this.labelText ?? '';
     return TextField(
+      maxLength: maxLength,
       controller: textController,
+      keyboardType: textInputType,
+      inputFormatters:<TextInputFormatter>[
+        textInputFormatter,
+      ],
       decoration: InputDecoration(
-          floatingLabelStyle: const TextStyle(color: Color(0xff190C21)),
+          floatingLabelStyle: const TextStyle(color: Color(0xff190C21), fontWeight: FontWeight.w700, fontSize: 16),
         fillColor: const Color(0xffEEEAEE),
         filled: true,
         enabledBorder: const UnderlineInputBorder( //<-- SEE HERE
@@ -28,8 +41,8 @@ class PrimaryInputField extends StatelessWidget {
         ),
         border: const OutlineInputBorder(
           borderRadius: BorderRadius.only(
-            topRight: Radius.circular(6),
-            topLeft: Radius.circular(6),
+            topRight: Radius.circular(12),
+            topLeft: Radius.circular(12),
           ),
           borderSide: BorderSide(
             width: 0,
@@ -38,7 +51,7 @@ class PrimaryInputField extends StatelessWidget {
         ),
         labelText: labelText,
       ),
-      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'SF Pro', color: Color(0xff190C21)),
+      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, fontFamily: 'SF Pro', color: Color(0xff190C21)),
     );
   }
 }

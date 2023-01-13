@@ -8,8 +8,6 @@ import 'package:app/views/otp.dart';
 import 'package:app/demo_method_channel.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:app/models/store_credential_data.dart';
-import 'package:app/widgets/common_logo_appbar.dart';
-import 'dashboard.dart';
 
 class QRScanner extends StatefulWidget {
   const QRScanner({Key? key}) : super(key: key);
@@ -29,7 +27,7 @@ class QRScannerState extends State<QRScanner> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomTitleAppBar(pageTitle: 'Scan QR'),
+      appBar: CustomTitleAppBar(pageTitle: 'Scan QR', addCloseIcon: false,),
       body: QRView(
         key: qrKey,
         onQRViewCreated: _onQRViewCreated,

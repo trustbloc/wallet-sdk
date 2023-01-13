@@ -4,6 +4,7 @@ import 'package:app/widgets/common_logo_appbar.dart';
 import 'package:app/widgets/primary_input_field.dart';
 import 'package:app/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'demo_method_channel.dart';
 import 'views/dashboard.dart';
@@ -77,7 +78,7 @@ class _MainWidgetState extends State<MainWidget> {
             ),
             Container(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
-              child: PrimaryInputField(textController: _usernameController, titleTextAlign: TextAlign.center, labelText: 'Username',),
+              child: PrimaryInputField(textController: _usernameController, titleTextAlign: TextAlign.center, labelText: 'Username', textInputFormatter: FilteringTextInputFormatter.singleLineFormatter,),
             ),
               Container(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
