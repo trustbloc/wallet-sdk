@@ -22,8 +22,11 @@ class _OTPPage extends State<OTP> {
   // This is the entered code
   // It will be displayed in a Text widget
   String? _otp;
-  String _requestCredentialErrorMsg = '';
-  String? actionText = 'Save Credential';
+  String _requestErrorSubTitleMsg = '';
+  String _requestErrorTitleMsg = '';
+  String? actionText = 'Submit';
+  double topPadding = 500;
+  bool show = false;
 
   @override
   Widget build(BuildContext context) {
@@ -32,44 +35,14 @@ class _OTPPage extends State<OTP> {
       FocusManager.instance.primaryFocus?.unfocus();
     },
     child: Scaffold(
-      appBar: CustomTitleAppBar(pageTitle: 'Add Credential', addCloseIcon: true),
-      backgroundColor: const Color(0xffFBF8FC),
+      appBar: CustomTitleAppBar(pageTitle: 'Enter OTP', addCloseIcon: true),
+      backgroundColor: const Color(0xffF4F1F5),
       body: Center(
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            ListTile(
-              //todo Issue-174 read the meta data from the backend on page load
-              leading: Image.asset('lib/assets/images/credLogo.png'),
-              title: const Text('Utopian Issuer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              subtitle: const Text('utopia.example.com', style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
-              trailing: Image.asset('lib/assets/images/verified.png', width: 82, height: 26),
-            ),
             Container(
               padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
-           child: ListTile(
-              contentPadding: const EdgeInsets.all(12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              tileColor: Colors.white,
-              title: const Text(
-                'Credential',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xff190C21),
-                ),
-                textAlign: TextAlign.start,
-              ),
-              //TODO need to add fallback and network image url
-              leading: const Image(
-                image: AssetImage('lib/assets/images/genericCredential.png'),
-                width: 47,
-                height: 47,
-                fit: BoxFit.cover,
-              ),
-            ),
             ),
       Container(
         padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
@@ -79,26 +52,78 @@ class _OTPPage extends State<OTP> {
               children: <Widget>[
                 Column(
                   children: <Widget>[
-                    Container(
-                      alignment: Alignment.bottomCenter,
-                      padding: const EdgeInsets.only(top: 400),
+                    Visibility(
+                      visible: show,
+                      child: Container (
+                        padding: const EdgeInsets.all(12),
+                        alignment: Alignment.center,
+                        child: ListTile(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          tileColor:  const Color(0xffFBF8FC),
+                          title: Text(
+                            _requestErrorTitleMsg ?? '',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xff190C21),
+                            ),
+                            textAlign: TextAlign.start,
+                          ),
+                          subtitle:  Text(
+                            _requestErrorSubTitleMsg ?? '',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xff6C6D7C),
+                            ),
+                            textAlign: TextAlign.start,
+                          ),
+                          //TODO need to add fallback and network image url
+                          leading: const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: Image(
+                                image: AssetImage('lib/assets/images/errorVector.png'),
+                                width: 24,
+                                height: 24,
+                                fit: BoxFit.cover,
+                              )
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(top: topPadding),
                     ),
                     PrimaryButton(
                       onPressed: () async {
                         setState(() {
                           _otp = otpController.text;
                         });
-                        var requestCredentialResp =  await WalletSDKPlugin.requestCredential(_otp!);
-                        var resolvedCredentialDisplay =  await WalletSDKPlugin.resolveCredentialDisplay();
-                        // Making sure request credential response doesn't contain error
-                        if (!resolvedCredentialDisplay!.contains("invalid pin")) {
-                          _navigateToCredPreviewScreen(requestCredentialResp!, resolvedCredentialDisplay);
-                        } else {
-                          setState(() {
-                            _requestCredentialErrorMsg = requestCredentialResp.toString();
-                            actionText = 'Re-enter';
-                            _clearOTPInput();
-                          });
+                        String? requestCredentialResp;
+                        String? resolvedCredentialDisplay;
+                        try {
+                          log('inside requestCredential');
+                          requestCredentialResp =  await WalletSDKPlugin.requestCredential(_otp!);
+                          resolvedCredentialDisplay =  await WalletSDKPlugin.resolveCredentialDisplay();
+                          _navigateToCredPreviewScreen(requestCredentialResp!, resolvedCredentialDisplay!);
+                        } catch (err) {
+                          String errorMessage = err.toString();
+                          if (err is PlatformException &&
+                              err.message != null &&
+                              err.message!.isNotEmpty) {
+                            errorMessage = err.message!;
+                          }
+                            setState(() {
+                              _requestErrorSubTitleMsg = errorMessage;
+                              _requestErrorTitleMsg = 'Error';
+                              actionText = 'Re-enter';
+                               show = true;
+                              topPadding = 440;
+                              _clearOTPInput();
+                            });
                         }
                       },
                       width: double.infinity,
@@ -118,11 +143,8 @@ class _OTPPage extends State<OTP> {
                     ),
                   ],
                 )
-
               ],
             ),
-            Text(_requestCredentialErrorMsg ?? '', style: const TextStyle(fontSize: 12, color: Colors.redAccent)),
-
           ],
     ),
  )));
