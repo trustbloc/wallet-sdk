@@ -222,35 +222,18 @@ jobs:
           disable-animations: true
           script: adb reverse tcp:8075 tcp:8075 && make integration-test-flutter
 
-  PublishAndroidSDKSnapshot:
-    needs: [ Checks, UnitTest, SDKIntegrationTest]
+  GenerateVersion:
     if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
+    needs: [ Checks, UnitTest, SDKIntegrationTest]
     runs-on: ubuntu-22.04
     timeout-minutes: 10
+    outputs:
+      version: ${{ steps.store.outputs.version }}
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           lfs: true
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Generate Binding
-        run: |
-          export PATH=$PATH:$GOPATH/bin
-          echo $PATH
-          go install golang.org/x/mobile/cmd/gomobile@latest
-          gomobile init
-          make generate-android-bindings
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOPATH: /home/runner/work/wallet-sdk/go
-      - uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: android-binding
-          path: ./cmd/wallet-sdk-gomobile/bindings/android
       - name: Get current published version
         run: |
           TAG=$(git describe --tags --always `git rev-list --tags --max-count=1`)
@@ -268,13 +251,132 @@ jobs:
           current-version: '${{ env.CURRENT_SEMVER }}'
           # TODO: needs to be configurable https://github.com/christian-draeger/increment-semantic-version#input--output-examples
           version-fragment: 'bug'
+      - id: store
+        run: echo "version=${{ steps.bump_version.outputs.next-version }}" >> $GITHUB_OUTPUT
+
+  PublishIosSDKSnapshot:
+    if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
+    needs: GenerateVersion
+    runs-on: macos-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Derive the new version
+        run: |
+          echo "new version"
+          NEW_VER=v${{ needs.GenerateVersion.outputs.version }}-SNAPSHOT-$(git rev-parse --short=7 HEAD)
+          echo "NEW_VERSION=$NEW_VER" >> $GITHUB_ENV
+          echo $NEW_VER
+      - name: Generate Binding
+        run: |
+          echo $PATH
+          echo ${{ github.workspace }}
+          echo ${GOPATH}
+          echo ${GOROOT}
+          export PATH=$PATH:$GOPATH/bin
+          echo $PATH
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+          make generate-ios-bindings
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOPATH: /Users/runner/work/wallet-sdk/go
+      - name: Zip walletsdk framework
+        run: |
+          cd ./cmd/wallet-sdk-gomobile/bindings/ios
+          zip -r -X walletsdk.xcframework.zip walletsdk.xcframework
+      - name: Clone walletsdk release repository
+        uses: actions/checkout@v2
+        with:
+          repository: rolsonquadras/wallet-sdk-test
+          path: ios
+          token: ${{ secrets.WALLET_SDK_CICD_PAT }}
+      - name: Build and commit walletsdk xcframework package
+        run: |
+          cp -r ./cmd/wallet-sdk-gomobile/bindings/ios/walletsdk.xcframework.zip ./ios/walletsdk.xcframework.zip
+          cd ios/
+          ls -lrt
+          echo "calculate new checksum"
+          NEW_CHECKSUM=$(swift package compute-checksum $FRAMEWORK_NAME.xcframework.zip)
+          echo "moduleName=$FRAMEWORK_NAME version=$NEW_VERSION checksum=$NEW_CHECKSUM"
+          echo "replace name module information in package manifest"
+          sed -E -i '' 's/let moduleName = ".+"/let moduleName = "'$FRAMEWORK_NAME\"/ Package.swift
+          echo "replace version information in package manifest"
+          sed -E -i '' 's/let version = ".+"/let version = "'$NEW_VERSION\"/ Package.swift
+          echo "replace checksum information in package manifest"
+          sed -E -i '' 's/let checksum = ".+"/let checksum = "'$NEW_CHECKSUM\"/ Package.swift
+          echo "Package.swift content file after update"
+          cat Package.swift
+          echo "git commit all without framework and push"
+          git status
+          git add Package.swift
+          git commit -m "New $FRAMEWORK_NAME version $NEW_VERSION"
+          git push
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FRAMEWORK_NAME: walletsdk
+          NEW_VERSION: '${{ env.NEW_VERSION }}'
+      - name: Tag and Release new version Swift package
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          tag_name : ${{ env.NEW_VERSION }}
+          repository : rolsonquadras/wallet-sdk-test
+          files: |
+            ios/walletsdk.xcframework.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.WALLET_SDK_CICD_PAT }}
+
+  PublishAndroidSDKSnapshot:
+    needs: GenerateVersion
+    if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Derive the new version
+        run: |
+          echo "new version"
+          NEW_VER=v${{ needs.GenerateVersion.outputs.version }}-SNAPSHOT-$(git rev-parse --short=7 HEAD)
+          echo "NEW_VERSION=$NEW_VER" >> $GITHUB_ENV
+          echo $NEW_VER
+      - name: Generate Binding
+        run: |
+          export PATH=$PATH:$GOPATH/bin
+          echo $PATH
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+          make generate-android-bindings
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOPATH: /home/runner/work/wallet-sdk/go
       - name: Publish
         run: |
           export USER=$USER
           export TOKEN=$TOKEN
           export ANDROID_GROUP_ID=dev.trustbloc
           export ANDROID_ARTIFACT_ID=vc-wallet-sdk
-          export ANDROID_VERSION=v${{ steps.bump_version.outputs.next-version }}-SNAPSHOT-$(git rev-parse --short=7 HEAD)
+          export ANDROID_VERSION=${{ env.NEW_VERSION }}
           export PROJECT_PKG_REPO=https://maven.pkg.github.com/trustbloc-cicd/snapshot
           echo $ANDROID_VERSION
           gradle publish
@@ -282,3 +384,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USER: ${{ secrets.CR_USER }}
           TOKEN: ${{ secrets.CR_PAT }}
+          NEW_VERSION: '${{ env.NEW_VERSION }}'
