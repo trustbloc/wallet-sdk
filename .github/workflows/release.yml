@@ -57,3 +57,87 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USER: ${{ secrets.CR_USER }}
           TOKEN: ${{ secrets.CR_PAT }}
+
+  PublishIosSDKRelease:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Derive the new version
+        run: |
+          echo "new version"
+          NEW_VER=$(git describe --tags --always `git rev-list --tags --max-count=1`)
+          echo "NEW_VERSION=$NEW_VER" >> $GITHUB_ENV
+          echo $NEW_VER
+      - name: Generate Binding
+        run: |
+          echo $PATH
+          echo ${{ github.workspace }}
+          echo ${GOPATH}
+          echo ${GOROOT}
+          export PATH=$PATH:$GOPATH/bin
+          echo $PATH
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+          make generate-ios-bindings
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOPATH: /Users/runner/work/wallet-sdk/go
+      - name: Zip walletsdk framework
+        run: |
+          cd ./cmd/wallet-sdk-gomobile/bindings/ios
+          zip -r -X walletsdk.xcframework.zip walletsdk.xcframework
+      - name: Clone walletsdk release repository
+        uses: actions/checkout@v2
+        with:
+          repository: trustbloc-cicd/wallet-sdk
+          path: ios
+          token: ${{ secrets.WALLET_SDK_CICD_PAT }}
+      - name: Build and commit walletsdk xcframework package
+        run: |
+          cp -r ./cmd/wallet-sdk-gomobile/bindings/ios/walletsdk.xcframework.zip ./ios/walletsdk.xcframework.zip
+          cd ios/
+          ls -lrt
+          echo "calculate new checksum"
+          NEW_CHECKSUM=$(swift package compute-checksum $FRAMEWORK_NAME.xcframework.zip)
+          echo "moduleName=$FRAMEWORK_NAME version=$NEW_VERSION checksum=$NEW_CHECKSUM"
+          echo "replace name module information in package manifest"
+          sed -E -i '' 's/let moduleName = ".+"/let moduleName = "'$FRAMEWORK_NAME\"/ Package.swift
+          echo "replace version information in package manifest"
+          sed -E -i '' 's/let version = ".+"/let version = "'$NEW_VERSION\"/ Package.swift
+          echo "replace checksum information in package manifest"
+          sed -E -i '' 's/let checksum = ".+"/let checksum = "'$NEW_CHECKSUM\"/ Package.swift
+          echo "Package.swift content file after update"
+          cat Package.swift
+          echo "git commit all without framework and push"
+          git status
+          git add Package.swift
+          git commit -m "New $FRAMEWORK_NAME version $NEW_VERSION"
+          git push
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FRAMEWORK_NAME: walletsdk
+          NEW_VERSION: '${{ env.NEW_VERSION }}'
+      - name: Tag and Release new version Swift package
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          tag_name : ${{ env.NEW_VERSION }}
+          repository : trustbloc-cicd/wallet-sdk
+          files: |
+            ios/walletsdk.xcframework.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.WALLET_SDK_CICD_PAT }}
