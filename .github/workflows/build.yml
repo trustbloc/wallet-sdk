@@ -300,7 +300,7 @@ jobs:
       - name: Clone walletsdk release repository
         uses: actions/checkout@v2
         with:
-          repository: rolsonquadras/wallet-sdk-test
+          repository: trustbloc-cicd/wallet-sdk
           path: ios
           token: ${{ secrets.WALLET_SDK_CICD_PAT }}
       - name: Build and commit walletsdk xcframework package
@@ -334,7 +334,7 @@ jobs:
         with:
           draft: false
           tag_name : ${{ env.NEW_VERSION }}
-          repository : rolsonquadras/wallet-sdk-test
+          repository : trustbloc-cicd/wallet-sdk
           files: |
             ios/walletsdk.xcframework.zip
         env:
