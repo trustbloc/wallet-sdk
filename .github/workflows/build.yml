@@ -276,7 +276,7 @@ jobs:
       - name: Derive the new version
         run: |
           echo "new version"
-          NEW_VER=v${{ needs.GenerateVersion.outputs.version }}-SNAPSHOT-$(git rev-parse --short=7 HEAD)
+          NEW_VER=${{ needs.GenerateVersion.outputs.version }}-SNAPSHOT-$(git rev-parse --short=7 HEAD)
           echo "NEW_VERSION=$NEW_VER" >> $GITHUB_ENV
           echo $NEW_VER
       - name: Generate Binding
@@ -357,7 +357,7 @@ jobs:
       - name: Derive the new version
         run: |
           echo "new version"
-          NEW_VER=v${{ needs.GenerateVersion.outputs.version }}-SNAPSHOT-$(git rev-parse --short=7 HEAD)
+          NEW_VER=${{ needs.GenerateVersion.outputs.version }}-SNAPSHOT-$(git rev-parse --short=7 HEAD)
           echo "NEW_VERSION=$NEW_VER" >> $GITHUB_ENV
           echo $NEW_VER
       - name: Generate Binding

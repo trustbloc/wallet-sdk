@@ -12,7 +12,7 @@ env:
 on:
   push:
     tags:
-      - 'v*'
+      - '*'
 
 jobs:
   PublishAndroidSDKRelease:
@@ -79,7 +79,7 @@ jobs:
         run: |
           echo "new version"
           NEW_VER=$(git describe --tags --always `git rev-list --tags --max-count=1`)
-          echo "NEW_VERSION=$NEW_VER" >> $GITHUB_ENV
+          echo "NEW_VERSION=$NEW_VER-swift-pm" >> $GITHUB_ENV
           echo $NEW_VER
       - name: Generate Binding
         run: |
@@ -102,9 +102,10 @@ jobs:
       - name: Clone walletsdk release repository
         uses: actions/checkout@v2
         with:
-          repository: trustbloc-cicd/wallet-sdk
+          repository: trustbloc/wallet-sdk
+          ref: swift-pm
           path: ios
-          token: ${{ secrets.WALLET_SDK_CICD_PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and commit walletsdk xcframework package
         run: |
           cp -r ./cmd/wallet-sdk-gomobile/bindings/ios/walletsdk.xcframework.zip ./ios/walletsdk.xcframework.zip
@@ -136,8 +137,8 @@ jobs:
         with:
           draft: false
           tag_name : ${{ env.NEW_VERSION }}
-          repository : trustbloc-cicd/wallet-sdk
+          repository : trustbloc/wallet-sdk
           files: |
             ios/walletsdk.xcframework.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.WALLET_SDK_CICD_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
