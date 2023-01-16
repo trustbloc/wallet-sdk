@@ -242,8 +242,8 @@ jobs:
           if [[ $TAG == $VERSION ]]; then
               TAG=v0.0.0
           fi
-          echo "CURRENT_SEMVER=${TAG:1}" >> $GITHUB_ENV
-          echo "repoTag=${TAG} repoVersion=${VERSION} currentSemVer=${TAG:1}"
+          echo "CURRENT_SEMVER=${TAG:0:5}" >> $GITHUB_ENV
+          echo "repoTag=${TAG} repoVersion=${VERSION} currentSemVer=${TAG:0:5}"
       - name: Bump published version
         id: bump_version
         uses: christian-draeger/increment-semantic-version@1.0.2
