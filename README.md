@@ -28,13 +28,14 @@ The repo also has code to generate a [Reference iOS or Android App](demo/app/) b
 ## Library/Package
 
 ### Android
-The Wallet SDK Android package is available on GitHub Maven Repository. Please check [this page](https://github.com/trustbloc-cicd/snapshot/packages/1690705) for the latest SNAPSHOT versions.
+The Wallet SDK Android package is available on GitHub Maven Repository. Please refer 
+[wallet-sdk maven packages](https://github.com/trustbloc/wallet-sdk/packages/1769347) for the latest releases.
 
 ```
 <dependency>
- <groupId>dev.trustbloc</groupId>
- <artifactId>vc-wallet-sdk</artifactId>
- <version>0.1.0-SNAPSHOT-7e3a6ed</version>
+  <groupId>dev.trustbloc</groupId>
+  <artifactId>vc-wallet-sdk</artifactId>
+  <version>0.1.1</version>
 </dependency>
 ```
 
@@ -54,8 +55,12 @@ maven {
 ```
 
 Use the following URL based on snapshot or release dependency:
-SNAPSHOT_REPO_URL=https://maven.pkg.github.com/trustbloc-cicd/snapshot
 RELEASE_REPO_URL=https://maven.pkg.github.com/trustbloc/wallet-sdk
+
+### iOS
+The Wallet SDK iOS xcframework packages are distributed through Swift Package Manager (SPM). Please refer
+[wallet-sdk tags](https://github.com/trustbloc/wallet-sdk/tags) with the suffix `-swift-pm` for the
+latest releases.
 
 ## Project structure
 
