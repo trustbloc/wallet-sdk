@@ -92,7 +92,7 @@ func (s *JWSSigner) GetKeyID() string {
 
 // Sign signs jwt token.
 func (s *JWSSigner) Sign(data []byte) ([]byte, error) {
-	return s.crypto.Sign(data, s.keyID)
+	return s.crypto.Sign(data, s.cryptoKID)
 }
 
 // Headers provides JWS headers.
