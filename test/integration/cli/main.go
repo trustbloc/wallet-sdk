@@ -13,16 +13,16 @@ import (
 func main() {
 	args := os.Args[1:]
 
-	if len(args) == 1 && args[0] == "issuance" {
-		initiatePreAuthorizedIssuance()
+	if len(args) == 2 && args[0] == "issuance" && args[1] != "" {
+		initiatePreAuthorizedIssuance(args[1])
 	}
 
-	if len(args) == 1 && args[0] == "verification" {
-		initiatePreAuthorizedVerification()
+	if len(args) == 2 && args[0] == "verification" && args[1] != "" {
+		initiatePreAuthorizedVerification(args[1])
 	}
 }
 
-func initiatePreAuthorizedIssuance() {
+func initiatePreAuthorizedIssuance(issuerProfileID string) {
 	err := testenv.SetupTestEnv("fixtures/keys/tls/ec-cacert.pem")
 	if err != nil {
 		panic(err)
@@ -41,7 +41,7 @@ func initiatePreAuthorizedIssuance() {
 	initiateIssuanceURL := ""
 
 	for i := 0; i < 120; i++ {
-		initiateIssuanceURL, err = oidc4ciSetup.InitiatePreAuthorizedIssuance("bank_issuer")
+		initiateIssuanceURL, err = oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileID)
 		if err == nil {
 			break
 		}
@@ -55,7 +55,7 @@ func initiatePreAuthorizedIssuance() {
 	fmt.Print(initiateIssuanceURL)
 }
 
-func initiatePreAuthorizedVerification() {
+func initiatePreAuthorizedVerification(verifierProfileID string) {
 	err := testenv.SetupTestEnv("fixtures/keys/tls/ec-cacert.pem")
 	if err != nil {
 		panic(err)
@@ -71,7 +71,7 @@ func initiatePreAuthorizedVerification() {
 	initiateIssuanceURL := ""
 
 	for i := 0; i < 120; i++ {
-		initiateIssuanceURL, err = oidc4vpSetup.InitiateInteraction("v_myprofile_jwt")
+		initiateIssuanceURL, err = oidc4vpSetup.InitiateInteraction(verifierProfileID)
 		if err == nil {
 			break
 		}
