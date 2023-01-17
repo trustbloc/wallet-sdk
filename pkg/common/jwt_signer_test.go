@@ -7,10 +7,17 @@ SPDX-License-Identifier: Apache-2.0
 package common_test
 
 import (
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/elliptic"
+	"crypto/rand"
 	"errors"
 	"testing"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk/jwksupport"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/util/jwkkid"
+	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/pkg/common"
@@ -18,6 +25,12 @@ import (
 )
 
 func TestNewJWSSigner(t *testing.T) {
+	mockKey, _, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+
+	mockJWK, err := jwkkid.BuildJWK(mockKey, kms.ED25519Type)
+	require.NoError(t, err)
+
 	t.Run("Success", func(t *testing.T) {
 		successCases := []struct {
 			name        string
@@ -29,6 +42,9 @@ func TestNewJWSSigner(t *testing.T) {
 				vm: &models.VerificationMethod{
 					ID:   "testKeyID",
 					Type: common.Ed25519VerificationKey2018,
+					Key: models.VerificationKey{
+						Raw: mockKey,
+					},
 				},
 				expectedAlg: common.EdDSA,
 			},
@@ -38,9 +54,7 @@ func TestNewJWSSigner(t *testing.T) {
 					ID:   "testKeyID",
 					Type: common.JSONWebKey2020,
 					Key: models.VerificationKey{
-						JSONWebKey: &jwk.JWK{
-							Crv: "Ed25519",
-						},
+						JSONWebKey: mockJWK,
 					},
 				},
 				expectedAlg: common.EdDSA,
@@ -61,6 +75,17 @@ func TestNewJWSSigner(t *testing.T) {
 		}
 	})
 
+	t.Run("Invalid raw ed25519 key", func(t *testing.T) {
+		_, err := common.NewJWSSigner(
+			&models.VerificationMethod{
+				ID:   "testKeyID",
+				Type: common.Ed25519VerificationKey2018,
+			},
+			&cryptoMock{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "generating thumbprint for ed25519 key")
+	})
+
 	t.Run("Invalid verificationType", func(t *testing.T) {
 		_, err := common.NewJWSSigner(
 			&models.VerificationMethod{
@@ -69,15 +94,59 @@ func TestNewJWSSigner(t *testing.T) {
 			},
 			&cryptoMock{})
 		require.Error(t, err)
+		require.Contains(t, err.Error(), "verification method type 'Invalid' not supported")
+	})
+
+	t.Run("missing JWK", func(t *testing.T) {
+		_, err := common.NewJWSSigner(
+			&models.VerificationMethod{
+				ID:   "testKeyID",
+				Type: common.JSONWebKey2020,
+			},
+			&cryptoMock{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "missing jwk")
+	})
+
+	t.Run("invalid JWK", func(t *testing.T) {
+		_, err := common.NewJWSSigner(
+			&models.VerificationMethod{
+				ID:   "testKeyID",
+				Type: common.JSONWebKey2020,
+				Key: models.VerificationKey{
+					JSONWebKey: &jwk.JWK{},
+				},
+			},
+			&cryptoMock{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "creating crypto thumbprint for JWK")
+	})
+
+	t.Run("unsupported JWK", func(t *testing.T) {
+		_, err := common.NewJWSSigner(
+			&models.VerificationMethod{
+				ID:   "testKeyID",
+				Type: common.JSONWebKey2020,
+				Key: models.VerificationKey{
+					JSONWebKey: getECKey(t),
+				},
+			},
+			&cryptoMock{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "only Ed25519 is supported")
 	})
 }
 
 func TestJWSSigner_Sign(t *testing.T) {
+	mockKey, _, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+
 	t.Run("Success", func(t *testing.T) {
 		signer, err := common.NewJWSSigner(
 			&models.VerificationMethod{
 				ID:   "testKeyID",
 				Type: "Ed25519VerificationKey2018",
+				Key:  models.VerificationKey{Raw: mockKey},
 			},
 			&cryptoMock{Signature: []byte("mock sig")})
 		require.NoError(t, err)
@@ -97,6 +166,7 @@ func TestJWSSigner_Sign(t *testing.T) {
 			&models.VerificationMethod{
 				ID:   "testKeyID",
 				Type: "Ed25519VerificationKey2018",
+				Key:  models.VerificationKey{Raw: mockKey},
 			},
 			&cryptoMock{Err: errors.New("test error")})
 		require.NoError(t, err)
@@ -104,6 +174,19 @@ func TestJWSSigner_Sign(t *testing.T) {
 		_, err = s.Sign([]byte("test data"))
 		require.Error(t, err)
 	})
+}
+
+func getECKey(t *testing.T) *jwk.JWK {
+	t.Helper()
+
+	crv := elliptic.P256()
+	privateKey, err := ecdsa.GenerateKey(crv, rand.Reader)
+	require.NoError(t, err)
+
+	j, err := jwksupport.JWKFromKey(privateKey)
+	require.NoError(t, err)
+
+	return j
 }
 
 type cryptoMock struct {
