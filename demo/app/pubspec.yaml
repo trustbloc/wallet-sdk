@@ -42,6 +42,7 @@ dependencies:
   flutter_secure_storage: ^6.0.0
   uuid: ^3.0.7
   shared_preferences: ^2.0.15
+  intl: ^0.18.0
 
 dev_dependencies:
   integration_test:

@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:app/services/storage_service.dart';
+import 'package:app/views/credential_details.dart';
 import 'package:app/widgets/credential_card.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';

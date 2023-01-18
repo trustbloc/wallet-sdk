@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:app/models/credential_data.dart';
+import 'package:app/views/credential_details.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/credential_preview.dart';
 
@@ -8,13 +9,11 @@ class CredentialCard extends StatefulWidget {
   CredentialData item;
 
   CredentialCard({required this.item, Key? key}) : super(key: key);
-
   @override
   State<CredentialCard> createState() => _CredentialCardState();
 }
 
 class _CredentialCardState extends State<CredentialCard> {
-  bool _visibility = false;
 
   Widget getCredentialDetails() {
     List<CredentialPreviewData> list;
@@ -59,6 +58,8 @@ class _CredentialCardState extends State<CredentialCard> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
       child: Container(
+          height: 70,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -69,11 +70,6 @@ class _CredentialCardState extends State<CredentialCard> {
                     blurRadius: 5)
               ]),
           child: ListTile(
-            onLongPress: () {
-              setState(() {
-                _visibility = !_visibility;
-              });
-            },
             title: Text(
               credentialDisplayName,
               style: const TextStyle(
@@ -82,19 +78,6 @@ class _CredentialCardState extends State<CredentialCard> {
                 color: Color(0xff190C21),
               ),
               textAlign: TextAlign.start,
-            ),
-            subtitle: Visibility(
-              visible: _visibility,
-              child: SizedBox(
-                height: 500,
-                child: Column(
-                  children: [
-                    Flexible( // wrap in Expanded
-                      child: getCredentialDetails(),
-                    ),
-                  ],
-                ),
-              ),
             ),
             //TODO need to add fallback and network image url
             leading: const Image(
@@ -106,7 +89,10 @@ class _CredentialCardState extends State<CredentialCard> {
             trailing: IconButton(
               icon: const Icon(Icons.arrow_circle_right, size: 32, color: Color(0xffB6B7C7)),
               onPressed: () async {
-
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CredentialDetails(item: widget.item,credentialName: credentialDisplayName,)),
+                );
               },
             ),
           )),
