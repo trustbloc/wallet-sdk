@@ -8,6 +8,7 @@ import io.flutter.plugin.common.MethodChannel
 import dev.trustbloc.wallet.sdk.localkms.KMS
 import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.ld.DocLoader
+import dev.trustbloc.wallet.sdk.walleterror.Walleterror
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.localkms.SignerCreator
 import io.flutter.plugin.common.MethodCall
@@ -57,10 +58,16 @@ class MainActivity : FlutterActivity() {
                                 result.success(userPinRequired)
 
                             } catch (e: Exception) {
+                                val err = Walleterror.parse(e.message)
+                                // Add custom error handling logic here basing on code and error properties
+                                println("code: ${err.code}")
+                                println("error: ${err.category}")
+                                println("details: ${err.details}")
+
                                 result.error(
                                         "Exception",
                                         "Error while authorizing the oidc vc flow",
-                                        e
+                                        "code: ${err.code}, error: ${err.category}, details: ${err.details}"
                                 )
 
                             }
@@ -187,9 +194,9 @@ class MainActivity : FlutterActivity() {
         return resp
     }
 
-    public fun resolveCredentialDisplay(call: MethodCall) : String?{
+    public fun resolveCredentialDisplay(call: MethodCall): String? {
         val openID4CI = this.openID4CI
-            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
         val resp = openID4CI.resolveCredentialDisplay() ?: return null
 
@@ -197,7 +204,7 @@ class MainActivity : FlutterActivity() {
     }
 
 
-       private fun createDID(call: MethodCall): String {
+    private fun createDID(call: MethodCall): String {
         val kms = this.kms ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
         val creatorDID = Creator(kms as KeyWriter)

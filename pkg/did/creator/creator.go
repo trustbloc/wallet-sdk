@@ -16,8 +16,10 @@ import (
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
+	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
 	didioncreator "github.com/trustbloc/wallet-sdk/pkg/did/creator/ion"
 	didkeycreator "github.com/trustbloc/wallet-sdk/pkg/did/creator/key"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 const (
@@ -89,12 +91,36 @@ func NewCreatorWithKeyReader(keyReader api.KeyReader) (*Creator, error) {
 func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) (*did.DocResolution, error) {
 	switch method {
 	case DIDMethodKey:
-		return d.createDIDKeyDoc(createDIDOpts)
+		doc, err := d.createDIDKeyDoc(createDIDOpts)
+		if err != nil {
+			return nil, walleterror.NewExecutionError(
+				diderrors.Module,
+				diderrors.CreateDIDKeyFailedCode,
+				diderrors.CreateDIDKeyFailedError,
+				err,
+			)
+		}
+
+		return doc, err
 	case DIDMethodIon:
-		return d.createDIDIonLongFormDoc(createDIDOpts)
+		doc, err := d.createDIDIonLongFormDoc(createDIDOpts)
+		if err != nil {
+			return nil, walleterror.NewExecutionError(
+				diderrors.Module,
+				diderrors.CreateDIDIONFailedCode,
+				diderrors.CreateDIDIONFailedError,
+				err,
+			)
+		}
+
+		return doc, err
 	}
 
-	return nil, fmt.Errorf("DID method %s not supported", method)
+	return nil, walleterror.NewValidationError(
+		diderrors.Module,
+		diderrors.UnsupportedDIDMethodCode,
+		diderrors.UnsupportedDIDMethodError,
+		fmt.Errorf("DID method %s not supported", method))
 }
 
 func (d *Creator) createDIDKeyDoc(createDIDOpts *api.CreateDIDOpts) (*did.DocResolution, error) {

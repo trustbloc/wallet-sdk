@@ -22,7 +22,9 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
+
 	"github.com/trustbloc/wallet-sdk/pkg/common"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 
 	"github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
@@ -43,7 +45,11 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 
 	requestURIParsed, err := url.Parse(initiateIssuanceURI)
 	if err != nil {
-		return nil, err
+		return nil, walleterror.NewValidationError(
+			module,
+			InvalidIssuanceURICode,
+			InvalidIssuanceURIError,
+			err)
 	}
 
 	initiationRequest := &InitiationRequest{}
@@ -57,7 +63,11 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 	if userPINRequiredString != "" {
 		userPINRequired, err := strconv.ParseBool(userPINRequiredString)
 		if err != nil {
-			return nil, err
+			return nil, walleterror.NewValidationError(
+				module,
+				InvalidIssuanceURICode,
+				InvalidIssuanceURIError,
+				err)
 		}
 
 		initiationRequest.UserPINRequired = userPINRequired
@@ -82,7 +92,11 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-6
 func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 	if i.initiationRequest.PreAuthorizedCode == "" {
-		return nil, errors.New("pre-authorized code is required (authorization flow not implemented)")
+		return nil, walleterror.NewValidationError(
+			module,
+			PreAuthorizedCodeRequiredCode,
+			PreAuthorizedCodeRequiredError,
+			errors.New("pre-authorized code is required (authorization flow not implemented)"))
 	}
 
 	authorizeResult := &AuthorizeResult{
@@ -97,14 +111,22 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 // Relevant sections of the spec:
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-7
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-8
-func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequestOpts) ([]CredentialResponse, error) {
+func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequestOpts) ([]CredentialResponse, error) { //nolint:funlen,lll
 	if i.initiationRequest.UserPINRequired && credentialRequestOpts.UserPIN == "" {
-		return nil, errors.New("invalid user PIN")
+		return nil, walleterror.NewValidationError(
+			module,
+			PinCodeRequiredCode,
+			PinCodeRequiredError,
+			errors.New("invalid user PIN"))
 	}
 
 	metadata, err := metadatafetcher.Get(i.initiationRequest.IssuerURI)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get issuer metadata: %w", err)
+		return nil, walleterror.NewExecutionError(
+			module,
+			MetadataFetchFailedCode,
+			MetadataFetchFailedError,
+			fmt.Errorf("failed to get issuer metadata: %w", err))
 	}
 
 	i.issuerMetadata = metadata
@@ -116,7 +138,11 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 
 	tokenResp, err := i.getTokenResponse(metadata.TokenEndpoint, params)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get token response: %w", err)
+		return nil, walleterror.NewExecutionError(
+			module,
+			TokenFetchFailedCode,
+			TokenFetchFailedError,
+			fmt.Errorf("failed to get token response: %w", err))
 	}
 
 	claims := map[string]interface{}{
@@ -129,7 +155,11 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 	// didsignjwt.SignJWT will create the headers automatically
 	jwt, err := didsignjwt.SignJWT(nil, claims, i.userDID, i.signerProvider, i.didResolver)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create JWT: %w", err)
+		return nil, walleterror.NewExecutionError(
+			module,
+			JWTSigningFailedCode,
+			JWTSigningFailedError,
+			fmt.Errorf("failed to create JWT: %w", err))
 	}
 
 	credentialResponses := make([]CredentialResponse, len(i.initiationRequest.CredentialTypes))
@@ -138,7 +168,12 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 		credentialResponse, err := i.getCredentialResponse(credentialType, metadata.CredentialEndpoint,
 			tokenResp.AccessToken, jwt)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get credential response: %w", err)
+			return nil,
+				walleterror.NewExecutionError(
+					module,
+					CredentialFetchFailedCode,
+					CredentialFetchFailedError,
+					fmt.Errorf("failed to get credential response: %w", err))
 		}
 
 		credentialResponses[index] = *credentialResponse
@@ -168,16 +203,27 @@ func (i *Interaction) ResolveDisplay(preferredLocale string) (*credentialschema.
 			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
 			verifiable.WithDisabledProofCheck())
 		if err != nil {
-			return nil, err
+			return nil, walleterror.NewExecutionError(
+				module,
+				CredentialParseFailedCode,
+				CredentialParseFailedError, err)
 		}
 
 		credentials = append(credentials, credential)
 	}
 
-	return credentialschema.Resolve(
+	displayData, err := credentialschema.Resolve(
 		credentialschema.WithCredentials(credentials),
 		credentialschema.WithIssuerMetadata(i.issuerMetadata),
 		credentialschema.WithPreferredLocale(preferredLocale))
+	if err != nil {
+		return nil, walleterror.NewExecutionError(
+			module,
+			CredentialSchemaResolveFailedCode,
+			CredentialSchemaResolveFailedError, err)
+	}
+
+	return displayData, nil
 }
 
 func (i *Interaction) getTokenResponse(tokenEndpointURL string, params url.Values) (*tokenResponse, error) {

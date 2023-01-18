@@ -12,6 +12,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 
 	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
@@ -36,23 +37,43 @@ type ClientConfig struct {
 
 func validateClientConfig(config *ClientConfig) error {
 	if config == nil {
-		return errors.New("no client config provided")
+		return walleterror.NewValidationError(
+			module,
+			NoClientConfigProvidedCode,
+			NoClientConfigProvidedError,
+			errors.New("no client config provided"))
 	}
 
 	if config.UserDID == "" {
-		return errors.New("no user DID provided")
+		return walleterror.NewValidationError(
+			module,
+			ClientConfigNoUserDidProvidedCode,
+			ClientConfigNoUserDidProvidedError,
+			errors.New("no user DID provided"))
 	}
 
 	if config.ClientID == "" {
-		return errors.New("no client ID provided")
+		return walleterror.NewValidationError(
+			module,
+			ClientConfigNoClientIDProvidedCode,
+			ClientConfigNoClientIDProvidedError,
+			errors.New("no client ID provided"))
 	}
 
 	if config.SignerProvider == nil {
-		return errors.New("no signer provider provided")
+		return walleterror.NewValidationError(
+			module,
+			ClientConfigNoSignerProviderProvidedCode,
+			ClientConfigNoSignerProviderProvidedError,
+			errors.New("no signer provider provided"))
 	}
 
 	if config.DIDResolver == nil {
-		return errors.New("no DID resolver provided")
+		return walleterror.NewValidationError(
+			module,
+			ClientConfigNoDIDResolverProvidedCode,
+			ClientConfigNoDIDResolverProvidedError,
+			errors.New("no DID resolver provided"))
 	}
 
 	return nil

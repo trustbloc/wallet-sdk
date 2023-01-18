@@ -14,6 +14,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/stretchr/testify/require"
 
+	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
@@ -39,7 +40,7 @@ func TestNewCreator(t *testing.T) {
 	})
 	t.Run("Failure - no KeyWriter specified", func(t *testing.T) {
 		didCreator, err := creator.NewCreator(nil, nil)
-		require.EqualError(t, err, "a KeyWriter must be specified")
+		testutil.RequireErrorContains(t, err, "a KeyWriter must be specified")
 		require.Nil(t, didCreator)
 	})
 }
@@ -55,7 +56,7 @@ func TestNewCreatorWithKeyWriter(t *testing.T) {
 	})
 	t.Run("Failure - no KeyWriter specified", func(t *testing.T) {
 		didCreator, err := creator.NewCreatorWithKeyWriter(nil)
-		require.EqualError(t, err, "a KeyWriter must be specified")
+		testutil.RequireErrorContains(t, err, "a KeyWriter must be specified")
 		require.Nil(t, didCreator)
 	})
 }
@@ -71,7 +72,7 @@ func TestNewCreatorWithKeyReader(t *testing.T) {
 	})
 	t.Run("Failure - no KeyReader specified", func(t *testing.T) {
 		didCreator, err := creator.NewCreatorWithKeyReader(nil)
-		require.EqualError(t, err, "a KeyReader must be specified")
+		testutil.RequireErrorContains(t, err, "a KeyReader must be specified")
 		require.Nil(t, didCreator)
 	})
 }
@@ -107,11 +108,11 @@ func TestCreator_Create(t *testing.T) {
 		createDIDOpts := &api.CreateDIDOpts{}
 
 		didDocResolution, err := didCreator.Create(creator.DIDMethodKey, createDIDOpts)
-		require.ErrorIs(t, err, expectErr)
+		testutil.RequireErrorContains(t, err, "CREATE_DID_KEY_FAILED(DID1-0000):expected error")
 		require.Empty(t, didDocResolution)
 
 		didDocResolution, err = didCreator.Create(creator.DIDMethodIon, createDIDOpts)
-		require.ErrorIs(t, err, expectErr)
+		testutil.RequireErrorContains(t, err, "CREATE_DID_ION_FAILED(DID1-0001):expected error")
 		require.Empty(t, didDocResolution)
 	})
 	t.Run("Using KeyReader (caller specified options)", func(t *testing.T) {
@@ -154,11 +155,11 @@ func TestCreator_Create(t *testing.T) {
 			}
 
 			didDocResolution, err := didCreator.Create(creator.DIDMethodKey, createDIDOpts)
-			require.EqualError(t, err, "no verification type specified")
+			testutil.RequireErrorContains(t, err, "no verification type specified")
 			require.Empty(t, didDocResolution)
 
 			didDocResolution, err = didCreator.Create(creator.DIDMethodIon, createDIDOpts)
-			require.EqualError(t, err, "no verification type specified")
+			testutil.RequireErrorContains(t, err, "no verification type specified")
 			require.Empty(t, didDocResolution)
 		})
 		t.Run("Fail to get key handle", func(t *testing.T) {
@@ -175,11 +176,11 @@ func TestCreator_Create(t *testing.T) {
 			}
 
 			didDocResolution, err := didCreator.Create(creator.DIDMethodKey, createDIDOpts)
-			require.EqualError(t, err, "failed to get key handle: test failure")
+			testutil.RequireErrorContains(t, err, "failed to get key handle: test failure")
 			require.Empty(t, didDocResolution)
 
 			didDocResolution, err = didCreator.Create(creator.DIDMethodIon, createDIDOpts)
-			require.EqualError(t, err, "failed to get key handle: test failure")
+			testutil.RequireErrorContains(t, err, "failed to get key handle: test failure")
 			require.Empty(t, didDocResolution)
 		})
 		t.Run("Fail to create jwk", func(t *testing.T) {
@@ -210,7 +211,7 @@ func TestCreator_Create(t *testing.T) {
 		require.NoError(t, err)
 
 		didDocResolution, err := didCreator.Create("NotAValidDIDMethod", nil)
-		require.EqualError(t, err, "DID method NotAValidDIDMethod not supported")
+		testutil.RequireErrorContains(t, err, "DID method NotAValidDIDMethod not supported")
 		require.Empty(t, didDocResolution)
 	})
 }

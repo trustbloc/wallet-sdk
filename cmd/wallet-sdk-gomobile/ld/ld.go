@@ -11,6 +11,8 @@ import (
 	"encoding/json"
 
 	"github.com/piprate/json-gold/ld"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -32,7 +34,7 @@ func NewDocLoader() *DocLoader {
 func (l *DocLoader) LoadDocument(u string) (*api.LDDocument, error) {
 	doc, err := l.documentLoader.LoadDocument(u)
 	if err != nil {
-		return nil, err
+		return nil, walleterror.ToMobileError(err)
 	}
 
 	wrappedDoc := &api.LDDocument{
@@ -42,7 +44,7 @@ func (l *DocLoader) LoadDocument(u string) (*api.LDDocument, error) {
 
 	wrappedDoc.Document, err = json.Marshal(doc.Document)
 	if err != nil {
-		return nil, err
+		return nil, walleterror.ToMobileError(err)
 	}
 
 	return wrappedDoc, nil

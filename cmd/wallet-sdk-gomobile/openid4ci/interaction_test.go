@@ -18,6 +18,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk/jwksupport"
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/stretchr/testify/require"
+
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 
@@ -47,7 +48,7 @@ func TestNewInteraction(t *testing.T) {
 		config := getTestClientConfig(t)
 
 		interaction, err := openid4ci.NewInteraction(requestURI, config)
-		require.EqualError(t, err, `strconv.ParseBool: parsing "notabool": invalid syntax`)
+		requireErrorContains(t, err, `INVALID_ISSUANCE_URI`)
 		require.Nil(t, interaction)
 	})
 }
@@ -69,7 +70,7 @@ func TestInteraction_Authorize(t *testing.T) {
 		require.NoError(t, err)
 
 		result, err := interaction.Authorize()
-		require.EqualError(t, err, "pre-authorized code is required (authorization flow not implemented)")
+		requireErrorContains(t, err, "PRE_AUTHORIZED_CODE_REQUIRED")
 		require.Nil(t, result)
 	})
 }
@@ -196,7 +197,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		credentialRequest := openid4ci.NewCredentialRequestOpts("")
 
 		result, err := interaction.RequestCredential(credentialRequest)
-		require.EqualError(t, err, "failed to create JWT: failed to create gomobile signer: test failure")
+		requireErrorContains(t, err, "JWT_SIGNING_FAILED")
 		require.Nil(t, result)
 	})
 }
@@ -285,4 +286,9 @@ func mockDocResolution(vm *did.VerificationMethod) ([]byte, error) {
 	didDocResolution := &did.DocResolution{DIDDocument: newDoc}
 
 	return didDocResolution.JSONBytes()
+}
+
+func requireErrorContains(t *testing.T, err error, errString string) { //nolint:thelper
+	require.Error(t, err)
+	require.Contains(t, err.Error(), errString)
 }

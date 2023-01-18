@@ -144,7 +144,7 @@ func TestValidate(t *testing.T) {
 	})
 	t.Run("DID service validation failure", func(t *testing.T) {
 		validationResult, err := ValidateLinkedDomains("DID", newMockResolver())
-		require.EqualError(t, err, "DID service validation failed: domain linkage credential(s) not found")
+		requireErrorContains(t, err, "DOMAIN_AND_DID_VERIFICATION_FAILED")
 		require.Nil(t, validationResult)
 	})
 }
@@ -210,4 +210,9 @@ func (m *mockResolver) Resolve(string) ([]byte, error) {
 	didDocResolution := did.DocResolution{DIDDocument: parsedDIDDoc}
 
 	return didDocResolution.JSONBytes()
+}
+
+func requireErrorContains(t *testing.T, err error, errString string) { //nolint:thelper
+	require.Error(t, err)
+	require.Contains(t, err.Error(), errString)
 }

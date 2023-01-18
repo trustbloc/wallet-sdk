@@ -89,12 +89,12 @@ func TestResolve(t *testing.T) {
 		})
 	})
 	t.Run("No credentials specified", func(t *testing.T) {
-		t.Run("Error from wallet-sdk-gomobile layer", func(t *testing.T) {
+		t.Run("Category from wallet-sdk-gomobile layer", func(t *testing.T) {
 			resolvedDisplayData, err := openid4ci.ResolveDisplay(nil, nil, "")
 			require.EqualError(t, err, "no credentials specified")
 			require.Nil(t, resolvedDisplayData)
 		})
-		t.Run("Error from Go SDK layer", func(t *testing.T) {
+		t.Run("Category from Go SDK layer", func(t *testing.T) {
 			resolvedDisplayData, err := openid4ci.ResolveDisplay(&openid4ci.Credentials{},
 				&openid4ci.IssuerMetadata{}, "")
 			require.EqualError(t, err, "no credentials specified")

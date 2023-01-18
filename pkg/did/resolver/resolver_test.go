@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
 )
 
@@ -68,6 +69,11 @@ func TestDIDResolver_InvalidDID(t *testing.T) {
 
 	didDocResolution, err := didResolver.Resolve("did:example:abc")
 	require.Error(t, err)
-	require.EqualError(t, err, "resolve did:example:abc : did method example not supported for vdr")
+	requireErrorContains(t, err, "resolve did:example:abc : did method example not supported for vdr")
 	require.Empty(t, didDocResolution)
+}
+
+func requireErrorContains(t *testing.T, err error, errString string) { //nolint:thelper
+	require.Error(t, err)
+	require.Contains(t, err.Error(), errString)
 }

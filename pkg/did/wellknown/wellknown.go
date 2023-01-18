@@ -18,6 +18,8 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
+	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 const linkedDomainsServiceType = "LinkedDomains"
@@ -31,7 +33,12 @@ func ValidateLinkedDomains(did string, resolver api.DIDResolver,
 	httpClient didconfig.HTTPClient,
 ) (bool, string, error) {
 	if resolver == nil {
-		return false, "", errors.New("no resolver provided")
+		return false, "",
+			walleterror.NewExecutionError(
+				diderrors.Module,
+				diderrors.WellknownInitializationCode,
+				diderrors.WellknownInitializationFailed,
+				errors.New("no resolver provided"))
 	}
 
 	if httpClient == nil {
@@ -40,7 +47,11 @@ func ValidateLinkedDomains(did string, resolver api.DIDResolver,
 
 	didDocResolution, err := resolver.Resolve(did)
 	if err != nil {
-		return false, "", fmt.Errorf("failed to resolve DID: %w", err)
+		return false, "", walleterror.NewExecutionError(
+			diderrors.Module,
+			diderrors.WellknownInitializationCode,
+			diderrors.WellknownInitializationFailed,
+			fmt.Errorf("failed to resolve DID: %w", err))
 	}
 
 	linkedDomainsService, err := getLinkedDomainsService(didDocResolution.DIDDocument)
@@ -54,12 +65,19 @@ func ValidateLinkedDomains(did string, resolver api.DIDResolver,
 	// Note that in the case of multiple origins, this method will only return the first one.
 	uri, err := linkedDomainsService.ServiceEndpoint.URI()
 	if err != nil {
-		return false, "", err
+		return false, "", walleterror.NewExecutionError(
+			diderrors.Module,
+			diderrors.WellknownInitializationCode,
+			diderrors.WellknownInitializationFailed, err)
 	}
 
 	err = client.VerifyDIDAndDomain(did, uri)
 	if err != nil {
-		return false, "", fmt.Errorf("DID service validation failed: %w", err)
+		return false, "", walleterror.NewExecutionError(
+			diderrors.Module,
+			diderrors.DomainAndDidVerificationCode,
+			diderrors.DomainAndDidVerificationFailed,
+			fmt.Errorf("DID service validation failed: %w", err))
 	}
 
 	return true, uri, nil

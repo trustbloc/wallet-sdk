@@ -16,7 +16,10 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/key"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/web"
+
 	"github.com/trustbloc/wallet-sdk/pkg/common"
+	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 // DIDResolver is used for resolving DID using supported DID methods.
@@ -30,7 +33,11 @@ type DIDResolver struct {
 func NewDIDResolver(resolverServerURI string) (*DIDResolver, error) {
 	ion, err := longform.New()
 	if err != nil {
-		return nil, fmt.Errorf("initializing did:ion longform resolver: %w", err)
+		return nil, walleterror.NewExecutionError(
+			diderrors.Module,
+			diderrors.ResolverInitializationCode,
+			diderrors.ResolverInitializationFailed,
+			fmt.Errorf("initializing did:ion longform resolver: %w", err))
 	}
 
 	opts := []vdr.Option{
@@ -46,7 +53,12 @@ func NewDIDResolver(resolverServerURI string) (*DIDResolver, error) {
 				return true
 			}))
 		if err != nil {
-			return nil, fmt.Errorf("failed to initialize client for DID resolution server: %w", err)
+			return nil,
+				walleterror.NewExecutionError(
+					diderrors.Module,
+					diderrors.ResolverInitializationCode,
+					diderrors.ResolverInitializationFailed,
+					fmt.Errorf("failed to initialize client for DID resolution server: %w", err))
 		}
 
 		opts = append(opts, vdr.WithVDR(httpVDR))
@@ -61,7 +73,12 @@ func NewDIDResolver(resolverServerURI string) (*DIDResolver, error) {
 func (d *DIDResolver) Resolve(did string) (*didDoc.DocResolution, error) {
 	res, err := d.vdr.Resolve(did)
 	if err != nil {
-		return nil, fmt.Errorf("resolve %s : %w", did, err)
+		return nil, walleterror.NewExecutionError(
+			diderrors.Module,
+			diderrors.ResolutionFailedCode,
+			diderrors.ResolutionFailedError,
+			fmt.Errorf("resolve %s : %w", did, err),
+		)
 	}
 
 	return res, nil

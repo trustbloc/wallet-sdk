@@ -106,7 +106,7 @@ func TestCreator_Create(t *testing.T) {
 			}
 
 			didDocResolution, err := creator.Create(did.DIDMethodKey, createDIDOpts)
-			require.EqualError(t, err, "failed to get key handle: test failure")
+			requireErrorContains(t, err, "CREATE_DID_KEY_FAILED")
 			require.Empty(t, didDocResolution)
 		})
 	})

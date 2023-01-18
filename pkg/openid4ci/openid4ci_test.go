@@ -22,6 +22,7 @@ import (
 	arieslocalkms "github.com/hyperledger/aries-framework-go/pkg/kms/localkms"
 	"github.com/stretchr/testify/require"
 
+	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
@@ -56,7 +57,7 @@ func TestNewInteraction(t *testing.T) {
 		config := getTestClientConfig(t)
 
 		interaction, err := openid4ci.NewInteraction("%", config)
-		require.EqualError(t, err, `parse "%": invalid URL escape "%"`)
+		testutil.RequireErrorContains(t, err, `parse "%": invalid URL escape "%"`)
 		require.Nil(t, interaction)
 	})
 	t.Run("Fail to parse user_pin_required URL query parameter", func(t *testing.T) {
@@ -65,33 +66,33 @@ func TestNewInteraction(t *testing.T) {
 		config := getTestClientConfig(t)
 
 		interaction, err := openid4ci.NewInteraction(requestURI, config)
-		require.EqualError(t, err, `strconv.ParseBool: parsing "notabool": invalid syntax`)
+		testutil.RequireErrorContains(t, err, `strconv.ParseBool: parsing "notabool": invalid syntax`)
 		require.Nil(t, interaction)
 	})
 	t.Run("Missing client config", func(t *testing.T) {
 		interaction, err := openid4ci.NewInteraction("", nil)
-		require.EqualError(t, err, "no client config provided")
+		testutil.RequireErrorContains(t, err, "no client config provided")
 		require.Nil(t, interaction)
 	})
 	t.Run("Missing user DID", func(t *testing.T) {
 		testConfig := &openid4ci.ClientConfig{}
 
 		interaction, err := openid4ci.NewInteraction("", testConfig)
-		require.EqualError(t, err, "no user DID provided")
+		testutil.RequireErrorContains(t, err, "no user DID provided")
 		require.Nil(t, interaction)
 	})
 	t.Run("Missing user DID", func(t *testing.T) {
 		testConfig := &openid4ci.ClientConfig{UserDID: "UserDID"}
 
 		interaction, err := openid4ci.NewInteraction("", testConfig)
-		require.EqualError(t, err, "no client ID provided")
+		testutil.RequireErrorContains(t, err, "no client ID provided")
 		require.Nil(t, interaction)
 	})
 	t.Run("Missing signer provider", func(t *testing.T) {
 		testConfig := &openid4ci.ClientConfig{UserDID: "UserDID", ClientID: "ClientID"}
 
 		interaction, err := openid4ci.NewInteraction("", testConfig)
-		require.EqualError(t, err, "no signer provider provided")
+		testutil.RequireErrorContains(t, err, "no signer provider provided")
 		require.Nil(t, interaction)
 	})
 	t.Run("Missing DID resolver", func(t *testing.T) {
@@ -100,7 +101,7 @@ func TestNewInteraction(t *testing.T) {
 		testConfig.DIDResolver = nil
 
 		interaction, err := openid4ci.NewInteraction("", testConfig)
-		require.EqualError(t, err, "no DID resolver provided")
+		testutil.RequireErrorContains(t, err, "no DID resolver provided")
 		require.Nil(t, interaction)
 	})
 }
@@ -122,7 +123,7 @@ func TestInteraction_Authorize(t *testing.T) {
 		require.NoError(t, err)
 
 		result, err := interaction.Authorize()
-		require.EqualError(t, err, "pre-authorized code is required (authorization flow not implemented)")
+		testutil.RequireErrorContains(t, err, "pre-authorized code is required (authorization flow not implemented)")
 		require.Nil(t, result)
 	})
 }
@@ -223,7 +224,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		credentialRequest := &openid4ci.CredentialRequestOpts{}
 
 		credentialResponses, err := interaction.RequestCredential(credentialRequest)
-		require.EqualError(t, err, "invalid user PIN")
+		testutil.RequireErrorContains(t, err, "invalid user PIN")
 		require.Nil(t, credentialResponses)
 	})
 	t.Run("Fail to get issuer metadata", func(t *testing.T) {
@@ -291,7 +292,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		credentialRequest := &openid4ci.CredentialRequestOpts{}
 
 		credentialResponses, err := interaction.RequestCredential(credentialRequest)
-		require.EqualError(t, err, "failed to get token response: received status code [500] with body "+
+		testutil.RequireErrorContains(t, err, "failed to get token response: received status code [500] with body "+
 			"[test failure] from issuer's token endpoint")
 		require.Nil(t, credentialResponses)
 	})
@@ -320,7 +321,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		credentialRequest := &openid4ci.CredentialRequestOpts{}
 
 		credentialResponses, err := interaction.RequestCredential(credentialRequest)
-		require.EqualError(t, err, "failed to get token response: failed to unmarshal response from the "+
+		testutil.RequireErrorContains(t, err, "failed to get token response: failed to unmarshal response from the "+
 			"issuer's token endpoint: invalid character 'i' looking for beginning of value")
 		require.Nil(t, credentialResponses)
 	})
@@ -356,7 +357,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		credentialRequest := &openid4ci.CredentialRequestOpts{UserPIN: "1234"}
 
 		credentialResponses, err := interaction.RequestCredential(credentialRequest)
-		require.EqualError(t, err, "failed to create JWT: failed to resolve signing DID: resolve UserDID : "+
+		testutil.RequireErrorContains(t, err, "resolve UserDID : "+
 			"wrong format did input: UserDID")
 		require.Nil(t, credentialResponses)
 	})
@@ -385,7 +386,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		credentialRequest := &openid4ci.CredentialRequestOpts{}
 
 		credentialResponses, err := interaction.RequestCredential(credentialRequest)
-		require.EqualError(t, err, "failed to get credential response: received status code [500] "+
+		testutil.RequireErrorContains(t, err, "failed to get credential response: received status code [500] "+
 			"with body [test failure] from issuer's credential endpoint")
 		require.Nil(t, credentialResponses)
 	})
@@ -439,7 +440,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		credentialRequest := &openid4ci.CredentialRequestOpts{}
 
 		credentialResponses, err := interaction.RequestCredential(credentialRequest)
-		require.EqualError(t, err, "failed to get credential response: failed to unmarshal response "+
+		testutil.RequireErrorContains(t, err, "failed to get credential response: failed to unmarshal response "+
 			"from the issuer's credential endpoint: invalid character 'i' looking for beginning of value")
 		require.Nil(t, credentialResponses)
 	})
@@ -538,7 +539,8 @@ func TestInteraction_ResolveDisplay(t *testing.T) {
 		require.NoError(t, err)
 
 		resolvedDisplayData, err := interaction.ResolveDisplay("")
-		require.EqualError(t, err, "unmarshal new credential: invalid character '*' looking for beginning of value")
+		testutil.RequireErrorContains(t, err,
+			"unmarshal new credential: invalid character '*' looking for beginning of value")
 		require.Nil(t, resolvedDisplayData)
 	})
 	t.Run("Fail to parse VC", func(t *testing.T) {
@@ -584,7 +586,7 @@ func TestInteraction_ResolveDisplay(t *testing.T) {
 		require.NoError(t, err)
 
 		resolvedDisplayData, err := interaction.ResolveDisplay("")
-		require.EqualError(t, err, "unmarshal new credential: unexpected end of JSON input")
+		testutil.RequireErrorContains(t, err, "unmarshal new credential: unexpected end of JSON input")
 		require.Nil(t, resolvedDisplayData)
 	})
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/stretchr/testify/require"
 
+	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
 	"github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
 )
@@ -143,7 +144,7 @@ func TestValidate(t *testing.T) {
 	})
 	t.Run("No resolver provided", func(t *testing.T) {
 		valid, domain, err := wellknown.ValidateLinkedDomains(testDID, nil, nil)
-		require.EqualError(t, err, "no resolver provided")
+		testutil.RequireErrorContains(t, err, "no resolver provided")
 		require.False(t, valid)
 		require.Empty(t, domain)
 	})
@@ -152,8 +153,7 @@ func TestValidate(t *testing.T) {
 		require.NoError(t, err)
 
 		valid, domain, err := wellknown.ValidateLinkedDomains("InvalidDID", didResolver, nil)
-		require.EqualError(t, err, "failed to resolve DID: resolve InvalidDID : "+
-			"wrong format did input: InvalidDID")
+		testutil.RequireErrorContains(t, err, "WELLKNOWN_INITIALIZATION_FAILED")
 		require.False(t, valid)
 		require.Empty(t, domain)
 	})
@@ -164,7 +164,7 @@ func TestValidate(t *testing.T) {
 		sampleDIDWithoutServices := "did:key:z6MkoTHsgNNrby8JzCNQ1iRLyW5QQ6R8Xuu6AA8igGrMVPUM"
 
 		valid, domain, err := wellknown.ValidateLinkedDomains(sampleDIDWithoutServices, didResolver, nil)
-		require.EqualError(t, err, "resolved DID document has no Linked Domains services specified")
+		testutil.RequireErrorContains(t, err, "resolved DID document has no Linked Domains services specified")
 		require.False(t, valid)
 		require.Empty(t, domain)
 	})
@@ -201,7 +201,7 @@ func TestValidate(t *testing.T) {
 }`
 
 		valid, domain, err := wellknown.ValidateLinkedDomains("DID", newMockResolver(didDoc), nil)
-		require.EqualError(t, err, "validating multiple Linked Domains services not supported")
+		testutil.RequireErrorContains(t, err, "validating multiple Linked Domains services not supported")
 		require.False(t, valid)
 		require.Empty(t, domain)
 	})
@@ -228,7 +228,7 @@ func TestValidate(t *testing.T) {
   ]
 }`
 		valid, domain, err := wellknown.ValidateLinkedDomains("DID", newMockResolver(didDoc), nil)
-		require.EqualError(t, err, "DID service validation failed: "+
+		testutil.RequireErrorContains(t, err, "DID service validation failed: "+
 			"domain linkage credential(s) not found")
 		require.False(t, valid)
 		require.Empty(t, domain)
@@ -246,7 +246,7 @@ func TestValidate(t *testing.T) {
   ]
 }`
 		valid, domain, err := wellknown.ValidateLinkedDomains("DID", newMockResolver(didDoc), nil)
-		require.EqualError(t, err, "resolved DID document is not supported since it contains a service type "+
+		testutil.RequireErrorContains(t, err, "resolved DID document is not supported since it contains a service type "+
 			"at index 0 that is not a simple string")
 		require.False(t, valid)
 		require.Empty(t, domain)
@@ -264,7 +264,7 @@ func TestValidate(t *testing.T) {
   ]
 }`
 		valid, domain, err := wellknown.ValidateLinkedDomains("DID", newMockResolver(didDoc), nil)
-		require.EqualError(t, err, "resolved DID document has no Linked Domains services specified")
+		testutil.RequireErrorContains(t, err, "resolved DID document has no Linked Domains services specified")
 		require.False(t, valid)
 		require.Empty(t, domain)
 	})

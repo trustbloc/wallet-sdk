@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package credentialquery
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
@@ -15,6 +16,7 @@ import (
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 // Instance implements querying credentials using presentation definition.
@@ -65,14 +67,23 @@ func (c *Instance) Query(
 	credentials := qOpts.credentials
 	if len(credentials) == 0 {
 		if qOpts.credentialReader == nil {
-			return nil, fmt.Errorf("credentials array or credential reader option should be set")
+			return nil, walleterror.NewValidationError(
+				module,
+				CredentialReaderNotSetCode,
+				CredentialReaderNotSetError,
+				fmt.Errorf("credentials array or credential reader option must be set"))
 		}
 
 		var err error
 
 		credentials, err = qOpts.credentialReader.GetAll()
 		if err != nil {
-			return nil, fmt.Errorf("credential reader failed: %w", err)
+			return nil,
+				walleterror.NewValidationError(
+					module,
+					CredentialReaderReadFailedCode,
+					CredentialReaderReadFailedError,
+					fmt.Errorf("credential reader failed: %w", err))
 		}
 	}
 
@@ -81,6 +92,24 @@ func (c *Instance) Query(
 		query.InputDescriptors[i].Schema = nil
 	}
 
-	return query.CreateVP(credentials, c.documentLoader, verifiable.WithDisabledProofCheck(),
+	vp, err := query.CreateVP(credentials, c.documentLoader, verifiable.WithDisabledProofCheck(),
 		verifiable.WithJSONLDDocumentLoader(c.documentLoader))
+	if err != nil {
+		if errors.Is(err, presexch.ErrNoCredentials) {
+			return nil, walleterror.NewValidationError(
+				module,
+				NoCredentialSatisfyRequirementsCode,
+				NoCredentialSatisfyRequirementsError,
+				err)
+		}
+
+		return nil,
+			walleterror.NewValidationError(
+				module,
+				CreateVPFailedCode,
+				CreateVPFailedError,
+				fmt.Errorf("create vp failed: %w", err))
+	}
+
+	return vp, nil
 }

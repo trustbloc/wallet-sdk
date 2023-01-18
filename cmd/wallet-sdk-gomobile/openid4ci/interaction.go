@@ -16,6 +16,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	openid4cigoapi "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
@@ -78,7 +79,7 @@ func NewInteraction(
 
 	goAPIInteraction, err := openid4cigoapi.NewInteraction(initiateIssuanceURI, goAPIClientConfig)
 	if err != nil {
-		return nil, err
+		return nil, walleterror.ToMobileError(err)
 	}
 
 	return &Interaction{goAPIInteraction: goAPIInteraction}, nil
@@ -93,7 +94,7 @@ func NewInteraction(
 func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 	authorizationResultGoAPI, err := i.goAPIInteraction.Authorize()
 	if err != nil {
-		return nil, err
+		return nil, walleterror.ToMobileError(err)
 	}
 
 	authorizationResult := &AuthorizeResult{
@@ -117,7 +118,7 @@ func (i *Interaction) RequestCredential(
 
 	credentialResponses, err := i.goAPIInteraction.RequestCredential(goAPICredentialRequest)
 	if err != nil {
-		return nil, err
+		return nil, walleterror.ToMobileError(err)
 	}
 
 	result := api.NewVerifiableCredentialsArray()
@@ -137,12 +138,12 @@ func (i *Interaction) RequestCredential(
 func (i *Interaction) ResolveDisplay(preferredLocale string) (*api.JSONObject, error) {
 	resolvedDisplayData, err := i.goAPIInteraction.ResolveDisplay(preferredLocale)
 	if err != nil {
-		return nil, err
+		return nil, walleterror.ToMobileError(err)
 	}
 
 	resolvedDisplayDataBytes, err := json.Marshal(resolvedDisplayData)
 	if err != nil {
-		return nil, err
+		return nil, walleterror.ToMobileError(err)
 	}
 
 	return &api.JSONObject{Data: resolvedDisplayDataBytes}, nil

@@ -13,6 +13,7 @@ import (
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	goapicreator "github.com/trustbloc/wallet-sdk/pkg/did/creator"
 )
@@ -43,7 +44,7 @@ func NewCreatorWithKeyWriter(
 
 	goAPICreator, err := goapicreator.NewCreatorWithKeyWriter(gomobileKeyWriterWrapper)
 	if err != nil {
-		return nil, err
+		return nil, walleterror.ToMobileError(err)
 	}
 
 	return &Creator{
@@ -63,7 +64,7 @@ func NewCreatorWithKeyReader(keyReader api.KeyReader) (*Creator, error) {
 
 	goAPIDIDCreator, err := goapicreator.NewCreatorWithKeyReader(gomobileKeyReaderWrapper)
 	if err != nil {
-		return nil, err
+		return nil, walleterror.ToMobileError(err)
 	}
 
 	return &Creator{
@@ -92,12 +93,12 @@ func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) (*api.
 
 	didDocResolution, err := d.goAPICreator.Create(method, goAPIOpts)
 	if err != nil {
-		return nil, err
+		return nil, walleterror.ToMobileError(err)
 	}
 
 	didDocResolutionBytes, err := didDocResolution.JSONBytes()
 	if err != nil {
-		return nil, err
+		return nil, walleterror.ToMobileError(err)
 	}
 
 	return &api.DIDDocResolution{Content: didDocResolutionBytes}, nil
