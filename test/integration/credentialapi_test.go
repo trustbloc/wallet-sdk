@@ -7,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package integration
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -36,10 +38,12 @@ func TestCredentialAPI(t *testing.T) {
 
 	ldLoader := ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())
 
+	ldLoaderWrapper := &documentLoaderReverseWrapper{DocumentLoader: ldLoader}
+
 	didResolver, e := did.NewResolver("")
 	require.NoError(t, e)
 
-	signer, e := credential.NewSigner(credStore, didResolver, crypto, ldLoader)
+	signer, e := credential.NewSigner(credStore, didResolver, crypto, ldLoaderWrapper)
 	require.NoError(t, e)
 
 	c, e := did.NewCreatorWithKeyWriter(kms)
@@ -137,4 +141,27 @@ type didResolverWrapper struct {
 
 func (d *didResolverWrapper) Resolve(did string, _ ...vdr.DIDMethodOption) (*diddoc.DocResolution, error) {
 	return d.didResolver.Resolve(did)
+}
+
+type documentLoaderReverseWrapper struct {
+	DocumentLoader ld.DocumentLoader
+}
+
+func (l *documentLoaderReverseWrapper) LoadDocument(u string) (*api.LDDocument, error) {
+	doc, err := l.DocumentLoader.LoadDocument(u)
+	if err != nil {
+		return nil, err
+	}
+
+	wrappedDoc := &api.LDDocument{
+		DocumentURL: doc.DocumentURL,
+		ContextURL:  doc.ContextURL,
+	}
+
+	wrappedDoc.Document, err = json.Marshal(doc.Document)
+	if err != nil {
+		return nil, fmt.Errorf("fail to unmarshal ld document bytes: %w", err)
+	}
+
+	return wrappedDoc, nil
 }

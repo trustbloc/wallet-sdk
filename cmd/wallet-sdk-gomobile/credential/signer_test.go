@@ -55,7 +55,7 @@ func TestSigner_Issue(t *testing.T) {
 				&mockReader{},
 				&mockResolver{ResolveVal: mockDocResolution(t)},
 				&mockCrypto{SignVal: []byte("foo")},
-				testutil.DocumentLoader(t),
+				&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)},
 			)
 			require.NoError(t, err)
 
@@ -69,7 +69,7 @@ func TestSigner_Issue(t *testing.T) {
 				&mockReader{GetVal: mockCredBytes},
 				&mockResolver{ResolveVal: mockDocResolution(t)},
 				&mockCrypto{SignVal: []byte("foo")},
-				testutil.DocumentLoader(t),
+				&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)},
 			)
 			require.NoError(t, err)
 
@@ -85,7 +85,7 @@ func TestSigner_Issue(t *testing.T) {
 				&mockReader{},
 				&mockResolver{ResolveVal: mockDocResolution(t)},
 				&mockCrypto{SignVal: []byte("foo")},
-				testutil.DocumentLoader(t),
+				&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)},
 			)
 			require.NoError(t, err)
 
@@ -99,7 +99,7 @@ func TestSigner_Issue(t *testing.T) {
 				&mockReader{},
 				&mockResolver{ResolveVal: mockDocResolution(t)},
 				&mockCrypto{SignErr: expectErr},
-				testutil.DocumentLoader(t),
+				&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)},
 			)
 			require.NoError(t, err)
 
