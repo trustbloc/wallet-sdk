@@ -25,7 +25,7 @@ class _OTPPage extends State<OTP> {
   String _requestErrorSubTitleMsg = '';
   String _requestErrorTitleMsg = '';
   String? actionText = 'Submit';
-  double topPadding = 500;
+  double topPadding = 520;
   bool show = false;
 
   @override
