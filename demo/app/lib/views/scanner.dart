@@ -74,6 +74,7 @@ class QRScannerState extends State<QRScanner> {
     log('received qr code url - $qrCodeURL');
     if (!qrCodeURL.contains("openid-vc")) {
       var authorizeResultPinRequired = await WalletSDKPlugin.authorize(qrCodeURL);
+      log("whats the authorize pin $authorizeResultPinRequired");
       if (authorizeResultPinRequired == true) {
         _navigateToOTPScreen();
         return;

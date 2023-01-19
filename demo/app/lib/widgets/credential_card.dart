@@ -7,8 +7,9 @@ import 'package:app/models/credential_preview.dart';
 
 class CredentialCard extends StatefulWidget {
   CredentialData item;
+  bool isDashboardWidget;
 
-  CredentialCard({required this.item, Key? key}) : super(key: key);
+  CredentialCard({required this.item, required this.isDashboardWidget,  Key? key}) : super(key: key);
   @override
   State<CredentialCard> createState() => _CredentialCardState();
 }
@@ -91,7 +92,7 @@ class _CredentialCardState extends State<CredentialCard> {
               onPressed: () async {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => CredentialDetails(item: widget.item,credentialName: credentialDisplayName,)),
+                  MaterialPageRoute(builder: (context) => CredentialDetails(item: widget.item,credentialName: credentialDisplayName, isDashboardWidget: widget.isDashboardWidget,)),
                 );
               },
             ),
