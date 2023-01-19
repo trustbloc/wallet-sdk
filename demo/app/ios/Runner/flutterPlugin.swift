@@ -108,10 +108,19 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                  details: "parameter storedCredentials is missed"))
             }
             
+            
             let openID4VP = try createOpenID4VP()
             self.openID4VP = openID4VP
             
-            let matchedCredentials = try openID4VP.processAuthorizationRequest(authorizationRequest: authorizationRequest, storedCredentials: storedCredentials)
+            let opts = VcparseNewOpts(true, nil)
+            var parsedCredentials: Array<ApiVerifiableCredential> = Array()
+            
+            for cred in storedCredentials{
+                let parsedVC = VcparseParse(cred, opts, nil)!
+                parsedCredentials.append(parsedVC)
+            }
+            
+            let matchedCredentials = try openID4VP.processAuthorizationRequest(authorizationRequest: authorizationRequest, credentials: parsedCredentials)
             result(matchedCredentials)
             
         } catch OpenID4VPError.runtimeError(let errorMsg){
@@ -184,8 +193,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         do {
             let credentialRequest = Openid4ciNewCredentialRequestOpts( otp )
             let credResp  = try newOIDCInteraction?.requestCredential(credentialRequest)
-            let credentialData = credResp?.atIndex(0)!.content;
-            result(credentialData!)
+            let credentialData = credResp?.atIndex(0)!;
+            result(credentialData?.serialize(nil))
           } catch let error as NSError{
               result(FlutterError.init(code: "Exception",
                                        message: "error while requesting credential",
