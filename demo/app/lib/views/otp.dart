@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:app/main.dart';
+import 'package:app/models/credential_data.dart';
 import 'package:flutter/material.dart';
 import 'package:app/widgets/common_title_appbar.dart';
 import 'package:flutter/services.dart';
@@ -108,7 +109,7 @@ class _OTPPage extends State<OTP> {
                           log('inside requestCredential');
                           requestCredentialResp =  await WalletSDKPlugin.requestCredential(_otp!);
                           resolvedCredentialDisplay =  await WalletSDKPlugin.resolveCredentialDisplay();
-                          _navigateToCredPreviewScreen(requestCredentialResp!, resolvedCredentialDisplay!);
+                          _navigateToCredPreviewScreen(requestCredentialResp, resolvedCredentialDisplay!);
                         } catch (err) {
                           String errorMessage = err.toString();
                           if (err is PlatformException &&
@@ -150,7 +151,7 @@ class _OTPPage extends State<OTP> {
  )));
   }
   _navigateToCredPreviewScreen(String credentialResp, String credentialResolveDisplay) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(rawCredential: credentialResp,credentialDisplay: credentialResolveDisplay)));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, credentialDisplayData: credentialResolveDisplay),)));
   }
 
   _clearOTPInput(){

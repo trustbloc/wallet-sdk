@@ -1,7 +1,6 @@
 import 'dart:developer';
 
 import 'package:app/services/storage_service.dart';
-import 'package:app/views/credential_details.dart';
 import 'package:app/widgets/credential_card.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -68,7 +67,7 @@ class _CredentialListState extends State<CredentialList> {
                   itemBuilder: (_, index) {
                     return Dismissible(
                       key: Key(_credentialList[index].toString()),
-                      child: CredentialCard(item: _credentialList[index].value),
+                      child: CredentialCard(item: _credentialList[index].value, isDashboardWidget: true),
                       onDismissed: (direction) async {
                         await _storageService.deleteData(_credentialList[index])
                             .then((value) => _credentialList.removeAt(index));
