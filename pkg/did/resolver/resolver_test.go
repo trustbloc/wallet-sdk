@@ -29,9 +29,27 @@ func TestDIDResolver(t *testing.T) {
 		didResolver, err := resolver.NewDIDResolver("")
 		require.NoError(t, err)
 
-		didDocResolution, err := didResolver.Resolve("did:key:z6MkjfbzWitsSUyFMTbBUSWNsJBHR7BefFp1WmABE3kRw8Qr")
-		require.NoError(t, err)
-		require.NotEmpty(t, didDocResolution)
+		testcases := []struct {
+			name string
+			did  string
+		}{
+			{
+				name: "did:key",
+				did:  "did:key:z6MkjfbzWitsSUyFMTbBUSWNsJBHR7BefFp1WmABE3kRw8Qr",
+			},
+			{
+				name: "did:jwk",
+				did:  "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwieCI6IndVQWp5UmFqRDhSLTJ2Zm1oZU1lRzNPUTViY0F4OFZKRHhUdDl5SDRVbDgifQ", //nolint:lll
+			},
+		}
+
+		for _, tc := range testcases {
+			t.Run(tc.name, func(t *testing.T) {
+				didDocResolution, e := didResolver.Resolve(tc.did)
+				require.NoError(t, e)
+				require.NotEmpty(t, didDocResolution)
+			})
+		}
 	})
 
 	t.Run("httpbinding initialization error", func(t *testing.T) {
