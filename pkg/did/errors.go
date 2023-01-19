@@ -12,6 +12,7 @@ const (
 	Module                         = "DID"
 	CreateDIDKeyFailedError        = "CREATE_DID_KEY_FAILED"
 	CreateDIDIONFailedError        = "CREATE_DID_ION_FAILED"
+	CreateDIDJWKFailedError        = "CREATE_DID_JWK_FAILED"
 	UnsupportedDIDMethodError      = "UNSUPPORTED_DID_METHOD"
 	ResolutionFailedError          = "DID_RESOLUTION_FAILED"
 	ResolverInitializationFailed   = "DID_RESOLVER_INITIALIZATION_FAILED"
@@ -23,6 +24,7 @@ const (
 const (
 	CreateDIDKeyFailedCode = iota
 	CreateDIDIONFailedCode
+	CreateDIDJWKFailedCode
 	UnsupportedDIDMethodCode
 	ResolutionFailedCode
 	ResolverInitializationCode

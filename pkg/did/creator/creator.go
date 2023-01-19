@@ -14,6 +14,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/jwkkid"
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
+	jwkdidcreator "github.com/trustbloc/wallet-sdk/pkg/did/creator/jwk"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
@@ -27,6 +28,8 @@ const (
 	DIDMethodKey = "key"
 	// DIDMethodIon is the name recognized by the Create method for the did:ion method.
 	DIDMethodIon = "ion"
+	// DIDMethodJWK is the name recognized by the Create method for the did:jwk method.
+	DIDMethodJWK = "jwk"
 	// Ed25519VerificationKey2018 is a supported DID verification type.
 	Ed25519VerificationKey2018 = "Ed25519VerificationKey2018"
 	// JSONWebKey2020 is a supported DID verification type.
@@ -114,6 +117,18 @@ func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) (*did.
 		}
 
 		return doc, err
+	case DIDMethodJWK:
+		doc, err := d.createDIDJWKDoc(createDIDOpts)
+		if err != nil {
+			return nil, walleterror.NewExecutionError(
+				diderrors.Module,
+				diderrors.CreateDIDJWKFailedCode,
+				diderrors.CreateDIDJWKFailedError,
+				err,
+			)
+		}
+
+		return doc, err
 	}
 
 	return nil, walleterror.NewValidationError(
@@ -130,6 +145,8 @@ func (d *Creator) createDIDKeyDoc(createDIDOpts *api.CreateDIDOpts) (*did.DocRes
 
 	var err error
 
+	// TODO: https://github.com/trustbloc/wallet-sdk/issues/162 refactor so more code is
+	//  shared between handlers for different did methods
 	if d.keyReader == nil { // Generate a key and set the verification type on behalf of the caller.
 		_, key, err = d.keyWriter.Create(arieskms.ED25519Type)
 		if err != nil {
@@ -154,17 +171,27 @@ func (d *Creator) createDIDKeyDoc(createDIDOpts *api.CreateDIDOpts) (*did.DocRes
 }
 
 func (d *Creator) createDIDIonLongFormDoc(createDIDOpts *api.CreateDIDOpts) (*did.DocResolution, error) {
+	vm, err := d.getVM(createDIDOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	creator, err := didioncreator.NewCreator(d.keyWriter)
+	if err != nil {
+		return nil, fmt.Errorf("initializing Ion longform DID creator: %w", err)
+	}
+
+	return creator.Create(vm)
+}
+
+func (d *Creator) getVM(createDIDOpts *api.CreateDIDOpts) (*did.VerificationMethod, error) {
 	var (
-		key              []byte
-		keyID            string
-		keyType          arieskms.KeyType
-		verificationType string
-		vm               *did.VerificationMethod
-		err              error
+		keyType arieskms.KeyType
+		key     []byte
+		keyID   string
+		err     error
 	)
 
-	// TODO: https://github.com/trustbloc/wallet-sdk/issues/162 refactor so more code is
-	// shared between handlers for different did methods
 	if d.keyReader == nil { // Generate a key and set the verification type on behalf of the caller.
 		keyID, key, err = d.keyWriter.Create(arieskms.ED25519Type)
 		if err != nil {
@@ -172,7 +199,6 @@ func (d *Creator) createDIDIonLongFormDoc(createDIDOpts *api.CreateDIDOpts) (*di
 		}
 
 		keyType = arieskms.ED25519Type
-		verificationType = JSONWebKey2020
 	} else { // Use the caller's chosen key and verification type.
 		if createDIDOpts.VerificationType == "" {
 			return nil, errors.New("no verification type specified")
@@ -185,7 +211,6 @@ func (d *Creator) createDIDIonLongFormDoc(createDIDOpts *api.CreateDIDOpts) (*di
 
 		keyID = createDIDOpts.KeyID
 		keyType = createDIDOpts.KeyType
-		verificationType = createDIDOpts.VerificationType
 	}
 
 	pkJWK, e := jwkkid.BuildJWK(key, keyType)
@@ -193,15 +218,21 @@ func (d *Creator) createDIDIonLongFormDoc(createDIDOpts *api.CreateDIDOpts) (*di
 		return nil, fmt.Errorf("failed to create JWK from public key: %w", e)
 	}
 
-	vm, e = did.NewVerificationMethodFromJWK("#"+keyID, verificationType, "", pkJWK)
-	if e != nil {
-		return nil, fmt.Errorf("creating verification method from JWK: %w", e)
+	vm, err := did.NewVerificationMethodFromJWK("#"+keyID, JSONWebKey2020, "", pkJWK)
+	if err != nil {
+		return nil, fmt.Errorf("creating template verification method from JWK: %w", err)
 	}
 
-	creator, err := didioncreator.NewCreator(d.keyWriter)
+	return vm, nil
+}
+
+func (d *Creator) createDIDJWKDoc(createDIDOpts *api.CreateDIDOpts) (*did.DocResolution, error) {
+	vm, err := d.getVM(createDIDOpts)
 	if err != nil {
-		return nil, fmt.Errorf("initializing Ion longform DID creator: %w", err)
+		return nil, err
 	}
+
+	creator := jwkdidcreator.NewCreator()
 
 	return creator.Create(vm)
 }

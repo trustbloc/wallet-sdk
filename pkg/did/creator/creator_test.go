@@ -94,6 +94,10 @@ func TestCreator_Create(t *testing.T) {
 		didDocResolution, err = didCreator.Create(creator.DIDMethodIon, createDIDOpts)
 		require.NoError(t, err)
 		require.NotEmpty(t, didDocResolution)
+
+		didDocResolution, err = didCreator.Create(creator.DIDMethodJWK, createDIDOpts)
+		require.NoError(t, err)
+		require.NotEmpty(t, didDocResolution)
 	})
 	t.Run("Using KeyWriter (automatic key generation) - failure", func(t *testing.T) {
 		expectErr := errors.New("expected error")
@@ -113,6 +117,10 @@ func TestCreator_Create(t *testing.T) {
 
 		didDocResolution, err = didCreator.Create(creator.DIDMethodIon, createDIDOpts)
 		testutil.RequireErrorContains(t, err, "CREATE_DID_ION_FAILED(DID1-0001):expected error")
+		require.Empty(t, didDocResolution)
+
+		didDocResolution, err = didCreator.Create(creator.DIDMethodJWK, createDIDOpts)
+		testutil.RequireErrorContains(t, err, "CREATE_DID_JWK_FAILED(DID1-0002):expected error")
 		require.Empty(t, didDocResolution)
 	})
 	t.Run("Using KeyReader (caller specified options)", func(t *testing.T) {
