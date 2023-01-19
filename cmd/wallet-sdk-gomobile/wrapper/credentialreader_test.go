@@ -17,7 +17,6 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
-	"github.com/trustbloc/wallet-sdk/internal/testutil"
 )
 
 var (
@@ -37,7 +36,6 @@ func TestCredentialReaderWrapper_Get(t *testing.T) {
 			CredentialReader: &readerMock{
 				getReturn: vc,
 			},
-			DocumentLoader: testutil.DocumentLoader(t),
 		}
 
 		cred, err := reader.Get("test")
@@ -50,7 +48,6 @@ func TestCredentialReaderWrapper_Get(t *testing.T) {
 			CredentialReader: &readerMock{
 				err: errors.New("reader error"),
 			},
-			DocumentLoader: testutil.DocumentLoader(t),
 		}
 
 		_, err := reader.Get("test")
@@ -75,7 +72,6 @@ func TestCredentialReaderWrapper_GetAll(t *testing.T) {
 			CredentialReader: &readerMock{
 				getAllReturn: vcArray,
 			},
-			DocumentLoader: testutil.DocumentLoader(t),
 		}
 
 		creds, err := reader.GetAll()
@@ -88,7 +84,6 @@ func TestCredentialReaderWrapper_GetAll(t *testing.T) {
 			CredentialReader: &readerMock{
 				err: errors.New("reader error"),
 			},
-			DocumentLoader: testutil.DocumentLoader(t),
 		}
 
 		_, err := reader.GetAll()

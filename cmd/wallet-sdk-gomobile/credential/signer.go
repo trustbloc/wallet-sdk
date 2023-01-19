@@ -30,7 +30,7 @@ func NewSigner(
 	ldLoader api.LDDocumentLoader,
 ) (*Signer, error) {
 	ldLoaderWrapper := &wrapper.DocumentLoaderWrapper{DocumentLoader: ldLoader}
-	readerWrapper := &wrapper.CredentialReaderWrapper{CredentialReader: credReader, DocumentLoader: ldLoaderWrapper}
+	readerWrapper := &wrapper.CredentialReaderWrapper{CredentialReader: credReader}
 	resolverWrapper := &wrapper.VDRResolverWrapper{DIDResolver: didResolver}
 
 	sdkSigner := credentialsigner.New(readerWrapper, resolverWrapper, crypto)
