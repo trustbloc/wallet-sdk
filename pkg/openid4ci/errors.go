@@ -22,7 +22,6 @@ const (
 	TokenFetchFailedError                     = "TOKEN_FETCH_FAILED" //nolint:gosec //false positive
 	JWTSigningFailedError                     = "JWT_SIGNING_FAILED"
 	CredentialFetchFailedError                = "CREDENTIAL_FETCH_FAILED"          //nolint:gosec //false positive
-	CredentialParseFailedError                = "CREDENTIAL_PARSE_FAILED"          //nolint:gosec //false positive
 	CredentialSchemaResolveFailedError        = "CREDENTIAL_SCHEMA_RESOLVE_FAILED" //nolint:gosec //false positive
 )
 
@@ -41,6 +40,5 @@ const (
 	TokenFetchFailedCode
 	JWTSigningFailedCode
 	CredentialFetchFailedCode
-	CredentialParseFailedCode
 	CredentialSchemaResolveFailedCode
 )
