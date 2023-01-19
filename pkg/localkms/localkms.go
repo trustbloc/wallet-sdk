@@ -18,6 +18,7 @@ import (
 	arieslocalkms "github.com/hyperledger/aries-framework-go/pkg/kms/localkms"
 
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 // LocalKMS is a KMS implementation that uses Google's Tink crypto library.
@@ -39,12 +40,12 @@ func NewLocalKMS(cfg *Config) (*LocalKMS, error) {
 		Storage: cfg.Storage,
 	})
 	if err != nil {
-		return nil, err
+		return nil, walleterror.NewExecutionError(module, InitialisationFailedCode, InitialisationFailedError, err)
 	}
 
 	ariesCrypto, err := tinkcrypto.New()
 	if err != nil {
-		return nil, err
+		return nil, walleterror.NewExecutionError(module, InitialisationFailedCode, InitialisationFailedError, err)
 	}
 
 	return &LocalKMS{ariesLocalKMS: ariesLocalKMS, ariesCrypto: ariesCrypto}, nil
@@ -55,7 +56,12 @@ func NewLocalKMS(cfg *Config) (*LocalKMS, error) {
 func (k *LocalKMS) Create(keyType arieskms.KeyType) (string, []byte, error) {
 	// TODO: https://github.com/trustbloc/wallet-sdk/issues/164 for keys that
 	// support afgo JWK, return afgo JWK
-	return k.ariesLocalKMS.CreateAndExportPubKeyBytes(keyType)
+	keyID, publicKey, err := k.ariesLocalKMS.CreateAndExportPubKeyBytes(keyType)
+	if err != nil {
+		return "", nil, walleterror.NewExecutionError(module, CreateKeyFailedCode, CreateKeyFailedError, err)
+	}
+
+	return keyID, publicKey, nil
 }
 
 // ExportPubKey returns the public key associated with the given keyID as raw bytes.
