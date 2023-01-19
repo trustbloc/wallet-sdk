@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package walletsdk.openid4vp
 
 import dev.trustbloc.wallet.sdk.api.*
+import dev.trustbloc.wallet.sdk.vcparse.*
 import dev.trustbloc.wallet.sdk.credential.CredentialsOpt
 import dev.trustbloc.wallet.sdk.openid4vp.Interaction
 import dev.trustbloc.wallet.sdk.credential.Inquirer
@@ -30,7 +31,10 @@ class OpenID4VP constructor(
 
         val credArray = VerifiableCredentialsArray()
         for (cred in storedCredentials) {
-            credArray.add(VerifiableCredential(cred))
+            val opts = Opts(true, null)
+
+            val parsedCred = Vcparse.parse(cred, opts)
+            credArray.add(parsedCred)
         }
 
         val credentials = CredentialsOpt(credArray)
@@ -43,7 +47,7 @@ class OpenID4VP constructor(
         initiatedInteraction = interaction
 
         return List<String>(matchedCreds.length().toInt()
-        ) { i: Int -> matchedCreds.atIndex(i.toLong()).content }
+        ) { i: Int -> matchedCreds.atIndex(i.toLong()).serialize() }
     }
 
     fun presentCredential(didVerificationMethod: VerificationMethod) {

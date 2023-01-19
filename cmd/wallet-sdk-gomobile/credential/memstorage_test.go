@@ -8,22 +8,23 @@ package credential_test
 
 import (
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api/vcparse"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )
 
 var (
 	//go:embed test_data/credential_university_degree.jsonld
-	universityDegreeVC []byte
+	universityDegreeVC string
 	//go:embed test_data/credential_drivers_license.jsonld
-	driversLicenseDegreeVC []byte
+	driversLicenseDegreeVC string
 )
 
 func TestProvider(t *testing.T) {
@@ -31,11 +32,19 @@ func TestProvider(t *testing.T) {
 
 	const universityDegreeVCID = "http://example.edu/credentials/1872"
 
-	// Store two VCs.
-	err := provider.Add(&api.JSONObject{Data: universityDegreeVC})
+	parseOpts := &vcparse.Opts{DisableProofCheck: true}
+
+	universityDegreeVerifiableCredential, err := vcparse.Parse(universityDegreeVC, parseOpts)
 	require.NoError(t, err)
 
-	err = provider.Add(&api.JSONObject{Data: driversLicenseDegreeVC})
+	// Store two VCs.
+	err = provider.Add(universityDegreeVerifiableCredential)
+	require.NoError(t, err)
+
+	driversLicenseVerifiableCredential, err := vcparse.Parse(driversLicenseDegreeVC, parseOpts)
+	require.NoError(t, err)
+
+	err = provider.Add(driversLicenseVerifiableCredential)
 	require.NoError(t, err)
 
 	// Get each VC individually.
@@ -48,17 +57,12 @@ func TestProvider(t *testing.T) {
 	require.NotNil(t, retrievedVC)
 
 	// Retrieve both VCs in one call.
-	retrievedVCsJSONArray, err := provider.GetAll()
+	retrievedVCs, err := provider.GetAll()
 	require.NoError(t, err)
 
-	var retrievedVCs []interface{}
-
-	err = json.Unmarshal(retrievedVCsJSONArray.Data, &retrievedVCs)
-	require.NoError(t, err)
-
-	require.Len(t, retrievedVCs, 2)
-	require.NotNil(t, retrievedVCs[0])
-	require.NotNil(t, retrievedVCs[1])
+	require.Equal(t, 2, retrievedVCs.Length())
+	require.NotNil(t, retrievedVCs.AtIndex(0))
+	require.NotNil(t, retrievedVCs.AtIndex(1))
 
 	// Remove one of the VCs and verify that it's deleted.
 	err = provider.Remove(universityDegreeVCID)
@@ -69,9 +73,9 @@ func TestProvider(t *testing.T) {
 	require.Nil(t, retrievedVC)
 }
 
-func TestProvider_Add_Failure_Empty_JSON(t *testing.T) {
+func TestProvider_Add_Failure_Nil_VC(t *testing.T) {
 	provider := credential.NewInMemoryDB()
 
-	err := provider.Add(&api.JSONObject{})
-	require.EqualError(t, err, "unmarshal new credential: unexpected end of JSON input")
+	err := provider.Add(api.NewVerifiableCredential(nil))
+	require.EqualError(t, err, "VC cannot be nil")
 }

@@ -80,7 +80,14 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, issuedCredentials.Length(), matchedCreds.Length())
-		require.Equal(t, string(issuedCredentials.AtIndex(0).Content), string(matchedCreds.AtIndex(0).Content))
+
+		serializedIssuedVC, err := issuedCredentials.AtIndex(0).Serialize()
+		require.NoError(t, err)
+
+		serializedMatchedVC, err := matchedCreds.AtIndex(0).Serialize()
+		require.NoError(t, err)
+
+		require.Equal(t, serializedIssuedVC, serializedMatchedVC)
 
 		verifiablePresContent, err := verifiablePres.Content()
 		require.NoError(t, err)
@@ -157,7 +164,12 @@ func (h *vpTestHelper) issueCredentials(t *testing.T, issuerProfileID string) *a
 		require.NotEmpty(t, result)
 
 		for i := 0; i < result.Length(); i++ {
-			println(string(result.AtIndex(i).Content))
+			vc := result.AtIndex(i)
+
+			serializedVC, err := vc.Serialize()
+			require.NoError(t, err)
+
+			println(serializedVC)
 			credentials.Add(result.AtIndex(i))
 		}
 

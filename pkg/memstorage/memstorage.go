@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package memstorage
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
@@ -49,6 +50,10 @@ func (p *Provider) GetAll() ([]verifiable.Credential, error) {
 
 // Add stores the given credential.
 func (p *Provider) Add(vc *verifiable.Credential) error {
+	if vc == nil {
+		return errors.New("VC cannot be nil")
+	}
+
 	p.credentialStore[vc.ID] = *vc
 
 	return nil

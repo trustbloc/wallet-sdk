@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package openid4ci_test
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
 	"net/http"
@@ -26,6 +27,9 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
 )
 
+//go:embed testdata/sample_credential_response.json
+var sampleCredentialResponse []byte
+
 const (
 	sampleRequestURI = "openid-vc://initiate_issuance?issuer=https%3A%2F%2Fserver%2Eexample%2Ecom" +
 		"&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard" +
@@ -33,8 +37,6 @@ const (
 		"&user_pin_required=false"
 	sampleTokenResponse = `{"access_token":"eyJhbGciOiJSUzI1NiIsInR5cCI6Ikp..sHQ",` +
 		`"token_type":"bearer","expires_in":86400,"c_nonce":"tZignsnFbp","c_nonce_expires_in":86400}`
-	sampleCredentialResponse = `{"format":"jwt_vc","credential":"LUpixVCWJk0eOt4CXQe1NXK....WZwmhmn9OQp6YxX0a2L",` +
-		`"c_nonce":"fGFF7UkhLa","c_nonce_expires_in":86400}`
 	mockDID = "did:test:foo"
 )
 
@@ -88,7 +90,7 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, reader *
 	case "/connect/token":
 		_, err = writer.Write([]byte(sampleTokenResponse))
 	case "/credential":
-		_, err = writer.Write([]byte(sampleCredentialResponse))
+		_, err = writer.Write(sampleCredentialResponse)
 	}
 
 	if err != nil {

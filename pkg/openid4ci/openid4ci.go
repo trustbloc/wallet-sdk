@@ -24,10 +24,9 @@ import (
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/pkg/common"
-	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
-
 	"github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 // NewInteraction creates a new OpenID4CI Interaction.
@@ -111,7 +110,7 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 // Relevant sections of the spec:
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-7
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-8
-func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequestOpts) ([]CredentialResponse, error) { //nolint:funlen,lll
+func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequestOpts) ([]*verifiable.Credential, error) { //nolint:funlen,lll
 	if i.initiationRequest.UserPINRequired && credentialRequestOpts.UserPIN == "" {
 		return nil, walleterror.NewValidationError(
 			module,
@@ -165,29 +164,28 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 	credentialResponses := make([]CredentialResponse, len(i.initiationRequest.CredentialTypes))
 
 	for index, credentialType := range i.initiationRequest.CredentialTypes {
-		credentialResponse, err := i.getCredentialResponse(credentialType, metadata.CredentialEndpoint,
+		credentialResponse, errGetCredResp := i.getCredentialResponse(credentialType, metadata.CredentialEndpoint,
 			tokenResp.AccessToken, jwt)
-		if err != nil {
+		if errGetCredResp != nil {
 			return nil,
 				walleterror.NewExecutionError(
 					module,
 					CredentialFetchFailedCode,
 					CredentialFetchFailedError,
-					fmt.Errorf("failed to get credential response: %w", err))
+					fmt.Errorf("failed to get credential response: %w", errGetCredResp))
 		}
 
 		credentialResponses[index] = *credentialResponse
 	}
 
-	var vcs []string
-
-	for _, credentialResponse := range credentialResponses {
-		vcs = append(vcs, credentialResponse.Credential)
+	vcs, err := getCredentialsFromResponses(credentialResponses)
+	if err != nil {
+		return nil, err
 	}
 
 	i.vcs = vcs
 
-	return credentialResponses, nil
+	return vcs, nil
 }
 
 // ResolveDisplay is the optional final step that can be called after RequestCredential. It resolves display
@@ -196,24 +194,8 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 // If preferredLocale is not specified, then the first locale specified by the issuer's metadata will be used during
 // resolution.
 func (i *Interaction) ResolveDisplay(preferredLocale string) (*credentialschema.ResolvedDisplayData, error) {
-	var credentials []*verifiable.Credential
-
-	for _, vc := range i.vcs {
-		credential, err := verifiable.ParseCredential([]byte(vc),
-			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
-			verifiable.WithDisabledProofCheck())
-		if err != nil {
-			return nil, walleterror.NewExecutionError(
-				module,
-				CredentialParseFailedCode,
-				CredentialParseFailedError, err)
-		}
-
-		credentials = append(credentials, credential)
-	}
-
 	displayData, err := credentialschema.Resolve(
-		credentialschema.WithCredentials(credentials),
+		credentialschema.WithCredentials(i.vcs),
 		credentialschema.WithIssuerMetadata(i.issuerMetadata),
 		credentialschema.WithPreferredLocale(preferredLocale))
 	if err != nil {
@@ -317,4 +299,21 @@ func (i *Interaction) getCredentialResponse(credentialType, credentialEndpoint,
 	}
 
 	return &credentialResponse, nil
+}
+
+func getCredentialsFromResponses(credentialResponses []CredentialResponse) ([]*verifiable.Credential, error) {
+	var vcs []*verifiable.Credential
+
+	for i := range credentialResponses {
+		vc, err := verifiable.ParseCredential([]byte(credentialResponses[i].Credential),
+			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
+			verifiable.WithDisabledProofCheck())
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse credential from credential response at index %d: %w", i, err)
+		}
+
+		vcs = append(vcs, vc)
+	}
+
+	return vcs, nil
 }

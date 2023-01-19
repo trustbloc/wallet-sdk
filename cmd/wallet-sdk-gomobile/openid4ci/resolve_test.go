@@ -12,6 +12,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api/vcparse"
+
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
@@ -49,9 +51,10 @@ func TestResolve(t *testing.T) {
 		t.Run("With credential reader", func(t *testing.T) {
 			memProvider := credential.NewInMemoryDB()
 
-			vc := &api.JSONObject{Data: []byte(credentialUniversityDegree)}
+			vc, err := vcparse.Parse(credentialUniversityDegree, nil)
+			require.NoError(t, err)
 
-			err := memProvider.Add(vc)
+			err = memProvider.Add(vc)
 			require.NoError(t, err)
 
 			credentials := openid4ci.Credentials{
@@ -125,9 +128,10 @@ func TestResolve(t *testing.T) {
 	t.Run("Credential IDs are nil", func(t *testing.T) {
 		memProvider := credential.NewInMemoryDB()
 
-		vc := &api.JSONObject{Data: []byte(credentialUniversityDegree)}
+		vc, err := vcparse.Parse(credentialUniversityDegree, nil)
+		require.NoError(t, err)
 
-		err := memProvider.Add(vc)
+		err = memProvider.Add(vc)
 		require.NoError(t, err)
 
 		credentials := openid4ci.Credentials{
