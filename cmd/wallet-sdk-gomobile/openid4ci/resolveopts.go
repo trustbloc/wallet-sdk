@@ -118,7 +118,6 @@ func generateWithCredentialReaderOpt(credentials *Credentials) (goapicredentials
 
 	opt := goapicredentialschema.WithCredentialReader(&wrapper.CredentialReaderWrapper{
 		CredentialReader: credentials.Reader,
-		DocumentLoader:   ld.NewDefaultDocumentLoader(common.DefaultHTTPClient()),
 	}, ids)
 
 	return opt, nil

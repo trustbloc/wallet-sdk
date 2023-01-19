@@ -9,8 +9,6 @@ package wrapper
 
 import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
-	"github.com/piprate/json-gold/ld"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )
 
@@ -18,7 +16,6 @@ import (
 // their corresponding Go API versions.
 type CredentialReaderWrapper struct {
 	CredentialReader api.CredentialReader
-	DocumentLoader   ld.DocumentLoader
 }
 
 // Get wraps Get of api.CredentialReader.

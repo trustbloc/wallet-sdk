@@ -128,7 +128,6 @@ func (c *Inquirer) Query(query []byte, contents *CredentialsOpt) (*VerifiablePre
 		credentialquery.WithCredentialsArray(credentials),
 		credentialquery.WithCredentialReader(&wrapper.CredentialReaderWrapper{
 			CredentialReader: contents.CredentialReader,
-			DocumentLoader:   c.documentLoader,
 		}),
 	)
 	if err != nil {
