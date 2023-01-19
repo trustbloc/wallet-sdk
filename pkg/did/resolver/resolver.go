@@ -10,6 +10,7 @@ package resolver
 import (
 	"fmt"
 
+	"github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/longform"
 	didDoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr"
@@ -43,6 +44,7 @@ func NewDIDResolver(resolverServerURI string) (*DIDResolver, error) {
 	opts := []vdr.Option{
 		vdr.WithVDR(key.New()),
 		vdr.WithVDR(web.New()),
+		vdr.WithVDR(jwk.New()),
 		vdr.WithVDR(ion),
 	}
 
