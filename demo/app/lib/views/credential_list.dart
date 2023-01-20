@@ -56,6 +56,7 @@ class _CredentialListState extends State<CredentialList> {
                   style: TextStyle(color: Color(0xff190C21), fontWeight: FontWeight.bold, fontSize: 16),
                 )),
             Container(
+                padding: const EdgeInsets.fromLTRB(24, 40, 16, 24),
                 alignment: Alignment.center,
                 child: _loading
                   ? const CircularProgressIndicator()

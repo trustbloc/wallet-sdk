@@ -57,9 +57,9 @@ class _CredentialCardState extends State<CredentialCard> {
     Map<String, dynamic> issuer = jsonDecode(widget.item.credentialDisplayData);
     final credentialDisplayName = issuer['credential_displays'][0]['overview']['name'];
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+      padding: const EdgeInsets.fromLTRB(0, 40, 0, 24),
       child: Container(
-          height: 70,
+          height: 80,
           alignment: Alignment.center,
           decoration: BoxDecoration(
               color: Colors.white,
