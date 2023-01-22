@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:app/models/credential_data.dart';
+import 'package:app/views/credential_added.dart';
 import 'package:app/views/dashboard.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:app/widgets/add_credential_dialog.dart';
@@ -42,7 +43,9 @@ class CredentialPreviewState extends State<CredentialPreview> {
 
     return Scaffold(
       appBar:  CustomTitleAppBar(pageTitle: 'Credential Preview', addCloseIcon: true),
-      body: Column(
+      body: Container(
+        padding: const EdgeInsets.fromLTRB(24, 40, 16, 24),
+        child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           const SizedBox(height: 50),
@@ -82,12 +85,8 @@ class CredentialPreviewState extends State<CredentialPreview> {
                     ),
                     PrimaryButton(
                         onPressed: () async {
-                          final StorageItem? newItem = await showDialog<StorageItem>(
-                              context: context, builder: (_) => AddDataDialog());
-                          if (newItem != null) {
                             _storageService.addCredential(CredentialDataObject("$userLoggedIn-${uuid.v1()}",CredentialData(rawCredential: widget.credentialData.rawCredential, credentialDisplayData: widget.credentialData.credentialDisplayData)));
-                            _navigateToDashboard(userLoggedIn);
-                          }
+                            _navigateToCredentialAdded(widget.credentialData);
                         },
                         width: double.infinity,
                         child: const Text('Save Credential', style: TextStyle(fontSize: 16, color: Colors.white))
@@ -96,7 +95,9 @@ class CredentialPreviewState extends State<CredentialPreview> {
                       padding: EdgeInsets.fromLTRB(24, 0, 24, 8),
                     ),
                     PrimaryButton(
-                      onPressed: (){},
+                      onPressed: (){
+                        _navigateToDashboard();
+                      },
                       width: double.infinity,
                       gradient: const LinearGradient(
                           begin: Alignment.topCenter,
@@ -109,12 +110,16 @@ class CredentialPreviewState extends State<CredentialPreview> {
               ), //last one
             ),
           ),
-
         ],
+        ),
       ),
     );
   }
-  _navigateToDashboard(String userLoggedIn) async {
+
+  _navigateToCredentialAdded(CredentialData credentialData) async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialAdded(credentialData: widget.credentialData,)));
+  }
+  _navigateToDashboard() async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }
 }
