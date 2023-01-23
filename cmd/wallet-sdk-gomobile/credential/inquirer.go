@@ -109,6 +109,14 @@ func (c *Inquirer) Query(query []byte, contents *CredentialsOpt) (*VerifiablePre
 		return nil, fmt.Errorf("unmarshal of presentation definition failed: %w", err)
 	}
 
+	if pdQuery.Format == nil {
+		pdQuery.Format = &presexch.Format{
+			JwtVP: &presexch.JwtType{
+				Alg: []string{"RS256", "EdDSA", "PS256", "ES256K", "ES256", "ES384", "ES521"},
+			},
+		}
+	}
+
 	err = pdQuery.ValidateSchema()
 	if err != nil {
 		return nil, fmt.Errorf("validation of presentation definition failed: %w", err)

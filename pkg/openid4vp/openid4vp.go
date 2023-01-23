@@ -10,7 +10,6 @@ package openid4vp
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -194,7 +193,6 @@ func verifyTokenSignature(rawJwt string, claims interface{}, verifier jose.Signa
 	return nil
 }
 
-//nolint:funlen
 func createAuthorizedResponse(
 	presentation *verifiable.Presentation,
 	requestObject *requestObject,
@@ -208,33 +206,9 @@ func createAuthorizedResponse(
 	did := kidParts[0]
 	presentationSubmission := presentation.CustomFields["presentation_submission"]
 
-	// TODO https://github.com/trustbloc/wallet-sdk/issues/158 The following code adds jwt format
-	// along with nestedPath for vc. Remove these changes once AFG PEx has this support.
-	presSubBytes, err := json.Marshal(presentationSubmission)
-	if err != nil {
-		return nil, fmt.Errorf("marshal pb error: %w", err)
-	}
-
-	var presSub *presexch.PresentationSubmission
-
-	err = json.Unmarshal(presSubBytes, &presSub)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshal pb error: %w", err)
-	}
-
-	if presSub != nil {
-		presSub.DescriptorMap[0].Format = "jwt_vp"
-		presSub.DescriptorMap[0].Path = "$"
-		presSub.DescriptorMap[0].PathNested = &presexch.InputDescriptorMapping{
-			ID:     presSub.DefinitionID,
-			Format: "jwt_vc",
-			Path:   "$.verifiableCredential[0]",
-		}
-	}
-
 	idToken := &idTokenClaims{
 		VPToken: idTokenVPToken{
-			PresentationSubmission: presSub,
+			PresentationSubmission: presentationSubmission,
 		},
 		Nonce: requestObject.Nonce,
 		Exp:   time.Now().Unix() + tokenLiveTimeSec,
