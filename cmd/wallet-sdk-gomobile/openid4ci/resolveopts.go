@@ -24,7 +24,7 @@ import (
 // We don't check here to see if multiple conflicting options are used - that's left up to the
 // goapicredentialschema.Resolve method that get called after this function returns.
 func prepareOpts(credentials *Credentials, issuerMetadata *IssuerMetadata,
-	preferredLocale string,
+	preferredLocale string, logger api.Logger,
 ) ([]goapicredentialschema.ResolveOpt, error) {
 	if credentials == nil {
 		return nil, errors.New("no credentials specified")
@@ -49,6 +49,11 @@ func prepareOpts(credentials *Credentials, issuerMetadata *IssuerMetadata,
 	}
 
 	opts = append(opts, issuerMetadataOpts...)
+
+	if logger != nil {
+		loggerWrapper := &wrapper.MobileLoggerWrapper{MobileAPILogger: logger}
+		opts = append(opts, goapicredentialschema.WithLogger(loggerWrapper))
+	}
 
 	return opts, nil
 }

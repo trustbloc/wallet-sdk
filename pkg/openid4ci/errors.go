@@ -17,11 +17,13 @@ const (
 	ClientConfigNoDIDResolverProvidedError    = "CLIENT_CONFIG_DID_RESOLVER_PROVIDED"
 	PreAuthorizedCodeRequiredError            = "PRE_AUTHORIZED_CODE_REQUIRED"
 	InvalidIssuanceURIError                   = "INVALID_ISSUANCE_URI"
+	UserPINRequiredParseFailedError           = "USER_PIN_REQUIRED_PARSE_FAILED"
 	PinCodeRequiredError                      = "PIN_CODE_REQUIRED"
 	MetadataFetchFailedError                  = "META_DATA_FETCH_FAILED"
 	TokenFetchFailedError                     = "TOKEN_FETCH_FAILED" //nolint:gosec //false positive
 	JWTSigningFailedError                     = "JWT_SIGNING_FAILED"
 	CredentialFetchFailedError                = "CREDENTIAL_FETCH_FAILED"          //nolint:gosec //false positive
+	CredentialParseFailedError                = "CREDENTIAL_PARSE_FAILED"          //nolint:gosec //false positive
 	CredentialSchemaResolveFailedError        = "CREDENTIAL_SCHEMA_RESOLVE_FAILED" //nolint:gosec //false positive
 )
 
@@ -35,10 +37,12 @@ const (
 	ClientConfigNoDIDResolverProvidedCode
 	PreAuthorizedCodeRequiredCode
 	InvalidIssuanceURICode
+	UserPINRequiredParseFailedCode
 	PinCodeRequiredCode
 	MetadataFetchFailedCode
 	TokenFetchFailedCode
 	JWTSigningFailedCode
 	CredentialFetchFailedCode
+	CredentialParseFailedCode
 	CredentialSchemaResolveFailedCode
 )

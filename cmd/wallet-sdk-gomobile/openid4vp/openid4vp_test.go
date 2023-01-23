@@ -41,7 +41,8 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 			&mockKeyHandleReader{},
 			&mockCrypto{},
 			&mocksDIDResolver{},
-			&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)})
+			&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
+			nil)
 
 		require.NotNil(t, instance)
 		require.NotNil(t, instance.crypto)

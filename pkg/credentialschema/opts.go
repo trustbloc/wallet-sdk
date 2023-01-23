@@ -9,6 +9,8 @@ package credentialschema
 import (
 	"errors"
 
+	"github.com/trustbloc/wallet-sdk/pkg/api"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
@@ -42,6 +44,7 @@ type resolveOpts struct {
 	credentialSource     credentialSource
 	issuerMetadataSource issuerMetadataSource
 	preferredLocal       string
+	logger               api.Logger
 }
 
 // ResolveOpt represents an option for the Resolve function.
@@ -95,7 +98,14 @@ func WithPreferredLocale(locale string) ResolveOpt {
 	}
 }
 
-func processOpts(opts []ResolveOpt) ([]*verifiable.Credential, *issuer.Metadata, string, error) {
+// WithLogger is an option that allows a caller to specify their own logger implementation.
+func WithLogger(logger api.Logger) ResolveOpt {
+	return func(opts *resolveOpts) {
+		opts.logger = logger
+	}
+}
+
+func processOpts(operationType string, opts []ResolveOpt) ([]*verifiable.Credential, *issuer.Metadata, string, error) {
 	mergedOpts := mergeOpts(opts)
 
 	err := validateOpts(mergedOpts)
@@ -103,7 +113,7 @@ func processOpts(opts []ResolveOpt) ([]*verifiable.Credential, *issuer.Metadata,
 		return nil, nil, "", err
 	}
 
-	return processValidatedOpts(mergedOpts)
+	return processValidatedOpts(operationType, mergedOpts)
 }
 
 func mergeOpts(opts []ResolveOpt) *resolveOpts {
@@ -149,13 +159,15 @@ func validateIssuerMetadataOpts(issuerMetadataSource *issuerMetadataSource) erro
 	return nil
 }
 
-func processValidatedOpts(opts *resolveOpts) ([]*verifiable.Credential, *issuer.Metadata, string, error) {
+func processValidatedOpts(operationType string,
+	opts *resolveOpts,
+) ([]*verifiable.Credential, *issuer.Metadata, string, error) {
 	vcs, err := processVCOpts(&opts.credentialSource)
 	if err != nil {
 		return nil, nil, "", err
 	}
 
-	issuerMetadata, err := processIssuerMetadataOpts(&opts.issuerMetadataSource)
+	issuerMetadata, err := processIssuerMetadataOpts(opts.logger, operationType, &opts.issuerMetadataSource)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -182,12 +194,13 @@ func processVCOpts(credentialSource *credentialSource) ([]*verifiable.Credential
 	return vcs, nil
 }
 
-func processIssuerMetadataOpts(issuerMetadataSource *issuerMetadataSource) (*issuer.Metadata, error) {
+func processIssuerMetadataOpts(logger api.Logger, operationType string, issuerMetadataSource *issuerMetadataSource,
+) (*issuer.Metadata, error) {
 	if issuerMetadataSource.metadata != nil {
 		return issuerMetadataSource.metadata, nil
 	}
 
-	metadata, err := metadatafetcher.Get(issuerMetadataSource.issuerURI)
+	metadata, err := metadatafetcher.Get(issuerMetadataSource.issuerURI, logger, operationType)
 	if err != nil {
 		return nil, err
 	}

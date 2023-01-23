@@ -19,14 +19,31 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 
+	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
+	"github.com/trustbloc/wallet-sdk/pkg/log/consolelogger"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
+)
+
+const (
+	// Base operation type.
+	logOperationTypeOIDCIssuance = "OIDCIssuance"
+
+	// Sub-operation types.
+	logOperationTypeInitialization    = logOperationTypeOIDCIssuance + "_Initialization"
+	logOperationTypeFetchToken        = logOperationTypeOIDCIssuance + "_FetchToken"
+	logOperationTypeRequestCredential = logOperationTypeOIDCIssuance + "_RequestCredential"
+	logOperationTypeResolveDisplay    = logOperationTypeOIDCIssuance + "_ResolveDisplay"
+
+	// Sub-sub-operation type.
+	logOperationTypeFetchMetadata = logOperationTypeRequestCredential + "_FetchMetadata"
 )
 
 // NewInteraction creates a new OpenID4CI Interaction.
@@ -42,13 +59,21 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 		return nil, err
 	}
 
+	if config.Logger == nil {
+		config.Logger = consolelogger.NewConsoleLogger()
+	}
+
 	requestURIParsed, err := url.Parse(initiateIssuanceURI)
 	if err != nil {
-		return nil, walleterror.NewValidationError(
+		errValidation := walleterror.NewValidationError(
 			module,
 			InvalidIssuanceURICode,
 			InvalidIssuanceURIError,
 			err)
+
+		log(config.Logger, logOperationTypeInitialization, api.LogStatusFailure, config.ClientID, err)
+
+		return nil, errValidation
 	}
 
 	initiationRequest := &InitiationRequest{}
@@ -62,11 +87,15 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 	if userPINRequiredString != "" {
 		userPINRequired, err := strconv.ParseBool(userPINRequiredString)
 		if err != nil {
-			return nil, walleterror.NewValidationError(
+			errValidation := walleterror.NewValidationError(
 				module,
-				InvalidIssuanceURICode,
-				InvalidIssuanceURIError,
+				UserPINRequiredParseFailedCode,
+				UserPINRequiredParseFailedError,
 				err)
+
+			log(config.Logger, logOperationTypeInitialization, api.LogStatusFailure, config.ClientID, errValidation)
+
+			return nil, errValidation
 		}
 
 		initiationRequest.UserPINRequired = userPINRequired
@@ -80,6 +109,7 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 		clientID:          config.ClientID,
 		signerProvider:    config.SignerProvider,
 		didResolver:       &didResolverWrapper{didResolver: config.DIDResolver},
+		logger:            config.Logger,
 	}, nil
 }
 
@@ -112,20 +142,28 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-8
 func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequestOpts) ([]*verifiable.Credential, error) { //nolint:funlen,lll
 	if i.initiationRequest.UserPINRequired && credentialRequestOpts.UserPIN == "" {
-		return nil, walleterror.NewValidationError(
+		errValidation := walleterror.NewValidationError(
 			module,
 			PinCodeRequiredCode,
 			PinCodeRequiredError,
 			errors.New("invalid user PIN"))
+
+		i.logFailure(logOperationTypeRequestCredential, errValidation)
+
+		return nil, errValidation
 	}
 
-	metadata, err := metadatafetcher.Get(i.initiationRequest.IssuerURI)
+	metadata, err := metadatafetcher.Get(i.initiationRequest.IssuerURI, i.logger, logOperationTypeFetchMetadata)
 	if err != nil {
-		return nil, walleterror.NewExecutionError(
+		errExecution := walleterror.NewExecutionError(
 			module,
 			MetadataFetchFailedCode,
 			MetadataFetchFailedError,
 			fmt.Errorf("failed to get issuer metadata: %w", err))
+
+		i.logFailure(logOperationTypeFetchMetadata, errExecution)
+
+		return nil, errExecution
 	}
 
 	i.issuerMetadata = metadata
@@ -137,12 +175,18 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 
 	tokenResp, err := i.getTokenResponse(metadata.TokenEndpoint, params)
 	if err != nil {
-		return nil, walleterror.NewExecutionError(
+		errExecution := walleterror.NewExecutionError(
 			module,
 			TokenFetchFailedCode,
 			TokenFetchFailedError,
 			fmt.Errorf("failed to get token response: %w", err))
+
+		i.logFailure(logOperationTypeFetchToken, errExecution)
+
+		return nil, errExecution
 	}
+
+	i.logSuccess(logOperationTypeFetchToken)
 
 	claims := map[string]interface{}{
 		"iss":   i.clientID,
@@ -154,11 +198,15 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 	// didsignjwt.SignJWT will create the headers automatically
 	jwt, err := didsignjwt.SignJWT(nil, claims, i.userDID, i.signerProvider, i.didResolver)
 	if err != nil {
-		return nil, walleterror.NewExecutionError(
+		errExecution := walleterror.NewExecutionError(
 			module,
 			JWTSigningFailedCode,
 			JWTSigningFailedError,
 			fmt.Errorf("failed to create JWT: %w", err))
+
+		i.logFailure(logOperationTypeRequestCredential, errExecution)
+
+		return nil, errExecution
 	}
 
 	credentialResponses := make([]CredentialResponse, len(i.initiationRequest.CredentialTypes))
@@ -167,23 +215,28 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 		credentialResponse, errGetCredResp := i.getCredentialResponse(credentialType, metadata.CredentialEndpoint,
 			tokenResp.AccessToken, jwt)
 		if errGetCredResp != nil {
-			return nil,
-				walleterror.NewExecutionError(
-					module,
-					CredentialFetchFailedCode,
-					CredentialFetchFailedError,
-					fmt.Errorf("failed to get credential response: %w", errGetCredResp))
+			errExecution := walleterror.NewExecutionError(
+				module,
+				CredentialFetchFailedCode,
+				CredentialFetchFailedError,
+				fmt.Errorf("failed to get credential response: %w", errGetCredResp))
+
+			i.logFailure(logOperationTypeRequestCredential, errExecution)
+
+			return nil, errExecution
 		}
 
 		credentialResponses[index] = *credentialResponse
 	}
 
-	vcs, err := getCredentialsFromResponses(credentialResponses)
+	vcs, err := i.getCredentialsFromResponses(credentialResponses)
 	if err != nil {
 		return nil, err
 	}
 
 	i.vcs = vcs
+
+	i.logSuccess(logOperationTypeRequestCredential)
 
 	return vcs, nil
 }
@@ -195,14 +248,20 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 // resolution.
 func (i *Interaction) ResolveDisplay(preferredLocale string) (*credentialschema.ResolvedDisplayData, error) {
 	displayData, err := credentialschema.Resolve(
+		logOperationTypeResolveDisplay,
 		credentialschema.WithCredentials(i.vcs),
 		credentialschema.WithIssuerMetadata(i.issuerMetadata),
-		credentialschema.WithPreferredLocale(preferredLocale))
+		credentialschema.WithPreferredLocale(preferredLocale),
+		credentialschema.WithLogger(i.logger))
 	if err != nil {
-		return nil, walleterror.NewExecutionError(
+		errExecution := walleterror.NewExecutionError(
 			module,
 			CredentialSchemaResolveFailedCode,
 			CredentialSchemaResolveFailedError, err)
+
+		i.logFailure(logOperationTypeResolveDisplay, errExecution)
+
+		return nil, errExecution
 	}
 
 	return displayData, nil
@@ -301,19 +360,58 @@ func (i *Interaction) getCredentialResponse(credentialType, credentialEndpoint,
 	return &credentialResponse, nil
 }
 
-func getCredentialsFromResponses(credentialResponses []CredentialResponse) ([]*verifiable.Credential, error) {
+func (i *Interaction) getCredentialsFromResponses(
+	credentialResponses []CredentialResponse,
+) ([]*verifiable.Credential, error) {
 	var vcs []*verifiable.Credential
 
-	for i := range credentialResponses {
-		vc, err := verifiable.ParseCredential([]byte(credentialResponses[i].Credential),
+	for j := range credentialResponses {
+		vc, err := verifiable.ParseCredential([]byte(credentialResponses[j].Credential),
 			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
 			verifiable.WithDisabledProofCheck())
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse credential from credential response at index %d: %w", i, err)
+			errExecution := walleterror.NewExecutionError(
+				module,
+				CredentialParseFailedCode,
+				CredentialParseFailedError,
+				fmt.Errorf("failed to parse credential from credential response at index %d: %w", j, err))
+
+			i.logFailure(logOperationTypeRequestCredential, errExecution)
+
+			return nil, errExecution
 		}
 
 		vcs = append(vcs, vc)
 	}
 
 	return vcs, nil
+}
+
+func (i *Interaction) logFailure(operationType string, err error) {
+	log(i.logger, operationType, api.LogStatusFailure, i.clientID, err)
+}
+
+func (i *Interaction) logSuccess(operationType string) {
+	log(i.logger, operationType, api.LogStatusSuccess, i.clientID, nil)
+}
+
+func log(logger api.Logger, operationType, status, clientID string, err error) {
+	currentTime := time.Now()
+
+	logEntry := &api.LogEntry{
+		ID:   uuid.New().String(),
+		Type: api.LogTypeCredentialActivity,
+		Time: &currentTime,
+		Data: &api.LogData{
+			Client:    clientID,
+			Operation: operationType,
+			Status:    status,
+		},
+	}
+
+	if err != nil {
+		logEntry.Data.Params = map[string]interface{}{"error": err.Error()}
+	}
+
+	logger.Log(logEntry)
 }

@@ -9,13 +9,12 @@ package openid4ci
 import (
 	"errors"
 
+	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
+	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
-
-	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 )
 
 type didResolverWrapper struct {
@@ -33,6 +32,7 @@ type ClientConfig struct {
 	ClientID       string
 	SignerProvider didsignjwt.SignerGetter
 	DIDResolver    api.DIDResolver
+	Logger         api.Logger
 }
 
 func validateClientConfig(config *ClientConfig) error {

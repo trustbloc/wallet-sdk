@@ -485,8 +485,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		credentialRequest := &openid4ci.CredentialRequestOpts{UserPIN: "1234"}
 
 		vcs, err := interaction.RequestCredential(credentialRequest)
-		require.EqualError(t, err, "failed to parse credential from credential response at index 0: "+
-			"unmarshal new credential: unexpected end of JSON input")
+		require.EqualError(t, err, "CREDENTIAL_PARSE_FAILED(OCI1-0013):failed to parse credential "+
+			"from credential response at index 0: unmarshal new credential: unexpected end of JSON input")
 		require.Nil(t, vcs)
 	})
 }

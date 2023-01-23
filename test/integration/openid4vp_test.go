@@ -73,7 +73,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		require.NoError(t, err)
 
 		interaction := openid4vp.NewInteraction(
-			initiateURL, testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver, ld.NewDocLoader())
+			initiateURL, testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver, ld.NewDocLoader(), nil)
 
 		query, err := interaction.GetQuery()
 		require.NoError(t, err)

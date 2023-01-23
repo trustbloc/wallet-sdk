@@ -50,7 +50,7 @@ func TestNewInteraction(t *testing.T) {
 		config := getTestClientConfig(t)
 
 		interaction, err := openid4ci.NewInteraction(requestURI, config)
-		requireErrorContains(t, err, `INVALID_ISSUANCE_URI`)
+		requireErrorContains(t, err, `USER_PIN_REQUIRED_PARSE_FAILED`)
 		require.Nil(t, interaction)
 	})
 }
@@ -232,7 +232,7 @@ func getTestClientConfig(t *testing.T, useMockVM ...mockVMCreator) *openid4ci.Cl
 		resolver.makeVM = useMockVM[0]
 	}
 
-	clientConfig := openid4ci.NewClientConfig("UserDID", "ClientID", signerCreator, resolver)
+	clientConfig := openid4ci.NewClientConfig("UserDID", "ClientID", signerCreator, resolver, nil)
 
 	return clientConfig
 }

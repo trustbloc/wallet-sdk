@@ -47,12 +47,12 @@ func TestGet(t *testing.T) {
 
 		defer server.Close()
 
-		issuerMetadata, err := issuermetadata.Get(server.URL)
+		issuerMetadata, err := issuermetadata.Get(server.URL, nil, "test")
 		require.NoError(t, err)
 		require.NotNil(t, issuerMetadata)
 	})
 	t.Run("Fail to reach issuer OpenID config endpoint", func(t *testing.T) {
-		issuerMetadata, err := issuermetadata.Get("http://BadURL")
+		issuerMetadata, err := issuermetadata.Get("http://BadURL", nil, "test")
 		require.Contains(t, err.Error(), `Get "http://BadURL/.well-known/openid-configuration":`+
 			` dial tcp: lookup BadURL:`)
 		require.Nil(t, issuerMetadata)
@@ -63,7 +63,7 @@ func TestGet(t *testing.T) {
 
 		defer server.Close()
 
-		issuerMetadata, err := issuermetadata.Get(server.URL)
+		issuerMetadata, err := issuermetadata.Get(server.URL, nil, "test")
 		require.Contains(t, err.Error(), "received status code [500] with body [test failure] from "+
 			"issuer's OpenID configuration endpoint")
 		require.Nil(t, issuerMetadata)
@@ -74,7 +74,7 @@ func TestGet(t *testing.T) {
 
 		defer server.Close()
 
-		issuerMetadata, err := issuermetadata.Get(server.URL)
+		issuerMetadata, err := issuermetadata.Get(server.URL, nil, "test")
 		require.Contains(t, err.Error(), "failed to unmarshal response from the issuer's OpenID "+
 			"configuration endpoint: invalid character 'i' looking for beginning of value")
 		require.Nil(t, issuerMetadata)

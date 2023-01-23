@@ -34,7 +34,7 @@ var (
 
 func TestOpenID4VP_GetQuery(t *testing.T) {
 	t.Run("Inline Request Object", func(t *testing.T) {
-		instance := New(requestObjectJWT, &jwtSignatureVerifierMock{}, nil)
+		instance := New(requestObjectJWT, &jwtSignatureVerifierMock{})
 
 		query, err := instance.GetQuery()
 		require.NoError(t, err)
@@ -44,11 +44,11 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 	t.Run("Fetch Request Object", func(t *testing.T) {
 		instance := New("openid-vc://?request_uri=https://request-object",
 			&jwtSignatureVerifierMock{},
-			&httpClientMock{
+			WithHTTPClient(&httpClientMock{
 				Response:         requestObjectJWT,
 				StatusCode:       200,
 				ExpectedEndpoint: "https://request-object",
-			},
+			}),
 		)
 
 		query, err := instance.GetQuery()
@@ -59,9 +59,9 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 	t.Run("Fetch Request failed", func(t *testing.T) {
 		instance := New("openid-vc://?request_uri=https://request-object",
 			&jwtSignatureVerifierMock{},
-			&httpClientMock{
+			WithHTTPClient(&httpClientMock{
 				Err: errors.New("http error"),
-			},
+			}),
 		)
 
 		_, err := instance.GetQuery()
@@ -91,7 +91,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			StatusCode: 200,
 		}
 
-		instance := New(requestObjectJWT, &jwtSignatureVerifierMock{}, httpClient)
+		instance := New(requestObjectJWT, &jwtSignatureVerifierMock{}, WithHTTPClient(httpClient))
 
 		query, err := instance.GetQuery()
 		require.NoError(t, err)

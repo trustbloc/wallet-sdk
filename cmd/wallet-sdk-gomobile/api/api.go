@@ -89,10 +89,10 @@ type Crypto interface {
 	Verify(signature, msg []byte, keyID string) error
 }
 
-// ActivityLog defines logging functionality.
-type ActivityLog interface {
-	// Log logs an activity.
-	Log(message string)
+// A Logger is capable of writing log entries.
+type Logger interface {
+	// Log logs a single log entry.
+	Log(log string)
 }
 
 // LDDocument is linked domains document.

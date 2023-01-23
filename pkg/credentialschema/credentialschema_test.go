@@ -65,6 +65,7 @@ func TestResolve(t *testing.T) {
 
 			t.Run("Without preferred locale specified", func(t *testing.T) {
 				resolvedDisplayData, errResolve := credentialschema.Resolve(
+					"test",
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 					credentialschema.WithIssuerMetadata(&issuerMetadata))
 				require.NoError(t, errResolve)
@@ -74,6 +75,7 @@ func TestResolve(t *testing.T) {
 			t.Run("With preferred locale specified", func(t *testing.T) {
 				t.Run("Issuer metadata has a localization for the given locale", func(t *testing.T) {
 					resolvedDisplayData, errResolve := credentialschema.Resolve(
+						"test",
 						credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 						credentialschema.WithIssuerMetadata(&issuerMetadata),
 						credentialschema.WithPreferredLocale("en-US"))
@@ -83,6 +85,7 @@ func TestResolve(t *testing.T) {
 				})
 				t.Run("Issuer metadata does not have a localization for the given locale", func(t *testing.T) {
 					resolvedDisplayData, errResolve := credentialschema.Resolve(
+						"test",
 						credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 						credentialschema.WithIssuerMetadata(&issuerMetadata),
 						credentialschema.WithPreferredLocale("UnknownLocale"))
@@ -98,6 +101,7 @@ func TestResolve(t *testing.T) {
 				require.NoError(t, errAdd)
 
 				resolvedDisplayData, errResolve := credentialschema.Resolve(
+					"test",
 					credentialschema.WithCredentialReader(memStorageProvider,
 						[]string{"http://example.edu/credentials/1872"}),
 					credentialschema.WithIssuerMetadata(&issuerMetadata),
@@ -113,6 +117,7 @@ func TestResolve(t *testing.T) {
 				defer server.Close()
 
 				resolvedDisplayData, errResolve := credentialschema.Resolve(
+					"test",
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 					credentialschema.WithIssuerURI(server.URL))
 				require.NoError(t, errResolve)
@@ -129,6 +134,7 @@ func TestResolve(t *testing.T) {
 				issuerMetadata.CredentialsSupported["UniversityDegree"].Types[1] = "SomeOtherType"
 
 				resolvedDisplayData, errResolve := credentialschema.Resolve(
+					"test",
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 					credentialschema.WithIssuerMetadata(&issuerMetadata),
 					credentialschema.WithPreferredLocale("en-US"))
@@ -160,6 +166,7 @@ func TestResolve(t *testing.T) {
 				require.NoError(t, err)
 
 				resolvedDisplayData, errResolve := credentialschema.Resolve(
+					"test",
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 					credentialschema.WithIssuerMetadata(&issuerMetadata),
 					credentialschema.WithPreferredLocale("en-US"))
@@ -187,6 +194,7 @@ func TestResolve(t *testing.T) {
 				issuerMetadata.CredentialIssuer = nil
 
 				resolvedDisplayData, err := credentialschema.Resolve(
+					"test",
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 					credentialschema.WithIssuerMetadata(&issuerMetadata))
 				require.NoError(t, err)
@@ -231,6 +239,7 @@ func TestResolve(t *testing.T) {
 				require.NoError(t, err)
 
 				resolvedDisplayData, err := credentialschema.Resolve(
+					"test",
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 					credentialschema.WithIssuerMetadata(&issuerMetadata))
 				require.NoError(t, err)
@@ -261,12 +270,13 @@ func TestResolve(t *testing.T) {
 	})
 	t.Run("Invalid options:", func(t *testing.T) {
 		t.Run("No credentials specified", func(t *testing.T) {
-			resolvedDisplayData, err := credentialschema.Resolve()
+			resolvedDisplayData, err := credentialschema.Resolve("test")
 			require.EqualError(t, err, "no credentials specified")
 			require.Nil(t, resolvedDisplayData)
 		})
 		t.Run("Multiple credential sources", func(t *testing.T) {
 			resolvedDisplayData, err := credentialschema.Resolve(
+				"test",
 				credentialschema.WithCredentials([]*verifiable.Credential{{}}),
 				credentialschema.WithCredentialReader(memstorage.NewProvider(), []string{}))
 			require.EqualError(t, err, "cannot have multiple credential sources specified - "+
@@ -275,12 +285,14 @@ func TestResolve(t *testing.T) {
 		})
 		t.Run("Using credential reader, but no IDs specified", func(t *testing.T) {
 			resolvedDisplayData, err := credentialschema.Resolve(
+				"test",
 				credentialschema.WithCredentialReader(memstorage.NewProvider(), []string{}))
 			require.EqualError(t, err, "credential IDs must be provided when using a credential reader")
 			require.Nil(t, resolvedDisplayData)
 		})
 		t.Run("Using credential reader, but credential could not be found", func(t *testing.T) {
 			resolvedDisplayData, err := credentialschema.Resolve(
+				"test",
 				credentialschema.WithCredentialReader(memstorage.NewProvider(), []string{"SomeID"}),
 				credentialschema.WithIssuerMetadata(&issuer.Metadata{}))
 			require.EqualError(t, err, "no credential with an id of SomeID was found")
@@ -288,12 +300,14 @@ func TestResolve(t *testing.T) {
 		})
 		t.Run("No issuer metadata source specified", func(t *testing.T) {
 			resolvedDisplayData, err := credentialschema.Resolve(
+				"test",
 				credentialschema.WithCredentials([]*verifiable.Credential{{}}))
 			require.EqualError(t, err, "no issuer metadata source specified")
 			require.Nil(t, resolvedDisplayData)
 		})
 		t.Run("Using issuer URI option, but failed to fetch issuer metadata", func(t *testing.T) {
 			resolvedDisplayData, err := credentialschema.Resolve(
+				"test",
 				credentialschema.WithCredentials([]*verifiable.Credential{{}}),
 				credentialschema.WithIssuerURI("http://BadURL"))
 			require.Contains(t, err.Error(), `Get "http://BadURL/.well-known/openid-configuration":`+
@@ -314,6 +328,7 @@ func TestResolve(t *testing.T) {
 			require.NoError(t, err)
 
 			resolvedDisplayData, err := credentialschema.Resolve(
+				"test",
 				credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 				credentialschema.WithIssuerMetadata(&issuerMetadata))
 			require.EqualError(t, err, "unsupported vc subject type")
@@ -331,6 +346,7 @@ func TestResolve(t *testing.T) {
 			require.NoError(t, err)
 
 			resolvedDisplayData, err := credentialschema.Resolve(
+				"test",
 				credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 				credentialschema.WithIssuerMetadata(&issuerMetadata))
 			require.EqualError(t, err, "only VCs with one credential subject are supported")

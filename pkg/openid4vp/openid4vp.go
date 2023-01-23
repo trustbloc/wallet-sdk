@@ -28,6 +28,16 @@ import (
 )
 
 const (
+	// Base operation type.
+	logOperationTypeOIDCPresentation = "OIDCPresentation"
+
+	// Sub-operation types.
+	logOperationTypeGetQuery          = logOperationTypeOIDCPresentation + "_GetQuery"
+	logOperationTypePresentCredential = logOperationTypeOIDCPresentation + "_PresentCredential"
+
+	// Sub-sub-operation type.
+	logOperationTypeFetchRequestObject = logOperationTypeGetQuery + "_FetchRequestObject"
+
 	requestURIPrefix = "openid-vc://?request_uri="
 	tokenLiveTimeSec = 600
 )
@@ -45,6 +55,7 @@ type Interaction struct {
 	authorizationRequest string
 	signatureVerifier    jwtSignatureVerifier
 	httpClient           httpClient
+	logger               api.Logger
 
 	requestObject *requestObject
 }
@@ -56,33 +67,46 @@ type authorizedResponse struct {
 }
 
 // New creates new openid4vp instance.
-func New(authorizationRequest string, signatureVerifier jwtSignatureVerifier, httpClient httpClient) *Interaction {
+func New(authorizationRequest string, signatureVerifier jwtSignatureVerifier, opts ...Opt) *Interaction {
+	client, logger := processOpts(opts)
+
 	return &Interaction{
 		authorizationRequest: authorizationRequest,
 		signatureVerifier:    signatureVerifier,
-		httpClient:           httpClient,
+		httpClient:           client,
+		logger:               logger,
 	}
 }
 
 // GetQuery creates query based on authorization request data.
 func (o *Interaction) GetQuery() (*presexch.PresentationDefinition, error) {
-	rawRequestObject, err := fetchRequestObject(o.httpClient, o.authorizationRequest)
+	rawRequestObject, err := o.fetchRequestObject(o.httpClient, o.authorizationRequest)
 	if err != nil {
-		return nil, walleterror.NewExecutionError(
+		errExecution := walleterror.NewExecutionError(
 			module,
 			RequestObjectFetchFailedCode,
 			RequestObjectFetchFailedError,
 			fmt.Errorf("fetch request object: %w", err))
+
+		o.logFailure(logOperationTypeGetQuery, errExecution)
+
+		return nil, errExecution
 	}
 
 	requestObject, err := verifyAuthorizationRequestAndDecodeClaims(rawRequestObject, o.signatureVerifier)
 	if err != nil {
-		return nil, walleterror.NewExecutionError(
+		errExecution := walleterror.NewExecutionError(
 			module,
 			VerifyAuthorizationRequestFailedCode,
 			VerifyAuthorizationRequestFailedError,
 			fmt.Errorf("verify authorization request: %w", err))
+
+		o.logFailure(logOperationTypeGetQuery, errExecution)
+
+		return nil, errExecution
 	}
+
+	o.logSuccess(logOperationTypeGetQuery)
 
 	o.requestObject = requestObject
 
@@ -93,11 +117,15 @@ func (o *Interaction) GetQuery() (*presexch.PresentationDefinition, error) {
 func (o *Interaction) PresentCredential(presentation *verifiable.Presentation, jwtSigner api.JWTSigner) error {
 	response, err := createAuthorizedResponse(presentation, o.requestObject, jwtSigner)
 	if err != nil {
-		return walleterror.NewExecutionError(
+		errExecution := walleterror.NewExecutionError(
 			module,
 			CreateAuthorizedResponseFailedCode,
 			CreateAuthorizedResponseFailedError,
 			fmt.Errorf("create authorized response failed: %w", err))
+
+		o.logFailure(logOperationTypePresentCredential, errExecution)
+
+		return errExecution
 	}
 
 	data := url.Values{}
@@ -107,17 +135,53 @@ func (o *Interaction) PresentCredential(presentation *verifiable.Presentation, j
 
 	err = sendAuthorizedResponse(o.httpClient, data.Encode(), o.requestObject.RedirectURI)
 	if err != nil {
-		return walleterror.NewExecutionError(
+		errExecution := walleterror.NewExecutionError(
 			module,
 			SendAuthorizedResponseFailedCode,
 			SendAuthorizedResponseFailedError,
 			fmt.Errorf("send authorized response failed: %w", err))
+
+		o.logFailure(logOperationTypePresentCredential, errExecution)
+
+		return errExecution
 	}
+
+	o.logSuccess(logOperationTypePresentCredential)
 
 	return nil
 }
 
-func fetchRequestObject(httpClient httpClient, authorizationRequest string) (string, error) {
+func (o *Interaction) logFailure(operationType string, err error) {
+	o.log(api.LogStatusFailure, operationType, err)
+}
+
+func (o *Interaction) logSuccess(operationType string) {
+	o.log(api.LogStatusSuccess, operationType, nil)
+}
+
+func (o *Interaction) log(status, operationType string, err error) {
+	currentTime := time.Now()
+
+	logEntry := &api.LogEntry{
+		ID:   uuid.New().String(),
+		Type: api.LogTypeCredentialActivity,
+		Time: &currentTime,
+		Data: &api.LogData{
+			Operation: operationType,
+			Status:    status,
+		},
+	}
+
+	if err != nil {
+		logEntry.Data.Params = map[string]interface{}{"error": err.Error()}
+	}
+
+	o.logger.Log(logEntry)
+}
+
+// If an HTTP request has to be made to fetch the request object, then on a successful response the logger will be
+// used to log a success message.
+func (o *Interaction) fetchRequestObject(httpClient httpClient, authorizationRequest string) (string, error) {
 	if !strings.HasPrefix(authorizationRequest, requestURIPrefix) {
 		return authorizationRequest, nil
 	}
@@ -128,6 +192,8 @@ func fetchRequestObject(httpClient httpClient, authorizationRequest string) (str
 	if err != nil {
 		return "", err
 	}
+
+	o.logSuccess(logOperationTypeFetchRequestObject)
 
 	return string(respBytes), nil
 }

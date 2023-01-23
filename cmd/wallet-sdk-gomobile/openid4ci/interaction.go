@@ -14,6 +14,7 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
@@ -51,17 +52,19 @@ type ClientConfig struct {
 	ClientID      string
 	SignerCreator api.DIDJWTSignerCreator
 	DIDResolver   api.DIDResolver
+	Logger        api.Logger
 }
 
 // NewClientConfig creates the client config object.
 func NewClientConfig(userDID, clientID string, signerCreator api.DIDJWTSignerCreator,
-	didRes api.DIDResolver,
+	didRes api.DIDResolver, logger api.Logger,
 ) *ClientConfig {
 	return &ClientConfig{
 		UserDID:       userDID,
 		ClientID:      clientID,
 		SignerCreator: signerCreator,
 		DIDResolver:   didRes,
+		Logger:        logger,
 	}
 }
 
@@ -163,12 +166,23 @@ func unwrapConfig(config *ClientConfig) *openid4cigoapi.ClientConfig {
 		return goMobileSigner, nil
 	}
 
+	logger := createGoAPILogger(config.Logger)
+
 	return &openid4cigoapi.ClientConfig{
 		UserDID:        config.UserDID,
 		ClientID:       config.ClientID,
 		SignerProvider: goAPISignerGetter,
 		DIDResolver:    &wrapper.VDRResolverWrapper{DIDResolver: config.DIDResolver},
+		Logger:         logger,
 	}
+}
+
+func createGoAPILogger(mobileAPILogger api.Logger) goapi.Logger {
+	if mobileAPILogger == nil {
+		return nil // Console logger will get used by default in the OpenID4CI Interaction
+	}
+
+	return &wrapper.MobileLoggerWrapper{MobileAPILogger: mobileAPILogger}
 }
 
 func workaroundMarshalVM(vm *did.VerificationMethod) ([]byte, error) {

@@ -13,6 +13,8 @@ import (
 	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 )
 
+const logOperationTypeResolveDisplay = "ResolveDisplay"
+
 // Credentials represents the different ways that credentials can be passed in to the Resolve function.
 // At most one out of VCs and Reader can be used for a given call to Resolve.
 // If reader is specified, then IDs must also be specified. The corresponding credentials will be
@@ -43,14 +45,14 @@ type IssuerMetadata struct {
 // The display values are resolved per the 27 October 2022 revision of the OpenID4CI spec:
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-11.2
 func ResolveDisplay(credentials *Credentials, issuerMetadata *IssuerMetadata,
-	preferredLocale string,
+	preferredLocale string, logger api.Logger,
 ) (*api.JSONObject, error) {
-	opts, err := prepareOpts(credentials, issuerMetadata, preferredLocale)
+	opts, err := prepareOpts(credentials, issuerMetadata, preferredLocale, logger)
 	if err != nil {
 		return nil, err
 	}
 
-	resolvedDisplayData, err := goapicredentialschema.Resolve(opts...)
+	resolvedDisplayData, err := goapicredentialschema.Resolve(logOperationTypeResolveDisplay, opts...)
 	if err != nil {
 		return nil, err
 	}
