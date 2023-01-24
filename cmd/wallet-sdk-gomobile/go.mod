@@ -8,7 +8,7 @@ go 1.19
 
 require (
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce
-	github.com/hyperledger/aries-framework-go v0.1.9-0.20230109173229-5f37c017ff47
+	github.com/hyperledger/aries-framework-go v0.1.9-0.20230123141502-39b647b282e2
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220610133818-119077b0ec85
 	github.com/piprate/json-gold v0.4.2
 	github.com/stretchr/testify v1.8.1
