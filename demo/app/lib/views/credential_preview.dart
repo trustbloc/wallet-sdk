@@ -3,15 +3,13 @@ import 'package:app/models/credential_data.dart';
 import 'package:app/views/credential_added.dart';
 import 'package:app/views/dashboard.dart';
 import 'package:app/services/storage_service.dart';
-import 'package:app/widgets/add_credential_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:app/models/credential_data_object.dart';
 import 'package:app/models/store_credential_data.dart';
 import 'package:app/widgets/common_title_appbar.dart';
 import 'package:app/widgets/credential_card.dart';
-
-import '../widgets/primary_button.dart';
+import 'package:app/widgets/primary_button.dart';
 
 class CredentialPreview extends StatefulWidget {
   final CredentialData credentialData;
@@ -42,7 +40,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      appBar:  CustomTitleAppBar(pageTitle: 'Credential Preview', addCloseIcon: true),
+      appBar:  const CustomTitleAppBar(pageTitle: 'Credential Preview', addCloseIcon: true, height: 60,),
       body: Container(
         padding: const EdgeInsets.fromLTRB(24, 40, 16, 24),
         child: Column(
@@ -86,7 +84,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
                     PrimaryButton(
                         onPressed: () async {
                             _storageService.addCredential(CredentialDataObject("$userLoggedIn-${uuid.v1()}",CredentialData(rawCredential: widget.credentialData.rawCredential, credentialDisplayData: widget.credentialData.credentialDisplayData)));
-                            _navigateToCredentialAdded(widget.credentialData);
+                            _navigateToCredentialAdded();
                         },
                         width: double.infinity,
                         child: const Text('Save Credential', style: TextStyle(fontSize: 16, color: Colors.white))
@@ -116,7 +114,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
     );
   }
 
-  _navigateToCredentialAdded(CredentialData credentialData) async {
+  _navigateToCredentialAdded() async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialAdded(credentialData: widget.credentialData,)));
   }
   _navigateToDashboard() async {

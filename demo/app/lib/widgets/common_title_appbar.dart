@@ -5,12 +5,14 @@ import 'package:app/views/dashboard.dart';
 class CustomTitleAppBar extends StatelessWidget implements PreferredSizeWidget{
   final String? pageTitle;
   final bool? addCloseIcon;
+  final double height;
 
   @override
-  Size get preferredSize => const Size.fromHeight(50);
+  Size get preferredSize => Size.fromHeight(height);
 
   const CustomTitleAppBar({
     super.key,
+    required this.height,
     required this.pageTitle,
     this.addCloseIcon
   });

@@ -1,14 +1,13 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
-
 import 'package:app/models/credential_data.dart';
 import 'package:app/models/credential_preview.dart';
 
 class CredentialVerifiedInformation extends StatelessWidget {
 
   CredentialData credentialData;
-  CredentialVerifiedInformation({required this.credentialData,  Key? key}) : super(key: key);
+  double? height;
+  CredentialVerifiedInformation({required this.credentialData, this.height,   Key? key}) : super(key: key);
 
   final ScrollController credDataController = ScrollController();
 
@@ -89,7 +88,7 @@ class CredentialVerifiedInformation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        height: MediaQuery.of(context).size.height*0.42,
+        height: height,
         padding: const EdgeInsets.fromLTRB(0, 24, 0, 0),
         child: Column(
             children: <Widget>[

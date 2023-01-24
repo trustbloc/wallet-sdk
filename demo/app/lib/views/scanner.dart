@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:app/models/credential_data.dart';
 import 'package:app/models/credential_data_object.dart';
 import 'package:app/views/presentation_preview.dart';
 import 'package:app/widgets/common_title_appbar.dart';
@@ -27,7 +28,7 @@ class QRScannerState extends State<QRScanner> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomTitleAppBar(pageTitle: 'Scan QR', addCloseIcon: true,),
+      appBar: const CustomTitleAppBar(pageTitle: 'Scan QR', addCloseIcon: true, height: 50,),
       body: QRView(
         key: qrKey,
         onQRViewCreated: _onQRViewCreated,
@@ -64,8 +65,8 @@ class QRScannerState extends State<QRScanner> {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const OTP()));
   }
 
-  _navigateToPresentationPreviewScreen(String matchedCredential, String credentialDisplayData) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => PresentationPreview(matchedCredential: matchedCredential, credentialDisplay: credentialDisplayData)));
+  _navigateToPresentationPreviewScreen(String matchedCredential, CredentialData credentialData) async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => PresentationPreview(matchedCredential: matchedCredential, credentialData: credentialData)));
   }
 
   _authorize(String qrCodeURL) async {
@@ -91,7 +92,7 @@ class QRScannerState extends State<QRScanner> {
       log(matchedCred.length.toString());
       if (matchedCred.isNotEmpty) {
         //TODO: in future we can show all the credential
-        _navigateToPresentationPreviewScreen(matchedCred.first, credentialDisplayData.first);
+        _navigateToPresentationPreviewScreen(matchedCred.first, CredentialData(rawCredential: '', credentialDisplayData: credentialDisplayData.first));
         return;
        }
       }
