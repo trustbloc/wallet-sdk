@@ -9,6 +9,8 @@ import 'package:app/views/otp.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:app/models/store_credential_data.dart';
 
+import 'package:app/views/credential_preview.dart';
+
 void _navigateToOTPScreen(BuildContext context) async {
   Navigator.push(context, MaterialPageRoute(builder: (context) => const OTP()));
 }
@@ -20,6 +22,15 @@ void _navigateToPresentationPreviewScreen(
       MaterialPageRoute(
           builder: (context) =>
               PresentationPreview(matchedCredential: matchedCredential, credentialData: credentialData)));
+}
+
+_navigateToCredPreviewScreen(
+    BuildContext context, String credentialResp, String credentialResolveDisplay) async {
+  Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) =>
+              CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, credentialDisplayData: credentialResolveDisplay),)));
 }
 
 void handleOpenIDUrl(BuildContext context, String qrCodeURL) async {
@@ -34,6 +45,10 @@ void handleOpenIDUrl(BuildContext context, String qrCodeURL) async {
     if (authorizeResultPinRequired == true) {
       _navigateToOTPScreen(context);
       return;
+    } else {
+      String? requestCredentialResp =  await WalletSDKPlugin.requestCredential('');
+      String? resolvedCredentialDisplay =  await WalletSDKPlugin.resolveCredentialDisplay();
+      _navigateToCredPreviewScreen(context, requestCredentialResp, resolvedCredentialDisplay!);
     }
   } else {
     // Check if the flow is for the verifiable presentation or for issuance.
