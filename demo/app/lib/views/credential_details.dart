@@ -1,6 +1,5 @@
 import 'dart:convert';
-import 'dart:ffi';
-
+import 'package:app/widgets/Credential_card_outline.dart';
 import 'package:app/widgets/credential_metadata_card.dart';
 import 'package:app/widgets/credential_verified_information_view.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +19,7 @@ class CredentialDetails extends StatelessWidget {
 
   getCurrentDate() {
     final now = DateTime.now();
+    // Todo instead of today's date always it will have to persist the date in the storage in the shared preference.
     String formatter = DateFormat('yMMMMd').format(now);// 28/03/2020
     return  formatter;
   }
@@ -127,7 +127,7 @@ class CredentialDetails extends StatelessWidget {
                     ),
                         isDashboardWidget?
                         const CredentialMetaDataCard(): Container(),
-                        CredentialVerifiedInformation(credentialData: item)
+                        CredentialVerifiedInformation(credentialData: item, height: MediaQuery.of(context).size.height*0.42,)
                       ],
                     )
              ]),

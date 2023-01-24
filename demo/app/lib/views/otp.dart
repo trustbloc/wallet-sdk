@@ -36,7 +36,7 @@ class _OTPPage extends State<OTP> {
       FocusManager.instance.primaryFocus?.unfocus();
     },
     child: Scaffold(
-      appBar: CustomTitleAppBar(pageTitle: 'Enter OTP', addCloseIcon: true),
+      appBar: const CustomTitleAppBar(pageTitle: 'Enter OTP', addCloseIcon: true, height: 60,),
       backgroundColor: const Color(0xffF4F1F5),
       body: Center(
         child: ListView(

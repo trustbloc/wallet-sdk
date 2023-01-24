@@ -1,31 +1,18 @@
+import 'package:app/widgets/success_card.dart';
 import 'package:flutter/material.dart';
-import 'package:app/models/store_credential_data.dart';
+import 'package:app/models/credential_data.dart';
 import 'dashboard.dart';
 
 class CredentialShared extends StatefulWidget {
   final String? verifierName;
-  const CredentialShared({super.key, this.verifierName});
+  CredentialData credentialData;
+  CredentialShared({super.key, this.verifierName, required this.credentialData});
 
   @override
   State<CredentialShared> createState() => CredentialSharedState ();
 }
 
 class CredentialSharedState extends State<CredentialShared> {
-  late final String userLoggedIn;
-
-  @override
-  void initState() {
-    super.initState();
-    /// Await your Future here (This function only called once after the layout is Complete)
-    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) async {
-      UserLoginDetails userLoginDetails =  await getUser();
-      userLoggedIn = userLoginDetails.username!;
-    });
-  }
-
-  static const TextStyle optionStyle =
-  TextStyle(fontSize: 28, fontWeight: FontWeight.bold);
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,7 +21,7 @@ class CredentialSharedState extends State<CredentialShared> {
         actions: [
           IconButton(
             onPressed: () {
-              _navigateToDashboard(userLoggedIn);
+              _navigateToDashboard();
           },
             icon: const Icon(Icons.close),
           ),
@@ -53,41 +40,11 @@ class CredentialSharedState extends State<CredentialShared> {
         ),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            RichText(
-              text: const TextSpan(
-                children: [
-                  WidgetSpan(
-                    child: Icon(Icons.check_circle, size: 30, color: Colors.green),
-                  ),
-                  TextSpan(
-                    text: "Success",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 28,
-                    ),
-                  )
-                ],
-              ),
-            ),
-            Text(
-              "Credential has been shared with ${widget.verifierName}",
-              style: const TextStyle(
-                color: Colors.black54,
-                fontWeight: FontWeight.w400,
-                fontSize: 22,
-              ),
-            ),
-          ],
-        ),
+        child: SuccessCard(credentialData: widget.credentialData, verifierName: widget.verifierName, subTitle: 'Credential has been shared with ',),
       ),
     );
   }
-  _navigateToDashboard(String userLoggedIn) async {
+  _navigateToDashboard() async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }
 }
