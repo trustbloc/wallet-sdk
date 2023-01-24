@@ -1,14 +1,8 @@
 import 'dart:developer';
-import 'package:app/models/credential_data.dart';
-import 'package:app/models/credential_data_object.dart';
-import 'package:app/views/presentation_preview.dart';
+import 'package:app/scenarios/handle_openid_url.dart';
 import 'package:app/widgets/common_title_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
-import 'package:app/views/otp.dart';
-import 'package:app/demo_method_channel.dart';
-import 'package:app/services/storage_service.dart';
-import 'package:app/models/store_credential_data.dart';
 
 class QRScanner extends StatefulWidget {
   const QRScanner({Key? key}) : super(key: key);
@@ -19,8 +13,6 @@ class QRScanner extends StatefulWidget {
   }
 }
 
-var WalletSDKPlugin = MethodChannelWallet();
-
 class QRScannerState extends State<QRScanner> {
   QRViewController? controller;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
@@ -28,7 +20,11 @@ class QRScannerState extends State<QRScanner> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomTitleAppBar(pageTitle: 'Scan QR', addCloseIcon: true, height: 50,),
+      appBar: const CustomTitleAppBar(
+        pageTitle: 'Scan QR',
+        addCloseIcon: true,
+        height: 50,
+      ),
       body: QRView(
         key: qrKey,
         onQRViewCreated: _onQRViewCreated,
@@ -48,7 +44,7 @@ class QRScannerState extends State<QRScanner> {
     this.controller = controller;
     controller.scannedDataStream.listen((scanData) async {
       controller.dispose();
-      _authorize(scanData.code!);
+      handleOpenIDUrl(context, scanData.code!);
     });
   }
 
@@ -60,41 +56,4 @@ class QRScannerState extends State<QRScanner> {
       );
     }
   }
-
-  _navigateToOTPScreen() async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => const OTP()));
-  }
-
-  _navigateToPresentationPreviewScreen(String matchedCredential, CredentialData credentialData) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => PresentationPreview(matchedCredential: matchedCredential, credentialData: credentialData)));
-  }
-
-  _authorize(String qrCodeURL) async {
-    final StorageService storageService = StorageService();
-    late List<CredentialDataObject> storedCredentials;
-    log('received qr code url - $qrCodeURL');
-    if (!qrCodeURL.contains("openid-vc")) {
-      var authorizeResultPinRequired = await WalletSDKPlugin.authorize(qrCodeURL);
-      log("whats the authorize pin $authorizeResultPinRequired");
-      if (authorizeResultPinRequired == true) {
-        _navigateToOTPScreen();
-        return;
-      }
-    } else {
-    // Check if the flow is for the verifiable presentation or for issuance.
-      UserLoginDetails userLoginDetails =  await getUser();
-      var username = userLoginDetails.username!;
-      storedCredentials = await storageService.retrieveCredentials(username!);
-      var credentials = storedCredentials.map((e) => e.value.rawCredential).toList();
-      var matchedCred = await WalletSDKPlugin.processAuthorizationRequest(
-          authorizationRequest: qrCodeURL, storedCredentials: credentials);
-      var credentialDisplayData = storedCredentials.where((element) => matchedCred.contains(element.value.rawCredential)).map((e) => e.value.credentialDisplayData);
-      log(matchedCred.length.toString());
-      if (matchedCred.isNotEmpty) {
-        //TODO: in future we can show all the credential
-        _navigateToPresentationPreviewScreen(matchedCred.first, CredentialData(rawCredential: '', credentialDisplayData: credentialDisplayData.first));
-        return;
-       }
-      }
-    }
-  }
+}
