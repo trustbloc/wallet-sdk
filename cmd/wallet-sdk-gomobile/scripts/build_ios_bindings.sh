@@ -9,4 +9,4 @@
 
 packages_for_bindings=$(. scripts/generate_package_list.sh)
 
-gomobile bind -target=ios -o bindings/ios/walletsdk.xcframework ${packages_for_bindings}
+gomobile bind -ldflags '-w -s' -target=ios -o bindings/ios/walletsdk.xcframework ${packages_for_bindings}
