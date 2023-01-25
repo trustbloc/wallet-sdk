@@ -1,6 +1,6 @@
 # SDK Usage
 
-Last updated: December 12, 2022 (commit `88e63eaac7e66835e779cb0a718337505bf05dcd`)
+Last updated: January 25, 2023 (commit `c30a461b9b0684ad402a23cebe63136f0ddc6d28`)
 
 This guide explains how to use this SDK in Android or iOS code.
 
@@ -33,8 +33,8 @@ import dev.trustbloc.wallet.sdk.credential.*
 
 val db = credential.newInMemoryDB()
 
-val vc = api.JSONObject()
-vc.setData = "VC JSON goes here"
+val opts = Opts(true, null)
+val vc = Vcparse.parse("VC JSON goes here", opts)
 
 db.add(vc)
 
@@ -52,7 +52,8 @@ import Walletsdk
 
 let db = CredentialNewInMemoryDB()
 
-let vc = ApiJSONObject(data: "VC JSON goes here")
+let opts = VcparseNewOpts(true, nil)
+let vc = VcparseParse("VC JSON goes here", opts, nil)!
 
 db.add(vc)
 
@@ -75,9 +76,9 @@ then an in-memory key store will be used.
 #### Kotlin (Android)
 
 ```kotlin
-import dev.trustbloc.wallet.sdk.localkms
+import dev.trustbloc.wallet.sdk.localkms.Localkms
 
-val kms = localkms.KMS(null) // The null store argument causes it to use in-memory storage
+val kms = Localkms.newKMS(null) // The null store argument causes it to use in-memory storage
 
 val keyHandle = kms.create(localkms.KeyTypeED25519)
 ```
@@ -87,7 +88,7 @@ val keyHandle = kms.create(localkms.KeyTypeED25519)
 ```swift
 import Walletsdk
 
-let kms = LocalkmsNewKMS(nil) // The nil store argument causes it to use in-memory storage
+let kms = LocalkmsNewKMS(nil, nil) // The nil store argument causes it to use in-memory storage
 
 let keyHandle = kms.create(LocalkmsKeyTypeED25519)
 ```
@@ -109,11 +110,11 @@ The Keys used for DID documents are created for you automatically by the key wri
 
 ```kotlin
 import dev.trustbloc.wallet.sdk.api.CreateDIDOpts
-import dev.trustbloc.wallet.sdk.did.*
-import dev.trustbloc.wallet.sdk.localkms
+import dev.trustbloc.wallet.sdk.did.Creator
+import dev.trustbloc.wallet.sdk.localkms.Localkms
 
-val kms = localkms.KMS(null) // The null store argument causes it to use in-memory storage
-val didCreator = did.NewCreatorWithKeyWriter(kms)
+val kms = Localkms.newKMS(null) // The null store argument causes it to use in-memory storage
+val didCreator = Creator(kms as KeyWriter)
 val didDocResolution = didCreator.create("key", CreateDIDOpts()) // Create a did:key doc
 ```
 
@@ -122,8 +123,8 @@ val didDocResolution = didCreator.create("key", CreateDIDOpts()) // Create a did
 ```swift
 import Walletsdk
 
-let kms = LocalkmsNewKMS(nil) // The nil store argument causes it to use in-memory storage
-let didCreator = DidNewCreatorWithKeyWriter(kms)
+let kms = LocalkmsNewKMS(nil, nil) // The nil store argument causes it to use in-memory storage
+let didCreator = DidNewCreatorWithKeyWriter(kms, nil)
 let didDocResolution = didCreator.create("key", ApiCreateDIDOpts()) // Create a did:key doc
 ```
 
@@ -136,19 +137,21 @@ They must be passed in by the caller.
 ##### Kotlin (Android)
 
 ```kotlin
-import dev.trustbloc.wallet.sdk.api.*
-import dev.trustbloc.wallet.sdk.did.*
-import dev.trustbloc.wallet.sdk.localkms
 
-val kms = localkms.KMS(null) // The null store argument causes it to use in-memory storage
+import dev.trustbloc.wallet.sdk.api.CreateDIDOpts
+import dev.trustbloc.wallet.sdk.did.Creator
+import dev.trustbloc.wallet.sdk.did.Did.Ed25519VerificationKey2018
+import dev.trustbloc.wallet.sdk.localkms.Localkms
+
+val kms = Localkms.newKMS(null) // The null store argument causes it to use in-memory storage
 
 val keyHandle = kms.create(localkms.KeyTypeED25519)
 
-val didCreator = did.NewCreatorWithKeyReader(kms)
+val didCreator = Creator(kms as KeyReader)
 
 val createDIDOpts = api.CreateDIDOpts()
 createDIDOpts.setKeyID = keyHandle.getKeyID()
-createDIDOpts.setVerificationType = did.Ed25519VerificationKey2018
+createDIDOpts.setVerificationType = Ed25519VerificationKey2018
 
 val didDocResolution = didCreator.create("key", createDIDOpts) // Create a did:key doc
 ```
@@ -162,7 +165,7 @@ let kms = LocalkmsNewKMS(nil) // The nil store argument causes it to use in-memo
 
 let keyHandle = kms.create(LocalkmsKeyTypeED25519)
 
-let didCreator = DidNewCreatorWithKeyReader(kms)
+let didCreator = DidNewCreatorWithKeyReader(kms, nil)
 
 let createDIDOpts = ApiCreateDIDOpts(keyID: keyHandle.keyID, verificationType: DidEd25519VerificationKey2018)
 
@@ -178,7 +181,7 @@ let didDocResolution = didCreator.create("key", createDIDOpts) // Create a did:k
 ```kotlin
 import dev.trustbloc.wallet.sdk.did.*
 
-val didResolver = did.Resolver()
+val didResolver = did.Resolver("") // argument is resolverServerURI, can be empty.
 
 val didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
 ```
@@ -188,7 +191,7 @@ val didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpb
 ```swift
 import Walletsdk
 
-let didResolver = DidNewResolver()
+let didResolver = DidNewResolver("", nil)
 
 let didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
 ```
@@ -202,19 +205,20 @@ They must be passed in by the caller.
 ##### Kotlin (Android)
 
 ```kotlin
-import dev.trustbloc.wallet.sdk.api.*
-import dev.trustbloc.wallet.sdk.did.*
-import dev.trustbloc.wallet.sdk.localkms
+import dev.trustbloc.wallet.sdk.api.CreateDIDOpts
+import dev.trustbloc.wallet.sdk.did.Creator
+import dev.trustbloc.wallet.sdk.did.Did.Ed25519VerificationKey2018
+import dev.trustbloc.wallet.sdk.localkms.Localkms
 
-val kms = localkms.KMS(null) // The null store argument causes it to use in-memory storage
+val kms = Localkms.newKMS(null) // The null store argument causes it to use in-memory storage
 
 val keyHandle = kms.create(localkms.KeyTypeED25519)
 
-val didCreator = did.NewCreatorWithKeyReader(kms)
+val didCreator = Creator(kms as KeyReader)
 
 val createDIDOpts = api.CreateDIDOpts()
 createDIDOpts.setKeyID = keyHandle.getKeyID()
-createDIDOpts.setVerificationType = did.Ed25519VerificationKey2018
+createDIDOpts.setVerificationType = Ed25519VerificationKey2018
 
 val didDocResolution = didCreator.create("key", createDIDOpts) // Create a did:key doc
 ```
@@ -224,11 +228,11 @@ val didDocResolution = didCreator.create("key", createDIDOpts) // Create a did:k
 ```swift
 import Walletsdk
 
-let kms = LocalkmsNewKMS(nil) // The nil store argument causes it to use in-memory storage
+let kms = LocalkmsNewKMS(nil, nil) // The nil store argument causes it to use in-memory storage
 
 let keyHandle = kms.create(LocalkmsKeyTypeED25519)
 
-let didCreator = DidNewCreatorWithKeyReader(kms)
+let didCreator = DidNewCreatorWithKeyReader(kms, nil)
 
 let createDIDOpts = ApiCreateDIDOpts(keyID: keyHandle.keyID, verificationType: DidEd25519VerificationKey2018)
 
@@ -248,9 +252,9 @@ Note the following limitations:
 ```kotlin
 import dev.trustbloc.wallet.sdk.did.*
 
-val didResolver = did.Resolver()
+val didResolver = Resolver()
 
-val validationResult = did.ValidateService("YourDIDHere", didResolver)
+val validationResult = Did.validateLinkedDomains("YourDIDHere", didResolver)
 ```
 
 #### Swift (iOS)
@@ -258,9 +262,9 @@ val validationResult = did.ValidateService("YourDIDHere", didResolver)
 ```swift
 import Walletsdk
 
-let didResolver = DidNewResolver()
+let didResolver = DidNewResolver("", nil)
 
-let validationResult = DidValidateService("YourDIDHere", didResolver)
+let validationResult = ValidateLinkedDomains("YourDIDHere", didResolver)
 ```
 
 ## OpenID4CI
@@ -313,24 +317,27 @@ They use in-memory key storage and the Tink crypto library.
 #### Kotlin (Android)
 
 ```kotlin
-import dev.trustbloc.wallet.sdk.api.CreateDIDOpts
-import dev.trustbloc.wallet.sdk.did.*
-import dev.trustbloc.wallet.sdk.localkms
-import dev.trustbloc.wallet.sdk.openid4ci
+import dev.trustbloc.wallet.sdk.localkms.Localkms
+import dev.trustbloc.wallet.sdk.localkms.SignerCreator
+import dev.trustbloc.wallet.sdk.did.Resolver
+import dev.trustbloc.wallet.sdk.did.Creator
+import dev.trustbloc.wallet.sdk.openid4ci.Interaction
+import dev.trustbloc.wallet.sdk.openid4ci.ClientConfig
+import dev.trustbloc.wallet.sdk.openid4ci.CredentialRequestOpts
 
 // Setup
-val kms = localkms.KMS(null) // The null store argument causes it to use in-memory storage. Will use the Tink crypto library.
-val signerCreator = localkms.SignerCreator(kms) // Will use the Tink crypto library
-val didResolver = did.Resolver()
-val didCreator = did.NewCreatorWithKeyWriter(kms)
+val kms = Localkms.newKMS(null)// The null store argument causes it to use in-memory storage. Will use the Tink crypto library.
+val signerCreator = Localkms.createSignerCreator(kms) // Will use the Tink crypto library
+val didResolver = Resolver("")
+val didCreator = Creator(kms as KeyWriter)
 val didDocResolution = didCreator.create("key", CreateDIDOpts()) // Create a did:key doc
 val cfg = ClientConfig(didDocResolution.id(), "ClientID", signerCreator, didResolver)
 
 // Going through the flow
-val interaction = openid4ci.Interaction("YourRequestURIHere", cfg)
+val interaction = Interaction("YourRequestURIHere", cfg)
 interaction.authorize() // Returned object doesn't matter with current implementation limitations
 val userPIN = "1234"
-val requestCredentialOpts = openid4ci.CredentialRequestOpts(userPIN)
+val requestCredentialOpts = CredentialRequestOpts(userPIN)
 val credentials = interaction.requestCredential(requestCredentialOpts) // Should probably store these somewhere
 val displayData = interaction.resolveDisplay("en-US") // Optional (but useful)
 ```
@@ -341,15 +348,15 @@ val displayData = interaction.resolveDisplay("en-US") // Optional (but useful)
 import Walletsdk
 
 // Setup
-let kms = LocalkmsNewKMS(nil) // The nil store argument causes it to use in-memory storage. Will use the Tink crypto library.
-let signerCreator = LocalkmsCreateSignerCreator(kms) // Will use the Tink crypto library
-let didResolver = DidNewResolver()
-let didCreator = DidNewCreatorWithKeyWriter(kms)
+let kms = DidNewResolver("", nil) // The nil store argument causes it to use in-memory storage. Will use the Tink crypto library.
+let signerCreator = LocalkmsCreateSignerCreator(kms, nil) // Will use the Tink crypto library
+let didResolver = DidNewResolver("", nil)
+let didCreator = DidNewCreatorWithKeyWriter(kms, nil)
 let didDocResolution = didCreator.create("key", ApiCreateDIDOpts()) // Create a did:key doc
-let cfg =  Openid4ciClientConfig(didDocResolution.id, "ClientID", signerCreator, didResolver)
+let cfg =  Openid4ciClientConfig(didDocResolution.id, clientID: "ClientID", signerCreator: signerCreator, didRes: didResolver)
 
 // Going through the flow
-let interaction = Openid4ciNewInteraction("YourRequestURIHere", cfg)
+let interaction = Openid4ciNewInteraction("YourRequestURIHere", cfg, nil)
 interaction.authorize() // Returned object doesn't matter with current implementation limitations
 let userPIN = "1234"
 let requestCredentialOpts = Openid4ciNewCredentialRequestOpts(userPIN)
@@ -383,19 +390,23 @@ They use in-memory key storage and the Tink crypto library.
 #### Kotlin (Android)
 
 ```kotlin
-import dev.trustbloc.wallet.sdk.api.*
-import dev.trustbloc.wallet.sdk.did.*
+import dev.trustbloc.wallet.sdk.localkms.Localkms
+import dev.trustbloc.wallet.sdk.localkms.SignerCreator
+import dev.trustbloc.wallet.sdk.did.Resolver
+import dev.trustbloc.wallet.sdk.did.Creator
+import dev.trustbloc.wallet.sdk.ld.DocLoader
 import dev.trustbloc.wallet.sdk.localkms
 import dev.trustbloc.wallet.sdk.openid4vp
 import dev.trustbloc.wallet.sdk.ld
 import dev.trustbloc.wallet.sdk.credential
 
 // Setup
-val kms = localkms.KMS(null) // The null store argument causes it to use in-memory storage. Will use the Tink crypto library.
-val didResolver = did.Resolver()
-val docLoader = ld.DocLoader()
-val didCreator = did.NewCreatorWithKeyWriter(kms)
-val didDocResolution = didCreator.create("key", api.CreateDIDOpts()) // Create a did:key doc
+val kms = Localkms.newKMS(null)// The null store argument causes it to use in-memory storage. Will use the Tink crypto library.
+val signerCreator = Localkms.createSignerCreator(kms) // Will use the Tink crypto library
+val didResolver = Resolver("")
+val didCreator = Creator(kms as KeyWriter)
+val documentLoader = DocLoader()
+val didDocResolution = didCreator.create("key", CreateDIDOpts()) // Create a did:key doc
 
 // Going through the flow
 val interaction = openid4vp.Interaction("YourAuthRequestURIHere", kms, kms.getCrypto(), didResolver, docLoader)
@@ -403,8 +414,9 @@ val query = interaction.getQuery()
 val inquirer = credential.Inquirer(docLoader)
 val issuedCredentials = api.VerifiableCredentialsArray() // Would need some actual credentials for this to actually work
 val verifiablePres = inquirer.Query(query, credential.CredentialsOpt(issuedCredentials))
+val matchedCreds = verifiablePresentation.credentials() // These credentials should be shown to the user with a confirmation dialog so they can confirm that they want to share this data before calling presentCredential.
 val keyID = didDocResolution.assertionMethodKeyID()
-val credentials = interaction.presentCredential(verifiablePres, keyID)
+interaction.presentCredential(verifiablePres, keyID)
 ```
 
 #### Swift (iOS)
@@ -413,15 +425,16 @@ val credentials = interaction.presentCredential(verifiablePres, keyID)
 import Walletsdk
 
 // Setup
-let kms = LocalkmsNewKMS(nil) // The nil store argument causes it to use in-memory storage. Will use the Tink crypto library.
-let didResolver = DidNewResolver()
-let didCreator = DidNewCreatorWithKeyWriter(kms)
-let didDocResolution = didCreator.create("key", ApiCreateDIDOpts()) // Create a did:key doc
+let kms = DidNewResolver("", nil) // The nil store argument causes it to use in-memory storage. Will use the Tink crypto library.
+let signerCreator = LocalkmsCreateSignerCreator(kms, nil) // Will use the Tink crypto library
+let didResolver = DidNewResolver("", nil)
+let didCreator = DidNewCreatorWithKeyWriter(kms, nil)
+let documentLoader = LdNewDocLoader()
 
 // Going through the flow
-let interaction = Openid4vpNewInteraction("YourAuthRequestURIHere", kms, kms.getCrypto(), didResolver, docLoader)
+let interaction = Openid4vpInteraction("YourAuthRequestURIHere", keyHandle:kms, crypto:kms.getCrypto(), didResolver:didResolver, ldDocumentLoader:docLoader)
 let query = interaction.getQuery()
-let inquirer = CredentialNewinquirer(docLoader)
+let inquirer = CredentialNewInquirer(docLoader)
 let issuedCredentials = ApiVerifiableCredentialsArray() // Would need some actual credentials for this to actually work
 let verifiablePres = inquirer.Query(query, CredentialNewCredentialsOpt(issuedCredentials))
 let keyID = didDocResolution.assertionMethodKeyID()
