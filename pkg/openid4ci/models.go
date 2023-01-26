@@ -9,6 +9,7 @@ package openid4ci
 import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
@@ -22,6 +23,7 @@ type Interaction struct {
 	vcs               []*verifiable.Credential
 	signerProvider    didsignjwt.SignerGetter
 	didResolver       *didResolverWrapper
+	activityLogger    api.ActivityLogger
 }
 
 // InitiationRequest represents the Issuance Initiation Request object received from an issuer as defined in

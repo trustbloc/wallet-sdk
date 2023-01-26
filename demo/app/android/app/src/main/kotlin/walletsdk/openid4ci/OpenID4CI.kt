@@ -17,7 +17,7 @@ class OpenID4CI constructor(
     private var newInteraction: Interaction
 
     init {
-        val cfg = ClientConfig(userDID, "ClientID", didJWTSignerCreator, didResolver)
+        val cfg = ClientConfig(userDID, "ClientID", didJWTSignerCreator, didResolver, null)
 
         println("didJWTSignerCreator")
         println(didJWTSignerCreator)

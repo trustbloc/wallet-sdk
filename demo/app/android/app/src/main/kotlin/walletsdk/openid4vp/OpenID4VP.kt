@@ -25,7 +25,7 @@ class OpenID4VP constructor(
     private var verifiablePresentation: VerifiablePresentation? = null;
 
     fun processAuthorizationRequest(authorizationRequest: String, storedCredentials: List<String>): List<String> {
-        val interaction = Interaction(authorizationRequest, keyReader, crypto, didResolver, documentLoader)
+        val interaction = Interaction(authorizationRequest, keyReader, crypto, didResolver, documentLoader, null)
 
         val query = interaction.getQuery()
 

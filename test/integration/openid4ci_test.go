@@ -10,6 +10,10 @@ import (
 	"fmt"
 	"testing"
 
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/stretchr/testify/require"
 
@@ -74,11 +78,14 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		didID, err := didDoc.ID()
 		require.NoError(t, err)
 
+		activityLogger := mem.NewActivityLogger()
+
 		clientConfig := openid4ci.ClientConfig{
-			UserDID:       didID,
-			ClientID:      "ClientID",
-			SignerCreator: signerCreator,
-			DIDResolver:   didResolver,
+			UserDID:        didID,
+			ClientID:       "ClientID",
+			SignerCreator:  signerCreator,
+			DIDResolver:    didResolver,
+			ActivityLogger: activityLogger,
 		}
 
 		interaction, err := openid4ci.NewInteraction(initiateIssuanceURL, &clientConfig)
@@ -104,5 +111,27 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 
 		subID, err := verifiable.SubjectID(vc.VC.Subject)
 		require.Contains(t, subID, didID)
+
+		checkActivityLogAfterOpenID4CIFlow(t, activityLogger, tc.issuerProfileID, subID)
 	}
+}
+
+func checkActivityLogAfterOpenID4CIFlow(t *testing.T, activityLogger *mem.ActivityLogger,
+	issuerProfileID, expectedSubjectID string,
+) {
+	numberOfActivitiesLogged := activityLogger.Length()
+	require.Equal(t, 1, numberOfActivitiesLogged)
+
+	activity := activityLogger.AtIndex(0)
+
+	require.NotEmpty(t, activity.ID)
+	require.Equal(t, goapi.LogTypeCredentialActivity, activity.Type)
+	require.NotEmpty(t, activity.Time)
+	require.NotNil(t, activity.Data)
+	require.Equal(t, oidc4ci.VCSAPIDirect+"/"+issuerProfileID, activity.Data.Client)
+	require.Equal(t, "oidc-issuance", activity.Data.Operation)
+	require.Equal(t, goapi.ActivityLogStatusSuccess, activity.Data.Status)
+	require.NotNil(t, activity.Data.Params)
+	require.Equal(t, fmt.Sprintf(`{"subjectIDs":["%s"]}`, expectedSubjectID),
+		string(activity.Data.Params.Data))
 }

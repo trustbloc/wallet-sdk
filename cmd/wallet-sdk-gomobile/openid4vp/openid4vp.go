@@ -40,19 +40,28 @@ type Interaction struct {
 
 // NewInteraction creates a new OpenID4VP Interaction.
 // The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
+// If activityLogger is nil, then no activity logging will take place.
 func NewInteraction(authorizationRequest string, keyHandleReader api.KeyReader, crypto api.Crypto,
-	didResolver api.DIDResolver, ldDocumentLoader api.LDDocumentLoader,
+	didResolver api.DIDResolver, ldDocumentLoader api.LDDocumentLoader, activityLogger api.ActivityLogger,
 ) *Interaction {
 	jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
 		common.NewVDRKeyResolver(&wrapper.VDRResolverWrapper{
 			DIDResolver: didResolver,
 		}).PublicKeyFetcher()))
 
+	opts := []openid4vp.Opt{openid4vp.WithHTTPClient(common.DefaultHTTPClient())}
+
+	if activityLogger != nil {
+		mobileActivityLoggerWrapper := &wrapper.MobileActivityLoggerWrapper{MobileAPIActivityLogger: activityLogger}
+
+		opts = append(opts, openid4vp.WithActivityLogger(mobileActivityLoggerWrapper))
+	}
+
 	return &Interaction{
 		keyHandleReader:  keyHandleReader,
 		ldDocumentLoader: ldDocumentLoader,
 		crypto:           crypto,
-		goAPIOpenID4VP:   openid4vp.New(authorizationRequest, jwtVerifier, common.DefaultHTTPClient()),
+		goAPIOpenID4VP:   openid4vp.New(authorizationRequest, jwtVerifier, opts...),
 	}
 }
 

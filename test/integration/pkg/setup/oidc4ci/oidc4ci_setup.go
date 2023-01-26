@@ -23,13 +23,13 @@ import (
 
 const (
 	vcsAPIGateway                       = "https://localhost:4455"
-	vcsAPIDirect                        = "http://localhost:8075"
+	VCSAPIDirect                        = "http://localhost:8075"
 	initiateCredentialIssuanceURLFormat = "%s" + "/issuer/profiles/%s/interactions/initiate-oidc"
 	vcsAuthorizeEndpoint                = "%s" + "/oidc/authorize"
 	vcsTokenEndpoint                    = "%s" + "/oidc/token"
 	oidcProviderURL                     = "https://localhost:4444"
 	claimDataURL                        = "https://mock-login-consent.example.com:8099/claim-data"
-	xAPIKey 							= "rw_token"
+	xAPIKey                             = "rw_token"
 )
 
 type initiateOIDC4CIRequest struct {
@@ -76,7 +76,7 @@ func NewSetup(httpRequest *httprequest.Request) (*Setup, error) {
 
 func (s *Setup) AuthorizeIssuerBypassAuth(orgID string) error {
 	s.organizationID = orgID
-	s.apiURL = vcsAPIDirect
+	s.apiURL = VCSAPIDirect
 	return nil
 }
 

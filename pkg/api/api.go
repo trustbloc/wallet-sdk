@@ -77,9 +77,3 @@ type JWTSigner interface {
 	Sign(data []byte) ([]byte, error)
 	Headers() jose.Headers
 }
-
-// ActivityLog defines activity log related APIs.
-type ActivityLog interface {
-	// Log logs an activity.
-	Log(message string)
-}

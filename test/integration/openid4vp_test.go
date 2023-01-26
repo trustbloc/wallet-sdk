@@ -10,6 +10,10 @@ import (
 	"fmt"
 	"testing"
 
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -72,8 +76,10 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		didResolver, err := did.NewResolver("")
 		require.NoError(t, err)
 
+		activityLogger := mem.NewActivityLogger()
+
 		interaction := openid4vp.NewInteraction(
-			initiateURL, testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver, ld.NewDocLoader())
+			initiateURL, testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver, ld.NewDocLoader(), activityLogger)
 
 		query, err := interaction.GetQuery()
 		require.NoError(t, err)
@@ -103,7 +109,25 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		err = interaction.PresentCredential(verifiablePresContent, vm)
 		require.NoError(t, err)
+
+		checkActivityLogAfterOpenID4VPFlow(t, activityLogger, tc.verifierProfileID)
 	}
+}
+
+func checkActivityLogAfterOpenID4VPFlow(t *testing.T, activityLogger *mem.ActivityLogger, verifierProfileID string) {
+	numberOfActivitiesLogged := activityLogger.Length()
+	require.Equal(t, 1, numberOfActivitiesLogged)
+
+	activity := activityLogger.AtIndex(0)
+
+	require.NotEmpty(t, activity.ID)
+	require.Equal(t, goapi.LogTypeCredentialActivity, activity.Type)
+	require.NotEmpty(t, activity.Time)
+	require.NotNil(t, activity.Data)
+	require.Equal(t, verifierProfileID, activity.Data.Client)
+	require.Equal(t, "oidc-presentation", activity.Data.Operation)
+	require.Equal(t, goapi.ActivityLogStatusSuccess, activity.Data.Status)
+	require.Nil(t, activity.Data.Params)
 }
 
 type vpTestHelper struct {

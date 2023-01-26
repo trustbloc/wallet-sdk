@@ -26,13 +26,14 @@ func (d *didResolverWrapper) Resolve(did string, _ ...vdr.DIDMethodOption) (*did
 	return d.didResolver.Resolve(did)
 }
 
-// ClientConfig contains the various required parameters for an OpenID4CI Interaction.
+// ClientConfig contains the various parameters for an OpenID4CI Interaction.
 // TODO: https://github.com/trustbloc/wallet-sdk/issues/163 refactor to instead require a key ID and a signer.
 type ClientConfig struct {
 	UserDID        string
 	ClientID       string
 	SignerProvider didsignjwt.SignerGetter
 	DIDResolver    api.DIDResolver
+	ActivityLogger api.ActivityLogger // If not specified, then activities won't be logged.
 }
 
 func validateClientConfig(config *ClientConfig) error {
