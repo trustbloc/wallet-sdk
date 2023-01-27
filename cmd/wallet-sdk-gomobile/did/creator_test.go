@@ -29,8 +29,7 @@ func (m *mockKeyHandleReader) ExportPubKey(string) ([]byte, error) {
 
 func TestNewCreatorWithKeyWriter(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		localKMS, err := localkms.NewKMS(nil)
-		require.NoError(t, err)
+		localKMS := createTestKMS(t)
 
 		didCreator, err := did.NewCreatorWithKeyWriter(localKMS)
 		require.NoError(t, err)
@@ -45,8 +44,7 @@ func TestNewCreatorWithKeyWriter(t *testing.T) {
 
 func TestNewCreatorWithKeyReader(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		localKMS, err := localkms.NewKMS(nil)
-		require.NoError(t, err)
+		localKMS := createTestKMS(t)
 
 		didCreator, err := did.NewCreatorWithKeyReader(localKMS)
 		require.NoError(t, err)
@@ -61,8 +59,7 @@ func TestNewCreatorWithKeyReader(t *testing.T) {
 
 func TestCreator_Create(t *testing.T) {
 	t.Run("Using KeyWriter (automatic key generation) - success", func(t *testing.T) {
-		localKMS, err := localkms.NewKMS(nil)
-		require.NoError(t, err)
+		localKMS := createTestKMS(t)
 
 		creator, err := did.NewCreatorWithKeyWriter(localKMS)
 		require.NoError(t, err)
@@ -110,4 +107,15 @@ func TestCreator_Create(t *testing.T) {
 			require.Empty(t, didDocResolution)
 		})
 	})
+}
+
+func createTestKMS(t *testing.T) *localkms.KMS {
+	t.Helper()
+
+	kmsStore := localkms.NewMemKMSStore()
+
+	localKMS, err := localkms.NewKMS(kmsStore)
+	require.NoError(t, err)
+
+	return localKMS
 }

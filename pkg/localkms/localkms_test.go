@@ -15,10 +15,15 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 )
 
+func TestNewLocalKMS(t *testing.T) {
+	localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: nil})
+	require.EqualError(t, err, "cfg.Storage cannot be nil")
+	require.Nil(t, localKMS)
+}
+
 func TestLocalKMS_Create(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
-		require.NoError(t, err)
+		localKMS := createTestKMS(t)
 
 		keyID, key, err := localKMS.Create(arieskms.ED25519Type)
 		require.NoError(t, err)
@@ -27,17 +32,15 @@ func TestLocalKMS_Create(t *testing.T) {
 	})
 
 	t.Run("Invalid key type", func(t *testing.T) {
-		localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
-		require.NoError(t, err)
+		localKMS := createTestKMS(t)
 
-		_, _, err = localKMS.Create("INVALID")
+		_, _, err := localKMS.Create("INVALID")
 		require.Error(t, err)
 	})
 }
 
 func TestLocalKMS_GetKey(t *testing.T) {
-	localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
-	require.NoError(t, err)
+	localKMS := createTestKMS(t)
 
 	key, err := localKMS.ExportPubKey("KeyID")
 	require.EqualError(t, err, "not implemented")
@@ -45,7 +48,7 @@ func TestLocalKMS_GetKey(t *testing.T) {
 }
 
 func TestLocalKMS_CustomStore(t *testing.T) {
-	localKMS, err := localkms.NewLocalKMS(&localkms.Config{
+	localKMS, err := localkms.NewLocalKMS(localkms.Config{
 		Storage: newMockStorage(),
 	})
 	require.NoError(t, err)
@@ -56,19 +59,28 @@ func TestLocalKMS_CustomStore(t *testing.T) {
 }
 
 func TestLocalKMS_GetCrypto(t *testing.T) {
-	localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
-	require.NoError(t, err)
+	localKMS := createTestKMS(t)
 
 	crypto := localKMS.GetCrypto()
 	require.NotNil(t, crypto)
 }
 
 func TestLocalKMS_GetAriesKMS(t *testing.T) {
-	localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
-	require.NoError(t, err)
+	localKMS := createTestKMS(t)
 
 	ariesKMS := localKMS.GetAriesKMS()
 	require.NotNil(t, ariesKMS)
+}
+
+func createTestKMS(t *testing.T) *localkms.LocalKMS {
+	t.Helper()
+
+	kmsStore := localkms.NewMemKMSStore()
+
+	localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: kmsStore})
+	require.NoError(t, err)
+
+	return localKMS
 }
 
 type mockStorage struct {

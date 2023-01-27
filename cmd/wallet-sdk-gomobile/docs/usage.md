@@ -64,12 +64,13 @@ retrievedVCs = db.getAll()
 db.remove("VC_ID")
 ```
 
-## KMS
-This package contains a KMS implementation that uses Google's Tink crypto library.
+## Local KMS
+This package contains a local KMS implementation that uses Google's Tink crypto library.
 Private keys may intermittently reside in local memory with this implementation so
 keep this consideration in mind when deciding whether to use this or not.
-The key store can be injected in by the caller. If the store argument in the constructor is left null/nil,
-then an in-memory key store will be used.
+The caller must inject a key store for the KMS to use. This package includes an in-memory key store implementation
+that can be used, but you will likely want to inject in your own implementation at some point so your keys are
+persisted.
 
 ### Examples
 
@@ -77,8 +78,10 @@ then an in-memory key store will be used.
 
 ```kotlin
 import dev.trustbloc.wallet.sdk.localkms.Localkms
+import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 
-val kms = Localkms.newKMS(null) // The null store argument causes it to use in-memory storage
+val memKMSStore = MemKMSStore.MemKMSStore()
+val kms = Localkms.newKMS(memKMSStore)
 
 val keyHandle = kms.create(localkms.KeyTypeED25519)
 ```
@@ -88,7 +91,8 @@ val keyHandle = kms.create(localkms.KeyTypeED25519)
 ```swift
 import Walletsdk
 
-let kms = LocalkmsNewKMS(nil, nil) // The nil store argument causes it to use in-memory storage
+let memKMSStore = LocalkmsNewMemKMSStore()
+let kms = LocalkmsNewKMS(memKMSStore, nil)
 
 let keyHandle = kms.create(LocalkmsKeyTypeED25519)
 ```
@@ -112,8 +116,10 @@ The Keys used for DID documents are created for you automatically by the key wri
 import dev.trustbloc.wallet.sdk.api.CreateDIDOpts
 import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.localkms.Localkms
+import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 
-val kms = Localkms.newKMS(null) // The null store argument causes it to use in-memory storage
+val memKMSStore = MemKMSStore.MemKMSStore()
+val kms = Localkms.newKMS(memKMSStore)
 val didCreator = Creator(kms as KeyWriter)
 val didDocResolution = didCreator.create("key", CreateDIDOpts()) // Create a did:key doc
 ```
@@ -123,7 +129,8 @@ val didDocResolution = didCreator.create("key", CreateDIDOpts()) // Create a did
 ```swift
 import Walletsdk
 
-let kms = LocalkmsNewKMS(nil, nil) // The nil store argument causes it to use in-memory storage
+let memKMSStore = LocalkmsNewMemKMSStore()
+let kms = LocalkmsNewKMS(memKMSStore, nil)
 let didCreator = DidNewCreatorWithKeyWriter(kms, nil)
 let didDocResolution = didCreator.create("key", ApiCreateDIDOpts()) // Create a did:key doc
 ```
@@ -142,8 +149,10 @@ import dev.trustbloc.wallet.sdk.api.CreateDIDOpts
 import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.did.Did.Ed25519VerificationKey2018
 import dev.trustbloc.wallet.sdk.localkms.Localkms
+import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 
-val kms = Localkms.newKMS(null) // The null store argument causes it to use in-memory storage
+val memKMSStore = MemKMSStore.MemKMSStore()
+val kms = Localkms.newKMS(memKMSStore)
 
 val keyHandle = kms.create(localkms.KeyTypeED25519)
 
@@ -161,7 +170,8 @@ val didDocResolution = didCreator.create("key", createDIDOpts) // Create a did:k
 ```swift
 import Walletsdk
 
-let kms = LocalkmsNewKMS(nil) // The nil store argument causes it to use in-memory storage
+let memKMSStore = LocalkmsNewMemKMSStore()
+let kms = LocalkmsNewKMS(memKMSStore)
 
 let keyHandle = kms.create(LocalkmsKeyTypeED25519)
 
@@ -209,8 +219,10 @@ import dev.trustbloc.wallet.sdk.api.CreateDIDOpts
 import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.did.Did.Ed25519VerificationKey2018
 import dev.trustbloc.wallet.sdk.localkms.Localkms
+import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 
-val kms = Localkms.newKMS(null) // The null store argument causes it to use in-memory storage
+val memKMSStore = MemKMSStore.MemKMSStore()
+val kms = Localkms.newKMS(memKMSStore)
 
 val keyHandle = kms.create(localkms.KeyTypeED25519)
 
@@ -228,7 +240,8 @@ val didDocResolution = didCreator.create("key", createDIDOpts) // Create a did:k
 ```swift
 import Walletsdk
 
-let kms = LocalkmsNewKMS(nil, nil) // The nil store argument causes it to use in-memory storage
+let memKMSStore = LocalkmsNewMemKMSStore()
+let kms = LocalkmsNewKMS(memKMSStore, nil)
 
 let keyHandle = kms.create(LocalkmsKeyTypeED25519)
 
@@ -319,6 +332,7 @@ They use in-memory key storage and the Tink crypto library.
 
 ```kotlin
 import dev.trustbloc.wallet.sdk.localkms.Localkms
+import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 import dev.trustbloc.wallet.sdk.localkms.SignerCreator
 import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.did.Creator
@@ -328,7 +342,8 @@ import dev.trustbloc.wallet.sdk.openid4ci.CredentialRequestOpts
 import dev.trustbloc.wallet.sdk.openid4ci.mem
 
 // Setup
-val kms = Localkms.newKMS(null)// The null store argument causes it to use in-memory storage. Will use the Tink crypto library.
+val memKMSStore = MemKMSStore.MemKMSStore()
+val kms = Localkms.newKMS(memKMSStore)
 val signerCreator = Localkms.createSignerCreator(kms) // Will use the Tink crypto library
 val didResolver = Resolver("")
 val didCreator = Creator(kms as KeyWriter)
@@ -352,7 +367,8 @@ val displayData = interaction.resolveDisplay("en-US") // Optional (but useful)
 import Walletsdk
 
 // Setup
-let kms = DidNewResolver("", nil) // The nil store argument causes it to use in-memory storage. Will use the Tink crypto library.
+let memKMSStore = LocalkmsNewMemKMSStore()
+let kms = LocalkmsNewKMS(memKMSStore, nil)
 let signerCreator = LocalkmsCreateSignerCreator(kms, nil) // Will use the Tink crypto library
 let didResolver = DidNewResolver("", nil)
 let didCreator = DidNewCreatorWithKeyWriter(kms, nil)
@@ -398,6 +414,7 @@ They use in-memory key storage and the Tink crypto library.
 
 ```kotlin
 import dev.trustbloc.wallet.sdk.localkms.Localkms
+import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 import dev.trustbloc.wallet.sdk.localkms.SignerCreator
 import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.did.Creator
@@ -409,7 +426,8 @@ import dev.trustbloc.wallet.sdk.credential
 import dev.trustbloc.wallet.sdk.openid4ci.mem
 
 // Setup
-val kms = Localkms.newKMS(null)// The null store argument causes it to use in-memory storage. Will use the Tink crypto library.
+val memKMSStore = MemKMSStore.MemKMSStore()
+val kms = Localkms.newKMS(memKMSStore)
 val signerCreator = Localkms.createSignerCreator(kms) // Will use the Tink crypto library
 val didResolver = Resolver("")
 val didCreator = Creator(kms as KeyWriter)
@@ -435,7 +453,8 @@ interaction.presentCredential(verifiablePres, keyID)
 import Walletsdk
 
 // Setup
-let kms = DidNewResolver("", nil) // The nil store argument causes it to use in-memory storage. Will use the Tink crypto library.
+let memKMSStore = LocalkmsNewMemKMSStore()
+let kms = LocalkmsNewKMS(memKMSStore, nil)
 let signerCreator = LocalkmsCreateSignerCreator(kms, nil) // Will use the Tink crypto library
 let didResolver = DidNewResolver("", nil)
 let didCreator = DidNewCreatorWithKeyWriter(kms, nil)

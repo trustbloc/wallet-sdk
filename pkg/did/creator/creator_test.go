@@ -31,8 +31,7 @@ func (m *mockKeyHandleReader) ExportPubKey(string) ([]byte, error) {
 
 func TestNewCreator(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
-		require.NoError(t, err)
+		localKMS := createTestKMS(t)
 
 		didCreator, err := creator.NewCreator(localKMS, nil)
 		require.NoError(t, err)
@@ -47,8 +46,7 @@ func TestNewCreator(t *testing.T) {
 
 func TestNewCreatorWithKeyWriter(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
-		require.NoError(t, err)
+		localKMS := createTestKMS(t)
 
 		didCreator, err := creator.NewCreatorWithKeyWriter(localKMS)
 		require.NoError(t, err)
@@ -63,8 +61,7 @@ func TestNewCreatorWithKeyWriter(t *testing.T) {
 
 func TestNewCreatorWithKeyReader(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
-		require.NoError(t, err)
+		localKMS := createTestKMS(t)
 
 		didCreator, err := creator.NewCreatorWithKeyReader(localKMS)
 		require.NoError(t, err)
@@ -79,8 +76,7 @@ func TestNewCreatorWithKeyReader(t *testing.T) {
 
 func TestCreator_Create(t *testing.T) {
 	t.Run("Using KeyWriter (automatic key generation) - success", func(t *testing.T) {
-		localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
-		require.NoError(t, err)
+		localKMS := createTestKMS(t)
 
 		didCreator, err := creator.NewCreatorWithKeyWriter(localKMS)
 		require.NoError(t, err)
@@ -132,8 +128,7 @@ func TestCreator_Create(t *testing.T) {
 				getKeyReturn: key,
 			}
 
-			localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
-			require.NoError(t, err)
+			localKMS := createTestKMS(t)
 
 			didCreator, err := creator.NewCreator(localKMS, mockKHR)
 			require.NoError(t, err)
@@ -212,8 +207,7 @@ func TestCreator_Create(t *testing.T) {
 		})
 	})
 	t.Run("Unsupported DID method", func(t *testing.T) {
-		localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
-		require.NoError(t, err)
+		localKMS := createTestKMS(t)
 
 		didCreator, err := creator.NewCreatorWithKeyWriter(localKMS)
 		require.NoError(t, err)
@@ -222,6 +216,17 @@ func TestCreator_Create(t *testing.T) {
 		testutil.RequireErrorContains(t, err, "DID method NotAValidDIDMethod not supported")
 		require.Empty(t, didDocResolution)
 	})
+}
+
+func createTestKMS(t *testing.T) *localkms.LocalKMS {
+	t.Helper()
+
+	kmsStore := localkms.NewMemKMSStore()
+
+	localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: kmsStore})
+	require.NoError(t, err)
+
+	return localKMS
 }
 
 type mockKeyWriter func(keyType kms.KeyType) (string, []byte, error)

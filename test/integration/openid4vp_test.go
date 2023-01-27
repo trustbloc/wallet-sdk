@@ -136,7 +136,7 @@ type vpTestHelper struct {
 }
 
 func newVPTestHelper(t *testing.T, didMethod string) *vpTestHelper {
-	kms, err := localkms.NewKMS(nil)
+	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
 	// create DID

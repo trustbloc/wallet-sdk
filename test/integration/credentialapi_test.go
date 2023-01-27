@@ -29,7 +29,7 @@ import (
 )
 
 func TestCredentialAPI(t *testing.T) {
-	kms, e := localkms.NewKMS(nil)
+	kms, e := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, e)
 
 	crypto := kms.GetCrypto()

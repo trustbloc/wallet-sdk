@@ -12,25 +12,25 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/secretlock/noop"
 )
 
-// InMemoryStore represents an in-memory database of keysets.
-type InMemoryStore struct {
+// MemKMSStore represents an in-memory database of keysets.
+type MemKMSStore struct {
 	keys map[string][]byte
 }
 
-// NewInMemoryStore returns a new InMemoryStore.
-func NewInMemoryStore() *InMemoryStore {
-	return &InMemoryStore{keys: map[string][]byte{}}
+// NewMemKMSStore returns a new MemKMSStore.
+func NewMemKMSStore() *MemKMSStore {
+	return &MemKMSStore{keys: map[string][]byte{}}
 }
 
 // Put stores the given key under the given keysetID.
-func (k *InMemoryStore) Put(keysetID string, keyset []byte) error {
+func (k *MemKMSStore) Put(keysetID string, keyset []byte) error {
 	k.keys[keysetID] = keyset
 
 	return nil
 }
 
 // Get retrieves the key stored under the given keysetID. If no key is found, then an error is returned.
-func (k *InMemoryStore) Get(keysetID string) ([]byte, error) {
+func (k *MemKMSStore) Get(keysetID string) ([]byte, error) {
 	key, exists := k.keys[keysetID]
 	if !exists {
 		return nil, arieskms.ErrKeyNotFound
@@ -40,33 +40,24 @@ func (k *InMemoryStore) Get(keysetID string) ([]byte, error) {
 }
 
 // Delete deletes the key stored under the given keysetID.
-func (k *InMemoryStore) Delete(keysetID string) error {
+// This won't normally be used since we don't expose the underlyinng Rotate method from the Aries local KMS
+// in the local KMS implementation here. However, if someone uses the deprecated GetAriesKMS method, they could
+// potentially call Rotate directly, so the Delete method is implemented here just in case.
+func (k *MemKMSStore) Delete(keysetID string) error {
 	delete(k.keys, keysetID)
 
 	return nil
 }
 
-// InMemoryStorageProvider represents an in-memory storage provide that can be used to satisfy the Aries KMS
-// Provider interface.
-type InMemoryStorageProvider struct {
+type storageProvider struct {
 	Storage arieskms.Store
 }
 
-// NewInMemoryStorageProvider returns a new InMemoryStorageProvider.
-func NewInMemoryStorageProvider() *InMemoryStorageProvider {
-	return &InMemoryStorageProvider{Storage: NewInMemoryStore()}
-}
-
-// StorageProvider returns an in-memory arieskms.Store implemenation.
-func (p *InMemoryStorageProvider) StorageProvider() arieskms.Store {
-	if p.Storage != nil {
-		return p.Storage
-	}
-
-	return NewInMemoryStore()
+func (p *storageProvider) StorageProvider() arieskms.Store {
+	return p.Storage
 }
 
 // SecretLock returns the Aries no-op secretlock.Service implementation.
-func (p *InMemoryStorageProvider) SecretLock() secretlock.Service {
+func (p *storageProvider) SecretLock() secretlock.Service {
 	return &noop.NoLock{}
 }

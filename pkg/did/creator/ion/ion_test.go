@@ -28,8 +28,7 @@ func TestNewCreator(t *testing.T) {
 
 func TestCreator_Create(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		localKMS, err := localkms.NewLocalKMS(&localkms.Config{})
-		require.NoError(t, err)
+		localKMS := createTestKMS(t)
 
 		kid, pk, err := localKMS.Create(kms.ED25519Type)
 		require.NoError(t, err)
@@ -66,6 +65,17 @@ func TestCreator_Create(t *testing.T) {
 		require.ErrorIs(t, err, expectErr)
 		require.Nil(t, doc)
 	})
+}
+
+func createTestKMS(t *testing.T) *localkms.LocalKMS {
+	t.Helper()
+
+	kmsStore := localkms.NewMemKMSStore()
+
+	localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: kmsStore})
+	require.NoError(t, err)
+
+	return localKMS
 }
 
 type mockKeyWriter func(keyType kms.KeyType) (string, []byte, error)
