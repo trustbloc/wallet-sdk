@@ -41,6 +41,10 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             let didMethodType = fetchArgsKeyValue(call, key: "didMethodType")
             createDid(didMethodType: didMethodType!, result: result)
             
+        case "fetchDID":
+            let didID = fetchArgsKeyValue(call, key: "didID")
+            fetchDID(didID: didID!)
+            
         case "authorize":
             let requestURI = fetchArgsKeyValue(call, key: "requestURI")
             qrCodeData.requestURI = requestURI!
@@ -68,7 +72,12 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     private func initSDK(result: @escaping FlutterResult) {
-        kms = LocalkmsNewKMS(nil, nil)
+        // storage implementation in the swift
+        // each user should have own kms store.  Should be for current user only.
+        let kmsStore = kmsStore()
+        print("what is store", kmsStore);
+        kms = LocalkmsNewKMS(kmsStore, nil)
+        print("what is kms", kms!);
         didResolver = DidNewResolver("", nil)
         crypto = kms?.getCrypto()
         documentLoader = LdNewDocLoader()
@@ -156,14 +165,24 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
     }
     
+    public func fetchDID(didID: String){
+        print("fetch did", didDocID!);
+        didDocID = didID
+    }
+    
     public func createDid(didMethodType: String, result: @escaping FlutterResult){
+        print("inside create did", didMethodType);
         let didCreator = DidNewCreatorWithKeyWriter(self.kms, nil)
+        print("didcreator", didCreator);
         do {
+            print("inside do");
             let apiCreate = initializeObject(fromType: ApiCreateDIDOpts.self)
+            print("api create", apiCreate);
             let doc = try didCreator!.create(didMethodType, createDIDOpts: apiCreate)
-            let docString = String(bytes: doc.content!, encoding: .utf8)
+            print("doc created", doc);
             didDocID = doc.id_(nil)
             didVerificationMethod = try doc.assertionMethod()
+            print("didDocid", didDocID);
             result(didDocID)
         } catch {
             result(FlutterError.init(code: "NATIVE_ERR",

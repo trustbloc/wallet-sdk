@@ -19,6 +19,12 @@ class MethodChannelWallet extends WalletPlatform {
     return createDIDMsg;
   }
 
+  Future<String?> fetchStoredDID(String didID) async {
+    final fetchDIDMsg = await methodChannel.invokeMethod<String>('fetchDID', <String, dynamic>{'didID': didID});
+    return fetchDIDMsg;
+  }
+
+
   Future<bool?> authorize(String qrCode) async {
     final authorizeResult =
         await methodChannel.invokeMethod<bool>('authorize', <String, dynamic>{'requestURI': qrCode});
