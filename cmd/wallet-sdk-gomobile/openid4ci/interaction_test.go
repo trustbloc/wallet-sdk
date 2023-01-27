@@ -15,16 +15,19 @@ import (
 	"net/url"
 	"testing"
 
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk/jwksupport"
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/stretchr/testify/require"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
-	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
+	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 )
 
 //go:embed testdata/sample_credential_response.json
@@ -42,12 +45,12 @@ const (
 
 func TestNewInteraction(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		createInteraction(t, sampleRequestURI)
+		createInteraction(t, nil, sampleRequestURI)
 	})
 	t.Run("Fail to parse user_pin_required URL query parameter", func(t *testing.T) {
 		requestURI := "openid-vc:///initiate_issuance?&user_pin_required=notabool"
 
-		config := getTestClientConfig(t)
+		config := getTestClientConfig(t, nil)
 
 		interaction, err := openid4ci.NewInteraction(requestURI, config)
 		requireErrorContains(t, err, `INVALID_ISSUANCE_URI`)
@@ -57,7 +60,7 @@ func TestNewInteraction(t *testing.T) {
 
 func TestInteraction_Authorize(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		interaction := createInteraction(t, sampleRequestURI)
+		interaction := createInteraction(t, nil, sampleRequestURI)
 
 		result, err := interaction.Authorize()
 		require.NoError(t, err)
@@ -66,7 +69,7 @@ func TestInteraction_Authorize(t *testing.T) {
 	t.Run("Pre-authorized code not provided", func(t *testing.T) {
 		requestURI := "openid-vc:///initiate_issuance"
 
-		config := getTestClientConfig(t)
+		config := getTestClientConfig(t, nil)
 
 		interaction, err := openid4ci.NewInteraction(requestURI, config)
 		require.NoError(t, err)
@@ -125,13 +128,31 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			"&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA" +
 			"&user_pin_required=false"
 
-		interaction := createInteraction(t, requestURI)
+		activityLogger := mem.NewActivityLogger()
+
+		interaction := createInteraction(t, activityLogger, requestURI)
 
 		credentialRequest := openid4ci.NewCredentialRequestOpts("")
 
 		result, err := interaction.RequestCredential(credentialRequest)
 		require.NoError(t, err)
 		require.NotNil(t, result)
+
+		numberOfActivitiesLogged := activityLogger.Length()
+		require.Equal(t, 1, numberOfActivitiesLogged)
+
+		activity := activityLogger.AtIndex(0)
+
+		require.NotEmpty(t, activity.ID)
+		require.Equal(t, goapi.LogTypeCredentialActivity, activity.Type)
+		require.NotEmpty(t, activity.Time)
+		require.NotNil(t, activity.Data)
+		require.Equal(t, "https://server.example.com", activity.Data.Client)
+		require.Equal(t, "oidc-issuance", activity.Data.Operation)
+		require.Equal(t, goapi.ActivityLogStatusSuccess, activity.Data.Status)
+		require.NotNil(t, activity.Data.Params)
+		require.Equal(t, `{"subjectIDs":["did:orb:uAAA:EiARTvvCsWFTSCc35447YpI2MJpFAaJZtFlceVz9lcMYVw"]}`,
+			string(activity.Data.Params.Data))
 	})
 	t.Run("Success with jwk public key", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{}
@@ -153,7 +174,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			"&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA" +
 			"&user_pin_required=false"
 
-		config := getTestClientConfig(t, func(handle *api.KeyHandle, kt string) (*did.VerificationMethod, error) {
+		config := getTestClientConfig(t, nil, func(handle *api.KeyHandle, kt string) (*did.VerificationMethod, error) {
 			jwk, err := jwksupport.PubKeyBytesToJWK(handle.PubKey, arieskms.KeyType(kt))
 			require.NoError(t, err)
 
@@ -189,7 +210,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			"&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA" +
 			"&user_pin_required=false"
 
-		config := getTestClientConfig(t)
+		config := getTestClientConfig(t, nil)
 
 		config.SignerCreator = &failingSignerCreator{}
 
@@ -204,10 +225,10 @@ func TestInteraction_RequestCredential(t *testing.T) {
 	})
 }
 
-func createInteraction(t *testing.T, requestURI string) *openid4ci.Interaction {
+func createInteraction(t *testing.T, activityLogger api.ActivityLogger, requestURI string) *openid4ci.Interaction {
 	t.Helper()
 
-	config := getTestClientConfig(t)
+	config := getTestClientConfig(t, activityLogger)
 
 	interaction, err := openid4ci.NewInteraction(requestURI, config)
 	require.NoError(t, err)
@@ -216,8 +237,10 @@ func createInteraction(t *testing.T, requestURI string) *openid4ci.Interaction {
 	return interaction
 }
 
-// getTestClientConfig accepts one optional mockVMCreator.
-func getTestClientConfig(t *testing.T, useMockVM ...mockVMCreator) *openid4ci.ClientConfig {
+// getTestClientConfig accepts an optional activityLogger and also one optional mockVMCreator.
+func getTestClientConfig(t *testing.T, activityLogger api.ActivityLogger,
+	useMockVM ...mockVMCreator,
+) *openid4ci.ClientConfig {
 	t.Helper()
 
 	kms, err := localkms.NewKMS(nil)
@@ -232,7 +255,8 @@ func getTestClientConfig(t *testing.T, useMockVM ...mockVMCreator) *openid4ci.Cl
 		resolver.makeVM = useMockVM[0]
 	}
 
-	clientConfig := openid4ci.NewClientConfig("UserDID", "ClientID", signerCreator, resolver)
+	clientConfig := openid4ci.NewClientConfig("UserDID", "ClientID", signerCreator, resolver,
+		activityLogger)
 
 	return clientConfig
 }

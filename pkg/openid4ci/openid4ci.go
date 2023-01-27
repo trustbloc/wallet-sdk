@@ -19,6 +19,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/trustbloc/wallet-sdk/pkg/api"
+
+	"github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
@@ -29,6 +34,8 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
+const activityLogOperation = "oidc-issuance"
+
 // NewInteraction creates a new OpenID4CI Interaction.
 // The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
 // Calling this function represents taking the first step in the flow.
@@ -36,10 +43,15 @@ import (
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-5.1), encoded using URL query
 // parameters. This object is intended for going through the full flow only once (i.e. one interaction), after which
 // it should be discarded. Any new interactions should use a fresh Interaction instance.
+// If no ActivityLogger is provided (via the ClientConfig object), then no activity logging will take place.
 func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interaction, error) {
 	err := validateClientConfig(config)
 	if err != nil {
 		return nil, err
+	}
+
+	if config.ActivityLogger == nil {
+		config.ActivityLogger = noop.NewActivityLogger()
 	}
 
 	requestURIParsed, err := url.Parse(initiateIssuanceURI)
@@ -80,6 +92,7 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 		clientID:          config.ClientID,
 		signerProvider:    config.SignerProvider,
 		didResolver:       &didResolverWrapper{didResolver: config.DIDResolver},
+		activityLogger:    config.ActivityLogger,
 	}, nil
 }
 
@@ -183,9 +196,24 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 		return nil, err
 	}
 
+	subjectIDs, err := getSubjectIDs(vcs)
+	if err != nil {
+		return nil, err
+	}
+
 	i.vcs = vcs
 
-	return vcs, nil
+	return vcs, i.activityLogger.Log(&api.Activity{
+		ID:   uuid.New(),
+		Type: api.LogTypeCredentialActivity,
+		Time: time.Now(),
+		Data: api.Data{
+			Client:    i.issuerMetadata.Issuer,
+			Operation: activityLogOperation,
+			Status:    api.ActivityLogStatusSuccess,
+			Params:    map[string]interface{}{"subjectIDs": subjectIDs},
+		},
+	})
 }
 
 // ResolveDisplay is the optional final step that can be called after RequestCredential. It resolves display
@@ -316,4 +344,21 @@ func getCredentialsFromResponses(credentialResponses []CredentialResponse) ([]*v
 	}
 
 	return vcs, nil
+}
+
+func getSubjectIDs(vcs []*verifiable.Credential) ([]string, error) {
+	var subjectIDs []string
+
+	for i := 0; i < len(vcs); i++ {
+		subjects, ok := vcs[i].Subject.([]verifiable.Subject)
+		if !ok {
+			return nil, fmt.Errorf("unexpected VC subject type for credential at index %d", i)
+		}
+
+		for j := 0; j < len(subjects); j++ {
+			subjectIDs = append(subjectIDs, subjects[j].ID)
+		}
+	}
+
+	return subjectIDs, nil
 }

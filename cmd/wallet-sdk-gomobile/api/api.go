@@ -89,12 +89,6 @@ type Crypto interface {
 	Verify(signature, msg []byte, keyID string) error
 }
 
-// ActivityLog defines logging functionality.
-type ActivityLog interface {
-	// Log logs an activity.
-	Log(message string)
-}
-
 // LDDocument is linked domains document.
 type LDDocument struct {
 	DocumentURL string `json:"documentUrl,omitempty"`

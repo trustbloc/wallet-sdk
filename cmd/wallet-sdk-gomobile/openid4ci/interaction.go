@@ -14,6 +14,7 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
@@ -45,23 +46,29 @@ func NewCredentialRequestOpts(userPIN string) *CredentialRequestOpts {
 	return &CredentialRequestOpts{UserPIN: userPIN}
 }
 
-// ClientConfig contains the various required parameters for an OpenID4CI Interaction.
+// ClientConfig contains various parameters for an OpenID4CI Interaction.
+// ActivityLogger is optional, but if provided then activities will be logged there.
+// If not provided, then no activities will be logged.
 type ClientConfig struct {
-	UserDID       string
-	ClientID      string
-	SignerCreator api.DIDJWTSignerCreator
-	DIDResolver   api.DIDResolver
+	UserDID        string
+	ClientID       string
+	SignerCreator  api.DIDJWTSignerCreator
+	DIDResolver    api.DIDResolver
+	ActivityLogger api.ActivityLogger
 }
 
 // NewClientConfig creates the client config object.
+// ActivityLogger is optional, but if provided then activities will be logged there.
+// If not provided, then no activities will be logged.
 func NewClientConfig(userDID, clientID string, signerCreator api.DIDJWTSignerCreator,
-	didRes api.DIDResolver,
+	didRes api.DIDResolver, activityLogger api.ActivityLogger,
 ) *ClientConfig {
 	return &ClientConfig{
-		UserDID:       userDID,
-		ClientID:      clientID,
-		SignerCreator: signerCreator,
-		DIDResolver:   didRes,
+		UserDID:        userDID,
+		ClientID:       clientID,
+		SignerCreator:  signerCreator,
+		DIDResolver:    didRes,
+		ActivityLogger: activityLogger,
 	}
 }
 
@@ -72,6 +79,7 @@ func NewClientConfig(userDID, clientID string, signerCreator api.DIDJWTSignerCre
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-5.1), encoded using URL query
 // parameters. This object is intended for going through the full flow only once (i.e. one interaction), after which
 // it should be discarded. Any new interactions should use a fresh Interaction instance.
+// If no ActivityLogger is provided (via the ClientConfig object), then no activity logging will take place.
 func NewInteraction(
 	initiateIssuanceURI string, config *ClientConfig,
 ) (*Interaction, error) {
@@ -163,11 +171,14 @@ func unwrapConfig(config *ClientConfig) *openid4cigoapi.ClientConfig {
 		return goMobileSigner, nil
 	}
 
+	activityLogger := createGoAPIActivityLogger(config.ActivityLogger)
+
 	return &openid4cigoapi.ClientConfig{
 		UserDID:        config.UserDID,
 		ClientID:       config.ClientID,
 		SignerProvider: goAPISignerGetter,
 		DIDResolver:    &wrapper.VDRResolverWrapper{DIDResolver: config.DIDResolver},
+		ActivityLogger: activityLogger,
 	}
 }
 
@@ -191,4 +202,12 @@ func workaroundMarshalVM(vm *did.VerificationMethod) ([]byte, error) {
 	}
 
 	return json.Marshal(rawVM)
+}
+
+func createGoAPIActivityLogger(mobileAPIActivityLogger api.ActivityLogger) goapi.ActivityLogger {
+	if mobileAPIActivityLogger == nil {
+		return nil // Will result in activity logging being disabled in the OpenID4CI Interaction object.
+	}
+
+	return &wrapper.MobileActivityLoggerWrapper{MobileAPIActivityLogger: mobileAPIActivityLogger}
 }

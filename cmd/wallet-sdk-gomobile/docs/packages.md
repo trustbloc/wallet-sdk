@@ -19,7 +19,7 @@ three versions.
 * `dev.trustbloc.wallet.sdk.didresolver`
 * `dev.trustbloc.wallet.sdk.linkeddomains`
 * `dev.trustbloc.wallet.sdk.localkms`
-* `dev.trustbloc.wallet.sdk.memstorage`
+* `dev.trustbloc.wallet.sdk.mem`
 * `dev.trustbloc.wallet.sdk.openid4ci`
 * `dev.trustbloc.wallet.sdk.openid4vp`
 * `dev.trustbloc.wallet.sdk.presentationexchange`
@@ -44,7 +44,7 @@ Prefixes:
 * `Didresolver`
 * `Linkeddomains`
 * `Localkms`
-* `Memstorage`
+* `Mem`
 * `Openid4ci`
 * `Openid4vp`
 * `Presentationexchange`

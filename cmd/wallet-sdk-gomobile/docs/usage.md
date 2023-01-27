@@ -276,11 +276,12 @@ Note that the implementation currently only supports the pre-authorized flow.
 
 The general pattern is as follows:
 
-1. Create a `ClientConfig` object. A `ClientConfig` contains the following mandatory parameters:
+1. Create a `ClientConfig` object. A `ClientConfig` contains the following parameters:
    * The user's DID.
    * A client ID to use.
    * A `DIDJWTSignerCreator`. See the next section for more detail on this.
    * A DID resolver.
+   * An activity logger (optional, but if set then this will be used to log credential activities)
 2. Create a new `Interaction` object using an initiate issuance URI obtained from an issuer (e.g. via a QR code)
 and your `ClientConfig` from the last step. The `Interaction` object is a stateful object and is meant to be used
 for a single interaction of an OpenID4CI flow and then discarded.
@@ -324,6 +325,7 @@ import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.openid4ci.Interaction
 import dev.trustbloc.wallet.sdk.openid4ci.ClientConfig
 import dev.trustbloc.wallet.sdk.openid4ci.CredentialRequestOpts
+import dev.trustbloc.wallet.sdk.openid4ci.mem
 
 // Setup
 val kms = Localkms.newKMS(null)// The null store argument causes it to use in-memory storage. Will use the Tink crypto library.
@@ -331,7 +333,8 @@ val signerCreator = Localkms.createSignerCreator(kms) // Will use the Tink crypt
 val didResolver = Resolver("")
 val didCreator = Creator(kms as KeyWriter)
 val didDocResolution = didCreator.create("key", CreateDIDOpts()) // Create a did:key doc
-val cfg = ClientConfig(didDocResolution.id(), "ClientID", signerCreator, didResolver)
+val activityLogger = mem.ActivityLogger() // Optional, but useful for tracking credential activities
+val cfg = ClientConfig(didDocResolution.id(), "ClientID", signerCreator, didResolver, activityLogger)
 
 // Going through the flow
 val interaction = Interaction("YourRequestURIHere", cfg)
@@ -340,6 +343,7 @@ val userPIN = "1234"
 val requestCredentialOpts = CredentialRequestOpts(userPIN)
 val credentials = interaction.requestCredential(requestCredentialOpts) // Should probably store these somewhere
 val displayData = interaction.resolveDisplay("en-US") // Optional (but useful)
+// Consider checking the activity log at some point after the interaction
 ```
 
 #### Swift (iOS)
@@ -353,7 +357,8 @@ let signerCreator = LocalkmsCreateSignerCreator(kms, nil) // Will use the Tink c
 let didResolver = DidNewResolver("", nil)
 let didCreator = DidNewCreatorWithKeyWriter(kms, nil)
 let didDocResolution = didCreator.create("key", ApiCreateDIDOpts()) // Create a did:key doc
-let cfg =  Openid4ciClientConfig(didDocResolution.id, clientID: "ClientID", signerCreator: signerCreator, didRes: didResolver)
+let activityLogger = MemNewActivityLogger() // Optional, but useful for tracking credential activities
+let cfg =  Openid4ciClientConfig(didDocResolution.id, clientID: "ClientID", signerCreator: signerCreator, didRes: didResolver, activityLogger: activityLogger)
 
 // Going through the flow
 let interaction = Openid4ciNewInteraction("YourRequestURIHere", cfg, nil)
@@ -362,6 +367,7 @@ let userPIN = "1234"
 let requestCredentialOpts = Openid4ciNewCredentialRequestOpts(userPIN)
 let credentials = interaction.requestCredential(requestCredentialOpts) // Should probably store these somewhere
 let displayData = interaction.resolveDisplay("en-US") // Optional (but useful)
+// Consider checking the activity log at some point after the interaction
 ```
 
 ## OpenID4VP
@@ -371,12 +377,13 @@ to go through the [OpenID4VP](https://openid.net/specs/openid-connect-4-verifiab
 
 The general pattern is as follows:
 
-1. Create a new `Interaction` object. An `Interaction` object has the following mandatory parameters:
+1. Create a new `Interaction` object. An `Interaction` object has the following parameters:
    * An authorization request URL
    * A key reader
    * A crypto implementation
    * A DID resolver
    * An LD document loader
+   * An activity logger (optional, but if set then this will be used to log credential activities)
 2. Get the query by calling the `GetQuery` method on the `Interaction`.
 3. Create a verifiable presentation from the credentials that match the query from the previous step.
 4. Determine the key ID you want to use for signing (e.g. from one of the user's DID docs).
@@ -399,6 +406,7 @@ import dev.trustbloc.wallet.sdk.localkms
 import dev.trustbloc.wallet.sdk.openid4vp
 import dev.trustbloc.wallet.sdk.ld
 import dev.trustbloc.wallet.sdk.credential
+import dev.trustbloc.wallet.sdk.openid4ci.mem
 
 // Setup
 val kms = Localkms.newKMS(null)// The null store argument causes it to use in-memory storage. Will use the Tink crypto library.
@@ -407,9 +415,10 @@ val didResolver = Resolver("")
 val didCreator = Creator(kms as KeyWriter)
 val documentLoader = DocLoader()
 val didDocResolution = didCreator.create("key", CreateDIDOpts()) // Create a did:key doc
+val activityLogger = mem.ActivityLogger() // Optional, but useful for tracking credential activities
 
 // Going through the flow
-val interaction = openid4vp.Interaction("YourAuthRequestURIHere", kms, kms.getCrypto(), didResolver, docLoader)
+val interaction = openid4vp.Interaction("YourAuthRequestURIHere", kms, kms.getCrypto(), didResolver, docLoader, activityLogger)
 val query = interaction.getQuery()
 val inquirer = credential.Inquirer(docLoader)
 val issuedCredentials = api.VerifiableCredentialsArray() // Would need some actual credentials for this to actually work
@@ -417,6 +426,7 @@ val verifiablePres = inquirer.Query(query, credential.CredentialsOpt(issuedCrede
 val matchedCreds = verifiablePresentation.credentials() // These credentials should be shown to the user with a confirmation dialog so they can confirm that they want to share this data before calling presentCredential.
 val keyID = didDocResolution.assertionMethodKeyID()
 interaction.presentCredential(verifiablePres, keyID)
+// Consider checking the activity log at some point after the interaction
 ```
 
 #### Swift (iOS)
@@ -430,13 +440,15 @@ let signerCreator = LocalkmsCreateSignerCreator(kms, nil) // Will use the Tink c
 let didResolver = DidNewResolver("", nil)
 let didCreator = DidNewCreatorWithKeyWriter(kms, nil)
 let documentLoader = LdNewDocLoader()
+let activityLogger = MemNewActivityLogger() // Optional, but useful for tracking credential activities
 
 // Going through the flow
-let interaction = Openid4vpInteraction("YourAuthRequestURIHere", keyHandle:kms, crypto:kms.getCrypto(), didResolver:didResolver, ldDocumentLoader:docLoader)
+let interaction = Openid4vpInteraction("YourAuthRequestURIHere", keyHandle:kms, crypto:kms.getCrypto(), didResolver:didResolver, ldDocumentLoader:docLoader, activityLogger: activityLogger)
 let query = interaction.getQuery()
 let inquirer = CredentialNewInquirer(docLoader)
 let issuedCredentials = ApiVerifiableCredentialsArray() // Would need some actual credentials for this to actually work
 let verifiablePres = inquirer.Query(query, CredentialNewCredentialsOpt(issuedCredentials))
 let keyID = didDocResolution.assertionMethodKeyID()
 let credentials = interaction.presentCredential(verifiablePres, keyID)
+// Consider checking the activity log at some point after the interaction
 ```

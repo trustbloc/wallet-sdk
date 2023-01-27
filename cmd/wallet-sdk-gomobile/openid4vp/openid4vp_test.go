@@ -15,6 +15,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
@@ -41,7 +43,8 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 			&mockKeyHandleReader{},
 			&mockCrypto{},
 			&mocksDIDResolver{},
-			&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)})
+			&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
+			mem.NewActivityLogger())
 
 		require.NotNil(t, instance)
 		require.NotNil(t, instance.crypto)

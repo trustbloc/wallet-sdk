@@ -30,6 +30,8 @@ import (
 const (
 	requestURIPrefix = "openid-vc://?request_uri="
 	tokenLiveTimeSec = 600
+
+	activityLogOperation = "oidc-presentation"
 )
 
 type jwtSignatureVerifier interface {
@@ -45,6 +47,7 @@ type Interaction struct {
 	authorizationRequest string
 	signatureVerifier    jwtSignatureVerifier
 	httpClient           httpClient
+	activityLogger       api.ActivityLogger
 
 	requestObject *requestObject
 }
@@ -56,11 +59,15 @@ type authorizedResponse struct {
 }
 
 // New creates new openid4vp instance.
-func New(authorizationRequest string, signatureVerifier jwtSignatureVerifier, httpClient httpClient) *Interaction {
+// If no ActivityLogger is provided (via an option), then no activity logging will take place.
+func New(authorizationRequest string, signatureVerifier jwtSignatureVerifier, opts ...Opt) *Interaction {
+	client, activityLogger := processOpts(opts)
+
 	return &Interaction{
 		authorizationRequest: authorizationRequest,
 		signatureVerifier:    signatureVerifier,
-		httpClient:           httpClient,
+		httpClient:           client,
+		activityLogger:       activityLogger,
 	}
 }
 
@@ -114,7 +121,16 @@ func (o *Interaction) PresentCredential(presentation *verifiable.Presentation, j
 			fmt.Errorf("send authorized response failed: %w", err))
 	}
 
-	return nil
+	return o.activityLogger.Log(&api.Activity{
+		ID:   uuid.New(),
+		Type: api.LogTypeCredentialActivity,
+		Time: time.Now(),
+		Data: api.Data{
+			Client:    o.requestObject.Registration.ClientName,
+			Operation: activityLogOperation,
+			Status:    api.ActivityLogStatusSuccess,
+		},
+	})
 }
 
 func fetchRequestObject(httpClient httpClient, authorizationRequest string) (string, error) {
