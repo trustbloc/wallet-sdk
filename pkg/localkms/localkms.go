@@ -35,8 +35,12 @@ type Config struct {
 }
 
 // NewLocalKMS returns a new Local KMS.
-func NewLocalKMS(cfg *Config) (*LocalKMS, error) {
-	ariesLocalKMS, err := arieslocalkms.New("ThisIs://Unused", &InMemoryStorageProvider{
+func NewLocalKMS(cfg Config) (*LocalKMS, error) {
+	if cfg.Storage == nil {
+		return nil, errors.New("cfg.Storage cannot be nil")
+	}
+
+	ariesLocalKMS, err := arieslocalkms.New("ThisIs://Unused", &storageProvider{
 		Storage: cfg.Storage,
 	})
 	if err != nil {

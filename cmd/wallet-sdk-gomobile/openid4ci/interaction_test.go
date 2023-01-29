@@ -243,7 +243,7 @@ func getTestClientConfig(t *testing.T, activityLogger api.ActivityLogger,
 ) *openid4ci.ClientConfig {
 	t.Helper()
 
-	kms, err := localkms.NewKMS(nil)
+	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
 	signerCreator, err := localkms.CreateSignerCreator(kms)

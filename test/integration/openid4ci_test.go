@@ -59,7 +59,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 
 		println(initiateIssuanceURL)
 
-		kms, err := localkms.NewKMS(nil)
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
 		// create DID

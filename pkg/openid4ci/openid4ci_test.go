@@ -558,15 +558,17 @@ func newInteraction(t *testing.T, requestURI string) *openid4ci.Interaction {
 func getTestClientConfig(t *testing.T) *openid4ci.ClientConfig {
 	t.Helper()
 
-	ariesLocalKMS, err := arieslocalkms.New("ThisIs://Unused", localkms.NewInMemoryStorageProvider())
+	localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: localkms.NewMemKMSStore()})
 	require.NoError(t, err)
 
 	tinkCrypto, err := tinkcrypto.New()
 	require.NoError(t, err)
 
-	signerProvider := didsignjwt.UseDefaultSigner(ariesLocalKMS, tinkCrypto)
+	ariesKMS := localKMS.GetAriesKMS() //nolint: staticcheck // will be removed in the future
 
-	didResolver := &mockResolver{keyWriter: ariesLocalKMS}
+	signerProvider := didsignjwt.UseDefaultSigner(ariesKMS, tinkCrypto)
+
+	didResolver := &mockResolver{keyWriter: ariesKMS}
 
 	return &openid4ci.ClientConfig{
 		UserDID:        "UserDID",

@@ -10,6 +10,8 @@ SPDX-License-Identifier: Apache-2.0
 package localkms
 
 import (
+	"errors"
+
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -19,14 +21,23 @@ import (
 // KeyTypeED25519 is the name recognized by the Create method for creating an ED25519 keyset.
 const KeyTypeED25519 = arieskms.ED25519
 
+// Result indicates the result of a key retrieval operation (see Store.Get for more info).
+type Result struct {
+	// Found indicates whether a key was found stored under the given keysetID.
+	// If this is false, then Key should be nil. If this is true, then Key should not be nil.
+	Found bool
+	// Key is the retrieved key bytes.
+	Key []byte
+}
+
 // Store defines the storage capability for local KMS.
 type Store interface {
 	// Put stores the given key under the given keysetID.
 	Put(keysetID string, key []byte) error
-	// Get retrieves the key stored under the given keysetID. If no key is found, then an error is returned.
-	Get(keysetID string) (key []byte, err error)
-	// Delete deletes the key stored under the given keysetID.
-	Delete(keysetID string) error
+	// Get retrieves the key stored under the given keysetID.
+	// The returned result indicates whether a key was found and, if so, the key bytes.
+	// If a key was not found, then Result.Found should be set accordingly - no error should be returned in this case.
+	Get(keysetID string) (*Result, error)
 }
 
 // KMS is a KMS implementation that uses Google's Tink crypto library.
@@ -38,8 +49,12 @@ type KMS struct {
 
 // NewKMS returns a new local KMS instance.
 func NewKMS(kmsStore Store) (*KMS, error) {
-	goAPILocalKMS, err := goapilocalkms.NewLocalKMS(&goapilocalkms.Config{
-		Storage: kmsStore,
+	if kmsStore == nil {
+		return nil, errors.New("kmsStore cannot be nil")
+	}
+
+	goAPILocalKMS, err := goapilocalkms.NewLocalKMS(goapilocalkms.Config{
+		Storage: &kmsStoreWrapper{store: kmsStore},
 	})
 	if err != nil {
 		return nil, err
@@ -71,4 +86,33 @@ func (k *KMS) ExportPubKey(keyID string) ([]byte, error) {
 // GetCrypto returns Crypto instance that can perform crypto ops with keys created by this kms.
 func (k *KMS) GetCrypto() api.Crypto {
 	return k.goAPILocalKMS.GetCrypto()
+}
+
+// kmsStoreWrapper is a wrapper around the Store interface defined here. Its purpose is to convert any Store.Get
+// calls from the wrapped Store implementation into equivalent Aries local KMS store interface Get calls.
+type kmsStoreWrapper struct {
+	store Store
+}
+
+func (k *kmsStoreWrapper) Put(keysetID string, key []byte) error {
+	return k.store.Put(keysetID, key)
+}
+
+func (k *kmsStoreWrapper) Get(keysetID string) ([]byte, error) {
+	result, err := k.store.Get(keysetID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !result.Found {
+		return nil, arieskms.ErrKeyNotFound
+	}
+
+	return result.Key, nil
+}
+
+// Delete isn't used since we don't expose the Rotate method from the underlying Aries local KMS.
+// This method is just here as it's required to satisfy the Aries KMS store interface.
+func (k *kmsStoreWrapper) Delete(keysetID string) error {
+	return nil
 }

@@ -10,6 +10,7 @@ import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.ld.DocLoader
 import dev.trustbloc.wallet.sdk.walleterror.Walleterror
 import dev.trustbloc.wallet.sdk.localkms.Localkms
+import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 import dev.trustbloc.wallet.sdk.localkms.SignerCreator
 import io.flutter.plugin.common.MethodCall
 import walletsdk.openid4ci.OpenID4CI
@@ -117,7 +118,8 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun initSDK() {
-        val kms = Localkms.newKMS(null)
+        val memKMSStore = MemKMSStore()
+        val kms = Localkms.newKMS(memKMSStore)
         didResolver = Resolver("")
         crypto = kms.crypto
         documentLoader = DocLoader()
