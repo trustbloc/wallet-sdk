@@ -68,8 +68,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     private func initSDK(result: @escaping FlutterResult) {
-        let memKMSStore = LocalkmsNewMemKMSStore()
-        kms = LocalkmsNewKMS(memKMSStore, nil)
+        let kmsstore = kmsStore()
+        kms = LocalkmsNewKMS(kmsstore, nil)
         didResolver = DidNewResolver("", nil)
         crypto = kms?.getCrypto()
         documentLoader = LdNewDocLoader()
@@ -162,7 +162,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         do {
             let apiCreate = initializeObject(fromType: ApiCreateDIDOpts.self)
             let doc = try didCreator!.create(didMethodType, createDIDOpts: apiCreate)
-            let docString = String(bytes: doc.content!, encoding: .utf8)
+            let _ = String(bytes: doc.content!, encoding: .utf8)
             didDocID = doc.id_(nil)
             didVerificationMethod = try doc.assertionMethod()
             result(didDocID)

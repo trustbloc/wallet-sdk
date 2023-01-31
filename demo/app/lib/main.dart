@@ -10,7 +10,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'demo_method_channel.dart';
 import 'views/dashboard.dart';
 import 'package:uni_links/uni_links.dart';
-import 'package:flutter/services.dart' show PlatformException;
 
 final WalletSDKPlugin = MethodChannelWallet();
 
