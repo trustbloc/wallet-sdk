@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4ci"
@@ -13,16 +14,16 @@ import (
 func main() {
 	args := os.Args[1:]
 
-	if len(args) == 2 && args[0] == "issuance" && args[1] != "" {
-		initiatePreAuthorizedIssuance(args[1])
+	if len(args) >= 2 && args[0] == "issuance" && args[1] != "" {
+		initiatePreAuthorizedIssuance(args[1:])
 	}
 
-	if len(args) == 2 && args[0] == "verification" && args[1] != "" {
-		initiatePreAuthorizedVerification(args[1])
+	if len(args) >= 2 && args[0] == "verification" && args[1] != "" {
+		initiatePreAuthorizedVerification(args[1:])
 	}
 }
 
-func initiatePreAuthorizedIssuance(issuerProfileID string) {
+func initiatePreAuthorizedIssuance(issuerProfileIDs []string) {
 	err := testenv.SetupTestEnv("fixtures/keys/tls/ec-cacert.pem")
 	if err != nil {
 		panic(err)
@@ -38,24 +39,29 @@ func initiatePreAuthorizedIssuance(issuerProfileID string) {
 		panic(err)
 	}
 
-	initiateIssuanceURL := ""
+	var initiateIssuanceURLs []string
 
-	for i := 0; i < 120; i++ {
-		initiateIssuanceURL, err = oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileID)
-		if err == nil {
-			break
+	for i := 0; i < len(issuerProfileIDs); i++ {
+		for j := 0; j < 120; j++ {
+			initiateIssuanceURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i])
+			if err == nil {
+				initiateIssuanceURLs = append(initiateIssuanceURLs, initiateIssuanceURL)
+				break
+			}
+			println(err.Error())
+			time.Sleep(5 * time.Second)
 		}
-		println(err.Error())
-		time.Sleep(5 * time.Second)
 	}
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Print(initiateIssuanceURL)
+	result := strings.Join(initiateIssuanceURLs, " ")
+
+	fmt.Print(result)
 }
 
-func initiatePreAuthorizedVerification(verifierProfileID string) {
+func initiatePreAuthorizedVerification(verifierProfileIDs []string) {
 	err := testenv.SetupTestEnv("fixtures/keys/tls/ec-cacert.pem")
 	if err != nil {
 		panic(err)
@@ -68,19 +74,24 @@ func initiatePreAuthorizedVerification(verifierProfileID string) {
 		panic(err)
 	}
 
-	initiateIssuanceURL := ""
+	var initiateVerificationURLs []string
 
-	for i := 0; i < 120; i++ {
-		initiateIssuanceURL, err = oidc4vpSetup.InitiateInteraction(verifierProfileID)
-		if err == nil {
-			break
+	for i := 0; i < len(verifierProfileIDs); i++ {
+		for j := 0; j < 120; j++ {
+			initiateVerificationURL, err := oidc4vpSetup.InitiateInteraction(verifierProfileIDs[i])
+			if err == nil {
+				initiateVerificationURLs = append(initiateVerificationURLs, initiateVerificationURL)
+				break
+			}
+			println(err.Error())
+			time.Sleep(5 * time.Second)
 		}
-		println(err.Error())
-		time.Sleep(5 * time.Second)
 	}
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Print(initiateIssuanceURL)
+	result := strings.Join(initiateVerificationURLs, " ")
+
+	fmt.Print(result)
 }
