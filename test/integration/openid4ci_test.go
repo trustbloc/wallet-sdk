@@ -7,7 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package integration
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
@@ -34,12 +37,14 @@ import (
 
 func TestOpenID4CIFullFlow(t *testing.T) {
 	type test struct {
-		issuerProfileID string
-		issuerDIDMethod string
-		walletDIDMethod string
+		issuerProfileID       string
+		issuerDIDMethod       string
+		walletDIDMethod       string
+		isSelectiveDisclosure bool
 	}
 
 	tests := []test{
+		{issuerProfileID: "bank_issuer_jwtsd", issuerDIDMethod: "orb", walletDIDMethod: "ion", isSelectiveDisclosure: true},
 		{issuerProfileID: "bank_issuer", issuerDIDMethod: "orb", walletDIDMethod: "ion"},
 		{issuerProfileID: "did_ion_issuer", issuerDIDMethod: "ion", walletDIDMethod: "key"},
 	}
@@ -109,11 +114,36 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		require.NoError(t, err)
 		require.Contains(t, vc.VC.Issuer.ID, tc.issuerDIDMethod)
 
-		subID, err := verifiable.SubjectID(vc.VC.Subject)
-		require.Contains(t, subID, didID)
-
-		checkActivityLogAfterOpenID4CIFlow(t, activityLogger, tc.issuerProfileID, subID)
+		if !tc.isSelectiveDisclosure {
+			subID, err := verifiable.SubjectID(vc.VC.Subject)
+			require.NoError(t, err)
+			require.Contains(t, subID, didID)
+			checkActivityLogAfterOpenID4CIFlow(t, activityLogger, tc.issuerProfileID, subID)
+		} else {
+			subID := getDisclosure(t, serializedVC, "id")
+			require.Contains(t, subID, didID)
+		}
 	}
+}
+
+func getDisclosure(t *testing.T, vcData, disclosureName string) string {
+	parts := strings.Split(vcData, "~")
+
+	for i := 1; i < len(parts); i++ {
+		decoded, err := base64.RawURLEncoding.DecodeString(parts[i])
+		require.NoError(t, err)
+
+		var disclosureStrArr []string
+
+		require.NoError(t, json.Unmarshal(decoded, &disclosureStrArr))
+
+		if disclosureStrArr[1] == disclosureName {
+			return disclosureStrArr[2]
+		}
+	}
+
+	require.FailNow(t, "No disclosure found.")
+	return ""
 }
 
 func checkActivityLogAfterOpenID4CIFlow(t *testing.T, activityLogger *mem.ActivityLogger,
