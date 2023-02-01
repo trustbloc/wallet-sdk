@@ -2,6 +2,133 @@
   "issuers": [
     {
       "issuer": {
+        "id": "bank_issuer_jwtsd",
+        "name": "Bank Issuer",
+        "organizationID": "test_org",
+        "url": "http://localhost:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "JsonWebSignature2020",
+          "signatureRepresentation": 0,
+          "keyType": "ECDSASecp256k1DER",
+          "format": "jwt",
+          "didMethod": "orb",
+          "status": {
+            "type": "StatusList2021Entry"
+          },
+          "sdjwt": {
+            "enable": true,
+            "hashAlg": 5
+          }
+        },
+        "oidcConfig": {
+          "client_id": "bank_issuer",
+          "client_secret_handle": "bank-issuer-secret",
+          "scope": [
+            "openid",
+            "profile"
+          ],
+          "redirect_uri": "https://localhost:4455/oidc/redirect",
+          "issuer_well_known": "https://oidc-provider.example.com:4444/.well-known/openid-configuration"
+        },
+        "credentialTemplates": [
+          {
+            "contexts": [
+              "https://www.w3.org/2018/credentials/v1"
+            ],
+            "type": "VerifiedEmployee",
+            "id": "templateID",
+            "issuer": "did:orb:bank_issuer"
+          }
+        ],
+        "credentialMetadata": {
+          "credentials_supported": {
+            "VerifiedEmployee": {
+              "format": "jwt_vc_json",
+              "id": "VerifiedEmployee_JWT",
+              "types": [
+                "VerifiableCredential",
+                "VerifiedEmployee"
+              ],
+              "display": [
+                {
+                  "name": "Verified Employee",
+                  "locale": "en-US",
+                  "logo": {
+                    "url": "https://example.com/public/logo.png",
+                    "alternative_text": "a square logo of a employee verification"
+                  },
+                  "background_color": "#12107c",
+                  "text_color": "#FFFFFF"
+                }
+              ],
+              "credentialSubject": {
+                "displayName": {
+                  "display": [
+                    {
+                      "name": "Employee",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "givenName": {
+                  "display": [
+                    {
+                      "name": "Given Name",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "jobTitle": {
+                  "display": [
+                    {
+                      "name": "Job Title",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "surname": {
+                  "display": [
+                    {
+                      "name": "Surname",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "preferredLanguage": {
+                  "display": [
+                    {
+                      "name": "Preferred Language",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "mail": {
+                  "display": [
+                    {
+                      "name": "Mail",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "photo": {
+                  "display": [
+                    {
+                      "name": "Photo"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "createDID": true,
+      "didDomain": "https://testnet.orb.local",
+      "didServiceAuthToken": "tk1"
+    },
+    {
+      "issuer": {
         "id": "bank_issuer",
         "name": "Bank Issuer",
         "organizationID": "test_org",
@@ -371,14 +498,14 @@
         "presentationDefinitions": [
           {
             "id": "32f54163-7166-48f1-93d8-ff217bdb0653",
-            "input_descriptors":[
+            "input_descriptors": [
               {
-                "id":"VerifiableCredential",
-                "name":"VerifiableCredential",
-                "purpose":"So we can see that you are an expert.",
-                "schema":[
+                "id": "VerifiableCredential",
+                "name": "VerifiableCredential",
+                "purpose": "So we can see that you are an expert.",
+                "schema": [
                   {
-                    "uri":"VerifiableCredential"
+                    "uri": "VerifiableCredential"
                   }
                 ]
               }
