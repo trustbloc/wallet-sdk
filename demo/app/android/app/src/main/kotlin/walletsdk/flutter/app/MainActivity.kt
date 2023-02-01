@@ -10,9 +10,9 @@ import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.ld.DocLoader
 import dev.trustbloc.wallet.sdk.walleterror.Walleterror
 import dev.trustbloc.wallet.sdk.localkms.Localkms
-import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 import dev.trustbloc.wallet.sdk.localkms.SignerCreator
 import io.flutter.plugin.common.MethodCall
+import walletsdk.kmsStorage.KmsStore
 import walletsdk.openid4ci.OpenID4CI
 import java.util.ArrayList
 import walletsdk.openid4vp.OpenID4VP
@@ -22,7 +22,7 @@ import java.lang.Override
 class MainActivity : FlutterActivity() {
     private var openID4CI: OpenID4CI? = null
     private var openID4VP: OpenID4VP? = null
-    private var kms: KMS? = null;
+    private var kms: KMS? = null
     private var didResolver: DIDResolver? = null
     private var signerCreator: SignerCreator? = null
     private var documentLoader: LDDocumentLoader? = null
@@ -86,7 +86,7 @@ class MainActivity : FlutterActivity() {
 
                         "resolveCredentialDisplay" -> {
                             try {
-                                val credentialDisplay = resolveCredentialDisplay(call)
+                                val credentialDisplay = resolveCredentialDisplay()
 
                                 result.success(credentialDisplay)
 
@@ -97,7 +97,7 @@ class MainActivity : FlutterActivity() {
 
                         "processAuthorizationRequest" -> {
                             try {
-                                val creds = processAuthorizationRequest(call);
+                                val creds = processAuthorizationRequest(call)
 
                                 result.success(creds)
                             } catch (e: Exception) {
@@ -107,7 +107,7 @@ class MainActivity : FlutterActivity() {
 
                         "presentCredential" -> {
                             try {
-                                presentCredential(call);
+                                presentCredential()
                                 result.success(null)
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while processing authorization request", e)
@@ -118,8 +118,8 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun initSDK() {
-        val memKMSStore = MemKMSStore()
-        val kms = Localkms.newKMS(memKMSStore)
+        val kmsLocalStore = KmsStore(context)
+        val kms = Localkms.newKMS(kmsLocalStore)
         didResolver = Resolver("")
         crypto = kms.crypto
         documentLoader = DocLoader()
@@ -140,7 +140,7 @@ class MainActivity : FlutterActivity() {
         return openID4VP.processAuthorizationRequest(authorizationRequest, storedCredentials)
     }
 
-    private fun presentCredential(call: MethodCall) {
+    private fun presentCredential() {
         val openID4VP = this.openID4VP
                 ?: throw java.lang.Exception("OpenID4VP not initiated. Call processAuthorizationRequest before this.")
 
@@ -163,7 +163,7 @@ class MainActivity : FlutterActivity() {
         return OpenID4VP(kms, crypto, didResolver, documentLoader)
     }
 
-    fun authorize(call: MethodCall): Boolean {
+    private fun authorize(call: MethodCall): Boolean {
         val requestURI = call.argument<String>("requestURI")
                 ?: throw java.lang.Exception("requestURI params is missed")
 
@@ -193,19 +193,16 @@ class MainActivity : FlutterActivity() {
         val otp = call.argument<String>("otp")
 
         val openID4CI = this.openID4CI
-                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
-        val resp = openID4CI.requestCredential(otp) ?: return null
-        return resp
+        return openID4CI.requestCredential(otp)
     }
 
-    public fun resolveCredentialDisplay(call: MethodCall): String? {
+    private fun resolveCredentialDisplay(): String? {
         val openID4CI = this.openID4CI
-                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
-        val resp = openID4CI.resolveCredentialDisplay() ?: return null
-
-        return resp
+        return openID4CI.resolveCredentialDisplay()
     }
 
 
