@@ -46,6 +46,6 @@ class OpenID4CI constructor(
 
     fun resolveCredentialDisplay(): String? {
         val resolvedDisplayData = newInteraction.resolveDisplay("")
-        return String(resolvedDisplayData.data)
+        return resolvedDisplayData.serialize()
     }
 }

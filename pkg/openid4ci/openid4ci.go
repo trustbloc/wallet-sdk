@@ -20,14 +20,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/trustbloc/wallet-sdk/pkg/api"
-
-	"github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
-
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 
+	"github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
+	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
@@ -234,6 +232,12 @@ func (i *Interaction) ResolveDisplay(preferredLocale string) (*credentialschema.
 	}
 
 	return displayData, nil
+}
+
+// IssuerURI returns the issuer's URI from the initiation request. It's useful to store this somewhere in case
+// there's a later need to refresh credential display data using the latest display information from the issuer.
+func (i *Interaction) IssuerURI() string {
+	return i.initiationRequest.IssuerURI
 }
 
 func (i *Interaction) getTokenResponse(tokenEndpointURL string, params url.Values) (*tokenResponse, error) {

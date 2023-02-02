@@ -1,0 +1,55 @@
+{
+  "issuer_display":{
+    "name":"DID Ion Issuer",
+    "locale":"en-US"
+  },
+  "credential_displays":[
+    {
+      "overview":{
+        "name":"Verified Employee",
+        "locale":"en-US",
+        "logo":{
+          "url":"https://example.com/public/logo.png"
+        },
+        "background_color":"#12107c",
+        "text_color":"#FFFFFF"
+      },
+      "claims":[
+        {
+          "label":"Employee",
+          "value":"John Doe",
+          "locale":"en-US"
+        },
+        {
+          "label":"Given Name",
+          "value":"John",
+          "locale":"en-US"
+        },
+        {
+          "label":"Job Title",
+          "value":"Software Developer",
+          "locale":"en-US"
+        },
+        {
+          "label":"Mail",
+          "value":"john.doe@foo.bar",
+          "locale":"en-US"
+        },
+        {
+          "label":"Photo",
+          "value":"base64photo"
+        },
+        {
+          "label":"Preferred Language",
+          "value":"English",
+          "locale":"en-US"
+        },
+        {
+          "label":"Surname",
+          "value":"Doe",
+          "locale":"en-US"
+        }
+      ]
+    }
+  ]
+}
