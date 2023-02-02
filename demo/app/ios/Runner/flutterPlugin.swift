@@ -207,7 +207,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     public func resolveCredentialDisplay(result: @escaping FlutterResult){
         do {
             let resolvedDisplayData = try newOIDCInteraction?.resolveDisplay("")
-            let displayDataResp = String(bytes: (resolvedDisplayData?.data)!, encoding: .utf8)
+            let displayDataResp = resolvedDisplayData?.serialize(nil)
             result(displayDataResp)
         } catch let error as NSError{
                 print("printing error")

@@ -543,6 +543,17 @@ func TestInteraction_ResolveDisplay(t *testing.T) {
 	})
 }
 
+func TestInteraction_IssuerURI(t *testing.T) {
+	testIssuerURI := "https://example.com"
+	requestURI := "openid-vc://initiate_issuance?issuer=https://example.com"
+
+	interaction := newInteraction(t, requestURI)
+
+	issuerURI := interaction.IssuerURI()
+
+	require.Equal(t, testIssuerURI, issuerURI)
+}
+
 func newInteraction(t *testing.T, requestURI string) *openid4ci.Interaction {
 	t.Helper()
 

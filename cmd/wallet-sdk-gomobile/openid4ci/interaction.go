@@ -142,18 +142,19 @@ func (i *Interaction) RequestCredential(
 // object correspond to the VCs received and are in the same order.
 // If preferredLocale is not specified, then the first locale specified by the issuer's metadata will be used during
 // resolution.
-func (i *Interaction) ResolveDisplay(preferredLocale string) (*api.JSONObject, error) {
+func (i *Interaction) ResolveDisplay(preferredLocale string) (*DisplayData, error) {
 	resolvedDisplayData, err := i.goAPIInteraction.ResolveDisplay(preferredLocale)
 	if err != nil {
 		return nil, walleterror.ToMobileError(err)
 	}
 
-	resolvedDisplayDataBytes, err := json.Marshal(resolvedDisplayData)
-	if err != nil {
-		return nil, walleterror.ToMobileError(err)
-	}
+	return &DisplayData{resolvedDisplayData: resolvedDisplayData}, nil
+}
 
-	return &api.JSONObject{Data: resolvedDisplayDataBytes}, nil
+// IssuerURI returns the issuer's URI from the initiation request. It's useful to store this somewhere in case
+// there's a later need to refresh credential display data using the latest display information from the issuer.
+func (i *Interaction) IssuerURI() string {
+	return i.goAPIInteraction.IssuerURI()
 }
 
 func unwrapConfig(config *ClientConfig) *openid4cigoapi.ClientConfig {

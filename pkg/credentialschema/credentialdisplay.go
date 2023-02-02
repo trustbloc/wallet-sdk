@@ -112,7 +112,7 @@ func buildDefaultCredentialDisplay(vcID string, subject *verifiable.Subject) *Cr
 		})
 	}
 
-	credentialOverview := issuer.CredentialDisplay{Name: vcID, Locale: localeNotApplicable}
+	credentialOverview := CredentialOverview{Name: vcID, Locale: localeNotApplicable}
 
 	return &CredentialDisplay{Overview: &credentialOverview, Claims: claims}
 }
@@ -135,7 +135,7 @@ func resolveClaims(supportedCredential *issuer.SupportedCredential, credentialSu
 ) []ResolvedClaim {
 	var resolvedClaims []ResolvedClaim
 
-	for fieldName, claim := range supportedCredential.CredentialSubject {
+	for fieldName, claim := range supportedCredential.Claims {
 		claim := claim // Resolves implicit memory aliasing warning from linter
 
 		resolvedClaim := resolveClaim(fieldName, &claim, credentialSubject, preferredLocale)
@@ -207,16 +207,36 @@ func getValue(credentialSubject *verifiable.Subject, fieldName string) (interfac
 
 func getOverviewDisplay(supportedCredential *issuer.SupportedCredential,
 	preferredLocale string,
-) *issuer.CredentialDisplay {
+) *CredentialOverview {
 	if preferredLocale == "" {
-		return &supportedCredential.Displays[0]
+		return issuerCredentialDisplayToResolvedCredentialOverview(&supportedCredential.Overview[0])
 	}
 
-	for _, credentialDisplay := range supportedCredential.Displays {
-		if strings.EqualFold(preferredLocale, credentialDisplay.Locale) {
-			return &credentialDisplay
+	for i := range supportedCredential.Overview {
+		if strings.EqualFold(preferredLocale, supportedCredential.Overview[i].Locale) {
+			return issuerCredentialDisplayToResolvedCredentialOverview(&supportedCredential.Overview[i])
 		}
 	}
 
-	return &supportedCredential.Displays[0]
+	return issuerCredentialDisplayToResolvedCredentialOverview(&supportedCredential.Overview[0])
+}
+
+func issuerCredentialDisplayToResolvedCredentialOverview(
+	issuerCredentialOverview *issuer.CredentialOverview,
+) *CredentialOverview {
+	resolvedCredentialOverview := &CredentialOverview{
+		Name:            issuerCredentialOverview.Name,
+		Locale:          issuerCredentialOverview.Locale,
+		BackgroundColor: issuerCredentialOverview.BackgroundColor,
+		TextColor:       issuerCredentialOverview.TextColor,
+	}
+
+	if issuerCredentialOverview.Logo != nil {
+		resolvedCredentialOverview.Logo = &Logo{
+			URL:     issuerCredentialOverview.Logo.URL,
+			AltText: issuerCredentialOverview.Logo.AltText,
+		}
+	}
+
+	return resolvedCredentialOverview
 }

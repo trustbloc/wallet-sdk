@@ -53,7 +53,6 @@ func Teardown() {
 }
 
 func runDockerCompose() {
-
 	dockerComposeUp := []string{"docker-compose", "-f", composeFilePath, "up", "--force-recreate", "-d"}
 
 	logger.Info("Running ", logfields.WithDockerComposeCmd(strings.Join(dockerComposeUp, " ")))

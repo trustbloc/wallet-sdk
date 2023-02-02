@@ -21,18 +21,18 @@ type Metadata struct {
 
 // SupportedCredential represents metadata about a credential type that a credential issuer can issue.
 type SupportedCredential struct {
-	Format                                string              `json:"format,omitempty"`
-	Types                                 []string            `json:"types,omitempty"`
-	CryptographicBindingsMethodsSupported []string            `json:"cryptographic_bindings_methods_supported,omitempty"`
-	CryptographicSuitesSupported          []string            `json:"cryptographic_suites_supported,omitempty"`
-	Displays                              []CredentialDisplay `json:"display,omitempty"`
-	CredentialSubject                     map[string]Claim    `json:"credentialSubject,omitempty"`
+	Format                                string               `json:"format,omitempty"`
+	Types                                 []string             `json:"types,omitempty"`
+	CryptographicBindingsMethodsSupported []string             `json:"cryptographic_bindings_methods_supported,omitempty"`
+	CryptographicSuitesSupported          []string             `json:"cryptographic_suites_supported,omitempty"`
+	Overview                              []CredentialOverview `json:"display,omitempty"`
+	Claims                                map[string]Claim     `json:"credentialSubject,omitempty"`
 }
 
-// CredentialDisplay represents display data for a credential as a whole.
-// Display data for specific claims (e.g. first name, date of birth, etc) are represented by ClaimDisplays, which
-// are in SupportedCredential.CredentialSubject (in the parent object above).
-type CredentialDisplay struct {
+// CredentialOverview represents display data for a credential as a whole.
+// Display data for specific claims (e.g. first name, date of birth, etc.) are in SupportedCredential.Claims
+// (in the parent object above).
+type CredentialOverview struct {
 	Name            string `json:"name,omitempty"`
 	Locale          string `json:"locale,omitempty"`
 	Logo            *Logo  `json:"logo,omitempty"`

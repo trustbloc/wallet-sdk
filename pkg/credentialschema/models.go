@@ -6,10 +6,6 @@ SPDX-License-Identifier: Apache-2.0
 
 package credentialschema
 
-import (
-	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
-)
-
 // ResolvedDisplayData represents display information for some issued credentials based on an issuer's metadata.
 type ResolvedDisplayData struct {
 	IssuerDisplay      *ResolvedCredentialIssuerDisplay `json:"issuer_display,omitempty"`
@@ -25,8 +21,19 @@ type ResolvedCredentialIssuerDisplay struct {
 // CredentialDisplay represents display data for a credential.
 // Display data for specific claims (e.g. first name, date of birth, etc.) are in Claims.
 type CredentialDisplay struct {
-	Overview *issuer.CredentialDisplay `json:"overview,omitempty"`
-	Claims   []ResolvedClaim           `json:"claims,omitempty"`
+	Overview *CredentialOverview `json:"overview,omitempty"`
+	Claims   []ResolvedClaim     `json:"claims,omitempty"`
+}
+
+// CredentialOverview represents display data for a credential as a whole.
+// Display data for specific claims (e.g. first name, date of birth, etc.) are in CredentialDisplay.Claims
+// (in the parent object above).
+type CredentialOverview struct {
+	Name            string `json:"name,omitempty"`
+	Locale          string `json:"locale,omitempty"`
+	Logo            *Logo  `json:"logo,omitempty"`
+	BackgroundColor string `json:"background_color,omitempty"`
+	TextColor       string `json:"text_color,omitempty"`
 }
 
 // ResolvedClaim represents display data for a specific claim.
@@ -34,4 +41,10 @@ type ResolvedClaim struct {
 	Label  string `json:"label,omitempty"`
 	Value  string `json:"value,omitempty"`
 	Locale string `json:"locale,omitempty"`
+}
+
+// Logo represents display information for a logo.
+type Logo struct {
+	URL     string `json:"url,omitempty"`
+	AltText string `json:"alt_text,omitempty"`
 }
