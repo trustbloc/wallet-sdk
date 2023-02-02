@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hyperledger/aries-framework-go/pkg/doc/sdjwt/common"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
@@ -36,7 +38,7 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 			supportedCredential := credentialsSupported[id]
 
 			if haveMatchingTypes(&supportedCredential, vc) {
-				credentialDisplay := buildCredentialDisplay(&supportedCredential, subject, preferredLocale)
+				credentialDisplay := buildCredentialDisplay(&supportedCredential, subject, vc.SDJWTDisclosures, preferredLocale)
 
 				credentialDisplays = append(credentialDisplays, *credentialDisplay)
 
@@ -80,9 +82,9 @@ func haveMatchingTypes(supportedCredential *issuer.SupportedCredential, vc *veri
 }
 
 func buildCredentialDisplay(supportedCredential *issuer.SupportedCredential, subject *verifiable.Subject,
-	preferredLocale string,
+	sdDisclosures []*common.DisclosureClaim, preferredLocale string,
 ) *CredentialDisplay {
-	resolvedClaims := resolveClaims(supportedCredential, subject, preferredLocale)
+	resolvedClaims := resolveClaims(supportedCredential, subject, sdDisclosures, preferredLocale)
 
 	overview := *getOverviewDisplay(supportedCredential, preferredLocale)
 
@@ -131,14 +133,14 @@ func getSubject(vc *verifiable.Credential) (*verifiable.Subject, error) {
 }
 
 func resolveClaims(supportedCredential *issuer.SupportedCredential, credentialSubject *verifiable.Subject,
-	preferredLocale string,
+	sdDisclosures []*common.DisclosureClaim, preferredLocale string,
 ) []ResolvedClaim {
 	var resolvedClaims []ResolvedClaim
 
 	for fieldName, claim := range supportedCredential.Claims {
 		claim := claim // Resolves implicit memory aliasing warning from linter
 
-		resolvedClaim := resolveClaim(fieldName, &claim, credentialSubject, preferredLocale)
+		resolvedClaim := resolveClaim(fieldName, &claim, credentialSubject, sdDisclosures, preferredLocale)
 
 		if resolvedClaim != nil {
 			resolvedClaims = append(resolvedClaims, *resolvedClaim)
@@ -149,7 +151,7 @@ func resolveClaims(supportedCredential *issuer.SupportedCredential, credentialSu
 }
 
 func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *verifiable.Subject,
-	preferredLocale string,
+	sdDisclosures []*common.DisclosureClaim, preferredLocale string,
 ) *ResolvedClaim {
 	if len(claim.Displays) == 0 {
 		return nil
@@ -157,7 +159,7 @@ func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *veri
 
 	name, nameLocale := getLocalizedName(preferredLocale, claim)
 
-	rawValue, exists := getValue(credentialSubject, fieldName)
+	rawValue, exists := getValue(credentialSubject, sdDisclosures, fieldName)
 	if !exists {
 		return &ResolvedClaim{
 			Label:  name,
@@ -191,13 +193,23 @@ func getLocalizedName(preferredLocale string, claim *issuer.Claim) (string, stri
 	return claim.Displays[0].Name, claim.Displays[0].Locale
 }
 
-func getValue(credentialSubject *verifiable.Subject, fieldName string) (interface{}, bool) {
+func getValue(credentialSubject *verifiable.Subject,
+	sdDisclosures []*common.DisclosureClaim, fieldName string,
+) (interface{}, bool) {
 	if strings.EqualFold(fieldName, "ID") {
 		if credentialSubject.ID == "" {
 			return "", false
 		}
 
 		return credentialSubject.ID, true
+	}
+
+	if len(sdDisclosures) > 0 {
+		for _, disclosure := range sdDisclosures {
+			if disclosure.Name == fieldName {
+				return disclosure.Value, true
+			}
+		}
 	}
 
 	value, exists := credentialSubject.CustomFields[fieldName]

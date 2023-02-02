@@ -35,9 +35,6 @@ import (
 // echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
 
 var (
-	//go:embed expecteddisplaydata/bank_issuer_jwtsd.json
-	expectedDisplayDataBankIssuerJWTSD string
-
 	//go:embed expecteddisplaydata/bank_issuer.json
 	expectedDisplayDataBankIssuer string
 
@@ -61,7 +58,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 			issuerDIDMethod:       "orb",
 			walletDIDMethod:       "ion",
 			expectedIssuerURI:     "http://localhost:8075/issuer/bank_issuer_jwtsd",
-			expectedDisplayData:   parseDisplayData(t, expectedDisplayDataBankIssuerJWTSD),
+			expectedDisplayData:   parseDisplayData(t, expectedDisplayDataBankIssuer),
 			isSelectiveDisclosure: true,
 		},
 		{
