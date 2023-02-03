@@ -58,14 +58,15 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		{
 			issuerProfileID:   "bank_issuer_jwtsd",
 			walletDIDMethod:   "jwk",
-			verifierProfileID: "v_myprofile_jwt",
+			verifierProfileID: "v_myprofile_sdjwt",
 			verifierDIDMethod: "ion",
 		},
 	}
 
-	for _, tc := range tests {
-		fmt.Println(fmt.Sprintf("running tests with issuerProfileID=%s walletDIDMethod=%s verifierDIDMethod=%s",
-			tc.issuerProfileID, tc.walletDIDMethod, tc.verifierDIDMethod))
+	for i, tc := range tests {
+		fmt.Printf("running test %d: issuerProfileID=%s verifierProfileID=%s "+
+			"walletDIDMethod=%s verifierDIDMethod=%s\n", i,
+			tc.issuerProfileID, tc.verifierProfileID, tc.walletDIDMethod, tc.verifierDIDMethod)
 
 		testHelper := newVPTestHelper(t, tc.walletDIDMethod)
 
@@ -117,6 +118,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		require.NoError(t, err)
 
 		checkActivityLogAfterOpenID4VPFlow(t, activityLogger, tc.verifierProfileID)
+		fmt.Printf("done test %d\n", i)
 	}
 }
 

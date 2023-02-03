@@ -9,7 +9,7 @@ go 1.19
 require (
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce
 	github.com/google/uuid v1.3.0
-	github.com/hyperledger/aries-framework-go v0.1.9-0.20230131173032-b4e5124106cb
+	github.com/hyperledger/aries-framework-go v0.1.9-0.20230202214245-be9f5b2c4e8c
 	github.com/piprate/json-gold v0.4.2
 	github.com/stretchr/testify v1.8.1
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
