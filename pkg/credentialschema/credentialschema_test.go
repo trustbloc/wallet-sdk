@@ -39,6 +39,12 @@ var (
 
 	//go:embed testdata/unsupported_credential_multiple_subjects.jsonld
 	unsupportedCredentialMultipleSubjects []byte
+
+	//go:embed testdata/verified_employee_sd.jwt
+	credentialVerifiedEmployeeSD []byte
+
+	//go:embed testdata/bank_issuer_metadata.json
+	bankIssuerMetadata []byte
 )
 
 type mockIssuerServerHandler struct{}
@@ -258,6 +264,25 @@ func TestResolve(t *testing.T) {
 				verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
 			})
 		})
+
+		t.Run("Correctly shown display info for selective disclosure JWT", func(t *testing.T) {
+			credential, err := verifiable.ParseCredential(credentialVerifiedEmployeeSD,
+				verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
+				verifiable.WithDisabledProofCheck())
+			require.NoError(t, err)
+
+			var issuerMetadata issuer.Metadata
+
+			err = json.Unmarshal(bankIssuerMetadata, &issuerMetadata)
+			require.NoError(t, err)
+
+			resolvedDisplayData, errResolve := credentialschema.Resolve(
+				credentialschema.WithCredentials([]*verifiable.Credential{credential}),
+				credentialschema.WithIssuerMetadata(&issuerMetadata))
+			require.NoError(t, errResolve)
+
+			checkSDVCMatchedDisplayData(t, resolvedDisplayData)
+		})
 	})
 	t.Run("Invalid options:", func(t *testing.T) {
 		t.Run("No credentials specified", func(t *testing.T) {
@@ -360,6 +385,35 @@ func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *crede
 		{Label: "Given Name", Value: "Alice", Locale: "en-US"},
 		{Label: "Surname", Value: "Bowman", Locale: "en-US"},
 		{Label: "GPA", Value: "4.0", Locale: "en-US"},
+	}
+
+	verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
+}
+
+func checkSDVCMatchedDisplayData(t *testing.T, resolvedDisplayData *credentialschema.ResolvedDisplayData) {
+	t.Helper()
+
+	require.Equal(t, "Bank Issuer", resolvedDisplayData.IssuerDisplay.Name)
+	require.Equal(t, "en-US", resolvedDisplayData.IssuerDisplay.Locale)
+	require.Len(t, resolvedDisplayData.CredentialDisplays, 1)
+	require.Equal(t, "Verified Employee",
+		resolvedDisplayData.CredentialDisplays[0].Overview.Name)
+	require.Equal(t, "en-US",
+		resolvedDisplayData.CredentialDisplays[0].Overview.Locale)
+	require.Equal(t, "https://example.com/public/logo.png",
+		resolvedDisplayData.CredentialDisplays[0].Overview.Logo.URL)
+	require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Overview.Logo.AltText)
+	require.Equal(t, "#12107c", resolvedDisplayData.CredentialDisplays[0].Overview.BackgroundColor)
+	require.Equal(t, "#FFFFFF", resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
+
+	expectedClaims := []credentialschema.ResolvedClaim{
+		{Label: "Employee", Value: "John Doe", Locale: "en-US"},
+		{Label: "Given Name", Value: "John", Locale: "en-US"},
+		{Label: "Surname", Value: "Doe", Locale: "en-US"},
+		{Label: "Job Title", Value: "Software Developer", Locale: "en-US"},
+		{Label: "Mail", Value: "john.doe@foo.bar", Locale: "en-US"},
+		{Label: "Photo", Value: "base64photo", Locale: ""},
+		{Label: "Preferred Language", Value: "English", Locale: "en-US"},
 	}
 
 	verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
