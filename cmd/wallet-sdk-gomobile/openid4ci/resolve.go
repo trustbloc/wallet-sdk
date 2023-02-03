@@ -11,39 +11,15 @@ import (
 	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 )
 
-// Credentials represents the different ways that credentials can be passed in to the Resolve function.
-// At most one out of VCs and Reader can be used for a given call to Resolve.
-// If reader is specified, then IDs must also be specified. The corresponding credentials will be
-// retrieved from the credentialReader.
-type Credentials struct {
-	// VCs is an array of Verifiable Credentials.
-	VCs *api.JSONArray
-	// Reader allows for access to VCs stored via some storage mechanism. This is ignored if VCs is set.
-	Reader api.CredentialReader
-	// IDs specifies which credentials should be retrieved from the reader as a JSON array of strings.
-	IDs *api.JSONArray
-}
-
-// IssuerMetadata represents the different ways that issuer metadata can be specified in the Resolve function.
-// At most one out of issuerURI and metadata can be used for a given call to Resolve.
-// Setting issuerURI will cause the Resolve function to fetch an issuer's metadata by doing a lookup on its
-// OpenID configuration endpoint. issuerURI is expected to be the base URL for the issuer.
-// Alternatively, if metadata is set, then it will be used directly.
-type IssuerMetadata struct {
-	IssuerURI string
-	Metadata  *api.JSONObject
-}
-
-// ResolveDisplay resolves display information for issued credentials based on an issuer's metadata.
+// ResolveDisplay resolves display information for issued credentials based on an issuer's metadata, which is fetched
+// using the issuer's (base) URI.
 // The CredentialDisplays in the returned DisplayData object correspond to the VCs passed in and are in the
 // same order.
-// This method requires one VC source and one issuer metadata source.
+// This method requires one or more VCs and the issuer's base URI.
 // The display values are resolved per the 27 October 2022 revision of the OpenID4CI spec:
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-11.2
-func ResolveDisplay(credentials *Credentials, issuerMetadata *IssuerMetadata,
-	preferredLocale string,
-) (*DisplayData, error) {
-	opts, err := prepareOpts(credentials, issuerMetadata, preferredLocale)
+func ResolveDisplay(vcs *api.VerifiableCredentialsArray, issuerURI, preferredLocale string) (*DisplayData, error) {
+	opts, err := prepareOpts(vcs, issuerURI, preferredLocale)
 	if err != nil {
 		return nil, err
 	}

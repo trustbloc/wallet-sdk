@@ -38,9 +38,9 @@ val vc = Vcparse.parse("VC JSON goes here", opts)
 
 db.add(vc)
 
-retrievedVC = db.get("VC_ID")
+val retrievedVC = db.get("VC_ID")
 
-retrievedVCs = db.getAll()
+val retrievedVCs = db.getAll()
 
 db.remove("VC_ID")
 ```
@@ -57,9 +57,9 @@ let vc = VcparseParse("VC JSON goes here", opts, nil)!
 
 db.add(vc)
 
-retrievedVC = db.get("VC_ID")
+let retrievedVC = db.get("VC_ID")
 
-retrievedVCs = db.getAll()
+let retrievedVCs = db.getAll()
 
 db.remove("VC_ID")
 ```
@@ -392,7 +392,7 @@ let issuerURI = interaction.issuerURI() // Optional (but useful)
 // Consider checking the activity log at some point after the interaction
 ```
 
-## Credential Display Data
+### Credential Display Data
 
 After completing the `RequestCredential` step of the OpenID4CI flow, you will have your issued Verifiable Credential
 objects. These objects contain the data needed for various wallet operations, but they don't tell you how you can
@@ -406,13 +406,14 @@ and pass in your preferred locale.
 calling the `issuerURI` method on an OpenID4CI interaction object. It's a good idea to store the issuer URI somewhere
 after going through the OpenID4CI flow. This way, you can call the standalone `resolveDisplay` method later if/when you
 need to refresh your display data based on the latest display information from the issuer.
+See [Resolve Display](#resolve-display) for more information.
 
 Display data objects can be serialized using the `serialize()` method (useful for storage) and parsed from serialized
 form back into display data objects using the `parseDisplayData()` function.
 
 The structure of the display data object is as follows:
 
-### `DisplayData`
+#### `DisplayData`
 
 * The root object.
 * Can be serialized using the `serialize()` method and parsed using the `parseDisplayData()` function.
@@ -420,42 +421,75 @@ The structure of the display data object is as follows:
 * Use the `credentialDisplaysLength()` and `credentialDisplayAtIndex()` methods to iterate over the `CredentialDisplay`
 objects.
 
-### `IssuerDisplay`
+#### `IssuerDisplay`
 
 * Describes display information about the issuer.
 * Can be serialized using the `serialize()` method and parsed using the `parseIssuerDisplay()` function.
 * Has `name()` and `locale()` methods.
 
-### `CredentialDisplay`
+#### `CredentialDisplay`
 
 * Describes display information about the credential.
 * Can be serialized using the `serialize()` method and parsed using the `parseCredentialDisplay()` function.
 * The `overview()` method returns the `CredentialOverview` object.
 * Use the `claimsLength()` and `claimAtIndex()` methods to iterate over the `Claim` objects.
 
-### `CredentialOverview`
+#### `CredentialOverview`
 
 * Describes display information for the credential as a whole.
 * Has `name()`, `logo()`, `backgroundColor()`, `textColor()`, and `locale()` methods. The `logo()` method returns
 a `Logo` object.
 
-### `Logo`
+#### `Logo`
 
 * Describes display information for a logo.
 * Has `url()` and `altText()` methods.
 
-### `Claim`
+#### `Claim`
 
 * Describes display information for a specific claim.
 * Has `label()`, `value()`, and `locale()` methods.
 * For example, if the UI were to display "Given Name: Alice", then `label()` would correspond to "Given Name" while
 `value()` would correspond to "Alice".
 
-### A Note about `locale()`
+#### A Note about `locale()`
 
 The locale returned by the various `locale()` methods may not be the same as the preferred locale you passed into the
 `ResolveDisplay` function under certain circumstances. For instance, if the locale you passed in wasn't available,
 then a default locale may get used instead.
+
+#### Resolve Display
+
+The following examples show how the standalone `ResolveDisplay` function can be used.
+
+##### Kotlin (Android)
+
+```kotlin
+import dev.trustbloc.wallet.sdk.api.VerifiableCredentialsArray
+import dev.trustbloc.wallet.sdk.openid4ci.Openid4ci
+
+val vc = db.get("VC_ID") // db is some CredentialReader implementation
+
+val vcArray = VerifiableCredentialsArray()
+
+vcArray.add(vc)
+
+val displayData = Openid4ci.resolveDisplay(vcArray, "Issuer_URI_Goes_Here")
+```
+
+##### Swift (iOS)
+
+```kotlin
+import Walletsdk
+
+let vc = db.get("VC_ID") // db is some CredentialReader implementation
+
+let vcArray = ApiVerifiableCredentialsArray()
+
+vcArray.add(vc)
+
+let displayData = Openid4ciResolveDisplay(vcArray, "Issuer_URI_Goes_Here")
+```
 
 ## OpenID4VP
 
