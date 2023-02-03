@@ -8,13 +8,10 @@ package openid4ci_test
 
 import (
 	_ "embed"
-	"fmt"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api/vcparse"
-
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
 
@@ -33,119 +30,46 @@ var (
 
 func TestResolve(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		t.Run("Directly passing in VC", func(t *testing.T) {
-			vcs := fmt.Sprintf("[%s]", credentialUniversityDegree)
+		issuerServerHandler := &mockIssuerServerHandler{issuerMetadata: string(sampleIssuerMetadata)}
+		server := httptest.NewServer(issuerServerHandler)
 
-			credentials := openid4ci.Credentials{
-				VCs: &api.JSONArray{Data: []byte(vcs)},
-			}
+		defer server.Close()
 
-			issuerMetadata := openid4ci.IssuerMetadata{
-				Metadata: &api.JSONObject{Data: sampleIssuerMetadata},
-			}
+		opts := vcparse.NewOpts(true, nil)
 
-			resolvedDisplayData, err := openid4ci.ResolveDisplay(&credentials, &issuerMetadata, "en-US")
+		vc, err := vcparse.Parse(credentialUniversityDegree, opts)
+		require.NoError(t, err)
+
+		vcs := api.NewVerifiableCredentialsArray()
+		vcs.Add(vc)
+
+		t.Run("Without a preferred locale specified", func(t *testing.T) {
+			resolvedDisplayData, err := openid4ci.ResolveDisplay(vcs, server.URL, "")
 			require.NoError(t, err)
 			checkResolvedDisplayData(t, resolvedDisplayData)
 		})
-		t.Run("With credential reader", func(t *testing.T) {
-			memProvider := credential.NewInMemoryDB()
-
-			vc, err := vcparse.Parse(credentialUniversityDegree, nil)
-			require.NoError(t, err)
-
-			err = memProvider.Add(vc)
-			require.NoError(t, err)
-
-			credentials := openid4ci.Credentials{
-				Reader: memProvider,
-				IDs:    &api.JSONArray{Data: []byte(`["http://example.edu/credentials/1872"]`)},
-			}
-
-			issuerMetadata := openid4ci.IssuerMetadata{
-				Metadata: &api.JSONObject{Data: sampleIssuerMetadata},
-			}
-
-			resolvedDisplayData, err := openid4ci.ResolveDisplay(&credentials, &issuerMetadata, "en-US")
-			require.NoError(t, err)
-			checkResolvedDisplayData(t, resolvedDisplayData)
-		})
-		t.Run("Using issuer URI", func(t *testing.T) {
-			issuerServerHandler := &mockIssuerServerHandler{issuerMetadata: string(sampleIssuerMetadata)}
-			server := httptest.NewServer(issuerServerHandler)
-
-			defer server.Close()
-
-			vcs := fmt.Sprintf("[%s]", credentialUniversityDegree)
-
-			credentials := openid4ci.Credentials{
-				VCs: &api.JSONArray{Data: []byte(vcs)},
-			}
-
-			issuerMetadata := openid4ci.IssuerMetadata{
-				IssuerURI: server.URL,
-			}
-
-			resolvedDisplayData, err := openid4ci.ResolveDisplay(&credentials, &issuerMetadata, "en-US")
+		t.Run("With a preferred locale specified", func(t *testing.T) {
+			resolvedDisplayData, err := openid4ci.ResolveDisplay(vcs, server.URL, "en-US")
 			require.NoError(t, err)
 			checkResolvedDisplayData(t, resolvedDisplayData)
 		})
 	})
 	t.Run("No credentials specified", func(t *testing.T) {
-		t.Run("Category from wallet-sdk-gomobile layer", func(t *testing.T) {
-			resolvedDisplayData, err := openid4ci.ResolveDisplay(nil, nil, "")
-			require.EqualError(t, err, "no credentials specified")
-			require.Nil(t, resolvedDisplayData)
-		})
-		t.Run("Category from Go SDK layer", func(t *testing.T) {
-			resolvedDisplayData, err := openid4ci.ResolveDisplay(&openid4ci.Credentials{},
-				&openid4ci.IssuerMetadata{}, "")
-			require.EqualError(t, err, "no credentials specified")
-			require.Nil(t, resolvedDisplayData)
-		})
-	})
-	t.Run("No issuer metadata source specified", func(t *testing.T) {
-		resolvedDisplayData, err := openid4ci.ResolveDisplay(&openid4ci.Credentials{}, nil, "")
-		require.EqualError(t, err, "no issuer metadata source specified")
+		resolvedDisplayData, err := openid4ci.ResolveDisplay(nil, "", "")
+		require.EqualError(t, err, "no credentials specified")
 		require.Nil(t, resolvedDisplayData)
 	})
-	t.Run("VCs are not provided as a JSON array", func(t *testing.T) {
-		resolvedDisplayData, err := openid4ci.ResolveDisplay(&openid4ci.Credentials{
-			VCs: &api.JSONArray{Data: []byte("NotAJSONArray")},
-		}, &openid4ci.IssuerMetadata{}, "")
-		require.EqualError(t, err, "failed to unmarshal VCs into an array: invalid character 'N' "+
-			"looking for beginning of value")
+	t.Run("No issuer URI specified", func(t *testing.T) {
+		resolvedDisplayData, err := openid4ci.ResolveDisplay(api.NewVerifiableCredentialsArray(), "",
+			"")
+		require.EqualError(t, err, "no issuer URI specified")
 		require.Nil(t, resolvedDisplayData)
 	})
-	t.Run("Failed to parse VC", func(t *testing.T) {
-		resolvedDisplayData, err := openid4ci.ResolveDisplay(&openid4ci.Credentials{
-			VCs: &api.JSONArray{Data: []byte(`[{}]`)},
-		}, &openid4ci.IssuerMetadata{}, "")
-		require.EqualError(t, err, "failed to parse credential: build new credential: "+
-			"fill credential types from raw: credential type of unknown structure")
-		require.Nil(t, resolvedDisplayData)
-	})
-	t.Run("Credential IDs are nil", func(t *testing.T) {
-		memProvider := credential.NewInMemoryDB()
-
-		vc, err := vcparse.Parse(credentialUniversityDegree, nil)
-		require.NoError(t, err)
-
-		err = memProvider.Add(vc)
-		require.NoError(t, err)
-
-		credentials := openid4ci.Credentials{
-			Reader: memProvider,
-			IDs:    &api.JSONArray{},
-		}
-
-		issuerMetadata := openid4ci.IssuerMetadata{
-			Metadata: &api.JSONObject{Data: sampleIssuerMetadata},
-		}
-
-		resolvedDisplayData, err := openid4ci.ResolveDisplay(&credentials, &issuerMetadata, "en-US")
-		require.EqualError(t, err, "failed to unmarshal credential IDs into a []string: "+
-			"unexpected end of JSON input")
+	t.Run("Malformed issuer URI", func(t *testing.T) {
+		resolvedDisplayData, err := openid4ci.ResolveDisplay(api.NewVerifiableCredentialsArray(),
+			"badURL", "")
+		require.EqualError(t, err,
+			`Get "badURL/.well-known/openid-configuration": unsupported protocol scheme ""`)
 		require.Nil(t, resolvedDisplayData)
 	})
 }
