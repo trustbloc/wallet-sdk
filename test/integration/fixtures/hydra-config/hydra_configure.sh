@@ -27,4 +27,14 @@ hydra clients create \
     --callbacks https://localhost:4455/oidc/redirect \
     --skip-tls-verify
 
+hydra clients create \
+    --endpoint https://oidc-provider.example.com:4445 \
+    --id drivers_license_issuer \
+    --secret drivers-license-issuer-secret \
+    --grant-types authorization_code \
+    --response-types code \
+    --scope openid,profile \
+    --callbacks https://localhost:4455/oidc/redirect \
+    --skip-tls-verify
+
 echo "Finished creating OAuth2 clients"

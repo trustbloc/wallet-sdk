@@ -144,14 +144,34 @@ func (s *Setup) InitiateCredentialIssuance(issuerProfileID string) (string, erro
 func (s *Setup) InitiatePreAuthorizedIssuance(issuerProfileID string) (string, error) {
 	issuanceURL := fmt.Sprintf(initiateCredentialIssuanceURLFormat, s.apiURL, issuerProfileID)
 
-	claimData := map[string]interface{}{
-		"displayName":       "John Doe",
-		"givenName":         "John",
-		"jobTitle":          "Software Developer",
-		"surname":           "Doe",
-		"preferredLanguage": "English",
-		"mail":              "john.doe@foo.bar",
-		"photo":             "base64photo",
+	var claimData map[string]interface{}
+
+	if issuerProfileID == "drivers_license_issuer" {
+		claimData = map[string]interface{}{
+			"birthdate":            "1990-01-01",
+			"document_number":      "123-456-789",
+			"driving_privileges":   "G2",
+			"expiry_date":          "2025-05-26",
+			"family_name":          "Smith",
+			"given_name":           "John",
+			"issue_date":           "2020-05-27",
+			"issuing_authority":    "Ministry of Transport Ontario",
+			"issuing_country":      "Canada",
+			"resident_address":     "4726 Pine Street",
+			"resident_city":        "Toronto",
+			"resident_postal_code": "A1B 2C3",
+			"resident_state":       "Ontario",
+		}
+	} else {
+		claimData = map[string]interface{}{
+			"displayName":       "John Doe",
+			"givenName":         "John",
+			"jobTitle":          "Software Developer",
+			"surname":           "Doe",
+			"preferredLanguage": "English",
+			"mail":              "john.doe@foo.bar",
+			"photo":             "base64photo",
+		}
 	}
 
 	reqBody, err := json.Marshal(&initiateOIDC4CIRequest{
