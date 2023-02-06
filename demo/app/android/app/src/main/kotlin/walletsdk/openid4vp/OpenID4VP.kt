@@ -10,6 +10,7 @@ import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.vcparse.*
 import dev.trustbloc.wallet.sdk.credential.CredentialsOpt
 import dev.trustbloc.wallet.sdk.openid4vp.Interaction
+import dev.trustbloc.wallet.sdk.openid4vp.ClientConfig
 import dev.trustbloc.wallet.sdk.credential.Inquirer
 import dev.trustbloc.wallet.sdk.credential.VerifiablePresentation
 import dev.trustbloc.wallet.sdk.api.VerificationMethod
@@ -25,7 +26,8 @@ class OpenID4VP constructor(
     private var verifiablePresentation: VerifiablePresentation? = null;
 
     fun processAuthorizationRequest(authorizationRequest: String, storedCredentials: List<String>): List<String> {
-        val interaction = Interaction(authorizationRequest, keyReader, crypto, didResolver, documentLoader, null)
+        val cfg = ClientConfig(keyReader, crypto, didResolver, documentLoader, null)
+        val interaction = Interaction(authorizationRequest, cfg)
 
         val query = interaction.getQuery()
 

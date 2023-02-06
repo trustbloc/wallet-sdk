@@ -38,29 +38,53 @@ type Interaction struct {
 	goAPIOpenID4VP   goAPIOpenID4VP
 }
 
+// ClientConfig contains various parameters for an OpenID4VP Interaction.
+// ActivityLogger is optional, but if provided then activities will be logged there.
+// If not provided, then no activities will be logged.
+type ClientConfig struct {
+	KeyHandleReader api.KeyReader
+	Crypto          api.Crypto
+	DIDRes          api.DIDResolver
+	DocumentLoader  api.LDDocumentLoader
+	ActivityLogger  api.ActivityLogger
+}
+
+// NewClientConfig creates the client config object.
+// ActivityLogger is optional, but if provided then activities will be logged there.
+// If not provided, then no activities will be logged.
+func NewClientConfig(keyHandleReader api.KeyReader, crypto api.Crypto,
+	didResolver api.DIDResolver, ldDocumentLoader api.LDDocumentLoader, activityLogger api.ActivityLogger,
+) *ClientConfig {
+	return &ClientConfig{
+		KeyHandleReader: keyHandleReader,
+		Crypto:          crypto,
+		DIDRes:          didResolver,
+		DocumentLoader:  ldDocumentLoader,
+		ActivityLogger:  activityLogger,
+	}
+}
+
 // NewInteraction creates a new OpenID4VP Interaction.
 // The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
 // If activityLogger is nil, then no activity logging will take place.
-func NewInteraction(authorizationRequest string, keyHandleReader api.KeyReader, crypto api.Crypto,
-	didResolver api.DIDResolver, ldDocumentLoader api.LDDocumentLoader, activityLogger api.ActivityLogger,
-) *Interaction {
+func NewInteraction(authorizationRequest string, config *ClientConfig) *Interaction {
 	jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
 		common.NewVDRKeyResolver(&wrapper.VDRResolverWrapper{
-			DIDResolver: didResolver,
+			DIDResolver: config.DIDRes,
 		}).PublicKeyFetcher()))
 
 	opts := []openid4vp.Opt{openid4vp.WithHTTPClient(common.DefaultHTTPClient())}
 
-	if activityLogger != nil {
-		mobileActivityLoggerWrapper := &wrapper.MobileActivityLoggerWrapper{MobileAPIActivityLogger: activityLogger}
+	if config.ActivityLogger != nil {
+		mobileActivityLoggerWrapper := &wrapper.MobileActivityLoggerWrapper{MobileAPIActivityLogger: config.ActivityLogger}
 
 		opts = append(opts, openid4vp.WithActivityLogger(mobileActivityLoggerWrapper))
 	}
 
 	return &Interaction{
-		keyHandleReader:  keyHandleReader,
-		ldDocumentLoader: ldDocumentLoader,
-		crypto:           crypto,
+		keyHandleReader:  config.KeyHandleReader,
+		ldDocumentLoader: config.DocumentLoader,
+		crypto:           config.Crypto,
 		goAPIOpenID4VP:   openid4vp.New(authorizationRequest, jwtVerifier, opts...),
 	}
 }
