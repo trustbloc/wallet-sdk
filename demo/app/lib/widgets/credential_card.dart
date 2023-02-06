@@ -6,23 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:app/models/credential_preview.dart';
 
 class CredentialCard extends StatefulWidget {
-  CredentialData item;
+  CredentialData credentialData;
   bool isDashboardWidget;
 
-  CredentialCard({required this.item, required this.isDashboardWidget,  Key? key}) : super(key: key);
+  CredentialCard({required this.credentialData, required this.isDashboardWidget,  Key? key}) : super(key: key);
   @override
   State<CredentialCard> createState() => _CredentialCardState();
 }
 
 class _CredentialCardState extends State<CredentialCard> {
-
-  Widget getCredentialDetails() {
-    List<CredentialPreviewData> list;
-    var data = json.decode(widget.item.credentialDisplayData);
-    var credentialClaimsData = data['credential_displays'][0]['claims'] as List;
-    list = credentialClaimsData.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
-    return listViewWidget(list);
-  }
 
   Widget listViewWidget(List<CredentialPreviewData> credPrev) {
     return ListView.builder(
@@ -54,7 +46,7 @@ class _CredentialCardState extends State<CredentialCard> {
 
   @override
   Widget build(BuildContext context) {
-    Map<String, dynamic> issuer = jsonDecode(widget.item.credentialDisplayData);
+    Map<String, dynamic> issuer = jsonDecode(widget.credentialData.credentialDisplayData!);
     final credentialDisplayName = issuer['credential_displays'][0]['overview']['name'];
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
@@ -72,7 +64,7 @@ class _CredentialCardState extends State<CredentialCard> {
               ]),
           child: ListTile(
             title: Text(
-              credentialDisplayName,
+              credentialDisplayName!,
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -92,7 +84,7 @@ class _CredentialCardState extends State<CredentialCard> {
               onPressed: () async {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => CredentialDetails(item: widget.item,credentialName: credentialDisplayName, isDashboardWidget: widget.isDashboardWidget,)),
+                  MaterialPageRoute(builder: (context) => CredentialDetails(credentialData: widget.credentialData, credentialName: credentialDisplayName!, isDashboardWidget: widget.isDashboardWidget,)),
                 );
               },
             ),

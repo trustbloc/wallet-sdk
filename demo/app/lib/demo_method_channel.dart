@@ -19,6 +19,12 @@ class MethodChannelWallet extends WalletPlatform {
     return createDIDMsg;
   }
 
+  Future<String?> fetchStoredDID(String didID) async {
+    final fetchDIDMsg = await methodChannel.invokeMethod<String>('fetchDID', <String, dynamic>{'didID': didID});
+    return fetchDIDMsg;
+  }
+
+
   Future<bool?> authorize(String qrCode) async {
     final authorizeResult =
         await methodChannel.invokeMethod<bool>('authorize', <String, dynamic>{'requestURI': qrCode});
@@ -36,10 +42,16 @@ class MethodChannelWallet extends WalletPlatform {
     }
   }
 
-  Future<String?> resolveCredentialDisplay() async {
+  Future<String?> issuerURI() async {
+    final issuerURI = await methodChannel.invokeMethod<String>('issuerURI');
+    return issuerURI;
+  }
+
+  Future<String?> resolveCredentialDisplay(List<String> credentials , String issuerURI) async {
     try {
+      print('vc and issueruri');
       final credentialResponse =
-      await methodChannel.invokeMethod<String>('resolveCredentialDisplay');
+      await methodChannel.invokeMethod<String>('resolveCredentialDisplay', <String, dynamic>{'vcCredentials':credentials, 'uri':issuerURI});
       return credentialResponse;
     } on PlatformException catch (error) {
       if (error.code == errorCode) {

@@ -11,7 +11,7 @@ class CredentialCardOutline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Map<String, dynamic> issuer = jsonDecode(item.credentialDisplayData);
+    Map<String, dynamic> issuer = jsonDecode(item.credentialDisplayData!);
     final credentialDisplayName = issuer['credential_displays'][0]['overview']['name'];
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 2),

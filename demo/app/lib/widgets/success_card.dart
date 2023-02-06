@@ -33,7 +33,7 @@ class SuccessCard extends StatelessWidget {
                 title: const Text('Success', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 subtitle: Text(subTitle! + verifierName!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
               ),
-              CredentialCard(item: credentialData, isDashboardWidget: true),
+              CredentialCard(credentialData: credentialData, isDashboardWidget: true),
             ],
           ),
         ));

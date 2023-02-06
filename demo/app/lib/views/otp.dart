@@ -106,10 +106,10 @@ class _OTPPage extends State<OTP> {
                         String? requestCredentialResp;
                         String? resolvedCredentialDisplay;
                         try {
-                          log('inside requestCredential');
                           requestCredentialResp =  await WalletSDKPlugin.requestCredential(_otp!);
-                          resolvedCredentialDisplay =  await WalletSDKPlugin.resolveCredentialDisplay();
-                          _navigateToCredPreviewScreen(requestCredentialResp, resolvedCredentialDisplay!);
+                          String? issuerURI = await WalletSDKPlugin.issuerURI();
+                          resolvedCredentialDisplay = await WalletSDKPlugin.resolveCredentialDisplay([requestCredentialResp], issuerURI!);
+                          _navigateToCredPreviewScreen(requestCredentialResp, issuerURI, resolvedCredentialDisplay!);
                         } catch (err) {
                           String errorMessage = err.toString();
                           if (err is PlatformException &&
@@ -150,8 +150,8 @@ class _OTPPage extends State<OTP> {
     ),
  )));
   }
-  _navigateToCredPreviewScreen(String credentialResp, String credentialResolveDisplay) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, credentialDisplayData: credentialResolveDisplay),)));
+  _navigateToCredPreviewScreen(String credentialResp, String issuerURI, String credentialDisplayData) async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURI, credentialDisplayData: credentialDisplayData))));
   }
 
   _clearOTPInput(){
