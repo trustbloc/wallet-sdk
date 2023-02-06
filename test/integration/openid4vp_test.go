@@ -91,8 +91,10 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		activityLogger := mem.NewActivityLogger()
 
-		interaction := openid4vp.NewInteraction(
-			initiateURL, testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver, ld.NewDocLoader(), activityLogger)
+		cfg := openid4vp.NewClientConfig(
+			testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver, ld.NewDocLoader(), activityLogger)
+
+		interaction := openid4vp.NewInteraction(initiateURL, cfg)
 
 		query, err := interaction.GetQuery()
 		require.NoError(t, err)

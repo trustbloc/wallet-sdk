@@ -21,6 +21,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
+
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -38,13 +39,18 @@ var (
 
 func TestOpenID4VP_GetQuery(t *testing.T) {
 	t.Run("NewInteraction success", func(t *testing.T) {
-		instance := NewInteraction(
-			requestObjectJWT,
+		cfg := NewClientConfig(
 			&mockKeyHandleReader{},
 			&mockCrypto{},
 			&mocksDIDResolver{},
 			&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
-			mem.NewActivityLogger())
+			mem.NewActivityLogger(),
+		)
+
+		instance := NewInteraction(
+			requestObjectJWT,
+			cfg,
+		)
 
 		require.NotNil(t, instance)
 		require.NotNil(t, instance.crypto)
