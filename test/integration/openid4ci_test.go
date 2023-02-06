@@ -40,6 +40,9 @@ var (
 
 	//go:embed expecteddisplaydata/did_ion_issuer.json
 	expectedDisplayDataDIDION string
+
+	//go:embed expecteddisplaydata/drivers_license_issuer.json
+	expectedDisplayDataDriversLicenseIssuer string
 )
 
 func TestOpenID4CIFullFlow(t *testing.T) {
@@ -74,6 +77,13 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 			walletDIDMethod:     "key",
 			expectedDisplayData: parseDisplayData(t, expectedDisplayDataDIDION),
 			expectedIssuerURI:   "http://localhost:8075/issuer/did_ion_issuer",
+		},
+		{
+			issuerProfileID:     "drivers_license_issuer",
+			issuerDIDMethod:     "ion",
+			walletDIDMethod:     "ion",
+			expectedDisplayData: parseDisplayData(t, expectedDisplayDataDriversLicenseIssuer),
+			expectedIssuerURI:   "http://localhost:8075/issuer/drivers_license_issuer",
 		},
 	}
 

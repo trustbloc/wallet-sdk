@@ -1,0 +1,86 @@
+{
+  "issuer_display":{
+    "name":"Driver's License Issuer",
+    "locale":"en-US"
+  },
+  "credential_displays":[
+    {
+      "overview":{
+        "name":"Driver's License",
+        "locale":"en-US",
+        "logo":{
+          "url":"https://example.com/public/logo.png"
+        },
+        "background_color":"#12107c",
+        "text_color":"#FFFFFF"
+      },
+      "claims":[
+        {
+          "label":"Birth Date",
+          "value":"1990-01-01",
+          "locale":"en-US"
+        },
+        {
+          "label":"Document Number",
+          "value":"123-456-789",
+          "locale":"en-US"
+        },
+        {
+          "label":"Driving Privileges",
+          "value":"G2",
+          "locale":"en-US"
+        },
+        {
+          "label":"Expiry Date",
+          "value":"2025-05-26",
+          "locale":"en-US"
+        },
+        {
+          "label":"Family Name",
+          "value":"Smith",
+          "locale":"en-US"
+        },
+        {
+          "label":"Given Name",
+          "value":"John",
+          "locale":"en-US"
+        },
+        {
+          "label":"Issue Date",
+          "value":"2020-05-27",
+          "locale":"en-US"
+        },
+        {
+          "label":"Issuing Authority",
+          "value":"Ministry of Transport Ontario",
+          "locale":"en-US"
+        },
+        {
+          "label":"Issuing Country",
+          "value":"Canada",
+          "locale":"en-US"
+        },
+        {
+          "label": "Resident Address",
+          "value": "4726 Pine Street",
+          "locale": "en-US"
+        },
+        {
+          "label":"Resident City",
+          "value":"Toronto",
+          "locale":"en-US"
+        },
+        {
+          "label":"Resident Postal Code",
+          "value":"A1B 2C3",
+          "locale":"en-US"
+        },
+        {
+          "label":"Resident State",
+          "value":"Ontario",
+          "locale":"en-US"
+        }
+      ]
+    }
+  ]
+}

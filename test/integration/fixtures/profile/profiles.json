@@ -129,6 +129,176 @@
     },
     {
       "issuer": {
+        "id": "drivers_license_issuer",
+        "name": "Driver's License Issuer",
+        "organizationID": "test_org",
+        "url": "http://localhost:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "JsonWebSignature2020",
+          "signatureRepresentation": 0,
+          "keyType": "ECDSASecp256k1DER",
+          "format": "jwt",
+          "didMethod": "ion",
+          "status": {
+            "type": "StatusList2021Entry"
+          }
+        },
+        "oidcConfig": {
+          "client_id": "drivers_license_issuer",
+          "client_secret_handle": "drivers-license-issuer-secret",
+          "scope": [
+            "openid",
+            "profile"
+          ],
+          "redirect_uri": "https://localhost:4455/oidc/redirect",
+          "issuer_well_known": "https://oidc-provider.example.com:4444/.well-known/openid-configuration"
+        },
+        "credentialTemplates": [
+          {
+            "contexts": [
+              "https://www.w3.org/2018/credentials/v1"
+            ],
+            "type": "DriversLicense",
+            "id": "templateID",
+            "issuer": "did:ion:drivers_license_issuer"
+          }
+        ],
+        "credentialMetadata": {
+          "credentials_supported": {
+            "DriversLicense": {
+              "format": "jwt_vc_json",
+              "id": "DriversLicense_JWT",
+              "types": [
+                "VerifiableCredential",
+                "DriversLicense"
+              ],
+              "display": [
+                {
+                  "name": "Driver's License",
+                  "locale": "en-US",
+                  "logo": {
+                    "url": "https://example.com/public/logo.png",
+                    "alternative_text": "a square logo of a driver's license verification"
+                  },
+                  "background_color": "#12107c",
+                  "text_color": "#FFFFFF"
+                }
+              ],
+              "credentialSubject": {
+                "birthdate": {
+                  "display": [
+                    {
+                      "name": "Birth Date",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "document_number": {
+                  "display": [
+                    {
+                      "name": "Document Number",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "driving_privileges": {
+                  "display": [
+                    {
+                      "name": "Driving Privileges",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "expiry_date": {
+                  "display": [
+                    {
+                      "name": "Expiry Date",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "family_name": {
+                  "display": [
+                    {
+                      "name": "Family Name",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "given_name": {
+                  "display": [
+                    {
+                      "name": "Given Name",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "issue_date": {
+                  "display": [
+                    {
+                      "name": "Issue Date",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "issuing_authority": {
+                  "display": [
+                    {
+                      "name": "Issuing Authority",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "issuing_country": {
+                  "display": [
+                    {
+                      "name": "Issuing Country",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "resident_address": {
+                  "display": [
+                    {
+                      "name": "Resident Address",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "resident_city": {
+                  "display": [
+                    {
+                      "name": "Resident City",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "resident_postal_code": {
+                  "display": [
+                    {
+                      "name": "Resident Postal Code",
+                      "locale": "en-US"
+                    }
+                  ]
+                },
+                "resident_state": {
+                  "display": [
+                    {
+                      "name": "Resident State",
+                      "locale": "en-US"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "createDID": true
+    },
+    {
+      "issuer": {
         "id": "bank_issuer",
         "name": "Bank Issuer",
         "organizationID": "test_org",

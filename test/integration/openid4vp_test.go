@@ -61,6 +61,12 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			verifierProfileID: "v_myprofile_sdjwt",
 			verifierDIDMethod: "ion",
 		},
+		{
+			issuerProfileID:   "drivers_license_issuer",
+			walletDIDMethod:   "ion",
+			verifierProfileID: "v_myprofile_jwt",
+			verifierDIDMethod: "ion",
+		},
 	}
 
 	for i, tc := range tests {

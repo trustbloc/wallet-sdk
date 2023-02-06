@@ -48,7 +48,7 @@ copy-android-bindings:
 
 .PHONY: copy-ios-bindings
 copy-ios-bindings:
-	@cp -R cmd/wallet-sdk-gomobile/bindings/ios/walletsdk.xcframework demo/app/ios/Runner
+	@rm -rf demo/app/ios/Runner/walletsdk.xcframework && cp -R cmd/wallet-sdk-gomobile/bindings/ios/walletsdk.xcframework demo/app/ios/Runner
 
 .PHONY: demo-app-ios
 demo-app-ios:generate-ios-bindings copy-ios-bindings
