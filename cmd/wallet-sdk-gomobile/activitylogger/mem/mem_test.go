@@ -9,6 +9,9 @@ package mem_test
 import (
 	"testing"
 
+	"github.com/google/uuid"
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
+
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 
@@ -19,14 +22,14 @@ func TestActivityLogger(t *testing.T) {
 	activityLogger := mem.NewActivityLogger()
 
 	activity1 := &api.Activity{
-		ID: "ID1",
+		GoAPIActivity: &goapi.Activity{ID: uuid.New()},
 	}
 
 	err := activityLogger.Log(activity1)
 	require.NoError(t, err)
 
 	activity2 := &api.Activity{
-		ID: "ID2",
+		GoAPIActivity: &goapi.Activity{ID: uuid.New()},
 	}
 
 	err = activityLogger.Log(activity2)

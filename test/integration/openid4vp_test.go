@@ -128,14 +128,13 @@ func checkActivityLogAfterOpenID4VPFlow(t *testing.T, activityLogger *mem.Activi
 
 	activity := activityLogger.AtIndex(0)
 
-	require.NotEmpty(t, activity.ID)
-	require.Equal(t, goapi.LogTypeCredentialActivity, activity.Type)
-	require.NotEmpty(t, activity.Time)
-	require.NotNil(t, activity.Data)
-	require.Equal(t, verifierProfileID, activity.Data.Client)
-	require.Equal(t, "oidc-presentation", activity.Data.Operation)
-	require.Equal(t, goapi.ActivityLogStatusSuccess, activity.Data.Status)
-	require.Nil(t, activity.Data.Params)
+	require.NotEmpty(t, activity.ID())
+	require.Equal(t, goapi.LogTypeCredentialActivity, activity.Type())
+	require.NotEmpty(t, activity.UnixTimestamp())
+	require.Equal(t, verifierProfileID, activity.Client())
+	require.Equal(t, "oidc-presentation", activity.Operation())
+	require.Equal(t, goapi.ActivityLogStatusSuccess, activity.Status())
+	require.Equal(t, 0, activity.Params().AllKeyValuePairs().Length())
 }
 
 type vpTestHelper struct {

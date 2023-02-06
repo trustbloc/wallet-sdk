@@ -144,15 +144,34 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		activity := activityLogger.AtIndex(0)
 
 		require.NotEmpty(t, activity.ID)
-		require.Equal(t, goapi.LogTypeCredentialActivity, activity.Type)
-		require.NotEmpty(t, activity.Time)
-		require.NotNil(t, activity.Data)
-		require.Equal(t, "https://server.example.com", activity.Data.Client)
-		require.Equal(t, "oidc-issuance", activity.Data.Operation)
-		require.Equal(t, goapi.ActivityLogStatusSuccess, activity.Data.Status)
-		require.NotNil(t, activity.Data.Params)
-		require.Equal(t, `{"subjectIDs":["did:orb:uAAA:EiARTvvCsWFTSCc35447YpI2MJpFAaJZtFlceVz9lcMYVw"]}`,
-			string(activity.Data.Params.Data))
+		require.Equal(t, goapi.LogTypeCredentialActivity, activity.Type())
+		require.NotEmpty(t, activity.UnixTimestamp())
+		require.Equal(t, "https://server.example.com", activity.Client())
+		require.Equal(t, "oidc-issuance", activity.Operation())
+		require.Equal(t, goapi.ActivityLogStatusSuccess, activity.Status())
+
+		params := activity.Params()
+		require.NotNil(t, params)
+
+		keyValuePairs := params.AllKeyValuePairs()
+
+		numberOfKeyValuePairs := keyValuePairs.Length()
+
+		require.Equal(t, 1, numberOfKeyValuePairs)
+
+		keyValuePair := keyValuePairs.AtIndex(0)
+
+		key := keyValuePair.Key()
+		require.Equal(t, "subjectIDs", key)
+
+		subjectIDs, err := keyValuePair.ValueStringArray()
+		require.NoError(t, err)
+
+		numberOfSubjectIDs := subjectIDs.Length()
+		require.Equal(t, 1, numberOfSubjectIDs)
+
+		subjectID := subjectIDs.AtIndex(0)
+		require.Equal(t, "did:orb:uAAA:EiARTvvCsWFTSCc35447YpI2MJpFAaJZtFlceVz9lcMYVw", subjectID)
 	})
 	t.Run("Success with jwk public key", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{}
