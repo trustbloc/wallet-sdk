@@ -1,6 +1,6 @@
 # SDK Usage
 
-Last updated: January 25, 2023 (commit `c30a461b9b0684ad402a23cebe63136f0ddc6d28`)
+Last updated: February 6, 2023 (commit `eae2710e579e7578127e607b6400b8e0a839640e`)
 
 This guide explains how to use this SDK in Android or iOS code.
 
@@ -529,6 +529,8 @@ import dev.trustbloc.wallet.sdk.openid4vp
 import dev.trustbloc.wallet.sdk.ld
 import dev.trustbloc.wallet.sdk.credential
 import dev.trustbloc.wallet.sdk.openid4ci.mem
+import dev.trustbloc.wallet.sdk.openid4vp.ClientConfig
+import dev.trustbloc.wallet.sdk.openid4vp.Interaction
 
 // Setup
 val memKMSStore = MemKMSStore.MemKMSStore()
@@ -539,9 +541,10 @@ val didCreator = Creator(kms as KeyWriter)
 val documentLoader = DocLoader()
 val didDocResolution = didCreator.create("key", CreateDIDOpts()) // Create a did:key doc
 val activityLogger = mem.ActivityLogger() // Optional, but useful for tracking credential activities
+val cfg = ClientConfig(kms, kms.getCrypto(), didResolver, documentLoader, activityLogger)
 
 // Going through the flow
-val interaction = openid4vp.Interaction("YourAuthRequestURIHere", kms, kms.getCrypto(), didResolver, docLoader, activityLogger)
+val interaction = openid4vp.Interaction("YourAuthRequestURIHere", cfg)
 val query = interaction.getQuery()
 val inquirer = credential.Inquirer(docLoader)
 val issuedCredentials = api.VerifiableCredentialsArray() // Would need some actual credentials for this to actually work
@@ -565,9 +568,10 @@ let didResolver = DidNewResolver("", nil)
 let didCreator = DidNewCreatorWithKeyWriter(kms, nil)
 let documentLoader = LdNewDocLoader()
 let activityLogger = MemNewActivityLogger() // Optional, but useful for tracking credential activities
+let clientConfig = Openid4vpClientConfig(keyHandleReader: kms, crypto: kms.getCrypto(), didResolver: didResolver, ldDocumentLoader: documentLoader, activityLogger: activityLogger)
 
 // Going through the flow
-let interaction = Openid4vpInteraction("YourAuthRequestURIHere", keyHandle:kms, crypto:kms.getCrypto(), didResolver:didResolver, ldDocumentLoader:docLoader, activityLogger: activityLogger)
+let interaction = Openid4vpInteraction("YourAuthRequestURIHere", config: clientConfig)
 let query = interaction.getQuery()
 let inquirer = CredentialNewInquirer(docLoader)
 let issuedCredentials = ApiVerifiableCredentialsArray() // Would need some actual credentials for this to actually work
