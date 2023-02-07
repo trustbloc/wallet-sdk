@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/models/credential_preview.dart';
@@ -7,13 +8,13 @@ class CredentialVerifiedInformation extends StatelessWidget {
 
   CredentialData credentialData;
   double? height;
-  CredentialVerifiedInformation({required this.credentialData, this.height,   Key? key}) : super(key: key);
+  CredentialVerifiedInformation({required this.credentialData,  this.height, Key? key}) : super(key: key);
 
   final ScrollController credDataController = ScrollController();
 
   Widget getCredentialDetails() {
     List<CredentialPreviewData> list;
-    var data = json.decode(credentialData.credentialDisplayData);
+    var data = json.decode(credentialData.credentialDisplayData!);
     var credentialClaimsData = data['credential_displays'][0]['claims'] as List;
     list = credentialClaimsData.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
     return listViewWidget(list);

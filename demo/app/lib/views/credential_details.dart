@@ -8,11 +8,11 @@ import 'package:app/models/credential_data.dart';
 import 'package:intl/intl.dart';
 
 class CredentialDetails extends StatelessWidget {
-  CredentialData item;
+  CredentialData credentialData;
   bool isDashboardWidget = true;
   String credentialName;
 
-  CredentialDetails({required this.item, required this.isDashboardWidget,  required this.credentialName, Key? key}) : super(key: key);
+  CredentialDetails({required this.credentialData, required this.isDashboardWidget, required this.credentialName, Key? key}) : super(key: key);
 
   final ScrollController credDataController = ScrollController();
   final ScrollController rawDataController = ScrollController();
@@ -25,7 +25,7 @@ class CredentialDetails extends StatelessWidget {
   }
 
   prettifyRawJson(){
-    final parsedJson = json.decode(item.credentialDisplayData);
+    final parsedJson = json.decode(credentialData.credentialDisplayData!);
     final prettyString = const JsonEncoder.withIndent('  ').convert(parsedJson);
     return Text(prettyString);
   }
@@ -127,7 +127,7 @@ class CredentialDetails extends StatelessWidget {
                     ),
                         isDashboardWidget?
                         const CredentialMetaDataCard(): Container(),
-                        CredentialVerifiedInformation(credentialData: item, height: MediaQuery.of(context).size.height*0.42,)
+                        CredentialVerifiedInformation(credentialData: credentialData, height: MediaQuery.of(context).size.height*0.42,)
                       ],
                     )
              ]),

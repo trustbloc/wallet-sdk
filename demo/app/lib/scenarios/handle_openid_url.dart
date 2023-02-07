@@ -25,12 +25,12 @@ void _navigateToPresentationPreviewScreen(
 }
 
 _navigateToCredPreviewScreen(
-    BuildContext context, String credentialResp, String credentialResolveDisplay) async {
+    BuildContext context, String credentialResp, String issuerURL, String resolvedCredentialDisplay) async {
   Navigator.push(
       context,
       MaterialPageRoute(
           builder: (context) =>
-              CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, credentialDisplayData: credentialResolveDisplay),)));
+              CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURL, credentialDisplayData: resolvedCredentialDisplay)),));
 }
 
 void handleOpenIDUrl(BuildContext context, String qrCodeURL) async {
@@ -41,14 +41,15 @@ void handleOpenIDUrl(BuildContext context, String qrCodeURL) async {
   log('received qr code url - $qrCodeURL');
   if (!qrCodeURL.contains("openid-vc")) {
     var authorizeResultPinRequired = await WalletSDKPlugin.authorize(qrCodeURL);
-    log("whats the authorize pin $authorizeResultPinRequired");
+    log("pin required flow -  $authorizeResultPinRequired");
     if (authorizeResultPinRequired == true) {
       _navigateToOTPScreen(context);
       return;
     } else {
       String? requestCredentialResp =  await WalletSDKPlugin.requestCredential('');
-      String? resolvedCredentialDisplay =  await WalletSDKPlugin.resolveCredentialDisplay();
-      _navigateToCredPreviewScreen(context, requestCredentialResp, resolvedCredentialDisplay!);
+      String? issuerURL = await WalletSDKPlugin.issuerURI();
+      String? resolvedCredentialDisplay =  await WalletSDKPlugin.resolveCredentialDisplay([requestCredentialResp],issuerURL!);
+      _navigateToCredPreviewScreen(context, requestCredentialResp, issuerURL, resolvedCredentialDisplay!);
     }
   } else {
     // Check if the flow is for the verifiable presentation or for issuance.
@@ -65,7 +66,7 @@ void handleOpenIDUrl(BuildContext context, String qrCodeURL) async {
     if (matchedCred.isNotEmpty) {
       //TODO: in future we can show all the credential
       _navigateToPresentationPreviewScreen(context, matchedCred.first,
-          CredentialData(rawCredential: '', credentialDisplayData: credentialDisplayData.first));
+          CredentialData(rawCredential: '', credentialDisplayData: credentialDisplayData.first, issuerURL: ''));
       return;
     }
   }

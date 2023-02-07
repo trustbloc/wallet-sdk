@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'dart:developer';
+import 'package:app/demo_platform_interface.dart';
+import 'package:app/main.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/views/credential_added.dart';
 import 'package:app/views/dashboard.dart';
@@ -38,7 +41,6 @@ class CredentialPreviewState extends State<CredentialPreview> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar:  const CustomTitleAppBar(pageTitle: 'Credential Preview', addCloseIcon: true, height: 60,),
       body: Container(
@@ -60,7 +62,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
                 style: TextStyle(fontSize: 18, color: Colors.black),
                 "wants to issue the credential"),
           ),
-          CredentialCard(item: widget.credentialData, isDashboardWidget: false),
+          CredentialCard(credentialData: widget.credentialData, isDashboardWidget: false),
           Expanded(
             child: Align(
               alignment: Alignment.bottomCenter,
@@ -83,7 +85,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
                     ),
                     PrimaryButton(
                         onPressed: () async {
-                            _storageService.addCredential(CredentialDataObject("$userLoggedIn-${uuid.v1()}",CredentialData(rawCredential: widget.credentialData.rawCredential, credentialDisplayData: widget.credentialData.credentialDisplayData)));
+                            _storageService.addCredential(CredentialDataObject("$userLoggedIn-${uuid.v1()}",CredentialData(rawCredential: widget.credentialData.rawCredential, issuerURL: widget.credentialData.issuerURL, credentialDisplayData: widget.credentialData.credentialDisplayData!)));
                             _navigateToCredentialAdded();
                         },
                         width: double.infinity,

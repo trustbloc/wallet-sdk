@@ -49,12 +49,22 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "requestCredential":
             let otp = fetchArgsKeyValue(call, key: "otp")
             requestCredential(otp: otp!, result: result)
+            
+        case "fetchDID":
+            let didID = fetchArgsKeyValue(call, key: "didID")
+            if didDocID == nil {
+                didDocID = didID
+            }
         
         case "resolveCredentialDisplay":
-            resolveCredentialDisplay(result: result)
+            resolveCredentialDisplay(arguments: arguments!,  result: result)
             
         case "initSDK":
             initSDK(result:result)
+            
+        case "issuerURI":
+            issuerURI(result:result)
+            
             
         case "processAuthorizationRequest":
             processAuthorizationRequest(arguments: arguments!, result: result)
@@ -188,6 +198,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
           }
     }
     
+    
     public func requestCredential(otp: String, result: @escaping FlutterResult){
         let clientConfig =  Openid4ciClientConfig(didDocID!,  clientID: "ClientID", signerCreator: self.signerCreator, didRes: self.didResolver, activityLogger: nil)
         newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
@@ -204,18 +215,42 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         
     }
     
-    public func resolveCredentialDisplay(result: @escaping FlutterResult){
+    public func resolveCredentialDisplay(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
         do {
-            let resolvedDisplayData = try newOIDCInteraction?.resolveDisplay("")
+            guard let issuerURI = arguments["uri"] as? String else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while resolve credential display",
+                                                 details: "parameter issuerURI is missed"))
+            }
+            
+            guard let vcCredentials = arguments["vcCredentials"] as? Array<String> else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while resolve credential display",
+                                                 details: "parameter storedcredentials is missed"))
+            }
+            
+            let opts = VcparseNewOpts(true, nil)
+            var parsedCredentials: ApiVerifiableCredentialsArray = ApiVerifiableCredentialsArray()!
+            
+            for cred in vcCredentials{
+                let parsedVC = VcparseParse(cred, opts, nil)!
+                parsedCredentials.add(parsedVC)
+            }
+            let resolvedDisplayData = Openid4ciResolveDisplay(parsedCredentials, issuerURI, nil, nil)
             let displayDataResp = resolvedDisplayData?.serialize(nil)
             result(displayDataResp)
-        } catch let error as NSError{
-                print("printing error")
+          } catch let error as NSError {
                 result(FlutterError.init(code: "Exception",
                                          message: "error while resolving credential",
                                          details: error.description))
             }
     }
+    
+    public func issuerURI(result: @escaping FlutterResult){
+        let issuerURIResp = newOIDCInteraction?.issuerURI();
+        result(issuerURIResp)
+    }
+
 
     
     public func initializeObject<T: ApiCreateDIDOpts>(fromType type: T.Type) -> T {

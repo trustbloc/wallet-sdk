@@ -104,6 +104,8 @@ class _MainWidgetState extends State<MainWidget> {
               final SharedPreferences pref = await prefs;
               String? userLoggedIn = pref.getString("userLoggedIn");
               if (_usernameController.text == userLoggedIn.toString()) {
+                var fetchedUserDID = pref.getString('userDID');
+                WalletSDKPlugin.fetchStoredDID(fetchedUserDID!);
                 _loginCompleted();
               } else {
                 await _createDid();

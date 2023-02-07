@@ -19,6 +19,7 @@ class _CredentialListState extends State<CredentialList> {
   final StorageService _storageService = StorageService();
  // late List<StorageItem> _credentialList;
   late List<CredentialDataObject> _credentialList;
+  String? credentialDisplayData;
   bool _loading = true;
   static String? username = '';
   @override
@@ -68,7 +69,7 @@ class _CredentialListState extends State<CredentialList> {
                   itemBuilder: (_, index) {
                     return Dismissible(
                       key: Key(_credentialList[index].toString()),
-                      child: CredentialCard(item: _credentialList[index].value, isDashboardWidget: true),
+                      child: CredentialCard(credentialData: _credentialList[index].value,  isDashboardWidget: true),
                       onDismissed: (direction) async {
                         await _storageService.deleteData(_credentialList[index])
                             .then((value) => _credentialList.removeAt(index));
