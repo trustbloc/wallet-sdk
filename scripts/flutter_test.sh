@@ -7,7 +7,7 @@
 
 cd test/integration
 INITIATE_ISSUANCE_URLS=$(../../build/bin/integration-cli issuance bank_issuer did_ion_issuer did_ion_issuer)
-INITIATE_VERIFICATION_URLS=$(../../build/bin/integration-cli verification v_myprofile_jwt v_myprofile_jwt v_myprofile_jwt)
+INITIATE_VERIFICATION_URLS=$(../../build/bin/integration-cli verification v_myprofile_jwt_verified_employee v_myprofile_jwt_verified_employee v_myprofile_jwt_verified_employee)
 
 echo "INITIATE_ISSUANCE_URLS:${INITIATE_ISSUANCE_URLS}"
 echo "INITIATE_VERIFICATION_URLS:${INITIATE_VERIFICATION_URLS}"

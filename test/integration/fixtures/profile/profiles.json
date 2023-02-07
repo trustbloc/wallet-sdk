@@ -618,7 +618,7 @@
                       "path": [
                         "$.credentialSubject.jobTitle",
                         "$.vc.credentialSubject.jobTitle"
-                      ],
+                        ],
                       "purpose": "We can only hire software developers.",
                       "filter": {
                         "type": "string",
@@ -638,8 +638,8 @@
     },
     {
       "verifier": {
-        "id": "v_myprofile_jwt",
-        "name": "v_myprofile_jwt",
+        "id": "v_myprofile_jwt_verified_employee",
+        "name": "v_myprofile_jwt_verified_employee",
         "organizationID": "test_org",
         "url": "https://test-verifier.com",
         "active": true,
@@ -670,14 +670,83 @@
             "id": "32f54163-7166-48f1-93d8-ff217bdb0653",
             "input_descriptors": [
               {
-                "id": "VerifiableCredential",
-                "name": "VerifiableCredential",
-                "purpose": "So we can see that you are an expert.",
-                "schema": [
-                  {
-                    "uri": "VerifiableCredential"
-                  }
-                ]
+                "id": "VerifiedEmployee",
+                "constraints": {
+                  "fields": [
+                    {
+                      "path": [
+                        "$.type",
+                        "$.vc.type"
+                      ],
+                      "filter": {
+                        "type": "array",
+                        "contains": {
+                          "type": "string",
+                          "const": "VerifiedEmployee"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "createDID": true
+    },
+    {
+      "verifier": {
+        "id": "v_myprofile_jwt_drivers_license",
+        "name": "v_myprofile_jwt_drivers_license",
+        "organizationID": "test_org",
+        "url": "https://test-verifier.com",
+        "active": true,
+        "webHook": "",
+        "checks": {
+          "credential": {
+            "format": [
+              "jwt"
+            ],
+            "proof": true,
+            "status": true
+          },
+          "presentation": {
+            "format": [
+              "jwt"
+            ],
+            "vcSubject": true,
+            "proof": true
+          }
+        },
+        "oidcConfig": {
+          "roSigningAlgorithm": "EcdsaSecp256k1Signature2019",
+          "keyType": "ECDSASecp256k1DER",
+          "didMethod": "ion"
+        },
+        "presentationDefinitions": [
+          {
+            "id": "32f54163-7166-48f1-93d8-ff217bdb0654",
+            "input_descriptors": [
+              {
+                "id": "DriversLicense",
+                "constraints": {
+                  "fields": [
+                    {
+                      "path": [
+                        "$.type",
+                        "$.vc.type"
+                      ],
+                      "filter": {
+                        "type": "array",
+                        "contains": {
+                          "type": "string",
+                          "const": "DriversLicense"
+                        }
+                      }
+                    }
+                  ]
+                }
               }
             ]
           }
