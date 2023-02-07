@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:app/main.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:app/widgets/credential_card.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +20,7 @@ class _CredentialListState extends State<CredentialList> {
   final StorageService _storageService = StorageService();
  // late List<StorageItem> _credentialList;
   late List<CredentialDataObject> _credentialList;
+  late List<Object?> activityLogger;
   String? credentialDisplayData;
   bool _loading = true;
   static String? username = '';
@@ -34,6 +36,7 @@ class _CredentialListState extends State<CredentialList> {
     username =  p.getString("userLoggedIn");
     log("list - $username");
       _credentialList = await _storageService.retrieveCredentials(username!);
+      activityLogger =  await WalletSDKPlugin.activityLogger();
     if (_credentialList.isEmpty) {
       _loading = true;
       _credentialList.clear();
@@ -69,7 +72,7 @@ class _CredentialListState extends State<CredentialList> {
                   itemBuilder: (_, index) {
                     return Dismissible(
                       key: Key(_credentialList[index].toString()),
-                      child: CredentialCard(credentialData: _credentialList[index].value,  isDashboardWidget: true),
+                      child: CredentialCard(credentialData: _credentialList[index].value, activityLogger: activityLogger, isDashboardWidget: true),
                       onDismissed: (direction) async {
                         await _storageService.deleteData(_credentialList[index])
                             .then((value) => _credentialList.removeAt(index));
