@@ -30,53 +30,57 @@ import (
 
 func TestOpenID4VPFullFlow(t *testing.T) {
 	type test struct {
-		issuerProfileID   string
+		issuerProfileIDs  []string
 		walletDIDMethod   string
 		verifierProfileID string
-		verifierDIDMethod string
 	}
 
 	tests := []test{
 		{
-			issuerProfileID:   "bank_issuer",
+			issuerProfileIDs:  []string{"bank_issuer"},
 			walletDIDMethod:   "ion",
-			verifierProfileID: "v_myprofile_jwt",
-			verifierDIDMethod: "ion",
+			verifierProfileID: "v_myprofile_jwt_verified_employee",
 		},
 		{
-			issuerProfileID:   "bank_issuer",
+			issuerProfileIDs:  []string{"bank_issuer"},
 			walletDIDMethod:   "key",
-			verifierProfileID: "v_myprofile_jwt",
-			verifierDIDMethod: "ion",
+			verifierProfileID: "v_myprofile_jwt_verified_employee",
 		},
 		{
-			issuerProfileID:   "bank_issuer",
+			issuerProfileIDs:  []string{"bank_issuer"},
 			walletDIDMethod:   "jwk",
-			verifierProfileID: "v_myprofile_jwt",
-			verifierDIDMethod: "jwk",
+			verifierProfileID: "v_myprofile_jwt_verified_employee",
 		},
 		{
-			issuerProfileID:   "bank_issuer_jwtsd",
+			issuerProfileIDs:  []string{"bank_issuer_jwtsd"},
 			walletDIDMethod:   "jwk",
 			verifierProfileID: "v_myprofile_sdjwt",
-			verifierDIDMethod: "ion",
 		},
 		{
-			issuerProfileID:   "drivers_license_issuer",
+			issuerProfileIDs:  []string{"drivers_license_issuer"},
 			walletDIDMethod:   "ion",
-			verifierProfileID: "v_myprofile_jwt",
-			verifierDIDMethod: "ion",
+			verifierProfileID: "v_myprofile_jwt_drivers_license",
+		},
+		{
+			issuerProfileIDs:  []string{"bank_issuer", "drivers_license_issuer"},
+			walletDIDMethod:   "ion",
+			verifierProfileID: "v_myprofile_jwt_verified_employee",
 		},
 	}
 
 	for i, tc := range tests {
-		fmt.Printf("running test %d: issuerProfileID=%s verifierProfileID=%s "+
-			"walletDIDMethod=%s verifierDIDMethod=%s\n", i,
-			tc.issuerProfileID, tc.verifierProfileID, tc.walletDIDMethod, tc.verifierDIDMethod)
+		fmt.Printf("running test %d: issuerProfileIDs=%s verifierProfileID=%s "+
+			"walletDIDMethod=%s\n", i,
+			tc.issuerProfileIDs, tc.verifierProfileID, tc.walletDIDMethod)
 
 		testHelper := newVPTestHelper(t, tc.walletDIDMethod)
 
-		issuedCredentials := testHelper.issueCredentials(t, tc.issuerProfileID)
+		issuedCredentials := testHelper.issueCredentials(t, tc.issuerProfileIDs)
+		println("Issued", issuedCredentials.Length(), "credentials")
+		for k := 0; k < issuedCredentials.Length(); k++ {
+			cred, _ := issuedCredentials.AtIndex(k).Serialize()
+			println("Issued VC[", k, "]: ", cred)
+		}
 
 		setup := oidc4vp.NewSetup(testenv.NewHttpRequest())
 
@@ -98,6 +102,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		query, err := interaction.GetQuery()
 		require.NoError(t, err)
+		println("query", string(query))
 
 		verifiablePres, err := credential.NewInquirer(ld.NewDocLoader()).
 			Query(query, credential.NewCredentialsOpt(issuedCredentials))
@@ -106,13 +111,14 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		matchedCreds, err := verifiablePres.Credentials()
 		require.NoError(t, err)
 
-		require.Equal(t, issuedCredentials.Length(), matchedCreds.Length())
+		require.Equal(t, 1, matchedCreds.Length())
 
 		serializedIssuedVC, err := issuedCredentials.AtIndex(0).Serialize()
 		require.NoError(t, err)
 
 		serializedMatchedVC, err := matchedCreds.AtIndex(0).Serialize()
 		require.NoError(t, err)
+		println(serializedMatchedVC)
 
 		require.Equal(t, serializedIssuedVC, serializedMatchedVC)
 
@@ -167,7 +173,7 @@ func newVPTestHelper(t *testing.T, didMethod string) *vpTestHelper {
 	}
 }
 
-func (h *vpTestHelper) issueCredentials(t *testing.T, issuerProfileID string) *api.VerifiableCredentialsArray {
+func (h *vpTestHelper) issueCredentials(t *testing.T, issuerProfileIDs []string) *api.VerifiableCredentialsArray {
 	oidc4ciSetup, err := oidc4ci.NewSetup(testenv.NewHttpRequest())
 	require.NoError(t, err)
 
@@ -176,8 +182,8 @@ func (h *vpTestHelper) issueCredentials(t *testing.T, issuerProfileID string) *a
 
 	credentials := api.NewVerifiableCredentialsArray()
 
-	for i := 0; i < 2; i++ {
-		initiateIssuanceURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileID)
+	for i := 0; i < len(issuerProfileIDs); i++ {
+		initiateIssuanceURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i])
 		require.NoError(t, err)
 
 		signerCreator, err := localkms.CreateSignerCreator(h.KMS)
