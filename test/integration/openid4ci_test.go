@@ -8,10 +8,7 @@ package integration
 
 import (
 	_ "embed"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
@@ -47,22 +44,20 @@ var (
 
 func TestOpenID4CIFullFlow(t *testing.T) {
 	type test struct {
-		issuerProfileID       string
-		issuerDIDMethod       string
-		walletDIDMethod       string
-		expectedIssuerURI     string
-		expectedDisplayData   *openid4ci.DisplayData
-		isSelectiveDisclosure bool
+		issuerProfileID     string
+		issuerDIDMethod     string
+		walletDIDMethod     string
+		expectedIssuerURI   string
+		expectedDisplayData *openid4ci.DisplayData
 	}
 
 	tests := []test{
 		{
-			issuerProfileID:       "bank_issuer_jwtsd",
-			issuerDIDMethod:       "orb",
-			walletDIDMethod:       "ion",
-			expectedIssuerURI:     "http://localhost:8075/issuer/bank_issuer_jwtsd",
-			expectedDisplayData:   parseDisplayData(t, expectedDisplayDataBankIssuer),
-			isSelectiveDisclosure: true,
+			issuerProfileID:     "bank_issuer_jwtsd",
+			issuerDIDMethod:     "orb",
+			walletDIDMethod:     "ion",
+			expectedIssuerURI:   "http://localhost:8075/issuer/bank_issuer_jwtsd",
+			expectedDisplayData: parseDisplayData(t, expectedDisplayDataBankIssuer),
 		},
 		{
 			issuerProfileID:     "bank_issuer",
@@ -158,15 +153,10 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		issuerURI := interaction.IssuerURI()
 		require.Equal(t, tc.expectedIssuerURI, issuerURI)
 
-		if !tc.isSelectiveDisclosure {
-			subID, err := verifiable.SubjectID(vc.VC.Subject)
-			require.NoError(t, err)
-			require.Contains(t, subID, didID)
-			checkActivityLogAfterOpenID4CIFlow(t, activityLogger, tc.issuerProfileID, subID)
-		} else {
-			subID := getDisclosure(t, serializedVC, "id")
-			require.Contains(t, subID, didID)
-		}
+		subID, err := verifiable.SubjectID(vc.VC.Subject)
+		require.NoError(t, err)
+		require.Contains(t, subID, didID)
+		checkActivityLogAfterOpenID4CIFlow(t, activityLogger, tc.issuerProfileID, subID)
 	}
 }
 
@@ -268,26 +258,6 @@ func checkCredentialDisplay(t *testing.T, actualCredentialDisplay, expectedCrede
 				expectedClaim.Label(), expectedClaim.Value(), expectedClaim.Locale())
 		}
 	}
-}
-
-func getDisclosure(t *testing.T, vcData, disclosureName string) string {
-	parts := strings.Split(vcData, "~")
-
-	for i := 1; i < len(parts); i++ {
-		decoded, err := base64.RawURLEncoding.DecodeString(parts[i])
-		require.NoError(t, err)
-
-		var disclosureStrArr []string
-
-		require.NoError(t, json.Unmarshal(decoded, &disclosureStrArr))
-
-		if disclosureStrArr[1] == disclosureName {
-			return disclosureStrArr[2]
-		}
-	}
-
-	require.FailNow(t, "No disclosure found.")
-	return ""
 }
 
 func checkActivityLogAfterOpenID4CIFlow(t *testing.T, activityLogger *mem.ActivityLogger,
