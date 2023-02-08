@@ -8,7 +8,6 @@ package openid4ci_test
 
 import (
 	_ "embed"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +15,7 @@ import (
 	"testing"
 
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/models"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
 
@@ -41,16 +41,23 @@ const (
 	sampleTokenResponse = `{"access_token":"eyJhbGciOiJSUzI1NiIsInR5cCI6Ikp..sHQ",` +
 		`"token_type":"bearer","expires_in":86400,"c_nonce":"tZignsnFbp","c_nonce_expires_in":86400}`
 	mockDID = "did:test:foo"
+
+	mockKeyID = "did:test:foo#abcd"
 )
 
 func TestNewInteraction(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		createInteraction(t, nil, sampleRequestURI)
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		createInteraction(t, kms, nil, sampleRequestURI)
 	})
 	t.Run("Fail to parse user_pin_required URL query parameter", func(t *testing.T) {
 		requestURI := "openid-vc:///initiate_issuance?&user_pin_required=notabool"
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
 
-		config := getTestClientConfig(t, nil)
+		config := getTestClientConfig(t, kms, nil)
 
 		interaction, err := openid4ci.NewInteraction(requestURI, config)
 		requireErrorContains(t, err, `INVALID_ISSUANCE_URI`)
@@ -60,7 +67,10 @@ func TestNewInteraction(t *testing.T) {
 
 func TestInteraction_Authorize(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		interaction := createInteraction(t, nil, sampleRequestURI)
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		interaction := createInteraction(t, kms, nil, sampleRequestURI)
 
 		result, err := interaction.Authorize()
 		require.NoError(t, err)
@@ -69,7 +79,10 @@ func TestInteraction_Authorize(t *testing.T) {
 	t.Run("Pre-authorized code not provided", func(t *testing.T) {
 		requestURI := "openid-vc:///initiate_issuance"
 
-		config := getTestClientConfig(t, nil)
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		config := getTestClientConfig(t, kms, nil)
 
 		interaction, err := openid4ci.NewInteraction(requestURI, config)
 		require.NoError(t, err)
@@ -101,14 +114,14 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, reader *
 	}
 }
 
-type failingSignerCreator struct{}
-
-func (f *failingSignerCreator) Create(*api.JSONObject) (api.Signer, error) {
-	return nil, errors.New("test failure")
-}
-
 func TestInteraction_RequestCredential(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		keyHandle, err := kms.Create(arieskms.ED25519)
+		require.NoError(t, err)
+
 		issuerServerHandler := &mockIssuerServerHandler{}
 		server := httptest.NewServer(issuerServerHandler)
 
@@ -130,11 +143,15 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		activityLogger := mem.NewActivityLogger()
 
-		interaction := createInteraction(t, activityLogger, requestURI)
+		interaction := createInteraction(t, kms, activityLogger, requestURI)
 
 		credentialRequest := openid4ci.NewCredentialRequestOpts("")
 
-		result, err := interaction.RequestCredential(credentialRequest)
+		result, err := interaction.RequestCredential(credentialRequest, &api.VerificationMethod{
+			ID:   "did:example:12345#testId",
+			Type: "Ed25519VerificationKey2018",
+			Key:  models.VerificationKey{Raw: keyHandle.PubKey},
+		})
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
@@ -174,6 +191,12 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		require.Equal(t, "did:orb:uAAA:EiARTvvCsWFTSCc35447YpI2MJpFAaJZtFlceVz9lcMYVw", subjectID)
 	})
 	t.Run("Success with jwk public key", func(t *testing.T) {
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		keyHandle, err := kms.Create(arieskms.ED25519)
+		require.NoError(t, err)
+
 		issuerServerHandler := &mockIssuerServerHandler{}
 		server := httptest.NewServer(issuerServerHandler)
 
@@ -193,23 +216,29 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			"&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA" +
 			"&user_pin_required=false"
 
-		config := getTestClientConfig(t, nil, func(handle *api.KeyHandle, kt string) (*did.VerificationMethod, error) {
-			jwk, err := jwksupport.PubKeyBytesToJWK(handle.PubKey, arieskms.KeyType(kt))
-			require.NoError(t, err)
+		config := getTestClientConfig(t, kms, nil)
 
-			return did.NewVerificationMethodFromJWK(handle.KeyID, creator.JSONWebKey2020, mockDID, jwk)
-		})
+		jwk, err := jwksupport.PubKeyBytesToJWK(keyHandle.PubKey, arieskms.ED25519)
+		require.NoError(t, err)
 
 		interaction, err := openid4ci.NewInteraction(requestURI, config)
 		require.NoError(t, err)
 
 		credentialRequest := openid4ci.NewCredentialRequestOpts("")
 
-		result, err := interaction.RequestCredential(credentialRequest)
+		result, err := interaction.RequestCredential(credentialRequest, &api.VerificationMethod{
+			ID:   mockKeyID,
+			Type: creator.JSONWebKey2020,
+			Key:  models.VerificationKey{JSONWebKey: jwk},
+		})
+
 		require.NoError(t, err)
 		require.NotNil(t, result)
 	})
-	t.Run("Fail to create gomobile signer", func(t *testing.T) {
+	t.Run("Fail to sign", func(t *testing.T) {
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
 		issuerServerHandler := &mockIssuerServerHandler{}
 		server := httptest.NewServer(issuerServerHandler)
 
@@ -229,25 +258,26 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			"&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA" +
 			"&user_pin_required=false"
 
-		config := getTestClientConfig(t, nil)
-
-		config.SignerCreator = &failingSignerCreator{}
+		config := getTestClientConfig(t, kms, nil)
 
 		interaction, err := openid4ci.NewInteraction(requestURI, config)
 		require.NoError(t, err)
 
 		credentialRequest := openid4ci.NewCredentialRequestOpts("")
 
-		result, err := interaction.RequestCredential(credentialRequest)
-		requireErrorContains(t, err, "JWT_SIGNING_FAILED")
+		result, err := interaction.RequestCredential(credentialRequest, &api.VerificationMethod{
+			ID: "did:example:12345#testId", Type: "Invalid",
+		})
+		requireErrorContains(t, err, "UNSUPPORTED_ALGORITHM")
 		require.Nil(t, result)
 	})
 }
 
-func createInteraction(t *testing.T, activityLogger api.ActivityLogger, requestURI string) *openid4ci.Interaction {
+func createInteraction(t *testing.T, kms *localkms.KMS, activityLogger api.ActivityLogger, requestURI string,
+) *openid4ci.Interaction {
 	t.Helper()
 
-	config := getTestClientConfig(t, activityLogger)
+	config := getTestClientConfig(t, kms, activityLogger)
 
 	interaction, err := openid4ci.NewInteraction(requestURI, config)
 	require.NoError(t, err)
@@ -257,25 +287,14 @@ func createInteraction(t *testing.T, activityLogger api.ActivityLogger, requestU
 }
 
 // getTestClientConfig accepts an optional activityLogger and also one optional mockVMCreator.
-func getTestClientConfig(t *testing.T, activityLogger api.ActivityLogger,
-	useMockVM ...mockVMCreator,
+func getTestClientConfig(t *testing.T, kms *localkms.KMS,
+	activityLogger api.ActivityLogger,
 ) *openid4ci.ClientConfig {
 	t.Helper()
 
-	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
-	require.NoError(t, err)
-
-	signerCreator, err := localkms.CreateSignerCreator(kms)
-	require.NoError(t, err)
-
 	resolver := &mockResolver{keyWriter: kms}
 
-	if len(useMockVM) > 0 {
-		resolver.makeVM = useMockVM[0]
-	}
-
-	clientConfig := openid4ci.NewClientConfig("UserDID", "ClientID", signerCreator, resolver,
-		activityLogger)
+	clientConfig := openid4ci.NewClientConfig("ClientID", kms.GetCrypto(), resolver, activityLogger)
 
 	return clientConfig
 }

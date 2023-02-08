@@ -186,20 +186,13 @@ func (h *vpTestHelper) issueCredentials(t *testing.T, issuerProfileIDs []string)
 		initiateIssuanceURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i])
 		require.NoError(t, err)
 
-		signerCreator, err := localkms.CreateSignerCreator(h.KMS)
-		require.NoError(t, err)
-
 		didResolver, err := did.NewResolver("")
 		require.NoError(t, err)
 
-		didID, err := h.DIDDoc.ID()
-		require.NoError(t, err)
-
 		clientConfig := openid4ci.ClientConfig{
-			UserDID:       didID,
-			ClientID:      "ClientID",
-			SignerCreator: signerCreator,
-			DIDResolver:   didResolver,
+			ClientID:    "ClientID",
+			DIDResolver: didResolver,
+			Crypto:      h.KMS.GetCrypto(),
 		}
 
 		interaction, err := openid4ci.NewInteraction(initiateIssuanceURL, &clientConfig)
@@ -209,7 +202,10 @@ func (h *vpTestHelper) issueCredentials(t *testing.T, issuerProfileIDs []string)
 		require.NoError(t, err)
 		require.False(t, authorizeResult.UserPINRequired)
 
-		result, err := interaction.RequestCredential(&openid4ci.CredentialRequestOpts{})
+		vm, err := h.DIDDoc.AssertionMethod()
+		require.NoError(t, err)
+
+		result, err := interaction.RequestCredential(&openid4ci.CredentialRequestOpts{}, vm)
 
 		require.NoError(t, err)
 		require.NotEmpty(t, result)

@@ -25,13 +25,12 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     private var didResolver: ApiDIDResolverProtocol?
     private var documentLoader: ApiLDDocumentLoaderProtocol?
     private var crypto: ApiCryptoProtocol?
-    private var signerCreator: LocalkmsSignerCreator?
     private var didDocRes: ApiDIDDocResolution?
     private var didDocID: String?
     private var newOIDCInteraction: Openid4ciInteraction?
     private var didVerificationMethod: ApiVerificationMethod?
     private var activityLogger: MemActivityLogger?
-    
+
     private var openID4VP: OpenID4VP?
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -50,13 +49,13 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "requestCredential":
             let otp = fetchArgsKeyValue(call, key: "otp")
             requestCredential(otp: otp!, result: result)
-            
+
         case "fetchDID":
             let didID = fetchArgsKeyValue(call, key: "didID")
             if didDocID == nil {
                 didDocID = didID
             }
-        
+
         case "resolveCredentialDisplay":
             resolveCredentialDisplay(arguments: arguments!,  result: result)
             
@@ -65,10 +64,10 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             
         case "issuerURI":
             issuerURI(result:result)
-            
+
         case "activityLogger":
             activityLogger(result:result)
-            
+
         case "processAuthorizationRequest":
             processAuthorizationRequest(arguments: arguments!, result: result)
             
@@ -86,7 +85,6 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         didResolver = DidNewResolver("", nil)
         crypto = kms?.getCrypto()
         documentLoader = LdNewDocLoader()
-        signerCreator = LocalkmsCreateSignerCreator(kms, nil)
         activityLogger = MemNewActivityLogger()
         result(true)
     }
@@ -188,7 +186,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     public func authorize(requestURI: String, result: @escaping FlutterResult){
-        let clientConfig =  Openid4ciClientConfig( didDocID!,  clientID: "ClientID", signerCreator: self.signerCreator, didRes: self.didResolver, activityLogger: activityLogger)
+        let clientConfig =  Openid4ciClientConfig("ClientID", crypto: self.crypto, didRes: self.didResolver, activityLogger: activityLogger)
         newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
         do {
             let authorizeResult  = try newOIDCInteraction?.authorize()
@@ -202,13 +200,13 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
           }
     }
     
-    
+
     public func requestCredential(otp: String, result: @escaping FlutterResult){
-        let clientConfig =  Openid4ciClientConfig(didDocID!,  clientID: "ClientID", signerCreator: self.signerCreator, didRes: self.didResolver, activityLogger: activityLogger)
+        let clientConfig =  Openid4ciClientConfig("ClientID", crypto: self.crypto, didRes: self.didResolver, activityLogger: activityLogger)
         newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
         do {
             let credentialRequest = Openid4ciNewCredentialRequestOpts( otp )
-            let credResp  = try newOIDCInteraction?.requestCredential(credentialRequest)
+            let credResp  = try newOIDCInteraction?.requestCredential(credentialRequest, vm: didVerificationMethod)
             let credentialData = credResp?.atIndex(0)!;
             result(credentialData?.serialize(nil))
           } catch let error as NSError{
@@ -226,16 +224,16 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                  message: "error while resolve credential display",
                                                  details: "parameter issuerURI is missed"))
             }
-            
+
             guard let vcCredentials = arguments["vcCredentials"] as? Array<String> else{
                 return  result(FlutterError.init(code: "NATIVE_ERR",
                                                  message: "error while resolve credential display",
                                                  details: "parameter storedcredentials is missed"))
             }
-            
+
             let opts = VcparseNewOpts(true, nil)
             var parsedCredentials: ApiVerifiableCredentialsArray = ApiVerifiableCredentialsArray()!
-            
+
             for cred in vcCredentials{
                 let parsedVC = VcparseParse(cred, opts, nil)!
                 parsedCredentials.add(parsedVC)
@@ -249,14 +247,14 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                          details: error.description))
             }
     }
-    
+
     public func activityLogger(result: @escaping FlutterResult){
         var activityList: [Any] = []
         var aryLength = activityLogger!.length()
         for index in 0..<aryLength {
             var status = activityLogger!.atIndex(index)!.status()
             var date = NSDate(timeIntervalSince1970: TimeInterval(activityLogger!.atIndex(index)!.unixTimestamp()))
-           
+
             var utcDateFormatter = DateFormatter()
             utcDateFormatter.dateStyle = .long
             utcDateFormatter.timeStyle = .short
@@ -267,20 +265,20 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 "Activity Type": activityLogger!.atIndex(index)!.type(),
                 "Date": utcDateFormatter.string(from: updatedDate as Date),
             ]
-            
+
             activityList.append(activityDicResp)
         }
-     
+
         result(activityList)
     }
-    
+
     public func issuerURI(result: @escaping FlutterResult){
         let issuerURIResp = newOIDCInteraction?.issuerURI();
         result(issuerURIResp)
     }
 
 
-    
+
     public func initializeObject<T: ApiCreateDIDOpts>(fromType type: T.Type) -> T {
         return T.init() //No Error
     }

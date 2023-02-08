@@ -1,8 +1,6 @@
 package walletsdk.openid4ci
 
-import dev.trustbloc.wallet.sdk.api.DIDJWTSignerCreator
-import dev.trustbloc.wallet.sdk.api.DIDResolver
-import dev.trustbloc.wallet.sdk.api.VerifiableCredential
+import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.openid4ci.AuthorizeResult
 import dev.trustbloc.wallet.sdk.openid4ci.ClientConfig
 import dev.trustbloc.wallet.sdk.openid4ci.CredentialRequestOpts
@@ -10,20 +8,13 @@ import dev.trustbloc.wallet.sdk.openid4ci.Interaction
 
 class OpenID4CI constructor(
         private val requestURI: String,
-        private val userDID: String,
-        private val didJWTSignerCreator: DIDJWTSignerCreator,
+        private val crypto: Crypto,
         private val didResolver: DIDResolver,
 ) {
     private var newInteraction: Interaction
 
     init {
-        val cfg = ClientConfig(userDID, "ClientID", didJWTSignerCreator, didResolver, null)
-
-        println("didJWTSignerCreator")
-        println(didJWTSignerCreator)
-
-        println("cfg.signerCreator")
-        println(cfg.signerCreator)
+        val cfg = ClientConfig( "ClientID", crypto, didResolver, null)
 
         newInteraction = Interaction(requestURI, cfg)
     }
@@ -33,9 +24,9 @@ class OpenID4CI constructor(
     }
 
 
-    fun requestCredential(otp: String?): VerifiableCredential? {
+    fun requestCredential(otp: String?, didVerificationMethod: VerificationMethod): VerifiableCredential? {
         val credReq = CredentialRequestOpts(otp)
-        val credsArr = newInteraction.requestCredential(credReq)
+        val credsArr = newInteraction.requestCredential(credReq, didVerificationMethod)
 
         if (credsArr.length() != 0L) {
             return credsArr.atIndex(0)

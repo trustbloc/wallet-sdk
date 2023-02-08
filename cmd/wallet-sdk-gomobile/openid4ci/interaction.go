@@ -8,13 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package openid4ci
 
 import (
-	"encoding/json"
-	"fmt"
-
-	"github.com/btcsuite/btcutil/base58"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
@@ -26,6 +21,7 @@ import (
 // object are used to help guide the calling code through the OpenID4CI flow.
 type Interaction struct {
 	goAPIInteraction *openid4cigoapi.Interaction
+	crypto           api.Crypto
 }
 
 // AuthorizeResult is the object returned from the Client.Authorize method.
@@ -50,9 +46,8 @@ func NewCredentialRequestOpts(userPIN string) *CredentialRequestOpts {
 // ActivityLogger is optional, but if provided then activities will be logged there.
 // If not provided, then no activities will be logged.
 type ClientConfig struct {
-	UserDID        string
 	ClientID       string
-	SignerCreator  api.DIDJWTSignerCreator
+	Crypto         api.Crypto
 	DIDResolver    api.DIDResolver
 	ActivityLogger api.ActivityLogger
 }
@@ -60,13 +55,12 @@ type ClientConfig struct {
 // NewClientConfig creates the client config object.
 // ActivityLogger is optional, but if provided then activities will be logged there.
 // If not provided, then no activities will be logged.
-func NewClientConfig(userDID, clientID string, signerCreator api.DIDJWTSignerCreator,
+func NewClientConfig(clientID string, crypto api.Crypto,
 	didRes api.DIDResolver, activityLogger api.ActivityLogger,
 ) *ClientConfig {
 	return &ClientConfig{
-		UserDID:        userDID,
 		ClientID:       clientID,
-		SignerCreator:  signerCreator,
+		Crypto:         crypto,
 		DIDResolver:    didRes,
 		ActivityLogger: activityLogger,
 	}
@@ -90,7 +84,10 @@ func NewInteraction(
 		return nil, walleterror.ToMobileError(err)
 	}
 
-	return &Interaction{goAPIInteraction: goAPIInteraction}, nil
+	return &Interaction{
+		crypto:           config.Crypto,
+		goAPIInteraction: goAPIInteraction,
+	}, nil
 }
 
 // Authorize is used by a wallet to authorize an issuer's OIDC Verifiable Credential Issuance Request.
@@ -120,10 +117,16 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-8
 func (i *Interaction) RequestCredential(
 	credentialRequest *CredentialRequestOpts,
+	vm *api.VerificationMethod,
 ) (*api.VerifiableCredentialsArray, error) {
 	goAPICredentialRequest := &openid4cigoapi.CredentialRequestOpts{UserPIN: credentialRequest.UserPIN}
 
-	credentials, err := i.goAPIInteraction.RequestCredential(goAPICredentialRequest)
+	signer, err := common.NewJWSSigner(vm.ToSDKVerificationMethod(), i.crypto)
+	if err != nil {
+		return nil, walleterror.ToMobileError(err)
+	}
+
+	credentials, err := i.goAPIInteraction.RequestCredential(goAPICredentialRequest, signer)
 	if err != nil {
 		return nil, walleterror.ToMobileError(err)
 	}
@@ -158,51 +161,13 @@ func (i *Interaction) IssuerURI() string {
 }
 
 func unwrapConfig(config *ClientConfig) *openid4cigoapi.ClientConfig {
-	goAPISignerGetter := func(vm *did.VerificationMethod) (didsignjwt.Signer, error) {
-		vmBytes, err := workaroundMarshalVM(vm)
-		if err != nil {
-			return nil, err
-		}
-
-		goMobileSigner, err := config.SignerCreator.Create(&api.JSONObject{Data: vmBytes})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create gomobile signer: %w", err)
-		}
-
-		return goMobileSigner, nil
-	}
-
 	activityLogger := createGoAPIActivityLogger(config.ActivityLogger)
 
 	return &openid4cigoapi.ClientConfig{
-		UserDID:        config.UserDID,
 		ClientID:       config.ClientID,
-		SignerProvider: goAPISignerGetter,
 		DIDResolver:    &wrapper.VDRResolverWrapper{DIDResolver: config.DIDResolver},
 		ActivityLogger: activityLogger,
 	}
-}
-
-func workaroundMarshalVM(vm *did.VerificationMethod) ([]byte, error) {
-	rawVM := map[string]interface{}{
-		"id":         vm.ID,
-		"type":       vm.Type,
-		"controller": vm.Controller,
-	}
-
-	jsonKey := vm.JSONWebKey()
-	if jsonKey != nil {
-		jwkBytes, err := jsonKey.MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-
-		rawVM["publicKeyJwk"] = json.RawMessage(jwkBytes)
-	} else {
-		rawVM["publicKeyBase58"] = base58.Encode(vm.Value)
-	}
-
-	return json.Marshal(rawVM)
 }
 
 func createGoAPIActivityLogger(mobileAPIActivityLogger api.ActivityLogger) goapi.ActivityLogger {

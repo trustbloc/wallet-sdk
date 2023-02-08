@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 
@@ -86,9 +86,7 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 
 	return &Interaction{
 		initiationRequest: initiationRequest,
-		userDID:           config.UserDID,
 		clientID:          config.ClientID,
-		signerProvider:    config.SignerProvider,
 		didResolver:       &didResolverWrapper{didResolver: config.DIDResolver},
 		activityLogger:    config.ActivityLogger,
 	}, nil
@@ -121,7 +119,7 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 // Relevant sections of the spec:
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-7
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-8
-func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequestOpts) ([]*verifiable.Credential, error) { //nolint:funlen,lll
+func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequestOpts, jwtSigner api.JWTSigner) ([]*verifiable.Credential, error) { //nolint:funlen,gocyclo,lll
 	if i.initiationRequest.UserPINRequired && credentialRequestOpts.UserPIN == "" {
 		return nil, walleterror.NewValidationError(
 			module,
@@ -162,8 +160,7 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 		"nonce": tokenResp.CNonce,
 	}
 
-	// didsignjwt.SignJWT will create the headers automatically
-	jwt, err := didsignjwt.SignJWT(nil, claims, i.userDID, i.signerProvider, i.didResolver)
+	token, err := signToken(claims, jwtSigner)
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
 			module,
@@ -174,9 +171,19 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 
 	credentialResponses := make([]CredentialResponse, len(i.initiationRequest.CredentialTypes))
 
+	kidParts := strings.Split(jwtSigner.GetKeyID(), "#")
+	if len(kidParts) < 2 { //nolint: gomnd
+		return nil, walleterror.NewExecutionError(
+			module,
+			KeyIDNotContainDIDPartCode,
+			KeyIDNotContainDIDPartError,
+			fmt.Errorf("kid not containing did part %s", jwtSigner.GetKeyID()))
+	}
+
 	for index, credentialType := range i.initiationRequest.CredentialTypes {
-		credentialResponse, errGetCredResp := i.getCredentialResponse(credentialType, metadata.CredentialEndpoint,
-			tokenResp.AccessToken, jwt)
+		credentialResponse, errGetCredResp := i.getCredentialResponse(kidParts[0],
+			credentialType, metadata.CredentialEndpoint,
+			tokenResp.AccessToken, token)
 		if errGetCredResp != nil {
 			return nil,
 				walleterror.NewExecutionError(
@@ -274,16 +281,15 @@ func (i *Interaction) getTokenResponse(tokenEndpointURL string, params url.Value
 	return &tokenResp, nil
 }
 
-func (i *Interaction) getCredentialResponse(credentialType, credentialEndpoint,
-	accessToken string, jwt string,
+func (i *Interaction) getCredentialResponse(userDID, credentialType, credentialEndpoint, accessToken string, tkn string,
 ) (*CredentialResponse, error) {
 	credentialReq := &credentialRequest{
 		Type:   credentialType,
 		Format: "jwt_vc",
-		DID:    i.userDID,
+		DID:    userDID,
 		Proof: proof{
 			ProofType: "jwt", // TODO: https://github.com/trustbloc/wallet-sdk/issues/159 support other proof types
-			JWT:       jwt,
+			JWT:       tkn,
 		},
 	}
 
@@ -365,4 +371,18 @@ func getSubjectIDs(vcs []*verifiable.Credential) ([]string, error) {
 	}
 
 	return subjectIDs, nil
+}
+
+func signToken(claims interface{}, signer api.JWTSigner) (string, error) {
+	token, err := jwt.NewSigned(claims, nil, signer)
+	if err != nil {
+		return "", fmt.Errorf("sign token failed: %w", err)
+	}
+
+	tokenBytes, err := token.Serialize(false)
+	if err != nil {
+		return "", fmt.Errorf("serialize token failed: %w", err)
+	}
+
+	return tokenBytes, nil
 }

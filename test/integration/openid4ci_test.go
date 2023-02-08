@@ -107,9 +107,6 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		didDoc, err := c.Create(tc.walletDIDMethod, &api.CreateDIDOpts{})
 		require.NoError(t, err)
 
-		signerCreator, err := localkms.CreateSignerCreator(kms)
-		require.NoError(t, err)
-
 		didResolver, err := did.NewResolver("")
 		require.NoError(t, err)
 
@@ -119,11 +116,10 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		activityLogger := mem.NewActivityLogger()
 
 		clientConfig := openid4ci.ClientConfig{
-			UserDID:        didID,
 			ClientID:       "ClientID",
-			SignerCreator:  signerCreator,
 			DIDResolver:    didResolver,
 			ActivityLogger: activityLogger,
+			Crypto:         kms.GetCrypto(),
 		}
 
 		interaction, err := openid4ci.NewInteraction(initiateIssuanceURL, &clientConfig)
@@ -133,7 +129,10 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		require.NoError(t, err)
 		require.False(t, authorizeResult.UserPINRequired)
 
-		credential, err := interaction.RequestCredential(openid4ci.NewCredentialRequestOpts(""))
+		vm, err := didDoc.AssertionMethod()
+		require.NoError(t, err)
+
+		credential, err := interaction.RequestCredential(openid4ci.NewCredentialRequestOpts(""), vm)
 		require.NoError(t, err)
 		require.NotNil(t, credential)
 

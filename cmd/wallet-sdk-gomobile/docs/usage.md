@@ -290,9 +290,8 @@ Note that the implementation currently only supports the pre-authorized flow.
 The general pattern is as follows:
 
 1. Create a `ClientConfig` object. A `ClientConfig` contains the following parameters:
-   * The user's DID.
    * A client ID to use.
-   * A `DIDJWTSignerCreator`. See the next section for more detail on this.
+   * A crypto implementation
    * A DID resolver.
    * An activity logger (optional, but if set then this will be used to log credential activities)
 2. Create a new `Interaction` object using an initiate issuance URI obtained from an issuer (e.g. via a QR code)
@@ -313,19 +312,6 @@ information on how to use this object.
 get the issuer URI. The issuer URI should be stored somewhere for later use, since it can be used to refresh the
 display data. See [Credential Display Data](#credential-display-data) for more information.
 
-### DIDJWTSignerCreator
-
-As mentioned above, the `ClientConfig` object requires an implementation of a `DIDJWTSignerCreator`.
-To understand why, let's look at what happens when the `RequestCredential` method is called. Using the DID resolver
-(set in the `ClientConfig`), the user's DID (also from the `ClientConfig`) will be resolved, and an appropriate
-verification method related to JWT signing will be found. Next, there needs to be some way to map between the
-verification method and the corresponding private key to be used for signing. This is what the `DIDJWTSignerCreator`
-does - it knows how to create a JWT signer object (that is able to access the private key) based on a verification
-method.
-
-Wallet-SDK includes an implementation of this that uses the Google Tink crypto library. Keys may reside in local memory
-intermittently. For a production application, you may want to supply your own DIDJWTSignerCreator implementation that
-uses a platform-specific crypto implementation.
 
 ### Examples
 
@@ -353,14 +339,14 @@ val didResolver = Resolver("")
 val didCreator = Creator(kms as KeyWriter)
 val didDocResolution = didCreator.create("key", CreateDIDOpts()) // Create a did:key doc
 val activityLogger = mem.ActivityLogger() // Optional, but useful for tracking credential activities
-val cfg = ClientConfig(didDocResolution.id(), "ClientID", signerCreator, didResolver, activityLogger)
+val cfg = ClientConfig("ClientID", kms.crypto, didResolver, activityLogger)
 
 // Going through the flow
 val interaction = Interaction("YourRequestURIHere", cfg)
 interaction.authorize() // Returned object doesn't matter with current implementation limitations
 val userPIN = "1234"
 val requestCredentialOpts = CredentialRequestOpts(userPIN)
-val credentials = interaction.requestCredential(requestCredentialOpts) // Should probably store these somewhere
+val credentials = interaction.requestCredential(requestCredentialOpts, doc.assertionMethod()) // Should probably store these somewhere
 val displayData = interaction.resolveDisplay("en-US") // Optional (but useful)
 val issuerURI = interaction.issuerURI() // Optional (but useful)
 // Consider checking the activity log at some point after the interaction
@@ -386,7 +372,7 @@ let interaction = Openid4ciNewInteraction("YourRequestURIHere", cfg, nil)
 interaction.authorize() // Returned object doesn't matter with current implementation limitations
 let userPIN = "1234"
 let requestCredentialOpts = Openid4ciNewCredentialRequestOpts(userPIN)
-let credentials = interaction.requestCredential(requestCredentialOpts) // Should probably store these somewhere
+let credentials = interaction.requestCredential(requestCredentialOpts, doc.assertionMethod()) // Should probably store these somewhere
 let displayData = interaction.resolveDisplay("en-US") // Optional (but useful)
 let issuerURI = interaction.issuerURI() // Optional (but useful)
 // Consider checking the activity log at some point after the interaction
@@ -550,8 +536,7 @@ val inquirer = credential.Inquirer(docLoader)
 val issuedCredentials = api.VerifiableCredentialsArray() // Would need some actual credentials for this to actually work
 val verifiablePres = inquirer.Query(query, credential.CredentialsOpt(issuedCredentials))
 val matchedCreds = verifiablePresentation.credentials() // These credentials should be shown to the user with a confirmation dialog so they can confirm that they want to share this data before calling presentCredential.
-val keyID = didDocResolution.assertionMethodKeyID()
-interaction.presentCredential(verifiablePres, keyID)
+interaction.presentCredential(verifiablePres, doc.assertionMethod())
 // Consider checking the activity log at some point after the interaction
 ```
 
@@ -576,7 +561,6 @@ let query = interaction.getQuery()
 let inquirer = CredentialNewInquirer(docLoader)
 let issuedCredentials = ApiVerifiableCredentialsArray() // Would need some actual credentials for this to actually work
 let verifiablePres = inquirer.Query(query, CredentialNewCredentialsOpt(issuedCredentials))
-let keyID = didDocResolution.assertionMethodKeyID()
-let credentials = interaction.presentCredential(verifiablePres, keyID)
+let credentials = interaction.presentCredential(verifiablePres, doc.assertionMethod())
 // Consider checking the activity log at some point after the interaction
 ```
