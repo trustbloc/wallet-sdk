@@ -17,19 +17,21 @@ public class OpenID4VP {
     private var didResolver: ApiDIDResolverProtocol
     private var documentLoader: ApiLDDocumentLoaderProtocol
     private var crypto: ApiCryptoProtocol
+    private var activityLogger: ApiActivityLoggerProtocol
     
     private var initiatedInteraction: Openid4vpInteraction?
     private var verifiablePresentation: CredentialVerifiablePresentation?
     
-    init (keyReader:LocalkmsKMS, didResolver: ApiDIDResolverProtocol, documentLoader: ApiLDDocumentLoaderProtocol, crypto: ApiCryptoProtocol) {
+    init (keyReader:LocalkmsKMS, didResolver: ApiDIDResolverProtocol, documentLoader: ApiLDDocumentLoaderProtocol, crypto: ApiCryptoProtocol, activityLogger: ApiActivityLoggerProtocol) {
         self.keyReader = keyReader
         self.didResolver = didResolver
         self.documentLoader = documentLoader
         self.crypto = crypto
+        self.activityLogger = activityLogger
     }
     
     func processAuthorizationRequest(authorizationRequest: String, credentials: Array<ApiVerifiableCredential>) throws -> Array<String> {
-        let clientConfig = Openid4vpClientConfig(keyReader, crypto: crypto, didResolver: didResolver, ldDocumentLoader: documentLoader, activityLogger: nil)
+        let clientConfig = Openid4vpClientConfig(keyReader, crypto: crypto, didResolver: didResolver, ldDocumentLoader: documentLoader, activityLogger: activityLogger)
 
         let interaction = Openid4vpInteraction(authorizationRequest, config: clientConfig)
         

@@ -30,6 +30,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     private var didDocID: String?
     private var newOIDCInteraction: Openid4ciInteraction?
     private var didVerificationMethod: ApiVerificationMethod?
+    private var activityLogger: MemActivityLogger?
     
     private var openID4VP: OpenID4VP?
     
@@ -65,6 +66,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "issuerURI":
             issuerURI(result:result)
             
+        case "activityLogger":
+            activityLogger(result:result)
             
         case "processAuthorizationRequest":
             processAuthorizationRequest(arguments: arguments!, result: result)
@@ -84,6 +87,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         crypto = kms?.getCrypto()
         documentLoader = LdNewDocLoader()
         signerCreator = LocalkmsCreateSignerCreator(kms, nil)
+        activityLogger = MemNewActivityLogger()
         result(true)
     }
     
@@ -101,7 +105,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             throw OpenID4VPError.runtimeError("SDK is not initialized, call initSDK()")
         }
         
-        return OpenID4VP(keyReader: kms, didResolver: didResolver, documentLoader: documentLoader, crypto: crypto)
+        return OpenID4VP(keyReader: kms, didResolver: didResolver, documentLoader: documentLoader, crypto: crypto, activityLogger: activityLogger!)
     }
     
     public func processAuthorizationRequest(arguments: Dictionary<String, Any> , result: @escaping FlutterResult) {
@@ -184,7 +188,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     public func authorize(requestURI: String, result: @escaping FlutterResult){
-        let clientConfig =  Openid4ciClientConfig( didDocID!,  clientID: "ClientID", signerCreator: self.signerCreator, didRes: self.didResolver, activityLogger: nil)
+        let clientConfig =  Openid4ciClientConfig( didDocID!,  clientID: "ClientID", signerCreator: self.signerCreator, didRes: self.didResolver, activityLogger: activityLogger)
         newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
         do {
             let authorizeResult  = try newOIDCInteraction?.authorize()
@@ -200,7 +204,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     
     
     public func requestCredential(otp: String, result: @escaping FlutterResult){
-        let clientConfig =  Openid4ciClientConfig(didDocID!,  clientID: "ClientID", signerCreator: self.signerCreator, didRes: self.didResolver, activityLogger: nil)
+        let clientConfig =  Openid4ciClientConfig(didDocID!,  clientID: "ClientID", signerCreator: self.signerCreator, didRes: self.didResolver, activityLogger: activityLogger)
         newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
         do {
             let credentialRequest = Openid4ciNewCredentialRequestOpts( otp )
@@ -244,6 +248,30 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                          message: "error while resolving credential",
                                          details: error.description))
             }
+    }
+    
+    public func activityLogger(result: @escaping FlutterResult){
+        var activityList: [Any] = []
+        var aryLength = activityLogger!.length()
+        for index in 0..<aryLength {
+            var status = activityLogger!.atIndex(index)!.status()
+            var date = NSDate(timeIntervalSince1970: TimeInterval(activityLogger!.atIndex(index)!.unixTimestamp()))
+           
+            var utcDateFormatter = DateFormatter()
+            utcDateFormatter.dateStyle = .long
+            utcDateFormatter.timeStyle = .short
+            let updatedDate = date
+            var activityDicResp:[String:Any] = [
+                "Status":  status,
+                "Issued By": activityLogger!.atIndex(index)!.client(),
+                "Activity Type": activityLogger!.atIndex(index)!.type(),
+                "Date": utcDateFormatter.string(from: updatedDate as Date),
+            ]
+            
+            activityList.append(activityDicResp)
+        }
+     
+        result(activityList)
     }
     
     public func issuerURI(result: @escaping FlutterResult){

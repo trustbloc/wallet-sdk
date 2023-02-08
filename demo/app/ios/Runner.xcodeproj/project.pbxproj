@@ -19,6 +19,7 @@
 		F7047AA02907097B00947F71 /* flutterPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7047A9F2907097B00947F71 /* flutterPlugin.swift */; };
 		F7047AA529070A6800947F71 /* walletsdk.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7047AA1290709B800947F71 /* walletsdk.xcframework */; };
 		F78289312988E193002DB5A2 /* kmsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78289302988E193002DB5A2 /* kmsStore.swift */; };
+		F7C1776C29919FA8001FBBB9 /* LocalActivityLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7C1776B29919FA8001FBBB9 /* LocalActivityLogger.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,6 +45,7 @@
 		F7047A9F2907097B00947F71 /* flutterPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = flutterPlugin.swift; sourceTree = "<group>"; };
 		F7047AA1290709B800947F71 /* walletsdk.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = walletsdk.xcframework; sourceTree = "<group>"; };
 		F78289302988E193002DB5A2 /* kmsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = kmsStore.swift; sourceTree = "<group>"; };
+		F7C1776B29919FA8001FBBB9 /* LocalActivityLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalActivityLogger.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -131,6 +133,7 @@
 				F7047A9F2907097B00947F71 /* flutterPlugin.swift */,
 				8CE50A4C293648A1000C9FF6 /* OpenID4VP.swift */,
 				F78289302988E193002DB5A2 /* kmsStore.swift */,
+				F7C1776B29919FA8001FBBB9 /* LocalActivityLogger.swift */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -284,6 +287,7 @@
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				8CE50A5029365465000C9FF6 /*  json.swift in Sources */,
 				F7047AA02907097B00947F71 /* flutterPlugin.swift in Sources */,
+				F7C1776C29919FA8001FBBB9 /* LocalActivityLogger.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				8CE50A4D293648A1000C9FF6 /* OpenID4VP.swift in Sources */,
 				F78289312988E193002DB5A2 /* kmsStore.swift in Sources */,

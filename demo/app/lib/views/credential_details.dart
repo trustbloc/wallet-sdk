@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'package:app/widgets/Credential_card_outline.dart';
+import 'dart:developer';
+import 'dart:io';
 import 'package:app/widgets/credential_metadata_card.dart';
 import 'package:app/widgets/credential_verified_information_view.dart';
 import 'package:flutter/material.dart';
@@ -11,11 +12,13 @@ class CredentialDetails extends StatelessWidget {
   CredentialData credentialData;
   bool isDashboardWidget = true;
   String credentialName;
+  List<Object?>? activityLogger;
 
-  CredentialDetails({required this.credentialData, required this.isDashboardWidget, required this.credentialName, Key? key}) : super(key: key);
+  CredentialDetails({required this.credentialData, required this.isDashboardWidget, required this.credentialName, this.activityLogger, Key? key}) : super(key: key);
 
   final ScrollController credDataController = ScrollController();
   final ScrollController rawDataController = ScrollController();
+  final ScrollController activityController = ScrollController();
 
   getCurrentDate() {
     final now = DateTime.now();
@@ -28,6 +31,48 @@ class CredentialDetails extends StatelessWidget {
     final parsedJson = json.decode(credentialData.credentialDisplayData!);
     final prettyString = const JsonEncoder.withIndent('  ').convert(parsedJson);
     return Text(prettyString);
+  }
+
+  activityLogDetails() {
+    var activities = activityLogger!;
+    return listViewWidget(activities!.asMap().values);
+  }
+
+  Widget listViewWidget(Iterable<Object?> activitiesValue) {
+    return ListView.builder(
+        itemCount: activitiesValue.length,
+        scrollDirection: Axis.vertical,
+        controller: credDataController,
+        shrinkWrap: true,
+        itemBuilder: (context, index)
+    {
+      var value = const JsonEncoder.withIndent('  ').convert(activitiesValue.toList().elementAt(index));
+      return Row(
+        children: [
+          const Divider(
+            thickness: 2,
+            color: Color(0xffDBD7DC),
+          ),
+          Expanded(
+            child: ListTile(
+              title: const Text(
+                  "",
+                  style: TextStyle(
+                      fontSize: 14, fontFamily: 'SF Pro', fontWeight: FontWeight.w400, color: Color(0xff6C6D7C))
+              ),
+              subtitle: Text(
+                value.toString(),
+                style: const TextStyle(
+                    fontSize: 16,
+                    color: Color(0xff190C21),
+                    fontFamily: 'SF Pro',
+                    fontWeight: FontWeight.normal),
+              ),
+            ),
+          ),
+        ]
+      );
+    });
   }
 
   @override
@@ -43,7 +88,7 @@ class CredentialDetails extends StatelessWidget {
             children: <Widget>[
           const SizedBox(height: 24.0),
           DefaultTabController(
-              length: 2, // length of tabs
+              length: 3, // length of tabs
               initialIndex: 0,
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,6 +125,18 @@ class CredentialDetails extends StatelessWidget {
                       ),
                     ),
                     ),
+                    Tab(  child: SizedBox(
+                      width: 100,
+                      child: Text(
+                        "Activity",
+                        textAlign: TextAlign.start,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    )
                   ],
                 ),
                 Container(
@@ -143,6 +200,21 @@ class CredentialDetails extends StatelessWidget {
                                   return Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: prettifyRawJson(),
+                                  );
+                                }),
+                          )),
+                      SizedBox(
+                          height: 450,
+                          child: Scrollbar(
+                            thumbVisibility: true,
+                            controller: activityController,
+                            child: ListView.builder(
+                                controller: activityController,
+                                itemCount: 1,
+                                itemBuilder: (BuildContext context, int index) {
+                                  return Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: activityLogDetails()
                                   );
                                 }),
                           ))

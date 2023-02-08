@@ -49,7 +49,6 @@ class MethodChannelWallet extends WalletPlatform {
 
   Future<String?> resolveCredentialDisplay(List<String> credentials , String issuerURI) async {
     try {
-      print('vc and issueruri');
       final credentialResponse =
       await methodChannel.invokeMethod<String>('resolveCredentialDisplay', <String, dynamic>{'vcCredentials':credentials, 'uri':issuerURI});
       return credentialResponse;
@@ -71,5 +70,10 @@ class MethodChannelWallet extends WalletPlatform {
 
   Future<void> presentCredential() async {
     await methodChannel.invokeMethod('presentCredential');
+  }
+
+  Future<List<Object?>> activityLogger() async {
+   var activityObj =  await methodChannel.invokeMethod('activityLogger');
+   return activityObj;
   }
 }
