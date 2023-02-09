@@ -9,6 +9,7 @@ package common
 import (
 	cryptolib "crypto"
 	"encoding/base64"
+	"errors"
 	"fmt"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
@@ -46,6 +47,15 @@ func NewJWSSigner(vm *models.VerificationMethod, crypto api.Crypto) (*JWSSigner,
 			UnsupportedAlgorithmCode,
 			UnsupportedAlgorithmError,
 			err,
+		)
+	}
+
+	if crypto == nil {
+		return nil, walleterror.NewValidationError(
+			module,
+			NoCryptoProvidedCode,
+			NoCryptoProvidedError,
+			errors.New("crypto instance should be provided"),
 		)
 	}
 

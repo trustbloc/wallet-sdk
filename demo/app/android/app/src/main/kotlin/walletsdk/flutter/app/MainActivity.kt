@@ -10,7 +10,6 @@ import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.ld.DocLoader
 import dev.trustbloc.wallet.sdk.walleterror.Walleterror
 import dev.trustbloc.wallet.sdk.localkms.Localkms
-import dev.trustbloc.wallet.sdk.localkms.SignerCreator
 import io.flutter.plugin.common.MethodCall
 import walletsdk.kmsStorage.KmsStore
 import walletsdk.openid4ci.OpenID4CI
@@ -24,7 +23,6 @@ class MainActivity : FlutterActivity() {
     private var openID4VP: OpenID4VP? = null
     private var kms: KMS? = null
     private var didResolver: DIDResolver? = null
-    private var signerCreator: SignerCreator? = null
     private var documentLoader: LDDocumentLoader? = null
     private var crypto: Crypto? = null
     private var didDocID: String? = null
@@ -123,7 +121,6 @@ class MainActivity : FlutterActivity() {
         didResolver = Resolver("")
         crypto = kms.crypto
         documentLoader = DocLoader()
-        signerCreator = Localkms.createSignerCreator(kms)
 
         this.kms = kms
     }
@@ -167,18 +164,15 @@ class MainActivity : FlutterActivity() {
         val requestURI = call.argument<String>("requestURI")
                 ?: throw java.lang.Exception("requestURI params is missed")
 
-        val didDocID = this.didDocID ?: throw java.lang.Exception("DID should be created first")
-
         val didResolver = this.didResolver
                 ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
-        val signerCreator = this.signerCreator
+        val crypto = this.crypto
                 ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
         val openID4CI = OpenID4CI(
                 requestURI,
-                didDocID,
-                signerCreator,
+                crypto,
                 didResolver,
         )
 
@@ -195,7 +189,10 @@ class MainActivity : FlutterActivity() {
         val openID4CI = this.openID4CI
             ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
-        return openID4CI.requestCredential(otp)
+        val didVerificationMethod = this.didVerificationMethod
+                ?: throw java.lang.Exception("DID should be created first")
+
+        return openID4CI.requestCredential(otp, didVerificationMethod)
     }
 
     private fun resolveCredentialDisplay(): String? {

@@ -135,6 +135,20 @@ func TestNewJWSSigner(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "only Ed25519 is supported")
 	})
+
+	t.Run("Missed crypto", func(t *testing.T) {
+		_, err := common.NewJWSSigner(
+			&models.VerificationMethod{
+				ID:   "testKeyID",
+				Type: common.Ed25519VerificationKey2018,
+				Key: models.VerificationKey{
+					Raw: mockKey,
+				},
+			},
+			nil)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "NO_CRYPTO_PROVIDED")
+	})
 }
 
 func TestJWSSigner_Sign(t *testing.T) {

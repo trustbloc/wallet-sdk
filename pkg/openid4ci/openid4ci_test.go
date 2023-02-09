@@ -9,21 +9,20 @@ package openid4ci_test
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
-	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 	arieslocalkms "github.com/hyperledger/aries-framework-go/pkg/kms/localkms"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
-	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 	"github.com/trustbloc/wallet-sdk/pkg/openid4ci"
@@ -39,7 +38,8 @@ const (
 		"&user_pin_required=false"
 	sampleTokenResponse = `{"access_token":"eyJhbGciOiJSUzI1NiIsInR5cCI6Ikp..sHQ",` +
 		`"token_type":"bearer","expires_in":86400,"c_nonce":"tZignsnFbp","c_nonce_expires_in":86400}`
-	mockDID = "did:test:foo"
+	mockDID   = "did:test:foo"
+	mockKeyID = "did:example:12345#testId"
 )
 
 var (
@@ -73,27 +73,6 @@ func TestNewInteraction(t *testing.T) {
 	t.Run("Missing client config", func(t *testing.T) {
 		interaction, err := openid4ci.NewInteraction("", nil)
 		testutil.RequireErrorContains(t, err, "no client config provided")
-		require.Nil(t, interaction)
-	})
-	t.Run("Missing user DID", func(t *testing.T) {
-		testConfig := &openid4ci.ClientConfig{}
-
-		interaction, err := openid4ci.NewInteraction("", testConfig)
-		testutil.RequireErrorContains(t, err, "no user DID provided")
-		require.Nil(t, interaction)
-	})
-	t.Run("Missing user DID", func(t *testing.T) {
-		testConfig := &openid4ci.ClientConfig{UserDID: "UserDID"}
-
-		interaction, err := openid4ci.NewInteraction("", testConfig)
-		testutil.RequireErrorContains(t, err, "no client ID provided")
-		require.Nil(t, interaction)
-	})
-	t.Run("Missing signer provider", func(t *testing.T) {
-		testConfig := &openid4ci.ClientConfig{UserDID: "UserDID", ClientID: "ClientID"}
-
-		interaction, err := openid4ci.NewInteraction("", testConfig)
-		testutil.RequireErrorContains(t, err, "no signer provider provided")
 		require.Nil(t, interaction)
 	})
 	t.Run("Missing DID resolver", func(t *testing.T) {
@@ -209,7 +188,9 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		credentialRequest := &openid4ci.CredentialRequestOpts{UserPIN: "1234"}
 
-		credentials, err := interaction.RequestCredential(credentialRequest)
+		credentials, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
 		require.NoError(t, err)
 		require.Len(t, credentials, 1)
 		require.NotEmpty(t, credentials[0])
@@ -224,7 +205,9 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		credentialRequest := &openid4ci.CredentialRequestOpts{}
 
-		credentialResponses, err := interaction.RequestCredential(credentialRequest)
+		credentialResponses, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
 		testutil.RequireErrorContains(t, err, "invalid user PIN")
 		require.Nil(t, credentialResponses)
 	})
@@ -238,7 +221,9 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		credentialRequest := &openid4ci.CredentialRequestOpts{}
 
-		credentialResponses, err := interaction.RequestCredential(credentialRequest)
+		credentialResponses, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
 		require.Contains(t, err.Error(), `failed to get issuer metadata: Get `+
 			`"http://BadURL/.well-known/openid-configuration": dial tcp: lookup BadURL:`)
 		require.Nil(t, credentialResponses)
@@ -263,7 +248,9 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		credentialRequest := &openid4ci.CredentialRequestOpts{}
 
-		credentialResponses, err := interaction.RequestCredential(credentialRequest)
+		credentialResponses, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
 		require.Contains(t, err.Error(), `failed to get token response: Post `+
 			`"http://BadURL/connect/token": dial tcp: lookup BadURL:`)
 		require.Nil(t, credentialResponses)
@@ -292,7 +279,9 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		credentialRequest := &openid4ci.CredentialRequestOpts{}
 
-		credentialResponses, err := interaction.RequestCredential(credentialRequest)
+		credentialResponses, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
 		testutil.RequireErrorContains(t, err, "failed to get token response: received status code [500] with body "+
 			"[test failure] from issuer's token endpoint")
 		require.Nil(t, credentialResponses)
@@ -321,47 +310,14 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		credentialRequest := &openid4ci.CredentialRequestOpts{}
 
-		credentialResponses, err := interaction.RequestCredential(credentialRequest)
+		credentialResponses, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
 		testutil.RequireErrorContains(t, err, "failed to get token response: failed to unmarshal response from the "+
 			"issuer's token endpoint: invalid character 'i' looking for beginning of value")
 		require.Nil(t, credentialResponses)
 	})
-	t.Run("Fail to create JWT", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{credentialResponse: sampleCredentialResponse}
-		server := httptest.NewServer(issuerServerHandler)
 
-		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"issuer":"https://server.example.com",`+
-			`"authorization_endpoint":"https://server.example.com/connect/authorize",`+
-			`"token_endpoint":"%s/connect/token",`+
-			`"pushed_authorization_request_endpoint":"https://server.example.com/connect/par-authorize",`+
-			`"require_pushed_authorization_requests":false,`+
-			`"credential_endpoint":"%s/credential"}`, server.URL, server.URL)
-
-		defer server.Close()
-
-		serverURLEscaped := url.QueryEscape(server.URL)
-
-		requestURI := "openid-vc://initiate_issuance?issuer=" + serverURLEscaped +
-			"&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard" +
-			"&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA" +
-			"&user_pin_required=false"
-
-		config := getTestClientConfig(t)
-
-		var err error
-		config.DIDResolver, err = resolver.NewDIDResolver("")
-		require.NoError(t, err)
-
-		interaction, err := openid4ci.NewInteraction(requestURI, config)
-		require.NoError(t, err)
-
-		credentialRequest := &openid4ci.CredentialRequestOpts{UserPIN: "1234"}
-
-		credentialResponses, err := interaction.RequestCredential(credentialRequest)
-		testutil.RequireErrorContains(t, err, "resolve UserDID : "+
-			"wrong format did input: UserDID")
-		require.Nil(t, credentialResponses)
-	})
 	t.Run("Fail to get credential response: server failure", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{credentialRequestShouldFail: true}
 		server := httptest.NewServer(issuerServerHandler)
@@ -386,9 +342,41 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		credentialRequest := &openid4ci.CredentialRequestOpts{}
 
-		credentialResponses, err := interaction.RequestCredential(credentialRequest)
+		credentialResponses, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
 		testutil.RequireErrorContains(t, err, "failed to get credential response: received status code [500] "+
 			"with body [test failure] from issuer's credential endpoint")
+		require.Nil(t, credentialResponses)
+	})
+	t.Run("Fail to get credential response: signature error", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{credentialRequestShouldFail: true}
+		server := httptest.NewServer(issuerServerHandler)
+
+		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"issuer":"https://server.example.com",`+
+			`"authorization_endpoint":"https://server.example.com/connect/authorize",`+
+			`"token_endpoint":"%s/connect/token",`+
+			`"pushed_authorization_request_endpoint":"https://server.example.com/connect/par-authorize",`+
+			`"require_pushed_authorization_requests":false,`+
+			`"credential_endpoint":"%s/credential"}`, server.URL, server.URL)
+
+		defer server.Close()
+
+		serverURLEscaped := url.QueryEscape(server.URL)
+
+		requestURI := "openid-vc://initiate_issuance?issuer=" + serverURLEscaped +
+			"&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard" +
+			"&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA" +
+			"&user_pin_required=false"
+
+		interaction := newInteraction(t, requestURI)
+
+		credentialRequest := &openid4ci.CredentialRequestOpts{}
+
+		credentialResponses, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			Err: errors.New("signature error"),
+		})
+		testutil.RequireErrorContains(t, err, "JWT_SIGNING_FAILED")
 		require.Nil(t, credentialResponses)
 	})
 	t.Run("Fail to reach issuer's credential endpoint", func(t *testing.T) {
@@ -411,9 +399,41 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		credentialRequest := &openid4ci.CredentialRequestOpts{}
 
-		credentialResponses, err := interaction.RequestCredential(credentialRequest)
+		credentialResponses, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
 		require.Contains(t, err.Error(), `failed to get credential response: `+
 			`Post "http://BadURL/credential": dial tcp: lookup BadURL:`)
+		require.Nil(t, credentialResponses)
+	})
+	t.Run("Fail to get credential response: kid not containing did part", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{credentialRequestShouldFail: true}
+		server := httptest.NewServer(issuerServerHandler)
+
+		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"issuer":"https://server.example.com",`+
+			`"authorization_endpoint":"https://server.example.com/connect/authorize",`+
+			`"token_endpoint":"%s/connect/token",`+
+			`"pushed_authorization_request_endpoint":"https://server.example.com/connect/par-authorize",`+
+			`"require_pushed_authorization_requests":false,`+
+			`"credential_endpoint":"%s/credential"}`, server.URL, server.URL)
+
+		defer server.Close()
+
+		serverURLEscaped := url.QueryEscape(server.URL)
+
+		requestURI := "openid-vc://initiate_issuance?issuer=" + serverURLEscaped +
+			"&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard" +
+			"&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA" +
+			"&user_pin_required=false"
+
+		interaction := newInteraction(t, requestURI)
+
+		credentialRequest := &openid4ci.CredentialRequestOpts{}
+
+		credentialResponses, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: "did:example:12345",
+		})
+		testutil.RequireErrorContains(t, err, "KEY_ID_NOT_CONTAIN_DID_PART")
 		require.Nil(t, credentialResponses)
 	})
 	t.Run("Fail to unmarshal response from issuer credential endpoint", func(t *testing.T) {
@@ -440,7 +460,9 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		credentialRequest := &openid4ci.CredentialRequestOpts{}
 
-		credentialResponses, err := interaction.RequestCredential(credentialRequest)
+		credentialResponses, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
 		testutil.RequireErrorContains(t, err, "failed to get credential response: failed to unmarshal response "+
 			"from the issuer's credential endpoint: invalid character 'i' looking for beginning of value")
 		require.Nil(t, credentialResponses)
@@ -484,7 +506,9 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		credentialRequest := &openid4ci.CredentialRequestOpts{UserPIN: "1234"}
 
-		vcs, err := interaction.RequestCredential(credentialRequest)
+		vcs, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
 		require.EqualError(t, err, "failed to parse credential from credential response at index 0: "+
 			"unmarshal new credential: unexpected end of JSON input")
 		require.Nil(t, vcs)
@@ -534,7 +558,9 @@ func TestInteraction_ResolveDisplay(t *testing.T) {
 
 		credentialRequest := &openid4ci.CredentialRequestOpts{UserPIN: "1234"}
 
-		_, err = interaction.RequestCredential(credentialRequest)
+		_, err = interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
 		require.NoError(t, err)
 
 		resolvedDisplayData, err := interaction.ResolveDisplay("")
@@ -572,20 +598,13 @@ func getTestClientConfig(t *testing.T) *openid4ci.ClientConfig {
 	localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: localkms.NewMemKMSStore()})
 	require.NoError(t, err)
 
-	tinkCrypto, err := tinkcrypto.New()
-	require.NoError(t, err)
-
 	ariesKMS := localKMS.GetAriesKMS() //nolint: staticcheck // will be removed in the future
-
-	signerProvider := didsignjwt.UseDefaultSigner(ariesKMS, tinkCrypto)
 
 	didResolver := &mockResolver{keyWriter: ariesKMS}
 
 	return &openid4ci.ClientConfig{
-		UserDID:        "UserDID",
-		ClientID:       "ClientID",
-		SignerProvider: signerProvider,
-		DIDResolver:    didResolver,
+		ClientID:    "ClientID",
+		DIDResolver: didResolver,
 	}
 }
 
@@ -617,4 +636,24 @@ func makeMockDoc(keyManager *arieslocalkms.LocalKMS) (*did.Doc, error) {
 	}
 
 	return newDoc, nil
+}
+
+type jwtSignerMock struct {
+	keyID string
+	Err   error
+}
+
+func (s *jwtSignerMock) GetKeyID() string {
+	return s.keyID
+}
+
+func (s *jwtSignerMock) Sign(data []byte) ([]byte, error) {
+	return []byte("test signature"), s.Err
+}
+
+func (s *jwtSignerMock) Headers() jose.Headers {
+	return jose.Headers{
+		jose.HeaderKeyID:     "KeyID",
+		jose.HeaderAlgorithm: "ES384",
+	}
 }
