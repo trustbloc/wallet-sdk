@@ -17,7 +17,10 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
-const localeNotApplicable = "N/A"
+const (
+	localeNotApplicable = "N/A"
+	jwtVCFormatType     = "jwt_vc"
+)
 
 func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported map[string]issuer.SupportedCredential,
 	preferredLocale string,
@@ -37,7 +40,7 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 		for id := range credentialsSupported {
 			supportedCredential := credentialsSupported[id]
 
-			if haveMatchingTypes(&supportedCredential, vc) {
+			if haveMatchingTypes(supportedCredential.Formats, vc) {
 				credentialDisplay := buildCredentialDisplay(&supportedCredential, subject, vc.SDJWTDisclosures, preferredLocale)
 
 				credentialDisplays = append(credentialDisplays, *credentialDisplay)
@@ -63,17 +66,21 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 
 // The VC is considered to be a match for the supportedCredential if the VC has at least one type that's the same as
 // the type specified by the supportCredential (excluding the "VerifiableCredential" type that all VCs have).
-func haveMatchingTypes(supportedCredential *issuer.SupportedCredential, vc *verifiable.Credential) bool {
-	for _, typeFromVC := range vc.Types {
-		// We expect the types in the VC and SupportedCredential to always include VerifiableCredential,
-		// so we skip this case.
-		if strings.EqualFold(typeFromVC, "VerifiableCredential") {
-			continue
-		}
+func haveMatchingTypes(supportedCredential map[string]issuer.Format, vc *verifiable.Credential) bool {
+	// Currently, our OpenID4CI implementation only supports the jwt_vc format.
+	format, found := supportedCredential[jwtVCFormatType]
+	if found {
+		for _, typeFromVC := range vc.Types {
+			// We expect the types in the VC and SupportedCredential to always include VerifiableCredential,
+			// so we skip this case.
+			if strings.EqualFold(typeFromVC, "VerifiableCredential") {
+				continue
+			}
 
-		for _, typeFromSupportedCredentials := range supportedCredential.Types {
-			if strings.EqualFold(typeFromVC, typeFromSupportedCredentials) {
-				return true
+			for _, typeFromFormat := range format.Types {
+				if strings.EqualFold(typeFromVC, typeFromFormat) {
+					return true
+				}
 			}
 		}
 	}

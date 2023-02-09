@@ -42,80 +42,89 @@
           }
         ],
         "credentialMetadata": {
-          "credentials_supported": {
-            "VerifiedEmployee": {
-              "format": "jwt_vc_json",
-              "id": "VerifiedEmployee_JWT",
-              "types": [
-                "VerifiableCredential",
-                "VerifiedEmployee"
-              ],
-              "display": [
+          "credentials_supported":{
+            "verified_employee":{
+              "claims":{
+                "displayName":{
+                  "display":[
+                    {
+                      "locale":"en-US",
+                      "name":"Employee"
+                    }
+                  ]
+                },
+                "givenName":{
+                  "display":[
+                    {
+                      "locale":"en-US",
+                      "name":"Given Name"
+                    }
+                  ]
+                },
+                "jobTitle":{
+                  "display":[
+                    {
+                      "locale":"en-US",
+                      "name":"Job Title"
+                    }
+                  ]
+                },
+                "mail":{
+                  "display":[
+                    {
+                      "locale":"en-US",
+                      "name":"Mail"
+                    }
+                  ]
+                },
+                "photo":{
+                  "display":[
+                    {
+                      "name":"Photo",
+                      "value_type":"image"
+                    }
+                  ]
+                },
+                "preferredLanguage":{
+                  "display":[
+                    {
+                      "locale":"en-US",
+                      "name":"Preferred Language"
+                    }
+                  ]
+                },
+                "surname":{
+                  "display":[
+                    {
+                      "locale":"en-US",
+                      "name":"Surname"
+                    }
+                  ]
+                }
+              },
+              "display":[
                 {
-                  "name": "Verified Employee",
-                  "locale": "en-US",
-                  "logo": {
-                    "url": "https://example.com/public/logo.png",
-                    "alternative_text": "a square logo of a employee verification"
+                  "background_color":"#12107c",
+                  "locale":"en-US",
+                  "logo":{
+                    "alternative_text":"a square logo of an employee verification",
+                    "url":"https://example.com/public/logo.png"
                   },
-                  "background_color": "#12107c",
-                  "text_color": "#FFFFFF"
+                  "name":"Verified Employee",
+                  "text_color":"#FFFFFF"
                 }
               ],
-              "credentialSubject": {
-                "displayName": {
-                  "display": [
-                    {
-                      "name": "Employee",
-                      "locale": "en-US"
-                    }
-                  ]
-                },
-                "givenName": {
-                  "display": [
-                    {
-                      "name": "Given Name",
-                      "locale": "en-US"
-                    }
-                  ]
-                },
-                "jobTitle": {
-                  "display": [
-                    {
-                      "name": "Job Title",
-                      "locale": "en-US"
-                    }
-                  ]
-                },
-                "surname": {
-                  "display": [
-                    {
-                      "name": "Surname",
-                      "locale": "en-US"
-                    }
-                  ]
-                },
-                "preferredLanguage": {
-                  "display": [
-                    {
-                      "name": "Preferred Language",
-                      "locale": "en-US"
-                    }
-                  ]
-                },
-                "mail": {
-                  "display": [
-                    {
-                      "name": "Mail",
-                      "locale": "en-US"
-                    }
-                  ]
-                },
-                "photo": {
-                  "display": [
-                    {
-                      "name": "Photo"
-                    }
+              "formats":{
+                "jwt_vc":{
+                  "cryptographic_binding_methods_supported":[
+                    "did"
+                  ],
+                  "cryptographic_suites_supported":[
+                    "EcdsaSecp256k1Signature2019"
+                  ],
+                  "types":[
+                    "VerifiableCredential",
+                    "VerifiedEmployee"
                   ]
                 }
               }
@@ -166,13 +175,7 @@
         ],
         "credentialMetadata": {
           "credentials_supported": {
-            "DriversLicense": {
-              "format": "jwt_vc_json",
-              "id": "DriversLicense_JWT",
-              "types": [
-                "VerifiableCredential",
-                "DriversLicense"
-              ],
+            "drivers_license": {
               "display": [
                 {
                   "name": "Driver's License",
@@ -185,7 +188,15 @@
                   "text_color": "#FFFFFF"
                 }
               ],
-              "credentialSubject": {
+              "formats":{
+                "jwt_vc":{
+                  "types":[
+                    "VerifiableCredential",
+                    "DriversLicense"
+                  ]
+                }
+              },
+              "claims": {
                 "birthdate": {
                   "display": [
                     {
@@ -336,26 +347,28 @@
         ],
         "credentialMetadata": {
           "credentials_supported": {
-            "VerifiedEmployee": {
-              "format": "jwt_vc_json",
-              "id": "VerifiedEmployee_JWT",
-              "types": [
-                "VerifiableCredential",
-                "VerifiedEmployee"
-              ],
+            "verified_employee": {
               "display": [
                 {
                   "name": "Verified Employee",
                   "locale": "en-US",
                   "logo": {
                     "url": "https://example.com/public/logo.png",
-                    "alternative_text": "a square logo of a employee verification"
+                    "alternative_text": "a square logo of an employee verification"
                   },
                   "background_color": "#12107c",
                   "text_color": "#FFFFFF"
                 }
               ],
-              "credentialSubject": {
+              "formats":{
+                "jwt_vc":{
+                  "types":[
+                    "VerifiableCredential",
+                    "VerifiedEmployee"
+                  ]
+                }
+              },
+              "claims": {
                 "displayName": {
                   "display": [
                     {
@@ -459,26 +472,28 @@
         ],
         "credentialMetadata": {
           "credentials_supported": {
-            "VerifiedEmployee": {
-              "format": "jwt_vc_json",
-              "id": "VerifiedEmployee_JWT",
-              "types": [
-                "VerifiableCredential",
-                "VerifiedEmployee"
-              ],
+            "verified_employee": {
               "display": [
                 {
                   "name": "Verified Employee",
                   "locale": "en-US",
                   "logo": {
                     "url": "https://example.com/public/logo.png",
-                    "alternative_text": "a square logo of a employee verification"
+                    "alternative_text": "a square logo of an employee verification"
                   },
                   "background_color": "#12107c",
                   "text_color": "#FFFFFF"
                 }
               ],
-              "credentialSubject": {
+              "formats":{
+                "jwt_vc":{
+                  "types":[
+                    "VerifiableCredential",
+                    "VerifiedEmployee"
+                  ]
+                }
+              },
+              "claims": {
                 "displayName": {
                   "display": [
                     {
