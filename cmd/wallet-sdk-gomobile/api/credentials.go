@@ -28,6 +28,11 @@ func NewVerifiableCredential(vc *verifiable.Credential) *VerifiableCredential {
 	}
 }
 
+// ID returns this VC's ID.
+func (v *VerifiableCredential) ID() string {
+	return v.VC.ID
+}
+
 // IssuerID returns the ID of this VC's issuer.
 // While the ID is typically going to be a DID, the Verifiable Credential spec does not mandate this.
 func (v *VerifiableCredential) IssuerID() string {
