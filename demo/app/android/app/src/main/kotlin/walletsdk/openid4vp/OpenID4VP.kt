@@ -20,13 +20,15 @@ class OpenID4VP constructor(
         private val keyReader: KeyReader,
         private val crypto: Crypto,
         private val didResolver: DIDResolver,
-        private val documentLoader: LDDocumentLoader) {
+        private val documentLoader: LDDocumentLoader,
+        private val activityLogger: ActivityLogger,
+        ) {
 
-    private var initiatedInteraction: Interaction? = null;
-    private var verifiablePresentation: VerifiablePresentation? = null;
+    private var initiatedInteraction: Interaction? = null
+    private var verifiablePresentation: VerifiablePresentation? = null
 
     fun processAuthorizationRequest(authorizationRequest: String, storedCredentials: List<String>): List<String> {
-        val cfg = ClientConfig(keyReader, crypto, didResolver, documentLoader, null)
+        val cfg = ClientConfig(keyReader, crypto, didResolver, documentLoader, activityLogger)
         val interaction = Interaction(authorizationRequest, cfg)
 
         val query = interaction.getQuery()
