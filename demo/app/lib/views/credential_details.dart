@@ -34,8 +34,10 @@ class CredentialDetails extends StatelessWidget {
   }
 
   activityLogDetails() {
-    var activities = activityLogger!;
-    return listViewWidget(activities!.asMap().values);
+    var decoded = jsonDecode(credentialData.activityLoggerData!);
+    log("activities $decoded");
+    List<Object?> activities = decoded;
+    return listViewWidget(activities.asMap().values);
   }
 
   Widget listViewWidget(Iterable<Object?> activitiesValue) {

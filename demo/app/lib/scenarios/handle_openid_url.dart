@@ -30,7 +30,7 @@ _navigateToCredPreviewScreen(
       context,
       MaterialPageRoute(
           builder: (context) =>
-              CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURL, credentialDisplayData: resolvedCredentialDisplay)),));
+              CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURL, credentialDisplayData: resolvedCredentialDisplay, activityLoggerData: '')),));
 }
 
 void handleOpenIDUrl(BuildContext context, String qrCodeURL) async {
@@ -66,7 +66,7 @@ void handleOpenIDUrl(BuildContext context, String qrCodeURL) async {
     if (matchedCred.isNotEmpty) {
       //TODO: in future we can show all the credential
       _navigateToPresentationPreviewScreen(context, matchedCred.first,
-          CredentialData(rawCredential: '', credentialDisplayData: credentialDisplayData.first, issuerURL: ''));
+          CredentialData(rawCredential: '', credentialDisplayData: credentialDisplayData.first, issuerURL: '',activityLoggerData: ''));
       return;
     }
   }

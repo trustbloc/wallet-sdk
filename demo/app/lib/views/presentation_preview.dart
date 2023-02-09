@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:app/views/credential_shared.dart';
 import 'package:app/views/dashboard.dart';
 import 'package:app/widgets/credential_verified_information_view.dart';
@@ -79,6 +81,8 @@ class PresentationPreviewState extends State<PresentationPreview> {
                       PrimaryButton(
                           onPressed: () async {
                             await WalletSDKPlugin.presentCredential();
+                            var activityLogger = await WalletSDKPlugin.activityLogger();
+                            log("while presenting credential $activityLogger");
                             _navigateToCredentialShareSuccess(verifierName);
                           },
                           width: double.infinity,

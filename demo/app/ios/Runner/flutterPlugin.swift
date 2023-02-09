@@ -69,6 +69,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "activityLogger":
             activityLogger(result:result)
             
+        case "storeActivityLoggerData":
+            activityLogger(result:result)
+            
         case "processAuthorizationRequest":
             processAuthorizationRequest(arguments: arguments!, result: result)
             
@@ -272,6 +275,20 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
      
         result(activityList)
+    }
+    
+    public func storeActivityLoggerData(result: @escaping FlutterResult){
+        var storeActivityLoggerData: [Any] = []
+        var aryLength = activityLogger!.length()
+        for index in 0..<aryLength {
+            var activityDicResp:[String:Any] = [
+                "SerializedData":  activityLogger!.atIndex(index)!.serialize(nil),
+            ]
+            
+            storeActivityLoggerData.append(activityDicResp)
+        }
+     
+        result(storeActivityLoggerData)
     }
     
     public func issuerURI(result: @escaping FlutterResult){

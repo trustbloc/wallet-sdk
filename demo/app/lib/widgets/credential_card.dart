@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:app/models/credential_data.dart';
 import 'package:app/views/credential_details.dart';
 import 'package:flutter/material.dart';
@@ -14,11 +15,11 @@ class CredentialCard extends StatefulWidget {
 }
 
 class _CredentialCardState extends State<CredentialCard> {
-
   @override
   Widget build(BuildContext context) {
     Map<String, dynamic> issuer = jsonDecode(widget.credentialData.credentialDisplayData!);
     final credentialDisplayName = issuer['credential_displays'][0]['overview']['name'];
+    log("what is data credential card ${widget.credentialData.activityLoggerData}");
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
       child: Container(

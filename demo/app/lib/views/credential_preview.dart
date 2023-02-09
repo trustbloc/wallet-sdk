@@ -85,7 +85,11 @@ class CredentialPreviewState extends State<CredentialPreview> {
                     ),
                     PrimaryButton(
                         onPressed: () async {
-                            _storageService.addCredential(CredentialDataObject("$userLoggedIn-${uuid.v1()}",CredentialData(rawCredential: widget.credentialData.rawCredential, issuerURL: widget.credentialData.issuerURL, credentialDisplayData: widget.credentialData.credentialDisplayData!)));
+                             var activityLogger = await WalletSDKPlugin.storeActivityLoggerData();
+                             var activityLoggerToStore =  jsonEncode(activityLogger);
+                             log("is activity Logs are added already $activityLoggerToStore");
+                             _storageService.addCredential(CredentialDataObject("$userLoggedIn-${uuid.v1()}",CredentialData(rawCredential: widget.credentialData.rawCredential, issuerURL: widget.credentialData.issuerURL,
+                                credentialDisplayData: widget.credentialData.credentialDisplayData!, activityLoggerData: activityLoggerToStore!)));
                             _navigateToCredentialAdded();
                         },
                         width: double.infinity,

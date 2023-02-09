@@ -151,7 +151,7 @@ class _OTPPage extends State<OTP> {
  )));
   }
   _navigateToCredPreviewScreen(String credentialResp, String issuerURI, String credentialDisplayData) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURI, credentialDisplayData: credentialDisplayData))));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURI, credentialDisplayData: credentialDisplayData, activityLoggerData: ""))));
   }
 
   _clearOTPInput(){

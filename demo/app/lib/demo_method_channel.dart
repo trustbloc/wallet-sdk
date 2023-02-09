@@ -76,4 +76,10 @@ class MethodChannelWallet extends WalletPlatform {
    var activityObj =  await methodChannel.invokeMethod('activityLogger');
    return activityObj;
   }
+
+  Future<List<Object?>> storeActivityLoggerData() async {
+    var storeActivityObj =  await methodChannel.invokeMethod('storeActivityLoggerData');
+    print("storeActivityObj $storeActivityObj");
+    return storeActivityObj;
+  }
 }
