@@ -32,8 +32,11 @@ func TestVerifiableCredential(t *testing.T) {
 	universityDegreeVC, err := vcparse.Parse(universityDegreeCredential, parseOpts)
 	require.NoError(t, err)
 
-	id := universityDegreeVC.IssuerID()
-	require.Equal(t, "did:example:76e12ec712ebc6f1c221ebfeb1f", id)
+	id := universityDegreeVC.ID()
+	require.Equal(t, "http://example.edu/credentials/1872", id)
+
+	issuerID := universityDegreeVC.IssuerID()
+	require.Equal(t, "did:example:76e12ec712ebc6f1c221ebfeb1f", issuerID)
 
 	vcArray.Add(universityDegreeVC)
 
@@ -42,8 +45,11 @@ func TestVerifiableCredential(t *testing.T) {
 	driversLicenceVC, err := vcparse.Parse(driversLicenceCredential, parseOpts)
 	require.NoError(t, err)
 
-	id = driversLicenceVC.IssuerID()
-	require.Equal(t, "did:foo:123", id)
+	id = driversLicenceVC.ID()
+	require.Equal(t, "https://eu.com/claims/DriversLicense", id)
+
+	issuerID = driversLicenceVC.IssuerID()
+	require.Equal(t, "did:foo:123", issuerID)
 
 	vcArray.Add(driversLicenceVC)
 
