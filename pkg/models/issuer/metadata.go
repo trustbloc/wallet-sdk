@@ -21,12 +21,11 @@ type Metadata struct {
 
 // SupportedCredential represents metadata about a credential type that a credential issuer can issue.
 type SupportedCredential struct {
-	Format                                string               `json:"format,omitempty"`
-	Types                                 []string             `json:"types,omitempty"`
-	CryptographicBindingsMethodsSupported []string             `json:"cryptographic_bindings_methods_supported,omitempty"`
-	CryptographicSuitesSupported          []string             `json:"cryptographic_suites_supported,omitempty"`
-	Overview                              []CredentialOverview `json:"display,omitempty"`
-	Claims                                map[string]Claim     `json:"credentialSubject,omitempty"`
+	Formats                              map[string]Format    `json:"formats,omitempty"`
+	Overview                             []CredentialOverview `json:"display,omitempty"`
+	Claims                               map[string]Claim     `json:"claims,omitempty"`
+	CryptographicBindingMethodsSupported []string             `json:"cryptographic_binding_methods_supported,omitempty"`
+	CryptographicSuitesSupported         []string             `json:"cryptographic_suites_supported,omitempty"`
 }
 
 // CredentialOverview represents display data for a credential as a whole.
@@ -43,13 +42,21 @@ type CredentialOverview struct {
 // Claim represents display data for a specific claim in (potentially) multiple locales.
 // Each ClaimDisplay represents display data for a single locale.
 type Claim struct {
-	Displays []ClaimDisplay `json:"display,omitempty"`
+	Displays  []ClaimDisplay `json:"display,omitempty"`
+	ValueType string         `json:"value_type,omitempty"`
 }
 
 // Logo represents display information for a logo.
 type Logo struct {
 	URL     string `json:"url,omitempty"`
-	AltText string `json:"alt_text,omitempty"`
+	AltText string `json:"alternative_text,omitempty"`
+}
+
+// Format represents a single supported VC format within a SupportedCredential object.
+type Format struct {
+	CryptographicBindingMethodsSupported []string `json:"cryptographic_binding_methods_supported,omitempty"`
+	CryptographicSuitesSupported         []string `json:"cryptographic_suites_supported,omitempty"`
+	Types                                []string `json:"types,omitempty"`
 }
 
 // CredentialIssuer represents display information about the issuer of some credential(s) for (potentially) multiple

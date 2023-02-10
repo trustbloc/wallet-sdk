@@ -127,37 +127,37 @@ func TestResolve(t *testing.T) {
 			})
 			t.Run("Credentials supported object does not contain display info for the given VC, "+
 				"resulting in the default display being used", func(t *testing.T) {
-				var issuerMetadata issuer.Metadata
+				t.Run("Credentials supported object doesn't have a jwt_vc format object", func(t *testing.T) {
+					var issuerMetadata issuer.Metadata
 
-				err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
-				require.NoError(t, err)
+					err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
+					require.NoError(t, err)
 
-				issuerMetadata.CredentialsSupported["UniversityDegree"].Types[1] = "SomeOtherType"
+					delete(issuerMetadata.CredentialsSupported["university_degree"].Formats, "jwt_vc")
 
-				resolvedDisplayData, errResolve := credentialschema.Resolve(
-					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-					credentialschema.WithIssuerMetadata(&issuerMetadata),
-					credentialschema.WithPreferredLocale("en-US"))
-				require.NoError(t, errResolve)
-				require.Equal(t, "Example University", resolvedDisplayData.IssuerDisplay.Name)
-				require.Equal(t, "en-US", resolvedDisplayData.IssuerDisplay.Locale)
-				require.Len(t, resolvedDisplayData.CredentialDisplays, 1)
-				require.Equal(t, "http://example.edu/credentials/1872",
-					resolvedDisplayData.CredentialDisplays[0].Overview.Name)
-				require.Equal(t, "N/A",
-					resolvedDisplayData.CredentialDisplays[0].Overview.Locale)
-				require.Nil(t, resolvedDisplayData.CredentialDisplays[0].Overview.Logo)
-				require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Overview.BackgroundColor)
-				require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
+					resolvedDisplayData, errResolve := credentialschema.Resolve(
+						credentialschema.WithCredentials([]*verifiable.Credential{credential}),
+						credentialschema.WithIssuerMetadata(&issuerMetadata),
+						credentialschema.WithPreferredLocale("en-US"))
+					require.NoError(t, errResolve)
+					checkForDefaultDisplayData(t, resolvedDisplayData)
+				})
+				t.Run("jwt_vc format object doesn't have UniversityDegreeCredential in its types",
+					func(t *testing.T) {
+						var issuerMetadata issuer.Metadata
 
-				expectedClaims := []credentialschema.ResolvedClaim{
-					{Label: "ID", Value: "1234", Locale: "N/A"},
-					{Label: "given_name", Value: "Alice", Locale: "N/A"},
-					{Label: "surname", Value: "Bowman", Locale: "N/A"},
-					{Label: "gpa", Value: "4.0", Locale: "N/A"},
-				}
+						err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
+						require.NoError(t, err)
 
-				verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
+						issuerMetadata.CredentialsSupported["university_degree"].Formats["jwt_vc"].Types[1] = "SomeOtherType"
+
+						resolvedDisplayData, errResolve := credentialschema.Resolve(
+							credentialschema.WithCredentials([]*verifiable.Credential{credential}),
+							credentialschema.WithIssuerMetadata(&issuerMetadata),
+							credentialschema.WithPreferredLocale("en-US"))
+						require.NoError(t, errResolve)
+						checkForDefaultDisplayData(t, resolvedDisplayData)
+					})
 			})
 			t.Run("Credentials supported object does not have claim display info", func(t *testing.T) {
 				var issuerMetadata issuer.Metadata
@@ -179,7 +179,8 @@ func TestResolve(t *testing.T) {
 					resolvedDisplayData.CredentialDisplays[0].Overview.Locale)
 				require.Equal(t, "https://exampleuniversity.com/public/logo.png",
 					resolvedDisplayData.CredentialDisplays[0].Overview.Logo.URL)
-				require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Overview.Logo.AltText)
+				require.Equal(t, "a square logo of a university",
+					resolvedDisplayData.CredentialDisplays[0].Overview.Logo.AltText)
 				require.Equal(t, "#12107c", resolvedDisplayData.CredentialDisplays[0].Overview.BackgroundColor)
 				require.Equal(t, "#FFFFFF", resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
 				require.Nil(t, resolvedDisplayData.CredentialDisplays[0].Claims)
@@ -205,7 +206,8 @@ func TestResolve(t *testing.T) {
 					resolvedDisplayData.CredentialDisplays[0].Overview.Locale)
 				require.Equal(t, "https://exampleuniversity.com/public/logo.png",
 					resolvedDisplayData.CredentialDisplays[0].Overview.Logo.URL)
-				require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Overview.Logo.AltText)
+				require.Equal(t, "a square logo of a university",
+					resolvedDisplayData.CredentialDisplays[0].Overview.Logo.AltText)
 				require.Equal(t, "#12107c", resolvedDisplayData.CredentialDisplays[0].Overview.BackgroundColor)
 				require.Equal(t, "#FFFFFF", resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
 
@@ -250,7 +252,8 @@ func TestResolve(t *testing.T) {
 					resolvedDisplayData.CredentialDisplays[0].Overview.Locale)
 				require.Equal(t, "https://exampleuniversity.com/public/logo.png",
 					resolvedDisplayData.CredentialDisplays[0].Overview.Logo.URL)
-				require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Overview.Logo.AltText)
+				require.Equal(t, "a square logo of a university",
+					resolvedDisplayData.CredentialDisplays[0].Overview.Logo.AltText)
 				require.Equal(t, "#12107c", resolvedDisplayData.CredentialDisplays[0].Overview.BackgroundColor)
 				require.Equal(t, "#FFFFFF", resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
 
@@ -376,7 +379,8 @@ func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *crede
 		resolvedDisplayData.CredentialDisplays[0].Overview.Locale)
 	require.Equal(t, "https://exampleuniversity.com/public/logo.png",
 		resolvedDisplayData.CredentialDisplays[0].Overview.Logo.URL)
-	require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Overview.Logo.AltText)
+	require.Equal(t, "a square logo of a university",
+		resolvedDisplayData.CredentialDisplays[0].Overview.Logo.AltText)
 	require.Equal(t, "#12107c", resolvedDisplayData.CredentialDisplays[0].Overview.BackgroundColor)
 	require.Equal(t, "#FFFFFF", resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
 
@@ -385,6 +389,30 @@ func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *crede
 		{Label: "Given Name", Value: "Alice", Locale: "en-US"},
 		{Label: "Surname", Value: "Bowman", Locale: "en-US"},
 		{Label: "GPA", Value: "4.0", Locale: "en-US"},
+	}
+
+	verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
+}
+
+func checkForDefaultDisplayData(t *testing.T, resolvedDisplayData *credentialschema.ResolvedDisplayData) {
+	t.Helper()
+
+	require.Equal(t, "Example University", resolvedDisplayData.IssuerDisplay.Name)
+	require.Equal(t, "en-US", resolvedDisplayData.IssuerDisplay.Locale)
+	require.Len(t, resolvedDisplayData.CredentialDisplays, 1)
+	require.Equal(t, "http://example.edu/credentials/1872",
+		resolvedDisplayData.CredentialDisplays[0].Overview.Name)
+	require.Equal(t, "N/A",
+		resolvedDisplayData.CredentialDisplays[0].Overview.Locale)
+	require.Nil(t, resolvedDisplayData.CredentialDisplays[0].Overview.Logo)
+	require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Overview.BackgroundColor)
+	require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
+
+	expectedClaims := []credentialschema.ResolvedClaim{
+		{Label: "ID", Value: "1234", Locale: "N/A"},
+		{Label: "given_name", Value: "Alice", Locale: "N/A"},
+		{Label: "surname", Value: "Bowman", Locale: "N/A"},
+		{Label: "gpa", Value: "4.0", Locale: "N/A"},
 	}
 
 	verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
@@ -402,7 +430,8 @@ func checkSDVCMatchedDisplayData(t *testing.T, resolvedDisplayData *credentialsc
 		resolvedDisplayData.CredentialDisplays[0].Overview.Locale)
 	require.Equal(t, "https://example.com/public/logo.png",
 		resolvedDisplayData.CredentialDisplays[0].Overview.Logo.URL)
-	require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Overview.Logo.AltText)
+	require.Equal(t, "a square logo of an employee verification",
+		resolvedDisplayData.CredentialDisplays[0].Overview.Logo.AltText)
 	require.Equal(t, "#12107c", resolvedDisplayData.CredentialDisplays[0].Overview.BackgroundColor)
 	require.Equal(t, "#FFFFFF", resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
 

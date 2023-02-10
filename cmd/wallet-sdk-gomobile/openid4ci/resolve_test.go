@@ -99,7 +99,7 @@ func checkCredentialDisplay(t *testing.T, credentialDisplay *openid4ci.Credentia
 	require.Equal(t, "University Credential", credentialOverview.Name())
 	require.Equal(t, "en-US", credentialOverview.Locale())
 	require.Equal(t, "https://exampleuniversity.com/public/logo.png", credentialOverview.Logo().URL())
-	require.Empty(t, credentialOverview.Logo().AltText())
+	require.Equal(t, "a square logo of a university", credentialOverview.Logo().AltText())
 	require.Equal(t, "#12107c", credentialOverview.BackgroundColor())
 	require.Equal(t, "#FFFFFF", credentialOverview.TextColor())
 
