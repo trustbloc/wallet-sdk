@@ -38,9 +38,10 @@ type CredentialOverview struct {
 
 // ResolvedClaim represents display data for a specific claim.
 type ResolvedClaim struct {
-	Label  string `json:"label,omitempty"`
-	Value  string `json:"value,omitempty"`
-	Locale string `json:"locale,omitempty"`
+	Label     string `json:"label,omitempty"`
+	ValueType string `json:"value_type,omitempty"`
+	Value     string `json:"value,omitempty"`
+	Locale    string `json:"locale,omitempty"`
 }
 
 // Logo represents display information for a logo.

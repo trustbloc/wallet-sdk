@@ -434,9 +434,11 @@ a `Logo` object.
 #### `Claim`
 
 * Describes display information for a specific claim.
-* Has `label()`, `value()`, and `locale()` methods.
+* Has `label()`, `valueType()`, `value()`, and `locale()` methods.
 * For example, if the UI were to display "Given Name: Alice", then `label()` would correspond to "Given Name" while
 `value()` would correspond to "Alice".
+* When the value type is "image", then you should expect the value data to be formatted using the
+[data URL scheme](https://www.rfc-editor.org/rfc/rfc2397).
 
 #### A Note about `locale()`
 

@@ -232,8 +232,8 @@ func checkCredentialDisplay(t *testing.T, actualCredentialDisplay, expectedCrede
 				claim.Locale() == expectedClaim.Locale() {
 				if expectedClaimsChecklist.Found[j] {
 					require.FailNow(t, "duplicate claim found: ",
-						"[Label: %s] [Value: %s] [Locale: %s]",
-						claim.Label(), claim.Value(), claim.Locale())
+						"[Label: %s] [Value Type: %s] [Value: %s] [Locale: %s]",
+						claim.Label(), claim.ValueType(), claim.Value(), claim.Locale())
 				}
 
 				expectedClaimsChecklist.Found[j] = true
@@ -243,8 +243,8 @@ func checkCredentialDisplay(t *testing.T, actualCredentialDisplay, expectedCrede
 
 			if j == len(expectedClaimsChecklist.Claims)-1 {
 				require.FailNow(t, "received unexpected claim: ",
-					"[Label: %s] [Value: %s] [Locale: %s]",
-					claim.Label(), claim.Value(), claim.Locale())
+					"[Label: %s] [Value Type: %s] [Value: %s] [Locale: %s]",
+					claim.Label(), claim.ValueType(), claim.Value(), claim.Locale())
 			}
 		}
 	}
@@ -253,8 +253,8 @@ func checkCredentialDisplay(t *testing.T, actualCredentialDisplay, expectedCrede
 		if !expectedClaimsChecklist.Found[i] {
 			expectedClaim := expectedClaimsChecklist.Claims[i]
 			require.FailNow(t, "the following claim was expected but wasn't received: ",
-				"[Label: %s] [Value: %s] [Locale: %s]",
-				expectedClaim.Label(), expectedClaim.Value(), expectedClaim.Locale())
+				"[Label: %s] [Value Type: %s] [Value: %s] [Locale: %s]",
+				expectedClaim.Label, expectedClaim.ValueType, expectedClaim.Value, expectedClaim.Locale)
 		}
 	}
 }

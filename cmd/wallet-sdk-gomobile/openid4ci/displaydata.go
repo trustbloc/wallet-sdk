@@ -197,6 +197,12 @@ func (c *Claim) Label() string {
 	return c.claim.Label
 }
 
+// ValueType returns the display value type for this claim.
+// For example:  "string", "number", "image", etc.
+func (c *Claim) ValueType() string {
+	return c.claim.ValueType
+}
+
 // Value returns the display value for this claim.
 // For example, if the UI were to display "Given Name: Alice", then the Value would be "Alice".
 func (c *Claim) Value() string {

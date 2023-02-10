@@ -19,10 +19,11 @@ const (
 
 	sampleCredentialDisplay = `{"overview":{"name":"University Credential","locale":"en-US","logo":{` +
 		`"url":"https://exampleuniversity.com/public/logo.png","alternative_text":"a square logo of a university"},` +
-		`"background_color":"#12107c","text_color":"#FFFFFF"` +
-		`},"claims":[{"label":"ID","value":"1234","locale":"en-US"},{"label":"Given Name","value":"Alice",` +
-		`"locale":"en-US"},{"label":"Surname","value":"Bowman","locale":"en-US"},{"label":"GPA","value":"4.0",` +
-		`"locale":"en-US"}]}`
+		`"background_color":"#12107c","text_color":"#FFFFFF"},"claims":[` +
+		`{"label":"ID","value_type":"string","value":"1234","locale":"en-US"},` +
+		`{"label":"Given Name","value_type":"string","value":"Alice","locale":"en-US"},` +
+		`{"label":"Surname","value_type":"string","value":"Bowman","locale":"en-US"},` +
+		`{"label":"GPA","value_type":"number","value":"4.0","locale":"en-US"}]}`
 
 	sampleDisplayData = `{"issuer_display":` + sampleIssuerDisplay +
 		`,"credential_displays":[` + sampleCredentialDisplay + `]}`
