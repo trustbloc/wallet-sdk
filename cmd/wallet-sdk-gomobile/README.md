@@ -25,11 +25,15 @@ This package contains the `gomobile`-compatible version of the SDK. It acts as a
 
 ## Generating the Bindings
 
-To generate both the Android and iOS bindings in one command:
-
+Change to the gomobile directory:
 ```
 cd cmd/wallet-sdk-gomobile
 gomobile init
+```
+
+To generate both the Android and iOS bindings in one command:
+
+```
 make generate-all-bindings
 ```
 
