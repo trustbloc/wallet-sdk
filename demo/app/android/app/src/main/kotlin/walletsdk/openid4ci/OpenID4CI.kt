@@ -1,20 +1,20 @@
 package walletsdk.openid4ci
 
 import dev.trustbloc.wallet.sdk.api.*
-import dev.trustbloc.wallet.sdk.openid4ci.AuthorizeResult
-import dev.trustbloc.wallet.sdk.openid4ci.ClientConfig
-import dev.trustbloc.wallet.sdk.openid4ci.CredentialRequestOpts
-import dev.trustbloc.wallet.sdk.openid4ci.Interaction
+import dev.trustbloc.wallet.sdk.openid4ci.*
+import dev.trustbloc.wallet.sdk.openid4ci.Openid4ci.resolveDisplay
+import dev.trustbloc.wallet.sdk.vcparse.Vcparse
 
 class OpenID4CI constructor(
         private val requestURI: String,
         private val crypto: Crypto,
         private val didResolver: DIDResolver,
+        private val activityLogger: ActivityLogger,
 ) {
     private var newInteraction: Interaction
 
     init {
-        val cfg = ClientConfig( "ClientID", crypto, didResolver, null)
+        val cfg = ClientConfig( "ClientID", crypto, didResolver, activityLogger)
 
         newInteraction = Interaction(requestURI, cfg)
     }
@@ -23,6 +23,9 @@ class OpenID4CI constructor(
         return newInteraction.authorize()
     }
 
+    fun issuerURI(): String? {
+        return newInteraction.issuerURI()
+    }
 
     fun requestCredential(otp: String?, didVerificationMethod: VerificationMethod): VerifiableCredential? {
         val credReq = CredentialRequestOpts(otp)
@@ -35,8 +38,14 @@ class OpenID4CI constructor(
         return null
     }
 
-    fun resolveCredentialDisplay(): String? {
-        val resolvedDisplayData = newInteraction.resolveDisplay("")
-        return resolvedDisplayData.serialize()
+    fun resolveCredentialDisplay(issuerURI: String?, vcCredentials: ArrayList<String>): String? {
+        val opts = Vcparse.newOpts(true, null)
+        val credArray = VerifiableCredentialsArray()
+        for (cred in vcCredentials) {
+            val parsedVC = Vcparse.parse(cred, opts)
+            credArray.add(parsedVC)
+        }
+
+        return  resolveDisplay(credArray, issuerURI, "").serialize()
     }
 }

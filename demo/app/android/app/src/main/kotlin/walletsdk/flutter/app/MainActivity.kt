@@ -1,21 +1,26 @@
 package dev.trustbloc.wallet
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.did.Creator
-import io.flutter.embedding.android.FlutterActivity
-import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.plugin.common.MethodChannel
-import dev.trustbloc.wallet.sdk.localkms.KMS
 import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.ld.DocLoader
-import dev.trustbloc.wallet.sdk.walleterror.Walleterror
+import dev.trustbloc.wallet.sdk.localkms.KMS
 import dev.trustbloc.wallet.sdk.localkms.Localkms
+import dev.trustbloc.wallet.sdk.walleterror.Walleterror
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import dev.trustbloc.wallet.sdk.mem.ActivityLogger
 import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
 import walletsdk.kmsStorage.KmsStore
 import walletsdk.openid4ci.OpenID4CI
-import java.util.ArrayList
 import walletsdk.openid4vp.OpenID4VP
-import java.lang.Override
+import java.security.Timestamp
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class MainActivity : FlutterActivity() {
@@ -26,6 +31,7 @@ class MainActivity : FlutterActivity() {
     private var documentLoader: LDDocumentLoader? = null
     private var crypto: Crypto? = null
     private var didDocID: String? = null
+    private var activityLogger: ActivityLogger? = null
     private var didVerificationMethod: VerificationMethod? = null
 
     @Override
@@ -82,10 +88,20 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
+                         "fetchDID" -> {
+                             try {
+                                 val didID = call.argument<String>("didID")
+                                 if (didDocID == null) {
+                                     didDocID = didID
+                                 }
+                             } catch (e: Exception) {
+                                 result.error("Exception", "Error while setting fetched DID", e)
+                             }
+                         }
+
                         "resolveCredentialDisplay" -> {
                             try {
-                                val credentialDisplay = resolveCredentialDisplay()
-
+                                val credentialDisplay = resolveCredentialDisplay(call)
                                 result.success(credentialDisplay)
 
                             } catch (e: Exception) {
@@ -100,6 +116,25 @@ class MainActivity : FlutterActivity() {
                                 result.success(creds)
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while processing authorization request", e)
+                            }
+                        }
+
+                        "issuerURI" -> {
+                            try {
+                                val issuerURIResp = issuerURI()
+                                result.success(issuerURIResp)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while getting issuerURI", e)
+                            }
+                        }
+
+                        "activityLogger" -> {
+                            try {
+                                println("here or no")
+                                val activityLoggerResp = activityLogger()
+                                result.success(activityLoggerResp)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while fetching activity logger request", e)
                             }
                         }
 
@@ -121,7 +156,7 @@ class MainActivity : FlutterActivity() {
         didResolver = Resolver("")
         crypto = kms.crypto
         documentLoader = DocLoader()
-
+        activityLogger = ActivityLogger()
         this.kms = kms
     }
 
@@ -135,6 +170,39 @@ class MainActivity : FlutterActivity() {
         this.openID4VP = openID4VP
 
         return openID4VP.processAuthorizationRequest(authorizationRequest, storedCredentials)
+    }
+
+    private fun issuerURI(): String? {
+        return openID4CI?.issuerURI()
+    }
+
+
+    private fun activityLogger(): MutableList<Any> {
+        val arrayList = mutableListOf<Any>()
+        var aryLength = activityLogger?.length()
+        for (i in 0..aryLength!!){
+            val status = activityLogger?.atIndex(i)?.status()
+            val client = activityLogger?.atIndex(i)?.client()
+            val activityType = activityLogger?.atIndex(i)?.type()
+            val timestampDate = activityLogger?.atIndex(i)?.unixTimestamp()
+
+            val activityDicResp = mutableListOf<Any>()
+            if (status != null) {
+                activityDicResp.add(status)
+            }
+            if (client != null) {
+                activityDicResp.add(client)
+            }
+            if (activityType != null) {
+                activityDicResp.add(activityType)
+            }
+            if (timestampDate != null) {
+                activityDicResp.add(timestampDate)
+            }
+            arrayList.addAll(activityDicResp)
+        }
+
+        return arrayList
     }
 
     private fun presentCredential() {
@@ -157,7 +225,11 @@ class MainActivity : FlutterActivity() {
         val documentLoader = this.documentLoader
                 ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
-        return OpenID4VP(kms, crypto, didResolver, documentLoader)
+        val activityLogger = this.activityLogger
+            ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+
+
+        return OpenID4VP(kms, crypto, didResolver, documentLoader, activityLogger)
     }
 
     private fun authorize(call: MethodCall): Boolean {
@@ -170,10 +242,14 @@ class MainActivity : FlutterActivity() {
         val crypto = this.crypto
                 ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
+        val activityLogger = this.activityLogger
+            ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+
         val openID4CI = OpenID4CI(
                 requestURI,
                 crypto,
                 didResolver,
+                activityLogger
         )
 
         val authRes = openID4CI.authorize()
@@ -195,11 +271,16 @@ class MainActivity : FlutterActivity() {
         return openID4CI.requestCredential(otp, didVerificationMethod)
     }
 
-    private fun resolveCredentialDisplay(): String? {
+    private fun resolveCredentialDisplay(call: MethodCall): String? {
+        val issuerURI = call.argument<String>("uri")
+            ?: throw java.lang.Exception("issuerURI params is missed")
+        val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
+            ?: throw java.lang.Exception("vcCredentials params is missed")
+
         val openID4CI = this.openID4CI
             ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
-        return openID4CI.resolveCredentialDisplay()
+        return openID4CI.resolveCredentialDisplay(issuerURI, vcCredentials)
     }
 
 
