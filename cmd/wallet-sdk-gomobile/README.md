@@ -1,4 +1,4 @@
-# Wallet SDK Gomobile
+# Wallet SDK Gomobile 
 
 This package contains the `gomobile`-compatible version of the SDK. It acts as a wrapper for the [Go SDK](../../README.md).
 
