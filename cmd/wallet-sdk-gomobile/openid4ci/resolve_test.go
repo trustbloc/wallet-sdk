@@ -105,13 +105,20 @@ func checkCredentialDisplay(t *testing.T, credentialDisplay *openid4ci.Credentia
 
 	require.Equal(t, 4, credentialDisplay.ClaimsLength())
 
+	checkClaims(t, credentialDisplay)
+}
+
+func checkClaims(t *testing.T, credentialDisplay *openid4ci.CredentialDisplay) { //nolint:gocyclo // Test file
+	t.Helper()
+
 	// Since the claims object in the supported_credentials object from the issuer is a map which effectively gets
 	// converted to an array of resolved claims, the order of resolved claims can differ from run-to-run. The code
 	// below checks to ensure we have the expected claims in any order.
 	type expectedClaim struct {
-		Label  string
-		Value  string
-		Locale string
+		Label     string
+		ValueType string
+		Value     string
+		Locale    string
 	}
 
 	expectedClaimsChecklist := struct {
@@ -120,24 +127,28 @@ func checkCredentialDisplay(t *testing.T, credentialDisplay *openid4ci.Credentia
 	}{
 		Claims: []expectedClaim{
 			{
-				Label:  "ID",
-				Value:  "1234",
-				Locale: "en-US",
+				Label:     "ID",
+				ValueType: "string",
+				Value:     "1234",
+				Locale:    "en-US",
 			},
 			{
-				Label:  "Given Name",
-				Value:  "Alice",
-				Locale: "en-US",
+				Label:     "Given Name",
+				ValueType: "string",
+				Value:     "Alice",
+				Locale:    "en-US",
 			},
 			{
-				Label:  "Surname",
-				Value:  "Bowman",
-				Locale: "en-US",
+				Label:     "Surname",
+				ValueType: "string",
+				Value:     "Bowman",
+				Locale:    "en-US",
 			},
 			{
-				Label:  "GPA",
-				Value:  "4.0",
-				Locale: "en-US",
+				Label:     "GPA",
+				ValueType: "number",
+				Value:     "4.0",
+				Locale:    "en-US",
 			},
 		},
 	}
@@ -149,12 +160,13 @@ func checkCredentialDisplay(t *testing.T, credentialDisplay *openid4ci.Credentia
 		for j := 0; j < len(expectedClaimsChecklist.Claims); j++ {
 			expectedClaim := expectedClaimsChecklist.Claims[j]
 			if claim.Label() == expectedClaim.Label &&
+				claim.ValueType() == expectedClaim.ValueType &&
 				claim.Value() == expectedClaim.Value &&
 				claim.Locale() == expectedClaim.Locale {
 				if expectedClaimsChecklist.Found[j] {
 					require.FailNow(t, "duplicate claim found: ",
-						"[Label: %s] [Value: %s] [Locale: %s]",
-						claim.Label(), claim.Value(), claim.Locale())
+						"[Label: %s] [Value Type: %s] [Value: %s] [Locale: %s]",
+						claim.Label(), claim.ValueType(), claim.Value(), claim.Locale())
 				}
 
 				expectedClaimsChecklist.Found[j] = true
@@ -164,8 +176,8 @@ func checkCredentialDisplay(t *testing.T, credentialDisplay *openid4ci.Credentia
 
 			if j == len(expectedClaimsChecklist.Claims)-1 {
 				require.FailNow(t, "received unexpected claim: ",
-					"[Label: %s] [Value: %s] [Locale: %s]",
-					claim.Label(), claim.Value(), claim.Locale())
+					"[Label: %s] [Value Type: %s] [Value: %s] [Locale: %s]",
+					claim.Label(), claim.ValueType(), claim.Value(), claim.Locale())
 			}
 		}
 	}
@@ -174,8 +186,8 @@ func checkCredentialDisplay(t *testing.T, credentialDisplay *openid4ci.Credentia
 		if !expectedClaimsChecklist.Found[i] {
 			expectedClaim := expectedClaimsChecklist.Claims[i]
 			require.FailNow(t, "the following claim was expected but wasn't received: ",
-				"[Label: %s] [Value: %s] [Locale: %s]",
-				expectedClaim.Label, expectedClaim.Value, expectedClaim.Locale)
+				"[Label: %s] [Value Type: %s] [Value: %s] [Locale: %s]",
+				expectedClaim.Label, expectedClaim.ValueType, expectedClaim.Value, expectedClaim.Locale)
 		}
 	}
 }

@@ -18,66 +18,79 @@
       "claims":[
         {
           "label":"Birth Date",
+          "value_type": "string",
           "value":"1990-01-01",
           "locale":"en-US"
         },
         {
           "label":"Document Number",
+          "value_type": "string",
           "value":"123-456-789",
           "locale":"en-US"
         },
         {
           "label":"Driving Privileges",
+          "value_type": "string",
           "value":"G2",
           "locale":"en-US"
         },
         {
           "label":"Expiry Date",
+          "value_type": "string",
           "value":"2025-05-26",
           "locale":"en-US"
         },
         {
           "label":"Family Name",
+          "value_type": "string",
           "value":"Smith",
           "locale":"en-US"
         },
         {
           "label":"Given Name",
+          "value_type": "string",
           "value":"John",
           "locale":"en-US"
         },
         {
           "label":"Issue Date",
+          "value_type": "string",
           "value":"2020-05-27",
           "locale":"en-US"
         },
         {
           "label":"Issuing Authority",
+          "value_type": "string",
           "value":"Ministry of Transport Ontario",
           "locale":"en-US"
         },
         {
           "label":"Issuing Country",
+          "value_type": "string",
           "value":"Canada",
           "locale":"en-US"
         },
         {
           "label": "Resident Address",
+          "value_type": "string",
           "value": "4726 Pine Street",
           "locale": "en-US"
         },
         {
           "label":"Resident City",
+          "value_type": "string",
           "value":"Toronto",
           "locale":"en-US"
         },
         {
           "label":"Resident Postal Code",
+          "value_type": "string",
           "value":"A1B 2C3",
           "locale":"en-US"
         },
         {
-          "label":"Resident State",
+          "label":"Resident Province",
+          "value_type": "string",
           "value":"Ontario",
           "locale":"en-US"
         }

@@ -169,18 +169,20 @@ func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *veri
 	rawValue, exists := getValue(credentialSubject, sdDisclosures, fieldName)
 	if !exists {
 		return &ResolvedClaim{
-			Label:  name,
-			Value:  "",
-			Locale: nameLocale,
+			Label:     name,
+			ValueType: claim.ValueType,
+			Value:     "",
+			Locale:    nameLocale,
 		}
 	}
 
 	value := fmt.Sprintf("%v", rawValue)
 
 	return &ResolvedClaim{
-		Label:  name,
-		Value:  value,
-		Locale: nameLocale,
+		Label:     name,
+		ValueType: claim.ValueType,
+		Value:     value,
+		Locale:    nameLocale,
 	}
 }
 

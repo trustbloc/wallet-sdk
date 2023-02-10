@@ -50,7 +50,7 @@
               "locale":"en-US"
             }
           ],
-          "value_type":"string"
+          "value_type":"number"
         }
       },
       "cryptographic_binding_methods_supported":[

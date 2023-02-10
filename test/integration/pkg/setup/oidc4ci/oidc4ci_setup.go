@@ -160,7 +160,7 @@ func (s *Setup) InitiatePreAuthorizedIssuance(issuerProfileID string) (string, e
 			"resident_address":     "4726 Pine Street",
 			"resident_city":        "Toronto",
 			"resident_postal_code": "A1B 2C3",
-			"resident_state":       "Ontario",
+			"resident_province":    "Ontario",
 		}
 	} else {
 		claimData = map[string]interface{}{
@@ -170,7 +170,7 @@ func (s *Setup) InitiatePreAuthorizedIssuance(issuerProfileID string) (string, e
 			"surname":           "Doe",
 			"preferredLanguage": "English",
 			"mail":              "john.doe@foo.bar",
-			"photo":             "base64photo",
+			"photo":             "data-URL-encoded image",
 		}
 	}
 

@@ -18,35 +18,42 @@
       "claims":[
         {
           "label":"Mail",
+          "value_type": "string",
           "value":"john.doe@foo.bar",
           "locale":"en-US"
         },
         {
           "label":"Photo",
-          "value":"base64photo"
+          "value_type": "image",
+          "value":"data-URL-encoded image"
         },
         {
           "label":"Preferred Language",
+          "value_type": "string",
           "value":"English",
           "locale":"en-US"
         },
         {
           "label":"Surname",
+          "value_type": "string",
           "value":"Doe",
           "locale":"en-US"
         },
         {
           "label":"Employee",
+          "value_type": "string",
           "value":"John Doe",
           "locale":"en-US"
         },
         {
           "label":"Given Name",
+          "value_type": "string",
           "value":"John",
           "locale":"en-US"
         },
         {
           "label":"Job Title",
+          "value_type": "string",
           "value":"Software Developer",
           "locale":"en-US"
         }

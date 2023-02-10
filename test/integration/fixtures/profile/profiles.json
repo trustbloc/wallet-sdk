@@ -51,7 +51,8 @@
                       "locale":"en-US",
                       "name":"Employee"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "givenName":{
                   "display":[
@@ -59,7 +60,8 @@
                       "locale":"en-US",
                       "name":"Given Name"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "jobTitle":{
                   "display":[
@@ -67,7 +69,8 @@
                       "locale":"en-US",
                       "name":"Job Title"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "mail":{
                   "display":[
@@ -75,15 +78,16 @@
                       "locale":"en-US",
                       "name":"Mail"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "photo":{
                   "display":[
                     {
-                      "name":"Photo",
-                      "value_type":"image"
+                      "name":"Photo"
                     }
-                  ]
+                  ],
+                  "value_type":"image"
                 },
                 "preferredLanguage":{
                   "display":[
@@ -91,7 +95,8 @@
                       "locale":"en-US",
                       "name":"Preferred Language"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "surname":{
                   "display":[
@@ -99,7 +104,8 @@
                       "locale":"en-US",
                       "name":"Surname"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 }
               },
               "display":[
@@ -203,7 +209,8 @@
                       "name": "Birth Date",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "document_number": {
                   "display": [
@@ -211,7 +218,8 @@
                       "name": "Document Number",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "driving_privileges": {
                   "display": [
@@ -219,7 +227,8 @@
                       "name": "Driving Privileges",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "expiry_date": {
                   "display": [
@@ -227,7 +236,8 @@
                       "name": "Expiry Date",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "family_name": {
                   "display": [
@@ -235,7 +245,8 @@
                       "name": "Family Name",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "given_name": {
                   "display": [
@@ -243,7 +254,8 @@
                       "name": "Given Name",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "issue_date": {
                   "display": [
@@ -251,7 +263,8 @@
                       "name": "Issue Date",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "issuing_authority": {
                   "display": [
@@ -259,7 +272,8 @@
                       "name": "Issuing Authority",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "issuing_country": {
                   "display": [
@@ -267,7 +281,8 @@
                       "name": "Issuing Country",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "resident_address": {
                   "display": [
@@ -275,7 +290,8 @@
                       "name": "Resident Address",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "resident_city": {
                   "display": [
@@ -283,7 +299,8 @@
                       "name": "Resident City",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "resident_postal_code": {
                   "display": [
@@ -291,15 +308,17 @@
                       "name": "Resident Postal Code",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
-                "resident_state": {
+                "resident_province": {
                   "display": [
                     {
-                      "name": "Resident State",
+                      "name": "Resident Province",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 }
               }
             }
@@ -375,7 +394,8 @@
                       "name": "Employee",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "givenName": {
                   "display": [
@@ -383,7 +403,8 @@
                       "name": "Given Name",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "jobTitle": {
                   "display": [
@@ -391,7 +412,8 @@
                       "name": "Job Title",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "surname": {
                   "display": [
@@ -399,7 +421,8 @@
                       "name": "Surname",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "preferredLanguage": {
                   "display": [
@@ -407,7 +430,8 @@
                       "name": "Preferred Language",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "mail": {
                   "display": [
@@ -415,14 +439,16 @@
                       "name": "Mail",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "photo": {
                   "display": [
                     {
                       "name": "Photo"
                     }
-                  ]
+                  ],
+                  "value_type":"image"
                 }
               }
             }
@@ -500,7 +526,8 @@
                       "name": "Employee",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "givenName": {
                   "display": [
@@ -508,7 +535,8 @@
                       "name": "Given Name",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "jobTitle": {
                   "display": [
@@ -516,7 +544,8 @@
                       "name": "Job Title",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "surname": {
                   "display": [
@@ -524,7 +553,8 @@
                       "name": "Surname",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "preferredLanguage": {
                   "display": [
@@ -532,7 +562,8 @@
                       "name": "Preferred Language",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "mail": {
                   "display": [
@@ -540,14 +571,16 @@
                       "name": "Mail",
                       "locale": "en-US"
                     }
-                  ]
+                  ],
+                  "value_type":"string"
                 },
                 "photo": {
                   "display": [
                     {
                       "name": "Photo"
                     }
-                  ]
+                  ],
+                  "value_type":"image"
                 }
               }
             }
