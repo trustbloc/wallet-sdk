@@ -8,7 +8,6 @@ This package contains the `gomobile`-compatible version of the SDK. It acts as a
 * The gomobile tools:
   ```
   go install golang.org/x/mobile/cmd/gomobile@latest
-  gomobile init
   ```
 * `$GOPATH/bin` added to your path
 
@@ -29,6 +28,8 @@ This package contains the `gomobile`-compatible version of the SDK. It acts as a
 To generate both the Android and iOS bindings in one command:
 
 ```
+cd cmd/wallet-sdk-gomobile
+gomobile init
 make generate-all-bindings
 ```
 
@@ -45,6 +46,20 @@ make generate-ios-bindings
 ```
 
 The generated bindings can be found in the `bindings` folder.
+
+## Build the Demo apps
+
+To generate the Android App
+```
+cd demo/app
+flutter build apk
+```
+
+To generate the iOS App
+```
+cd demo/app
+flutter build ios
+```
 
 ## SDK Usage
 
