@@ -106,13 +106,3 @@ type LDDocumentLoader interface {
 type Signer interface {
 	Sign(msg []byte) ([]byte, error)
 }
-
-// DIDJWTSignerCreator represents a type that can create a signer that signs with the private key
-// associated with the given verification method object (from a DID doc) in order to facilitate JWT signing.
-// This interface acts as a wrapper for a function with a signature of (verificationMethod *JSONObject) (Signer, error).
-// Gomobile doesn't allow a function to be used directly as a return parameter, so this interface wrapper allows us
-// to get around this limitation.
-type DIDJWTSignerCreator interface {
-	// Create returns a corresponding Signer type for the given DID doc verificationMethod object.
-	Create(verificationMethod *JSONObject) (Signer, error)
-}

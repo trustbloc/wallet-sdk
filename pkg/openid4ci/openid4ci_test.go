@@ -16,10 +16,11 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/pkg/api"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
-	arieslocalkms "github.com/hyperledger/aries-framework-go/pkg/kms/localkms"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
@@ -151,7 +152,7 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 }
 
 type mockResolver struct {
-	keyWriter *arieslocalkms.LocalKMS
+	keyWriter api.KeyWriter
 }
 
 func (m *mockResolver) Resolve(string) (*did.DocResolution, error) {
@@ -598,9 +599,7 @@ func getTestClientConfig(t *testing.T) *openid4ci.ClientConfig {
 	localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: localkms.NewMemKMSStore()})
 	require.NoError(t, err)
 
-	ariesKMS := localKMS.GetAriesKMS() //nolint: staticcheck // will be removed in the future
-
-	didResolver := &mockResolver{keyWriter: ariesKMS}
+	didResolver := &mockResolver{keyWriter: localKMS}
 
 	return &openid4ci.ClientConfig{
 		ClientID:    "ClientID",
@@ -609,8 +608,8 @@ func getTestClientConfig(t *testing.T) *openid4ci.ClientConfig {
 }
 
 // makeMockDoc creates a key in the given KMS and returns a mock DID Doc with a verification method.
-func makeMockDoc(keyManager *arieslocalkms.LocalKMS) (*did.Doc, error) {
-	_, pkb, err := keyManager.CreateAndExportPubKeyBytes(arieskms.ED25519Type)
+func makeMockDoc(keyWriter api.KeyWriter) (*did.Doc, error) {
+	_, pkb, err := keyWriter.Create(arieskms.ED25519Type)
 	if err != nil {
 		return nil, err
 	}
