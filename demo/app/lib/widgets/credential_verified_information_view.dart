@@ -27,7 +27,8 @@ class CredentialVerifiedInformation extends StatelessWidget {
         controller: credDataController,
         shrinkWrap: true,
         itemBuilder: (context, position) {
-          return (credPrev[position].label != "Photo") ? Row (
+          if (credPrev[position].label != "Photo" && credPrev[position].valueType != "image"){
+            return Row (
             children: [
               const Divider(
                 thickness: 2,
@@ -50,8 +51,9 @@ class CredentialVerifiedInformation extends StatelessWidget {
                 ),
               ),
             ],
-          ):
-          Row(
+          );
+          } else {
+          return Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
@@ -83,7 +85,7 @@ class CredentialVerifiedInformation extends StatelessWidget {
               ),
             ],
           );
-        });
+        }});
   }
 
   @override
