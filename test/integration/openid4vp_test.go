@@ -91,7 +91,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		initiateURL, err := setup.InitiateInteraction(tc.verifierProfileID)
 		require.NoError(t, err)
 
-		didResolver, err := did.NewResolver("")
+		didResolver, err := did.NewResolver("http://did-resolver.trustbloc.local:8072/1.0/identifiers")
 		require.NoError(t, err)
 
 		activityLogger := mem.NewActivityLogger()
@@ -189,7 +189,7 @@ func (h *vpTestHelper) issueCredentials(t *testing.T, issuerProfileIDs []string)
 		initiateIssuanceURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i])
 		require.NoError(t, err)
 
-		didResolver, err := did.NewResolver("")
+		didResolver, err := did.NewResolver("http://did-resolver.trustbloc.local:8072/1.0/identifiers")
 		require.NoError(t, err)
 
 		clientConfig := openid4ci.ClientConfig{

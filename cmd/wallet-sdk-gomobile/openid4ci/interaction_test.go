@@ -294,6 +294,7 @@ func getTestClientConfig(t *testing.T, kms *localkms.KMS,
 	resolver := &mockResolver{keyWriter: kms}
 
 	clientConfig := openid4ci.NewClientConfig("ClientID", kms.GetCrypto(), resolver, activityLogger)
+	clientConfig.DisableVCProofChecks()
 
 	return clientConfig
 }

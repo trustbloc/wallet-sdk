@@ -85,10 +85,11 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 	initiationRequest.OpState = requestURIParsed.Query().Get("op_state")
 
 	return &Interaction{
-		initiationRequest: initiationRequest,
-		clientID:          config.ClientID,
-		didResolver:       &didResolverWrapper{didResolver: config.DIDResolver},
-		activityLogger:    config.ActivityLogger,
+		initiationRequest:    initiationRequest,
+		clientID:             config.ClientID,
+		didResolver:          &didResolverWrapper{didResolver: config.DIDResolver},
+		activityLogger:       config.ActivityLogger,
+		disableVCProofChecks: config.DisableVCProofChecks,
 	}, nil
 }
 
@@ -196,7 +197,7 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 		credentialResponses[index] = *credentialResponse
 	}
 
-	vcs, err := getCredentialsFromResponses(credentialResponses)
+	vcs, err := i.getCredentialsFromResponses(credentialResponses)
 	if err != nil {
 		return nil, err
 	}
@@ -339,15 +340,26 @@ func (i *Interaction) getCredentialResponse(userDID, credentialType, credentialE
 	return &credentialResponse, nil
 }
 
-func getCredentialsFromResponses(credentialResponses []CredentialResponse) ([]*verifiable.Credential, error) {
+func (i *Interaction) getCredentialsFromResponses(
+	credentialResponses []CredentialResponse,
+) ([]*verifiable.Credential, error) {
 	var vcs []*verifiable.Credential
 
-	for i := range credentialResponses {
-		vc, err := verifiable.ParseCredential([]byte(credentialResponses[i].Credential),
-			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
-			verifiable.WithDisabledProofCheck())
+	vdrKeyResolver := verifiable.NewVDRKeyResolver(i.didResolver)
+
+	credentialOpts := []verifiable.CredentialOpt{
+		verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
+		verifiable.WithPublicKeyFetcher(vdrKeyResolver.PublicKeyFetcher()),
+	}
+
+	if i.disableVCProofChecks {
+		credentialOpts = append(credentialOpts, verifiable.WithDisabledProofCheck())
+	}
+
+	for j := range credentialResponses {
+		vc, err := verifiable.ParseCredential([]byte(credentialResponses[j].Credential), credentialOpts...)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse credential from credential response at index %d: %w", i, err)
+			return nil, fmt.Errorf("failed to parse credential from credential response at index %d: %w", j, err)
 		}
 
 		vcs = append(vcs, vc)

@@ -514,6 +514,51 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			"unmarshal new credential: unexpected end of JSON input")
 		require.Nil(t, vcs)
 	})
+	t.Run("Fail VC proof check - public key not found for issuer DID", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{credentialResponse: sampleCredentialResponse}
+		server := httptest.NewServer(issuerServerHandler)
+
+		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"issuer":"https://server.example.com",`+
+			`"authorization_endpoint":"https://server.example.com/connect/authorize",`+
+			`"token_endpoint":"%s/connect/token",`+
+			`"pushed_authorization_request_endpoint":"https://server.example.com/connect/par-authorize",`+
+			`"require_pushed_authorization_requests":false,`+
+			`"credential_endpoint":"%s/credential"}`, server.URL, server.URL)
+
+		defer server.Close()
+
+		serverURLEscaped := url.QueryEscape(server.URL)
+
+		requestURI := "openid-vc://initiate_issuance?issuer=" + serverURLEscaped +
+			"&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard" +
+			"&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA" +
+			"&user_pin_required=false"
+
+		localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: localkms.NewMemKMSStore()})
+		require.NoError(t, err)
+
+		didResolver := &mockResolver{keyWriter: localKMS}
+
+		config := &openid4ci.ClientConfig{
+			ClientID:    "ClientID",
+			DIDResolver: didResolver,
+		}
+
+		interaction, err := openid4ci.NewInteraction(requestURI, config)
+		require.NoError(t, err)
+		require.NotNil(t, interaction)
+
+		credentialRequest := &openid4ci.CredentialRequestOpts{UserPIN: "1234"}
+
+		credentials, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
+		require.EqualError(t, err, "failed to parse credential from credential response at index 0: "+
+			"decode new JWT credential: JWS decoding: unmarshal VC JWT claims: parse JWT: "+
+			"parse JWT from compact JWS: public key with KID d3cfd36b-4f75-4041-b416-f0a7a3c6b9f6 is not "+
+			"found for DID did:orb:uAAA:EiDpzs0hy0q0If4ZfJA1kxBQd9ed6FoBFhhqDWSiBeKaIg")
+		require.Nil(t, credentials)
+	})
 }
 
 func TestInteraction_ResolveDisplay(t *testing.T) {
@@ -602,8 +647,9 @@ func getTestClientConfig(t *testing.T) *openid4ci.ClientConfig {
 	didResolver := &mockResolver{keyWriter: localKMS}
 
 	return &openid4ci.ClientConfig{
-		ClientID:    "ClientID",
-		DIDResolver: didResolver,
+		ClientID:             "ClientID",
+		DIDResolver:          didResolver,
+		DisableVCProofChecks: true,
 	}
 }
 

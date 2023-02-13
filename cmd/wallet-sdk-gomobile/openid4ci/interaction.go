@@ -46,10 +46,11 @@ func NewCredentialRequestOpts(userPIN string) *CredentialRequestOpts {
 // ActivityLogger is optional, but if provided then activities will be logged there.
 // If not provided, then no activities will be logged.
 type ClientConfig struct {
-	ClientID       string
-	Crypto         api.Crypto
-	DIDResolver    api.DIDResolver
-	ActivityLogger api.ActivityLogger
+	ClientID             string
+	Crypto               api.Crypto
+	DIDResolver          api.DIDResolver
+	ActivityLogger       api.ActivityLogger
+	disableVCProofChecks bool
 }
 
 // NewClientConfig creates the client config object.
@@ -64,6 +65,11 @@ func NewClientConfig(clientID string, crypto api.Crypto,
 		DIDResolver:    didRes,
 		ActivityLogger: activityLogger,
 	}
+}
+
+// DisableVCProofChecks disables VC proof checks during the OpenID4CI interaction flow.
+func (c *ClientConfig) DisableVCProofChecks() {
+	c.disableVCProofChecks = true
 }
 
 // NewInteraction creates a new OpenID4CI Interaction.
@@ -164,9 +170,10 @@ func unwrapConfig(config *ClientConfig) *openid4cigoapi.ClientConfig {
 	activityLogger := createGoAPIActivityLogger(config.ActivityLogger)
 
 	return &openid4cigoapi.ClientConfig{
-		ClientID:       config.ClientID,
-		DIDResolver:    &wrapper.VDRResolverWrapper{DIDResolver: config.DIDResolver},
-		ActivityLogger: activityLogger,
+		ClientID:             config.ClientID,
+		DIDResolver:          &wrapper.VDRResolverWrapper{DIDResolver: config.DIDResolver},
+		ActivityLogger:       activityLogger,
+		DisableVCProofChecks: config.disableVCProofChecks,
 	}
 }
 
