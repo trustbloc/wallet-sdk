@@ -65,13 +65,6 @@ func TestLocalKMS_GetCrypto(t *testing.T) {
 	require.NotNil(t, crypto)
 }
 
-func TestLocalKMS_GetAriesKMS(t *testing.T) {
-	localKMS := createTestKMS(t)
-
-	ariesKMS := localKMS.GetAriesKMS()
-	require.NotNil(t, ariesKMS)
-}
-
 func createTestKMS(t *testing.T) *localkms.LocalKMS {
 	t.Helper()
 

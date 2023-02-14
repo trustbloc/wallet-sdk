@@ -80,10 +80,3 @@ func (k *LocalKMS) GetCrypto() goapi.Crypto {
 		wrappedCrypto: k.ariesCrypto,
 	}
 }
-
-// GetAriesKMS returns the underlying Aries local KMS instance.
-//
-// Deprecated: This method will be removed in a future version.
-func (k *LocalKMS) GetAriesKMS() *arieslocalkms.LocalKMS {
-	return k.ariesLocalKMS
-}

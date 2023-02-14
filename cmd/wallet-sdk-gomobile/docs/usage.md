@@ -1,6 +1,6 @@
 # SDK Usage
 
-Last updated: February 6, 2023 (commit `eae2710e579e7578127e607b6400b8e0a839640e`)
+Last updated: February 13, 2023 (commit `98ff31cc49234e06cac323b244cd544fae25cbff`)
 
 This guide explains how to use this SDK in Android or iOS code.
 
@@ -323,7 +323,6 @@ They use in-memory key storage and the Tink crypto library.
 ```kotlin
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
-import dev.trustbloc.wallet.sdk.localkms.SignerCreator
 import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.openid4ci.Interaction
@@ -334,7 +333,6 @@ import dev.trustbloc.wallet.sdk.openid4ci.mem
 // Setup
 val memKMSStore = MemKMSStore.MemKMSStore()
 val kms = Localkms.newKMS(memKMSStore)
-val signerCreator = Localkms.createSignerCreator(kms) // Will use the Tink crypto library
 val didResolver = Resolver("")
 val didCreator = Creator(kms as KeyWriter)
 val didDocResolution = didCreator.create("key", CreateDIDOpts()) // Create a did:key doc
@@ -360,12 +358,11 @@ import Walletsdk
 // Setup
 let memKMSStore = LocalkmsNewMemKMSStore()
 let kms = LocalkmsNewKMS(memKMSStore, nil)
-let signerCreator = LocalkmsCreateSignerCreator(kms, nil) // Will use the Tink crypto library
 let didResolver = DidNewResolver("", nil)
 let didCreator = DidNewCreatorWithKeyWriter(kms, nil)
 let didDocResolution = didCreator.create("key", ApiCreateDIDOpts()) // Create a did:key doc
 let activityLogger = MemNewActivityLogger() // Optional, but useful for tracking credential activities
-let cfg =  Openid4ciClientConfig(didDocResolution.id, clientID: "ClientID", signerCreator: signerCreator, didRes: didResolver, activityLogger: activityLogger)
+let cfg =  Openid4ciClientConfig(didDocResolution.id, clientID: "ClientID", didRes: didResolver, activityLogger: activityLogger)
 
 // Going through the flow
 let interaction = Openid4ciNewInteraction("YourRequestURIHere", cfg, nil)
@@ -508,7 +505,6 @@ They use in-memory key storage and the Tink crypto library.
 ```kotlin
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
-import dev.trustbloc.wallet.sdk.localkms.SignerCreator
 import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.ld.DocLoader
@@ -523,7 +519,6 @@ import dev.trustbloc.wallet.sdk.openid4vp.Interaction
 // Setup
 val memKMSStore = MemKMSStore.MemKMSStore()
 val kms = Localkms.newKMS(memKMSStore)
-val signerCreator = Localkms.createSignerCreator(kms) // Will use the Tink crypto library
 val didResolver = Resolver("")
 val didCreator = Creator(kms as KeyWriter)
 val documentLoader = DocLoader()
@@ -550,7 +545,6 @@ import Walletsdk
 // Setup
 let memKMSStore = LocalkmsNewMemKMSStore()
 let kms = LocalkmsNewKMS(memKMSStore, nil)
-let signerCreator = LocalkmsCreateSignerCreator(kms, nil) // Will use the Tink crypto library
 let didResolver = DidNewResolver("", nil)
 let didCreator = DidNewCreatorWithKeyWriter(kms, nil)
 let documentLoader = LdNewDocLoader()
