@@ -109,6 +109,7 @@ class _OTPPage extends State<OTP> {
                           requestCredentialResp =  await WalletSDKPlugin.requestCredential(_otp!);
                           String? issuerURI = await WalletSDKPlugin.issuerURI();
                           resolvedCredentialDisplay = await WalletSDKPlugin.resolveCredentialDisplay([requestCredentialResp], issuerURI!);
+                          log("resolvedCredentialDisplay -$resolvedCredentialDisplay");
                           _navigateToCredPreviewScreen(requestCredentialResp, issuerURI, resolvedCredentialDisplay!);
                         } catch (err) {
                           String errorMessage = err.toString();

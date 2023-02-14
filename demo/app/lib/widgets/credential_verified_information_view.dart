@@ -16,6 +16,7 @@ class CredentialVerifiedInformation extends StatelessWidget {
     List<CredentialPreviewData> list;
     var data = json.decode(credentialData.credentialDisplayData!);
     var credentialClaimsData = data['credential_displays'][0]['claims'] as List;
+    log("credentialClaimsData -$credentialClaimsData");
     list = credentialClaimsData.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
     return listViewWidget(list);
   }
@@ -27,31 +28,34 @@ class CredentialVerifiedInformation extends StatelessWidget {
         controller: credDataController,
         shrinkWrap: true,
         itemBuilder: (context, position) {
-          return (credPrev[position].label != "Photo") ? Row (
-            children: [
-              const Divider(
-                thickness: 2,
-                color: Color(0xffDBD7DC),
-              ),
-              Expanded(
-                child: ListTile(
-                  title: Text(
-                      credPrev[position].label,
-                      style: const TextStyle(fontSize: 14, fontFamily: 'SF Pro', fontWeight: FontWeight.w400, color: Color(0xff6C6D7C))
+          if (credPrev[position].label != "Photo" && credPrev[position].valueType != "image"){
+              return Row(
+                children: [
+                  const Divider(
+                    thickness: 2,
+                    color: Color(0xffDBD7DC),
                   ),
-                  subtitle: Text(
-                    credPrev[position].value,
-                    style: const TextStyle(
-                        fontSize: 16,
-                        color: Color(0xff190C21),
-                        fontFamily: 'SF Pro',
-                        fontWeight: FontWeight.normal),
+                  Expanded(
+                    child: ListTile(
+                      title: Text(
+                          credPrev[position].label,
+                          style: const TextStyle(
+                              fontSize: 14, fontFamily: 'SF Pro', fontWeight: FontWeight.w400, color: Color(0xff6C6D7C))
+                      ),
+                      subtitle: Text(
+                        credPrev[position].value,
+                        style: const TextStyle(
+                            fontSize: 16,
+                            color: Color(0xff190C21),
+                            fontFamily: 'SF Pro',
+                            fontWeight: FontWeight.normal),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
-          ):
-          Row(
+                ],
+              );
+          } else {
+          return Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
@@ -83,7 +87,7 @@ class CredentialVerifiedInformation extends StatelessWidget {
               ),
             ],
           );
-        });
+        }});
   }
 
   @override

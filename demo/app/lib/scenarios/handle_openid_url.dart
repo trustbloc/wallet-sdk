@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:app/demo_method_channel.dart';
@@ -59,15 +60,26 @@ void handleOpenIDUrl(BuildContext context, String qrCodeURL) async {
     var credentials = storedCredentials.map((e) => e.value.rawCredential).toList();
     var matchedCred = await WalletSDKPlugin.processAuthorizationRequest(
         authorizationRequest: qrCodeURL, storedCredentials: credentials);
-    var credentialDisplayData = storedCredentials
-        .where((element) => matchedCred.contains(element.value.rawCredential))
-        .map((e) => e.value.credentialDisplayData);
-    log(matchedCred.length.toString());
-    if (matchedCred.isNotEmpty) {
-      //TODO: in future we can show all the credential
+    if (credentials != matchedCred){
+      var issuerURI = storedCredentials.map((e) => e.value.issuerURL).toList();
+     var credentialDisplayData =  await WalletSDKPlugin.resolveCredentialDisplay(matchedCred, issuerURI.first);
+      log("selective disclosure flow - credentialDisplayData");
       _navigateToPresentationPreviewScreen(context, matchedCred.first,
-          CredentialData(rawCredential: '', credentialDisplayData: credentialDisplayData.first, issuerURL: ''));
+          CredentialData(rawCredential: '', credentialDisplayData: credentialDisplayData!, issuerURL: ''));
       return;
+    } else {
+      log("regular flow");
+      var credentialDisplayData = storedCredentials
+          .where((element) => matchedCred.contains(element.value.rawCredential))
+          .map((e) => e.value.credentialDisplayData);
+      log(matchedCred.length.toString());
+      if (matchedCred.isNotEmpty) {
+        //TODO: in future we can show all the credential
+        _navigateToPresentationPreviewScreen(context, matchedCred.first,
+            CredentialData(rawCredential: '', credentialDisplayData: credentialDisplayData.first, issuerURL: ''));
+        return;
+      }
     }
+
   }
 }

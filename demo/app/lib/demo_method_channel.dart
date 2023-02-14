@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:developer';
 import 'dart:ffi';
 
 import 'package:flutter/foundation.dart';
@@ -33,7 +35,7 @@ class MethodChannelWallet extends WalletPlatform {
 
   Future<String> requestCredential(String userPinEntered) async {
     try {
-      final credentialResponse =
+      var credentialResponse =
           await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{'otp': userPinEntered});
       return credentialResponse!;
     } on PlatformException catch (error) {

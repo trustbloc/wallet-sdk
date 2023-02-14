@@ -85,7 +85,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
                     ),
                     PrimaryButton(
                         onPressed: () async {
-                            _storageService.addCredential(CredentialDataObject("$userLoggedIn-${uuid.v1()}",CredentialData(rawCredential: widget.credentialData.rawCredential, issuerURL: widget.credentialData.issuerURL, credentialDisplayData: widget.credentialData.credentialDisplayData!)));
+                            _storageService.addCredential(CredentialDataObject("$userLoggedIn-${uuid.v1()}", widget.credentialData!));
                             _navigateToCredentialAdded();
                         },
                         width: double.infinity,
