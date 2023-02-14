@@ -9,32 +9,26 @@ void main() async {
 
   await walletSDKPlugin.initSDK();
 
-  testWidgets('openid4ci-vp', (tester) async {
+  testWidgets('Testing openid4vc with a single credential', (tester) async {
     const didMethodTypes = String.fromEnvironment("WALLET_DID_METHODS");
-    print("didMethodTypes $didMethodTypes");
-
     var didMethodTypesList = didMethodTypes.split(' ');
 
     const issuanceURLs = String.fromEnvironment("INITIATE_ISSUANCE_URLS");
-    print("issuanceURLs : $issuanceURLs");
-
     var issuanceURLsList = issuanceURLs.split(' ');
 
     const verificationURLs = String.fromEnvironment("INITIATE_VERIFICATION_URLS");
-    print("verificationURLs $verificationURLs");
-
     var verificationURLsList = verificationURLs.split(' ');
 
     for (int i = 0; i < issuanceURLsList.length; i++) {
       String didMethodType = didMethodTypesList[i];
-      print("didMethodType : $didMethodType");
+      print("wallet DID Type : $didMethodType");
       final didContent = await walletSDKPlugin.createDID(didMethodTypesList[i]);
-      print("didContent : $didContent");
+      print("wallet DID : $didContent");
 
       String issuanceURL = issuanceURLsList[i];
       print("issuanceURL : $issuanceURL");
-      bool? requirePIN = await walletSDKPlugin.authorize(issuanceURLsList[i]);
 
+      bool? requirePIN = await walletSDKPlugin.authorize(issuanceURL);
       print("requirePIN: $requirePIN");
 
       final credential = await walletSDKPlugin.requestCredential("");
@@ -50,12 +44,59 @@ void main() async {
       print("verificationURL : $verificationURL");
 
       final matchedCreds = await walletSDKPlugin
-          .processAuthorizationRequest(authorizationRequest: verificationURLsList[i], storedCredentials: [credential]);
+          .processAuthorizationRequest(authorizationRequest: verificationURL, storedCredentials: [credential]);
 
       expect(matchedCreds, hasLength(equals(1)));
       expect(matchedCreds[0], equals(credential));
 
       await walletSDKPlugin.presentCredential();
     }
+  });
+
+  testWidgets('Testing openid4vc with multiple credentials', (tester) async {
+    const didMethodTypes = String.fromEnvironment("WALLET_DID_METHODS");
+    var didMethodTypesList = didMethodTypes.split(' ');
+    String didMethodType = didMethodTypesList[0];
+    print("wallet DID type : $didMethodType");
+    final didContent = await walletSDKPlugin.createDID(didMethodTypesList[0]);
+    print("wallet DID : $didContent");
+
+    const issuanceURLs = String.fromEnvironment("INITIATE_ISSUANCE_URLS_MULTIPLE_CREDS");
+    var issuanceURLsList = issuanceURLs.split(' ');
+
+    List<String> credentials = [];
+
+    // Issue multiple credentials
+    for (int i = 0; i < issuanceURLsList.length; i++) {
+      String issuanceURL = issuanceURLsList[i];
+      print("issuanceURL : $issuanceURL");
+      bool? requirePIN = await walletSDKPlugin.authorize(issuanceURL);
+
+      print("requirePIN: $requirePIN");
+
+      final credential = await walletSDKPlugin.requestCredential("");
+
+      expect(credential, hasLength(greaterThan(0)));
+
+      credentials.add(credential);
+    }
+    print("issued credentials: $credentials");
+
+    const verificationURLs = String.fromEnvironment("INITIATE_VERIFICATION_URLS_MULTIPLE_CREDS");
+    var verificationURLsList = verificationURLs.split(' ');
+    String verificationURL = verificationURLsList[0];
+    print("verificationURL : $verificationURL");
+
+    final matchedCreds = await walletSDKPlugin
+        .processAuthorizationRequest(authorizationRequest: verificationURL, storedCredentials: credentials);
+
+    print("matchedCreds : $matchedCreds");
+
+    expect(matchedCreds, hasLength(equals(3)));
+    expect(matchedCreds[0], equals(credentials[0]));
+    expect(matchedCreds[1], equals(credentials[1]));
+    expect(matchedCreds[2], equals(credentials[2]));
+
+    await walletSDKPlugin.presentCredential();
   });
 }
