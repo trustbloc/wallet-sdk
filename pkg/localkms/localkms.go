@@ -14,6 +14,8 @@ import (
 
 	"github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/util/jwkkid"
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 	arieslocalkms "github.com/hyperledger/aries-framework-go/pkg/kms/localkms"
 
@@ -56,20 +58,29 @@ func NewLocalKMS(cfg Config) (*LocalKMS, error) {
 }
 
 // Create creates a keyset of the given keyType and then writes it to storage.
-// The keyID and raw public key bytes of the newly generated keyset are returned.
-func (k *LocalKMS) Create(keyType arieskms.KeyType) (string, []byte, error) {
-	// TODO: https://github.com/trustbloc/wallet-sdk/issues/164 for keys that
-	// support afgo JWK, return afgo JWK
+//
+// Returns:
+//   - key ID for the newly generated keyset.
+//   - JSON byte string containing the JWK for the keyset's public key.
+//   - JWK object for the same public key.
+func (k *LocalKMS) Create(keyType arieskms.KeyType) (string, *jwk.JWK, error) {
 	keyID, publicKey, err := k.ariesLocalKMS.CreateAndExportPubKeyBytes(keyType)
 	if err != nil {
 		return "", nil, walleterror.NewExecutionError(module, CreateKeyFailedCode, CreateKeyFailedError, err)
 	}
 
-	return keyID, publicKey, nil
+	pkJWK, err := jwkkid.BuildJWK(publicKey, keyType)
+	if err != nil {
+		return "", nil, walleterror.NewExecutionError(module, CreateKeyFailedCode, CreateKeyFailedError, err)
+	}
+
+	pkJWK.KeyID = keyID
+
+	return keyID, pkJWK, nil
 }
 
-// ExportPubKey returns the public key associated with the given keyID as raw bytes.
-func (k *LocalKMS) ExportPubKey(string) ([]byte, error) {
+// ExportPubKey returns the public key associated with the given keyID as a JWK byte string.
+func (k *LocalKMS) ExportPubKey(string) (*jwk.JWK, error) {
 	return nil, errors.New("not implemented")
 }
 

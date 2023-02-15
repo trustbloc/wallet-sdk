@@ -18,8 +18,12 @@ import (
 	goapilocalkms "github.com/trustbloc/wallet-sdk/pkg/localkms"
 )
 
-// KeyTypeED25519 is the name recognized by the Create method for creating an ED25519 keyset.
-const KeyTypeED25519 = arieskms.ED25519
+const (
+	// KeyTypeED25519 is the name recognized by the Create method for creating an ED25519 keyset.
+	KeyTypeED25519 = arieskms.ED25519
+	// KeyTypeP384 is the name recognized by the Create method for creating a P-384 keyset.
+	KeyTypeP384 = arieskms.ECDSAP384IEEEP1363
+)
 
 // Result indicates the result of a key retrieval operation (see Store.Get for more info).
 type Result struct {
@@ -64,23 +68,28 @@ func NewKMS(kmsStore Store) (*KMS, error) {
 }
 
 // Create creates a keyset of the given keyType and then writes it to storage.
-// The keyID and raw public key bytes of the newly generated keyset are returned.
-// Currently, this method only supports creating ED25519 keys.
-func (k *KMS) Create(keyType string) (*api.KeyHandle, error) {
-	keyID, key, err := k.goAPILocalKMS.Create(arieskms.KeyType(keyType))
+// The public key JWK for the newly generated keyset is returned.
+func (k *KMS) Create(keyType string) (*api.JSONWebKey, error) {
+	_, pkJWK, err := k.goAPILocalKMS.Create(arieskms.KeyType(keyType))
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.KeyHandle{
-		PubKey: key,
-		KeyID:  keyID,
+	return &api.JSONWebKey{
+		JWK: pkJWK,
 	}, nil
 }
 
-// ExportPubKey returns the public key associated with the given keyID as raw bytes.
-func (k *KMS) ExportPubKey(keyID string) ([]byte, error) {
-	return k.goAPILocalKMS.ExportPubKey(keyID)
+// ExportPubKey returns the public key associated with the given keyID as a JWK.
+func (k *KMS) ExportPubKey(keyID string) (*api.JSONWebKey, error) {
+	pkJWK, err := k.goAPILocalKMS.ExportPubKey(keyID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.JSONWebKey{
+		JWK: pkJWK,
+	}, err
 }
 
 // GetCrypto returns Crypto instance that can perform crypto ops with keys created by this kms.

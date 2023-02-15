@@ -12,7 +12,7 @@ import (
 	"fmt"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/util/jwkkid"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 	jwkdidcreator "github.com/trustbloc/wallet-sdk/pkg/did/creator/jwk"
 
@@ -139,35 +139,57 @@ func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) (*did.
 }
 
 func (d *Creator) createDIDKeyDoc(createDIDOpts *api.CreateDIDOpts) (*did.DocResolution, error) {
-	var key []byte
-
-	var verificationType string
-
-	var err error
+	var (
+		pkJWK            *jwk.JWK
+		verificationType string
+		err              error
+	)
 
 	// TODO: https://github.com/trustbloc/wallet-sdk/issues/162 refactor so more code is
 	//  shared between handlers for different did methods
-	if d.keyReader == nil { // Generate a key and set the verification type on behalf of the caller.
-		_, key, err = d.keyWriter.Create(arieskms.ED25519Type)
+	if d.keyReader == nil { //nolint:nestif
+		keyType := createDIDOpts.KeyType
+		if keyType == "" {
+			keyType = arieskms.ED25519Type
+		}
+
+		_, pkJWK, err = d.keyWriter.Create(keyType)
 		if err != nil {
 			return nil, err
 		}
 
-		verificationType = Ed25519VerificationKey2018
+		verificationType = JSONWebKey2020
 	} else { // Use the caller's chosen key and verification type.
 		if createDIDOpts.VerificationType == "" {
 			return nil, errors.New("no verification type specified")
 		}
 
-		key, err = d.keyReader.ExportPubKey(createDIDOpts.KeyID)
+		pkJWK, err = d.keyReader.ExportPubKey(createDIDOpts.KeyID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get key handle: %w", err)
+			return nil, fmt.Errorf("failed to get key: %w", err)
 		}
 
 		verificationType = createDIDOpts.VerificationType
 	}
 
-	return didkeycreator.NewCreator().Create(key, verificationType)
+	var vm *did.VerificationMethod
+
+	if pkJWK.Crv == "Ed25519" {
+		// workaround: when did:key vdr creates DID for ed25519, it expects Ed25519VerificationKey2018
+		pkb, e := pkJWK.PublicKeyBytes()
+		if e != nil {
+			return nil, e
+		}
+
+		vm = &did.VerificationMethod{Value: pkb, Type: Ed25519VerificationKey2018}
+	} else {
+		vm, err = did.NewVerificationMethodFromJWK("", verificationType, "", pkJWK)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return didkeycreator.NewCreator().Create(vm)
 }
 
 func (d *Creator) createDIDIonLongFormDoc(createDIDOpts *api.CreateDIDOpts) (*did.DocResolution, error) {
@@ -186,36 +208,36 @@ func (d *Creator) createDIDIonLongFormDoc(createDIDOpts *api.CreateDIDOpts) (*di
 
 func (d *Creator) getVM(createDIDOpts *api.CreateDIDOpts) (*did.VerificationMethod, error) {
 	var (
-		keyType arieskms.KeyType
-		key     []byte
-		keyID   string
-		err     error
+		pkJWK *jwk.JWK
+		keyID string
+		err   error
 	)
 
-	if d.keyReader == nil { // Generate a key and set the verification type on behalf of the caller.
-		keyID, key, err = d.keyWriter.Create(arieskms.ED25519Type)
+	if d.keyReader == nil { //nolint:nestif
+		keyType := createDIDOpts.KeyType
+		if keyType == "" {
+			keyType = arieskms.ED25519Type
+		}
+
+		keyID, pkJWK, err = d.keyWriter.Create(keyType)
 		if err != nil {
 			return nil, err
 		}
-
-		keyType = arieskms.ED25519Type
 	} else { // Use the caller's chosen key and verification type.
 		if createDIDOpts.VerificationType == "" {
 			return nil, errors.New("no verification type specified")
 		}
 
-		key, err = d.keyReader.ExportPubKey(createDIDOpts.KeyID)
+		pkJWK, err = d.keyReader.ExportPubKey(createDIDOpts.KeyID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get key handle: %w", err)
+			return nil, fmt.Errorf("failed to get key: %w", err)
 		}
 
 		keyID = createDIDOpts.KeyID
-		keyType = createDIDOpts.KeyType
 	}
 
-	pkJWK, e := jwkkid.BuildJWK(key, keyType)
-	if e != nil {
-		return nil, fmt.Errorf("failed to create JWK from public key: %w", e)
+	if pkJWK == nil || !pkJWK.Valid() {
+		return nil, fmt.Errorf("failed to get valid JWK from key manager")
 	}
 
 	vm, err := did.NewVerificationMethodFromJWK("#"+keyID, JSONWebKey2020, "", pkJWK)

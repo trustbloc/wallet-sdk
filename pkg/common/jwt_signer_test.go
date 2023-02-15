@@ -19,7 +19,6 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/jwkkid"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/stretchr/testify/require"
-
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 )
@@ -58,6 +57,17 @@ func TestNewJWSSigner(t *testing.T) {
 					},
 				},
 				expectedAlg: common.EdDSA,
+			},
+			{
+				name: "VM with P384 JWK",
+				vm: &models.VerificationMethod{
+					ID:   "testKeyID",
+					Type: common.JSONWebKey2020,
+					Key: models.VerificationKey{
+						JSONWebKey: getECKey(t),
+					},
+				},
+				expectedAlg: common.ES384,
 			},
 		}
 
@@ -122,20 +132,6 @@ func TestNewJWSSigner(t *testing.T) {
 		require.Contains(t, err.Error(), "creating crypto thumbprint for JWK")
 	})
 
-	t.Run("unsupported JWK", func(t *testing.T) {
-		_, err := common.NewJWSSigner(
-			&models.VerificationMethod{
-				ID:   "testKeyID",
-				Type: common.JSONWebKey2020,
-				Key: models.VerificationKey{
-					JSONWebKey: getECKey(t),
-				},
-			},
-			&cryptoMock{})
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "only Ed25519 is supported")
-	})
-
 	t.Run("Missed crypto", func(t *testing.T) {
 		_, err := common.NewJWSSigner(
 			&models.VerificationMethod{
@@ -193,7 +189,7 @@ func TestJWSSigner_Sign(t *testing.T) {
 func getECKey(t *testing.T) *jwk.JWK {
 	t.Helper()
 
-	crv := elliptic.P256()
+	crv := elliptic.P384()
 	privateKey, err := ecdsa.GenerateKey(crv, rand.Reader)
 	require.NoError(t, err)
 

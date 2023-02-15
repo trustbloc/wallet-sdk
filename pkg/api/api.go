@@ -10,6 +10,7 @@ package api
 import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 )
@@ -18,14 +19,14 @@ import (
 // an underlying KMS.
 type KeyWriter interface {
 	// Create creates a keyset of the given keyType and then writes it to storage.
-	// The keyID and raw public key bytes of the newly generated keyset are returned.
-	Create(keyType kms.KeyType) (string, []byte, error)
+	// The keyID and public key JWK for the newly generated keyset are returned.
+	Create(keyType kms.KeyType) (string, *jwk.JWK, error)
 }
 
 // KeyReader represents a type that is capable of performing operations related to reading keys from an underlying KMS.
 type KeyReader interface {
-	// ExportPubKey returns the public key associated with the given keyID as raw bytes.
-	ExportPubKey(keyID string) ([]byte, error)
+	// ExportPubKey returns the public key associated with the given keyID as a JWK.
+	ExportPubKey(keyID string) (*jwk.JWK, error)
 }
 
 // CreateDIDOpts represents the various options for the DIDCreator.Create method.

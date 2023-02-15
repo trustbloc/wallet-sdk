@@ -11,20 +11,32 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/go-jose/go-jose/v3"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/util/jwkkid"
+	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/stretchr/testify/require"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 )
 
 type mockKeyHandleReader struct {
-	getKeyReturn    []byte
+	getKeyReturn    *jwk.JWK
 	errGetKeyHandle error
 }
 
-func (m *mockKeyHandleReader) ExportPubKey(string) ([]byte, error) {
-	return m.getKeyReturn, m.errGetKeyHandle
+func (m *mockKeyHandleReader) ExportPubKey(string) (*api.JSONWebKey, error) {
+	return &api.JSONWebKey{JWK: m.getKeyReturn}, m.errGetKeyHandle
+}
+
+type mockKeyWriter struct {
+	getKeyVal *api.JSONWebKey
+	getKeyErr error
+}
+
+func (m *mockKeyWriter) Create(string) (*api.JSONWebKey, error) {
+	return m.getKeyVal, m.getKeyErr
 }
 
 func TestNewCreatorWithKeyWriter(t *testing.T) {
@@ -58,23 +70,59 @@ func TestNewCreatorWithKeyReader(t *testing.T) {
 }
 
 func TestCreator_Create(t *testing.T) {
-	t.Run("Using KeyWriter (automatic key generation) - success", func(t *testing.T) {
-		localKMS := createTestKMS(t)
+	t.Run("Using KeyWriter (automatic key generation)", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			localKMS := createTestKMS(t)
 
-		creator, err := did.NewCreatorWithKeyWriter(localKMS)
-		require.NoError(t, err)
+			creator, err := did.NewCreatorWithKeyWriter(localKMS)
+			require.NoError(t, err)
 
-		didDocResolution, err := creator.Create(did.DIDMethodKey, nil)
-		require.NoError(t, err)
-		require.NotEmpty(t, didDocResolution)
+			didDocResolution, err := creator.Create(did.DIDMethodKey, nil)
+			require.NoError(t, err)
+			require.NotEmpty(t, didDocResolution)
+		})
+
+		t.Run("fail to create key", func(t *testing.T) {
+			kw := &mockKeyWriter{
+				getKeyErr: errors.New("expected error"),
+			}
+
+			creator, err := did.NewCreatorWithKeyWriter(kw)
+			require.NoError(t, err)
+
+			didDocResolution, err := creator.Create(did.DIDMethodKey, nil)
+			requireErrorContains(t, err, "CREATE_DID_KEY_FAILED")
+			require.Empty(t, didDocResolution)
+		})
 	})
+
 	t.Run("Using KeyReader (caller specified options)", func(t *testing.T) {
 		t.Run("Success", func(t *testing.T) {
 			key, _, err := ed25519.GenerateKey(nil)
 			require.NoError(t, err)
 
+			pkJWK, err := jwkkid.BuildJWK(key, kms.ED25519Type)
+			require.NoError(t, err)
+
 			mockKHR := &mockKeyHandleReader{
-				getKeyReturn: key,
+				getKeyReturn: pkJWK,
+			}
+
+			creator, err := did.NewCreatorWithKeyReader(mockKHR)
+			require.NoError(t, err)
+
+			createDIDOpts := &api.CreateDIDOpts{
+				KeyID:            "SomeKeyID",
+				VerificationType: did.JSONWebKey2020,
+			}
+
+			didDocResolution, err := creator.Create(did.DIDMethodKey, createDIDOpts)
+			require.NoError(t, err)
+			require.NotEmpty(t, didDocResolution)
+		})
+		t.Run("Fail to get key", func(t *testing.T) {
+			mockKHR := &mockKeyHandleReader{
+				errGetKeyHandle: errors.New("test failure"),
 			}
 
 			creator, err := did.NewCreatorWithKeyReader(mockKHR)
@@ -86,12 +134,16 @@ func TestCreator_Create(t *testing.T) {
 			}
 
 			didDocResolution, err := creator.Create(did.DIDMethodKey, createDIDOpts)
-			require.NoError(t, err)
-			require.NotEmpty(t, didDocResolution)
+			requireErrorContains(t, err, "CREATE_DID_KEY_FAILED")
+			require.Empty(t, didDocResolution)
 		})
-		t.Run("Fail to get key handle", func(t *testing.T) {
+
+		t.Run("key contains garbage data", func(t *testing.T) {
 			mockKHR := &mockKeyHandleReader{
-				errGetKeyHandle: errors.New("test failure"),
+				getKeyReturn: &jwk.JWK{JSONWebKey: jose.JSONWebKey{
+					Algorithm: "invalid",
+					Key:       new(chan int),
+				}},
 			}
 
 			creator, err := did.NewCreatorWithKeyReader(mockKHR)

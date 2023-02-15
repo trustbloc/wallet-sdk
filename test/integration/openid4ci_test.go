@@ -47,6 +47,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		issuerProfileID     string
 		issuerDIDMethod     string
 		walletDIDMethod     string
+		walletKeyType       string
 		expectedIssuerURI   string
 		expectedDisplayData *openid4ci.DisplayData
 	}
@@ -58,6 +59,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 			walletDIDMethod:     "ion",
 			expectedIssuerURI:   "http://localhost:8075/issuer/bank_issuer_jwtsd",
 			expectedDisplayData: parseDisplayData(t, expectedDisplayDataBankIssuer),
+			walletKeyType:       localkms.KeyTypeP384,
 		},
 		{
 			issuerProfileID:     "bank_issuer",
@@ -104,7 +106,9 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		c, err := did.NewCreatorWithKeyWriter(kms)
 		require.NoError(t, err)
 
-		didDoc, err := c.Create(tc.walletDIDMethod, &api.CreateDIDOpts{})
+		didDoc, err := c.Create(tc.walletDIDMethod, &api.CreateDIDOpts{
+			KeyType: tc.walletKeyType,
+		})
 		require.NoError(t, err)
 
 		didResolver, err := did.NewResolver("")

@@ -10,12 +10,9 @@ import (
 	"fmt"
 	"testing"
 
-	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
-
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
-
 	"github.com/stretchr/testify/require"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
@@ -23,6 +20,8 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4vp"
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
+
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4ci"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4vp"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/testenv"
@@ -33,6 +32,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		issuerProfileIDs  []string
 		walletDIDMethod   string
 		verifierProfileID string
+		signingKeyType    string
 	}
 
 	tests := []test{
@@ -55,6 +55,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			issuerProfileIDs:  []string{"bank_issuer_jwtsd"},
 			walletDIDMethod:   "jwk",
 			verifierProfileID: "v_myprofile_sdjwt",
+			signingKeyType:    localkms.KeyTypeP384,
 		},
 		{
 			issuerProfileIDs:  []string{"drivers_license_issuer"},
@@ -73,7 +74,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			"walletDIDMethod=%s\n", i,
 			tc.issuerProfileIDs, tc.verifierProfileID, tc.walletDIDMethod)
 
-		testHelper := newVPTestHelper(t, tc.walletDIDMethod)
+		testHelper := newVPTestHelper(t, tc.walletDIDMethod, tc.signingKeyType)
 
 		issuedCredentials := testHelper.issueCredentials(t, tc.issuerProfileIDs)
 		println("Issued", issuedCredentials.Length(), "credentials")
@@ -156,7 +157,7 @@ type vpTestHelper struct {
 	DIDDoc *api.DIDDocResolution
 }
 
-func newVPTestHelper(t *testing.T, didMethod string) *vpTestHelper {
+func newVPTestHelper(t *testing.T, didMethod string, keyType string) *vpTestHelper {
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
@@ -164,7 +165,9 @@ func newVPTestHelper(t *testing.T, didMethod string) *vpTestHelper {
 	c, err := did.NewCreatorWithKeyWriter(kms)
 	require.NoError(t, err)
 
-	didDoc, err := c.Create(didMethod, &api.CreateDIDOpts{})
+	didDoc, err := c.Create(didMethod, &api.CreateDIDOpts{
+		KeyType: keyType,
+	})
 	require.NoError(t, err)
 
 	return &vpTestHelper{

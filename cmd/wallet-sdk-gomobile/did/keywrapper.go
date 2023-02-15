@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package did
 
 import (
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -18,13 +19,13 @@ type gomobileKeyWriterWrapper struct {
 	keyWriter api.KeyWriter
 }
 
-func (g *gomobileKeyWriterWrapper) Create(keyType arieskms.KeyType) (string, []byte, error) {
+func (g *gomobileKeyWriterWrapper) Create(keyType arieskms.KeyType) (string, *jwk.JWK, error) {
 	keyHandle, err := g.keyWriter.Create(string(keyType))
 	if err != nil {
 		return "", nil, err
 	}
 
-	return keyHandle.KeyID, keyHandle.PubKey, nil
+	return keyHandle.ID(), keyHandle.JWK, nil
 }
 
 // gomobileKeyReaderWrapper wraps a gomobile-compatible version of a KeyReader and translates methods calls to their
@@ -33,6 +34,11 @@ type gomobileKeyReaderWrapper struct {
 	keyReader api.KeyReader
 }
 
-func (g *gomobileKeyReaderWrapper) ExportPubKey(keyID string) ([]byte, error) {
-	return g.keyReader.ExportPubKey(keyID)
+func (g *gomobileKeyReaderWrapper) ExportPubKey(keyID string) (*jwk.JWK, error) {
+	kh, err := g.keyReader.ExportPubKey(keyID)
+	if err != nil {
+		return nil, err
+	}
+
+	return kh.JWK, nil
 }

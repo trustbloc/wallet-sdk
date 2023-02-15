@@ -25,16 +25,28 @@ func TestLocalKMS_Create(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		localKMS := createTestKMS(t)
 
-		keyID, key, err := localKMS.Create(arieskms.ED25519Type)
+		keyID, pkJWK, err := localKMS.Create(arieskms.ED25519Type)
 		require.NoError(t, err)
 		require.NotEmpty(t, keyID)
-		require.NotEmpty(t, key)
+		require.NotNil(t, pkJWK)
+
+		keyID, pkJWK, err = localKMS.Create(arieskms.ECDSAP384IEEEP1363)
+		require.NoError(t, err)
+		require.NotEmpty(t, keyID)
+		require.NotNil(t, pkJWK)
 	})
 
 	t.Run("Invalid key type", func(t *testing.T) {
 		localKMS := createTestKMS(t)
 
 		_, _, err := localKMS.Create("INVALID")
+		require.Error(t, err)
+	})
+
+	t.Run("key type not supported", func(t *testing.T) {
+		localKMS := createTestKMS(t)
+
+		_, _, err := localKMS.Create(arieskms.BLS12381G2Type)
 		require.Error(t, err)
 	})
 }
@@ -44,7 +56,7 @@ func TestLocalKMS_GetKey(t *testing.T) {
 
 	key, err := localKMS.ExportPubKey("KeyID")
 	require.EqualError(t, err, "not implemented")
-	require.Empty(t, key)
+	require.Nil(t, key)
 }
 
 func TestLocalKMS_CustomStore(t *testing.T) {
@@ -55,7 +67,7 @@ func TestLocalKMS_CustomStore(t *testing.T) {
 
 	key, err := localKMS.ExportPubKey("KeyID")
 	require.EqualError(t, err, "not implemented")
-	require.Empty(t, key)
+	require.Nil(t, key)
 }
 
 func TestLocalKMS_GetCrypto(t *testing.T) {
