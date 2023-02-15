@@ -44,7 +44,7 @@ class _CredentialCardState extends State<CredentialCard> {
               textAlign: TextAlign.start,
             ),
             //TODO need to add fallback and network image url
-            leading: const Image(
+            leading:  const Image(
                 image: AssetImage('lib/assets/images/genericCredential.png'),
                 width: 47,
                 height: 47,

@@ -34,8 +34,10 @@ class CredentialDetails extends StatelessWidget {
   }
 
   activityLogDetails() {
-    var activities = activityLogger!;
-    return listViewWidget(activities!.asMap().values);
+    if (activityLogger != null){
+      var activities = activityLogger!;
+      return listViewWidget(activities!.asMap().values);
+    }
   }
 
   Widget listViewWidget(Iterable<Object?> activitiesValue) {
