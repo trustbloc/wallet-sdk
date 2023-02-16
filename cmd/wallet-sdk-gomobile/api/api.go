@@ -7,6 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 // Package api defines gomobile-compatible wallet-sdk interfaces.
 package api
 
+import (
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
+)
+
 // JSONObject contains a single JSON object (not an array).
 // It's a simple wrapper around the actual JSON string. Its purpose is to help the
 // caller using the mobile bindings to understand what type of data to expect or pass in.
@@ -21,24 +25,23 @@ type JSONArray struct {
 	Data []byte
 }
 
-// KeyHandle represents a public key with associated metadata.
-type KeyHandle struct {
-	PubKey []byte `json:"key,omitempty"` // Raw bytes
-	KeyID  string `json:"keyID,omitempty"`
+// JSONWebKey holds a public key with associated metadata, in JWK format.
+type JSONWebKey struct {
+	JWK *jwk.JWK `json:"jwk,omitempty"`
 }
 
 // KeyWriter represents a type that is capable of performing operations related to key creation and storage within
 // an underlying KMS.
 type KeyWriter interface {
 	// Create creates a keyset of the given keyType and then writes it to storage.
-	// The keyID and raw public key bytes of the newly generated keyset are returned via the KeyHandle object.
-	Create(keyType string) (*KeyHandle, error)
+	// The public key JWK of the newly generated keyset is returned via the JSONWebKey object.
+	Create(keyType string) (*JSONWebKey, error)
 }
 
 // KeyReader represents a type that is capable of performing operations related to reading keys from an underlying KMS.
 type KeyReader interface {
-	// ExportPubKey returns the public key associated with the given keyID as raw bytes.
-	ExportPubKey(keyID string) ([]byte, error)
+	// ExportPubKey returns the public key associated with the given keyID as a JWK object.
+	ExportPubKey(keyID string) (*JSONWebKey, error)
 }
 
 // CreateDIDOpts represents the various options for the DIDCreator.Create method.

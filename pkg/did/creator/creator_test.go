@@ -11,6 +11,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/go-jose/go-jose/v3"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/util/jwkkid"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/stretchr/testify/require"
 
@@ -22,11 +25,12 @@ import (
 
 type mockKeyHandleReader struct {
 	getKeyReturn    []byte
+	getKeyJWK       *jwk.JWK
 	errGetKeyHandle error
 }
 
-func (m *mockKeyHandleReader) ExportPubKey(string) ([]byte, error) {
-	return m.getKeyReturn, m.errGetKeyHandle
+func (m *mockKeyHandleReader) ExportPubKey(string) (*jwk.JWK, error) {
+	return m.getKeyJWK, m.errGetKeyHandle
 }
 
 func TestNewCreator(t *testing.T) {
@@ -81,24 +85,31 @@ func TestCreator_Create(t *testing.T) {
 		didCreator, err := creator.NewCreatorWithKeyWriter(localKMS)
 		require.NoError(t, err)
 
-		createDIDOpts := &api.CreateDIDOpts{}
+		didMethods := []string{
+			creator.DIDMethodKey,
+			creator.DIDMethodIon,
+			creator.DIDMethodJWK,
+		}
 
-		didDocResolution, err := didCreator.Create(creator.DIDMethodKey, createDIDOpts)
-		require.NoError(t, err)
-		require.NotEmpty(t, didDocResolution)
+		opts := []*api.CreateDIDOpts{
+			{},
+			{
+				KeyType: kms.ECDSAP384TypeIEEEP1363,
+			},
+		}
 
-		didDocResolution, err = didCreator.Create(creator.DIDMethodIon, createDIDOpts)
-		require.NoError(t, err)
-		require.NotEmpty(t, didDocResolution)
-
-		didDocResolution, err = didCreator.Create(creator.DIDMethodJWK, createDIDOpts)
-		require.NoError(t, err)
-		require.NotEmpty(t, didDocResolution)
+		for _, method := range didMethods {
+			for _, didOpts := range opts {
+				didDocResolution, err := didCreator.Create(method, didOpts)
+				require.NoError(t, err)
+				require.NotEmpty(t, didDocResolution)
+			}
+		}
 	})
 	t.Run("Using KeyWriter (automatic key generation) - failure", func(t *testing.T) {
 		expectErr := errors.New("expected error")
 
-		badKMS := mockKeyWriter(func(keyType kms.KeyType) (string, []byte, error) {
+		badKMS := mockKeyWriter(func(keyType kms.KeyType) (string, *jwk.JWK, error) {
 			return "", nil, expectErr
 		})
 
@@ -124,8 +135,11 @@ func TestCreator_Create(t *testing.T) {
 			key, _, err := ed25519.GenerateKey(nil)
 			require.NoError(t, err)
 
+			pkJWK, err := jwkkid.BuildJWK(key, kms.ED25519Type)
+			require.NoError(t, err)
+
 			mockKHR := &mockKeyHandleReader{
-				getKeyReturn: key,
+				getKeyJWK: pkJWK,
 			}
 
 			localKMS := createTestKMS(t)
@@ -135,7 +149,7 @@ func TestCreator_Create(t *testing.T) {
 
 			createDIDOpts := &api.CreateDIDOpts{
 				KeyID:            "SomeKeyID",
-				VerificationType: creator.Ed25519VerificationKey2018,
+				VerificationType: creator.JSONWebKey2020,
 				KeyType:          kms.ED25519Type,
 			}
 
@@ -165,7 +179,7 @@ func TestCreator_Create(t *testing.T) {
 			testutil.RequireErrorContains(t, err, "no verification type specified")
 			require.Empty(t, didDocResolution)
 		})
-		t.Run("Fail to get key handle", func(t *testing.T) {
+		t.Run("Fail to get key", func(t *testing.T) {
 			mockKHR := &mockKeyHandleReader{
 				errGetKeyHandle: errors.New("test failure"),
 			}
@@ -179,11 +193,11 @@ func TestCreator_Create(t *testing.T) {
 			}
 
 			didDocResolution, err := didCreator.Create(creator.DIDMethodKey, createDIDOpts)
-			testutil.RequireErrorContains(t, err, "failed to get key handle: test failure")
+			testutil.RequireErrorContains(t, err, "failed to get key: test failure")
 			require.Empty(t, didDocResolution)
 
 			didDocResolution, err = didCreator.Create(creator.DIDMethodIon, createDIDOpts)
-			testutil.RequireErrorContains(t, err, "failed to get key handle: test failure")
+			testutil.RequireErrorContains(t, err, "failed to get key: test failure")
 			require.Empty(t, didDocResolution)
 		})
 		t.Run("Fail to create jwk", func(t *testing.T) {
@@ -202,7 +216,44 @@ func TestCreator_Create(t *testing.T) {
 
 			didDocResolution, err := didCreator.Create(creator.DIDMethodIon, createDIDOpts)
 			require.Error(t, err)
-			require.Contains(t, err.Error(), "failed to create JWK from public key")
+			require.Contains(t, err.Error(), "failed to get valid JWK from key manager")
+			require.Empty(t, didDocResolution)
+		})
+		t.Run("Fail to create verification method for did:key", func(t *testing.T) {
+			mockKHR := &mockKeyHandleReader{
+				getKeyJWK: &jwk.JWK{
+					JSONWebKey: jose.JSONWebKey{
+						Key: 1,
+					},
+					Kty: "",
+					Crv: "",
+				},
+			}
+
+			didCreator, err := creator.NewCreatorWithKeyReader(mockKHR)
+			require.NoError(t, err)
+
+			createDIDOpts := &api.CreateDIDOpts{
+				KeyType:          kms.ECDSAP384TypeIEEEP1363,
+				KeyID:            "SomeKeyID",
+				VerificationType: creator.JSONWebKey2020,
+			}
+
+			didDocResolution, err := didCreator.Create(creator.DIDMethodKey, createDIDOpts)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "convert JWK to public key bytes")
+			require.Empty(t, didDocResolution)
+
+			mockKHR.getKeyJWK = &jwk.JWK{
+				Crv: "Ed25519",
+				JSONWebKey: jose.JSONWebKey{
+					Key: 1,
+				},
+			}
+
+			didDocResolution, err = didCreator.Create(creator.DIDMethodKey, createDIDOpts)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "unsupported public key type")
 			require.Empty(t, didDocResolution)
 		})
 	})
@@ -229,8 +280,8 @@ func createTestKMS(t *testing.T) *localkms.LocalKMS {
 	return localKMS
 }
 
-type mockKeyWriter func(keyType kms.KeyType) (string, []byte, error)
+type mockKeyWriter func(keyType kms.KeyType) (string, *jwk.JWK, error)
 
-func (kw mockKeyWriter) Create(keyType kms.KeyType) (string, []byte, error) {
+func (kw mockKeyWriter) Create(keyType kms.KeyType) (string, *jwk.JWK, error) {
 	return kw(keyType)
 }

@@ -11,8 +11,10 @@ import (
 	"testing"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/stretchr/testify/require"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 
 	. "github.com/trustbloc/wallet-sdk/pkg/did/creator/ion"
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
@@ -30,14 +32,11 @@ func TestCreator_Create(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		localKMS := createTestKMS(t)
 
-		kid, pk, err := localKMS.Create(kms.ED25519Type)
+		kid, pkJWK, err := localKMS.Create(kms.ED25519Type)
 		require.NoError(t, err)
 
-		vm := &did.VerificationMethod{
-			ID:    "#" + kid,
-			Value: pk,
-			Type:  "Ed25519VerificationKey2018",
-		}
+		vm, err := did.NewVerificationMethodFromJWK("#"+kid, common.JSONWebKey2020, "", pkJWK)
+		require.NoError(t, err)
 
 		c, err := NewCreator(localKMS)
 		require.NoError(t, err)
@@ -48,13 +47,13 @@ func TestCreator_Create(t *testing.T) {
 		require.NotNil(t, doc.DIDDocument)
 		require.NotEmpty(t, doc.DIDDocument.VerificationMethod)
 		require.NotNil(t, doc.DIDDocument.VerificationMethod[0])
-		require.Equal(t, pk, doc.DIDDocument.VerificationMethod[0].Value)
+		require.Equal(t, pkJWK, doc.DIDDocument.VerificationMethod[0].JSONWebKey())
 	})
 
 	t.Run("fail to create update/recovery keys", func(t *testing.T) {
 		expectErr := errors.New("expected error")
 
-		badKMS := mockKeyWriter(func(keyType kms.KeyType) (string, []byte, error) {
+		badKMS := mockKeyWriter(func(keyType kms.KeyType) (string, *jwk.JWK, error) {
 			return "", nil, expectErr
 		})
 
@@ -78,8 +77,8 @@ func createTestKMS(t *testing.T) *localkms.LocalKMS {
 	return localKMS
 }
 
-type mockKeyWriter func(keyType kms.KeyType) (string, []byte, error)
+type mockKeyWriter func(keyType kms.KeyType) (string, *jwk.JWK, error)
 
-func (kw mockKeyWriter) Create(keyType kms.KeyType) (string, []byte, error) {
+func (kw mockKeyWriter) Create(keyType kms.KeyType) (string, *jwk.JWK, error) {
 	return kw(keyType)
 }

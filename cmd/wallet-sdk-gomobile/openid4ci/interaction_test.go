@@ -14,20 +14,17 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
+	"github.com/stretchr/testify/require"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
-
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk/jwksupport"
-	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
-	"github.com/stretchr/testify/require"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
-	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 )
 
 //go:embed testdata/sample_credential_response.json
@@ -122,6 +119,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		keyHandle, err := kms.Create(arieskms.ED25519)
 		require.NoError(t, err)
 
+		fmt.Println("key ID:", keyHandle.ID())
+
 		issuerServerHandler := &mockIssuerServerHandler{}
 		server := httptest.NewServer(issuerServerHandler)
 
@@ -147,10 +146,13 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		credentialRequest := openid4ci.NewCredentialRequestOpts("")
 
+		pkBytes, err := keyHandle.JWK.PublicKeyBytes()
+		require.NoError(t, err)
+
 		result, err := interaction.RequestCredential(credentialRequest, &api.VerificationMethod{
 			ID:   "did:example:12345#testId",
 			Type: "Ed25519VerificationKey2018",
-			Key:  models.VerificationKey{Raw: keyHandle.PubKey},
+			Key:  models.VerificationKey{Raw: pkBytes},
 		})
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -218,9 +220,6 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		config := getTestClientConfig(t, kms, nil)
 
-		jwk, err := jwksupport.PubKeyBytesToJWK(keyHandle.PubKey, arieskms.ED25519)
-		require.NoError(t, err)
-
 		interaction, err := openid4ci.NewInteraction(requestURI, config)
 		require.NoError(t, err)
 
@@ -229,7 +228,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		result, err := interaction.RequestCredential(credentialRequest, &api.VerificationMethod{
 			ID:   mockKeyID,
 			Type: creator.JSONWebKey2020,
-			Key:  models.VerificationKey{JSONWebKey: jwk},
+			Key:  models.VerificationKey{JSONWebKey: keyHandle.JWK},
 		})
 
 		require.NoError(t, err)
@@ -299,7 +298,7 @@ func getTestClientConfig(t *testing.T, kms *localkms.KMS,
 	return clientConfig
 }
 
-type mockVMCreator func(handle *api.KeyHandle, keyType string) (*did.VerificationMethod, error)
+type mockVMCreator func(key *api.JSONWebKey, keyType string) (*did.VerificationMethod, error)
 
 type mockResolver struct {
 	keyWriter *localkms.KMS
@@ -307,23 +306,36 @@ type mockResolver struct {
 }
 
 func (m *mockResolver) Resolve(string) ([]byte, error) {
-	keyHandle, err := m.keyWriter.Create(localkms.KeyTypeED25519)
+	newKey, err := m.keyWriter.Create(localkms.KeyTypeED25519)
 	if err != nil {
 		return nil, err
 	}
 
 	if m.makeVM == nil {
-		m.makeVM = func(handle *api.KeyHandle, _ string) (*did.VerificationMethod, error) {
+		m.makeVM = func(key *api.JSONWebKey, _ string) (*did.VerificationMethod, error) {
+			if key.JWK == nil {
+				return nil, fmt.Errorf("nil key")
+			}
+
+			if key.JWK.Kty != "OKP" || key.JWK.Crv != "Ed25519" {
+				return nil, fmt.Errorf("default test resolver only supports ed25519 key")
+			}
+
+			pkb, e := key.JWK.PublicKeyBytes()
+			if e != nil {
+				return nil, e
+			}
+
 			return &did.VerificationMethod{
 				ID:         "#key-1",
 				Controller: mockDID,
 				Type:       "Ed25519VerificationKey2018",
-				Value:      handle.PubKey,
+				Value:      pkb,
 			}, nil
 		}
 	}
 
-	vm, err := m.makeVM(keyHandle, localkms.KeyTypeED25519)
+	vm, err := m.makeVM(newKey, localkms.KeyTypeED25519)
 	if err != nil {
 		return nil, err
 	}

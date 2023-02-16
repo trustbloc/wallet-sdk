@@ -15,18 +15,16 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
-
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
-
-	"github.com/trustbloc/wallet-sdk/pkg/models"
-
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/models"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )
 
 var (
@@ -188,11 +186,11 @@ func (dl *documentLoaderWrapper) LoadDocument(u string) (*api.LDDocument, error)
 }
 
 type mockKeyHandleReader struct {
-	exportPubKeyResult []byte
+	exportPubKeyResult *api.JSONWebKey
 	exportPubKeyErr    error
 }
 
-func (m *mockKeyHandleReader) ExportPubKey(string) ([]byte, error) {
+func (m *mockKeyHandleReader) ExportPubKey(string) (*api.JSONWebKey, error) {
 	return m.exportPubKeyResult, m.exportPubKeyErr
 }
 

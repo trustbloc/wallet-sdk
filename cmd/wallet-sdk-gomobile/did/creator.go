@@ -23,6 +23,8 @@ const (
 	DIDMethodKey = goapicreator.DIDMethodKey
 	// Ed25519VerificationKey2018 is a supported DID verification type.
 	Ed25519VerificationKey2018 = goapicreator.Ed25519VerificationKey2018
+	// JSONWebKey2020 is a supported DID verification type.
+	JSONWebKey2020 = goapicreator.JSONWebKey2020
 )
 
 // Creator is used for creating DID Documents using supported DID methods.

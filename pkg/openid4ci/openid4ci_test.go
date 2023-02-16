@@ -609,7 +609,12 @@ func getTestClientConfig(t *testing.T) *openid4ci.ClientConfig {
 
 // makeMockDoc creates a key in the given KMS and returns a mock DID Doc with a verification method.
 func makeMockDoc(keyWriter api.KeyWriter) (*did.Doc, error) {
-	_, pkb, err := keyWriter.Create(arieskms.ED25519Type)
+	_, pkJWK, err := keyWriter.Create(arieskms.ED25519Type)
+	if err != nil {
+		return nil, err
+	}
+
+	pkb, err := pkJWK.PublicKeyBytes()
 	if err != nil {
 		return nil, err
 	}

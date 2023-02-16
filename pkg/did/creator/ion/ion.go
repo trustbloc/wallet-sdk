@@ -12,7 +12,6 @@ import (
 
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/longform"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/util/jwkkid"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -70,12 +69,7 @@ func (d *Creator) Create(vm *did.VerificationMethod) (*did.DocResolution, error)
 }
 
 func (d *Creator) makeKey() (interface{}, error) {
-	_, pkBytes, err := d.kw.Create(kms.ECDSAP256TypeIEEEP1363)
-	if err != nil {
-		return nil, err
-	}
-
-	pkJWK, err := jwkkid.BuildJWK(pkBytes, kms.ECDSAP256TypeIEEEP1363)
+	_, pkJWK, err := d.kw.Create(kms.ECDSAP256TypeIEEEP1363)
 	if err != nil {
 		return nil, err
 	}

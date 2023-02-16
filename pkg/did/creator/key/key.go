@@ -23,10 +23,8 @@ func NewCreator() *Creator {
 }
 
 // Create creates a new did:key document using the given rawKey and verificationMethodType.
-func (d *Creator) Create(rawKey []byte, verificationMethodType string) (*did.DocResolution, error) {
-	verificationMethod := did.VerificationMethod{Value: rawKey, Type: verificationMethodType}
-
-	didDocArgument := &did.Doc{VerificationMethod: []did.VerificationMethod{verificationMethod}}
+func (d *Creator) Create(vm *did.VerificationMethod) (*did.DocResolution, error) {
+	didDocArgument := &did.Doc{VerificationMethod: []did.VerificationMethod{*vm}}
 
 	return d.vdr.Create(didDocArgument)
 }

@@ -83,7 +83,8 @@ import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 val memKMSStore = MemKMSStore.MemKMSStore()
 val kms = Localkms.newKMS(memKMSStore)
 
-val keyHandle = kms.create(localkms.KeyTypeED25519)
+val jwk1 = kms.create(localkms.KeyTypeED25519)
+val jwk2 = kms.create(localkms.KeyTypeP384)
 ```
 
 #### Swift (iOS)
@@ -94,7 +95,8 @@ import Walletsdk
 let memKMSStore = LocalkmsNewMemKMSStore()
 let kms = LocalkmsNewKMS(memKMSStore, nil)
 
-let keyHandle = kms.create(LocalkmsKeyTypeED25519)
+let jwk1 = kms.create(LocalkmsKeyTypeED25519)
+let jwk2 = kms.create(LocalkmsKeyTypeP384)
 ```
 
 ## DID Creator

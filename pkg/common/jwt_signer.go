@@ -13,7 +13,9 @@ import (
 	"fmt"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/jwkkid"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -28,6 +30,8 @@ const (
 	JSONWebKey2020 = "JsonWebKey2020"
 	// EdDSA is  signature algorithm for Ed25519VerificationKey2018.
 	EdDSA = "EdDSA"
+	// ES384 is  signature algorithm for P-384 JSONWebKey2020.
+	ES384 = "ES384"
 )
 
 // JWSSigner utility class used to sign jwt using api.Crypto.
@@ -93,12 +97,26 @@ func algAndThumbprint(vm *models.VerificationMethod) (string, string, error) {
 
 	tp := base64.RawURLEncoding.EncodeToString(tpBytes)
 
-	// TODO: https://github.com/trustbloc/wallet-sdk/issues/161 handle more key types
-	if vm.Key.JSONWebKey.Crv == "Ed25519" {
-		return EdDSA, tp, nil
+	alg, err := inferAlg(vm.Key.JSONWebKey)
+	if err != nil {
+		return "", "", err
 	}
 
-	return "", "", fmt.Errorf("jwt signer: currently only Ed25519 is supported")
+	return alg, tp, nil
+}
+
+func inferAlg(key *jwk.JWK) (string, error) {
+	kt, err := key.KeyType()
+	if err != nil {
+		return "", err
+	}
+
+	algo, err := verifiable.KeyTypeToJWSAlgo(kt)
+	if err != nil {
+		return "", err
+	}
+
+	return algo.Name()
 }
 
 // GetKeyID return id of key used for signing.

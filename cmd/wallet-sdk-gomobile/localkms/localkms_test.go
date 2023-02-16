@@ -25,8 +25,8 @@ func TestLocalKMS_Create(t *testing.T) {
 
 	keyHandle, err := localKMS.Create(localkms.KeyTypeED25519)
 	require.NoError(t, err)
-	require.NotEmpty(t, keyHandle.PubKey)
-	require.NotEmpty(t, keyHandle.KeyID)
+	require.NotNil(t, keyHandle.JWK)
+	require.NotEmpty(t, keyHandle.ID())
 }
 
 func TestLocalKMS_ExportPubKey(t *testing.T) {
@@ -34,10 +34,10 @@ func TestLocalKMS_ExportPubKey(t *testing.T) {
 
 	keyHandle, err := localKMS.Create(localkms.KeyTypeED25519)
 	require.NoError(t, err)
-	require.NotEmpty(t, keyHandle.PubKey)
-	require.NotEmpty(t, keyHandle.KeyID)
+	require.NotNil(t, keyHandle.JWK)
+	require.NotEmpty(t, keyHandle.ID())
 
-	_, err = localKMS.ExportPubKey(keyHandle.KeyID)
+	_, err = localKMS.ExportPubKey(keyHandle.ID())
 	require.Contains(t, err.Error(), "not implemented")
 }
 
