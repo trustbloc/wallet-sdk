@@ -257,14 +257,7 @@ func TestResolve(t *testing.T) {
 				require.Equal(t, "#12107c", resolvedDisplayData.CredentialDisplays[0].Overview.BackgroundColor)
 				require.Equal(t, "#FFFFFF", resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
 
-				expectedClaims := []credentialschema.ResolvedClaim{
-					{Label: "ID", Value: "", Locale: "en-US"},
-					{Label: "Given Name", Value: "", Locale: "en-US"},
-					{Label: "Surname", Value: "", Locale: "en-US"},
-					{Label: "GPA", Value: "", Locale: "en-US"},
-				}
-
-				verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
+				require.Len(t, resolvedDisplayData.CredentialDisplays[0].Claims, 0)
 			})
 		})
 
