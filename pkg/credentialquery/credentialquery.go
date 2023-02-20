@@ -54,6 +54,44 @@ func NewInstance(documentLoader ld.DocumentLoader) *Instance {
 	return &Instance{documentLoader: documentLoader}
 }
 
+// GetSubmissionRequirements returns information about VCs matching requirements.
+func (c *Instance) GetSubmissionRequirements(
+	query *presexch.PresentationDefinition,
+	opts ...QueryOpt,
+) ([]*presexch.MatchedSubmissionRequirement, error) {
+	qOpts := &queryOpts{}
+	for _, opt := range opts {
+		opt(qOpts)
+	}
+
+	credentials, err := getCredentials(qOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: https://github.com/trustbloc/wallet-sdk/issues/165 remove this code after to re enable Schema check.
+	for i := range query.InputDescriptors {
+		query.InputDescriptors[i].Schema = nil
+	}
+
+	results, err := query.MatchSubmissionRequirement(
+		credentials,
+		c.documentLoader,
+		verifiable.WithDisabledProofCheck(),
+		verifiable.WithJSONLDDocumentLoader(c.documentLoader),
+	)
+	if err != nil {
+		return nil,
+			walleterror.NewValidationError(
+				module,
+				FailToGetMatchRequirementsResultsCode,
+				FailToGetMatchRequirementsResultsError,
+				err)
+	}
+
+	return results, nil
+}
+
 // Query returns credentials that match PresentationDefinition.
 func (c *Instance) Query(
 	query *presexch.PresentationDefinition,
@@ -64,27 +102,9 @@ func (c *Instance) Query(
 		opt(qOpts)
 	}
 
-	credentials := qOpts.credentials
-	if len(credentials) == 0 {
-		if qOpts.credentialReader == nil {
-			return nil, walleterror.NewValidationError(
-				module,
-				CredentialReaderNotSetCode,
-				CredentialReaderNotSetError,
-				fmt.Errorf("credentials array or credential reader option must be set"))
-		}
-
-		var err error
-
-		credentials, err = qOpts.credentialReader.GetAll()
-		if err != nil {
-			return nil,
-				walleterror.NewValidationError(
-					module,
-					CredentialReaderReadFailedCode,
-					CredentialReaderReadFailedError,
-					fmt.Errorf("credential reader failed: %w", err))
-		}
+	credentials, err := getCredentials(qOpts)
+	if err != nil {
+		return nil, err
 	}
 
 	// TODO: https://github.com/trustbloc/wallet-sdk/issues/165 remove this code after to re enable Schema check.
@@ -112,4 +132,31 @@ func (c *Instance) Query(
 	}
 
 	return vp, nil
+}
+
+func getCredentials(qOpts *queryOpts) ([]*verifiable.Credential, error) {
+	credentials := qOpts.credentials
+	if len(credentials) == 0 {
+		if qOpts.credentialReader == nil {
+			return nil, walleterror.NewValidationError(
+				module,
+				CredentialReaderNotSetCode,
+				CredentialReaderNotSetError,
+				fmt.Errorf("credentials array or credential reader option must be set"))
+		}
+
+		var err error
+
+		credentials, err = qOpts.credentialReader.GetAll()
+		if err != nil {
+			return nil,
+				walleterror.NewValidationError(
+					module,
+					CredentialReaderReadFailedCode,
+					CredentialReaderReadFailedError,
+					fmt.Errorf("credential reader failed: %w", err))
+		}
+	}
+
+	return credentials, nil
 }

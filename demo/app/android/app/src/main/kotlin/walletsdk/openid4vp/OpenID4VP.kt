@@ -15,6 +15,7 @@ import dev.trustbloc.wallet.sdk.credential.Inquirer
 import dev.trustbloc.wallet.sdk.credential.VerifiablePresentation
 import dev.trustbloc.wallet.sdk.api.VerificationMethod
 import java.lang.Exception
+import  dev.trustbloc.wallet.sdk.credential.SubmissionRequirement
 
 class OpenID4VP constructor(
         private val keyReader: KeyReader,
