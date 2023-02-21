@@ -102,34 +102,9 @@ func NewInquirer(documentLoader api.LDDocumentLoader) *Inquirer {
 
 // Query returns credentials that match PresentationDefinition.
 func (c *Inquirer) Query(query []byte, contents *CredentialsOpt) (*VerifiablePresentation, error) {
-	pdQuery := &presexch.PresentationDefinition{}
-
-	err := json.Unmarshal(query, pdQuery)
+	pdQuery, credentials, err := unwrapInputs(query, contents)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal of presentation definition failed: %w", err)
-	}
-
-	if pdQuery.Format == nil {
-		pdQuery.Format = &presexch.Format{
-			JwtVP: &presexch.JwtType{
-				Alg: []string{"RS256", "EdDSA", "PS256", "ES256K", "ES256", "ES384", "ES521"},
-			},
-		}
-	}
-
-	err = pdQuery.ValidateSchema()
-	if err != nil {
-		return nil, fmt.Errorf("validation of presentation definition failed: %w", err)
-	}
-
-	if contents.CredentialReader == nil && contents.VCs == nil {
-		return nil, fmt.Errorf("either credential reader or vc array should be set")
-	}
-
-	var credentials []*verifiable.Credential
-
-	if contents.VCs != nil {
-		credentials = unwrapVCs(contents.VCs)
+		return nil, err
 	}
 
 	presentation, err := c.goAPICredentialQuery.Query(pdQuery,
@@ -143,6 +118,62 @@ func (c *Inquirer) Query(query []byte, contents *CredentialsOpt) (*VerifiablePre
 	}
 
 	return wrapVerifiablePresentation(presentation), err
+}
+
+// GetSubmissionRequirements returns information about VCs matching requirements.
+func (c *Inquirer) GetSubmissionRequirements(query []byte, contents *CredentialsOpt,
+) (*SubmissionRequirementArray, error) {
+	pdQuery, credentials, err := unwrapInputs(query, contents)
+	if err != nil {
+		return nil, err
+	}
+
+	requirements, err := c.goAPICredentialQuery.GetSubmissionRequirements(pdQuery,
+		credentialquery.WithCredentialsArray(credentials),
+		credentialquery.WithCredentialReader(&wrapper.CredentialReaderWrapper{
+			CredentialReader: contents.CredentialReader,
+		}),
+	)
+	if err != nil {
+		return nil, walleterror.ToMobileError(err)
+	}
+
+	return &SubmissionRequirementArray{wrapped: requirements}, nil
+}
+
+func unwrapInputs(query []byte, contents *CredentialsOpt,
+) (*presexch.PresentationDefinition, []*verifiable.Credential, error) {
+	pdQuery := &presexch.PresentationDefinition{}
+
+	err := json.Unmarshal(query, pdQuery)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unmarshal of presentation definition failed: %w", err)
+	}
+
+	if pdQuery.Format == nil {
+		pdQuery.Format = &presexch.Format{
+			JwtVP: &presexch.JwtType{
+				Alg: []string{"RS256", "EdDSA", "PS256", "ES256K", "ES256", "ES384", "ES521"},
+			},
+		}
+	}
+
+	err = pdQuery.ValidateSchema()
+	if err != nil {
+		return nil, nil, fmt.Errorf("validation of presentation definition failed: %w", err)
+	}
+
+	if contents.CredentialReader == nil && contents.VCs == nil {
+		return nil, nil, fmt.Errorf("either credential reader or vc array should be set")
+	}
+
+	var credentials []*verifiable.Credential
+
+	if contents.VCs != nil {
+		credentials = unwrapVCs(contents.VCs)
+	}
+
+	return pdQuery, credentials, nil
 }
 
 func unwrapVCs(vcs *api.VerifiableCredentialsArray) []*verifiable.Credential {

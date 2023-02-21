@@ -12,6 +12,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/stretchr/testify/require"
@@ -24,12 +25,80 @@ var (
 	//go:embed test_data/presentation_definition.json
 	presentationDefinition []byte
 
+	//go:embed test_data/multi_inputs_pd.json
+	multiInputPD []byte
+
 	//go:embed test_data/university_degree.jwt
 	universityDegreeVC []byte
 
 	//go:embed test_data/permanent_resident_card.jwt
 	permanentResidentCardVC []byte
+
+	//go:embed test_data/drivers_license.jwt
+	driverLicenseVC []byte
+
+	//go:embed test_data/verified_employee.jwt
+	verifiedEmployeeVC []byte
 )
+
+func TestInstance_GetSubmissionRequirements(t *testing.T) {
+	docLoader := testutil.DocumentLoader(t)
+	pdQuery := &presexch.PresentationDefinition{}
+	err := json.Unmarshal(multiInputPD, pdQuery)
+	require.NoError(t, err)
+
+	contents := [][]byte{
+		universityDegreeVC,
+		permanentResidentCardVC,
+		driverLicenseVC,
+		verifiedEmployeeVC,
+	}
+
+	var credentials []*verifiable.Credential
+
+	for _, credContent := range contents {
+		cred, credErr := verifiable.ParseCredential(credContent, verifiable.WithDisabledProofCheck(),
+			verifiable.WithJSONLDDocumentLoader(docLoader))
+		require.NoError(t, credErr)
+
+		credentials = append(credentials, cred)
+	}
+
+	t.Run("Success", func(t *testing.T) {
+		instance := credentialquery.NewInstance(docLoader)
+		requirements, err := instance.GetSubmissionRequirements(pdQuery, credentialquery.WithCredentialsArray(
+			credentials,
+		))
+
+		require.NoError(t, err)
+		require.Len(t, requirements, 1)
+
+		require.Len(t, requirements[0].Descriptors, 3)
+	})
+
+	t.Run("Reader error", func(t *testing.T) {
+		instance := credentialquery.NewInstance(docLoader)
+		_, err := instance.GetSubmissionRequirements(pdQuery, credentialquery.WithCredentialReader(
+			&readerMock{
+				err: errors.New("get all error"),
+			},
+		))
+
+		require.Error(t, err, "credential reader failed: get all error")
+	})
+
+	t.Run("Checks schema", func(t *testing.T) {
+		incorrectPD := &presexch.PresentationDefinition{ID: uuid.New().String()}
+
+		instance := credentialquery.NewInstance(docLoader)
+		requirements, err := instance.GetSubmissionRequirements(incorrectPD, credentialquery.WithCredentialsArray(
+			credentials,
+		))
+
+		testutil.RequireErrorContains(t, err, "FAIL_TO_GET_MATCH_REQUIREMENTS_RESULTS")
+		require.Nil(t, requirements)
+	})
+}
 
 func TestInstance_Query(t *testing.T) {
 	docLoader := testutil.DocumentLoader(t)
