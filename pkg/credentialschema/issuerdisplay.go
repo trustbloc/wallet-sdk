@@ -12,31 +12,29 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
-func getIssuerDisplay(credentialIssuer *issuer.CredentialIssuer,
-	locale string,
-) *ResolvedCredentialIssuerDisplay {
-	if credentialIssuer == nil || len(credentialIssuer.Displays) == 0 {
+func getIssuerDisplay(issuerDisplays []issuer.Display, locale string) *ResolvedIssuerDisplay {
+	if len(issuerDisplays) == 0 {
 		return nil
 	}
 
 	if locale == "" {
-		return &ResolvedCredentialIssuerDisplay{
-			Name:   credentialIssuer.Displays[0].Name,
-			Locale: credentialIssuer.Displays[0].Locale,
+		return &ResolvedIssuerDisplay{
+			Name:   issuerDisplays[0].Name,
+			Locale: issuerDisplays[0].Locale,
 		}
 	}
 
-	for _, issuerDisplay := range credentialIssuer.Displays {
+	for _, issuerDisplay := range issuerDisplays {
 		if strings.EqualFold(issuerDisplay.Locale, locale) {
-			return &ResolvedCredentialIssuerDisplay{
+			return &ResolvedIssuerDisplay{
 				Name:   issuerDisplay.Name,
 				Locale: issuerDisplay.Locale,
 			}
 		}
 	}
 
-	return &ResolvedCredentialIssuerDisplay{
-		Name:   credentialIssuer.Displays[0].Name,
-		Locale: credentialIssuer.Displays[0].Locale,
+	return &ResolvedIssuerDisplay{
+		Name:   issuerDisplays[0].Name,
+		Locale: issuerDisplays[0].Locale,
 	}
 }

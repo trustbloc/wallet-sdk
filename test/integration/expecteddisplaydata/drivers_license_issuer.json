@@ -10,7 +10,7 @@
         "locale":"en-US",
         "logo":{
           "url":"https://example.com/public/logo.png",
-          "alternative_text": "a square logo of a driver's license verification"
+          "alt_text": "a square logo of a driver's license verification"
         },
         "background_color":"#12107c",
         "text_color":"#FFFFFF"

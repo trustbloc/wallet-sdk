@@ -307,11 +307,8 @@ know that the non-pre-authorized flow isn't implemented).
 5. Call the `RequestCredential` method on the `Interaction`, passing in the `CredentialRequestOpts` object from the
 last step. If successful, this method will return `CredentialResponses` to the caller, which contain the issued
 credentials.
-6. (Optional) - Call the `ResolveDisplay` method (with an optional preferred locale) on the `Interaction` object to
-get display information for your new credentials. See [Credential Display Data](#credential-display-data) for more
-information on how to use this object.
-7. (Optional, can be called at any point after step 2) - Call the `IssuerURI` method on the `Interaction` object to
-get the issuer URI. The issuer URI should be stored somewhere for later use, since it can be used to refresh the
+6. (Optional, can be called at any point after step 2) - Call the `IssuerURI` method on the `Interaction` object to
+get the issuer URI. The issuer URI should be stored somewhere for later use, since it can be used to get the
 display data. See [Credential Display Data](#credential-display-data) for more information.
 
 
@@ -346,8 +343,7 @@ val interaction = Interaction("YourRequestURIHere", cfg)
 interaction.authorize() // Returned object doesn't matter with current implementation limitations
 val userPIN = "1234"
 val requestCredentialOpts = CredentialRequestOpts(userPIN)
-val credentials = interaction.requestCredential(requestCredentialOpts, doc.assertionMethod()) // Should probably store these somewhere
-val displayData = interaction.resolveDisplay("en-US") // Optional (but useful)
+val credentials = interaction.requestCredential(requestCredentialOpts, didDocResolution.assertionMethod()) // Should probably store these somewhere
 val issuerURI = interaction.issuerURI() // Optional (but useful)
 // Consider checking the activity log at some point after the interaction
 ```
@@ -371,8 +367,7 @@ let interaction = Openid4ciNewInteraction("YourRequestURIHere", cfg, nil)
 interaction.authorize() // Returned object doesn't matter with current implementation limitations
 let userPIN = "1234"
 let requestCredentialOpts = Openid4ciNewCredentialRequestOpts(userPIN)
-let credentials = interaction.requestCredential(requestCredentialOpts, doc.assertionMethod()) // Should probably store these somewhere
-let displayData = interaction.resolveDisplay("en-US") // Optional (but useful)
+let credentials = interaction.requestCredential(requestCredentialOpts, didDocResolution.assertionMethod()) // Should probably store these somewhere
 let issuerURI = interaction.issuerURI() // Optional (but useful)
 // Consider checking the activity log at some point after the interaction
 ```
@@ -384,14 +379,11 @@ objects. These objects contain the data needed for various wallet operations, bu
 display the credential data in an easily-understandable way via a user interface. This is where the credential display
 data comes in.
 
-There are two ways to get display data:
-* After the `RequestCredential` step of the OpenID4CI flow, call the `resolveDisplay` method on the interaction object
-and pass in your preferred locale.
-* Call the standalone `resolveDisplay` function with your VCs and the issuer URI. An issuer URI can be obtained by
-calling the `issuerURI` method on an OpenID4CI interaction object. It's a good idea to store the issuer URI somewhere
-after going through the OpenID4CI flow. This way, you can call the standalone `resolveDisplay` method later if/when you
-need to refresh your display data based on the latest display information from the issuer.
-See [Resolve Display](#resolve-display) for more information.
+To get display data, call the `resolveDisplay` function with your VCs and the issuer URI. An issuer URI can be obtained by
+calling the `issuerURI` method on an OpenID4CI interaction object after it's been instantiated. It's a good idea to
+store the issuer URI somewhere in persistent storage after going through the OpenID4CI flow. This way, you can call the
+`resolveDisplay` function later if/when you need to refresh your display data based on the latest display information
+from the issuer. See [Resolve Display](#resolve-display) for more information.
 
 Display data objects can be serialized using the `serialize()` method (useful for storage) and parsed from serialized
 form back into display data objects using the `parseDisplayData()` function.
@@ -447,7 +439,7 @@ then a default locale may get used instead.
 
 #### Resolve Display
 
-The following examples show how the standalone `ResolveDisplay` function can be used.
+The following examples show how the `ResolveDisplay` function can be used.
 
 ##### Kotlin (Android)
 
@@ -535,7 +527,7 @@ val inquirer = credential.Inquirer(docLoader)
 val issuedCredentials = api.VerifiableCredentialsArray() // Would need some actual credentials for this to actually work
 val verifiablePres = inquirer.Query(query, credential.CredentialsOpt(issuedCredentials))
 val matchedCreds = verifiablePresentation.credentials() // These credentials should be shown to the user with a confirmation dialog so they can confirm that they want to share this data before calling presentCredential.
-interaction.presentCredential(verifiablePres, doc.assertionMethod())
+interaction.presentCredential(verifiablePres, didDocResolution.assertionMethod())
 // Consider checking the activity log at some point after the interaction
 ```
 

@@ -186,7 +186,7 @@ func (h *vpTestHelper) issueCredentials(t *testing.T, issuerProfileIDs []string)
 	credentials := api.NewVerifiableCredentialsArray()
 
 	for i := 0; i < len(issuerProfileIDs); i++ {
-		initiateIssuanceURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i])
+		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i])
 		require.NoError(t, err)
 
 		didResolver, err := did.NewResolver("http://did-resolver.trustbloc.local:8072/1.0/identifiers")
@@ -198,7 +198,7 @@ func (h *vpTestHelper) issueCredentials(t *testing.T, issuerProfileIDs []string)
 			Crypto:      h.KMS.GetCrypto(),
 		}
 
-		interaction, err := openid4ci.NewInteraction(initiateIssuanceURL, &clientConfig)
+		interaction, err := openid4ci.NewInteraction(offerCredentialURL, &clientConfig)
 		require.NoError(t, err)
 
 		authorizeResult, err := interaction.Authorize()

@@ -127,13 +127,13 @@ func TestResolve(t *testing.T) {
 			})
 			t.Run("Credentials supported object does not contain display info for the given VC, "+
 				"resulting in the default display being used", func(t *testing.T) {
-				t.Run("Credentials supported object doesn't have a jwt_vc format object", func(t *testing.T) {
+				t.Run("Credentials supported object doesn't have a jwt_vc_json format object", func(t *testing.T) {
 					var issuerMetadata issuer.Metadata
 
 					err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
 					require.NoError(t, err)
 
-					delete(issuerMetadata.CredentialsSupported["university_degree"].Formats, "jwt_vc")
+					issuerMetadata.CredentialsSupported[0].Format = "SomeUnknownFormat"
 
 					resolvedDisplayData, errResolve := credentialschema.Resolve(
 						credentialschema.WithCredentials([]*verifiable.Credential{credential}),
@@ -142,14 +142,14 @@ func TestResolve(t *testing.T) {
 					require.NoError(t, errResolve)
 					checkForDefaultDisplayData(t, resolvedDisplayData)
 				})
-				t.Run("jwt_vc format object doesn't have UniversityDegreeCredential in its types",
+				t.Run("jwt_vc_json format object doesn't have UniversityDegreeCredential in its types",
 					func(t *testing.T) {
 						var issuerMetadata issuer.Metadata
 
 						err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
 						require.NoError(t, err)
 
-						issuerMetadata.CredentialsSupported["university_degree"].Formats["jwt_vc"].Types[1] = "SomeOtherType"
+						issuerMetadata.CredentialsSupported[0].Types[1] = "SomeOtherType"
 
 						resolvedDisplayData, errResolve := credentialschema.Resolve(
 							credentialschema.WithCredentials([]*verifiable.Credential{credential}),
@@ -191,7 +191,7 @@ func TestResolve(t *testing.T) {
 				err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
 				require.NoError(t, err)
 
-				issuerMetadata.CredentialIssuer = nil
+				issuerMetadata.IssuerDisplays = nil
 
 				resolvedDisplayData, err := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
@@ -317,7 +317,7 @@ func TestResolve(t *testing.T) {
 			resolvedDisplayData, err := credentialschema.Resolve(
 				credentialschema.WithCredentials([]*verifiable.Credential{{}}),
 				credentialschema.WithIssuerURI("http://BadURL"))
-			require.Contains(t, err.Error(), `Get "http://BadURL/.well-known/openid-configuration":`+
+			require.Contains(t, err.Error(), `Get "http://BadURL/.well-known/openid-credential-issuer":`+
 				` dial tcp: lookup BadURL:`)
 			require.Nil(t, resolvedDisplayData)
 		})

@@ -19,10 +19,10 @@ import (
 
 const (
 	localeNotApplicable = "N/A"
-	jwtVCFormatType     = "jwt_vc"
+	jwtVCJSONFormatType = "jwt_vc_json"
 )
 
-func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported map[string]issuer.SupportedCredential,
+func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported []issuer.SupportedCredential,
 	preferredLocale string,
 ) ([]CredentialDisplay, error) {
 	var credentialDisplays []CredentialDisplay
@@ -35,13 +35,9 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 
 		var foundMatchingType bool
 
-		// Note that the actual ID here isn't important here - what matters are the types listed within the
-		// supported credential object.
-		for id := range credentialsSupported {
-			supportedCredential := credentialsSupported[id]
-
-			if haveMatchingTypes(supportedCredential.Formats, vc) {
-				credentialDisplay := buildCredentialDisplay(&supportedCredential, subject, vc.SDJWTDisclosures, preferredLocale)
+		for i := range credentialsSupported {
+			if haveMatchingTypes(&credentialsSupported[i], vc) {
+				credentialDisplay := buildCredentialDisplay(&credentialsSupported[i], subject, vc.SDJWTDisclosures, preferredLocale)
 
 				credentialDisplays = append(credentialDisplays, *credentialDisplay)
 
@@ -66,21 +62,22 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 
 // The VC is considered to be a match for the supportedCredential if the VC has at least one type that's the same as
 // the type specified by the supportCredential (excluding the "VerifiableCredential" type that all VCs have).
-func haveMatchingTypes(supportedCredential map[string]issuer.Format, vc *verifiable.Credential) bool {
-	// Currently, our OpenID4CI implementation only supports the jwt_vc format.
-	format, found := supportedCredential[jwtVCFormatType]
-	if found {
-		for _, typeFromVC := range vc.Types {
-			// We expect the types in the VC and SupportedCredential to always include VerifiableCredential,
-			// so we skip this case.
-			if strings.EqualFold(typeFromVC, "VerifiableCredential") {
-				continue
-			}
+func haveMatchingTypes(supportedCredential *issuer.SupportedCredential, vc *verifiable.Credential) bool {
+	// Currently, our OpenID4CI implementation only supports the jwt_vc_json format.
+	if supportedCredential.Format != jwtVCJSONFormatType {
+		return false
+	}
 
-			for _, typeFromFormat := range format.Types {
-				if strings.EqualFold(typeFromVC, typeFromFormat) {
-					return true
-				}
+	for _, typeFromVC := range vc.Types {
+		// We expect the types in the VC and SupportedCredential to always include VerifiableCredential,
+		// so we skip this case.
+		if strings.EqualFold(typeFromVC, "VerifiableCredential") {
+			continue
+		}
+
+		for _, typeFromSupportedCredential := range supportedCredential.Types {
+			if strings.EqualFold(typeFromVC, typeFromSupportedCredential) {
+				return true
 			}
 		}
 	}
@@ -144,7 +141,7 @@ func resolveClaims(supportedCredential *issuer.SupportedCredential, credentialSu
 ) []ResolvedClaim {
 	var resolvedClaims []ResolvedClaim
 
-	for fieldName, claim := range supportedCredential.Claims {
+	for fieldName, claim := range supportedCredential.CredentialSubject {
 		claim := claim // Resolves implicit memory aliasing warning from linter
 
 		resolvedClaim := resolveClaim(fieldName, &claim, credentialSubject, sdDisclosures, preferredLocale)

@@ -59,12 +59,12 @@ func (d *DisplayData) CredentialDisplayAtIndex(index int) *CredentialDisplay {
 
 // IssuerDisplay represents display information about the issuer of some credential(s).
 type IssuerDisplay struct {
-	issuerDisplay *goapicredentialschema.ResolvedCredentialIssuerDisplay
+	issuerDisplay *goapicredentialschema.ResolvedIssuerDisplay
 }
 
 // ParseIssuerDisplay parses the given serialized issuer display data and returns an IssuerDisplay object.
 func ParseIssuerDisplay(issuerDisplay string) (*IssuerDisplay, error) {
-	var parsedIssuerDisplay goapicredentialschema.ResolvedCredentialIssuerDisplay
+	var parsedIssuerDisplay goapicredentialschema.ResolvedIssuerDisplay
 
 	err := json.Unmarshal([]byte(issuerDisplay), &parsedIssuerDisplay)
 	if err != nil {
@@ -94,7 +94,7 @@ func (d *IssuerDisplay) Locale() string {
 }
 
 // CredentialDisplay represents display data for a credential.
-// Display data for specific claims (e.g. first name, date of birth, etc.) are in the Claims objects.
+// Display data for specific claims (e.g. first name, date of birth, etc.) are in the CredentialSubject objects.
 type CredentialDisplay struct {
 	credentialDisplay *goapicredentialschema.CredentialDisplay
 }
