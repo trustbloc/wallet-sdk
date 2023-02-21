@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:core';
 
+import 'package:app/models/activity_data_object.dart';
 import 'package:app/models/credential_data_object.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:flutter/cupertino.dart';
@@ -29,6 +30,21 @@ class StorageService {
         .map((e) => CredentialDataObject(e.key, CredentialData.fromJson(jsonDecode(e.value))))
         .toList();
     return list;
+  }
+
+  Future<void> addActivities(ActivityDataObj activityObj) async {
+    debugPrint("Adding new data having key ${activityObj.key}");
+    await _secureStorage.write(
+        key: activityObj.key, value: jsonEncode(activityObj.value), aOptions: _getAndroidOptions());
+  }
+
+  Future<List> retrieveActivities(String credID) async {
+    debugPrint("Retrieve stored activities $credID");
+    var allData = await _secureStorage.readAll(aOptions: _getAndroidOptions());
+    List list = allData.entries
+        .where((e) => e.key.contains(credID))
+        .map((e) => jsonDecode(e.value)).toList();
+    return list.first;
   }
 
   Future<void> deleteData(CredentialDataObject item) async {

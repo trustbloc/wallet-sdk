@@ -2,10 +2,13 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:app/main.dart';
+import 'package:app/models/activity_data_object.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:flutter/material.dart';
 import 'package:app/widgets/common_title_appbar.dart';
 import 'package:flutter/services.dart';
+import 'package:app/services/storage_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/primary_input_field.dart';
 import 'credential_preview.dart';
@@ -17,6 +20,8 @@ class OTP extends StatefulWidget {
   State<OTP> createState() => _OTPPage();
 }
 class _OTPPage extends State<OTP> {
+  final StorageService _storageService = StorageService();
+  final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   // 4 text editing controllers that associate with the 4 input fields
   final TextEditingController otpController = TextEditingController();
 
@@ -103,14 +108,20 @@ class _OTPPage extends State<OTP> {
                         setState(() {
                           _otp = otpController.text;
                         });
-                        String? requestCredentialResp;
+                        String? credentials;
                         String? resolvedCredentialDisplay;
                         try {
-                          requestCredentialResp =  await WalletSDKPlugin.requestCredential(_otp!);
+                          credentials =  await WalletSDKPlugin.requestCredential(_otp!);
                           String? issuerURI = await WalletSDKPlugin.issuerURI();
-                          resolvedCredentialDisplay = await WalletSDKPlugin.resolveCredentialDisplay([requestCredentialResp], issuerURI!);
+                          resolvedCredentialDisplay = await WalletSDKPlugin.resolveCredentialDisplay([credentials], issuerURI!);
                           log("resolvedCredentialDisplay -$resolvedCredentialDisplay");
-                          _navigateToCredPreviewScreen(requestCredentialResp, issuerURI, resolvedCredentialDisplay!);
+                          var activities = await WalletSDKPlugin.storeActivityLogger();
+                          var credID = await WalletSDKPlugin.getCredID([credentials]);
+                          log("activities and credID -$activities and $credID");
+                          _storageService.addActivities(ActivityDataObj(credID!, activities));
+                          final SharedPreferences pref = await prefs;
+                           pref.setString("credID", credID);
+                          _navigateToCredPreviewScreen(credentials, issuerURI, resolvedCredentialDisplay!);
                         } catch (err) {
                           String errorMessage = err.toString();
                           if (err is PlatformException &&
