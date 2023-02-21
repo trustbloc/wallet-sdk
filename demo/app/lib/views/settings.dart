@@ -2,7 +2,7 @@ import 'package:app/main.dart';
 import 'package:app/models/store_credential_data.dart';
 import 'package:flutter/material.dart';
 
-import '../widgets/primary_button.dart';
+import 'package:app/widgets/primary_button.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});

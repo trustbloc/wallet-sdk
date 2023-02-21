@@ -1,7 +1,10 @@
+import 'dart:developer';
+
 import 'package:app/views/credential_shared.dart';
 import 'package:app/views/dashboard.dart';
 import 'package:app/widgets/credential_verified_information_view.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:app/models/store_credential_data.dart';
 import 'package:app/widgets/common_title_appbar.dart';
@@ -10,6 +13,10 @@ import 'package:app/widgets/primary_button.dart';
 import 'package:app/widgets/Credential_card_outline.dart';
 import 'package:app/widgets/credential_metadata_card.dart';
 import 'package:app/main.dart';
+
+import 'package:app/services/storage_service.dart';
+
+import 'package:app/models/activity_data_object.dart';
 
 class PresentationPreview extends StatefulWidget {
   final String matchedCredential;
@@ -21,6 +28,8 @@ class PresentationPreview extends StatefulWidget {
 }
 
 class PresentationPreviewState extends State<PresentationPreview> {
+  final StorageService _storageService = StorageService();
+  final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   var uuid = const Uuid();
   late final String userLoggedIn;
   // Todo fetch the name of the  verifier name from the presentation
@@ -78,7 +87,11 @@ class PresentationPreviewState extends State<PresentationPreview> {
                       ),
                       PrimaryButton(
                           onPressed: () async {
+                            final SharedPreferences pref = await prefs;
                             await WalletSDKPlugin.presentCredential();
+                            var activities = await WalletSDKPlugin.storeActivityLogger();
+                            var credID = pref.getString('credID');
+                            _storageService.addActivities(ActivityDataObj(credID!, activities));
                             _navigateToCredentialShareSuccess(verifierName);
                           },
                           width: double.infinity,

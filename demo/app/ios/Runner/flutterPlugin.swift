@@ -59,6 +59,12 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "resolveCredentialDisplay":
             resolveCredentialDisplay(arguments: arguments!,  result: result)
             
+        case "getCredID":
+            getCredID(arguments: arguments!,  result: result)
+            
+        case "parseActivities":
+            parseActivities(arguments: arguments!,  result: result)
+            
         case "initSDK":
             initSDK(result:result)
             
@@ -66,7 +72,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             issuerURI(result:result)
 
         case "activityLogger":
-            activityLogger(result:result)
+            storeActivityLogger(result:result)
 
         case "processAuthorizationRequest":
             processAuthorizationRequest(arguments: arguments!, result: result)
@@ -248,31 +254,70 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             }
     }
 
-    public func activityLogger(result: @escaping FlutterResult){
+    public func parseActivities(arguments: Dictionary<String, Any>,result: @escaping FlutterResult){
         var activityList: [Any] = []
-        var aryLength = activityLogger!.length()
-        for index in 0..<aryLength {
-            var status = activityLogger!.atIndex(index)!.status()
-            var date = NSDate(timeIntervalSince1970: TimeInterval(activityLogger!.atIndex(index)!.unixTimestamp()))
-
+        guard let activities = arguments["activities"] as? Array<String> else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while parsing activities",
+                                             details: "parameter storedcredentials is missed"))
+        }
+                
+        for activity in activities {
+            let activityObj = ApiParseActivity(activity, nil)
+            var status = activityObj!.status()
+            var date = NSDate(timeIntervalSince1970: TimeInterval(activityObj!.unixTimestamp()))
             var utcDateFormatter = DateFormatter()
             utcDateFormatter.dateStyle = .long
             utcDateFormatter.timeStyle = .short
             let updatedDate = date
+            var type = activityObj?.type()
             var activityDicResp:[String:Any] = [
                 "Status":  status,
-                "Issued By": activityLogger!.atIndex(index)!.client(),
-                "Activity Type": activityLogger!.atIndex(index)!.type(),
+                "Issued By": activityObj?.client(),
+                "Operation": activityObj?.operation(),
+                "Activity Type": activityObj?.type(),
                 "Date": utcDateFormatter.string(from: updatedDate as Date),
             ]
-
             activityList.append(activityDicResp)
+        }
+    
+
+        result(activityList)
+    }
+    
+    public func storeActivityLogger(result: @escaping FlutterResult){
+        var activityList: [Any] = []
+        var aryLength = activityLogger!.length()
+        for index in 0..<aryLength {
+            activityList.append(activityLogger!.atIndex(index)!.serialize(nil))
         }
 
         result(activityList)
     }
+    
+    public func getCredID(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
+        
+        guard let vcCredentials = arguments["vcCredentials"] as? Array<String> else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while fetching credential ID",
+                                             details: "parameter storedcredentials is missed"))
+        }
+        let opts = VcparseNewOpts(true, nil)
+        var credIDs: [Any] = []
 
-    public func issuerURI(result: @escaping FlutterResult){
+        for cred in vcCredentials{
+            let parsedVC = VcparseParse(cred, opts, nil)!
+            let credID = parsedVC.id_()
+            print("credid -->", credID)
+            credIDs.append(credID)
+            
+        }
+        print("first credid -->", credIDs[0])
+        result(credIDs[0])
+    }
+
+
+    public func issuerURI( result: @escaping FlutterResult){
         let issuerURIResp = newOIDCInteraction?.issuerURI();
         result(issuerURIResp)
     }
@@ -292,14 +337,6 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         return myArgs?[key] as? String;
     }
 
-    public func dataToJSON(data: Data) -> Any? {
-       do {
-           return try JSONSerialization.jsonObject(with: data, options: .mutableContainers)
-       } catch let myJSONError {
-           print(myJSONError)
-       }
-       return nil
-    }
     //Define type method to access the new interaction further in the flow
     class OpenID
     {

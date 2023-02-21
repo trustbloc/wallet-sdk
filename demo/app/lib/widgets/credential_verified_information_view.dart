@@ -16,7 +16,6 @@ class CredentialVerifiedInformation extends StatelessWidget {
     List<CredentialPreviewData> list;
     var data = json.decode(credentialData.credentialDisplayData!);
     var credentialClaimsData = data['credential_displays'][0]['claims'] as List;
-    log("credentialClaimsData -$credentialClaimsData");
     list = credentialClaimsData.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
     return listViewWidget(list);
   }

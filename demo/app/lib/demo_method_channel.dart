@@ -74,8 +74,28 @@ class MethodChannelWallet extends WalletPlatform {
     await methodChannel.invokeMethod('presentCredential');
   }
 
-  Future<List<Object?>> activityLogger() async {
+  Future<List<Object?>> storeActivityLogger() async {
    var activityObj =  await methodChannel.invokeMethod('activityLogger');
    return activityObj;
   }
+
+  Future<List<Object?>> parseActivities(List activities) async {
+    var activityObj =  await methodChannel.invokeMethod('parseActivities', <String, dynamic>{'activities':activities});
+    return activityObj;
+  }
+
+  Future<String?> getCredID(List<String> credentials) async {
+    try {
+      final credentialID =
+      await methodChannel.invokeMethod<String>('getCredID', <String, dynamic>{'vcCredentials':credentials});
+      return credentialID;
+    } on PlatformException catch (error) {
+      if (error.code == errorCode) {
+        return error.details.toString();
+      }
+    }
+    return null;
+  }
+
+
 }
