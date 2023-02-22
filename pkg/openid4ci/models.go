@@ -16,12 +16,13 @@ import (
 // Interaction represents a single OpenID4CI interaction between a wallet and an issuer. The methods defined on this
 // object are used to help guide the calling code through the OpenID4CI flow.
 type Interaction struct {
-	initiationRequest *InitiationRequest
-	clientID          string
-	issuerMetadata    *issuer.Metadata
-	vcs               []*verifiable.Credential
-	didResolver       *didResolverWrapper
-	activityLogger    api.ActivityLogger
+	initiationRequest    *InitiationRequest
+	clientID             string
+	issuerMetadata       *issuer.Metadata
+	vcs                  []*verifiable.Credential
+	didResolver          *didResolverWrapper
+	activityLogger       api.ActivityLogger
+	disableVCProofChecks bool
 }
 
 // InitiationRequest represents the Issuance Initiation Request object received from an issuer as defined in

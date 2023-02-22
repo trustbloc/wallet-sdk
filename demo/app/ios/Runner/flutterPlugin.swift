@@ -88,7 +88,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     private func initSDK(result: @escaping FlutterResult) {
         let kmsstore = kmsStore()
         kms = LocalkmsNewKMS(kmsstore, nil)
-        didResolver = DidNewResolver("", nil)
+        didResolver = DidNewResolver("http://did-resolver.trustbloc.local:8072/1.0/identifiers", nil)
         crypto = kms?.getCrypto()
         documentLoader = LdNewDocLoader()
         activityLogger = MemNewActivityLogger()

@@ -153,7 +153,7 @@ class MainActivity : FlutterActivity() {
     private fun initSDK() {
         val kmsLocalStore = KmsStore(context)
         val kms = Localkms.newKMS(kmsLocalStore)
-        didResolver = Resolver("")
+        didResolver = Resolver("http://localhost:8072/1.0/identifiers")
         crypto = kms.crypto
         documentLoader = DocLoader()
         activityLogger = ActivityLogger()

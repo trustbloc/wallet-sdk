@@ -111,7 +111,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		didResolver, err := did.NewResolver("")
+		didResolver, err := did.NewResolver("http://did-resolver.trustbloc.local:8072/1.0/identifiers")
 		require.NoError(t, err)
 
 		didID, err := didDoc.ID()

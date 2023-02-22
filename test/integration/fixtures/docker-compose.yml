@@ -101,9 +101,11 @@ services:
       - ALLOWED_ORIGINS=https://testnet.orb.local
       - CAS_TYPE=local
       - ANCHOR_CREDENTIAL_SIGNATURE_SUITE=Ed25519Signature2018
-      - DATABASE_TYPE=mem
+      - DATABASE_TYPE=mongodb
+      - DATABASE_URL=mongodb://mongodb.example.com:27017
       - ORB_KMS_TYPE=local
-      - KMSSECRETS_DATABASE_TYPE=mem
+      - KMSSECRETS_DATABASE_TYPE=mongodb
+      - KMSSECRETS_DATABASE_URL=mongodb://mongodb.example.com:27017
       - INCLUDE_PUBLISHED_OPERATIONS_IN_METADATA=true
       - INCLUDE_UNPUBLISHED_OPERATIONS_IN_METADATA=true
       - UNPUBLISHED_OPERATION_STORE_ENABLED=true
