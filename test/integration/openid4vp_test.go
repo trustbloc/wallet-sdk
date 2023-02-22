@@ -67,6 +67,12 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_myprofile_jwt_verified_employee",
 		},
+
+		{
+			issuerProfileIDs:  []string{"bank_issuer", "bank_issuer"},
+			walletDIDMethod:   "ion",
+			verifierProfileID: "v_myprofile_jwt_verified_employee",
+		},
 	}
 
 	for i, tc := range tests {
@@ -105,8 +111,20 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		require.NoError(t, err)
 		println("query", string(query))
 
-		verifiablePres, err := credential.NewInquirer(ld.NewDocLoader()).
-			Query(query, credential.NewCredentialsOpt(issuedCredentials))
+		inquirer := credential.NewInquirer(ld.NewDocLoader())
+		require.NoError(t, err)
+
+		requirements, err := inquirer.GetSubmissionRequirements(query, credential.NewCredentialsOpt(issuedCredentials))
+		require.GreaterOrEqual(t, requirements.Len(), 1)
+		require.GreaterOrEqual(t, requirements.AtIndex(0).DescriptorLen(), 1)
+
+		requirementDescriptor := requirements.AtIndex(0).DescriptorAtIndex(0)
+		require.GreaterOrEqual(t, requirementDescriptor.MatchedVCs.Length(), 1)
+
+		selectedCreds := api.NewVerifiableCredentialsArray()
+		selectedCreds.Add(requirementDescriptor.MatchedVCs.AtIndex(0))
+
+		verifiablePres, err := inquirer.Query(query, credential.NewCredentialsOpt(selectedCreds))
 		require.NoError(t, err)
 
 		matchedCreds, err := verifiablePres.Credentials()
