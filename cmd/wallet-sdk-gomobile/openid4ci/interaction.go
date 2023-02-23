@@ -101,7 +101,7 @@ func NewInteraction(
 // order to continue with the flow.
 // It only supports the pre-authorized flow in its current implementation.
 // Once the authorization flow is implemented, the following section of the spec will be relevant:
-// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-6
+// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#name-authorization-endpoint
 func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 	authorizationResultGoAPI, err := i.goAPIInteraction.Authorize()
 	if err != nil {
@@ -119,8 +119,7 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 // RequestCredential is the final step (or second last step, if the ResolveDisplay method isn't needed) in the
 // interaction. This is called after the wallet is authorized and is ready to receive credential(s).
 // Relevant sections of the spec:
-// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-7
-// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-8
+// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#name-credential-endpoint
 func (i *Interaction) RequestCredential(
 	credentialRequest *CredentialRequestOpts,
 	vm *api.VerificationMethod,
@@ -144,20 +143,6 @@ func (i *Interaction) RequestCredential(
 	}
 
 	return gomobileCredentials, nil
-}
-
-// ResolveDisplay is the optional final step that can be called after RequestCredential. It resolves display
-// information for the credentials received in this interaction. The CredentialDisplays in the returned
-// object correspond to the VCs received and are in the same order.
-// If preferredLocale is not specified, then the first locale specified by the issuer's metadata will be used during
-// resolution.
-func (i *Interaction) ResolveDisplay(preferredLocale string) (*DisplayData, error) {
-	resolvedDisplayData, err := i.goAPIInteraction.ResolveDisplay(preferredLocale)
-	if err != nil {
-		return nil, walleterror.ToMobileError(err)
-	}
-
-	return &DisplayData{resolvedDisplayData: resolvedDisplayData}, nil
 }
 
 // IssuerURI returns the issuer's URI from the initiation request. It's useful to store this somewhere in case

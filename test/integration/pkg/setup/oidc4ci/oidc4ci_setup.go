@@ -22,14 +22,14 @@ import (
 )
 
 const (
-	vcsAPIGateway                       = "https://localhost:4455"
-	VCSAPIDirect                        = "http://localhost:8075"
-	initiateCredentialIssuanceURLFormat = "%s" + "/issuer/profiles/%s/interactions/initiate-oidc"
-	vcsAuthorizeEndpoint                = "%s" + "/oidc/authorize"
-	vcsTokenEndpoint                    = "%s" + "/oidc/token"
-	oidcProviderURL                     = "https://localhost:4444"
-	claimDataURL                        = "https://mock-login-consent.example.com:8099/claim-data"
-	xAPIKey                             = "rw_token"
+	vcsAPIGateway            = "https://localhost:4455"
+	VCSAPIDirect             = "http://localhost:8075"
+	offerCredentialURLFormat = "%s" + "/issuer/profiles/%s/interactions/initiate-oidc"
+	vcsAuthorizeEndpoint     = "%s" + "/oidc/authorize"
+	vcsTokenEndpoint         = "%s" + "/oidc/token"
+	oidcProviderURL          = "https://localhost:4444"
+	claimDataURL             = "https://mock-login-consent.example.com:8099/claim-data"
+	xAPIKey                  = "rw_token"
 )
 
 type initiateOIDC4CIRequest struct {
@@ -46,8 +46,7 @@ type initiateOIDC4CIRequest struct {
 }
 
 type initiateOIDC4CIResponse struct {
-	InitiateIssuanceUrl string `json:"initiate_issuance_url"`
-	TxId                string `json:"tx_id"`
+	OfferCredentialURL string `json:"offer_credential_URL"`
 }
 
 type Setup struct {
@@ -57,9 +56,9 @@ type Setup struct {
 	organizationID    string
 	apiURL            string
 
-	httpRequest         *httprequest.Request
-	debug               bool
-	initiateIssuanceURL string
+	httpRequest        *httprequest.Request
+	debug              bool
+	offerCredentialURL string
 }
 
 func NewSetup(httpRequest *httprequest.Request) (*Setup, error) {
@@ -110,7 +109,7 @@ func (s *Setup) registerPublicClient() error {
 }
 
 func (s *Setup) InitiateCredentialIssuance(issuerProfileID string) (string, error) {
-	endpointURL := fmt.Sprintf(initiateCredentialIssuanceURLFormat, s.apiURL, issuerProfileID)
+	endpointURL := fmt.Sprintf(offerCredentialURLFormat, s.apiURL, issuerProfileID)
 
 	reqBody, err := json.Marshal(&initiateOIDC4CIRequest{
 		CredentialTemplateId: "templateID",
@@ -132,17 +131,17 @@ func (s *Setup) InitiateCredentialIssuance(issuerProfileID string) (string, erro
 		return "", fmt.Errorf("https do: %w", err)
 	}
 
-	s.initiateIssuanceURL = oidc44CIResponse.InitiateIssuanceUrl
+	s.offerCredentialURL = oidc44CIResponse.OfferCredentialURL
 
-	if s.initiateIssuanceURL == "" {
+	if s.offerCredentialURL == "" {
 		return "", fmt.Errorf("initiate issuance URL is empty")
 	}
 
-	return s.initiateIssuanceURL, nil
+	return s.offerCredentialURL, nil
 }
 
 func (s *Setup) InitiatePreAuthorizedIssuance(issuerProfileID string) (string, error) {
-	issuanceURL := fmt.Sprintf(initiateCredentialIssuanceURLFormat, s.apiURL, issuerProfileID)
+	issuanceURL := fmt.Sprintf(offerCredentialURLFormat, s.apiURL, issuerProfileID)
 
 	var claimData map[string]interface{}
 
@@ -191,13 +190,13 @@ func (s *Setup) InitiatePreAuthorizedIssuance(issuerProfileID string) (string, e
 		return "", err
 	}
 
-	s.initiateIssuanceURL = oidcInitiateResponse.InitiateIssuanceUrl
+	s.offerCredentialURL = oidcInitiateResponse.OfferCredentialURL
 
-	if s.initiateIssuanceURL == "" {
-		return "", fmt.Errorf("initiate issuance URL is empty")
+	if s.offerCredentialURL == "" {
+		return "", fmt.Errorf("offer credential URL is empty")
 	}
 
-	return s.initiateIssuanceURL, nil
+	return s.offerCredentialURL, nil
 }
 
 func (s *Setup) getAuthHeaders() map[string]string {
@@ -207,7 +206,7 @@ func (s *Setup) getAuthHeaders() map[string]string {
 		headers["Authorization"] = "Bearer " + s.issuerAccessToken
 	}
 	if s.organizationID != "" {
-		headers["X-User"] = s.organizationID
+		headers["X-Tenant-ID"] = s.organizationID
 		headers["X-API-Key"] = xAPIKey
 	}
 	return headers

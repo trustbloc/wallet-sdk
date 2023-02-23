@@ -43,9 +43,9 @@ func initiatePreAuthorizedIssuance(issuerProfileIDs []string) {
 
 	for i := 0; i < len(issuerProfileIDs); i++ {
 		for j := 0; j < 120; j++ {
-			initiateIssuanceURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i])
+			offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i])
 			if err == nil {
-				initiateIssuanceURLs = append(initiateIssuanceURLs, initiateIssuanceURL)
+				initiateIssuanceURLs = append(initiateIssuanceURLs, offerCredentialURL)
 				break
 			}
 			println(err.Error())

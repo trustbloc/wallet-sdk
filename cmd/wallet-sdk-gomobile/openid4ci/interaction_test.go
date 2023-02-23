@@ -8,6 +8,7 @@ package openid4ci_test
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -20,6 +21,7 @@ import (
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
+	goapiopenid4ci "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -31,10 +33,6 @@ import (
 var sampleCredentialResponse []byte
 
 const (
-	sampleRequestURI = "openid-vc://initiate_issuance?issuer=https%3A%2F%2Fserver%2Eexample%2Ecom" +
-		"&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard" +
-		"&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA" +
-		"&user_pin_required=false"
 	sampleTokenResponse = `{"access_token":"eyJhbGciOiJSUzI1NiIsInR5cCI6Ikp..sHQ",` +
 		`"token_type":"bearer","expires_in":86400,"c_nonce":"tZignsnFbp","c_nonce_expires_in":86400}`
 	mockDID = "did:test:foo"
@@ -47,104 +45,89 @@ func TestNewInteraction(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		createInteraction(t, kms, nil, sampleRequestURI)
-	})
-	t.Run("Fail to parse user_pin_required URL query parameter", func(t *testing.T) {
-		requestURI := "openid-vc:///initiate_issuance?&user_pin_required=notabool"
-		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
-		require.NoError(t, err)
-
-		config := getTestClientConfig(t, kms, nil)
-
-		interaction, err := openid4ci.NewInteraction(requestURI, config)
-		requireErrorContains(t, err, `INVALID_ISSUANCE_URI`)
-		require.Nil(t, interaction)
-	})
-}
-
-func TestInteraction_Authorize(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
-		require.NoError(t, err)
-
-		interaction := createInteraction(t, kms, nil, sampleRequestURI)
-
-		result, err := interaction.Authorize()
-		require.NoError(t, err)
-		require.NotNil(t, result)
-	})
-	t.Run("Pre-authorized code not provided", func(t *testing.T) {
-		requestURI := "openid-vc:///initiate_issuance"
-
-		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
-		require.NoError(t, err)
-
-		config := getTestClientConfig(t, kms, nil)
-
-		interaction, err := openid4ci.NewInteraction(requestURI, config)
-		require.NoError(t, err)
-
-		result, err := interaction.Authorize()
-		requireErrorContains(t, err, "PRE_AUTHORIZED_CODE_REQUIRED")
-		require.Nil(t, result)
+		createInteraction(t, kms, nil, createTestRequestURI("example.com"))
 	})
 }
 
 type mockIssuerServerHandler struct {
-	issuerMetadata string
+	t                                                 *testing.T
+	openIDConfig                                      *goapiopenid4ci.OpenIDConfig
+	issuerMetadata                                    string
+	tokenRequestShouldFail                            bool
+	tokenRequestShouldGiveUnmarshallableResponse      bool
+	credentialRequestShouldFail                       bool
+	credentialRequestShouldGiveUnmarshallableResponse bool
+	credentialResponse                                []byte
 }
 
-func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, reader *http.Request) {
+func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	var err error
 
-	switch reader.URL.Path {
+	switch request.URL.Path {
 	case "/.well-known/openid-configuration":
+		var openIDConfigBytes []byte
+
+		openIDConfigBytes, err = json.Marshal(m.openIDConfig)
+		if err != nil {
+			break
+		}
+
+		_, err = writer.Write(openIDConfigBytes)
+	case "/.well-known/openid-credential-issuer":
 		_, err = writer.Write([]byte(m.issuerMetadata))
-	case "/connect/token":
-		_, err = writer.Write([]byte(sampleTokenResponse))
+	case "/oidc/token":
+		switch {
+		case m.tokenRequestShouldFail:
+			writer.WriteHeader(http.StatusInternalServerError)
+			_, err = writer.Write([]byte("test failure"))
+		case m.tokenRequestShouldGiveUnmarshallableResponse:
+			_, err = writer.Write([]byte("invalid"))
+		default:
+			_, err = writer.Write([]byte(sampleTokenResponse))
+		}
 	case "/credential":
-		_, err = writer.Write(sampleCredentialResponse)
+		switch {
+		case m.credentialRequestShouldFail:
+			writer.WriteHeader(http.StatusInternalServerError)
+			_, err = writer.Write([]byte("test failure"))
+		case m.credentialRequestShouldGiveUnmarshallableResponse:
+			_, err = writer.Write([]byte("invalid"))
+		default:
+			_, err = writer.Write(m.credentialResponse)
+		}
 	}
 
-	if err != nil {
-		println(err.Error())
-	}
+	require.NoError(m.t, err)
 }
 
 func TestInteraction_RequestCredential(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
-		require.NoError(t, err)
-
-		keyHandle, err := kms.Create(arieskms.ED25519)
-		require.NoError(t, err)
-
-		fmt.Println("key ID:", keyHandle.ID())
-
-		issuerServerHandler := &mockIssuerServerHandler{}
+		issuerServerHandler := &mockIssuerServerHandler{
+			t:                  t,
+			credentialResponse: sampleCredentialResponse,
+		}
 		server := httptest.NewServer(issuerServerHandler)
 
-		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"issuer":"https://server.example.com",`+
-			`"authorization_endpoint":"https://server.example.com/connect/authorize",`+
-			`"token_endpoint":"%s/connect/token",`+
-			`"pushed_authorization_request_endpoint":"https://server.example.com/connect/par-authorize",`+
-			`"require_pushed_authorization_requests":false,`+
-			`"credential_endpoint":"%s/credential"}`, server.URL, server.URL)
+		issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
+			TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+		}
+
+		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential",`+
+			`"credential_issuer":"https://server.example.com"}`, server.URL)
 
 		defer server.Close()
 
-		serverURLEscaped := url.QueryEscape(server.URL)
-
-		requestURI := "openid-vc://initiate_issuance?issuer=" + serverURLEscaped +
-			"&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard" +
-			"&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA" +
-			"&user_pin_required=false"
-
 		activityLogger := mem.NewActivityLogger()
 
-		interaction := createInteraction(t, kms, activityLogger, requestURI)
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
 
-		credentialRequest := openid4ci.NewCredentialRequestOpts("")
+		interaction := createInteraction(t, kms, activityLogger, createTestRequestURI(server.URL))
+
+		credentialRequest := openid4ci.NewCredentialRequestOpts("1234")
+
+		keyHandle, err := kms.Create(arieskms.ED25519)
+		require.NoError(t, err)
 
 		pkBytes, err := keyHandle.JWK.PublicKeyBytes()
 		require.NoError(t, err)
@@ -193,37 +176,35 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		require.Equal(t, "did:orb:uAAA:EiARTvvCsWFTSCc35447YpI2MJpFAaJZtFlceVz9lcMYVw", subjectID)
 	})
 	t.Run("Success with jwk public key", func(t *testing.T) {
-		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
-		require.NoError(t, err)
-
-		keyHandle, err := kms.Create(arieskms.ED25519)
-		require.NoError(t, err)
-
-		issuerServerHandler := &mockIssuerServerHandler{}
+		issuerServerHandler := &mockIssuerServerHandler{
+			t:                  t,
+			credentialResponse: sampleCredentialResponse,
+		}
 		server := httptest.NewServer(issuerServerHandler)
 
-		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"issuer":"https://server.example.com",`+
-			`"authorization_endpoint":"https://server.example.com/connect/authorize",`+
-			`"token_endpoint":"%s/connect/token",`+
-			`"pushed_authorization_request_endpoint":"https://server.example.com/connect/par-authorize",`+
-			`"require_pushed_authorization_requests":false,`+
-			`"credential_endpoint":"%s/credential"}`, server.URL, server.URL)
+		issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
+			TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+		}
+
+		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential",`+
+			`"credential_issuer":"https://server.example.com"}`, server.URL)
 
 		defer server.Close()
 
-		serverURLEscaped := url.QueryEscape(server.URL)
+		requestURI := createTestRequestURI(server.URL)
 
-		requestURI := "openid-vc://initiate_issuance?issuer=" + serverURLEscaped +
-			"&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard" +
-			"&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA" +
-			"&user_pin_required=false"
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
 
 		config := getTestClientConfig(t, kms, nil)
 
 		interaction, err := openid4ci.NewInteraction(requestURI, config)
 		require.NoError(t, err)
 
-		credentialRequest := openid4ci.NewCredentialRequestOpts("")
+		credentialRequest := openid4ci.NewCredentialRequestOpts("1234")
+
+		keyHandle, err := kms.Create(arieskms.ED25519)
+		require.NoError(t, err)
 
 		result, err := interaction.RequestCredential(credentialRequest, &api.VerificationMethod{
 			ID:   mockKeyID,
@@ -235,29 +216,17 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		require.NotNil(t, result)
 	})
 	t.Run("Fail to sign", func(t *testing.T) {
-		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
-		require.NoError(t, err)
-
-		issuerServerHandler := &mockIssuerServerHandler{}
+		issuerServerHandler := &mockIssuerServerHandler{t: t}
 		server := httptest.NewServer(issuerServerHandler)
-
-		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"issuer":"https://server.example.com",`+
-			`"authorization_endpoint":"https://server.example.com/connect/authorize",`+
-			`"token_endpoint":"%s/connect/token",`+
-			`"pushed_authorization_request_endpoint":"https://server.example.com/connect/par-authorize",`+
-			`"require_pushed_authorization_requests":false,`+
-			`"credential_endpoint":"%s/credential"}`, server.URL, server.URL)
 
 		defer server.Close()
 
-		serverURLEscaped := url.QueryEscape(server.URL)
-
-		requestURI := "openid-vc://initiate_issuance?issuer=" + serverURLEscaped +
-			"&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard" +
-			"&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA" +
-			"&user_pin_required=false"
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
 
 		config := getTestClientConfig(t, kms, nil)
+
+		requestURI := createTestRequestURI(server.URL)
 
 		interaction, err := openid4ci.NewInteraction(requestURI, config)
 		require.NoError(t, err)
@@ -368,4 +337,14 @@ func mockDocResolution(vm *did.VerificationMethod) ([]byte, error) {
 func requireErrorContains(t *testing.T, err error, errString string) { //nolint:thelper
 	require.Error(t, err)
 	require.Contains(t, err.Error(), errString)
+}
+
+func createTestRequestURI(issuerURL string) string {
+	issuerURLEscaped := url.QueryEscape(issuerURL)
+
+	return "openid-vc://?credential_offer=%7B%22credential_issuer%22%3A%22" + issuerURLEscaped +
+		"%22%2C%22credentials%22%3A%5B%7B%22format%22%3A%22jwt_vc_json%22%2C%22types%22%3A%5B%22Verifiable" +
+		"Credential%22%2C%22VerifiedEmployee%22%5D%7D%5D%2C%22grants%22%3A%7B%22urn%3Aietf%3Aparams%3Aoaut" +
+		"h%3Agrant-type%3Apre-authorized_code%22%3A%7B%22pre-authorized_code%22%3A%228e557518-bbb1-4483-94" +
+		"90-d80f4f54f3361677012959367644351%22%2C%22user_pin_required%22%3Atrue%7D%7D%7D"
 }

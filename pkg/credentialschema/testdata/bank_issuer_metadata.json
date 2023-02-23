@@ -1,17 +1,21 @@
 {
-  "authorization_endpoint":"http://localhost:8075/oidc/authorize",
+  "authorization_server":"http://localhost:8075/oidc/authorize",
   "credential_endpoint":"http://localhost:8075/oidc/credential",
-  "credential_issuer":{
-    "display":[
-      {
-        "locale":"en-US",
-        "name":"Bank Issuer"
-      }
-    ]
-  },
-  "credentials_supported":{
-    "verified_employee":{
-      "claims":{
+  "display":[
+    {
+      "locale":"en-US",
+      "name":"Bank Issuer"
+    }
+  ],
+  "credentials_supported":[
+    {
+      "id": "VerifiedEmployee",
+      "format": "jwt_vc_json",
+      "types":[
+        "VerifiableCredential",
+        "VerifiedEmployee"
+      ],
+      "credentialSubject":{
         "displayName":{
           "display":[
             {
@@ -86,32 +90,14 @@
           "background_color":"#12107c",
           "locale":"en-US",
           "logo":{
-            "alternative_text":"a square logo of an employee verification",
+            "alt_text":"a square logo of an employee verification",
             "url":"https://example.com/public/logo.png"
           },
           "name":"Verified Employee",
           "text_color":"#FFFFFF"
         }
-      ],
-      "formats":{
-        "jwt_vc":{
-          "cryptographic_binding_methods_supported":[
-            "orb"
-          ],
-          "cryptographic_suites_supported":[
-            "ECDSASecp256k1DER"
-          ],
-          "types":[
-            "VerifiableCredential",
-            "VerifiedEmployee"
-          ]
-        }
-      }
+      ]
     }
-  },
-  "issuer":"http://localhost:8075/bank_issuer_jwtsd",
-  "response_types_supported":[
-    "code"
   ],
-  "token_endpoint":"http://localhost:8075/oidc/token"
+  "credential_issuer":"http://localhost:8075/bank_issuer_jwtsd"
 }

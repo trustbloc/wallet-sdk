@@ -1,20 +1,19 @@
 {
-  "authorization_endpoint":"https://server.example.com/oidc/authorize",
+  "credential_issuer":"https://server.example.com",
+  "authorization_server":"https://server.example.com/oidc/authorize",
   "credential_endpoint":"https://server.example.com/oidc/credential",
-  "credential_issuer":{
-    "display":[
-      {
-        "locale":"en-US",
-        "name":"Example University"
-      },
-      {
-        "name":"サンプル大学",
-        "locale":"jp-JA"
-      }
-    ]
-  },
-  "credentials_supported":{
-    "university_degree":{
+  "display":[
+    {
+      "locale":"en-US",
+      "name":"Example University"
+    },
+    {
+      "name":"サンプル大学",
+      "locale":"jp-JA"
+    }
+  ],
+  "credentials_supported":[
+    {
       "claims":{
         "id":{
           "display":[
@@ -65,14 +64,14 @@
           "locale":"en-US",
           "logo":{
             "url":"https://exampleuniversity.com/public/logo.png",
-            "alternative_text":"a square logo of a university"
+            "alt_text":"a square logo of a university"
           },
           "background_color":"#12107c",
           "text_color":"#FFFFFF"
         }
       ],
       "formats":{
-        "jwt_vc":{
+        "jwt_vc_json":{
           "cryptographic_binding_methods_supported":[
             "did"
           ],
@@ -86,10 +85,5 @@
         }
       }
     }
-  },
-  "issuer":"https://server.example.com",
-  "response_types_supported":[
-    "code"
-  ],
-  "token_endpoint":"https://server.example.com/oidc/token"
+  ]
 }

@@ -95,7 +95,7 @@ func (e *Setup) getAuthHeaders() map[string]string {
 		headers["Authorization"] = "Bearer " + e.verifierAccessToken
 	}
 	if e.organizationID != "" {
-		headers["X-User"] = e.organizationID
+		headers["X-Tenant-ID"] = e.organizationID
 		headers["X-API-Key"] = xAPIKey
 	}
 	return headers

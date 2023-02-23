@@ -8,12 +8,12 @@ package credentialschema
 
 // ResolvedDisplayData represents display information for some issued credentials based on an issuer's metadata.
 type ResolvedDisplayData struct {
-	IssuerDisplay      *ResolvedCredentialIssuerDisplay `json:"issuer_display,omitempty"`
-	CredentialDisplays []CredentialDisplay              `json:"credential_displays,omitempty"`
+	IssuerDisplay      *ResolvedIssuerDisplay `json:"issuer_display,omitempty"`
+	CredentialDisplays []CredentialDisplay    `json:"credential_displays,omitempty"`
 }
 
-// ResolvedCredentialIssuerDisplay represents display information about the issuer of some credential(s).
-type ResolvedCredentialIssuerDisplay struct {
+// ResolvedIssuerDisplay represents display information about the issuer of some credential(s).
+type ResolvedIssuerDisplay struct {
 	Name   string `json:"name,omitempty"`
 	Locale string `json:"locale,omitempty"`
 }
@@ -47,5 +47,5 @@ type ResolvedClaim struct {
 // Logo represents display information for a logo.
 type Logo struct {
 	URL     string `json:"url,omitempty"`
-	AltText string `json:"alternative_text,omitempty"`
+	AltText string `json:"alt_text,omitempty"`
 }

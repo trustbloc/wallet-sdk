@@ -30,7 +30,10 @@ var (
 
 func TestResolve(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{issuerMetadata: string(sampleIssuerMetadata)}
+		issuerServerHandler := &mockIssuerServerHandler{
+			t:              t,
+			issuerMetadata: string(sampleIssuerMetadata),
+		}
 		server := httptest.NewServer(issuerServerHandler)
 
 		defer server.Close()
@@ -69,7 +72,7 @@ func TestResolve(t *testing.T) {
 		resolvedDisplayData, err := openid4ci.ResolveDisplay(api.NewVerifiableCredentialsArray(),
 			"badURL", "")
 		require.EqualError(t, err,
-			`Get "badURL/.well-known/openid-configuration": unsupported protocol scheme ""`)
+			`Get "badURL/.well-known/openid-credential-issuer": unsupported protocol scheme ""`)
 		require.Nil(t, resolvedDisplayData)
 	})
 }

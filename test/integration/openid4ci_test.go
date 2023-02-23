@@ -94,10 +94,10 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		fmt.Println(fmt.Sprintf("running tests with issuerProfileID=%s issuerDIDMethod=%s walletDIDMethod=%s",
 			tc.issuerProfileID, tc.issuerDIDMethod, tc.walletDIDMethod))
 
-		initiateIssuanceURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(tc.issuerProfileID)
+		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(tc.issuerProfileID)
 		require.NoError(t, err)
 
-		println(initiateIssuanceURL)
+		println(offerCredentialURL)
 
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
@@ -126,7 +126,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 			Crypto:         kms.GetCrypto(),
 		}
 
-		interaction, err := openid4ci.NewInteraction(initiateIssuanceURL, &clientConfig)
+		interaction, err := openid4ci.NewInteraction(offerCredentialURL, &clientConfig)
 		require.NoError(t, err)
 
 		authorizeResult, err := interaction.Authorize()
@@ -136,11 +136,11 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		vm, err := didDoc.AssertionMethod()
 		require.NoError(t, err)
 
-		credential, err := interaction.RequestCredential(openid4ci.NewCredentialRequestOpts(""), vm)
+		credentials, err := interaction.RequestCredential(openid4ci.NewCredentialRequestOpts(""), vm)
 		require.NoError(t, err)
-		require.NotNil(t, credential)
+		require.NotNil(t, credentials)
 
-		vc := credential.AtIndex(0)
+		vc := credentials.AtIndex(0)
 
 		serializedVC, err := vc.Serialize()
 		require.NoError(t, err)
@@ -149,7 +149,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		require.NoError(t, err)
 		require.Contains(t, vc.VC.Issuer.ID, tc.issuerDIDMethod)
 
-		displayData, err := interaction.ResolveDisplay("")
+		displayData, err := openid4ci.ResolveDisplay(credentials, interaction.IssuerURI(), "")
 		require.NoError(t, err)
 		checkResolvedDisplayData(t, displayData, tc.expectedDisplayData)
 
@@ -274,7 +274,7 @@ func checkActivityLogAfterOpenID4CIFlow(t *testing.T, activityLogger *mem.Activi
 	require.NotEmpty(t, activity.ID())
 	require.Equal(t, goapi.LogTypeCredentialActivity, activity.Type())
 	require.NotEmpty(t, activity.UnixTimestamp())
-	require.Equal(t, oidc4ci.VCSAPIDirect+"/"+issuerProfileID, activity.Client())
+	require.Equal(t, oidc4ci.VCSAPIDirect+"/issuer/"+issuerProfileID, activity.Client())
 	require.Equal(t, "oidc-issuance", activity.Operation())
 	require.Equal(t, goapi.ActivityLogStatusSuccess, activity.Status())
 

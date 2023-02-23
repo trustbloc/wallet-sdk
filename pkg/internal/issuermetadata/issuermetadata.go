@@ -19,7 +19,7 @@ import (
 // Get gets an issuer's metadata by doing a lookup on its OpenID configuration endpoint.
 // issuerURI is expected to be the base URL for the issuer.
 func Get(issuerURI string) (*issuer.Metadata, error) {
-	metadataEndpoint := issuerURI + "/.well-known/openid-configuration"
+	metadataEndpoint := issuerURI + "/.well-known/openid-credential-issuer"
 
 	response, err := http.Get(metadataEndpoint) //nolint: noctx,gosec
 	if err != nil {
@@ -33,7 +33,7 @@ func Get(issuerURI string) (*issuer.Metadata, error) {
 
 	if response.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("received status code [%d] with body [%s] from issuer's "+
-			"OpenID configuration endpoint", response.StatusCode, string(responseBytes))
+			"OpenID credential issuer endpoint", response.StatusCode, string(responseBytes))
 	}
 
 	defer func() {

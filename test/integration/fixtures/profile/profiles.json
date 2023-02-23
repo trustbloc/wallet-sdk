@@ -42,9 +42,21 @@
           }
         ],
         "credentialMetadata": {
-          "credentials_supported":{
-            "verified_employee":{
-              "claims":{
+          "credentials_supported": [
+            {
+              "id": "VerifiedEmployee",
+              "format": "jwt_vc_json",
+              "types":[
+                "VerifiableCredential",
+                "VerifiedEmployee"
+              ],
+              "cryptographic_binding_methods_supported":[
+                "did"
+              ],
+              "cryptographic_suites_supported":[
+                "EcdsaSecp256k1Signature2019"
+              ],
+              "credentialSubject":{
                 "displayName":{
                   "display":[
                     {
@@ -113,29 +125,15 @@
                   "background_color":"#12107c",
                   "locale":"en-US",
                   "logo":{
-                    "alternative_text":"a square logo of an employee verification",
+                    "alt_text":"a square logo of an employee verification",
                     "url":"https://example.com/public/logo.png"
                   },
                   "name":"Verified Employee",
                   "text_color":"#FFFFFF"
                 }
-              ],
-              "formats":{
-                "jwt_vc":{
-                  "cryptographic_binding_methods_supported":[
-                    "did"
-                  ],
-                  "cryptographic_suites_supported":[
-                    "EcdsaSecp256k1Signature2019"
-                  ],
-                  "types":[
-                    "VerifiableCredential",
-                    "VerifiedEmployee"
-                  ]
-                }
-              }
+              ]
             }
-          }
+          ]
         }
       },
       "createDID": true,
@@ -180,29 +178,33 @@
           }
         ],
         "credentialMetadata": {
-          "credentials_supported": {
-            "drivers_license": {
+          "credentials_supported": [
+            {
+              "id": "DriversLicense",
+              "format": "jwt_vc_json",
+              "types":[
+                "VerifiableCredential",
+                "DriversLicense"
+              ],
+              "cryptographic_binding_methods_supported":[
+                "did"
+              ],
+              "cryptographic_suites_supported":[
+                "EcdsaSecp256k1Signature2019"
+              ],
               "display": [
                 {
                   "name": "Driver's License",
                   "locale": "en-US",
                   "logo": {
                     "url": "https://example.com/public/logo.png",
-                    "alternative_text": "a square logo of a driver's license verification"
+                    "alt_text": "a square logo of a driver's license verification"
                   },
                   "background_color": "#12107c",
                   "text_color": "#FFFFFF"
                 }
               ],
-              "formats":{
-                "jwt_vc":{
-                  "types":[
-                    "VerifiableCredential",
-                    "DriversLicense"
-                  ]
-                }
-              },
-              "claims": {
+              "credentialSubject": {
                 "birthdate": {
                   "display": [
                     {
@@ -322,7 +324,7 @@
                 }
               }
             }
-          }
+          ]
         }
       },
       "createDID": true
@@ -365,29 +367,33 @@
           }
         ],
         "credentialMetadata": {
-          "credentials_supported": {
-            "verified_employee": {
+          "credentials_supported": [
+            {
+              "id": "VerifiedEmployee",
+              "format": "jwt_vc_json",
+              "types":[
+                "VerifiableCredential",
+                "VerifiedEmployee"
+              ],
+              "cryptographic_binding_methods_supported":[
+                "did"
+              ],
+              "cryptographic_suites_supported":[
+                "EcdsaSecp256k1Signature2019"
+              ],
               "display": [
                 {
                   "name": "Verified Employee",
                   "locale": "en-US",
                   "logo": {
                     "url": "https://example.com/public/logo.png",
-                    "alternative_text": "a square logo of an employee verification"
+                    "alt_text": "a square logo of an employee verification"
                   },
                   "background_color": "#12107c",
                   "text_color": "#FFFFFF"
                 }
               ],
-              "formats":{
-                "jwt_vc":{
-                  "types":[
-                    "VerifiableCredential",
-                    "VerifiedEmployee"
-                  ]
-                }
-              },
-              "claims": {
+              "credentialSubject": {
                 "displayName": {
                   "display": [
                     {
@@ -452,7 +458,7 @@
                 }
               }
             }
-          }
+          ]
         }
       },
       "createDID": true,
@@ -497,29 +503,33 @@
           }
         ],
         "credentialMetadata": {
-          "credentials_supported": {
-            "verified_employee": {
+          "credentials_supported": [
+            {
+              "id": "VerifiedEmployee",
+              "format": "jwt_vc_json",
+              "types":[
+                "VerifiableCredential",
+                "VerifiedEmployee"
+              ],
+              "cryptographic_binding_methods_supported":[
+                "did"
+              ],
+              "cryptographic_suites_supported":[
+                "EcdsaSecp256k1Signature2019"
+              ],
               "display": [
                 {
                   "name": "Verified Employee",
                   "locale": "en-US",
                   "logo": {
                     "url": "https://example.com/public/logo.png",
-                    "alternative_text": "a square logo of an employee verification"
+                    "alt_text": "a square logo of an employee verification"
                   },
                   "background_color": "#12107c",
                   "text_color": "#FFFFFF"
                 }
               ],
-              "formats":{
-                "jwt_vc":{
-                  "types":[
-                    "VerifiableCredential",
-                    "VerifiedEmployee"
-                  ]
-                }
-              },
-              "claims": {
+              "credentialSubject": {
                 "displayName": {
                   "display": [
                     {
@@ -584,7 +594,7 @@
                 }
               }
             }
-          }
+          ]
         }
       },
       "createDID": true

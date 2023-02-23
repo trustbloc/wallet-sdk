@@ -53,7 +53,7 @@ func TestGet(t *testing.T) {
 	})
 	t.Run("Fail to reach issuer OpenID config endpoint", func(t *testing.T) {
 		issuerMetadata, err := issuermetadata.Get("http://BadURL")
-		require.Contains(t, err.Error(), `Get "http://BadURL/.well-known/openid-configuration":`+
+		require.Contains(t, err.Error(), `Get "http://BadURL/.well-known/openid-credential-issuer":`+
 			` dial tcp: lookup BadURL:`)
 		require.Nil(t, issuerMetadata)
 	})
@@ -65,7 +65,7 @@ func TestGet(t *testing.T) {
 
 		issuerMetadata, err := issuermetadata.Get(server.URL)
 		require.Contains(t, err.Error(), "received status code [500] with body [test failure] from "+
-			"issuer's OpenID configuration endpoint")
+			"issuer's OpenID credential issuer endpoint")
 		require.Nil(t, issuerMetadata)
 	})
 	t.Run("Fail to unmarshal response from issuer OpenID config endpoint", func(t *testing.T) {

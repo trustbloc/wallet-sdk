@@ -25,7 +25,7 @@
         "handler": "header",
         "config": {
           "headers": {
-            "X-User": "{{ print .Subject }}",
+            "X-Tenant-ID": "{{ print .Subject }}",
             "X-API-Key": "rw_token"
           }
         }
@@ -61,7 +61,7 @@
         "handler": "header",
         "config": {
           "headers": {
-            "X-User": "{{ print .Subject }}",
+            "X-Tenant-ID": "{{ print .Subject }}",
             "X-API-Key": "rw_token"
           }
         }
@@ -97,7 +97,7 @@
         "handler": "header",
         "config": {
           "headers": {
-            "X-User": "{{ print .Subject }}",
+            "X-Tenant-ID": "{{ print .Subject }}",
             "X-API-Key": "rw_token"
           }
         }
@@ -133,7 +133,7 @@
         "handler": "header",
         "config": {
           "headers": {
-            "X-User": "{{ print .Subject }}",
+            "X-Tenant-ID": "{{ print .Subject }}",
             "X-API-Key": "rw_token"
           }
         }
@@ -208,7 +208,7 @@
         "handler": "header",
         "config": {
           "headers": {
-            "X-User": "{{ print .Subject }}",
+            "X-Tenant-ID": "{{ print .Subject }}",
             "X-API-Key": "rw_token"
           }
         }
