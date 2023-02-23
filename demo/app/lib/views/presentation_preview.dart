@@ -46,6 +46,8 @@ class PresentationPreviewState extends State<PresentationPreview> {
 
   @override
   Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
+    final width = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar:  const CustomTitleAppBar(pageTitle: 'Share Credential', addCloseIcon: true, height: 60,),
       body: SingleChildScrollView(
@@ -64,22 +66,12 @@ class PresentationPreviewState extends State<PresentationPreview> {
             CredentialCardOutline(item: widget.credentialData),
             const CredentialMetaDataCard(),
             CredentialVerifiedInformation(credentialData: widget.credentialData, height: MediaQuery.of(context).size.height*0.38,),
-            SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-            child: Align(
+            Align(
                 alignment: Alignment.bottomCenter,
                 child: Container(
-                  height: 150,
-                  padding: const EdgeInsets.all(16),
+                  height: MediaQuery.of(context).size.height*0.13,
+                  padding: const EdgeInsets.all(8),
                   alignment: Alignment.topCenter,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xffDBD7DC),
-                      width: 0.5,
-                    ),
-                  ),
                   child: Column(
                     children: [
                       const Padding(
@@ -98,7 +90,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
                           child: const Text('Share Credential', style: TextStyle(fontSize: 16, color: Colors.white))
                       ),
                       const Padding(
-                        padding: EdgeInsets.fromLTRB(24, 0, 24, 8),
+                        padding: EdgeInsets.fromLTRB(12, 0, 12, 8),
                       ),
                       PrimaryButton(
                         onPressed: (){
@@ -115,7 +107,6 @@ class PresentationPreviewState extends State<PresentationPreview> {
                   ),
                 ), //last one
               ),
-            ),
           ],
         ),
       ),

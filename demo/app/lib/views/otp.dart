@@ -31,11 +31,13 @@ class _OTPPage extends State<OTP> {
   String _requestErrorSubTitleMsg = '';
   String _requestErrorTitleMsg = '';
   String? actionText = 'Submit';
-  double topPadding = 520;
+  late double topPadding;
   bool show = false;
 
   @override
   Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
+    final width = MediaQuery.of(context).size.width;
     return GestureDetector(
         onTap: () {
       FocusManager.instance.primaryFocus?.unfocus();
@@ -100,8 +102,8 @@ class _OTPPage extends State<OTP> {
                         ),
                       ),
                     ),
-                    Padding(
-                      padding: EdgeInsets.only(top: topPadding),
+                   Padding(
+                      padding: EdgeInsets.only(top: height-width),
                     ),
                     PrimaryButton(
                       onPressed: () async {
@@ -134,7 +136,7 @@ class _OTPPage extends State<OTP> {
                               _requestErrorTitleMsg = 'Error';
                               actionText = 'Re-enter';
                                show = true;
-                              topPadding = 440;
+                              topPadding = height*0.20;
                               _clearOTPInput();
                             });
                         }
@@ -155,7 +157,7 @@ class _OTPPage extends State<OTP> {
                       child: const Text('Cancel', style: TextStyle(fontSize: 16, color: Color(0xff6C6D7C))),
                     ),
                   ],
-                )
+                ),
               ],
             ),
           ],
