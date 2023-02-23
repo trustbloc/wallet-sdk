@@ -31,8 +31,9 @@ import (
 )
 
 const (
-	activityLogOperation      = "oidc-issuance"
-	jwtVCJSONCredentialFormat = "jwt_vc_json" //nolint:gosec // false positive
+	activityLogOperation        = "oidc-issuance"
+	jwtVCJSONCredentialFormat   = "jwt_vc_json"    //nolint:gosec // false positive
+	jwtVCJSONLDCredentialFormat = "jwt_vc_json-ld" //nolint:gosec // false positive
 )
 
 // Interaction represents a single OpenID4CI interaction between a wallet and an issuer. The methods defined on this
@@ -89,13 +90,15 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 	credentialFormats := make([]string, len(credentialOffer.Credentials))
 
 	for i := 0; i < len(credentialOffer.Credentials); i++ {
-		if credentialOffer.Credentials[i].Format != jwtVCJSONCredentialFormat {
+		if credentialOffer.Credentials[i].Format != jwtVCJSONCredentialFormat &&
+			credentialOffer.Credentials[i].Format != jwtVCJSONLDCredentialFormat {
 			return nil, walleterror.NewValidationError(
 				module,
 				UnsupportedCredentialTypeInOfferCode,
 				UnsupportedCredentialTypeInOfferError,
 				fmt.Errorf("unsupported credential type (%s) in credential offer at index %d of "+
-					"credentials object", credentialOffer.Credentials[i].Format, i))
+					"credentials object (must be jwt_vc_json or jwt_vc_json-ld)",
+					credentialOffer.Credentials[i].Format, i))
 		}
 
 		credentialTypes[i] = credentialOffer.Credentials[i].Types
