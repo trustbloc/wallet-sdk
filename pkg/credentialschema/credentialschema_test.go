@@ -127,37 +127,19 @@ func TestResolve(t *testing.T) {
 			})
 			t.Run("Credentials supported object does not contain display info for the given VC, "+
 				"resulting in the default display being used", func(t *testing.T) {
-				t.Run("Credentials supported object doesn't have a jwt_vc_json format object", func(t *testing.T) {
-					var issuerMetadata issuer.Metadata
+				var issuerMetadata issuer.Metadata
 
-					err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
-					require.NoError(t, err)
+				err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
+				require.NoError(t, err)
 
-					issuerMetadata.CredentialsSupported[0].Format = "SomeUnknownFormat"
+				issuerMetadata.CredentialsSupported[0].Types[1] = "SomeOtherType"
 
-					resolvedDisplayData, errResolve := credentialschema.Resolve(
-						credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-						credentialschema.WithIssuerMetadata(&issuerMetadata),
-						credentialschema.WithPreferredLocale("en-US"))
-					require.NoError(t, errResolve)
-					checkForDefaultDisplayData(t, resolvedDisplayData)
-				})
-				t.Run("jwt_vc_json format object doesn't have UniversityDegreeCredential in its types",
-					func(t *testing.T) {
-						var issuerMetadata issuer.Metadata
-
-						err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
-						require.NoError(t, err)
-
-						issuerMetadata.CredentialsSupported[0].Types[1] = "SomeOtherType"
-
-						resolvedDisplayData, errResolve := credentialschema.Resolve(
-							credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-							credentialschema.WithIssuerMetadata(&issuerMetadata),
-							credentialschema.WithPreferredLocale("en-US"))
-						require.NoError(t, errResolve)
-						checkForDefaultDisplayData(t, resolvedDisplayData)
-					})
+				resolvedDisplayData, errResolve := credentialschema.Resolve(
+					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
+					credentialschema.WithIssuerMetadata(&issuerMetadata),
+					credentialschema.WithPreferredLocale("en-US"))
+				require.NoError(t, errResolve)
+				checkForDefaultDisplayData(t, resolvedDisplayData)
 			})
 			t.Run("Credentials supported object does not have claim display info", func(t *testing.T) {
 				var issuerMetadata issuer.Metadata

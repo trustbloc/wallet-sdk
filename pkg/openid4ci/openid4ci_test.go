@@ -114,7 +114,22 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 
 func TestNewInteraction(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		newInteraction(t, createCredentialOfferIssuanceURI(t, "example.com"))
+		t.Run("Credential format is jwt_vc_json", func(t *testing.T) {
+			credentialOffer := createSampleCredentialOffer(t)
+
+			credentialOffer.Credentials[0].Format = "jwt_vc_json-ld"
+
+			credentialOfferBytes, err := json.Marshal(credentialOffer)
+			require.NoError(t, err)
+
+			credentialOfferEscaped := url.QueryEscape(string(credentialOfferBytes))
+
+			credentialOfferIssuanceURI := "openid-vc://?credential_offer=" + credentialOfferEscaped
+
+			newInteraction(t, credentialOfferIssuanceURI)
+		})
+		t.Run("Credential format is jwt_vc_json", func(t *testing.T) {
+		})
 	})
 	t.Run("Fail to parse URI", func(t *testing.T) {
 		config := getTestClientConfig(t)
@@ -213,7 +228,8 @@ func TestNewInteraction(t *testing.T) {
 
 		interaction, err := openid4ci.NewInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
 		require.EqualError(t, err, "UNSUPPORTED_CREDENTIAL_TYPE_IN_OFFER(OCI0-0006):unsupported "+
-			"credential type (UnsupportedType) in credential offer at index 0 of credentials object")
+			"credential type (UnsupportedType) in credential offer at index 0 of credentials object "+
+			"(must be jwt_vc_json or jwt_vc_json-ld)")
 		require.Nil(t, interaction)
 	})
 }

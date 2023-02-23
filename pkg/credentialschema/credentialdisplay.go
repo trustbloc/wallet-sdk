@@ -19,7 +19,6 @@ import (
 
 const (
 	localeNotApplicable = "N/A"
-	jwtVCJSONFormatType = "jwt_vc_json"
 )
 
 func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported []issuer.SupportedCredential,
@@ -63,11 +62,6 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 // The VC is considered to be a match for the supportedCredential if the VC has at least one type that's the same as
 // the type specified by the supportCredential (excluding the "VerifiableCredential" type that all VCs have).
 func haveMatchingTypes(supportedCredential *issuer.SupportedCredential, vc *verifiable.Credential) bool {
-	// Currently, our OpenID4CI implementation only supports the jwt_vc_json format.
-	if supportedCredential.Format != jwtVCJSONFormatType {
-		return false
-	}
-
 	for _, typeFromVC := range vc.Types {
 		// We expect the types in the VC and SupportedCredential to always include VerifiableCredential,
 		// so we skip this case.
