@@ -1,7 +1,5 @@
 package dev.trustbloc.wallet
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.did.Resolver
@@ -17,9 +15,6 @@ import io.flutter.plugin.common.MethodChannel
 import walletsdk.kmsStorage.KmsStore
 import walletsdk.openid4ci.OpenID4CI
 import walletsdk.openid4vp.OpenID4VP
-import java.security.Timestamp
-import java.text.SimpleDateFormat
-import java.util.*
 import kotlin.collections.ArrayList
 
 
@@ -130,11 +125,28 @@ class MainActivity : FlutterActivity() {
 
                         "activityLogger" -> {
                             try {
-                                println("here or no")
-                                val activityLoggerResp = activityLogger()
+                                val activityLoggerResp = storeActivityLogger()
                                 result.success(activityLoggerResp)
                             } catch (e: Exception) {
-                                result.error("Exception", "Error while fetching activity logger request", e)
+                                result.error("Exception", "Error while storing activity logger request", e)
+                            }
+                        }
+
+                        "getCredID" -> {
+                            try {
+                                val credID = getCredID(call)
+                                result.success(credID)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while processing authorization request", e)
+                            }
+                        }
+
+                        "parseActivities" -> {
+                            try {
+                                val credID = parseActivities(call)
+                                result.success(credID)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while parsing activities", e)
                             }
                         }
 
@@ -176,15 +188,34 @@ class MainActivity : FlutterActivity() {
         return openID4CI?.issuerURI()
     }
 
-
-    private fun activityLogger(): MutableList<Any> {
-        val arrayList = mutableListOf<Any>()
+    private  fun storeActivityLogger() : MutableList<Any>{
+       var activityList = mutableListOf<Any>()
         var aryLength = activityLogger?.length()
         for (i in 0..aryLength!!){
-            val status = activityLogger?.atIndex(i)?.status()
-            val client = activityLogger?.atIndex(i)?.client()
-            val activityType = activityLogger?.atIndex(i)?.type()
-            val timestampDate = activityLogger?.atIndex(i)?.unixTimestamp()
+            val serializedData = activityLogger?.atIndex(i)?.serialize()
+            val activityDicResp = mutableListOf<Any>()
+            if (serializedData != null) {
+                activityDicResp.add(serializedData)
+            }
+
+            activityList.addAll(activityDicResp)
+        }
+         return activityList
+    }
+
+
+    private fun parseActivities(call: MethodCall): MutableList<Any> {
+        val arrayList = mutableListOf<Any>()
+
+        val activities = call.argument<ArrayList<String>>("activities")
+            ?: throw java.lang.Exception("parameter activities is missing")
+
+        for (activity in activities){
+             val activityObj = Api.parseActivity(activity)
+            val status = activityObj.status()
+            val client = activityObj.client()
+            val activityType = activityObj.type()
+            val timestampDate = activityObj.unixTimestamp()
 
             val activityDicResp = mutableListOf<Any>()
             if (status != null) {
@@ -282,6 +313,17 @@ class MainActivity : FlutterActivity() {
 
         return openID4CI.resolveCredentialDisplay(issuerURI, vcCredentials)
     }
+
+    private fun getCredID(call: MethodCall): String? {
+        val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
+            ?: throw java.lang.Exception("vcCredentials params is missed")
+
+        val openID4CI = this.openID4CI
+            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+
+        return openID4CI.getCredID(vcCredentials)
+    }
+
 
 
     private fun createDID(call: MethodCall): String {

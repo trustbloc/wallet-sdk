@@ -259,7 +259,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         guard let activities = arguments["activities"] as? Array<String> else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
                                              message: "error while parsing activities",
-                                             details: "parameter storedcredentials is missed"))
+                                             details: "parameter activities is missing"))
         }
                 
         for activity in activities {

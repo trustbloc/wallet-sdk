@@ -48,4 +48,15 @@ class OpenID4CI constructor(
 
         return  resolveDisplay(credArray, issuerURI, "").serialize()
     }
+
+    fun getCredID(vcCredentials: ArrayList<String>) : String?{
+        val opts = Vcparse.newOpts(true, null)
+        val credIds = ArrayList<String>()
+        for (cred in vcCredentials) {
+            val parsedVC = Vcparse.parse(cred, opts)
+            var credID = parsedVC.id()
+            credIds.add(credID)
+        }
+        return credIds[0];
+    }
 }
