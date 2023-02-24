@@ -331,7 +331,11 @@ class MainActivity : FlutterActivity() {
 
         val creatorDID = Creator(kms as KeyWriter)
         val didMethodType = call.argument<String>("didMethodType")
-        val doc = creatorDID.create(didMethodType, CreateDIDOpts())
+        val createDIDOpts = CreateDIDOpts()
+        if(didMethodType == "jwk"){
+            createDIDOpts.keyType = "ECDSAP384IEEEP1363"
+        }
+        val doc = creatorDID.create(didMethodType, createDIDOpts)
 
         didDocID = doc.id()
         didVerificationMethod = doc.assertionMethod()

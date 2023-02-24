@@ -58,7 +58,7 @@ class _MainWidgetState extends State<MainWidget> {
   String? initialLink;
 
   Future<String?> _createDid() async {
-    var didID = await WalletSDKPlugin.createDID("ion");
+    var didID = await WalletSDKPlugin.createDID("jwk");
     setState(() {
       userDIDId = didID!;
     });
