@@ -178,9 +178,12 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     public func createDid(didMethodType: String, result: @escaping FlutterResult){
         let didCreator = DidNewCreatorWithKeyWriter(self.kms, nil)
         do {
-            let apiCreate = initializeObject(fromType: ApiCreateDIDOpts.self)
+            let apiCreate = ApiCreateDIDOpts.init()
+            if (didMethodType == "jwk"){
+                apiCreate.keyType = "ECDSAP384IEEEP1363"
+            }
+          
             let doc = try didCreator!.create(didMethodType, createDIDOpts: apiCreate)
-            let _ = String(bytes: doc.content!, encoding: .utf8)
             didDocID = doc.id_(nil)
             didVerificationMethod = try doc.assertionMethod()
             result(didDocID)
