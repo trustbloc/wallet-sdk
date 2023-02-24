@@ -1,6 +1,6 @@
 # SDK Usage
 
-Last updated: February 13, 2023 (commit `98ff31cc49234e06cac323b244cd544fae25cbff`)
+Last updated: February 24, 2023 (commit `020fbea398a159fa2d016a7d76579313a87341fb`)
 
 This guide explains how to use this SDK in Android or iOS code.
 

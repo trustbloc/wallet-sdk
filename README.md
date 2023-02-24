@@ -35,7 +35,7 @@ The Wallet SDK Android package is available on GitHub Maven Repository. Please r
 <dependency>
   <groupId>dev.trustbloc</groupId>
   <artifactId>vc-wallet-sdk</artifactId>
-  <version>0.1.1</version>
+  <version>0.2.0</version>
 </dependency>
 ```
 
@@ -59,7 +59,7 @@ RELEASE_REPO_URL=https://maven.pkg.github.com/trustbloc/wallet-sdk
 
 ### iOS
 The Wallet SDK iOS xcframework packages are distributed through Swift Package Manager (SPM). Please refer
-[wallet-sdk tags](https://github.com/trustbloc/wallet-sdk/tags) with the suffix `-swift-pm` for the
+[wallet-sdk tags](https://github.com/trustbloc/wallet-sdk/tags) with the suffix `-swift-pm` (e.g., `0.2.0-swift-pm`) for the
 latest releases.
 
 ## Project structure
