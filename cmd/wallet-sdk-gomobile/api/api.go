@@ -11,20 +11,6 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
 )
 
-// JSONObject contains a single JSON object (not an array).
-// It's a simple wrapper around the actual JSON string. Its purpose is to help the
-// caller using the mobile bindings to understand what type of data to expect or pass in.
-type JSONObject struct {
-	Data []byte
-}
-
-// JSONArray contains a JSON array.
-// It's a simple wrapper around the actual JSON string. Its purpose is to help the
-// caller using the mobile bindings to understand what type of data to expect or pass in.
-type JSONArray struct {
-	Data []byte
-}
-
 // JSONWebKey holds a public key with associated metadata, in JWK format.
 type JSONWebKey struct {
 	JWK *jwk.JWK `json:"jwk,omitempty"`

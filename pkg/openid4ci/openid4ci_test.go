@@ -115,6 +115,9 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 func TestNewInteraction(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Run("Credential format is jwt_vc_json", func(t *testing.T) {
+			newInteraction(t, createCredentialOfferIssuanceURI(t, "example.com"))
+		})
+		t.Run("Credential format is jwt_vc_json-ld", func(t *testing.T) {
 			credentialOffer := createSampleCredentialOffer(t)
 
 			credentialOffer.Credentials[0].Format = "jwt_vc_json-ld"
@@ -127,8 +130,6 @@ func TestNewInteraction(t *testing.T) {
 			credentialOfferIssuanceURI := "openid-vc://?credential_offer=" + credentialOfferEscaped
 
 			newInteraction(t, credentialOfferIssuanceURI)
-		})
-		t.Run("Credential format is jwt_vc_json", func(t *testing.T) {
 		})
 	})
 	t.Run("Fail to parse URI", func(t *testing.T) {

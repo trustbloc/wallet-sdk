@@ -84,8 +84,8 @@ This package contains interface definitions and types that are used in multiple 
 package api
 
 type CredentialReader interface {
-	Get(...) (*JSONObject, error)
-	GetAll() (*JSONArray, error)
+	Get(...) (*VerifiableCredential, error)
+	GetAll() (*VerifiableCredentialsArray, error)
 }
 ```
 
