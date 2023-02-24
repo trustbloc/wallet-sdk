@@ -68,10 +68,8 @@ class PresentationPreviewState extends State<PresentationPreview> {
             CredentialVerifiedInformation(credentialData: widget.credentialData, height: MediaQuery.of(context).size.height*0.38,),
             Align(
                 alignment: Alignment.bottomCenter,
-                child: Container(
-                  height: MediaQuery.of(context).size.height*0.13,
+                child: SingleChildScrollView(
                   padding: const EdgeInsets.all(8),
-                  alignment: Alignment.topCenter,
                   child: Column(
                     children: [
                       const Padding(

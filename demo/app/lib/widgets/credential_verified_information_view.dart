@@ -94,7 +94,8 @@ class CredentialVerifiedInformation extends StatelessWidget {
     return Container(
         height: height,
         padding: const EdgeInsets.fromLTRB(0, 24, 0, 0),
-        child: Column(
+        child: SingleChildScrollView(
+          child: Column(
             children: <Widget>[
               Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,6 +123,6 @@ class CredentialVerifiedInformation extends StatelessWidget {
                         }),
                   )),
             ]
-        ));
+        )));
   }
 }

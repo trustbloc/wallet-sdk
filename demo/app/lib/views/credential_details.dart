@@ -146,8 +146,9 @@ class CredentialDetails extends StatelessWidget {
                     padding: const EdgeInsets.all(24),
                     alignment: Alignment.center,
                     child:  TabBarView(children: <Widget>[
-                    Column(
-                    children: [
+                      SingleChildScrollView(
+                      child: Column(
+                        children: [
                       Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -189,7 +190,7 @@ class CredentialDetails extends StatelessWidget {
                         CredentialVerifiedInformation(credentialData: credentialData, height: MediaQuery.of(context).size.height*0.42,)
                       ],
                     )
-             ]),
+             ])),
                       SizedBox(
                           height: 450,
                           child: Scrollbar(
