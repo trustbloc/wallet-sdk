@@ -59,6 +59,7 @@ jobs:
           TOKEN: ${{ secrets.CR_PAT }}
 
   PublishIosSDKRelease:
+    needs: [ PublishAndroidSDKRelease ]
     runs-on: macos-latest
     timeout-minutes: 10
     permissions:
