@@ -56,8 +56,8 @@ github.com/google/tink/go v1.7.0/go.mod h1:GAUOd+QE3pgj9q8VKIGTCP33c/B7eb4NhxLcg
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
-github.com/hyperledger/aries-framework-go v0.1.9-0.20230217102417-a948231f8452 h1:0MVQG7a8A6hDuvyV0EWh8KkmAIS3YsWTRt+qFJtxvaQ=
-github.com/hyperledger/aries-framework-go v0.1.9-0.20230217102417-a948231f8452/go.mod h1:qrOxEGVsu8M2RahaJgM8nz9AcAHjR/dKd1JIJ3ieJhY=
+github.com/hyperledger/aries-framework-go v0.1.9 h1:qwfjV/zGaH745AMyQwpL3296uRCbM3sJPVFzgW7EBWk=
+github.com/hyperledger/aries-framework-go v0.1.9/go.mod h1:qrOxEGVsu8M2RahaJgM8nz9AcAHjR/dKd1JIJ3ieJhY=
 github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk v0.0.0-20221209153644-5a3273a805c1 h1:eYsO49G3er0udPOAykDgPNJvJESjYWNbwjcjOTQtw5s=
 github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk v0.0.0-20221209153644-5a3273a805c1/go.mod h1:55cgCXsUzNwKYnAt1B1MElNop+kklmig/tP9aMCOlIE=
 github.com/hyperledger/aries-framework-go-ext/component/vdr/longform v0.0.0-20221209153644-5a3273a805c1 h1:DhHoi6pZlN/AEhcPOHteA/8XLRg0asFYUsysKwo0aCY=
