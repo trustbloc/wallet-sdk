@@ -525,8 +525,15 @@ val interaction = openid4vp.Interaction("YourAuthRequestURIHere", cfg)
 val query = interaction.getQuery()
 val inquirer = credential.Inquirer(docLoader)
 val issuedCredentials = api.VerifiableCredentialsArray() // Would need some actual credentials for this to actually work
-val verifiablePres = inquirer.Query(query, credential.CredentialsOpt(issuedCredentials))
-val matchedCreds = verifiablePresentation.credentials() // These credentials should be shown to the user with a confirmation dialog so they can confirm that they want to share this data before calling presentCredential.
+
+// Use this code to display the list of VCs to select which of them to send.
+val matchedRequirements = inquirer.getSubmissionRequirements(query, credentials) 
+val matchedRequirement = matchedRequirements.atIndex(0) // Usually we will have one requirement
+val requirementDesc = matchedRequirement.descriptorAtIndex(0) // Usually requirement will contain one descriptor
+val selectedVCs = api.VerifiableCredentialsArray()
+selectedVCs.add(requirementDesc.matchedVCs.atIndex(0)) // Users should select one VC for each descriptor from the matched list and confirm that they want to share it
+
+val verifiablePres = inquirer.Query(query, credential.CredentialsOpt(selectedVCs))
 interaction.presentCredential(verifiablePres, didDocResolution.assertionMethod())
 // Consider checking the activity log at some point after the interaction
 ```
@@ -550,7 +557,15 @@ let interaction = Openid4vpInteraction("YourAuthRequestURIHere", config: clientC
 let query = interaction.getQuery()
 let inquirer = CredentialNewInquirer(docLoader)
 let issuedCredentials = ApiVerifiableCredentialsArray() // Would need some actual credentials for this to actually work
-let verifiablePres = inquirer.Query(query, CredentialNewCredentialsOpt(issuedCredentials))
+
+// Use this code to display the list of VCs to select which of them to send.
+let matchedRequirements = inquirer.getSubmissionRequirements(query, credentials) 
+let matchedRequirement = matchedRequirements.atIndex(0) // Usually we will have one requirement
+let requirementDesc = matchedRequirement.descriptorAtIndex(0) // Usually requirement will contain one descriptor
+let selectedVCs = ApiVerifiableCredentialsArray()
+selectedVCs.add(requirementDesc.matchedVCs.atIndex(0)) // Users should select one VC for each descriptor from the matched list and confirm that they want to share it
+
+let verifiablePres = inquirer.Query(query, CredentialNewCredentialsOpt(selectedVCs))
 let credentials = interaction.presentCredential(verifiablePres, doc.assertionMethod())
 // Consider checking the activity log at some point after the interaction
 ```
