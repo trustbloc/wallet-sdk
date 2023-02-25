@@ -111,7 +111,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         
         return OpenID4VP(keyReader: kms, didResolver: didResolver, documentLoader: documentLoader, crypto: crypto, activityLogger: activityLogger!)
     }
-    
+    /**
+     This method  invoke processAuthorizationRequest defined in OpenID4Vp file.
+     */
     public func processAuthorizationRequest(arguments: Dictionary<String, Any> , result: @escaping FlutterResult) {
         do {
             
@@ -153,6 +155,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
     }
     
+    /**
+     This method invokes presentCredentialt defined in OpenID4Vp file.
+     */
     public func presentCredential(result: @escaping FlutterResult) {
         do {
             guard let openID4VP = self.openID4VP else{
@@ -175,6 +180,11 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
     }
     
+    /**
+     Create method of  DidNewCreatorWithKeyWriter creates a DID document using the given DID method.
+     The usage of ApiCreateDIDOpts depends on the DID method you're using.
+     In the app when user logins we invoke sdk DidNewCreatorWithKeyWriter create method to create new did per user.
+     */
     public func createDid(didMethodType: String, result: @escaping FlutterResult){
         let didCreator = DidNewCreatorWithKeyWriter(self.kms, nil)
         do {
@@ -194,6 +204,14 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
     }
     
+    /**
+     *Authorize method of Openid4ciNewInteraction is used by a wallet to authorize an issuer's OIDC Verifiable Credential Issuance Request.
+     After initializing the Interaction object with an Issuance Request, this should be the first method you call in
+     order to continue with the flow.
+     
+     AuthorizeResult is the object returned from the Client.Authorize method.
+     The userPinRequired method available on authorize result returns boolean value to differentiate pin is required or not.
+     */
     public func authorize(requestURI: String, result: @escaping FlutterResult){
         let clientConfig =  Openid4ciClientConfig("ClientID", crypto: self.crypto, didRes: self.didResolver, activityLogger: activityLogger)
         newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
@@ -209,7 +227,14 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
           }
     }
     
-
+    /**
+    * RequestCredential method of Openid4ciNewInteraction  is the final step (or second last step, if the ResolveDisplay method isn't needed) in the
+    interaction. This is called after the wallet is authorized and is ready to receive credential(s).
+    
+    Here if the pin required is true in the authorize method, then user need to enter OTP which is intercepted to create CredentialRequest Object using
+    Openid4ciNewCredentialRequestOpt.
+     If flow doesnt not require pin than Credential Request Opts will have empty string otp and sdk will return credential Data based on empty otp.
+    */
     public func requestCredential(otp: String, result: @escaping FlutterResult){
         let clientConfig =  Openid4ciClientConfig("ClientID", crypto: self.crypto, didRes: self.didResolver, activityLogger: activityLogger)
         newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
@@ -225,6 +250,13 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
           }
         
     }
+    
+    /**
+     * ResolveDisplay resolves display information for issued credentials based on an issuer's metadata, which is fetched
+       using the issuer's (base) URI. The CredentialDisplays returns DisplayData object correspond to the VCs passed in and are in the
+       same order. This method requires one or more VCs and the issuer's base URI.
+       IssuerURI and array of credentials  are parsed using VcparseParse to be passed to Openid4ciResolveDisplay which returns the resolved Display Data
+     */
     
     public func resolveCredentialDisplay(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
         do {
@@ -256,7 +288,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                          details: error.description))
             }
     }
-
+    /**
+     ApiParseActivity is invoked to parse the list of activities which are stored in the app when we issue and present credential,
+     */
     public func parseActivities(arguments: Dictionary<String, Any>,result: @escaping FlutterResult){
         var activityList: [Any] = []
         guard let activities = arguments["activities"] as? Array<String> else{
@@ -288,6 +322,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         result(activityList)
     }
     
+    /**
+     Local function to fetch all activities and send the serialized response to the app to be stored in the flutter secure storage.
+     */
     public func storeActivityLogger(result: @escaping FlutterResult){
         var activityList: [Any] = []
         var aryLength = activityLogger!.length()
@@ -298,6 +335,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         result(activityList)
     }
     
+    /**
+     Local function  to get the credential IDs of the requested credentials.
+     */
     public func getCredID(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
         
         guard let vcCredentials = arguments["vcCredentials"] as? Array<String> else{
@@ -318,19 +358,16 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         print("first credid -->", credIDs[0])
         result(credIDs[0])
     }
-
-
+    
+    /**
+     * IssuerURI returns the issuer's URI from the initiation request. It's useful to store this somewhere in case
+        there's a later need to refresh credential display data using the latest display information from the issuer.
+     */
     public func issuerURI( result: @escaping FlutterResult){
         let issuerURIResp = newOIDCInteraction?.issuerURI();
         result(issuerURIResp)
     }
 
-
-
-    public func initializeObject<T: ApiCreateDIDOpts>(fromType type: T.Type) -> T {
-        return T.init() //No Error
-    }
-    
     
     public func fetchArgsKeyValue(_ call: FlutterMethodCall, key: String) -> String? {
         guard let args = call.arguments else {

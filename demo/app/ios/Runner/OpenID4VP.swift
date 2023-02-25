@@ -30,6 +30,12 @@ public class OpenID4VP {
         self.activityLogger = activityLogger
     }
     
+    /**
+     * Openid4vpClientConfig contains various parameters for an OpenID4VP Interaction. ActivityLogger is optional, but if provided then activities will be logged there.
+       If not provided, then no activities will be logged.
+     * InitiatedInteraction is local variable to intiate  Openid4vpInteraction representing a single OpenID4VP interaction between a wallet and a verifier.
+     * The methods defined on this object are used to help guide the calling code through the OpenID4VP flow.
+     */
     func processAuthorizationRequest(authorizationRequest: String, credentials: Array<ApiVerifiableCredential>) throws -> Array<String> {
         let clientConfig = Openid4vpClientConfig(keyReader, crypto: crypto, didResolver: didResolver, ldDocumentLoader: documentLoader, activityLogger: activityLogger)
 
@@ -59,7 +65,9 @@ public class OpenID4VP {
         
         return credList
     }
-    
+    /**
+     * initiatedInteraction has PresentCredential method which presents credentials to redirect uri from request object.
+     */
     func presentCredential(didVerificationMethod: ApiVerificationMethod) throws {
         guard let verifiablePresentation = self.verifiablePresentation else {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")

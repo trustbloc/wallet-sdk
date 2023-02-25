@@ -28,6 +28,12 @@ class OpenID4VP constructor(
     private var initiatedInteraction: Interaction? = null
     private var verifiablePresentation: VerifiablePresentation? = null
 
+    /**
+     * ClientConfig contains various parameters for an OpenID4VP Interaction. ActivityLogger is optional, but if provided then activities will be logged there.
+      If not provided, then no activities will be logged.
+     * interaction is local variable to intiate Interaction representing a single OpenID4VP interaction between a wallet and a verifier.
+     * The methods defined on this object are used to help guide the calling code through the OpenID4VP flow.
+     */
     fun processAuthorizationRequest(authorizationRequest: String, storedCredentials: List<String>): List<String> {
         val cfg = ClientConfig(keyReader, crypto, didResolver, documentLoader, activityLogger)
         val interaction = Interaction(authorizationRequest, cfg)
@@ -54,7 +60,9 @@ class OpenID4VP constructor(
         return List<String>(matchedCreds.length().toInt()
         ) { i: Int -> matchedCreds.atIndex(i.toLong()).serialize() }
     }
-
+    /**
+     * initiatedInteraction has PresentCredential method which presents credentials to redirect uri from request object.
+     */
     fun presentCredential(didVerificationMethod: VerificationMethod) {
         val verifiablePresentation = this.verifiablePresentation
                 ?: throw Exception("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
