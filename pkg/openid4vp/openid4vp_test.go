@@ -19,11 +19,15 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/pkg/api"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/stretchr/testify/require"
+
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
+	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
 )
 
 var (
@@ -39,6 +43,21 @@ const (
 	mockDID       = "did:example:12345"
 	mockVMID      = "#key-1"
 )
+
+type failingMetricsLogger struct {
+	currentAttemptNumber int
+	attemptFailNumber    int
+}
+
+func (f *failingMetricsLogger) Log(metricsEvent *api.MetricsEvent) error {
+	if f.currentAttemptNumber == f.attemptFailNumber {
+		return fmt.Errorf("failed to log event (Event=%s)", metricsEvent.Event)
+	}
+
+	f.currentAttemptNumber++
+
+	return nil
+}
 
 func TestOpenID4VP_GetQuery(t *testing.T) {
 	t.Run("Inline Request Object", func(t *testing.T) {
@@ -87,6 +106,25 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 
 		_, err := instance.GetQuery()
 		require.Contains(t, err.Error(), "sig verification err")
+	})
+
+	t.Run("Fail to log retrieve request object via HTTP GET metrics event", func(t *testing.T) {
+		instance := New("openid-vc://?request_uri=https://request-object",
+			&jwtSignatureVerifierMock{},
+			nil,
+			nil,
+			WithHTTPClient(&httpClientMock{
+				Response:         requestObjectJWT,
+				StatusCode:       200,
+				ExpectedEndpoint: "https://request-object",
+			}),
+			WithMetricsLogger(&failingMetricsLogger{}),
+		)
+
+		query, err := instance.GetQuery()
+		require.EqualError(t, err, "REQUEST_OBJECT_FETCH_FAILED(OVP1-0000):fetch request object: "+
+			"failed to log event (Event=Fetch request object via an HTTP GET request to https://request-object)")
+		require.Nil(t, query)
 	})
 }
 
@@ -268,21 +306,21 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 		require.ErrorIs(t, err, expectErr)
 	})
-
-	t.Run("send authorized response failed", func(t *testing.T) {
-		err := sendAuthorizedResponse(&httpClientMock{}, "response", "redirectURI")
-		require.Contains(t, err.Error(), "expected status code 200")
-	})
 }
 
 func Test_doHTTPRequest(t *testing.T) {
 	t.Run("Invalid http method", func(t *testing.T) {
-		_, err := doHTTPRequest(&httpClientMock{}, "\n\n", "url", "", nil)
+		interaction := Interaction{httpClient: &httpClientMock{}}
+		_, err := interaction.doHTTPRequest("\n\n", "url", "", nil,
+			"", "")
 		require.Contains(t, err.Error(), "invalid method")
 	})
 
 	t.Run("Invalid http code", func(t *testing.T) {
-		_, err := doHTTPRequest(&httpClientMock{}, "GEt", "url", "", nil)
+		interaction := Interaction{httpClient: &httpClientMock{}, metricsLogger: noop.NewMetricsLogger()}
+
+		_, err := interaction.doHTTPRequest(http.MethodGet, "url", "", nil,
+			"", "")
 		require.Contains(t, err.Error(), "xpected status code 200")
 	})
 }

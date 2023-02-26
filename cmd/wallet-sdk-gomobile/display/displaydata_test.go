@@ -4,14 +4,15 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package openid4ci_test
+package display_test
 
 import (
 	_ "embed"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
+
 	"github.com/stretchr/testify/require"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
 )
 
 const (
@@ -31,7 +32,7 @@ const (
 
 func TestDisplayDataParseAndSerialize(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		displayData, err := openid4ci.ParseDisplayData(sampleDisplayData)
+		displayData, err := display.ParseData(sampleDisplayData)
 		require.NoError(t, err)
 		checkResolvedDisplayData(t, displayData)
 
@@ -40,7 +41,7 @@ func TestDisplayDataParseAndSerialize(t *testing.T) {
 		require.NotEmpty(t, serializedDisplayData)
 	})
 	t.Run("Fail to unmarshal", func(t *testing.T) {
-		displayData, err := openid4ci.ParseDisplayData("")
+		displayData, err := display.ParseData("")
 		require.EqualError(t, err, "unexpected end of JSON input")
 		require.Nil(t, displayData)
 	})
@@ -48,7 +49,7 @@ func TestDisplayDataParseAndSerialize(t *testing.T) {
 
 func TestIssuerDisplayParseAndSerialize(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		issuerDisplay, err := openid4ci.ParseIssuerDisplay(sampleIssuerDisplay)
+		issuerDisplay, err := display.ParseIssuerDisplay(sampleIssuerDisplay)
 		require.NoError(t, err)
 		checkIssuerDisplay(t, issuerDisplay)
 
@@ -57,7 +58,7 @@ func TestIssuerDisplayParseAndSerialize(t *testing.T) {
 		require.NotEmpty(t, serializedIssuerDisplay)
 	})
 	t.Run("Fail to unmarshal", func(t *testing.T) {
-		issuerDisplay, err := openid4ci.ParseIssuerDisplay("")
+		issuerDisplay, err := display.ParseIssuerDisplay("")
 		require.EqualError(t, err, "unexpected end of JSON input")
 		require.Nil(t, issuerDisplay)
 	})
@@ -65,7 +66,7 @@ func TestIssuerDisplayParseAndSerialize(t *testing.T) {
 
 func TestCredentialDisplayParseAndSerialize(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		credentialDisplay, err := openid4ci.ParseCredentialDisplay(sampleCredentialDisplay)
+		credentialDisplay, err := display.ParseCredentialDisplay(sampleCredentialDisplay)
 		require.NoError(t, err)
 		checkCredentialDisplay(t, credentialDisplay)
 
@@ -74,14 +75,14 @@ func TestCredentialDisplayParseAndSerialize(t *testing.T) {
 		require.NotEmpty(t, serializedCredentialDisplay)
 	})
 	t.Run("Fail to unmarshal", func(t *testing.T) {
-		credentialDisplay, err := openid4ci.ParseCredentialDisplay("")
+		credentialDisplay, err := display.ParseCredentialDisplay("")
 		require.EqualError(t, err, "unexpected end of JSON input")
 		require.Nil(t, credentialDisplay)
 	})
 }
 
 func TestDisplayData_CredentialDisplayAtIndex_IndexOutOfBounds(t *testing.T) {
-	displayData, err := openid4ci.ParseDisplayData(sampleDisplayData)
+	displayData, err := display.ParseData(sampleDisplayData)
 	require.NoError(t, err)
 
 	credentialDisplay := displayData.CredentialDisplayAtIndex(1)
@@ -92,7 +93,7 @@ func TestDisplayData_CredentialDisplayAtIndex_IndexOutOfBounds(t *testing.T) {
 }
 
 func TestCredentialDisplay_ClaimAtIndex_IndexOutOfBounds(t *testing.T) {
-	credentialDisplay, err := openid4ci.ParseCredentialDisplay(sampleCredentialDisplay)
+	credentialDisplay, err := display.ParseCredentialDisplay(sampleCredentialDisplay)
 	require.NoError(t, err)
 
 	claim := credentialDisplay.ClaimAtIndex(4)

@@ -10,6 +10,9 @@ package creator
 import (
 	"errors"
 	"fmt"
+	"time"
+
+	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
@@ -34,6 +37,8 @@ const (
 	Ed25519VerificationKey2018 = "Ed25519VerificationKey2018"
 	// JSONWebKey2020 is a supported DID verification type.
 	JSONWebKey2020 = "JsonWebKey2020"
+
+	creatingDIDEventText = "Creating DID"
 )
 
 // Creator is used for creating DID Documents using supported DID methods.
@@ -92,9 +97,23 @@ func NewCreatorWithKeyReader(keyReader api.KeyReader) (*Creator, error) {
 //	If the Creator was created using the NewCreatorWithKeyReader function, then you must specify the KeyID and also
 //	the VerificationType in the createDIDOpts object to use for the creation of the DID document.
 func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) (*did.DocResolution, error) {
+	if createDIDOpts == nil {
+		return nil, errors.New("createDIDOpts object not set")
+	}
+
+	if createDIDOpts.MetricsLogger == nil {
+		createDIDOpts.MetricsLogger = noop.NewMetricsLogger()
+	}
+
+	timeStartCreate := time.Now()
+
+	var doc *did.DocResolution
+
+	var err error
+
 	switch method {
 	case DIDMethodKey:
-		doc, err := d.createDIDKeyDoc(createDIDOpts)
+		doc, err = d.createDIDKeyDoc(createDIDOpts)
 		if err != nil {
 			return nil, walleterror.NewExecutionError(
 				diderrors.Module,
@@ -103,10 +122,8 @@ func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) (*did.
 				err,
 			)
 		}
-
-		return doc, err
 	case DIDMethodIon:
-		doc, err := d.createDIDIonLongFormDoc(createDIDOpts)
+		doc, err = d.createDIDIonLongFormDoc(createDIDOpts)
 		if err != nil {
 			return nil, walleterror.NewExecutionError(
 				diderrors.Module,
@@ -115,10 +132,8 @@ func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) (*did.
 				err,
 			)
 		}
-
-		return doc, err
 	case DIDMethodJWK:
-		doc, err := d.createDIDJWKDoc(createDIDOpts)
+		doc, err = d.createDIDJWKDoc(createDIDOpts)
 		if err != nil {
 			return nil, walleterror.NewExecutionError(
 				diderrors.Module,
@@ -127,15 +142,18 @@ func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) (*did.
 				err,
 			)
 		}
-
-		return doc, err
+	default:
+		return nil, walleterror.NewValidationError(
+			diderrors.Module,
+			diderrors.UnsupportedDIDMethodCode,
+			diderrors.UnsupportedDIDMethodError,
+			fmt.Errorf("DID method %s not supported", method))
 	}
 
-	return nil, walleterror.NewValidationError(
-		diderrors.Module,
-		diderrors.UnsupportedDIDMethodCode,
-		diderrors.UnsupportedDIDMethodError,
-		fmt.Errorf("DID method %s not supported", method))
+	return doc, createDIDOpts.MetricsLogger.Log(&api.MetricsEvent{
+		Event:    creatingDIDEventText,
+		Duration: time.Since(timeStartCreate),
+	})
 }
 
 func (d *Creator) createDIDKeyDoc(createDIDOpts *api.CreateDIDOpts) (*did.DocResolution, error) {

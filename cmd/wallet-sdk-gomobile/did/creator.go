@@ -10,6 +10,8 @@ package did
 import (
 	"errors"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
+
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -88,7 +90,7 @@ func NewCreatorWithKeyReader(keyReader api.KeyReader) (*Creator, error) {
 //	the VerificationType in the createDIDOpts object to use for the creation of the DID document.
 func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) (*api.DIDDocResolution, error) {
 	if createDIDOpts == nil {
-		createDIDOpts = &api.CreateDIDOpts{}
+		return nil, errors.New("createDIDOpts object cannot be nil")
 	}
 
 	goAPIOpts := convertToGoAPIOpts(createDIDOpts)
@@ -111,5 +113,6 @@ func convertToGoAPIOpts(createDIDOpts *api.CreateDIDOpts) *goapi.CreateDIDOpts {
 		KeyID:            createDIDOpts.KeyID,
 		VerificationType: createDIDOpts.VerificationType,
 		KeyType:          arieskms.KeyType(createDIDOpts.KeyType),
+		MetricsLogger:    &wrapper.MobileMetricsLoggerWrapper{MobileAPIMetricsLogger: createDIDOpts.MetricsLogger},
 	}
 }

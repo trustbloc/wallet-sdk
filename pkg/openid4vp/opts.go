@@ -7,14 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package openid4vp
 
 import (
-	"github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
+	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
+	noopmetricslogger "github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
 )
 
 type opts struct {
 	httpClient     httpClient
 	activityLogger api.ActivityLogger
+	metricsLogger  api.MetricsLogger
 }
 
 // An Opt is a single option for an OpenID4VP instance.
@@ -37,7 +39,16 @@ func WithActivityLogger(activityLogger api.ActivityLogger) Opt {
 	}
 }
 
-func processOpts(options []Opt) (httpClient, api.ActivityLogger) {
+// WithMetricsLogger is an option for an OpenID4VP instance that allows a caller to specify their MetricsLogger.
+// If used, then performance metrics events will be pushed to the given MetricsLogger implementation.
+// If this option is not used, then metrics logging will be disabled.
+func WithMetricsLogger(metricsLogger api.MetricsLogger) Opt {
+	return func(opts *opts) {
+		opts.metricsLogger = metricsLogger
+	}
+}
+
+func processOpts(options []Opt) (httpClient, api.ActivityLogger, api.MetricsLogger) {
 	opts := mergeOpts(options)
 
 	if opts.httpClient == nil {
@@ -45,10 +56,14 @@ func processOpts(options []Opt) (httpClient, api.ActivityLogger) {
 	}
 
 	if opts.activityLogger == nil {
-		opts.activityLogger = noop.NewActivityLogger()
+		opts.activityLogger = noopactivitylogger.NewActivityLogger()
 	}
 
-	return opts.httpClient, opts.activityLogger
+	if opts.metricsLogger == nil {
+		opts.metricsLogger = noopmetricslogger.NewMetricsLogger()
+	}
+
+	return opts.httpClient, opts.activityLogger, opts.metricsLogger
 }
 
 func mergeOpts(options []Opt) *opts {

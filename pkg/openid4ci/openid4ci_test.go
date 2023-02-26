@@ -112,6 +112,21 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 	require.NoError(m.t, err)
 }
 
+type failingMetricsLogger struct {
+	currentAttemptNumber int
+	attemptFailNumber    int
+}
+
+func (f *failingMetricsLogger) Log(metricsEvent *api.MetricsEvent) error {
+	if f.currentAttemptNumber == f.attemptFailNumber {
+		return fmt.Errorf("failed to log event (Event=%s)", metricsEvent.Event)
+	}
+
+	f.currentAttemptNumber++
+
+	return nil
+}
+
 func TestNewInteraction(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Run("Credential format is jwt_vc_json", func(t *testing.T) {
@@ -233,6 +248,34 @@ func TestNewInteraction(t *testing.T) {
 			"(must be jwt_vc_json or jwt_vc_json-ld)")
 		require.Nil(t, interaction)
 	})
+	t.Run("Fail to log retrieving credential offer via HTTP GET metrics event", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t:                  t,
+			credentialResponse: sampleCredentialResponse,
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		issuerServerHandler.credentialOffer = createCredentialOffer(t, server.URL)
+
+		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`,
+			server.URL)
+
+		escapedCredentialOfferURI := url.QueryEscape(server.URL + "/credential-offer")
+
+		credentialOfferIssuanceURI := "openid-credential-offer://?credential_offer_uri=" + escapedCredentialOfferURI
+
+		config := getTestClientConfig(t)
+
+		config.MetricsLogger = &failingMetricsLogger{}
+
+		interaction, err := openid4ci.NewInteraction(credentialOfferIssuanceURI, config)
+		require.Contains(t, err.Error(),
+			"failed to log event (Event=Fetch credential offer via an HTTP GET request to "+
+				"http://127.0.0.1:")
+		require.Nil(t, interaction)
+	})
 }
 
 func TestInteraction_Authorize(t *testing.T) {
@@ -263,6 +306,25 @@ func (m *mockResolver) Resolve(string) (*did.DocResolution, error) {
 	}
 
 	return &did.DocResolution{DIDDocument: didDoc}, err
+}
+
+// inMemoryMetricsLogger is a simple api.inMemoryMetricsLogger implementation that saves all metrics events in memory.
+type inMemoryMetricsLogger struct {
+	events []*api.MetricsEvent
+}
+
+// newInMemoryMetricsLogger returns a new inMemoryMetricsLogger.
+func newInMemoryMetricsLogger() *inMemoryMetricsLogger {
+	return &inMemoryMetricsLogger{
+		events: make([]*api.MetricsEvent, 0),
+	}
+}
+
+// Log saves the given metrics events in memory.
+func (m *inMemoryMetricsLogger) Log(metricsEvent *api.MetricsEvent) error {
+	m.events = append(m.events, metricsEvent)
+
+	return nil
 }
 
 func TestInteraction_RequestCredential(t *testing.T) {
@@ -316,7 +378,24 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 			credentialOfferIssuanceURI := "openid-credential-offer://?credential_offer_uri=" + escapedCredentialOfferURI
 
-			interaction := newInteraction(t, credentialOfferIssuanceURI)
+			config := getTestClientConfig(t)
+
+			metricsLogger := newInMemoryMetricsLogger()
+
+			config.MetricsLogger = metricsLogger
+
+			interaction, err := openid4ci.NewInteraction(credentialOfferIssuanceURI, config)
+			require.NoError(t, err)
+			require.NotNil(t, interaction)
+
+			// All the other metrics event tests are done in the integration tests already.
+			// However, the integration tests don't use the credential_offer_uri, so we have this test here
+			// to ensure the metrics event works as expected.
+			require.Len(t, metricsLogger.events, 2)
+			require.Contains(t, metricsLogger.events[0].Event,
+				"Fetch credential offer via an HTTP GET request to")
+			require.Equal(t, "Instantiating OpenID4CI interaction object", metricsLogger.events[0].ParentEvent)
+			require.Positive(t, metricsLogger.events[0].Duration.Nanoseconds())
 
 			credentialRequest := &openid4ci.CredentialRequestOpts{UserPIN: "1234"}
 
@@ -603,6 +682,120 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			"decode new JWT credential: JWS decoding: unmarshal VC JWT claims: parse JWT: "+
 			"parse JWT from compact JWS: public key with KID d3cfd36b-4f75-4041-b416-f0a7a3c6b9f6 is not "+
 			"found for DID did:orb:uAAA:EiDpzs0hy0q0If4ZfJA1kxBQd9ed6FoBFhhqDWSiBeKaIg")
+		require.Nil(t, credentials)
+	})
+	t.Run("Fail to log fetch OpenID config metrics event", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t: t,
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+			TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+		}
+
+		config := getTestClientConfig(t)
+		config.MetricsLogger = &failingMetricsLogger{attemptFailNumber: 1}
+
+		interaction, err := openid4ci.NewInteraction(createCredentialOfferIssuanceURI(t, server.URL), config)
+		require.NoError(t, err)
+
+		credentialRequest := &openid4ci.CredentialRequestOpts{UserPIN: "1234"}
+
+		credentials, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
+		require.Contains(t, err.Error(),
+			"failed to log event (Event=Fetch issuer's OpenID configuration via an HTTP GET request "+
+				"to http://127.0.0.1:")
+		require.Nil(t, credentials)
+	})
+	t.Run("Fail to log fetch token via HTTP POST metrics event", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t: t,
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+			TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+		}
+
+		config := getTestClientConfig(t)
+		config.MetricsLogger = &failingMetricsLogger{attemptFailNumber: 2}
+
+		interaction, err := openid4ci.NewInteraction(createCredentialOfferIssuanceURI(t, server.URL), config)
+		require.NoError(t, err)
+
+		credentialRequest := &openid4ci.CredentialRequestOpts{UserPIN: "1234"}
+
+		credentials, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
+		require.Contains(t, err.Error(),
+			"failed to log event (Event=Fetch token via an HTTP POST request to http://127.0.0.1:")
+		require.Nil(t, credentials)
+	})
+	t.Run("Fail to log fetch metadata via HTTP GET metrics event", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t: t,
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+			TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+		}
+
+		config := getTestClientConfig(t)
+		config.MetricsLogger = &failingMetricsLogger{attemptFailNumber: 3}
+
+		interaction, err := openid4ci.NewInteraction(createCredentialOfferIssuanceURI(t, server.URL), config)
+		require.NoError(t, err)
+
+		credentialRequest := &openid4ci.CredentialRequestOpts{UserPIN: "1234"}
+
+		credentials, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
+		require.Contains(t, err.Error(), "METADATA_FETCH_FAILED(OCI1-0009):failed to get issuer metadata: "+
+			"failed to log event (Event=Fetch issuer metadata via an HTTP GET request to http://127.0.0.1:")
+		require.Nil(t, credentials)
+	})
+	t.Run("Fail to log fetch credential via HTTP GET metrics event", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t:                  t,
+			credentialResponse: sampleCredentialResponse,
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+			TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+		}
+
+		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`,
+			server.URL)
+
+		config := getTestClientConfig(t)
+		config.MetricsLogger = &failingMetricsLogger{attemptFailNumber: 4}
+
+		interaction, err := openid4ci.NewInteraction(createCredentialOfferIssuanceURI(t, server.URL), config)
+		require.NoError(t, err)
+
+		credentialRequest := &openid4ci.CredentialRequestOpts{UserPIN: "1234"}
+
+		credentials, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+			keyID: mockKeyID,
+		})
+		require.Contains(t, err.Error(), "CREDENTIAL_FETCH_FAILED(OCI1-0012):failed to get credential "+
+			"response: failed to log event (Event=Fetch credential 1 of 1 via an HTTP POST request to "+
+			"http://127.0.0.1:")
 		require.Nil(t, credentials)
 	})
 }

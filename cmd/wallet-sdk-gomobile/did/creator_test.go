@@ -77,7 +77,7 @@ func TestCreator_Create(t *testing.T) {
 			creator, err := did.NewCreatorWithKeyWriter(localKMS)
 			require.NoError(t, err)
 
-			didDocResolution, err := creator.Create(did.DIDMethodKey, nil)
+			didDocResolution, err := creator.Create(did.DIDMethodKey, &api.CreateDIDOpts{})
 			require.NoError(t, err)
 			require.NotEmpty(t, didDocResolution)
 		})
@@ -90,7 +90,7 @@ func TestCreator_Create(t *testing.T) {
 			creator, err := did.NewCreatorWithKeyWriter(kw)
 			require.NoError(t, err)
 
-			didDocResolution, err := creator.Create(did.DIDMethodKey, nil)
+			didDocResolution, err := creator.Create(did.DIDMethodKey, &api.CreateDIDOpts{})
 			requireErrorContains(t, err, "CREATE_DID_KEY_FAILED")
 			require.Empty(t, didDocResolution)
 		})

@@ -4,16 +4,16 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package openid4ci_test
+package display_test
 
 import (
 	_ "embed"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api/vcparse"
-
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 
 	"github.com/stretchr/testify/require"
 
@@ -27,6 +27,16 @@ var (
 	//go:embed testdata/credential_university_degree.jsonld
 	credentialUniversityDegree string
 )
+
+type mockIssuerServerHandler struct {
+	t              *testing.T
+	issuerMetadata string
+}
+
+func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	_, err := writer.Write([]byte(m.issuerMetadata))
+	require.NoError(m.t, err)
+}
 
 func TestResolve(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
@@ -46,38 +56,52 @@ func TestResolve(t *testing.T) {
 		vcs := api.NewVerifiableCredentialsArray()
 		vcs.Add(vc)
 
+		resolveOpts := &display.ResolveOpts{
+			VCs:       vcs,
+			IssuerURI: server.URL,
+		}
+
 		t.Run("Without a preferred locale specified", func(t *testing.T) {
-			resolvedDisplayData, err := openid4ci.ResolveDisplay(vcs, server.URL, "")
+			resolvedDisplayData, err := display.Resolve(resolveOpts)
 			require.NoError(t, err)
 			checkResolvedDisplayData(t, resolvedDisplayData)
 		})
 		t.Run("With a preferred locale specified", func(t *testing.T) {
-			resolvedDisplayData, err := openid4ci.ResolveDisplay(vcs, server.URL, "en-US")
+			resolveOpts.PreferredLocale = "en-us"
+
+			resolvedDisplayData, err := display.Resolve(resolveOpts)
 			require.NoError(t, err)
 			checkResolvedDisplayData(t, resolvedDisplayData)
 		})
 	})
 	t.Run("No credentials specified", func(t *testing.T) {
-		resolvedDisplayData, err := openid4ci.ResolveDisplay(nil, "", "")
+		resolvedDisplayData, err := display.Resolve(&display.ResolveOpts{})
 		require.EqualError(t, err, "no credentials specified")
 		require.Nil(t, resolvedDisplayData)
 	})
 	t.Run("No issuer URI specified", func(t *testing.T) {
-		resolvedDisplayData, err := openid4ci.ResolveDisplay(api.NewVerifiableCredentialsArray(), "",
-			"")
+		resolveOpts := &display.ResolveOpts{
+			VCs: api.NewVerifiableCredentialsArray(),
+		}
+
+		resolvedDisplayData, err := display.Resolve(resolveOpts)
 		require.EqualError(t, err, "no issuer URI specified")
 		require.Nil(t, resolvedDisplayData)
 	})
 	t.Run("Malformed issuer URI", func(t *testing.T) {
-		resolvedDisplayData, err := openid4ci.ResolveDisplay(api.NewVerifiableCredentialsArray(),
-			"badURL", "")
+		resolveOpts := &display.ResolveOpts{
+			VCs:       api.NewVerifiableCredentialsArray(),
+			IssuerURI: "badURL",
+		}
+
+		resolvedDisplayData, err := display.Resolve(resolveOpts)
 		require.EqualError(t, err,
 			`Get "badURL/.well-known/openid-credential-issuer": unsupported protocol scheme ""`)
 		require.Nil(t, resolvedDisplayData)
 	})
 }
 
-func checkResolvedDisplayData(t *testing.T, resolvedDisplayData *openid4ci.DisplayData) {
+func checkResolvedDisplayData(t *testing.T, resolvedDisplayData *display.Data) {
 	t.Helper()
 
 	checkIssuerDisplay(t, resolvedDisplayData.IssuerDisplay())
@@ -88,14 +112,14 @@ func checkResolvedDisplayData(t *testing.T, resolvedDisplayData *openid4ci.Displ
 	checkCredentialDisplay(t, credentialDisplay)
 }
 
-func checkIssuerDisplay(t *testing.T, issuerDisplay *openid4ci.IssuerDisplay) {
+func checkIssuerDisplay(t *testing.T, issuerDisplay *display.IssuerDisplay) {
 	t.Helper()
 
 	require.Equal(t, "Example University", issuerDisplay.Name())
 	require.Equal(t, "en-US", issuerDisplay.Locale())
 }
 
-func checkCredentialDisplay(t *testing.T, credentialDisplay *openid4ci.CredentialDisplay) {
+func checkCredentialDisplay(t *testing.T, credentialDisplay *display.CredentialDisplay) {
 	t.Helper()
 
 	credentialOverview := credentialDisplay.Overview()
@@ -111,7 +135,7 @@ func checkCredentialDisplay(t *testing.T, credentialDisplay *openid4ci.Credentia
 	checkClaims(t, credentialDisplay)
 }
 
-func checkClaims(t *testing.T, credentialDisplay *openid4ci.CredentialDisplay) { //nolint:gocyclo // Test file
+func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { //nolint:gocyclo // Test file
 	t.Helper()
 
 	// Since the claims object in the supported_credentials object from the issuer is a map which effectively gets

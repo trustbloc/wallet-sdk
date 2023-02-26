@@ -35,6 +35,7 @@ type CreateDIDOpts struct {
 	KeyID            string
 	VerificationType string
 	KeyType          string
+	MetricsLogger    MetricsLogger
 }
 
 // DIDCreator defines the method required for a type to create DID documents.

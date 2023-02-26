@@ -50,6 +50,7 @@ type ClientConfig struct {
 	Crypto               api.Crypto
 	DIDResolver          api.DIDResolver
 	ActivityLogger       api.ActivityLogger
+	MetricsLogger        api.MetricsLogger
 	disableVCProofChecks bool
 }
 
@@ -158,6 +159,7 @@ func unwrapConfig(config *ClientConfig) *openid4cigoapi.ClientConfig {
 		ClientID:             config.ClientID,
 		DIDResolver:          &wrapper.VDRResolverWrapper{DIDResolver: config.DIDResolver},
 		ActivityLogger:       activityLogger,
+		MetricsLogger:        &wrapper.MobileMetricsLoggerWrapper{MobileAPIMetricsLogger: config.MetricsLogger},
 		DisableVCProofChecks: config.disableVCProofChecks,
 	}
 }

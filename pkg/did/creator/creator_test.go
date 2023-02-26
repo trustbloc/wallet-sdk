@@ -263,7 +263,7 @@ func TestCreator_Create(t *testing.T) {
 		didCreator, err := creator.NewCreatorWithKeyWriter(localKMS)
 		require.NoError(t, err)
 
-		didDocResolution, err := didCreator.Create("NotAValidDIDMethod", nil)
+		didDocResolution, err := didCreator.Create("NotAValidDIDMethod", &api.CreateDIDOpts{})
 		testutil.RequireErrorContains(t, err, "DID method NotAValidDIDMethod not supported")
 		require.Empty(t, didDocResolution)
 	})

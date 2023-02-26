@@ -566,3 +566,47 @@ do {
     // Access parsedError.code, parsedError.category, and parsedError.details as you see fit
 }
 ```
+
+## Metrics
+
+Certain Wallet-SDK functionality is able to report back performance metrics to the caller.
+
+Specifically:
+* DID creation
+* OpenID4CI
+* OpenID4VP
+
+To enable metrics reporting, you must pass in a MetricsLogger implementation into the various config/opts objects.
+There is an included MetricsLogger implementation that logs messages to standard error (probably will end up in the console) using pre-determined formatting.
+This implementation can be used or a custom implementation can be injected.
+
+The object that gets logged when a metrics event occurs is as follows:
+
+* Event: The name of the event that occurred.
+* Parent event: The name of the event that encompasses this event. Some longer Wallet-SDK operations log a larger event
+that captures the overall time of the method, and during that method some sub-events are also logged. If the parent
+event info is empty, then this event is a "root" event. Sub-events always have a duration that is <= the duration of the parent event.
+* Duration: How long the event/operation took.
+
+Example metrics event:
+
+* Event: Retrieving token via an HTTP POST request to example.com
+* Parent Event: Requesting credential(s) from issuer
+* Duration: 6.37ms
+
+### Example event timeline - OpenID4CI flow
+
+Note: performance numbers given below are illustrative only and are not intended to be representative of real-world performance.
+```
+                                                     Dashed line indicates event duration in timeline, towards the right is further ahead in time - not to scale
+                                
+ Request credential(s) from issuer (parent event) --------------------------------------------------------- (5.14s)
+ Fetch OpenID config (GET)                (event)     ----(2.92ms)
+ Fetch token (POST)                       (event)             ----(6.37ms)
+ Fetch issuer metadata (GET)              (event)                 ---(919.15µs)
+ Fetch credential (POST)                  (event)                      ------(28.87ms)
+ Parsing and checking proof               (event)                            ------------------------------ (5.10s)
+```
+                              
+Note that the sum of all sub-event durations may not add to the duration of the parent event, as not every possible operation during the parent event will be timed.
+Generally, short/trivial operations are not tracked.

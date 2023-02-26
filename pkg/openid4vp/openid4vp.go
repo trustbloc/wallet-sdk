@@ -36,6 +36,12 @@ const (
 	tokenLiveTimeSec = 600
 
 	activityLogOperation = "oidc-presentation"
+
+	getQueryEventText           = "Get query"
+	fetchRequestObjectEventText = "Fetch request object via an HTTP GET request to %s"
+
+	presentCredentialEventText      = "Present credential" //nolint:gosec // false positive
+	sendAuthorizedResponseEventText = "Send authorized response via an HTTP POST request to %s"
 )
 
 type jwtSignatureVerifier interface {
@@ -52,6 +58,7 @@ type Interaction struct {
 	signatureVerifier    jwtSignatureVerifier
 	httpClient           httpClient
 	activityLogger       api.ActivityLogger
+	metricsLogger        api.MetricsLogger
 	didResolver          api.DIDResolver
 	crypto               api.Crypto
 
@@ -73,13 +80,14 @@ func New(
 	crypto api.Crypto,
 	opts ...Opt,
 ) *Interaction {
-	client, activityLogger := processOpts(opts)
+	client, activityLogger, metricsLogger := processOpts(opts)
 
 	return &Interaction{
 		authorizationRequest: authorizationRequest,
 		signatureVerifier:    signatureVerifier,
 		httpClient:           client,
 		activityLogger:       activityLogger,
+		metricsLogger:        metricsLogger,
 		didResolver:          didResolver,
 		crypto:               crypto,
 	}
@@ -87,7 +95,9 @@ func New(
 
 // GetQuery creates query based on authorization request data.
 func (o *Interaction) GetQuery() (*presexch.PresentationDefinition, error) {
-	rawRequestObject, err := fetchRequestObject(o.httpClient, o.authorizationRequest)
+	timeStartGetQuery := time.Now()
+
+	rawRequestObject, err := o.fetchRequestObject()
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
 			module,
@@ -107,11 +117,17 @@ func (o *Interaction) GetQuery() (*presexch.PresentationDefinition, error) {
 
 	o.requestObject = requestObject
 
-	return requestObject.Claims.VPToken.PresentationDefinition, nil
+	return requestObject.Claims.VPToken.PresentationDefinition,
+		o.metricsLogger.Log(&api.MetricsEvent{
+			Event:    getQueryEventText,
+			Duration: time.Since(timeStartGetQuery),
+		})
 }
 
 // PresentCredential presents credentials to redirect uri from request object.
 func (o *Interaction) PresentCredential(presentations []*verifiable.Presentation) error {
+	timeStartPresentCredential := time.Now()
+
 	response, err := createAuthorizedResponse(presentations, o.requestObject, o.didResolver, o.crypto)
 	if err != nil {
 		return walleterror.NewExecutionError(
@@ -126,13 +142,17 @@ func (o *Interaction) PresentCredential(presentations []*verifiable.Presentation
 	data.Set("vp_token", response.VPTokenJWS)
 	data.Set("state", response.State)
 
-	err = sendAuthorizedResponse(o.httpClient, data.Encode(), o.requestObject.RedirectURI)
+	err = o.sendAuthorizedResponse(data.Encode())
 	if err != nil {
-		return walleterror.NewExecutionError(
-			module,
-			SendAuthorizedResponseFailedCode,
-			SendAuthorizedResponseFailedError,
-			fmt.Errorf("send authorized response failed: %w", err))
+		return err
+	}
+
+	err = o.metricsLogger.Log(&api.MetricsEvent{
+		Event:    presentCredentialEventText,
+		Duration: time.Since(timeStartPresentCredential),
+	})
+	if err != nil {
+		return err
 	}
 
 	return o.activityLogger.Log(&api.Activity{
@@ -147,14 +167,15 @@ func (o *Interaction) PresentCredential(presentations []*verifiable.Presentation
 	})
 }
 
-func fetchRequestObject(httpClient httpClient, authorizationRequest string) (string, error) {
-	if !strings.HasPrefix(authorizationRequest, requestURIPrefix) {
-		return authorizationRequest, nil
+func (o *Interaction) fetchRequestObject() (string, error) {
+	if !strings.HasPrefix(o.authorizationRequest, requestURIPrefix) {
+		return o.authorizationRequest, nil
 	}
 
-	endpointURL := strings.TrimPrefix(authorizationRequest, requestURIPrefix)
+	endpointURL := strings.TrimPrefix(o.authorizationRequest, requestURIPrefix)
 
-	respBytes, err := doHTTPRequest(httpClient, http.MethodGet, endpointURL, "", nil)
+	respBytes, err := o.doHTTPRequest(http.MethodGet, endpointURL, "", nil,
+		fmt.Sprintf(fetchRequestObjectEventText, endpointURL), getQueryEventText)
 	if err != nil {
 		return "", err
 	}
@@ -162,7 +183,26 @@ func fetchRequestObject(httpClient httpClient, authorizationRequest string) (str
 	return string(respBytes), nil
 }
 
-func doHTTPRequest(httpClient httpClient, method, endpointURL, contentType string, body io.Reader) ([]byte, error) {
+func (o *Interaction) sendAuthorizedResponse(responseBody string) error {
+	_, err := o.doHTTPRequest(http.MethodPost,
+		o.requestObject.RedirectURI, "application/x-www-form-urlencoded",
+		bytes.NewBuffer([]byte(responseBody)),
+		fmt.Sprintf(sendAuthorizedResponseEventText, o.requestObject.RedirectURI),
+		presentCredentialEventText)
+	if err != nil {
+		return walleterror.NewExecutionError(
+			module,
+			SendAuthorizedResponseFailedCode,
+			SendAuthorizedResponseFailedError,
+			fmt.Errorf("send authorized response failed: %w", err))
+	}
+
+	return nil
+}
+
+func (o *Interaction) doHTTPRequest(method, endpointURL, contentType string, body io.Reader,
+	event, parentEvent string,
+) ([]byte, error) {
 	req, err := http.NewRequestWithContext(context.Background(), method, endpointURL, body)
 	if err != nil {
 		return nil, err
@@ -172,7 +212,18 @@ func doHTTPRequest(httpClient httpClient, method, endpointURL, contentType strin
 		req.Header.Add("Content-Type", contentType)
 	}
 
-	resp, err := httpClient.Do(req)
+	timeStartHTTPRequest := time.Now()
+
+	resp, err := o.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	err = o.metricsLogger.Log(&api.MetricsEvent{
+		Event:       event,
+		ParentEvent: parentEvent,
+		Duration:    time.Since(timeStartHTTPRequest),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -300,16 +351,6 @@ func signToken(claims interface{}, signer api.JWTSigner) (string, error) {
 	}
 
 	return tokenBytes, nil
-}
-
-func sendAuthorizedResponse(httpClient httpClient, responseBody, redirectURI string) error {
-	_, err := doHTTPRequest(httpClient, http.MethodPost,
-		redirectURI, "application/x-www-form-urlencoded", bytes.NewBuffer([]byte(responseBody)))
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func getHolderSigner(holderDID string, didResolver api.DIDResolver, crypto api.Crypto) (api.JWTSigner, error) {

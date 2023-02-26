@@ -12,16 +12,38 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
+
+	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
+
+	"github.com/trustbloc/wallet-sdk/pkg/api"
 
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
+const fetchIssuerMetadataViaGETReqEventText = "Fetch issuer metadata via an HTTP GET request to %s"
+
 // Get gets an issuer's metadata by doing a lookup on its OpenID configuration endpoint.
 // issuerURI is expected to be the base URL for the issuer.
-func Get(issuerURI string) (*issuer.Metadata, error) {
+func Get(issuerURI string, metricsLogger api.MetricsLogger, parentEvent string) (*issuer.Metadata, error) {
+	if metricsLogger == nil {
+		metricsLogger = noop.NewMetricsLogger()
+	}
+
 	metadataEndpoint := issuerURI + "/.well-known/openid-credential-issuer"
 
+	timeStartHTTPRequest := time.Now()
+
 	response, err := http.Get(metadataEndpoint) //nolint: noctx,gosec
+	if err != nil {
+		return nil, err
+	}
+
+	err = metricsLogger.Log(&api.MetricsEvent{
+		Event:       fmt.Sprintf(fetchIssuerMetadataViaGETReqEventText, metadataEndpoint),
+		ParentEvent: parentEvent,
+		Duration:    time.Since(timeStartHTTPRequest),
+	})
 	if err != nil {
 		return nil, err
 	}

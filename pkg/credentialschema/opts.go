@@ -9,6 +9,10 @@ package credentialschema
 import (
 	"errors"
 
+	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
+
+	"github.com/trustbloc/wallet-sdk/pkg/api"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
@@ -42,6 +46,7 @@ type resolveOpts struct {
 	credentialSource     credentialSource
 	issuerMetadataSource issuerMetadataSource
 	preferredLocal       string
+	metricsLogger        api.MetricsLogger
 }
 
 // ResolveOpt represents an option for the Resolve function.
@@ -51,6 +56,15 @@ type ResolveOpt func(opts *resolveOpts)
 func WithCredentials(vcs []*verifiable.Credential) ResolveOpt {
 	return func(opts *resolveOpts) {
 		opts.credentialSource.vcs = vcs
+	}
+}
+
+// WithMetricsLogger is an option for an OpenID4VP instance that allows a caller to specify their MetricsLogger.
+// If used, then performance metrics events will be pushed to the given MetricsLogger implementation.
+// If this option is not used, then metrics logging will be disabled.
+func WithMetricsLogger(metricsLogger api.MetricsLogger) ResolveOpt {
+	return func(opts *resolveOpts) {
+		opts.metricsLogger = metricsLogger
 	}
 }
 
@@ -85,10 +99,10 @@ func WithIssuerMetadata(metadata *issuer.Metadata) ResolveOpt {
 	}
 }
 
-// WithPreferredLocale is an option specifying the caller's preferred locale to look for when resolving VCs.
-// If not specified, or the user's preferred locale is not available, then the first locale specified by the
-// issuer's metadata will be used during resolution.
-// The actual locales used for various pieces of display information are available in the ResolvedDisplayData object.
+// WithPreferredLocale is an option specifying the caller's preferred locale to look for while resolving VC display
+// data. If the preferred locale is not available (or this option is no used), then the first locale specified by the
+// issuer's metadata will be used during resolution. The actual locales used for various pieces of display information
+// are available in the ResolvedDisplayData object.
 func WithPreferredLocale(locale string) ResolveOpt {
 	return func(opts *resolveOpts) {
 		opts.preferredLocal = locale
@@ -155,7 +169,15 @@ func processValidatedOpts(opts *resolveOpts) ([]*verifiable.Credential, *issuer.
 		return nil, nil, "", err
 	}
 
-	issuerMetadata, err := processIssuerMetadataOpts(&opts.issuerMetadataSource)
+	var metricsLogger api.MetricsLogger
+
+	if opts.metricsLogger == nil {
+		metricsLogger = noop.NewMetricsLogger()
+	} else {
+		metricsLogger = opts.metricsLogger
+	}
+
+	issuerMetadata, err := processIssuerMetadataOpts(&opts.issuerMetadataSource, metricsLogger)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -182,12 +204,14 @@ func processVCOpts(credentialSource *credentialSource) ([]*verifiable.Credential
 	return vcs, nil
 }
 
-func processIssuerMetadataOpts(issuerMetadataSource *issuerMetadataSource) (*issuer.Metadata, error) {
+func processIssuerMetadataOpts(issuerMetadataSource *issuerMetadataSource,
+	metricsLogger api.MetricsLogger,
+) (*issuer.Metadata, error) {
 	if issuerMetadataSource.metadata != nil {
 		return issuerMetadataSource.metadata, nil
 	}
 
-	metadata, err := metadatafetcher.Get(issuerMetadataSource.issuerURI)
+	metadata, err := metadatafetcher.Get(issuerMetadataSource.issuerURI, metricsLogger, "Resolve display")
 	if err != nil {
 		return nil, err
 	}
