@@ -208,52 +208,6 @@ let didResolver = DidNewResolver("", nil)
 let didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
 ```
 
-### With Key Reader
-The keys used for DID documents are not automatically generated on the caller's behalf.
-They must be passed in by the caller.
-
-#### Examples
-
-##### Kotlin (Android)
-
-```kotlin
-import dev.trustbloc.wallet.sdk.api.CreateDIDOpts
-import dev.trustbloc.wallet.sdk.did.Creator
-import dev.trustbloc.wallet.sdk.did.Did.Ed25519VerificationKey2018
-import dev.trustbloc.wallet.sdk.localkms.Localkms
-import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
-
-val memKMSStore = MemKMSStore.MemKMSStore()
-val kms = Localkms.newKMS(memKMSStore)
-
-val keyHandle = kms.create(localkms.KeyTypeED25519)
-
-val didCreator = Creator(kms as KeyReader)
-
-val createDIDOpts = api.CreateDIDOpts()
-createDIDOpts.setKeyID = keyHandle.getKeyID()
-createDIDOpts.setVerificationType = Ed25519VerificationKey2018
-
-val didDocResolution = didCreator.create("key", createDIDOpts) // Create a did:key doc
-```
-
-##### Swift (iOS)
-
-```swift
-import Walletsdk
-
-let memKMSStore = LocalkmsNewMemKMSStore()
-let kms = LocalkmsNewKMS(memKMSStore, nil)
-
-let keyHandle = kms.create(LocalkmsKeyTypeED25519)
-
-let didCreator = DidNewCreatorWithKeyReader(kms, nil)
-
-let createDIDOpts = ApiCreateDIDOpts(keyID: keyHandle.keyID, verificationType: DidEd25519VerificationKey2018)
-
-let didDocResolution = didCreator.create("key", createDIDOpts) // Create a did:key doc
-```
-
 ## DID Service Validation
 
 Note the following limitations:
