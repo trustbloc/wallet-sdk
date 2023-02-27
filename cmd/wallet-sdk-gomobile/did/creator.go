@@ -103,7 +103,7 @@ func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) (*api.
 		return nil, walleterror.ToMobileError(err)
 	}
 
-	return &api.DIDDocResolution{Content: didDocResolutionBytes}, nil
+	return &api.DIDDocResolution{Content: string(didDocResolutionBytes)}, nil
 }
 
 func convertToGoAPIOpts(createDIDOpts *api.CreateDIDOpts) *goapi.CreateDIDOpts {

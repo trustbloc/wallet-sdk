@@ -1,17 +1,15 @@
 package dev.trustbloc.wallet
 
 import dev.trustbloc.wallet.sdk.api.*
-import dev.trustbloc.wallet.sdk.did.Creator
-import dev.trustbloc.wallet.sdk.did.Resolver
-import dev.trustbloc.wallet.sdk.ld.DocLoader
-import dev.trustbloc.wallet.sdk.localkms.KMS
-import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.walleterror.Walleterror
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
-import dev.trustbloc.wallet.sdk.mem.ActivityLogger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import walletsdk.WalletSDK
+import walletsdk.flutter.converters.convertSubmissionRequirementArray
+import walletsdk.flutter.converters.convertToVerifiableCredentialsArray
+import walletsdk.flutter.converters.convertVerifiableCredentialsArray
 import walletsdk.kmsStorage.KmsStore
 import walletsdk.openid4ci.OpenID4CI
 import walletsdk.openid4vp.OpenID4VP
@@ -19,15 +17,14 @@ import kotlin.collections.ArrayList
 
 
 class MainActivity : FlutterActivity() {
+    private var walletSDK: WalletSDK? = null
     private var openID4CI: OpenID4CI? = null
     private var openID4VP: OpenID4VP? = null
-    private var kms: KMS? = null
-    private var didResolver: DIDResolver? = null
-    private var documentLoader: LDDocumentLoader? = null
-    private var crypto: Crypto? = null
-    private var didDocID: String? = null
-    private var activityLogger: ActivityLogger? = null
-    private var didVerificationMethod: VerificationMethod? = null
+
+
+    // TODO: remove next three variables after refactoring finished.
+    private var processAuthorizationRequestVCs: VerifiableCredentialsArray? = null
+    private var didDocResolution: DIDDocResolution? = null
 
     @Override
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -83,16 +80,13 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
-                         "fetchDID" -> {
-                             try {
-                                 val didID = call.argument<String>("didID")
-                                 if (didDocID == null) {
-                                     didDocID = didID
-                                 }
-                             } catch (e: Exception) {
-                                 result.error("Exception", "Error while setting fetched DID", e)
-                             }
-                         }
+                        "fetchDID" -> {
+                            try {
+                                val didID = call.argument<String>("didID")
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while setting fetched DID", e)
+                            }
+                        }
 
                         "resolveCredentialDisplay" -> {
                             try {
@@ -152,50 +146,196 @@ class MainActivity : FlutterActivity() {
 
                         "presentCredential" -> {
                             try {
-                                presentCredential()
+                                presentCredential(call)
                                 result.success(null)
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while processing authorization request", e)
                             }
                         }
+
+                        "getMatchedSubmissionRequirements" -> {
+                            try {
+                                result.success(getMatchedSubmissionRequirements(call))
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while processing authorization request", e)
+                            }
+                        }
+
+
                     }
                 }
     }
 
     private fun initSDK() {
-        val kmsLocalStore = KmsStore(context)
-        val kms = Localkms.newKMS(kmsLocalStore)
-        didResolver = Resolver("http://localhost:8072/1.0/identifiers")
-        crypto = kms.crypto
-        documentLoader = DocLoader()
-        activityLogger = ActivityLogger()
-        this.kms = kms
+        val walletSDK = WalletSDK()
+
+        walletSDK.InitSDK(KmsStore(context))
+        this.walletSDK = walletSDK;
     }
+
+    /**
+    Create method of Creator (dev.trustbloc.wallet.sdk.did.Creator) creates a DID document using the given DID method.
+    The usage of CreateDIDOpts(dev.trustbloc.wallet.sdk.did.api) depends on the DID method you're using.
+    In the app when user logins we invoke sdk Creator create method to create new did per user.
+     */
+    private fun createDID(call: MethodCall): String {
+        val walletSDK = this.walletSDK
+                ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
+
+        val didMethodType = call.argument<String>("didMethodType")
+                ?: throw java.lang.Exception("didMethodType params is missed")
+
+        val doc = walletSDK.createDID(didMethodType)
+
+        didDocResolution = doc
+        return doc.content
+    }
+
+    /**
+     *Authorize method of Interaction(dev.trustbloc.wallet.sdk.openid4ci.Interaction) is used by a wallet to authorize an issuer's OIDC Verifiable Credential Issuance Request.
+    After initializing the Interaction object with an Issuance Request, this should be the first method you call in
+    order to continue with the flow.
+
+    AuthorizeResult is the object returned from the OpenID4CI.authorize method.
+    userPINRequired method available on authorize result returns boolean value to differentiate pin is required or not.
+     */
+    private fun authorize(call: MethodCall): Boolean {
+        val walletSDK = this.walletSDK
+                ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
+
+        val requestURI = call.argument<String>("requestURI")
+                ?: throw java.lang.Exception("requestURI params is missed")
+
+        val openID4CI = walletSDK.createOpenID4CIInteraction(requestURI)
+
+        val authRes = openID4CI.authorize()
+
+        this.openID4CI = openID4CI
+
+        return authRes.userPINRequired
+    }
+
+    private fun issuerURI(): String {
+        val openID4CI = this.openID4CI
+                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+
+        return openID4CI.issuerURI()
+    }
+
+    /**
+     * RequestCredential method of Interaction(dev.trustbloc.wallet.sdk.openid4ci.Interaction) is the final step (or second last step,
+     * if the ResolveDisplay method isn't needed) in the interaction. This is called after the wallet is authorized and is ready to receive credential(s).
+    Here if the pin required is true in the authorize method, then user need to enter OTP which is intercepted to create CredentialRequest Object using
+    CredentialRequestOpts.If flow doesnt not require pin than Credential Request Opts will have empty string otp and sdk will return credential Data based on empty otp.
+     */
+    private fun requestCredential(call: MethodCall): VerifiableCredential? {
+        val otp = call.argument<String>("otp") ?: throw java.lang.Exception("otp params is missed")
+
+        val didDocResolution = this.didDocResolution
+                ?: throw java.lang.Exception("DID should be created first")
+
+        val openID4CI = this.openID4CI
+                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+
+        return openID4CI.requestCredential(otp, didDocResolution.assertionMethod())
+    }
+    /**
+     * ResolveDisplay resolves display information for issued credentials based on an issuer's metadata, which is fetched
+    using the issuer's (base) URI. The CredentialDisplays returns DisplayData object correspond to the VCs passed in and are in the
+    same order. This method requires one or more VCs and the issuer's base URI.
+    IssuerURI and array of credentials  are parsed using VcParse to be passed to resolveDisplay which returns the resolved Display Data
+     */
+    private fun resolveCredentialDisplay(call: MethodCall): String? {
+        val issuerURI = call.argument<String>("uri")
+                ?: throw java.lang.Exception("issuerURI params is missed")
+        val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
+                ?: throw java.lang.Exception("vcCredentials params is missed")
+
+        val openID4CI = this.openID4CI
+                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+
+        return openID4CI.resolveCredentialDisplay(issuerURI, convertToVerifiableCredentialsArray(vcCredentials))
+    }
+
+    /**
+     Local function  to get the credential IDs of the requested credentials
+     */
+    private fun getCredID(call: MethodCall): String? {
+        val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
+                ?: throw java.lang.Exception("vcCredentials params is missed")
+
+        val openID4CI = this.openID4CI
+                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+
+        return openID4CI.getCredID(vcCredentials)
+    }
+
     /**
     This method invoke processAuthorizationRequest defined in OpenID4Vp.kt file.
      */
     private fun processAuthorizationRequest(call: MethodCall): List<String> {
-        val openID4VP = createOpenID4VP()
+        val walletSDK = this.walletSDK
+                ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
         val authorizationRequest = call.argument<String>("authorizationRequest")
                 ?: throw java.lang.Exception("authorizationRequest params is missed")
         val storedCredentials = call.argument<ArrayList<String>>("storedCredentials")
-                ?: throw java.lang.Exception("storedCredentials params is missed")
+
+        val openID4VP = walletSDK.createOpenID4VPInteraction()
 
         this.openID4VP = openID4VP
 
-        return openID4VP.processAuthorizationRequest(authorizationRequest, storedCredentials)
+        openID4VP.startVPInteraction(authorizationRequest)
+
+        if (storedCredentials != null) {
+            //TODO remove this block after refactoring finished.
+            processAuthorizationRequestVCs = convertToVerifiableCredentialsArray(storedCredentials)
+            val matchedReq = openID4VP.getMatchedSubmissionRequirements(convertToVerifiableCredentialsArray(storedCredentials))
+            return convertVerifiableCredentialsArray(matchedReq.atIndex(0).descriptorAtIndex(0).matchedVCs)
+        }
+        return listOf()
     }
 
-    private fun issuerURI(): String? {
-        return openID4CI?.issuerURI()
+    private fun getMatchedSubmissionRequirements(call: MethodCall): List<Any> {
+        val openID4VP = this.openID4VP
+                ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
+        val storedCredentials = call.argument<ArrayList<String>>("storedCredentials")
+                ?: throw java.lang.Exception("storedCredentials params is missed")
+
+        return convertSubmissionRequirementArray(
+                openID4VP.getMatchedSubmissionRequirements(convertToVerifiableCredentialsArray(storedCredentials)))
+    }
+
+
+    private fun presentCredential(call: MethodCall) {
+        val selectedCredentials = call.argument<ArrayList<String>>("selectedCredentials")
+        val selectedCredentialsArray = if (selectedCredentials != null) {
+            convertToVerifiableCredentialsArray(selectedCredentials)
+        } else {
+            //TODO: remove this after refactoring will be finished
+            this.processAuthorizationRequestVCs
+                    ?: throw java.lang.Exception("processAuthorizationRequest should be called first.")
+        }
+
+        val didDocResolution = this.didDocResolution
+                ?: throw java.lang.Exception("DID should be created first")
+        val openID4VP = this.openID4VP
+                ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
+
+        openID4VP.presentCredential(selectedCredentialsArray, didDocResolution.assertionMethod())
+        this.openID4VP = null
     }
     /**
     Local function to fetch all activities and send the serializedData response to the app to be stored in the flutter secure storage.
      */
-    private  fun storeActivityLogger() : MutableList<Any>{
-       var activityList = mutableListOf<Any>()
+    private fun storeActivityLogger(): MutableList<Any> {
+        val walletSDK = this.walletSDK
+                ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
+
+        val activityLogger = walletSDK.activityLogger
+
+        var activityList = mutableListOf<Any>()
         var aryLength = activityLogger?.length()
-        for (i in 0..aryLength!!){
+        for (i in 0..aryLength!!) {
             val serializedData = activityLogger?.atIndex(i)?.serialize()
             val activityDicResp = mutableListOf<Any>()
             if (serializedData != null) {
@@ -204,7 +344,7 @@ class MainActivity : FlutterActivity() {
 
             activityList.addAll(activityDicResp)
         }
-         return activityList
+        return activityList
     }
 
     /**
@@ -214,10 +354,10 @@ class MainActivity : FlutterActivity() {
         val arrayList = mutableListOf<Any>()
 
         val activities = call.argument<ArrayList<String>>("activities")
-            ?: throw java.lang.Exception("parameter activities is missing")
+                ?: throw java.lang.Exception("parameter activities is missing")
 
-        for (activity in activities){
-             val activityObj = Api.parseActivity(activity)
+        for (activity in activities) {
+            val activityObj = Api.parseActivity(activity)
             val status = activityObj.status()
             val client = activityObj.client()
             val activityType = activityObj.type()
@@ -242,135 +382,6 @@ class MainActivity : FlutterActivity() {
         return arrayList
     }
 
-    private fun presentCredential() {
-        val openID4VP = this.openID4VP
-                ?: throw java.lang.Exception("OpenID4VP not initiated. Call processAuthorizationRequest before this.")
-
-        val didVerificationMethod = this.didVerificationMethod
-                ?: throw java.lang.Exception("DID should be created first")
-
-        openID4VP.presentCredential(didVerificationMethod)
-    }
-
-
-    private fun createOpenID4VP(): OpenID4VP {
-        val kms = this.kms ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
-        val crypto = this.crypto
-                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
-        val didResolver = this.didResolver
-                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
-        val documentLoader = this.documentLoader
-                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
-
-        val activityLogger = this.activityLogger
-            ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
-
-
-        return OpenID4VP(kms, crypto, didResolver, documentLoader, activityLogger)
-    }
-
-    /**
-     *Authorize method of Interaction(dev.trustbloc.wallet.sdk.openid4ci.Interaction) is used by a wallet to authorize an issuer's OIDC Verifiable Credential Issuance Request.
-    After initializing the Interaction object with an Issuance Request, this should be the first method you call in
-    order to continue with the flow.
-
-    AuthorizeResult is the object returned from the OpenID4CI.authorize method.
-    userPINRequired method available on authorize result returns boolean value to differentiate pin is required or not.
-     */
-    private fun authorize(call: MethodCall): Boolean {
-        val requestURI = call.argument<String>("requestURI")
-                ?: throw java.lang.Exception("requestURI params is missed")
-
-        val didResolver = this.didResolver
-                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
-
-        val crypto = this.crypto
-                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
-
-        val activityLogger = this.activityLogger
-            ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
-
-        val openID4CI = OpenID4CI(
-                requestURI,
-                crypto,
-                didResolver,
-                activityLogger
-        )
-
-        val authRes = openID4CI.authorize()
-
-        this.openID4CI = openID4CI
-
-        return authRes.userPINRequired
-    }
-    /**
-     * RequestCredential method of Interaction(dev.trustbloc.wallet.sdk.openid4ci.Interaction) is the final step (or second last step,
-     * if the ResolveDisplay method isn't needed) in the interaction. This is called after the wallet is authorized and is ready to receive credential(s).
-    Here if the pin required is true in the authorize method, then user need to enter OTP which is intercepted to create CredentialRequest Object using
-    CredentialRequestOpts.If flow doesnt not require pin than Credential Request Opts will have empty string otp and sdk will return credential Data based on empty otp.
-     */
-    private fun requestCredential(call: MethodCall): VerifiableCredential? {
-        val otp = call.argument<String>("otp")
-
-        val openID4CI = this.openID4CI
-            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
-
-        val didVerificationMethod = this.didVerificationMethod
-                ?: throw java.lang.Exception("DID should be created first")
-
-        return openID4CI.requestCredential(otp, didVerificationMethod)
-    }
-    /**
-     * ResolveDisplay resolves display information for issued credentials based on an issuer's metadata, which is fetched
-    using the issuer's (base) URI. The CredentialDisplays returns DisplayData object correspond to the VCs passed in and are in the
-    same order. This method requires one or more VCs and the issuer's base URI.
-    IssuerURI and array of credentials  are parsed using VcParse to be passed to resolveDisplay which returns the resolved Display Data
-     */
-    private fun resolveCredentialDisplay(call: MethodCall): String? {
-        val issuerURI = call.argument<String>("uri")
-            ?: throw java.lang.Exception("issuerURI params is missed")
-        val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
-            ?: throw java.lang.Exception("vcCredentials params is missed")
-
-        val openID4CI = this.openID4CI
-            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
-
-        return openID4CI.resolveCredentialDisplay(issuerURI, vcCredentials)
-    }
-    /**
-     Local function  to get the credential IDs of the requested credentials
-     */
-    private fun getCredID(call: MethodCall): String? {
-        val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
-            ?: throw java.lang.Exception("vcCredentials params is missed")
-
-        val openID4CI = this.openID4CI
-            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
-
-        return openID4CI.getCredID(vcCredentials)
-    }
-
-    /**
-    Create method of Creator (dev.trustbloc.wallet.sdk.did.Creator) creates a DID document using the given DID method.
-    The usage of CreateDIDOpts(dev.trustbloc.wallet.sdk.did.api) depends on the DID method you're using.
-    In the app when user logins we invoke sdk Creator create method to create new did per user.
-     */
-    private fun createDID(call: MethodCall): String {
-        val kms = this.kms ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
-
-        val creatorDID = Creator(kms as KeyWriter)
-        val didMethodType = call.argument<String>("didMethodType")
-        val createDIDOpts = CreateDIDOpts()
-        if(didMethodType == "jwk"){
-            createDIDOpts.keyType = "ECDSAP384IEEEP1363"
-        }
-        val doc = creatorDID.create(didMethodType, createDIDOpts)
-
-        didDocID = doc.id()
-        didVerificationMethod = doc.assertionMethod()
-
-        return String(doc.content)
-    }
 
     companion object {
         private const val CHANNEL = "WalletSDKPlugin"

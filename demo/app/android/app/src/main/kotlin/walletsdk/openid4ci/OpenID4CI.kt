@@ -14,7 +14,7 @@ class OpenID4CI constructor(
     private var newInteraction: Interaction
 
     init {
-        val cfg = ClientConfig( "ClientID", crypto, didResolver, activityLogger)
+        val cfg = ClientConfig("ClientID", crypto, didResolver, activityLogger)
 
         newInteraction = Interaction(requestURI, cfg)
     }
@@ -23,7 +23,7 @@ class OpenID4CI constructor(
         return newInteraction.authorize()
     }
 
-    fun issuerURI(): String? {
+    fun issuerURI(): String {
         return newInteraction.issuerURI()
     }
 
@@ -38,15 +38,8 @@ class OpenID4CI constructor(
         return null
     }
 
-    fun resolveCredentialDisplay(issuerURI: String?, vcCredentials: ArrayList<String>): String? {
-        val opts = Vcparse.newOpts(true, null)
-        val credArray = VerifiableCredentialsArray()
-        for (cred in vcCredentials) {
-            val parsedVC = Vcparse.parse(cred, opts)
-            credArray.add(parsedVC)
-        }
-
-        return  resolveDisplay(credArray, issuerURI, "").serialize()
+    fun resolveCredentialDisplay(issuerURI: String?, vcCredentials: VerifiableCredentialsArray): String? {
+        return resolveDisplay(vcCredentials, issuerURI, "").serialize()
     }
 
     fun getCredID(vcCredentials: ArrayList<String>) : String?{

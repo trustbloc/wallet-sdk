@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:app/demo_method_channel.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -43,13 +45,26 @@ void main() async {
       String verificationURL = verificationURLsList[i];
       print("verificationURL : $verificationURL");
 
-      final matchedCreds = await walletSDKPlugin
-          .processAuthorizationRequest(authorizationRequest: verificationURL, storedCredentials: [credential]);
+      if (Platform.isAndroid) {
+        await walletSDKPlugin
+            .processAuthorizationRequest(authorizationRequest: verificationURL);
 
-      expect(matchedCreds, hasLength(equals(1)));
-      expect(matchedCreds[0], equals(credential));
+        final requirements = await walletSDKPlugin.getSubmissionRequirements( storedCredentials: [credential]);
 
-      await walletSDKPlugin.presentCredential();
+        expect(requirements, hasLength(equals(1)));
+        expect(requirements[0].inputDescriptors, hasLength(equals(1)));
+        expect(requirements[0].inputDescriptors[0].matchedVCsID, hasLength(equals(1)));
+
+        await walletSDKPlugin.presentCredential(selectedCredentials: [credential]);
+      } else {
+        final matchedCreds = await walletSDKPlugin
+            .processAuthorizationRequest(authorizationRequest: verificationURL, storedCredentials: [credential]);
+
+        expect(matchedCreds, hasLength(equals(1)));
+        expect(matchedCreds[0], equals(credential));
+
+        await walletSDKPlugin.presentCredential();
+      }
     }
   });
 
