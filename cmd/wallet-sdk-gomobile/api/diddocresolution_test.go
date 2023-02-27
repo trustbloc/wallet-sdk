@@ -15,13 +15,13 @@ import (
 )
 
 //go:embed testdata/valid_doc_resolution.jsonld
-var sampleDIDDocResolution []byte
+var sampleDIDDocResolution string
 
 //go:embed testdata/doc_with_jwk.jsonld
-var jwkDIDDocResolution []byte
+var jwkDIDDocResolution string
 
 //go:embed testdata/doc_missing_assertionmethod.jsonld
-var invalidDIDDocResolution []byte
+var invalidDIDDocResolution string
 
 func TestDIDDocResolution_ID(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
@@ -32,7 +32,7 @@ func TestDIDDocResolution_ID(t *testing.T) {
 		require.NotEmpty(t, id)
 	})
 	t.Run("Fail to parse DID document resolution content", func(t *testing.T) {
-		didDocResolution := api.NewDIDDocResolution([]byte{})
+		didDocResolution := api.NewDIDDocResolution("")
 
 		id, err := didDocResolution.ID()
 		require.EqualError(t, err, "failed to parse DID document resolution content: "+
@@ -57,7 +57,7 @@ func TestDIDDocResolution_AssertionMethod(t *testing.T) {
 		require.NotEmpty(t, vm)
 	})
 	t.Run("Fail to parse DID document resolution content", func(t *testing.T) {
-		didDocResolution := api.NewDIDDocResolution([]byte{})
+		didDocResolution := api.NewDIDDocResolution("")
 
 		vm, err := didDocResolution.AssertionMethod()
 		require.EqualError(t, err, "failed to parse DID document resolution content: "+

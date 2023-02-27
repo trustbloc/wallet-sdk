@@ -38,11 +38,11 @@ func NewVerificationMethod(keyID, vmType string) *VerificationMethod {
 // DIDDocResolution represents a DID document resolution object.
 type DIDDocResolution struct {
 	// Content is the full marshalled DID doc resolution object.
-	Content []byte
+	Content string
 }
 
 // NewDIDDocResolution creates a new DIDDocResolution.
-func NewDIDDocResolution(content []byte) *DIDDocResolution {
+func NewDIDDocResolution(content string) *DIDDocResolution {
 	return &DIDDocResolution{
 		Content: content,
 	}
@@ -50,7 +50,7 @@ func NewDIDDocResolution(content []byte) *DIDDocResolution {
 
 // ID returns the ID of the DID document contained within this DIDDocResolution.
 func (d *DIDDocResolution) ID() (string, error) {
-	didDocResolutionParsed, err := diddoc.ParseDocumentResolution(d.Content)
+	didDocResolutionParsed, err := diddoc.ParseDocumentResolution([]byte(d.Content))
 	if err != nil {
 		return "", fmt.Errorf("failed to parse DID document resolution content: %w", err)
 	}
@@ -60,7 +60,7 @@ func (d *DIDDocResolution) ID() (string, error) {
 
 // AssertionMethod returns did assertion verification method.
 func (d *DIDDocResolution) AssertionMethod() (*VerificationMethod, error) {
-	didDocResolutionParsed, err := diddoc.ParseDocumentResolution(d.Content)
+	didDocResolutionParsed, err := diddoc.ParseDocumentResolution([]byte(d.Content))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse DID document resolution content: %w", err)
 	}
