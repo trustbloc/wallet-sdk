@@ -228,7 +228,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     /**
-    * RequestCredential method of Openid4ciNewInteraction  is the final step (or second last step, if the ResolveDisplay method isn't needed) in the
+    * RequestCredential method of Openid4ciNewInteraction is the final step in the
     interaction. This is called after the wallet is authorized and is ready to receive credential(s).
     
     Here if the pin required is true in the authorize method, then user need to enter OTP which is intercepted to create CredentialRequest Object using

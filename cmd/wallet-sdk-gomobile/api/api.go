@@ -57,14 +57,6 @@ type CredentialReader interface {
 	GetAll() (*VerifiableCredentialsArray, error)
 }
 
-// A CredentialWriter is capable of writing VCs to some underlying storage mechanism.
-type CredentialWriter interface {
-	// Add adds a VC.
-	Add(vc *VerifiableCredential) error
-	// Remove removes a VC.
-	Remove(id string) error
-}
-
 // Crypto defines useful Crypto operations.
 type Crypto interface {
 	// Sign will sign msg using a matching signature primitive from key referenced by keyID

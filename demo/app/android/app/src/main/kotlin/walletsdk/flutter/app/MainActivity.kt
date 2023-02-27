@@ -223,8 +223,8 @@ class MainActivity : FlutterActivity() {
     }
 
     /**
-     * RequestCredential method of Interaction(dev.trustbloc.wallet.sdk.openid4ci.Interaction) is the final step (or second last step,
-     * if the ResolveDisplay method isn't needed) in the interaction. This is called after the wallet is authorized and is ready to receive credential(s).
+     * RequestCredential method of Interaction(dev.trustbloc.wallet.sdk.openid4ci.Interaction) is the final step,
+     * in the interaction. This is called after the wallet is authorized and is ready to receive credential(s).
     Here if the pin required is true in the authorize method, then user need to enter OTP which is intercepted to create CredentialRequest Object using
     CredentialRequestOpts.If flow doesnt not require pin than Credential Request Opts will have empty string otp and sdk will return credential Data based on empty otp.
      */
