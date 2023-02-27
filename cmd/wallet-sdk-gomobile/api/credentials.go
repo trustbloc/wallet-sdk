@@ -7,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package api
 
 import (
+	"errors"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 )
 
@@ -37,6 +39,37 @@ func (v *VerifiableCredential) ID() string {
 // While the ID is typically going to be a DID, the Verifiable Credential spec does not mandate this.
 func (v *VerifiableCredential) IssuerID() string {
 	return v.VC.Issuer.ID
+}
+
+// Types returns the types of this VC. At a minimum, one of the types will be "VerifiableCredential".
+// There may be additional more specific credential types as well.
+func (v *VerifiableCredential) Types() *StringArray {
+	return &StringArray{strings: v.VC.Types}
+}
+
+// IssuanceDate returns this VC's issuance date as a Unix timestamp.
+func (v *VerifiableCredential) IssuanceDate() (int64, error) {
+	if v.VC.Issued == nil {
+		return -1, errors.New("issuance date missing (invalid VC)")
+	}
+
+	return v.VC.Issued.Unix(), nil
+}
+
+// HasExpirationDate returns whether this VC has an expiration date.
+func (v *VerifiableCredential) HasExpirationDate() bool {
+	return v.VC.Expired != nil
+}
+
+// ExpirationDate returns this VC's expiration date as a Unix timestamp.
+// HasExpirationDate should be called first to ensure this VC has an expiration date before calling this method.
+// This method returns an error if the VC has no expiration date.
+func (v *VerifiableCredential) ExpirationDate() (int64, error) {
+	if v.VC.Expired == nil {
+		return -1, errors.New("VC has no expiration date")
+	}
+
+	return v.VC.Expired.Unix(), nil
 }
 
 // Serialize returns a JSON representation of this VC.

@@ -199,29 +199,6 @@ func (k *KeyValuePair) ValueStringArray() (*StringArray, error) {
 	return interfaceAsStringArray(k.value)
 }
 
-// StringArray represents an array of strings.
-// It wraps a standard Go array and provides gomobile-compatible methods that allow a caller to use this type
-// in an array-like manner.
-type StringArray struct {
-	strings []string
-}
-
-// Length returns the number of strings contained within this StringArray object.
-func (s *StringArray) Length() int {
-	return len(s.strings)
-}
-
-// AtIndex returns the string at the given index.
-// If the index passed in is out of bounds, then an empty string is returned.
-func (s *StringArray) AtIndex(index int) string {
-	maxIndex := len(s.strings) - 1
-	if index > maxIndex || index < 0 {
-		return ""
-	}
-
-	return s.strings[index]
-}
-
 // getType returns the type of value.
 // When unmarshalling an activity from JSON, the Go unmarshaller will use []interface{} even if each element of the
 // interface array is a string. This function ensures that "[]string" gets returned regardless of whether value
