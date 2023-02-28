@@ -523,3 +523,46 @@ let verifiablePres = inquirer.Query(query, CredentialNewCredentialsOpt(selectedV
 let credentials = interaction.presentCredential(verifiablePres, doc.assertionMethod())
 // Consider checking the activity log at some point after the interaction
 ```
+
+
+## Errors
+
+Errors from Wallet-SDK come in a structured format that can be parsed, allowing for individual fields to be accessed.
+
+Errors have three fields:
+
+* Code
+* Category
+* Details
+
+### Examples
+
+
+#### Kotlin (Android)
+
+```kotlin
+import dev.trustbloc.wallet.sdk.walleterror.Walleterror
+
+try {
+    // Some code here
+} catch (e: Exception) {
+    val parsedError = Walleterror.parse(e.message)
+    // Access parsedError.code, parsedError.category, and parsedError.details as you see fit
+}
+```
+
+#### Swift (iOS)
+
+Note: For error parsing, make sure you pass `localizedDescription` from the `NSError` object into the
+`WalleterrorParse` function. Passing in `description` will cause the parsing to not work correctly.
+
+```swift
+import Walletsdk
+
+do {
+    try someSDKMethodHere()
+} catch let error as NSError {
+    let parsedError = WalleterrorParse(error.localizedDescription)
+    // Access parsedError.code, parsedError.category, and parsedError.details as you see fit
+}
+```
