@@ -1,14 +1,45 @@
+import 'dart:convert';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'package:app/models/credential_data.dart';
+
+import 'package:app/models/credential_preview.dart';
+
 class CredentialMetaDataCard extends StatelessWidget {
-  const CredentialMetaDataCard({super.key});
+  CredentialData credentialData;
+  CredentialMetaDataCard({required this.credentialData, Key? key}) : super(key: key);
 
+  late var issueDate = '';
+  late var expiryDate = '';
+  getClaimList() {
+    var data = json.decode(credentialData.credentialDisplayData!);
+    var credentialClaimsData = data['credential_displays'][0]['claims'] as List;
+    return credentialClaimsData.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
+  }
 
-  getCurrentDate() {
-    final now = DateTime.now();
-    String formatter = DateFormat('yMMMMd').format(now);// 28/03/2020
-    return  formatter;
+  getIssuanceDate() {
+    var claimsList = getClaimList();
+    log("claim list ${claimsList!}");
+    for (var claims in claimsList){
+      if (claims.label.contains("Issue Date")) {
+        issueDate = claims.value;
+        log("date ${claims.value}");
+        return  issueDate;
+      }
+    }
+  }
+
+  getExpiryDate(){
+    var claimsList = getClaimList();
+    for (var claims in claimsList){
+      if (claims.label.contains("Expiry Date")) {
+        expiryDate = claims.value;
+        return expiryDate;
+      }
+    }
   }
 
   @override
@@ -44,9 +75,8 @@ class CredentialMetaDataCard extends StatelessWidget {
                     ),
                     textAlign: TextAlign.start,
                   ),
-                  //TODO need to add fallback and network image url
                   subtitle: Text(
-                    getCurrentDate(),
+                    issueDate == '' ? getIssuanceDate():'Never',
                     style: const TextStyle(
                       fontSize: 14,
                       color: Color(0xff6C6D7C),
@@ -56,11 +86,11 @@ class CredentialMetaDataCard extends StatelessWidget {
               ),
             )
         ),
-        const Flexible(
+        Flexible(
             child: SizedBox(
                 height: 60,
                 child: ListTile(
-                    title: Text(
+                    title: const Text(
                       'Expires on',
                       style: TextStyle(
                         fontSize: 14,
@@ -71,8 +101,8 @@ class CredentialMetaDataCard extends StatelessWidget {
                     ),
                     //TODO need to add fallback and network image url
                     subtitle: Text(
-                      'Never',
-                      style: TextStyle(
+                      expiryDate == '' ? getExpiryDate():'Never',
+                      style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xff6C6D7C),
                       ),

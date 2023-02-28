@@ -1,12 +1,10 @@
 import 'dart:convert';
-import 'dart:developer';
-import 'dart:io';
 import 'package:app/widgets/credential_metadata_card.dart';
 import 'package:app/widgets/credential_verified_information_view.dart';
 import 'package:flutter/material.dart';
-
 import 'package:app/models/credential_data.dart';
 import 'package:intl/intl.dart';
+import 'package:app/widgets/credential_card.dart';
 
 class CredentialDetails extends StatelessWidget {
   CredentialData credentialData;
@@ -152,45 +150,13 @@ class CredentialDetails extends StatelessWidget {
                       Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Container(
-                        height: 90,
-                        padding: const EdgeInsets.all(16),
-                        alignment: Alignment.topCenter,
-                        decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: const Color(0xffDBD7DC),
-                              width: 0.5,
-                            ),
-                           ),
-                        child:
-                        ListTile(
-                          title: Text(
-                            credentialName,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xff190C21),
-                            ),
-                            textAlign: TextAlign.start,
-                          ),
-                          //TODO need to add fallback and network image url
-                          leading: const Image(
-                            image: AssetImage('lib/assets/images/genericCredential.png'),
-                            width: 47,
-                            height: 47,
-                            fit: BoxFit.cover,
-                          ),
-                        )
-
-                    ),
+                        CredentialCard(credentialData: credentialData, isDashboardWidget: false),
                         isDashboardWidget?
-                        const CredentialMetaDataCard(): Container(),
-                        CredentialVerifiedInformation(credentialData: credentialData, height: MediaQuery.of(context).size.height*0.42,)
+                        CredentialMetaDataCard(credentialData: credentialData): Container(),
+                        CredentialVerifiedInformation(credentialData: credentialData, height: MediaQuery.of(context).size.height*0.42)
                       ],
                     )
-             ])),
+                 ])),
                       SizedBox(
                           height: 450,
                           child: Scrollbar(
