@@ -12,6 +12,8 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 )
 
+const claimsTypesFieldName = "type"
+
 // VerifiableCredential represents a Verifiable Credential per the VC Data Model spec:
 // https://www.w3.org/TR/vc-data-model/.
 // It wraps the VC type from aries-framework-go and provides gomobile-compatible methods.
@@ -45,6 +47,82 @@ func (v *VerifiableCredential) IssuerID() string {
 // There may be additional more specific credential types as well.
 func (v *VerifiableCredential) Types() *StringArray {
 	return &StringArray{strings: v.VC.Types}
+}
+
+// ClaimTypes returns the types specified in the claims of this VC.
+// It first checks the selective disclosure claims for the types - if found, they are returned.
+// Otherwise, the non-selective disclosure claims are checked and returned if found.
+// When checking the non-selective disclosure claims, only the first subject is checked.
+// If not found in either place, then nil is returned.
+func (v *VerifiableCredential) ClaimTypes() *StringArray {
+	types := v.claimTypesFromSelectiveDisclosures()
+	if types != nil {
+		return types
+	}
+
+	types = v.claimTypesFromCredentialSubject()
+	if types != nil {
+		return types
+	}
+
+	return nil
+}
+
+func (v *VerifiableCredential) claimTypesFromSelectiveDisclosures() *StringArray {
+	if len(v.VC.SDJWTDisclosures) > 0 {
+		for _, disclosure := range v.VC.SDJWTDisclosures {
+			if disclosure.Name == claimsTypesFieldName {
+				return rawTypesToStringArray(disclosure.Value)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (v *VerifiableCredential) claimTypesFromCredentialSubject() *StringArray {
+	credentialSubjects, ok := v.VC.Subject.([]verifiable.Subject)
+	if !ok {
+		return nil
+	}
+
+	if len(credentialSubjects) == 0 {
+		return nil
+	}
+
+	rawTypes, exists := credentialSubjects[0].CustomFields[claimsTypesFieldName]
+	if !exists {
+		return nil
+	}
+
+	return rawTypesToStringArray(rawTypes)
+}
+
+func rawTypesToStringArray(rawTypes interface{}) *StringArray {
+	typesAsInterfaceArray, ok := rawTypes.([]interface{}) // This will be the type if the VC was parsed (unmarshalled)
+	if ok {
+		types := make([]string, len(typesAsInterfaceArray))
+		for i := 0; i < len(typesAsInterfaceArray); i++ {
+			types[i], ok = typesAsInterfaceArray[i].(string)
+			if !ok {
+				return nil
+			}
+		}
+
+		return &StringArray{strings: types}
+	}
+
+	typesAsStringArray, ok := rawTypes.([]string)
+	if ok {
+		return &StringArray{strings: typesAsStringArray}
+	}
+
+	typeAsString, ok := rawTypes.(string)
+	if ok {
+		return &StringArray{strings: []string{typeAsString}}
+	}
+
+	return nil
 }
 
 // IssuanceDate returns this VC's issuance date as a Unix timestamp.
