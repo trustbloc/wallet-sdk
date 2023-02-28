@@ -64,7 +64,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
               trailing: Image.asset('lib/assets/images/verified.png', width: 82, height: 26),
             ),
             CredentialCardOutline(item: widget.credentialData),
-            const CredentialMetaDataCard(),
+            CredentialMetaDataCard(credentialData: widget.credentialData),
             CredentialVerifiedInformation(credentialData: widget.credentialData, height: MediaQuery.of(context).size.height*0.38,),
             Align(
                 alignment: Alignment.bottomCenter,

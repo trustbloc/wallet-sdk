@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:app/models/credential_data.dart';
 import 'package:app/views/credential_details.dart';
 import 'package:flutter/material.dart';
@@ -19,13 +20,16 @@ class _CredentialCardState extends State<CredentialCard> {
   Widget build(BuildContext context) {
     Map<String, dynamic> issuer = jsonDecode(widget.credentialData.credentialDisplayData!);
     final credentialDisplayName = issuer['credential_displays'][0]['overview']['name'];
+    final logoURL = issuer['credential_displays'][0]['overview']['logo']['url'];
+    final backgroundColor ='0xff${issuer['credential_displays'][0]['overview']['background_color'].toString().replaceAll('#', '')}';
+    final textColor = '0xff${issuer['credential_displays'][0]['overview']['text_color'].toString().replaceAll('#', '')}';
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
       child: Container(
           height: 80,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-              color: Colors.white,
+              color: backgroundColor.isNotEmpty ? Color(int.parse(backgroundColor)) : Colors.white,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -36,20 +40,23 @@ class _CredentialCardState extends State<CredentialCard> {
           child: ListTile(
             title: Text(
               credentialDisplayName!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Color(0xff190C21),
+                color: textColor.isNotEmpty ? Color(int.parse(textColor)) : const Color(0xff190C21),
               ),
               textAlign: TextAlign.start,
             ),
-            //TODO need to add fallback and network image url
-            leading:  const Image(
-                image: AssetImage('lib/assets/images/genericCredential.png'),
-                width: 47,
-                height: 47,
-                fit: BoxFit.cover,
-            ),
+            leading: FadeInImage(
+                  image: NetworkImage(logoURL),
+                  placeholder: AssetImage(logoURL),
+                  imageErrorBuilder:(context, error, stackTrace) {
+                    return Image.asset('lib/assets/images/genericCredential.png',
+                        fit: BoxFit.fitWidth
+                    );
+                  },
+                  fit: BoxFit.fitWidth,
+                ),
             trailing: IconButton(
               icon: const Icon(Icons.arrow_circle_right, size: 32, color: Color(0xffB6B7C7)),
               onPressed: () async {
