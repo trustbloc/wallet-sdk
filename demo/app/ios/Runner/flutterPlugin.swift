@@ -16,23 +16,16 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         let instance = SwiftWalletSDKPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
+   
     
-    struct qrCodeData{
-        static var requestURI = ""
-    }
-    
-    private var kms:LocalkmsKMS?
-    private var didResolver: ApiDIDResolverProtocol?
-    private var documentLoader: ApiLDDocumentLoaderProtocol?
-    private var crypto: ApiCryptoProtocol?
-    private var didDocRes: ApiDIDDocResolution?
-    private var didDocID: String?
-    private var newOIDCInteraction: Openid4ciInteraction?
-    private var didVerificationMethod: ApiVerificationMethod?
-    private var activityLogger: MemActivityLogger?
-
+    private var walletSDK: WalletSDK?
+    private var openID4CI: OpenID4CI?
     private var openID4VP: OpenID4VP?
-    
+
+    // TODO: remove next three variables after refactoring finished.
+    private var processAuthorizationRequestVCs: ApiVerifiableCredentialsArray?
+    private var didDocResolution: ApiDIDDocResolution?
+   
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         let arguments = call.arguments as? Dictionary<String, Any>
         
@@ -43,7 +36,6 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             
         case "authorize":
             let requestURI = fetchArgsKeyValue(call, key: "requestURI")
-            qrCodeData.requestURI = requestURI!
             authorize(requestURI: requestURI!, result: result)
             
         case "requestCredential":
@@ -52,9 +44,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
 
         case "fetchDID":
             let didID = fetchArgsKeyValue(call, key: "didID")
-            if didDocID == nil {
-                didDocID = didID
-            }
+
 
         case "resolveCredentialDisplay":
             resolveCredentialDisplay(arguments: arguments!,  result: result)
@@ -76,9 +66,12 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
 
         case "processAuthorizationRequest":
             processAuthorizationRequest(arguments: arguments!, result: result)
+        
+        case "getMatchedSubmissionRequirements":
+            getMatchedSubmissionRequirements(arguments: arguments!, result: result)
             
         case "presentCredential":
-            presentCredential(result: result)
+            presentCredential(arguments: arguments!, result: result)
             
         default:
             print("No call method is found")
@@ -86,63 +79,50 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     private func initSDK(result: @escaping FlutterResult) {
-        let kmsstore = kmsStore()
-        kms = LocalkmsNewKMS(kmsstore, nil)
-        didResolver = DidNewResolver("http://did-resolver.trustbloc.local:8072/1.0/identifiers", nil)
-        crypto = kms?.getCrypto()
-        documentLoader = LdNewDocLoader()
-        activityLogger = MemNewActivityLogger()
+        let walletSDK = WalletSDK();
+        walletSDK.InitSDK(kmsStore: kmsStore())
+        
+        self.walletSDK = walletSDK
         result(true)
     }
     
-    private func createOpenID4VP() throws -> OpenID4VP {
-        guard let kms = self.kms else {
-            throw OpenID4VPError.runtimeError("SDK is not initialized, call initSDK()")
-        }
-        guard let crypto = self.crypto else {
-            throw OpenID4VPError.runtimeError("SDK is not initialized, call initSDK()")
-        }
-        guard let didResolver = self.didResolver else {
-            throw OpenID4VPError.runtimeError("SDK is not initialized, call initSDK()")
-        }
-        guard let documentLoader = self.documentLoader else {
-            throw OpenID4VPError.runtimeError("SDK is not initialized, call initSDK()")
-        }
-        
-        return OpenID4VP(keyReader: kms, didResolver: didResolver, documentLoader: documentLoader, crypto: crypto, activityLogger: activityLogger!)
-    }
+
     /**
      This method  invoke processAuthorizationRequest defined in OpenID4Vp file.
      */
     public func processAuthorizationRequest(arguments: Dictionary<String, Any> , result: @escaping FlutterResult) {
         do {
+            guard let walletSDK = self.walletSDK else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while process authorization request",
+                                                 details: "WalletSDK interaction is not initialized, call initSDK()"))
+            }
             
             guard let authorizationRequest = arguments["authorizationRequest"] as? String else{
                 return  result(FlutterError.init(code: "NATIVE_ERR",
                                                  message: "error while process authorization request",
                                                  details: "parameter authorizationRequest is missed"))
             }
+
+            let storedCredentials = arguments["storedCredentials"] as? Array<String>
             
-            guard let storedCredentials = arguments["storedCredentials"] as? Array<String> else{
-                return  result(FlutterError.init(code: "NATIVE_ERR",
-                                                 message: "error while process authorization request",
-                                                 details: "parameter storedCredentials is missed"))
-            }
-            
-            
-            let openID4VP = try createOpenID4VP()
+            let openID4VP = try walletSDK.createOpenID4VPInteraction()
+
             self.openID4VP = openID4VP
+
+            try openID4VP.startVPInteraction(authorizationRequest: authorizationRequest)
             
-            let opts = VcparseNewOpts(true, nil)
-            var parsedCredentials: Array<ApiVerifiableCredential> = Array()
             
-            for cred in storedCredentials{
-                let parsedVC = VcparseParse(cred, opts, nil)!
-                parsedCredentials.append(parsedVC)
+            if (storedCredentials != nil) {
+                //TODO remove this block after refactoring finished.
+                processAuthorizationRequestVCs = convertToVerifiableCredentialsArray(credentials: storedCredentials!)
+                let matchedReq = try openID4VP.getMatchedSubmissionRequirements(
+                    storedCredentials:convertToVerifiableCredentialsArray(
+                    credentials: storedCredentials!))
+                result(convertVerifiableCredentialsArray(arr: matchedReq.atIndex(0)!.descriptor(at:0)!.matchedVCs!))
             }
             
-            let matchedCredentials = try openID4VP.processAuthorizationRequest(authorizationRequest: authorizationRequest, credentials: parsedCredentials)
-            result(matchedCredentials)
+            return result(Array<String>())
             
         } catch OpenID4VPError.runtimeError(let errorMsg){
             result(FlutterError.init(code: "NATIVE_ERR",
@@ -155,27 +135,81 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
     }
     
+    public func getMatchedSubmissionRequirements(arguments: Dictionary<String, Any> , result: @escaping FlutterResult) {
+        do {
+            guard let openID4VP = self.openID4VP else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while getting matched submission requirements",
+                                                 details: "OpenID4VP interaction is not initialted"))
+            }
+
+            guard let storedCredentials = arguments["storedCredentials"] as? Array<String> else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while getting matched submission requirements",
+                                                 details: "parameter storedCredentials is missed"))
+            }
+            
+ 
+         
+            let matchResult = try convertSubmissionRequirementArray(
+                requirements: try openID4VP.getMatchedSubmissionRequirements(storedCredentials:  convertToVerifiableCredentialsArray(credentials:storedCredentials)))
+            
+            return result(matchResult)
+            
+        } catch OpenID4VPError.runtimeError(let errorMsg){
+            result(FlutterError.init(code: "NATIVE_ERR",
+                                     message: "error while getting matched submission requirements",
+                                     details: errorMsg))
+        } catch let error as NSError {
+            result(FlutterError.init(code: "NATIVE_ERR",
+                                     message: "error while getting matched submission requirements",
+                                     details: error.description))
+        }
+    }
+    
     /**
      This method invokes presentCredentialt defined in OpenID4Vp file.
      */
-    public func presentCredential(result: @escaping FlutterResult) {
+    public func presentCredential(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
         do {
             guard let openID4VP = self.openID4VP else{
                 return  result(FlutterError.init(code: "NATIVE_ERR",
                                                  message: "error while process present credential",
                                                  details: "OpenID4VP interaction is not initialted"))
             }
+            guard let didDocResolution = self.didDocResolution else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while process present credential",
+                                                 details: "Did document not initialized"))
+            }
+            
+            let selectedCredentials = arguments["selectedCredentials"] as? Array<String>
+            
+            let selectedCredentialsArray: ApiVerifiableCredentialsArray?
+            if (selectedCredentials != nil) {
+                selectedCredentialsArray = convertToVerifiableCredentialsArray(credentials: selectedCredentials!)
+            } else {
+                guard let processAuthorizationRequestVCs = self.processAuthorizationRequestVCs else {
+                    return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                     message: "error while process present credential",
+                                                     details: "OpenID4VP interaction is not initialted"))
+                }
+                
+                selectedCredentialsArray = processAuthorizationRequestVCs
+            }
 
-            try openID4VP.presentCredential(didVerificationMethod: didVerificationMethod!)
+            try openID4VP.presentCredential(
+                didVerificationMethod: didDocResolution.assertionMethod(),
+                selectedCredentials: selectedCredentialsArray!)
             result(true);
             
         } catch OpenID4VPError.runtimeError(let errorMsg){
             result(FlutterError.init(code: "NATIVE_ERR",
-                                     message: "error while process authorization request",
+                                     message: "error while process present credential",
                                      details: errorMsg))
         } catch let error as NSError{
             result(FlutterError.init(code: "NATIVE_ERR",
-                                     message: "error while process authorization request",
+                                     message: "error while process present credential",
                                      details: error.description))
         }
     }
@@ -185,18 +219,22 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
      The usage of ApiCreateDIDOpts depends on the DID method you're using.
      In the app when user logins we invoke sdk DidNewCreatorWithKeyWriter create method to create new did per user.
      */
-    public func createDid(didMethodType: String, result: @escaping FlutterResult){
-        let didCreator = DidNewCreatorWithKeyWriter(self.kms, nil)
+    public func createDid(didMethodType: String, result: @escaping FlutterResult) {
         do {
+            guard let walletSDK = self.walletSDK else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while creating did",
+                                                 details: "WalletSDK interaction is not initialized, call initSDK()"))
+            }
+            
             let apiCreate = ApiCreateDIDOpts.init()
             if (didMethodType == "jwk"){
                 apiCreate.keyType = "ECDSAP384IEEEP1363"
             }
-          
-            let doc = try didCreator!.create(didMethodType, createDIDOpts: apiCreate)
-            didDocID = doc.id_(nil)
-            didVerificationMethod = try doc.assertionMethod()
-            result(didDocID)
+            let doc = try walletSDK.createDID(didMethodType: didMethodType)
+            didDocResolution = doc
+        
+            result(doc.content)
         } catch {
             result(FlutterError.init(code: "NATIVE_ERR",
                                      message: "error while creating did",
@@ -213,13 +251,20 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
      The userPinRequired method available on authorize result returns boolean value to differentiate pin is required or not.
      */
     public func authorize(requestURI: String, result: @escaping FlutterResult){
-        let clientConfig =  Openid4ciClientConfig("ClientID", crypto: self.crypto, didRes: self.didResolver, activityLogger: activityLogger)
-        newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
+        guard let walletSDK = self.walletSDK else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while creating new OIDC interaction",
+                                             details: "WalletSDK interaction is not initialized, call initSDK()"))
+        }
+
         do {
-            let authorizeResult  = try newOIDCInteraction?.authorize()
-            let userPINRequired = authorizeResult?.userPINRequired;
-            // Todo Issue-65 Pass the whole object for the future changes
-            result(Bool(userPINRequired ?? false))
+            let openID4CI = try walletSDK.createOpenID4CIInteraction(requestURI:requestURI)
+            
+            let authRes = try openID4CI.authorize()
+            
+            self.openID4CI = openID4CI
+                        
+            result(Bool(authRes.userPINRequired))
           } catch {
               result(FlutterError.init(code: "NATIVE_ERR",
                                        message: "error while creating new OIDC interaction",
@@ -236,13 +281,23 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
      If flow doesnt not require pin than Credential Request Opts will have empty string otp and sdk will return credential Data based on empty otp.
     */
     public func requestCredential(otp: String, result: @escaping FlutterResult){
-        let clientConfig =  Openid4ciClientConfig("ClientID", crypto: self.crypto, didRes: self.didResolver, activityLogger: activityLogger)
-        newOIDCInteraction = Openid4ciNewInteraction(qrCodeData.requestURI, clientConfig, nil)
-        do {
-            let credentialRequest = Openid4ciNewCredentialRequestOpts( otp )
-            let credResp  = try newOIDCInteraction?.requestCredential(credentialRequest, vm: didVerificationMethod)
-            let credentialData = credResp?.atIndex(0)!;
-            result(credentialData?.serialize(nil))
+        guard let openID4CI = self.openID4CI else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while process requestCredential credential",
+                                             details: "openID4CI not initiated. Call authorize before this."))
+        }
+        
+        guard let didDocResolution = self.didDocResolution else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while process requestCredential credential",
+                                             details: "Did document not initialized"))
+        }
+        
+         do {
+            let credentialCreated = try openID4CI.requestCredential(otp: otp,
+                                                                    didVerificationMethod: didDocResolution.assertionMethod())
+
+            result(credentialCreated.serialize(nil))
           } catch let error as NSError{
               result(FlutterError.init(code: "Exception",
                                        message: "error while requesting credential",
@@ -259,6 +314,11 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
      */
     
     public func resolveCredentialDisplay(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
+        guard let openID4CI = self.openID4CI else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while resolve credential display",
+                                             details: "openID4CI not initiated. Call authorize before this."))
+        }
         do {
             guard let issuerURI = arguments["uri"] as? String else{
                 return  result(FlutterError.init(code: "NATIVE_ERR",
@@ -271,16 +331,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                  message: "error while resolve credential display",
                                                  details: "parameter storedcredentials is missed"))
             }
-
-            let opts = VcparseNewOpts(true, nil)
-            var parsedCredentials: ApiVerifiableCredentialsArray = ApiVerifiableCredentialsArray()!
-
-            for cred in vcCredentials{
-                let parsedVC = VcparseParse(cred, opts, nil)!
-                parsedCredentials.add(parsedVC)
-            }
-            let resolvedDisplayData = Openid4ciResolveDisplay(parsedCredentials, issuerURI, nil, nil)
-            let displayDataResp = resolvedDisplayData?.serialize(nil)
+      
+            let displayDataResp = openID4CI.resolveCredentialDisplay(issuerURI: issuerURI,
+                                                                     vcCredentials: convertToVerifiableCredentialsArray(credentials: vcCredentials))
             result(displayDataResp)
           } catch let error as NSError {
                 result(FlutterError.init(code: "Exception",
@@ -326,10 +379,16 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
      Local function to fetch all activities and send the serialized response to the app to be stored in the flutter secure storage.
      */
     public func storeActivityLogger(result: @escaping FlutterResult){
+        guard let walletSDK = self.walletSDK else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while authorize ci",
+                                             details: "WalletSDK interaction is not initialized, call initSDK()"))
+        }
+        
         var activityList: [Any] = []
-        var aryLength = activityLogger!.length()
+        let aryLength = walletSDK.activityLogger!.length()
         for index in 0..<aryLength {
-            activityList.append(activityLogger!.atIndex(index)!.serialize(nil))
+            activityList.append(walletSDK.activityLogger!.atIndex(index)!.serialize(nil))
         }
 
         result(activityList)
@@ -364,7 +423,13 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         there's a later need to refresh credential display data using the latest display information from the issuer.
      */
     public func issuerURI( result: @escaping FlutterResult){
-        let issuerURIResp = newOIDCInteraction?.issuerURI();
+        guard let openID4CI = self.openID4CI else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while calling issuerURI",
+                                             details: "openID4CI not initiated. Call authorize before this."))
+        }
+        
+        let issuerURIResp = openID4CI.issuerURI();
         result(issuerURIResp)
     }
 
@@ -376,16 +441,6 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         let myArgs = args as? [String: Any];
         return myArgs?[key] as? String;
     }
-
-    //Define type method to access the new interaction further in the flow
-    class OpenID
-    {
-        class func NewInteraction(requestURI: String, clientConfig: Openid4ciClientConfig) -> Openid4ciInteraction?
-          {
-              return Openid4ciNewInteraction(requestURI, clientConfig, nil)
-          }
-        
-
-    }
+  
 }
 

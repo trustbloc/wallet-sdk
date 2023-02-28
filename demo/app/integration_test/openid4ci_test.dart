@@ -45,26 +45,20 @@ void main() async {
       String verificationURL = verificationURLsList[i];
       print("verificationURL : $verificationURL");
 
-      if (Platform.isAndroid) {
-        await walletSDKPlugin
-            .processAuthorizationRequest(authorizationRequest: verificationURL);
+      await walletSDKPlugin
+          .processAuthorizationRequest(authorizationRequest: verificationURL);
 
-        final requirements = await walletSDKPlugin.getSubmissionRequirements( storedCredentials: [credential]);
+      print("getSubmissionRequirements");
 
-        expect(requirements, hasLength(equals(1)));
-        expect(requirements[0].inputDescriptors, hasLength(equals(1)));
-        expect(requirements[0].inputDescriptors[0].matchedVCsID, hasLength(equals(1)));
+      final requirements = await walletSDKPlugin.getSubmissionRequirements( storedCredentials: [credential]);
 
-        await walletSDKPlugin.presentCredential(selectedCredentials: [credential]);
-      } else {
-        final matchedCreds = await walletSDKPlugin
-            .processAuthorizationRequest(authorizationRequest: verificationURL, storedCredentials: [credential]);
+      print("getSubmissionRequirements finished");
 
-        expect(matchedCreds, hasLength(equals(1)));
-        expect(matchedCreds[0], equals(credential));
+      expect(requirements, hasLength(equals(1)));
+      expect(requirements[0].inputDescriptors, hasLength(equals(1)));
+      expect(requirements[0].inputDescriptors[0].matchedVCsID, hasLength(equals(1)));
 
-        await walletSDKPlugin.presentCredential();
-      }
+      await walletSDKPlugin.presentCredential(selectedCredentials: [credential]);
     }
   });
 
