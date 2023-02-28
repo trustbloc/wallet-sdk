@@ -116,8 +116,8 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 	return authorizationResult, nil
 }
 
-// RequestCredential is the final step (or second last step, if the ResolveDisplay method isn't needed) in the
-// interaction. This is called after the wallet is authorized and is ready to receive credential(s).
+// RequestCredential is the final step in the interaction.
+// This is called after the wallet is authorized and is ready to receive credential(s).
 // Relevant sections of the spec:
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#name-credential-endpoint
 func (i *Interaction) RequestCredential(
