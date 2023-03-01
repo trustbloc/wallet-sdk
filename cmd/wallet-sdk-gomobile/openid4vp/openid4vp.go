@@ -115,10 +115,7 @@ func (o *Interaction) PresentCredential(presentation []byte, vm *api.Verificatio
 	parsedPresentation, err := verifiable.ParsePresentation(
 		presentation,
 		verifiable.WithPresDisabledProofCheck(),
-		verifiable.WithPresJSONLDDocumentLoader(
-			&wrapper.DocumentLoaderWrapper{
-				DocumentLoader: o.ldDocumentLoader,
-			}))
+		verifiable.WithDisabledJSONLDChecks())
 	if err != nil {
 		return walleterror.ToMobileError(
 			gowalleterror.NewValidationError(module,
