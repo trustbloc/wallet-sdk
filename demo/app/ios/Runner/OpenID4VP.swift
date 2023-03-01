@@ -20,7 +20,7 @@ public class OpenID4VP {
     private var activityLogger: ApiActivityLoggerProtocol
     
     private var initiatedInteraction: Openid4vpInteraction?
-    private var verifiablePresentation: CredentialVerifiablePresentation?
+    private var vpQueryContent: Data?
     
     init (keyReader:LocalkmsKMS, didResolver: ApiDIDResolverProtocol, documentLoader: ApiLDDocumentLoaderProtocol, crypto: ApiCryptoProtocol, activityLogger: ApiActivityLoggerProtocol) {
         self.keyReader = keyReader
@@ -36,48 +36,38 @@ public class OpenID4VP {
      * InitiatedInteraction is local variable to intiate  Openid4vpInteraction representing a single OpenID4VP interaction between a wallet and a verifier.
      * The methods defined on this object are used to help guide the calling code through the OpenID4VP flow.
      */
-    func processAuthorizationRequest(authorizationRequest: String, credentials: Array<ApiVerifiableCredential>) throws -> Array<String> {
+    func startVPInteraction(authorizationRequest: String) throws {
         let clientConfig = Openid4vpClientConfig(keyReader, crypto: crypto, didResolver: didResolver, ldDocumentLoader: documentLoader, activityLogger: activityLogger)
 
         let interaction = Openid4vpInteraction(authorizationRequest, config: clientConfig)
         
-        let query = try? interaction?.getQuery()
-
-        let creds = ApiVerifiableCredentialsArray()
-        for cred in credentials {
-            creds?.add(cred)
-        }
- 
-        let  verifiablePresentation = try CredentialNewInquirer(documentLoader)?.query(query, contents: CredentialCredentialsOpt(creds))
-       
-        self.verifiablePresentation = verifiablePresentation
-        
-        let matchedCreds = try verifiablePresentation!.credentials()
-
+        vpQueryContent = try interaction!.getQuery()
         initiatedInteraction = interaction
-        
-        var credList: [String] = []
-        
-        for i in 0...(matchedCreds.length()-1) {
-            credList.append((matchedCreds.atIndex(i)?.serialize(nil))!)
+    }
+    
+    func getMatchedSubmissionRequirements(storedCredentials: ApiVerifiableCredentialsArray)
+        throws -> CredentialSubmissionRequirementArray {
+        guard let vpQueryContent = self.vpQueryContent else {
+            throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         }
         
-        
-        return credList
+        return  try CredentialNewInquirer(documentLoader)!.getSubmissionRequirements(vpQueryContent, contents: CredentialCredentialsOpt(storedCredentials))
     }
+    
     /**
      * initiatedInteraction has PresentCredential method which presents credentials to redirect uri from request object.
      */
-    func presentCredential(didVerificationMethod: ApiVerificationMethod) throws {
-        guard let verifiablePresentation = self.verifiablePresentation else {
+    func presentCredential(didVerificationMethod: ApiVerificationMethod, selectedCredentials: ApiVerifiableCredentialsArray) throws {
+        guard let vpQueryContent = self.vpQueryContent else {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         }
-        
-        
         guard let initiatedInteraction = self.initiatedInteraction else {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         }
-                
+        
+        let  verifiablePresentation = try CredentialNewInquirer(documentLoader)!.query(vpQueryContent, contents: CredentialCredentialsOpt(selectedCredentials))
+                       
         try initiatedInteraction.presentCredential(verifiablePresentation.content(), vm: didVerificationMethod)
-    }
+    } 
+    
 }
