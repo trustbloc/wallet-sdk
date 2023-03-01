@@ -16,6 +16,7 @@ class CredentialMetaDataCard extends StatelessWidget {
   late var expiryDate = '';
   getClaimList() {
     var data = json.decode(credentialData.credentialDisplayData!);
+    log("data metadata $data");
     var credentialClaimsData = data['credential_displays'][0]['claims'] as List;
     return credentialClaimsData.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
   }
@@ -25,21 +26,25 @@ class CredentialMetaDataCard extends StatelessWidget {
     log("claim list ${claimsList!}");
     for (var claims in claimsList){
       if (claims.label.contains("Issue Date")) {
-        issueDate = claims.value;
+        var issueDate = claims.value;
         log("date ${claims.value}");
         return  issueDate;
       }
     }
+    final now = DateTime.now();
+    String formatter = DateFormat('yMMMMd').format(now);// 28/03/2020
+    return  formatter;
   }
 
   getExpiryDate(){
     var claimsList = getClaimList();
     for (var claims in claimsList){
       if (claims.label.contains("Expiry Date")) {
-        expiryDate = claims.value;
+        var expiryDate = claims.value;
         return expiryDate;
       }
     }
+    return 'Never';
   }
 
   @override
@@ -76,7 +81,7 @@ class CredentialMetaDataCard extends StatelessWidget {
                     textAlign: TextAlign.start,
                   ),
                   subtitle: Text(
-                    issueDate == '' ? getIssuanceDate():'Never',
+                    getIssuanceDate(),
                     style: const TextStyle(
                       fontSize: 14,
                       color: Color(0xff6C6D7C),
@@ -101,7 +106,7 @@ class CredentialMetaDataCard extends StatelessWidget {
                     ),
                     //TODO need to add fallback and network image url
                     subtitle: Text(
-                      expiryDate == '' ? getExpiryDate():'Never',
+                      getExpiryDate(),
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xff6C6D7C),

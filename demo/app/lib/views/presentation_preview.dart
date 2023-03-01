@@ -18,6 +18,8 @@ import 'package:app/services/storage_service.dart';
 
 import 'package:app/models/activity_data_object.dart';
 
+import 'package:app/widgets/credential_card.dart';
+
 class PresentationPreview extends StatefulWidget {
   final String matchedCredential;
   final CredentialData credentialData;
@@ -63,7 +65,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
               subtitle: const Text('verifier.com', style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
               trailing: Image.asset('lib/assets/images/verified.png', width: 82, height: 26),
             ),
-            CredentialCardOutline(item: widget.credentialData),
+            CredentialCard(credentialData: widget.credentialData, isDashboardWidget: false),
             CredentialMetaDataCard(credentialData: widget.credentialData),
             CredentialVerifiedInformation(credentialData: widget.credentialData, height: MediaQuery.of(context).size.height*0.38,),
             Align(
