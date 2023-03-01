@@ -488,7 +488,7 @@ val selectedVCs = api.VerifiableCredentialsArray()
 selectedVCs.add(requirementDesc.matchedVCs.atIndex(0)) // Users should select one VC for each descriptor from the matched list and confirm that they want to share it
 
 val verifiablePres = inquirer.Query(query, credential.CredentialsOpt(selectedVCs))
-interaction.presentCredential(verifiablePres, didDocResolution.assertionMethod())
+interaction.presentCredential(verifiablePres)
 // Consider checking the activity log at some point after the interaction
 ```
 

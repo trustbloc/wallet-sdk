@@ -316,12 +316,10 @@ class MainActivity : FlutterActivity() {
                     ?: throw java.lang.Exception("processAuthorizationRequest should be called first.")
         }
 
-        val didDocResolution = this.didDocResolution
-                ?: throw java.lang.Exception("DID should be created first")
         val openID4VP = this.openID4VP
                 ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
 
-        openID4VP.presentCredential(selectedCredentialsArray, didDocResolution.assertionMethod())
+        openID4VP.presentCredential(selectedCredentialsArray)
         this.openID4VP = null
     }
     /**

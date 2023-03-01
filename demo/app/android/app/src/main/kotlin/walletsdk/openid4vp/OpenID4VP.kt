@@ -50,13 +50,13 @@ class OpenID4VP constructor(
     /**
      * initiatedInteraction has PresentCredential method which presents credentials to redirect uri from request object.
      */
-    fun presentCredential(selectedCredentials: VerifiableCredentialsArray, didVerificationMethod: VerificationMethod) {
+    fun presentCredential(selectedCredentials: VerifiableCredentialsArray) {
         val initiatedInteraction = this.initiatedInteraction
                 ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
 
         val verifiablePresentation = createVerifiablePresentation(selectedCredentials);
 
-        initiatedInteraction.presentCredential(verifiablePresentation.content(), didVerificationMethod)
+        initiatedInteraction.presentCredential(verifiablePresentation.content())
     }
 
     private fun createVerifiablePresentation(selectedCredentials: VerifiableCredentialsArray): VerifiablePresentation {

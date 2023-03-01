@@ -177,11 +177,6 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                  message: "error while process present credential",
                                                  details: "OpenID4VP interaction is not initialted"))
             }
-            guard let didDocResolution = self.didDocResolution else{
-                return  result(FlutterError.init(code: "NATIVE_ERR",
-                                                 message: "error while process present credential",
-                                                 details: "Did document not initialized"))
-            }
             
             let selectedCredentials = arguments["selectedCredentials"] as? Array<String>
             
@@ -199,7 +194,6 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             }
 
             try openID4VP.presentCredential(
-                didVerificationMethod: didDocResolution.assertionMethod(),
                 selectedCredentials: selectedCredentialsArray!)
             result(true);
             
