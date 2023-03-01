@@ -10,7 +10,6 @@ import 'package:app/models/store_credential_data.dart';
 import 'package:app/widgets/common_title_appbar.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/widgets/primary_button.dart';
-import 'package:app/widgets/Credential_card_outline.dart';
 import 'package:app/widgets/credential_metadata_card.dart';
 import 'package:app/main.dart';
 
