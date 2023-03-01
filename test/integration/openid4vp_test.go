@@ -102,8 +102,10 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		activityLogger := mem.NewActivityLogger()
 
+		docLoader := ld.NewDocLoader()
+
 		cfg := openid4vp.NewClientConfig(
-			testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver, ld.NewDocLoader(), activityLogger)
+			testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver, docLoader, activityLogger)
 
 		interaction := openid4vp.NewInteraction(initiateURL, cfg)
 
@@ -111,7 +113,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		require.NoError(t, err)
 		println("query", string(query))
 
-		inquirer := credential.NewInquirer(ld.NewDocLoader())
+		inquirer := credential.NewInquirer(docLoader)
 		require.NoError(t, err)
 
 		requirements, err := inquirer.GetSubmissionRequirements(query, credential.NewCredentialsOpt(issuedCredentials))
@@ -149,7 +151,6 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		err = interaction.PresentCredential(verifiablePresContent, vm)
 		require.NoError(t, err)
-
 		checkActivityLogAfterOpenID4VPFlow(t, activityLogger, tc.verifierProfileID)
 		fmt.Printf("done test %d\n", i)
 	}
