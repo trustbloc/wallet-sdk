@@ -33,9 +33,12 @@ class WalletSDK {
     fun createDID(didMethodType: String): DIDDocResolution {
         val kms = this.kms ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
-        val creatorDID = Creator(kms as KeyWriter)
+        val createDIDOpts = CreateDIDOpts()
+        if(didMethodType == "jwk"){
+            createDIDOpts.keyType = "ECDSAP384IEEEP1363"
+        }
 
-        return creatorDID.create(didMethodType, CreateDIDOpts())
+        return creatorDID.create(didMethodType, createDIDOpts)
     }
 
     fun createOpenID4CIInteraction(requestURI: String) : OpenID4CI {
