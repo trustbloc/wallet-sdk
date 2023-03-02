@@ -471,7 +471,6 @@ val kms = Localkms.newKMS(memKMSStore)
 val didResolver = Resolver("")
 val didCreator = Creator(kms as KeyWriter)
 val documentLoader = DocLoader()
-val didDocResolution = didCreator.create("key", CreateDIDOpts()) // Create a did:key doc
 val activityLogger = mem.ActivityLogger() // Optional, but useful for tracking credential activities
 val cfg = ClientConfig(kms, kms.getCrypto(), didResolver, documentLoader, activityLogger)
 
@@ -479,10 +478,10 @@ val cfg = ClientConfig(kms, kms.getCrypto(), didResolver, documentLoader, activi
 val interaction = openid4vp.Interaction("YourAuthRequestURIHere", cfg)
 val query = interaction.getQuery()
 val inquirer = credential.Inquirer(docLoader)
-val issuedCredentials = api.VerifiableCredentialsArray() // Would need some actual credentials for this to actually work
+val savedCredentials = api.VerifiableCredentialsArray() // Would need some actual credentials for this to actually work
 
 // Use this code to display the list of VCs to select which of them to send.
-val matchedRequirements = inquirer.getSubmissionRequirements(query, credentials) 
+val matchedRequirements = inquirer.getSubmissionRequirements(query, savedCredentials) 
 val matchedRequirement = matchedRequirements.atIndex(0) // Usually we will have one requirement
 val requirementDesc = matchedRequirement.descriptorAtIndex(0) // Usually requirement will contain one descriptor
 val selectedVCs = api.VerifiableCredentialsArray()
@@ -502,7 +501,6 @@ import Walletsdk
 let memKMSStore = LocalkmsNewMemKMSStore()
 let kms = LocalkmsNewKMS(memKMSStore, nil)
 let didResolver = DidNewResolver("", nil)
-let didCreator = DidNewCreatorWithKeyWriter(kms, nil)
 let documentLoader = LdNewDocLoader()
 let activityLogger = MemNewActivityLogger() // Optional, but useful for tracking credential activities
 let clientConfig = Openid4vpClientConfig(keyHandleReader: kms, crypto: kms.getCrypto(), didResolver: didResolver, ldDocumentLoader: documentLoader, activityLogger: activityLogger)
@@ -511,17 +509,17 @@ let clientConfig = Openid4vpClientConfig(keyHandleReader: kms, crypto: kms.getCr
 let interaction = Openid4vpInteraction("YourAuthRequestURIHere", config: clientConfig)
 let query = interaction.getQuery()
 let inquirer = CredentialNewInquirer(docLoader)
-let issuedCredentials = ApiVerifiableCredentialsArray() // Would need some actual credentials for this to actually work
+let savedCredentials = ApiVerifiableCredentialsArray() // Would need some actual credentials for this to actually work
 
 // Use this code to display the list of VCs to select which of them to send.
-let matchedRequirements = inquirer.getSubmissionRequirements(query, credentials) 
+let matchedRequirements = inquirer.getSubmissionRequirements(query, savedCredentials) 
 let matchedRequirement = matchedRequirements.atIndex(0) // Usually we will have one requirement
 let requirementDesc = matchedRequirement.descriptorAtIndex(0) // Usually requirement will contain one descriptor
 let selectedVCs = ApiVerifiableCredentialsArray()
 selectedVCs.add(requirementDesc.matchedVCs.atIndex(0)) // Users should select one VC for each descriptor from the matched list and confirm that they want to share it
 
 let verifiablePres = inquirer.Query(query, CredentialNewCredentialsOpt(selectedVCs))
-let credentials = interaction.presentCredential(verifiablePres, doc.assertionMethod())
+let credentials = interaction.presentCredential(verifiablePres)
 // Consider checking the activity log at some point after the interaction
 ```
 
