@@ -17,6 +17,7 @@ three versions.
 * `dev.trustbloc.wallet.sdk.credentialverifier`
 * `dev.trustbloc.wallet.sdk.didcreator`
 * `dev.trustbloc.wallet.sdk.didresolver`
+* `dev.trustbloc.wallet.sdk.display`
 * `dev.trustbloc.wallet.sdk.linkeddomains`
 * `dev.trustbloc.wallet.sdk.localkms`
 * `dev.trustbloc.wallet.sdk.mem`
@@ -24,7 +25,6 @@ three versions.
 * `dev.trustbloc.wallet.sdk.openid4vp`
 * `dev.trustbloc.wallet.sdk.presentationexchange`
 * `dev.trustbloc.wallet.sdk.vdr`
-* `dev.trustbloc.wallet.sdk.wallethandle`
 
 ## iOS
 
@@ -42,6 +42,7 @@ Prefixes:
 * `Credentialverifier`
 * `Didcreator`
 * `Didresolver`
+* `Display`
 * `Linkeddomains`
 * `Localkms`
 * `Mem`
@@ -49,7 +50,6 @@ Prefixes:
 * `Openid4vp`
 * `Presentationexchange`
 * `Vdr`
-* `Wallethandle`
 
 ## Package/Module Examples
 
