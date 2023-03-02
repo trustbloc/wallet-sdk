@@ -326,7 +326,7 @@ let issuerURI = interaction.issuerURI() // Optional (but useful)
 // Consider checking the activity log at some point after the interaction
 ```
 
-### Credential Display Data
+## Credential Display Data
 
 After completing the `RequestCredential` step of the OpenID4CI flow, you will have your issued Verifiable Credential
 objects. These objects contain the data needed for various wallet operations, but they don't tell you how you can
@@ -344,54 +344,54 @@ form back into display data objects using the `parseDisplayData()` function.
 
 The structure of the display data object is as follows:
 
-#### `DisplayData`
+### `Data`
 
 * The root object.
 * Can be serialized using the `serialize()` method and parsed using the `parseDisplayData()` function.
 * The `issuerDisplay()` method returns the `IssuerDisplay` object.
 * Use the `credentialDisplaysLength()` and `credentialDisplayAtIndex()` methods to iterate over the `CredentialDisplay`
-objects.
+  objects.
 
-#### `IssuerDisplay`
+### `IssuerDisplay`
 
 * Describes display information about the issuer.
 * Can be serialized using the `serialize()` method and parsed using the `parseIssuerDisplay()` function.
 * Has `name()` and `locale()` methods.
 
-#### `CredentialDisplay`
+### `CredentialDisplay`
 
 * Describes display information about the credential.
 * Can be serialized using the `serialize()` method and parsed using the `parseCredentialDisplay()` function.
 * The `overview()` method returns the `CredentialOverview` object.
 * Use the `claimsLength()` and `claimAtIndex()` methods to iterate over the `Claim` objects.
 
-#### `CredentialOverview`
+### `CredentialOverview`
 
 * Describes display information for the credential as a whole.
 * Has `name()`, `logo()`, `backgroundColor()`, `textColor()`, and `locale()` methods. The `logo()` method returns
-a `Logo` object.
+  a `Logo` object.
 
-#### `Logo`
+### `Logo`
 
 * Describes display information for a logo.
 * Has `url()` and `altText()` methods.
 
-#### `Claim`
+### `Claim`
 
 * Describes display information for a specific claim.
 * Has `label()`, `valueType()`, `value()`, and `locale()` methods.
 * For example, if the UI were to display "Given Name: Alice", then `label()` would correspond to "Given Name" while
-`value()` would correspond to "Alice".
+  `value()` would correspond to "Alice".
 * When the value type is "image", then you should expect the value data to be formatted using the
-[data URL scheme](https://www.rfc-editor.org/rfc/rfc2397).
+  [data URL scheme](https://www.rfc-editor.org/rfc/rfc2397).
 
-#### A Note about `locale()`
+### A Note about `locale()`
 
 The locale returned by the various `locale()` methods may not be the same as the preferred locale you passed into the
 `ResolveDisplay` function under certain circumstances. For instance, if the locale you passed in wasn't available,
 then a default locale may get used instead.
 
-#### Resolve Display
+### Resolve Display
 
 The following examples show how the `ResolveDisplay` function can be used.
 
@@ -399,15 +399,16 @@ The following examples show how the `ResolveDisplay` function can be used.
 
 ```kotlin
 import dev.trustbloc.wallet.sdk.api.VerifiableCredentialsArray
+import dev.trustbloc.wallet.sdk.display.*
 import dev.trustbloc.wallet.sdk.openid4ci.Openid4ci
-
-val vc = db.get("VC_ID") // db is some CredentialReader implementation
 
 val vcArray = VerifiableCredentialsArray()
 
-vcArray.add(vc)
+vcArray.add(yourVCHere)
 
-val displayData = Openid4ci.resolveDisplay(vcArray, "Issuer_URI_Goes_Here")
+val resolveOpts = ResolveOpts(vcCredentials, "Issuer_URI_Goes_Here")
+
+val displayData = Display.resolve(resolveOpts)
 ```
 
 ##### Swift (iOS)
@@ -415,13 +416,13 @@ val displayData = Openid4ci.resolveDisplay(vcArray, "Issuer_URI_Goes_Here")
 ```kotlin
 import Walletsdk
 
-let vc = db.get("VC_ID") // db is some CredentialReader implementation
-
 let vcArray = ApiVerifiableCredentialsArray()
 
-vcArray.add(vc)
+vcArray.add(yourVCHere)
 
-let displayData = Openid4ciResolveDisplay(vcArray, "Issuer_URI_Goes_Here")
+let resolveOpts = DisplayNewResolveOpts(vcArray, "Issuer_URI_Goes_Here")
+
+let displayData = DisplayResolve(vcArray, "Issuer_URI_Goes_Here")
 ```
 
 ## OpenID4VP
@@ -523,7 +524,6 @@ let verifiablePres = inquirer.Query(query, CredentialNewCredentialsOpt(selectedV
 let credentials = interaction.presentCredential(verifiablePres, doc.assertionMethod())
 // Consider checking the activity log at some point after the interaction
 ```
-
 
 ## Errors
 
