@@ -90,6 +90,6 @@ class IntegrationTest {
         // Creating verifiable presentation from selected credentials.
         val verifiablePres = inquirer.query(credentialsQuery, CredentialsOpt(selectedCreds))
 
-        vpInteraction.presentCredential(verifiablePres.content(), userDID.assertionMethod())
+        vpInteraction.presentCredential(verifiablePres.content())
     }
 }
