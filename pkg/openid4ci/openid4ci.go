@@ -23,10 +23,11 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 
-	"github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
+	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
+	noopmetricslogger "github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
@@ -34,6 +35,19 @@ const (
 	activityLogOperation        = "oidc-issuance"
 	jwtVCJSONCredentialFormat   = "jwt_vc_json"    //nolint:gosec // false positive
 	jwtVCJSONLDCredentialFormat = "jwt_vc_json-ld" //nolint:gosec // false positive
+
+	newInteractionEventText = "Instantiating OpenID4CI interaction object"
+	//nolint:gosec //false positive
+	fetchCredOfferViaGETReqEventText = "Fetch credential offer via an HTTP GET request to %s"
+
+	//nolint:gosec //false positive
+	requestCredentialEventText          = "Request credential(s) from issuer"
+	fetchOpenIDConfigViaGETReqEventText = "Fetch issuer's OpenID configuration via an HTTP GET request to %s"
+	//nolint:gosec //false positive
+	fetchTokenViaPOSTReqEventText = "Fetch token via an HTTP POST request to %s"
+	//nolint:gosec //false positive
+	fetchCredentialViaGETReqEventText  = "Fetch credential %d of %d via an HTTP POST request to %s"
+	parseAndCheckProofCheckVCEventText = "Parsing and checking proof for received credential %d of %d"
 )
 
 // Interaction represents a single OpenID4CI interaction between a wallet and an issuer. The methods defined on this
@@ -46,6 +60,7 @@ type Interaction struct {
 	clientID               string
 	didResolver            *didResolverWrapper
 	activityLogger         api.ActivityLogger
+	metricsLogger          api.MetricsLogger
 	disableVCProofChecks   bool
 }
 
@@ -58,16 +73,22 @@ type Interaction struct {
 // it should be discarded. Any new interactions should use a fresh Interaction instance.
 // If no ActivityLogger is provided (via the ClientConfig object), then no activity logging will take place.
 func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interaction, error) {
+	timeStartNewInteraction := time.Now()
+
 	err := validateClientConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
 	if config.ActivityLogger == nil {
-		config.ActivityLogger = noop.NewActivityLogger()
+		config.ActivityLogger = noopactivitylogger.NewActivityLogger()
 	}
 
-	credentialOffer, err := getCredentialOffer(initiateIssuanceURI)
+	if config.MetricsLogger == nil {
+		config.MetricsLogger = noopmetricslogger.NewMetricsLogger()
+	}
+
+	credentialOffer, err := getCredentialOffer(initiateIssuanceURI, config.MetricsLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -84,37 +105,25 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 				"(support for other grant types not implemented)"))
 	}
 
-	// TODO Add support for credential offer objects that contain a credentials field with JSON strings instead.
-	// See https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#section-4.1.1 for more info.
-	credentialTypes := make([][]string, len(credentialOffer.Credentials))
-	credentialFormats := make([]string, len(credentialOffer.Credentials))
-
-	for i := 0; i < len(credentialOffer.Credentials); i++ {
-		if credentialOffer.Credentials[i].Format != jwtVCJSONCredentialFormat &&
-			credentialOffer.Credentials[i].Format != jwtVCJSONLDCredentialFormat {
-			return nil, walleterror.NewValidationError(
-				module,
-				UnsupportedCredentialTypeInOfferCode,
-				UnsupportedCredentialTypeInOfferError,
-				fmt.Errorf("unsupported credential type (%s) in credential offer at index %d of "+
-					"credentials object (must be jwt_vc_json or jwt_vc_json-ld)",
-					credentialOffer.Credentials[i].Format, i))
-		}
-
-		credentialTypes[i] = credentialOffer.Credentials[i].Types
-		credentialFormats[i] = credentialOffer.Credentials[i].Format
+	credentialTypes, credentialFormats, err := determineCredentialTypesAndFormats(credentialOffer)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Interaction{
-		issuerURI:              credentialOffer.CredentialIssuer,
-		credentialTypes:        credentialTypes,
-		credentialFormats:      credentialFormats,
-		preAuthorizedCodeGrant: &preAuthorizedCodeGrant,
-		clientID:               config.ClientID,
-		didResolver:            &didResolverWrapper{didResolver: config.DIDResolver},
-		activityLogger:         config.ActivityLogger,
-		disableVCProofChecks:   config.DisableVCProofChecks,
-	}, nil
+			issuerURI:              credentialOffer.CredentialIssuer,
+			credentialTypes:        credentialTypes,
+			credentialFormats:      credentialFormats,
+			preAuthorizedCodeGrant: &preAuthorizedCodeGrant,
+			clientID:               config.ClientID,
+			didResolver:            &didResolverWrapper{didResolver: config.DIDResolver},
+			activityLogger:         config.ActivityLogger,
+			metricsLogger:          config.MetricsLogger,
+			disableVCProofChecks:   config.DisableVCProofChecks,
+		}, config.MetricsLogger.Log(&api.MetricsEvent{
+			Event:    newInteractionEventText,
+			Duration: time.Since(timeStartNewInteraction),
+		})
 }
 
 // Authorize is used by a wallet to authorize an issuer's OIDC Verifiable Credential Issuance Request.
@@ -140,6 +149,8 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 // Relevant sections of the spec:
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#name-credential-endpoint
 func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequestOpts, jwtSigner api.JWTSigner) ([]*verifiable.Credential, error) { //nolint:funlen,gocyclo,lll
+	timeStartRequestCredential := time.Now()
+
 	if i.preAuthorizedCodeGrant.UserPINRequired && credentialRequestOpts.UserPIN == "" {
 		return nil, walleterror.NewValidationError(
 			module,
@@ -198,7 +209,7 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 			fmt.Errorf("kid not containing did part %s", jwtSigner.GetKeyID()))
 	}
 
-	metadata, err := metadatafetcher.Get(i.issuerURI)
+	metadata, err := metadatafetcher.Get(i.issuerURI, i.metricsLogger, requestCredentialEventText)
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
 			module,
@@ -209,7 +220,7 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 
 	for index := range i.credentialTypes {
 		credentialResponse, errGetCredResp := i.getCredentialResponse(metadata.CredentialEndpoint,
-			tokenResp.AccessToken, token, i.credentialFormats[index], i.credentialTypes[index])
+			tokenResp.AccessToken, token, i.credentialFormats[index], i.credentialTypes[index], index+1, len(i.credentialTypes))
 		if errGetCredResp != nil {
 			return nil,
 				walleterror.NewExecutionError(
@@ -228,6 +239,14 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 	}
 
 	subjectIDs, err := getSubjectIDs(vcs)
+	if err != nil {
+		return nil, err
+	}
+
+	err = i.metricsLogger.Log(&api.MetricsEvent{
+		Event:    requestCredentialEventText,
+		Duration: time.Since(timeStartRequestCredential),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +273,18 @@ func (i *Interaction) IssuerURI() string {
 func (i *Interaction) fetchIssuerOpenIDConfig() (*OpenIDConfig, error) {
 	openIDConfigEndpoint := i.issuerURI + "/.well-known/openid-configuration"
 
+	timeStartHTTPRequest := time.Now()
+
 	response, err := http.Get(openIDConfigEndpoint) //nolint: noctx,gosec
+	if err != nil {
+		return nil, err
+	}
+
+	err = i.metricsLogger.Log(&api.MetricsEvent{
+		Event:       fmt.Sprintf(fetchOpenIDConfigViaGETReqEventText, openIDConfigEndpoint),
+		ParentEvent: requestCredentialEventText,
+		Duration:    time.Since(timeStartHTTPRequest),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -288,8 +318,21 @@ func (i *Interaction) fetchIssuerOpenIDConfig() (*OpenIDConfig, error) {
 }
 
 func (i *Interaction) getTokenResponse(tokenEndpointURL string, params url.Values) (*tokenResponse, error) {
+	paramsReader := strings.NewReader(params.Encode())
+
+	timeStartHTTPRequest := time.Now()
+
 	response, err := http.Post(tokenEndpointURL, //nolint: noctx,gosec
-		"application/x-www-form-urlencoded", strings.NewReader(params.Encode()))
+		"application/x-www-form-urlencoded", paramsReader)
+	if err != nil {
+		return nil, err
+	}
+
+	err = i.metricsLogger.Log(&api.MetricsEvent{
+		Event:       fmt.Sprintf(fetchTokenViaPOSTReqEventText, tokenEndpointURL),
+		ParentEvent: requestCredentialEventText,
+		Duration:    time.Since(timeStartHTTPRequest),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -322,8 +365,27 @@ func (i *Interaction) getTokenResponse(tokenEndpointURL string, params url.Value
 }
 
 func (i *Interaction) getCredentialResponse(credentialEndpoint, accessToken, tkn, credentialFormat string,
-	credentialTypes []string,
+	credentialTypes []string, credNum, maxCredNum int,
 ) (*CredentialResponse, error) {
+	responseBytes, err := i.getRawCredentialResponse(credentialEndpoint, accessToken, tkn, credentialFormat,
+		credentialTypes, credNum, maxCredNum)
+	if err != nil {
+		return nil, err
+	}
+
+	var credentialResponse CredentialResponse
+
+	err = json.Unmarshal(responseBytes, &credentialResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response from the issuer's credential endpoint: %w", err)
+	}
+
+	return &credentialResponse, nil
+}
+
+func (i *Interaction) getRawCredentialResponse(credentialEndpoint, accessToken, tkn, credentialFormat string,
+	credentialTypes []string, credNum, maxCredNum int,
+) ([]byte, error) {
 	credentialReq := &credentialRequest{
 		Types:  credentialTypes,
 		Format: credentialFormat,
@@ -347,7 +409,18 @@ func (i *Interaction) getCredentialResponse(credentialEndpoint, accessToken, tkn
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("Authorization", "BEARER "+accessToken)
 
+	timeStartHTTPRequest := time.Now()
+
 	response, err := common.DefaultHTTPClient().Do(request)
+	if err != nil {
+		return nil, err
+	}
+
+	err = i.metricsLogger.Log(&api.MetricsEvent{
+		Event:       fmt.Sprintf(fetchCredentialViaGETReqEventText, credNum, maxCredNum, credentialEndpoint),
+		ParentEvent: requestCredentialEventText,
+		Duration:    time.Since(timeStartHTTPRequest),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -369,14 +442,7 @@ func (i *Interaction) getCredentialResponse(credentialEndpoint, accessToken, tkn
 		}
 	}()
 
-	var credentialResponse CredentialResponse
-
-	err = json.Unmarshal(responseBytes, &credentialResponse)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response from the issuer's credential endpoint: %w", err)
-	}
-
-	return &credentialResponse, nil
+	return responseBytes, nil
 }
 
 func (i *Interaction) getCredentialsFromResponses(
@@ -396,9 +462,22 @@ func (i *Interaction) getCredentialsFromResponses(
 	}
 
 	for j := range credentialResponses {
-		vc, err := verifiable.ParseCredential([]byte(credentialResponses[j].Credential), credentialOpts...)
+		timeStartParseCredential := time.Now()
+
+		credentialResponseBytes := []byte(credentialResponses[j].Credential)
+
+		vc, err := verifiable.ParseCredential(credentialResponseBytes, credentialOpts...)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse credential from credential response at index %d: %w", j, err)
+		}
+
+		err = i.metricsLogger.Log(&api.MetricsEvent{
+			Event:       fmt.Sprintf(parseAndCheckProofCheckVCEventText, j+1, len(credentialResponses)),
+			ParentEvent: requestCredentialEventText,
+			Duration:    time.Since(timeStartParseCredential),
+		})
+		if err != nil {
+			return nil, err
 		}
 
 		vcs = append(vcs, vc)
@@ -407,7 +486,7 @@ func (i *Interaction) getCredentialsFromResponses(
 	return vcs, nil
 }
 
-func getCredentialOffer(initiateIssuanceURI string) (*CredentialOffer, error) {
+func getCredentialOffer(initiateIssuanceURI string, metricsLogger api.MetricsLogger) (*CredentialOffer, error) {
 	requestURIParsed, err := url.Parse(initiateIssuanceURI)
 	if err != nil {
 		return nil, walleterror.NewValidationError(
@@ -425,7 +504,7 @@ func getCredentialOffer(initiateIssuanceURI string) (*CredentialOffer, error) {
 	case requestURIParsed.Query().Has("credential_offer_uri"):
 		credentialOfferURI := requestURIParsed.Query().Get("credential_offer_uri")
 
-		credentialOfferJSON, err = getCredentialOfferJSONFromCredentialOfferURI(credentialOfferURI)
+		credentialOfferJSON, err = getCredentialOfferJSONFromCredentialOfferURI(credentialOfferURI, metricsLogger)
 		if err != nil {
 			return nil, err
 		}
@@ -452,7 +531,11 @@ func getCredentialOffer(initiateIssuanceURI string) (*CredentialOffer, error) {
 	return &credentialOffer, nil
 }
 
-func getCredentialOfferJSONFromCredentialOfferURI(credentialOfferURI string) ([]byte, error) {
+func getCredentialOfferJSONFromCredentialOfferURI(credentialOfferURI string,
+	metricsLogger api.MetricsLogger,
+) ([]byte, error) {
+	timeStartHTTPRequest := time.Now()
+
 	//nolint:gosec,noctx // Necessary for this to be a variable URL. noctx to be re-evaluated later.
 	response, err := http.Get(credentialOfferURI)
 	if err != nil {
@@ -462,6 +545,15 @@ func getCredentialOfferJSONFromCredentialOfferURI(credentialOfferURI string) ([]
 			InvalidCredentialOfferError,
 			fmt.Errorf("failed to get credential offer from the endpoint specified in the "+
 				"credential_offer_uri URL query parameter: %w", err))
+	}
+
+	err = metricsLogger.Log(&api.MetricsEvent{
+		Event:       fmt.Sprintf(fetchCredOfferViaGETReqEventText, credentialOfferURI),
+		ParentEvent: newInteractionEventText,
+		Duration:    time.Since(timeStartHTTPRequest),
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	responseBytes, err := io.ReadAll(response.Body)
@@ -486,6 +578,31 @@ func getCredentialOfferJSONFromCredentialOfferURI(credentialOfferURI string) ([]
 	}()
 
 	return responseBytes, nil
+}
+
+func determineCredentialTypesAndFormats(credentialOffer *CredentialOffer) ([][]string, []string, error) {
+	// TODO Add support for credential offer objects that contain a credentials field with JSON strings instead.
+	// See https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#section-4.1.1 for more info.
+	credentialTypes := make([][]string, len(credentialOffer.Credentials))
+	credentialFormats := make([]string, len(credentialOffer.Credentials))
+
+	for i := 0; i < len(credentialOffer.Credentials); i++ {
+		if credentialOffer.Credentials[i].Format != jwtVCJSONCredentialFormat &&
+			credentialOffer.Credentials[i].Format != jwtVCJSONLDCredentialFormat {
+			return nil, nil, walleterror.NewValidationError(
+				module,
+				UnsupportedCredentialTypeInOfferCode,
+				UnsupportedCredentialTypeInOfferError,
+				fmt.Errorf("unsupported credential type (%s) in credential offer at index %d of "+
+					"credentials object (must be jwt_vc_json or jwt_vc_json-ld)",
+					credentialOffer.Credentials[i].Format, i))
+		}
+
+		credentialTypes[i] = credentialOffer.Credentials[i].Types
+		credentialFormats[i] = credentialOffer.Credentials[i].Format
+	}
+
+	return credentialTypes, credentialFormats, nil
 }
 
 func getSubjectIDs(vcs []*verifiable.Credential) ([]string, error) {

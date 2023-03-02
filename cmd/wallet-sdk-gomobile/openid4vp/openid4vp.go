@@ -47,6 +47,7 @@ type ClientConfig struct {
 	DIDRes          api.DIDResolver
 	DocumentLoader  api.LDDocumentLoader
 	ActivityLogger  api.ActivityLogger
+	MetricsLogger   api.MetricsLogger
 }
 
 // NewClientConfig creates the client config object.
@@ -79,6 +80,12 @@ func NewInteraction(authorizationRequest string, config *ClientConfig) *Interact
 		mobileActivityLoggerWrapper := &wrapper.MobileActivityLoggerWrapper{MobileAPIActivityLogger: config.ActivityLogger}
 
 		opts = append(opts, openid4vp.WithActivityLogger(mobileActivityLoggerWrapper))
+	}
+
+	if config.MetricsLogger != nil {
+		mobileMetricsLoggerWrapper := &wrapper.MobileMetricsLoggerWrapper{MobileAPIMetricsLogger: config.MetricsLogger}
+
+		opts = append(opts, openid4vp.WithMetricsLogger(mobileMetricsLoggerWrapper))
 	}
 
 	return &Interaction{

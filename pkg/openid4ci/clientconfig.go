@@ -30,6 +30,7 @@ type ClientConfig struct {
 	ClientID             string
 	DIDResolver          api.DIDResolver
 	ActivityLogger       api.ActivityLogger // If not specified, then activities won't be logged.
+	MetricsLogger        api.MetricsLogger  // If not specified, then metrics events won't be logged.
 	DisableVCProofChecks bool
 }
 

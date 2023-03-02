@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
+
 	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
@@ -81,7 +83,7 @@ func TestCredentialAPI(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			didDoc, err := c.Create(tc.didMethod, &api.CreateDIDOpts{})
+			didDoc, err := c.Create(tc.didMethod, &api.CreateDIDOpts{MetricsLogger: stderr.NewMetricsLogger()})
 			require.NoError(t, err)
 
 			docID, err := didDoc.ID()

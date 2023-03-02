@@ -1,8 +1,8 @@
 package walletsdk.openid4ci
 
 import dev.trustbloc.wallet.sdk.api.*
+import dev.trustbloc.wallet.sdk.display.*
 import dev.trustbloc.wallet.sdk.openid4ci.*
-import dev.trustbloc.wallet.sdk.openid4ci.Openid4ci.resolveDisplay
 import dev.trustbloc.wallet.sdk.vcparse.Vcparse
 
 class OpenID4CI constructor(
@@ -39,7 +39,9 @@ class OpenID4CI constructor(
     }
 
     fun resolveCredentialDisplay(issuerURI: String?, vcCredentials: VerifiableCredentialsArray): String? {
-        return resolveDisplay(vcCredentials, issuerURI, "").serialize()
+        val resolveOpts = ResolveOpts(vcCredentials, issuerURI)
+
+        return Display.resolve(resolveOpts).serialize()
     }
 
     fun getCredID(vcCredentials: ArrayList<String>) : String?{

@@ -8,9 +8,12 @@ package issuermetadata_test
 
 import (
 	_ "embed"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/trustbloc/wallet-sdk/pkg/api"
 
 	"github.com/stretchr/testify/require"
 
@@ -40,6 +43,12 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, _ *http.
 	}
 }
 
+type failingMetricsLogger struct{}
+
+func (f *failingMetricsLogger) Log(metricsEvent *api.MetricsEvent) error {
+	return fmt.Errorf("failed to log event (Event=%s)", metricsEvent.Event)
+}
+
 func TestGet(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{issuerMetadata: sampleIssuerMetadata}
@@ -47,12 +56,12 @@ func TestGet(t *testing.T) {
 
 		defer server.Close()
 
-		issuerMetadata, err := issuermetadata.Get(server.URL)
+		issuerMetadata, err := issuermetadata.Get(server.URL, nil, "")
 		require.NoError(t, err)
 		require.NotNil(t, issuerMetadata)
 	})
 	t.Run("Fail to reach issuer OpenID config endpoint", func(t *testing.T) {
-		issuerMetadata, err := issuermetadata.Get("http://BadURL")
+		issuerMetadata, err := issuermetadata.Get("http://BadURL", nil, "")
 		require.Contains(t, err.Error(), `Get "http://BadURL/.well-known/openid-credential-issuer":`+
 			` dial tcp: lookup BadURL:`)
 		require.Nil(t, issuerMetadata)
@@ -63,7 +72,7 @@ func TestGet(t *testing.T) {
 
 		defer server.Close()
 
-		issuerMetadata, err := issuermetadata.Get(server.URL)
+		issuerMetadata, err := issuermetadata.Get(server.URL, nil, "")
 		require.Contains(t, err.Error(), "received status code [500] with body [test failure] from "+
 			"issuer's OpenID credential issuer endpoint")
 		require.Nil(t, issuerMetadata)
@@ -74,9 +83,20 @@ func TestGet(t *testing.T) {
 
 		defer server.Close()
 
-		issuerMetadata, err := issuermetadata.Get(server.URL)
+		issuerMetadata, err := issuermetadata.Get(server.URL, nil, "")
 		require.Contains(t, err.Error(), "failed to unmarshal response from the issuer's OpenID "+
 			"configuration endpoint: invalid character 'i' looking for beginning of value")
+		require.Nil(t, issuerMetadata)
+	})
+	t.Run("Fail to log metrics event", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{issuerMetadata: sampleIssuerMetadata}
+		server := httptest.NewServer(issuerServerHandler)
+
+		defer server.Close()
+
+		issuerMetadata, err := issuermetadata.Get(server.URL, &failingMetricsLogger{}, "")
+		require.Contains(t, err.Error(), "failed to log event (Event=Fetch issuer metadata via an HTTP GET "+
+			"request to http://127.0.0.1:")
 		require.Nil(t, issuerMetadata)
 	})
 }

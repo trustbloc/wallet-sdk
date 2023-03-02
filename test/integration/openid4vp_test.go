@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
@@ -104,8 +106,11 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		docLoader := ld.NewDocLoader()
 
+		metricsLogger := NewMetricsLogger()
+
 		cfg := openid4vp.NewClientConfig(
 			testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver, docLoader, activityLogger)
+		cfg.MetricsLogger = metricsLogger
 
 		interaction := openid4vp.NewInteraction(initiateURL, cfg)
 
@@ -148,7 +153,10 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		err = interaction.PresentCredential(verifiablePresContent)
 		require.NoError(t, err)
+
 		checkActivityLogAfterOpenID4VPFlow(t, activityLogger, tc.verifierProfileID)
+		checkMetricsLoggerAfterOpenID4VPFlow(t, metricsLogger)
+
 		fmt.Printf("done test %d\n", i)
 	}
 }
@@ -168,6 +176,41 @@ func checkActivityLogAfterOpenID4VPFlow(t *testing.T, activityLogger *mem.Activi
 	require.Equal(t, 0, activity.Params().AllKeyValuePairs().Length())
 }
 
+func checkMetricsLoggerAfterOpenID4VPFlow(t *testing.T, metricsLogger *MetricsLogger) {
+	require.Len(t, metricsLogger.events, 4)
+
+	checkFetchRequestObjectMetricsEvent(t, metricsLogger.events[0])
+	checkGetQueryMetricsEvent(t, metricsLogger.events[1])
+	checkSendAuthorizedResponseMetricsEvent(t, metricsLogger.events[2])
+	checkPresentCredentialMetricsEvent(t, metricsLogger.events[3])
+}
+
+func checkFetchRequestObjectMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
+	require.Contains(t, metricsEvent.Event(), "Fetch request object via an HTTP GET request to "+
+		"http://localhost:8075/request-object/")
+	require.Equal(t, "Get query", metricsEvent.ParentEvent())
+	require.Positive(t, metricsEvent.DurationNanoseconds())
+}
+
+func checkGetQueryMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
+	require.Equal(t, "Get query", metricsEvent.Event())
+	require.Empty(t, metricsEvent.ParentEvent())
+	require.Positive(t, metricsEvent.DurationNanoseconds())
+}
+
+func checkSendAuthorizedResponseMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
+	require.Equal(t, "Send authorized response via an HTTP POST request to http://localhost:8075/oidc/present",
+		metricsEvent.Event())
+	require.Equal(t, "Present credential", metricsEvent.ParentEvent())
+	require.Positive(t, metricsEvent.DurationNanoseconds())
+}
+
+func checkPresentCredentialMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
+	require.Equal(t, "Present credential", metricsEvent.Event())
+	require.Empty(t, metricsEvent.ParentEvent())
+	require.Positive(t, metricsEvent.DurationNanoseconds())
+}
+
 type vpTestHelper struct {
 	KMS    *localkms.KMS
 	DIDDoc *api.DIDDocResolution
@@ -182,7 +225,8 @@ func newVPTestHelper(t *testing.T, didMethod string, keyType string) *vpTestHelp
 	require.NoError(t, err)
 
 	didDoc, err := c.Create(didMethod, &api.CreateDIDOpts{
-		KeyType: keyType,
+		KeyType:       keyType,
+		MetricsLogger: stderr.NewMetricsLogger(),
 	})
 	require.NoError(t, err)
 
@@ -209,9 +253,10 @@ func (h *vpTestHelper) issueCredentials(t *testing.T, issuerProfileIDs []string)
 		require.NoError(t, err)
 
 		clientConfig := openid4ci.ClientConfig{
-			ClientID:    "ClientID",
-			DIDResolver: didResolver,
-			Crypto:      h.KMS.GetCrypto(),
+			ClientID:      "ClientID",
+			DIDResolver:   didResolver,
+			Crypto:        h.KMS.GetCrypto(),
+			MetricsLogger: stderr.NewMetricsLogger(),
 		}
 
 		interaction, err := openid4ci.NewInteraction(offerCredentialURL, &clientConfig)

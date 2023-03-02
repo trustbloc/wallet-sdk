@@ -4,7 +4,8 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package openid4ci
+// Package display contains functionality that can be used to resolve display values per the OpenID4CI spec.
+package display
 
 import (
 	"encoding/json"
@@ -12,13 +13,13 @@ import (
 	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 )
 
-// DisplayData represents display information for some issued credentials based on an issuer's metadata.
-type DisplayData struct {
+// Data represents display information for some issued credentials based on an issuer's metadata.
+type Data struct {
 	resolvedDisplayData *goapicredentialschema.ResolvedDisplayData
 }
 
-// ParseDisplayData parses the given serialized display data and returns a DisplayData object.
-func ParseDisplayData(displayData string) (*DisplayData, error) {
+// ParseData parses the given serialized display data and returns a display Data object.
+func ParseData(displayData string) (*Data, error) {
 	var parsedDisplayData goapicredentialschema.ResolvedDisplayData
 
 	err := json.Unmarshal([]byte(displayData), &parsedDisplayData)
@@ -26,29 +27,29 @@ func ParseDisplayData(displayData string) (*DisplayData, error) {
 		return nil, err
 	}
 
-	return &DisplayData{resolvedDisplayData: &parsedDisplayData}, nil
+	return &Data{resolvedDisplayData: &parsedDisplayData}, nil
 }
 
-// Serialize serializes this DisplayData object into JSON.
-func (d *DisplayData) Serialize() (string, error) {
+// Serialize serializes this display Data object into JSON.
+func (d *Data) Serialize() (string, error) {
 	resolvedDisplayDataBytes, err := json.Marshal(d.resolvedDisplayData)
 
 	return string(resolvedDisplayDataBytes), err
 }
 
 // IssuerDisplay returns the issuer display object.
-func (d *DisplayData) IssuerDisplay() *IssuerDisplay {
+func (d *Data) IssuerDisplay() *IssuerDisplay {
 	return &IssuerDisplay{issuerDisplay: d.resolvedDisplayData.IssuerDisplay}
 }
 
-// CredentialDisplaysLength returns the number of credential displays contained within this DisplayData object.
-func (d *DisplayData) CredentialDisplaysLength() int {
+// CredentialDisplaysLength returns the number of credential displays contained within this display Data object.
+func (d *Data) CredentialDisplaysLength() int {
 	return len(d.resolvedDisplayData.CredentialDisplays)
 }
 
 // CredentialDisplayAtIndex returns the credential display object at the given index.
 // If the index passed in is out of bounds, then nil is returned.
-func (d *DisplayData) CredentialDisplayAtIndex(index int) *CredentialDisplay {
+func (d *Data) CredentialDisplayAtIndex(index int) *CredentialDisplay {
 	maxIndex := len(d.resolvedDisplayData.CredentialDisplays) - 1
 	if index > maxIndex || index < 0 {
 		return nil

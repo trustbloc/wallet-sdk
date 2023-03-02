@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/stretchr/testify/require"
 
@@ -49,7 +51,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		walletDIDMethod     string
 		walletKeyType       string
 		expectedIssuerURI   string
-		expectedDisplayData *openid4ci.DisplayData
+		expectedDisplayData *display.Data
 	}
 
 	tests := []test{
@@ -102,14 +104,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		// create DID
-		c, err := did.NewCreatorWithKeyWriter(kms)
-		require.NoError(t, err)
-
-		didDoc, err := c.Create(tc.walletDIDMethod, &api.CreateDIDOpts{
-			KeyType: tc.walletKeyType,
-		})
-		require.NoError(t, err)
+		didDoc := createDID(t, kms, tc.walletKeyType, tc.walletDIDMethod)
 
 		didResolver, err := did.NewResolver("http://did-resolver.trustbloc.local:8072/1.0/identifiers")
 		require.NoError(t, err)
@@ -119,11 +114,14 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 
 		activityLogger := mem.NewActivityLogger()
 
+		metricsLogger := NewMetricsLogger()
+
 		clientConfig := openid4ci.ClientConfig{
 			ClientID:       "ClientID",
 			DIDResolver:    didResolver,
 			ActivityLogger: activityLogger,
 			Crypto:         kms.GetCrypto(),
+			MetricsLogger:  metricsLogger,
 		}
 
 		interaction, err := openid4ci.NewInteraction(offerCredentialURL, &clientConfig)
@@ -149,9 +147,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		require.NoError(t, err)
 		require.Contains(t, vc.VC.Issuer.ID, tc.issuerDIDMethod)
 
-		displayData, err := openid4ci.ResolveDisplay(credentials, interaction.IssuerURI(), "")
-		require.NoError(t, err)
-		checkResolvedDisplayData(t, displayData, tc.expectedDisplayData)
+		resolveDisplayData(t, credentials, tc.expectedDisplayData, interaction.IssuerURI(), tc.issuerProfileID)
 
 		issuerURI := interaction.IssuerURI()
 		require.Equal(t, tc.expectedIssuerURI, issuerURI)
@@ -160,20 +156,72 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		require.NoError(t, err)
 		require.Contains(t, subID, didID)
 		checkActivityLogAfterOpenID4CIFlow(t, activityLogger, tc.issuerProfileID, subID)
+		checkMetricsLoggerAfterOpenID4CIFlow(t, metricsLogger, tc.issuerProfileID)
 	}
 }
 
-func parseDisplayData(t *testing.T, displayData string) *openid4ci.DisplayData {
-	parsedDisplayData, err := openid4ci.ParseDisplayData(displayData)
+func createDID(t *testing.T, kms *localkms.KMS, keyType, didMethod string) *api.DIDDocResolution {
+	didCreator, err := did.NewCreatorWithKeyWriter(kms)
+	require.NoError(t, err)
+
+	metricsLogger := NewMetricsLogger()
+
+	createDIDOpts := &api.CreateDIDOpts{
+		KeyType:       keyType,
+		MetricsLogger: metricsLogger,
+	}
+
+	didDoc, err := didCreator.Create(didMethod, createDIDOpts)
+	require.NoError(t, err)
+
+	checkDIDCreationMetricsLoggerEvents(t, metricsLogger)
+
+	return didDoc
+}
+
+func checkDIDCreationMetricsLoggerEvents(t *testing.T, metricsLogger *MetricsLogger) {
+	require.Len(t, metricsLogger.events, 1)
+
+	require.Equal(t, "Creating DID", metricsLogger.events[0].Event())
+	require.Empty(t, metricsLogger.events[0].ParentEvent())
+	require.Positive(t, metricsLogger.events[0].DurationNanoseconds())
+}
+
+func parseDisplayData(t *testing.T, displayData string) *display.Data {
+	parsedDisplayData, err := display.ParseData(displayData)
 	require.NoError(t, err)
 
 	return parsedDisplayData
 }
 
+func resolveDisplayData(t *testing.T, credentials *api.VerifiableCredentialsArray, expectedDisplayData *display.Data,
+	issuerURI, issuerProfileID string,
+) {
+	metricsLogger := NewMetricsLogger()
+
+	resolveDisplayOpts := &display.ResolveOpts{
+		VCs:           credentials,
+		IssuerURI:     issuerURI,
+		MetricsLogger: metricsLogger,
+	}
+
+	displayData, err := display.Resolve(resolveDisplayOpts)
+	require.NoError(t, err)
+	checkResolvedDisplayData(t, displayData, expectedDisplayData)
+
+	checkResolveMetricsEvent(t, metricsLogger, issuerProfileID)
+}
+
+func checkResolveMetricsEvent(t *testing.T, metricsLogger *MetricsLogger, issuerProfileID string) {
+	require.Len(t, metricsLogger.events, 1)
+
+	checkFetchIssuerMetadataMetricsEvent(t, metricsLogger.events[0], "Resolve display", issuerProfileID)
+}
+
 // For now, this function assumes that the display data object has only a single credential display.
 // In the event we add a test case where there are multiple credential displays, then this function will need to be
 // updated accordingly.
-func checkResolvedDisplayData(t *testing.T, actualDisplayData, expectedDisplayData *openid4ci.DisplayData) {
+func checkResolvedDisplayData(t *testing.T, actualDisplayData, expectedDisplayData *display.Data) {
 	t.Helper()
 
 	checkIssuerDisplay(t, actualDisplayData.IssuerDisplay(), expectedDisplayData.IssuerDisplay())
@@ -186,14 +234,14 @@ func checkResolvedDisplayData(t *testing.T, actualDisplayData, expectedDisplayDa
 	checkCredentialDisplay(t, actualCredentialDisplay, expectedCredentialDisplay)
 }
 
-func checkIssuerDisplay(t *testing.T, actualIssuerDisplay, expectedIssuerDisplay *openid4ci.IssuerDisplay) {
+func checkIssuerDisplay(t *testing.T, actualIssuerDisplay, expectedIssuerDisplay *display.IssuerDisplay) {
 	t.Helper()
 
 	require.Equal(t, expectedIssuerDisplay.Name(), actualIssuerDisplay.Name())
 	require.Equal(t, expectedIssuerDisplay.Locale(), actualIssuerDisplay.Locale())
 }
 
-func checkCredentialDisplay(t *testing.T, actualCredentialDisplay, expectedCredentialDisplay *openid4ci.CredentialDisplay) {
+func checkCredentialDisplay(t *testing.T, actualCredentialDisplay, expectedCredentialDisplay *display.CredentialDisplay) {
 	t.Helper()
 
 	actualCredentialOverview := actualCredentialDisplay.Overview()
@@ -212,14 +260,14 @@ func checkCredentialDisplay(t *testing.T, actualCredentialDisplay, expectedCrede
 	// converted to an array of resolved claims, the order of resolved claims can differ from run-to-run. The code
 	// below checks to ensure we have the expected claims in any order.
 
-	expectedClaims := make([]*openid4ci.Claim, expectedCredentialDisplay.ClaimsLength())
+	expectedClaims := make([]*display.Claim, expectedCredentialDisplay.ClaimsLength())
 
 	for i := 0; i < len(expectedClaims); i++ {
 		expectedClaims[i] = expectedCredentialDisplay.ClaimAtIndex(i)
 	}
 
 	expectedClaimsChecklist := struct {
-		Claims []*openid4ci.Claim
+		Claims []*display.Claim
 		Found  []bool
 	}{
 		Claims: expectedClaims,
@@ -300,4 +348,82 @@ func checkActivityLogAfterOpenID4CIFlow(t *testing.T, activityLogger *mem.Activi
 
 	subjectID := subjectIDs.AtIndex(0)
 	require.Equal(t, expectedSubjectID, subjectID)
+}
+
+func checkMetricsLoggerAfterOpenID4CIFlow(t *testing.T, metricsLogger *MetricsLogger, issuerProfileID string) {
+	require.Len(t, metricsLogger.events, 7)
+
+	checkInteractionInstantiationMetricsEvent(t, metricsLogger.events[0])
+
+	checkFetchOpenIDConfigMetricsEvent(t, metricsLogger.events[1], issuerProfileID)
+
+	checkFetchTokenMetricsEvent(t, metricsLogger.events[2])
+
+	checkFetchIssuerMetadataMetricsEvent(t, metricsLogger.events[3],
+		"Request credential(s) from issuer", issuerProfileID)
+
+	checkFetchCredentialHTTPRequestMetricsEvent(t, metricsLogger.events[4])
+
+	checkParseCredentialMetricsEvent(t, metricsLogger.events[5])
+
+	checkRequestCredentialsMetricsEvent(t, metricsLogger.events[6])
+}
+
+func checkInteractionInstantiationMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
+	require.Equal(t, "Instantiating OpenID4CI interaction object", metricsEvent.Event())
+	require.Empty(t, metricsEvent.ParentEvent())
+	require.Positive(t, metricsEvent.DurationNanoseconds())
+}
+
+func checkFetchOpenIDConfigMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent, issuerProfileID string) {
+	expectedEndpoint := fmt.Sprintf("http://localhost:8075/issuer/%s/.well-known/openid-configuration",
+		issuerProfileID)
+
+	require.Equal(t,
+		fmt.Sprintf("Fetch issuer's OpenID configuration via an HTTP GET request to %s", expectedEndpoint),
+		metricsEvent.Event())
+	require.Equal(t, "Request credential(s) from issuer", metricsEvent.ParentEvent())
+	require.Positive(t, metricsEvent.DurationNanoseconds())
+}
+
+func checkFetchTokenMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
+	expectedEndpoint := "http://localhost:8075/oidc/token"
+
+	require.Equal(t, fmt.Sprintf("Fetch token via an HTTP POST request to %s", expectedEndpoint),
+		metricsEvent.Event())
+	require.Equal(t, "Request credential(s) from issuer", metricsEvent.ParentEvent())
+	require.Positive(t, metricsEvent.DurationNanoseconds())
+}
+
+func checkFetchIssuerMetadataMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent, expectedParentEvent,
+	issuerProfileID string,
+) {
+	expectedEndpoint := fmt.Sprintf("http://localhost:8075/issuer/%s/.well-known/openid-credential-issuer",
+		issuerProfileID)
+
+	require.Equal(t, fmt.Sprintf("Fetch issuer metadata via an HTTP GET request to %s", expectedEndpoint),
+		metricsEvent.Event())
+	require.Equal(t, expectedParentEvent, metricsEvent.ParentEvent())
+	require.Positive(t, metricsEvent.DurationNanoseconds())
+}
+
+func checkFetchCredentialHTTPRequestMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
+	expectedEndpoint := "http://localhost:8075/oidc/credential"
+
+	require.Equal(t, fmt.Sprintf("Fetch credential 1 of 1 via an HTTP POST request to %s",
+		expectedEndpoint), metricsEvent.Event())
+	require.Equal(t, "Request credential(s) from issuer", metricsEvent.ParentEvent())
+	require.Positive(t, metricsEvent.DurationNanoseconds())
+}
+
+func checkParseCredentialMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
+	require.Equal(t, "Parsing and checking proof for received credential 1 of 1", metricsEvent.Event())
+	require.Equal(t, "Request credential(s) from issuer", metricsEvent.ParentEvent())
+	require.Positive(t, metricsEvent.DurationNanoseconds())
+}
+
+func checkRequestCredentialsMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
+	require.Equal(t, "Request credential(s) from issuer", metricsEvent.Event())
+	require.Empty(t, metricsEvent.ParentEvent())
+	require.Positive(t, metricsEvent.DurationNanoseconds())
 }
