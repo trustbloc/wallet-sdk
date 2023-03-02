@@ -228,7 +228,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             let doc = try walletSDK.createDID(didMethodType: didMethodType)
             didDocResolution = doc
         
-            result(doc.content)
+            result(doc.id_(nil))
         } catch {
             result(FlutterError.init(code: "NATIVE_ERR",
                                      message: "error while creating did",

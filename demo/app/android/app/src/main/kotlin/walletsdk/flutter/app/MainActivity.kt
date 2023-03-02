@@ -188,7 +188,7 @@ class MainActivity : FlutterActivity() {
         val doc = walletSDK.createDID(didMethodType)
 
         didDocResolution = doc
-        return doc.content
+        return doc.id()
     }
 
     /**
