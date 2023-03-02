@@ -82,6 +82,10 @@ prepare-integration-test-flutter: build-integration-cli generate-test-keys
 integration-test-flutter:
 	@scripts/flutter_test.sh
 
+.PHONY: integration-test-android
+integration-test-android:
+	@scripts/android_test.sh
+
 .PHONY: install-flutter-dependencies
 install-flutter-dependencies:
 	@cd demo/app && flutter pub get
