@@ -142,7 +142,7 @@ class MethodChannelWallet extends WalletPlatform {
         .toList();
   }
 
-  Future<List<SubmissionRequirement>> getSubmissionRequirements({required List<String> storedCredentials}) async {
+  Future<List<SubmissionRequirement>> getSubmissionRequirements({required List<String>? storedCredentials}) async {
     return (await methodChannel.invokeMethod<List<dynamic>>(
             'getMatchedSubmissionRequirements', <String, dynamic>{'storedCredentials': storedCredentials}))!
         .map((obj) => SubmissionRequirement.fromMap(obj.cast<String, dynamic>()))

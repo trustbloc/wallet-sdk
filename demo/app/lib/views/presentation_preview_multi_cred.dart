@@ -1,8 +1,5 @@
-import 'dart:developer';
-
 import 'package:app/views/credential_shared.dart';
 import 'package:app/views/dashboard.dart';
-import 'package:app/widgets/credential_verified_information_view.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -10,31 +7,29 @@ import 'package:app/models/store_credential_data.dart';
 import 'package:app/widgets/common_title_appbar.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/widgets/primary_button.dart';
-import 'package:app/widgets/credential_metadata_card.dart';
 import 'package:app/main.dart';
-
 import 'package:app/services/storage_service.dart';
-
 import 'package:app/models/activity_data_object.dart';
-
 import 'package:app/widgets/credential_card.dart';
 
-class PresentationPreview extends StatefulWidget {
-  final String matchedCredential;
-  final CredentialData credentialData;
-  const PresentationPreview({super.key, required this.credentialData, required this.matchedCredential});
+class PresentationPreviewMultiCred extends StatefulWidget {
+  final List<CredentialData> credentialData;
+  const PresentationPreviewMultiCred({super.key, required this.credentialData});
 
   @override
-  State<PresentationPreview> createState() => PresentationPreviewState();
+  State<PresentationPreviewMultiCred> createState() => PresentationPreviewMultiCredState();
 }
 
-class PresentationPreviewState extends State<PresentationPreview> {
+class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCred> {
   final StorageService _storageService = StorageService();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   var uuid = const Uuid();
   late final String userLoggedIn;
   // Todo fetch the name of the  verifier name from the presentation
   late String verifierName = 'Verifier';
+  bool checked = false;
+  late CredentialData selectedCredentialData = widget.credentialData[0];
+  int selectedRadio = 0;
 
   @override
   void initState() {
@@ -45,9 +40,14 @@ class PresentationPreviewState extends State<PresentationPreview> {
     });
   }
 
+  setSelectedRadio(int val) {
+    setState(() {
+      selectedRadio = val;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar:  const CustomTitleAppBar(pageTitle: 'Share Credential', addCloseIcon: true, height: 60,),
@@ -64,9 +64,23 @@ class PresentationPreviewState extends State<PresentationPreview> {
               subtitle: const Text('verifier.com', style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
               trailing: Image.asset('lib/assets/images/verified.png', width: 82, height: 26),
             ),
-            CredentialCard(credentialData: widget.credentialData, isDashboardWidget: false, isDetailArrowRequired: true,),
-            CredentialMetaDataCard(credentialData: widget.credentialData),
-            CredentialVerifiedInformation(credentialData: widget.credentialData, height: MediaQuery.of(context).size.height*0.38,),
+              for (var i = 0; i < widget.credentialData.length; i++)
+                RadioListTile(
+                controlAffinity: ListTileControlAffinity.leading,
+                title: CredentialCard(credentialData:  widget.credentialData[i], isDashboardWidget: false, isDetailArrowRequired: false,),
+                activeColor: Colors.deepPurple,
+                autofocus: false,
+                value:  i,
+                groupValue: selectedRadio,
+                onChanged: (val) {
+                      print("Radio $val");
+                      selectedCredentialData = widget.credentialData[i];
+                      setSelectedRadio(val!);
+               },
+           ),
+            Padding(
+              padding: EdgeInsets.only(top: width*0.8),
+            ),
             Align(
                 alignment: Alignment.bottomCenter,
                 child: SingleChildScrollView(
@@ -116,6 +130,6 @@ class PresentationPreviewState extends State<PresentationPreview> {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }
   _navigateToCredentialShareSuccess(String verifierName) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialShared(verifierName: verifierName, credentialData: widget.credentialData,)));
+      Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialShared(verifierName: verifierName, credentialData: selectedCredentialData)));
   }
 }

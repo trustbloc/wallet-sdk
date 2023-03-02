@@ -62,7 +62,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
                 style: TextStyle(fontSize: 18, color: Colors.black),
                 "wants to issue the credential"),
           ),
-          CredentialCard(credentialData: widget.credentialData, isDashboardWidget: false),
+          CredentialCard(credentialData: widget.credentialData, isDashboardWidget: false, isDetailArrowRequired: true,),
           Expanded(
             child: Align(
               alignment: Alignment.bottomCenter,
