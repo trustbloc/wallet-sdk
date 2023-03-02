@@ -38,6 +38,8 @@ class WalletSDK {
             createDIDOpts.keyType = "ECDSAP384IEEEP1363"
         }
 
+        val creatorDID = Creator(kms as KeyWriter)
+
         return creatorDID.create(didMethodType, createDIDOpts)
     }
 
