@@ -10,20 +10,24 @@ package openid4vp
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
-
 	"github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
+	"github.com/trustbloc/wallet-sdk/pkg/models"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
@@ -48,6 +52,8 @@ type Interaction struct {
 	signatureVerifier    jwtSignatureVerifier
 	httpClient           httpClient
 	activityLogger       api.ActivityLogger
+	didResolver          api.DIDResolver
+	crypto               api.Crypto
 
 	requestObject *requestObject
 }
@@ -60,7 +66,13 @@ type authorizedResponse struct {
 
 // New creates new openid4vp instance.
 // If no ActivityLogger is provided (via an option), then no activity logging will take place.
-func New(authorizationRequest string, signatureVerifier jwtSignatureVerifier, opts ...Opt) *Interaction {
+func New(
+	authorizationRequest string,
+	signatureVerifier jwtSignatureVerifier,
+	didResolver api.DIDResolver,
+	crypto api.Crypto,
+	opts ...Opt,
+) *Interaction {
 	client, activityLogger := processOpts(opts)
 
 	return &Interaction{
@@ -68,6 +80,8 @@ func New(authorizationRequest string, signatureVerifier jwtSignatureVerifier, op
 		signatureVerifier:    signatureVerifier,
 		httpClient:           client,
 		activityLogger:       activityLogger,
+		didResolver:          didResolver,
+		crypto:               crypto,
 	}
 }
 
@@ -97,8 +111,8 @@ func (o *Interaction) GetQuery() (*presexch.PresentationDefinition, error) {
 }
 
 // PresentCredential presents credentials to redirect uri from request object.
-func (o *Interaction) PresentCredential(presentation *verifiable.Presentation, jwtSigner api.JWTSigner) error {
-	response, err := createAuthorizedResponse(presentation, o.requestObject, jwtSigner)
+func (o *Interaction) PresentCredential(presentations []*verifiable.Presentation) error {
+	response, err := createAuthorizedResponse(presentations, o.requestObject, o.didResolver, o.crypto)
 	if err != nil {
 		return walleterror.NewExecutionError(
 			module,
@@ -209,17 +223,29 @@ func verifyTokenSignature(rawJwt string, claims interface{}, verifier jose.Signa
 	return nil
 }
 
-func createAuthorizedResponse(
-	presentation *verifiable.Presentation,
+func createAuthorizedResponse( //nolint:funlen
+	presentations []*verifiable.Presentation,
 	requestObject *requestObject,
-	signer api.JWTSigner,
+	didResolver api.DIDResolver,
+	crypto api.Crypto,
 ) (*authorizedResponse, error) {
-	kidParts := strings.Split(signer.GetKeyID(), "#")
-	if len(kidParts) < 2 { //nolint: gomnd
-		return nil, fmt.Errorf("kid not containing did part %s", signer.GetKeyID())
+	if len(presentations) == 0 {
+		return nil, fmt.Errorf("expected at least one presentation to present to verifier")
 	}
 
-	did := kidParts[0]
+	// TODO handle multiple presentations
+	presentation := presentations[0]
+
+	did, err := getRandomHolderDID(presentation)
+	if err != nil {
+		return nil, err
+	}
+
+	signer, err := getHolderSigner(did, didResolver, crypto)
+	if err != nil {
+		return nil, err
+	}
+
 	presentationSubmission := presentation.CustomFields["presentation_submission"]
 
 	idToken := &idTokenClaims{
@@ -284,4 +310,51 @@ func sendAuthorizedResponse(httpClient httpClient, responseBody, redirectURI str
 	}
 
 	return nil
+}
+
+func getHolderSigner(holderDID string, didResolver api.DIDResolver, crypto api.Crypto) (api.JWTSigner, error) {
+	docRes, err := didResolver.Resolve(holderDID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve holder DID for signing: %w", err)
+	}
+
+	verificationMethods := docRes.DIDDocument.VerificationMethods(diddoc.AssertionMethod)
+
+	if len(verificationMethods[diddoc.AssertionMethod]) == 0 {
+		return nil, fmt.Errorf("holder DID has no assertion method for signing")
+	}
+
+	signingVM := verificationMethods[diddoc.AssertionMethod][0].VerificationMethod
+
+	return common.NewJWSSigner(models.VerificationMethodFromDoc(&signingVM), crypto)
+}
+
+func getRandomHolderDID(pres *verifiable.Presentation) (string, error) {
+	creds := pres.Credentials()
+
+	if len(creds) == 0 {
+		return "", fmt.Errorf("presentation has no credentials")
+	}
+
+	idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(creds))))
+	if err != nil {
+		return "", err
+	}
+
+	selected := creds[idx.Int64()]
+
+	var subjID string
+
+	switch cred := selected.(type) {
+	case *verifiable.Credential:
+		subjID, err = verifiable.SubjectID(cred.Subject)
+	case map[string]interface{}:
+		subjID, err = verifiable.SubjectID(cred["credentialSubject"])
+	}
+
+	if err != nil || subjID == "" {
+		return "", fmt.Errorf("presentation VC does not have a subject ID")
+	}
+
+	return subjID, nil
 }

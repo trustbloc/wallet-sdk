@@ -13,14 +13,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
+	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
-	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
@@ -95,31 +96,15 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			goAPIOpenID4VP: &mocGoAPIInteraction{
 				PresentCredentialErr: nil,
 			},
-		}
-
-		err := instance.PresentCredential(
-			presentationJSONLD,
-			&api.VerificationMethod{
+			didResolver: &mocksDIDResolver{ResolveDocBytes: mockResolution(t, &api.VerificationMethod{
 				ID:   "did:example:12345#testId",
 				Type: "Ed25519VerificationKey2018",
 				Key:  models.VerificationKey{Raw: mockKey},
-			})
-		require.NoError(t, err)
-	})
-
-	t.Run("Fail to get signature algorithm", func(t *testing.T) {
-		instance := &Interaction{
-			keyHandleReader:  &mockKeyHandleReader{},
-			crypto:           &mockCrypto{},
-			ldDocumentLoader: &documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
-			goAPIOpenID4VP: &mocGoAPIInteraction{
-				PresentCredentialErr: nil,
-			},
+			})},
 		}
 
-		err := instance.PresentCredential(presentationJSONLD,
-			&api.VerificationMethod{ID: "did:example:12345#testId", Type: "Invalid"})
-		require.Contains(t, err.Error(), "UNSUPPORTED_ALGORITHM")
+		err := instance.PresentCredential(presentationJSONLD)
+		require.NoError(t, err)
 	})
 
 	t.Run("parse presentation failed", func(t *testing.T) {
@@ -130,15 +115,20 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			goAPIOpenID4VP: &mocGoAPIInteraction{
 				PresentCredentialErr: nil,
 			},
-		}
-
-		err := instance.PresentCredential(
-			[]byte("random value"),
-			&api.VerificationMethod{
+			didResolver: &mocksDIDResolver{ResolveDocBytes: mockResolution(t, &api.VerificationMethod{
 				ID:   "did:example:12345#testId",
 				Type: "Ed25519VerificationKey2018",
 				Key:  models.VerificationKey{Raw: mockKey},
-			})
+			})},
+		}
+
+		err := instance.PresentCredential([]byte("random value"))
+		require.Contains(t, err.Error(), "CREDENTIAL_PARSE_FAILED")
+
+		err = instance.PresentCredential([]byte("[\"random value\"]"))
+		require.Contains(t, err.Error(), "CREDENTIAL_PARSE_FAILED")
+
+		err = instance.PresentCredential([]byte("[not actually a json list]"))
 		require.Contains(t, err.Error(), "CREDENTIAL_PARSE_FAILED")
 	})
 
@@ -150,15 +140,14 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			goAPIOpenID4VP: &mocGoAPIInteraction{
 				PresentCredentialErr: errors.New("present credentials failed"),
 			},
-		}
-
-		err := instance.PresentCredential(
-			presentationJSONLD,
-			&api.VerificationMethod{
+			didResolver: &mocksDIDResolver{ResolveDocBytes: mockResolution(t, &api.VerificationMethod{
 				ID:   "did:example:12345#testId",
 				Type: "Ed25519VerificationKey2018",
 				Key:  models.VerificationKey{Raw: mockKey},
-			})
+			})},
+		}
+
+		err := instance.PresentCredential(presentationJSONLD)
 		require.Contains(t, err.Error(), "present credentials failed")
 	})
 }
@@ -218,10 +207,7 @@ func (o *mocGoAPIInteraction) GetQuery() (*presexch.PresentationDefinition, erro
 	return o.GetQueryResult, o.GetQueryError
 }
 
-func (o *mocGoAPIInteraction) PresentCredential(
-	presentation *verifiable.Presentation,
-	jwtSigner goapi.JWTSigner,
-) error {
+func (o *mocGoAPIInteraction) PresentCredential(presentation []*verifiable.Presentation) error {
 	return o.PresentCredentialErr
 }
 
@@ -230,6 +216,55 @@ type mocksDIDResolver struct {
 	ResolveErr      error
 }
 
-func (m *mocksDIDResolver) Resolve(did string) ([]byte, error) {
+func (m *mocksDIDResolver) Resolve(string) ([]byte, error) {
 	return m.ResolveDocBytes, m.ResolveErr
+}
+
+func mockResolution(t *testing.T, vm *api.VerificationMethod) []byte {
+	t.Helper()
+
+	var (
+		mockVM   *did.VerificationMethod
+		err      error
+		mockDID  string
+		mockVMID string
+	)
+
+	idSplit := strings.Split(vm.ID, "#")
+	switch len(idSplit) {
+	case 1:
+		mockVMID = idSplit[0]
+	case 2:
+		mockDID = idSplit[0]
+		mockVMID = idSplit[1]
+	default:
+		t.Fail()
+	}
+
+	if vm.Key.JSONWebKey != nil {
+		mockVM, err = did.NewVerificationMethodFromJWK(mockVMID, vm.Type, mockDID, vm.Key.JSONWebKey)
+		require.NoError(t, err)
+	} else {
+		mockVM = did.NewVerificationMethodFromBytes(mockVMID, vm.Type, mockDID, vm.Key.Raw)
+	}
+
+	docRes := &did.DocResolution{
+		DIDDocument: &did.Doc{
+			ID:      mockDID,
+			Context: []string{did.ContextV1},
+			VerificationMethod: []did.VerificationMethod{
+				*mockVM,
+			},
+			AssertionMethod: []did.Verification{
+				{
+					VerificationMethod: *mockVM,
+				},
+			},
+		},
+	}
+
+	docBytes, err := docRes.JSONBytes()
+	require.NoError(t, err)
+
+	return docBytes
 }

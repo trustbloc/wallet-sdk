@@ -146,10 +146,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		verifiablePresContent, err := verifiablePres.Content()
 		require.NoError(t, err)
 
-		vm, err := testHelper.DIDDoc.AssertionMethod()
-		require.NoError(t, err)
-
-		err = interaction.PresentCredential(verifiablePresContent, vm)
+		err = interaction.PresentCredential(verifiablePresContent)
 		require.NoError(t, err)
 		checkActivityLogAfterOpenID4VPFlow(t, activityLogger, tc.verifierProfileID)
 		fmt.Printf("done test %d\n", i)
