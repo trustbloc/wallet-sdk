@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:app/widgets/credential_metadata_card.dart';
 import 'package:app/widgets/credential_verified_information_view.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +18,7 @@ class CredentialDetails extends StatelessWidget {
   final ScrollController credDataController = ScrollController();
   final ScrollController rawDataController = ScrollController();
   final ScrollController activityController = ScrollController();
+  final ScrollController credentialDIDController = ScrollController();
 
   getCurrentDate() {
     final now = DateTime.now();
@@ -36,6 +38,11 @@ class CredentialDetails extends StatelessWidget {
       var activities = activityLogger!;
       return listViewWidget(activities!.asMap().values);
     }
+  }
+
+  getCredentialDID(){
+    log("getting credentialDID");
+    return Text(credentialData.credentialDID!);
   }
 
   Widget listViewWidget(Iterable<Object?> activitiesValue) {
@@ -88,7 +95,7 @@ class CredentialDetails extends StatelessWidget {
             children: <Widget>[
           const SizedBox(height: 24.0),
           DefaultTabController(
-              length: 3, // length of tabs
+              length: 4, // length of tabs
               initialIndex: 0,
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,7 +109,7 @@ class CredentialDetails extends StatelessWidget {
                   tabs: [
                     Tab(
                       child: SizedBox(
-                        width: 100,
+                        width: 50,
                         child: Text(
                           "Details",
                           textAlign: TextAlign.start,
@@ -114,9 +121,9 @@ class CredentialDetails extends StatelessWidget {
                       ),
                     ),
                     Tab(  child: SizedBox(
-                      width: 100,
+                      width: 150,
                       child: Text(
-                        "Raw Json",
+                        "Raw",
                         textAlign: TextAlign.start,
                         style: TextStyle(
                           fontSize: 14,
@@ -126,7 +133,7 @@ class CredentialDetails extends StatelessWidget {
                     ),
                     ),
                     Tab(  child: SizedBox(
-                      width: 100,
+                      width: 60,
                       child: Text(
                         "Activity",
                         textAlign: TextAlign.start,
@@ -136,7 +143,19 @@ class CredentialDetails extends StatelessWidget {
                         ),
                       ),
                     ),
-                    )
+                    ),
+                    Tab(  child: SizedBox(
+                      width: 50,
+                      child: Text(
+                        "DID",
+                        textAlign: TextAlign.start,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                     ),
+                    ),
                   ],
                 ),
                 Container(
@@ -184,6 +203,21 @@ class CredentialDetails extends StatelessWidget {
                                   return Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: activityLogDetails()
+                                  );
+                                }),
+                          )),
+                      SizedBox(
+                          height: 450,
+                          child: Scrollbar(
+                            thumbVisibility: true,
+                            controller: credentialDIDController,
+                            child: ListView.builder(
+                                controller: credentialDIDController,
+                                itemCount: 1,
+                                itemBuilder: (BuildContext context, int index) {
+                                  return Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: getCredentialDID()
                                   );
                                 }),
                           ))

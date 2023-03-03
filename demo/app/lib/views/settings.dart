@@ -14,7 +14,6 @@ class Settings extends StatefulWidget {
 
 class SettingsState extends State<Settings> {
   final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _userDIDController = TextEditingController();
 
   @override
   initState() {
@@ -61,21 +60,6 @@ class SettingsState extends State<Settings> {
                     )
                 ),
               ),
-              Flexible(
-                child: TextFormField(
-                    enabled: false,
-                    controller: _userDIDController,
-                    keyboardType: TextInputType.multiline,
-                    maxLines: null,
-                    decoration: const InputDecoration(
-                      fillColor:  Color(0xff8D8A8E),
-                      border: UnderlineInputBorder(),
-                      labelText: 'Decentralized Identifier (DID)',
-                      labelStyle: TextStyle(color: Color(0xff190C21), fontWeight: FontWeight.w700,
-                          fontFamily: 'SF Pro', fontSize: 16, fontStyle: FontStyle.normal ),
-                    )
-                ),
-              ),
               Expanded(
                 child: Align(
                   alignment: Alignment.bottomCenter,
@@ -104,7 +88,6 @@ class SettingsState extends State<Settings> {
   getUserDetails() async {
     UserLoginDetails userLoginDetails =  await getUser();
     _usernameController.text = userLoginDetails.username!;
-    _userDIDController.text = userLoginDetails.userDID!;
   }
   signOut() async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const MyApp()));

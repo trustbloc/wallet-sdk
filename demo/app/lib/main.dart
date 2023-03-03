@@ -54,17 +54,8 @@ class MainWidget extends StatefulWidget {
 class _MainWidgetState extends State<MainWidget> {
   final TextEditingController _usernameController = TextEditingController();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
-  var userDIDId = '';
   String? initialLink;
 
-  Future<String?> _createDid() async {
-    var didID = await WalletSDKPlugin.createDID("jwk");
-    setState(() {
-      userDIDId = didID!;
-    });
-    log("created didID :$didID");
-    return didID;
-  }
 
   @override
   void initState() {
@@ -108,9 +99,7 @@ class _MainWidgetState extends State<MainWidget> {
                 WalletSDKPlugin.fetchStoredDID(fetchedUserDID!);
                 _loginCompleted();
               } else {
-                await _createDid();
                 pref.setString('userLoggedIn', _usernameController.text);
-                pref.setString('userDID', userDIDId);
                 _loginCompleted();
               }
             },

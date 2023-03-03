@@ -29,7 +29,6 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
   late String verifierName = 'Verifier';
   bool checked = false;
   late CredentialData selectedCredentialData = widget.credentialData[0];
-  late List<String> selectedCredList;
   int selectedRadio = 0;
 
   @override
