@@ -1,10 +1,9 @@
-import 'dart:convert';
+
 import 'dart:developer';
 
 import 'package:app/demo_method_channel.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/models/credential_data_object.dart';
-import 'package:app/views/credentials_topresent.dart';
 import 'package:app/views/presentation_preview.dart';
 import 'package:app/views/presentation_preview_multi_cred.dart';
 import 'package:flutter/material.dart';
@@ -13,8 +12,9 @@ import 'package:app/services/storage_service.dart';
 import 'package:app/models/store_credential_data.dart';
 
 import 'package:app/views/credential_preview.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../main.dart';
+import '../models/activity_data_object.dart';
 
 void _navigateToOTPScreen(BuildContext context) async {
   Navigator.push(context, MaterialPageRoute(builder: (context) => const OTP()));
@@ -51,6 +51,7 @@ void handleOpenIDUrl(BuildContext context, String qrCodeURL) async {
   var WalletSDKPlugin = MethodChannelWallet();
 
   final StorageService storageService = StorageService();
+  final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   late List<CredentialDataObject> storedCredentials;
   late List<String> credentials;
   log('received qr code url - $qrCodeURL');
@@ -61,10 +62,18 @@ void handleOpenIDUrl(BuildContext context, String qrCodeURL) async {
       _navigateToOTPScreen(context);
       return;
     } else {
-      String? requestCredentialResp =  await WalletSDKPlugin.requestCredential('');
+      final SharedPreferences pref = await prefs;
+      var didID = await WalletSDKPlugin.createDID("jwk");
+      log("created didID :$didID");
+      pref.setString('userDID',didID!);
+      String? credentials =  await WalletSDKPlugin.requestCredential('');
       String? issuerURL = await WalletSDKPlugin.issuerURI();
-      String? resolvedCredentialDisplay =  await WalletSDKPlugin.resolveCredentialDisplay([requestCredentialResp],issuerURL!);
-      _navigateToCredPreviewScreen(context, requestCredentialResp, issuerURL, resolvedCredentialDisplay!);
+      String? resolvedCredentialDisplay =  await WalletSDKPlugin.resolveCredentialDisplay([credentials],issuerURL!);
+      var activities = await WalletSDKPlugin.storeActivityLogger();
+      var credID = await WalletSDKPlugin.getCredID([credentials]);
+      log("activities and credID handle open id  -$activities and $credID");
+      storageService.addActivities(ActivityDataObj(credID!, activities));
+      _navigateToCredPreviewScreen(context, credentials, issuerURL, resolvedCredentialDisplay!);
     }
   } else {
     // Check if the flow is for the verifiable presentation or for issuance.

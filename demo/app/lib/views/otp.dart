@@ -24,6 +24,17 @@ class _OTPPage extends State<OTP> {
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   // 4 text editing controllers that associate with the 4 input fields
   final TextEditingController otpController = TextEditingController();
+  var userDIDId = '';
+
+  Future<String?> _createDid() async {
+    var didID = await WalletSDKPlugin.createDID("jwk");
+    setState(() {
+      userDIDId = didID!;
+    });
+    log("created didID :$didID");
+    return didID;
+  }
+
 
   // This is the entered code
   // It will be displayed in a Text widget
@@ -110,9 +121,13 @@ class _OTPPage extends State<OTP> {
                         setState(() {
                           _otp = otpController.text;
                         });
+
                         String? credentials;
                         String? resolvedCredentialDisplay;
                         try {
+                          final SharedPreferences pref = await prefs;
+                             await _createDid();
+                             pref.setString('userDID',userDIDId);
                           credentials =  await WalletSDKPlugin.requestCredential(_otp!);
                           String? issuerURI = await WalletSDKPlugin.issuerURI();
                           resolvedCredentialDisplay = await WalletSDKPlugin.resolveCredentialDisplay([credentials], issuerURI!);
@@ -121,9 +136,8 @@ class _OTPPage extends State<OTP> {
                           var credID = await WalletSDKPlugin.getCredID([credentials]);
                           log("activities and credID -$activities and $credID");
                           _storageService.addActivities(ActivityDataObj(credID!, activities));
-                          final SharedPreferences pref = await prefs;
                            pref.setString("credID", credID);
-                          _navigateToCredPreviewScreen(credentials, issuerURI, resolvedCredentialDisplay!);
+                          _navigateToCredPreviewScreen(credentials, issuerURI, resolvedCredentialDisplay!, userDIDId);
                         } catch (err) {
                           String errorMessage = err.toString();
                           if (err is PlatformException &&
@@ -164,8 +178,8 @@ class _OTPPage extends State<OTP> {
     ),
  )));
   }
-  _navigateToCredPreviewScreen(String credentialResp, String issuerURI, String credentialDisplayData) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURI, credentialDisplayData: credentialDisplayData))));
+  _navigateToCredPreviewScreen(String credentialResp, String issuerURI, String credentialDisplayData, String didID) async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURI, credentialDisplayData: credentialDisplayData, credentialDID: didID),)));
   }
 
   _clearOTPInput(){
