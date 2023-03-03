@@ -45,6 +45,7 @@ type Claim struct {
 	// Displays represents display data for a specific claim in various locales.
 	Displays  []Display `json:"display,omitempty"`
 	ValueType string    `json:"value_type,omitempty"`
+	Order     *int      `json:"order,omitempty"`
 }
 
 // Logo represents display information for a logo.

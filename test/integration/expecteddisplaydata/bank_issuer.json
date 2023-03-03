@@ -42,18 +42,21 @@
         {
           "label":"Employee",
           "value_type": "string",
+          "order": 0,
           "value":"John Doe",
           "locale":"en-US"
         },
         {
           "label":"Given Name",
           "value_type": "string",
+          "order": 1,
           "value":"John",
           "locale":"en-US"
         },
         {
           "label":"Job Title",
           "value_type": "string",
+          "order": 2,
           "value":"Software Developer",
           "locale":"en-US"
         }

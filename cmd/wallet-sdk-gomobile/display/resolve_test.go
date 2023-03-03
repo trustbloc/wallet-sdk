@@ -10,6 +10,7 @@ import (
 	_ "embed"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api/vcparse"
@@ -146,7 +147,12 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 		ValueType string
 		Value     string
 		Locale    string
+		Order     *int
 	}
+
+	expectedIDOrder := 0
+	expectedGivenNameOrder := 1
+	expectedSurnameOrder := 2
 
 	expectedClaimsChecklist := struct {
 		Claims []expectedClaim
@@ -158,18 +164,21 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 				ValueType: "string",
 				Value:     "1234",
 				Locale:    "en-US",
+				Order:     &expectedIDOrder,
 			},
 			{
 				Label:     "Given Name",
 				ValueType: "string",
 				Value:     "Alice",
 				Locale:    "en-US",
+				Order:     &expectedGivenNameOrder,
 			},
 			{
 				Label:     "Surname",
 				ValueType: "string",
 				Value:     "Bowman",
 				Locale:    "en-US",
+				Order:     &expectedSurnameOrder,
 			},
 			{
 				Label:     "GPA",
@@ -189,11 +198,12 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 			if claim.Label() == expectedClaim.Label &&
 				claim.ValueType() == expectedClaim.ValueType &&
 				claim.Value() == expectedClaim.Value &&
-				claim.Locale() == expectedClaim.Locale {
+				claim.Locale() == expectedClaim.Locale &&
+				claimOrderMatches(t, claim, expectedClaim.Order) {
 				if expectedClaimsChecklist.Found[j] {
 					require.FailNow(t, "duplicate claim found: ",
-						"[Label: %s] [Value Type: %s] [Value: %s] [Locale: %s]",
-						claim.Label(), claim.ValueType(), claim.Value(), claim.Locale())
+						"[Label: %s] [Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
+						claim.Label(), claim.ValueType(), claim.Value(), getOrderAsString(t, claim), claim.Locale())
 				}
 
 				expectedClaimsChecklist.Found[j] = true
@@ -203,8 +213,8 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 
 			if j == len(expectedClaimsChecklist.Claims)-1 {
 				require.FailNow(t, "received unexpected claim: ",
-					"[Label: %s] [Value Type: %s] [Value: %s] [Locale: %s]",
-					claim.Label(), claim.ValueType(), claim.Value(), claim.Locale())
+					"[Label: %s] [Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
+					claim.Label(), claim.ValueType(), claim.Value(), getOrderAsString(t, claim), claim.Locale())
 			}
 		}
 	}
@@ -213,8 +223,51 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 		if !expectedClaimsChecklist.Found[i] {
 			expectedClaim := expectedClaimsChecklist.Claims[i]
 			require.FailNow(t, "the following claim was expected but wasn't received: ",
-				"[Label: %s] [Value Type: %s] [Value: %s] [Locale: %s]",
-				expectedClaim.Label, expectedClaim.ValueType, expectedClaim.Value, expectedClaim.Locale)
+				"[Label: %s] [Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
+				expectedClaim.Label, expectedClaim.ValueType, expectedClaim.Value,
+				getOrderIntPointerPointerAsString(expectedClaim.Order), expectedClaim.Locale)
 		}
 	}
+}
+
+func claimOrderMatches(t *testing.T, claim *display.Claim, expectedOrder *int) bool {
+	t.Helper()
+
+	if claim.HasOrder() {
+		if expectedOrder == nil {
+			return false
+		}
+
+		claimOrder, err := claim.Order()
+		require.NoError(t, err)
+
+		if claimOrder != *expectedOrder {
+			return false
+		}
+	} else if expectedOrder != nil {
+		return false
+	}
+
+	return true
+}
+
+func getOrderAsString(t *testing.T, claim *display.Claim) string {
+	t.Helper()
+
+	if claim.HasOrder() {
+		order, err := claim.Order()
+		require.NoError(t, err)
+
+		return strconv.Itoa(order)
+	}
+
+	return "none"
+}
+
+func getOrderIntPointerPointerAsString(order *int) string {
+	if order != nil {
+		return strconv.Itoa(*order)
+	}
+
+	return "none"
 }

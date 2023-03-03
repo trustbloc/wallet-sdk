@@ -167,6 +167,7 @@ func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *veri
 	return &ResolvedClaim{
 		Label:     name,
 		ValueType: claim.ValueType,
+		Order:     claim.Order,
 		Value:     value,
 		Locale:    nameLocale,
 	}

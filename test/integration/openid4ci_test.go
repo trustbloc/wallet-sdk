@@ -9,6 +9,7 @@ package integration
 import (
 	_ "embed"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
@@ -281,11 +282,12 @@ func checkCredentialDisplay(t *testing.T, actualCredentialDisplay, expectedCrede
 			expectedClaim := expectedClaimsChecklist.Claims[j]
 			if claim.Label() == expectedClaim.Label() &&
 				claim.Value() == expectedClaim.Value() &&
-				claim.Locale() == expectedClaim.Locale() {
+				claim.Locale() == expectedClaim.Locale() &&
+				claimOrderMatches(t, claim, expectedClaim) {
 				if expectedClaimsChecklist.Found[j] {
 					require.FailNow(t, "duplicate claim found: ",
-						"[Label: %s] [Value Type: %s] [Value: %s] [Locale: %s]",
-						claim.Label(), claim.ValueType(), claim.Value(), claim.Locale())
+						"[Label: %s] [Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
+						claim.Label(), claim.ValueType(), claim.Value(), getOrderAsString(t, claim), claim.Locale())
 				}
 
 				expectedClaimsChecklist.Found[j] = true
@@ -295,8 +297,8 @@ func checkCredentialDisplay(t *testing.T, actualCredentialDisplay, expectedCrede
 
 			if j == len(expectedClaimsChecklist.Claims)-1 {
 				require.FailNow(t, "received unexpected claim: ",
-					"[Label: %s] [Value Type: %s] [Value: %s] [Locale: %s]",
-					claim.Label(), claim.ValueType(), claim.Value(), claim.Locale())
+					"[Label: %s] [Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
+					claim.Label(), claim.ValueType(), claim.Value(), getOrderAsString(t, claim), claim.Locale())
 			}
 		}
 	}
@@ -305,10 +307,48 @@ func checkCredentialDisplay(t *testing.T, actualCredentialDisplay, expectedCrede
 		if !expectedClaimsChecklist.Found[i] {
 			expectedClaim := expectedClaimsChecklist.Claims[i]
 			require.FailNow(t, "the following claim was expected but wasn't received: ",
-				"[Label: %s] [Value Type: %s] [Value: %s] [Locale: %s]",
-				expectedClaim.Label, expectedClaim.ValueType, expectedClaim.Value, expectedClaim.Locale)
+				"[Label: %s] [Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
+				expectedClaim.Label, expectedClaim.ValueType, expectedClaim.Value, getOrderAsString(t, expectedClaim),
+				expectedClaim.Locale)
 		}
 	}
+}
+
+func claimOrderMatches(t *testing.T, claim1, claim2 *display.Claim) bool {
+	t.Helper()
+
+	if claim1.HasOrder() {
+		if !claim2.HasOrder() {
+			return false
+		}
+
+		claim1Order, err := claim1.Order()
+		require.NoError(t, err)
+
+		claim2Order, err := claim1.Order()
+		require.NoError(t, err)
+
+		if claim1Order != claim2Order {
+			return false
+		}
+	} else if claim2.HasOrder() {
+		return false
+	}
+
+	return true
+}
+
+func getOrderAsString(t *testing.T, claim *display.Claim) string {
+	t.Helper()
+
+	if claim.HasOrder() {
+		order, err := claim.Order()
+		require.NoError(t, err)
+
+		return strconv.Itoa(order)
+	}
+
+	return "none"
 }
 
 func checkActivityLogAfterOpenID4CIFlow(t *testing.T, activityLogger *mem.ActivityLogger,

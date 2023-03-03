@@ -193,10 +193,13 @@ func TestResolve(t *testing.T) {
 				require.Equal(t, "#12107c", resolvedDisplayData.CredentialDisplays[0].Overview.BackgroundColor)
 				require.Equal(t, "#FFFFFF", resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
 
+				expectedIDOrder := 0
+				expectedGivenNameOrder := 1
+				expectedSurnameOrder := 2
 				expectedClaims := []credentialschema.ResolvedClaim{
-					{Label: "ID", Value: "1234", Locale: "en-US"},
-					{Label: "Given Name", Value: "Alice", Locale: "en-US"},
-					{Label: "Surname", Value: "Bowman", Locale: "en-US"},
+					{Label: "ID", Value: "1234", Locale: "en-US", Order: &expectedIDOrder},
+					{Label: "Given Name", Value: "Alice", Locale: "en-US", Order: &expectedGivenNameOrder},
+					{Label: "Surname", Value: "Bowman", Locale: "en-US", Order: &expectedSurnameOrder},
 					{Label: "GPA", Value: "4.0", Locale: "en-US"},
 				}
 
@@ -359,10 +362,13 @@ func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *crede
 	require.Equal(t, "#12107c", resolvedDisplayData.CredentialDisplays[0].Overview.BackgroundColor)
 	require.Equal(t, "#FFFFFF", resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
 
+	expectedIDOrder := 0
+	expectedGivenNameOrder := 1
+	expectedSurnameOrder := 2
 	expectedClaims := []credentialschema.ResolvedClaim{
-		{Label: "ID", Value: "1234", Locale: "en-US"},
-		{Label: "Given Name", Value: "Alice", Locale: "en-US"},
-		{Label: "Surname", Value: "Bowman", Locale: "en-US"},
+		{Label: "ID", Value: "1234", Locale: "en-US", Order: &expectedIDOrder},
+		{Label: "Given Name", Value: "Alice", Locale: "en-US", Order: &expectedGivenNameOrder},
+		{Label: "Surname", Value: "Bowman", Locale: "en-US", Order: &expectedSurnameOrder},
 		{Label: "GPA", Value: "4.0", Locale: "en-US"},
 	}
 
@@ -438,9 +444,10 @@ func verifyClaimsAnyOrder(t *testing.T, actualClaims []credentialschema.Resolved
 				continue
 			}
 
-			if actualClaim.Label == expectedClaim.Label &&
-				actualClaim.Value == expectedClaim.Value &&
-				actualClaim.Locale == expectedClaim.Locale {
+			actualClaim := actualClaim     // Resolves implicit memory aliasing warning from linter
+			expectedClaim := expectedClaim // Resolves implicit memory aliasing warning from linter
+
+			if claimsMatch(&actualClaim, &expectedClaim) {
 				claimsMatched[j] = true
 
 				break
@@ -454,4 +461,30 @@ func verifyClaimsAnyOrder(t *testing.T, actualClaims []credentialschema.Resolved
 				"actual: [%v] expected (in any order): [%v]", actualClaims, expectedClaims)
 		}
 	}
+}
+
+func claimsMatch(claim1, claim2 *credentialschema.ResolvedClaim) bool {
+	if claim1.Label == claim2.Label &&
+		claim1.Value == claim2.Value &&
+		claim1.Locale == claim2.Locale {
+		return ordersMatch(claim1.Order, claim2.Order)
+	}
+
+	return false
+}
+
+func ordersMatch(order1, order2 *int) bool {
+	if order1 != nil {
+		if order2 == nil {
+			return false
+		}
+
+		if *order1 != *order2 {
+			return false
+		}
+	} else if order2 != nil {
+		return false
+	}
+
+	return true
 }
