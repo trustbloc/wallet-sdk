@@ -37,7 +37,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: /home/runner/work/wallet-sdk/go
-      - uses: actions/upload-artifact@v3
+      - name: Upload Android bindings to GitHub Actions Artifacts
+        uses: actions/upload-artifact@v3
         if: always()
         with:
           name: android-binding
@@ -96,6 +97,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: /Users/runner/work/wallet-sdk/go
+      - name: Upload iOS bindings to GitHub Actions Artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: ios-binding
+          path: ./cmd/wallet-sdk-gomobile/bindings/ios
       - name: Zip walletsdk framework
         run: |
           cd ./cmd/wallet-sdk-gomobile/bindings/ios
