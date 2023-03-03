@@ -18,7 +18,6 @@ class CredentialList extends StatefulWidget {
 
 class _CredentialListState extends State<CredentialList> {
   final StorageService _storageService = StorageService();
- // late List<StorageItem> _credentialList;
   late List<CredentialDataObject> _credentialList;
   late List<Object?> activityLogger;
   String? credentialDisplayData;
@@ -78,7 +77,7 @@ class _CredentialListState extends State<CredentialList> {
                   itemBuilder: (_, index) {
                     return Dismissible(
                       key: Key(_credentialList[index].toString()),
-                      child: CredentialCard(credentialData: _credentialList[index].value, activityLogger: activityLogger!, isDashboardWidget: true),
+                      child: CredentialCard(credentialData: _credentialList[index].value, activityLogger: activityLogger!, isDashboardWidget: true, isDetailArrowRequired: true,),
                       onDismissed: (direction) async {
                         await _storageService.deleteData(_credentialList[index])
                             .then((value) => _credentialList.removeAt(index));

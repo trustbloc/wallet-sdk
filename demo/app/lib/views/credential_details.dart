@@ -150,7 +150,7 @@ class CredentialDetails extends StatelessWidget {
                       Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        CredentialCard(credentialData: credentialData, isDashboardWidget: false),
+                        CredentialCard(credentialData: credentialData, isDashboardWidget: false, isDetailArrowRequired: false),
                         isDashboardWidget?
                         CredentialMetaDataCard(credentialData: credentialData): Container(),
                         CredentialVerifiedInformation(credentialData: credentialData, height: MediaQuery.of(context).size.height*0.42)

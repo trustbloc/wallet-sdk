@@ -16,18 +16,15 @@ class CredentialMetaDataCard extends StatelessWidget {
   late var expiryDate = '';
   getClaimList() {
     var data = json.decode(credentialData.credentialDisplayData!);
-    log("data metadata $data");
     var credentialClaimsData = data['credential_displays'][0]['claims'] as List;
     return credentialClaimsData.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
   }
 
   getIssuanceDate() {
     var claimsList = getClaimList();
-    log("claim list ${claimsList!}");
     for (var claims in claimsList){
       if (claims.label.contains("Issue Date")) {
         var issueDate = claims.value;
-        log("date ${claims.value}");
         return  issueDate;
       }
     }
