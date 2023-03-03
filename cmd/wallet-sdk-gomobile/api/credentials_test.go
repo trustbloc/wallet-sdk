@@ -41,6 +41,9 @@ func TestVerifiableCredential(t *testing.T) {
 		id := universityDegreeVC.ID()
 		require.Equal(t, "http://example.edu/credentials/1872", id)
 
+		name := universityDegreeVC.Name()
+		require.Equal(t, "University Degree Credential", name)
+
 		issuerID := universityDegreeVC.IssuerID()
 		require.Equal(t, "did:example:76e12ec712ebc6f1c221ebfeb1f", issuerID)
 
@@ -68,6 +71,9 @@ func TestVerifiableCredential(t *testing.T) {
 
 		id = driversLicenceVC.ID()
 		require.Equal(t, "https://eu.com/claims/DriversLicense", id)
+
+		name = driversLicenceVC.Name()
+		require.Empty(t, name)
 
 		issuerID = driversLicenceVC.IssuerID()
 		require.Equal(t, "did:foo:123", issuerID)
@@ -110,6 +116,18 @@ func TestVerifiableCredential(t *testing.T) {
 		require.EqualError(t, err, "issuance date missing (invalid VC)")
 		require.Equal(t, int64(-1), issuanceDate)
 	})
+}
+
+func TestVerifiableCredential_NameIsNotAString(t *testing.T) {
+	parseOpts := &vcparse.Opts{DisableProofCheck: true}
+
+	universityDegreeVC, err := vcparse.Parse(universityDegreeCredential, parseOpts)
+	require.NoError(t, err)
+
+	universityDegreeVC.VC.CustomFields["name"] = 0
+
+	name := universityDegreeVC.Name()
+	require.Empty(t, name)
 }
 
 func TestVerifiableCredential_ClaimTypes(t *testing.T) {

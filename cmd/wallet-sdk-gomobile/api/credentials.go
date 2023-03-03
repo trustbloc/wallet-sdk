@@ -37,6 +37,22 @@ func (v *VerifiableCredential) ID() string {
 	return v.VC.ID
 }
 
+// Name returns this VC's name.
+// If this VC doesn't provide a name, or the name isn't a string, then an empty string is returned.
+func (v *VerifiableCredential) Name() string {
+	rawName, found := v.VC.CustomFields["name"]
+	if !found {
+		return ""
+	}
+
+	nameAsString, ok := rawName.(string)
+	if !ok {
+		return ""
+	}
+
+	return nameAsString
+}
+
 // IssuerID returns the ID of this VC's issuer.
 // While the ID is typically going to be a DID, the Verifiable Credential spec does not mandate this.
 func (v *VerifiableCredential) IssuerID() string {
