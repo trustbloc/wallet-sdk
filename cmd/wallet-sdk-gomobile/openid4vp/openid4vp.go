@@ -14,18 +14,18 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/openid4vp"
-	gowalleterror "github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 type goAPIOpenID4VP interface {
 	GetQuery() (*presexch.PresentationDefinition, error)
-	PresentCredential(presentation []*verifiable.Presentation) error
+	PresentCredential(credentials []*verifiable.Credential) error
 }
 
 // Interaction represents a single OpenID4VP interaction between a wallet and a verifier. The methods defined on this
@@ -36,6 +36,7 @@ type Interaction struct {
 	ldDocumentLoader api.LDDocumentLoader
 	goAPIOpenID4VP   goAPIOpenID4VP
 	didResolver      api.DIDResolver
+	inquirer         *credential.Inquirer
 }
 
 // ClientConfig contains various parameters for an OpenID4VP Interaction.
@@ -88,6 +89,8 @@ func NewInteraction(authorizationRequest string, config *ClientConfig) *Interact
 		opts = append(opts, openid4vp.WithMetricsLogger(mobileMetricsLoggerWrapper))
 	}
 
+	inquirer := credential.NewInquirer(config.DocumentLoader)
+
 	return &Interaction{
 		keyHandleReader:  config.KeyHandleReader,
 		ldDocumentLoader: config.DocumentLoader,
@@ -97,9 +100,11 @@ func NewInteraction(authorizationRequest string, config *ClientConfig) *Interact
 			jwtVerifier,
 			&wrapper.VDRResolverWrapper{DIDResolver: config.DIDRes},
 			config.Crypto,
+			&wrapper.DocumentLoaderWrapper{DocumentLoader: config.DocumentLoader},
 			opts...,
 		),
 		didResolver: config.DIDRes,
+		inquirer:    inquirer,
 	}
 }
 
@@ -120,46 +125,16 @@ func (o *Interaction) GetQuery() ([]byte, error) {
 }
 
 // PresentCredential presents credentials to redirect uri from request object.
-func (o *Interaction) PresentCredential(presentation []byte) error {
-	parsedPresentations, err := parsePresentationList(presentation)
-	if err != nil {
-		return walleterror.ToMobileError(
-			gowalleterror.NewValidationError(module,
-				CredentialParseFailedCode,
-				CredentialParseFailedError,
-				err,
-			),
-		)
-	}
-
-	return walleterror.ToMobileError(o.goAPIOpenID4VP.PresentCredential(parsedPresentations))
+func (o *Interaction) PresentCredential(credentials *api.VerifiableCredentialsArray) error {
+	return walleterror.ToMobileError(o.goAPIOpenID4VP.PresentCredential(unwrapVCs(credentials)))
 }
 
-func parsePresentationList(presentations []byte) ([]*verifiable.Presentation, error) {
-	presDataList := []json.RawMessage{}
+func unwrapVCs(vcs *api.VerifiableCredentialsArray) []*verifiable.Credential {
+	var credentials []*verifiable.Credential
 
-	if len(presentations) > 2 && presentations[0] == '[' && presentations[len(presentations)-1] == ']' {
-		err := json.Unmarshal(presentations, &presDataList)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		presDataList = []json.RawMessage{presentations}
+	for i := 0; i < vcs.Length(); i++ {
+		credentials = append(credentials, vcs.AtIndex(i).VC)
 	}
 
-	parsedPresentations := []*verifiable.Presentation{}
-
-	for _, presData := range presDataList {
-		parsedPresentation, err := verifiable.ParsePresentation(
-			presData,
-			verifiable.WithPresDisabledProofCheck(),
-			verifiable.WithDisabledJSONLDChecks())
-		if err != nil {
-			return nil, err
-		}
-
-		parsedPresentations = append(parsedPresentations, parsedPresentation)
-	}
-
-	return parsedPresentations, nil
+	return credentials
 }
