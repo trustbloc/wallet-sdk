@@ -41,6 +41,7 @@ type ResolvedClaim struct {
 	Label     string `json:"label,omitempty"`
 	ValueType string `json:"value_type,omitempty"`
 	Value     string `json:"value,omitempty"`
+	Order     *int   `json:"order,omitempty"`
 	Locale    string `json:"locale,omitempty"`
 }
 

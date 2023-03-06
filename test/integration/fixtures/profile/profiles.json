@@ -64,7 +64,8 @@
                       "name":"Employee"
                     }
                   ],
-                  "value_type":"string"
+                  "value_type":"string",
+                  "order": 0
                 },
                 "givenName":{
                   "display":[
@@ -73,7 +74,8 @@
                       "name":"Given Name"
                     }
                   ],
-                  "value_type":"string"
+                  "value_type":"string",
+                  "order": 1
                 },
                 "jobTitle":{
                   "display":[
@@ -82,7 +84,8 @@
                       "name":"Job Title"
                     }
                   ],
-                  "value_type":"string"
+                  "value_type":"string",
+                  "order": 2
                 },
                 "mail":{
                   "display":[
@@ -401,7 +404,8 @@
                       "locale": "en-US"
                     }
                   ],
-                  "value_type":"string"
+                  "value_type":"string",
+                  "order":0
                 },
                 "givenName": {
                   "display": [
@@ -410,7 +414,8 @@
                       "locale": "en-US"
                     }
                   ],
-                  "value_type":"string"
+                  "value_type":"string",
+                  "order":1
                 },
                 "jobTitle": {
                   "display": [
@@ -419,7 +424,8 @@
                       "locale": "en-US"
                     }
                   ],
-                  "value_type":"string"
+                  "value_type":"string",
+                  "order":2
                 },
                 "surname": {
                   "display": [

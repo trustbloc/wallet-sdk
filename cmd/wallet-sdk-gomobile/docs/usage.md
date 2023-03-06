@@ -379,9 +379,12 @@ The structure of the display data object is as follows:
 ### `Claim`
 
 * Describes display information for a specific claim.
-* Has `label()`, `valueType()`, `value()`, and `locale()` methods.
+* Has `label()`, `valueType()`, `value()`, `hasOrder()`, `order()`, and `locale()` methods.
 * For example, if the UI were to display "Given Name: Alice", then `label()` would correspond to "Given Name" while
   `value()` would correspond to "Alice".
+* Display order data is optional and will only exist if the issuer provided it. Use the `hasOrder()` method
+to determine if there is a specified order before attempting to retrieve the order, since `order()` will return an
+error/throw an exception if the claim has no order information.
 * When the value type is "image", then you should expect the value data to be formatted using the
   [data URL scheme](https://www.rfc-editor.org/rfc/rfc2397).
 

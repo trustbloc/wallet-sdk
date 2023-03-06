@@ -9,6 +9,7 @@ package display
 
 import (
 	"encoding/json"
+	"errors"
 
 	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 )
@@ -208,6 +209,22 @@ func (c *Claim) ValueType() string {
 // For example, if the UI were to display "Given Name: Alice", then the Value would be "Alice".
 func (c *Claim) Value() string {
 	return c.claim.Value
+}
+
+// HasOrder returns whether this Claim has a specified order in it.
+func (c *Claim) HasOrder() bool {
+	return c.claim.Order != nil
+}
+
+// Order returns the display order for this claim.
+// HasOrder should be called first to ensure this claim has a specified order before calling this method.
+// This method returns an error if the claim has no specified order.
+func (c *Claim) Order() (int, error) {
+	if c.claim.Order == nil {
+		return -1, errors.New("claim has no specified order")
+	}
+
+	return *c.claim.Order, nil
 }
 
 // Locale returns the locale corresponding to this claim's display data.
