@@ -138,7 +138,7 @@ jobs:
           rm -rf demo/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json
           rm -rf demo/app/ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json
       - name: Run tests on Simulator
-        run: make integration-test-flutter
+        run: make integration-test-flutter integration-test-ios
 
   AndroidFlutterIntegrationTest:
     runs-on: macOS-12

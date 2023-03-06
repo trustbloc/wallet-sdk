@@ -86,6 +86,10 @@ integration-test-flutter:
 integration-test-android:
 	@scripts/android_test.sh
 
+.PHONY: integration-test-ios
+integration-test-ios:
+	@scripts/ios_test.sh
+
 .PHONY: install-flutter-dependencies
 install-flutter-dependencies:
 	@cd demo/app && flutter pub get
