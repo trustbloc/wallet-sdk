@@ -170,7 +170,10 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: false
-          script: echo "Generated AVD snapshot for caching."
+          script: |
+            adb reverse tcp:8075 tcp:8075
+            adb reverse tcp:8072 tcp:8072
+            echo "Generated AVD snapshot for caching."
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
