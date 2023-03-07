@@ -131,7 +131,7 @@ func checkCredentialDisplay(t *testing.T, credentialDisplay *display.CredentialD
 	require.Equal(t, "#12107c", credentialOverview.BackgroundColor())
 	require.Equal(t, "#FFFFFF", credentialOverview.TextColor())
 
-	require.Equal(t, 4, credentialDisplay.ClaimsLength())
+	require.Equal(t, 5, credentialDisplay.ClaimsLength())
 
 	checkClaims(t, credentialDisplay)
 }
@@ -143,10 +143,13 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 	// converted to an array of resolved claims, the order of resolved claims can differ from run-to-run. The code
 	// below checks to ensure we have the expected claims in any order.
 	type expectedClaim struct {
+		RawID     string
 		Label     string
 		ValueType string
 		Value     string
+		RawValue  string
 		Locale    string
+		Pattern   string
 		Order     *int
 	}
 
@@ -160,31 +163,48 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 	}{
 		Claims: []expectedClaim{
 			{
+				RawID:     "id",
 				Label:     "ID",
 				ValueType: "string",
 				Value:     "1234",
+				RawValue:  "1234",
 				Locale:    "en-US",
 				Order:     &expectedIDOrder,
 			},
 			{
+				RawID:     "given_name",
 				Label:     "Given Name",
 				ValueType: "string",
 				Value:     "Alice",
+				RawValue:  "Alice",
 				Locale:    "en-US",
 				Order:     &expectedGivenNameOrder,
 			},
 			{
+				RawID:     "surname",
 				Label:     "Surname",
 				ValueType: "string",
 				Value:     "Bowman",
+				RawValue:  "Bowman",
 				Locale:    "en-US",
 				Order:     &expectedSurnameOrder,
 			},
 			{
+				RawID:     "gpa",
 				Label:     "GPA",
 				ValueType: "number",
 				Value:     "4.0",
+				RawValue:  "4.0",
 				Locale:    "en-US",
+			},
+			{
+				RawID:     "sensitive_id",
+				Label:     "Sensitive ID",
+				ValueType: "string",
+				Value:     "******789",
+				RawValue:  "123456789",
+				Locale:    "en-US",
+				Pattern:   "mask:regex(^.{6})",
 			},
 		},
 	}
@@ -199,11 +219,16 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 				claim.ValueType() == expectedClaim.ValueType &&
 				claim.Value() == expectedClaim.Value &&
 				claim.Locale() == expectedClaim.Locale &&
+				claim.RawID() == expectedClaim.RawID &&
+				claim.Pattern() == expectedClaim.Pattern &&
+				claim.RawValue() == expectedClaim.RawValue &&
 				claimOrderMatches(t, claim, expectedClaim.Order) {
 				if expectedClaimsChecklist.Found[j] {
-					require.FailNow(t, "duplicate claim found: ",
-						"[Label: %s] [Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
-						claim.Label(), claim.ValueType(), claim.Value(), getOrderAsString(t, claim), claim.Locale())
+					require.FailNow(t, "duplicate claim found",
+						"[Claim ID: %s] [Pattern: %s] [Raw value: %s] [Label: %s] "+
+							"[Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
+						claim.RawID(), claim.Pattern(), claim.RawValue(), claim.Label(),
+						claim.ValueType(), claim.Value(), getOrderAsString(t, claim), claim.Locale())
 				}
 
 				expectedClaimsChecklist.Found[j] = true
@@ -212,9 +237,11 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 			}
 
 			if j == len(expectedClaimsChecklist.Claims)-1 {
-				require.FailNow(t, "received unexpected claim: ",
-					"[Label: %s] [Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
-					claim.Label(), claim.ValueType(), claim.Value(), getOrderAsString(t, claim), claim.Locale())
+				require.FailNow(t, "received unexpected claim",
+					"[Claim ID: %s] [Pattern: %s] [Raw value: %s] [Label: %s] "+
+						"[Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
+					claim.RawID(), claim.Pattern(), claim.RawValue(), claim.Label(),
+					claim.ValueType(), claim.Value(), getOrderAsString(t, claim), claim.Locale())
 			}
 		}
 	}
@@ -222,10 +249,12 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 	for i := 0; i < len(expectedClaimsChecklist.Claims); i++ {
 		if !expectedClaimsChecklist.Found[i] {
 			expectedClaim := expectedClaimsChecklist.Claims[i]
-			require.FailNow(t, "the following claim was expected but wasn't received: ",
-				"[Label: %s] [Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
-				expectedClaim.Label, expectedClaim.ValueType, expectedClaim.Value,
-				getOrderIntPointerPointerAsString(expectedClaim.Order), expectedClaim.Locale)
+			require.FailNow(t, "claim was expected but wasn't received",
+				"[Claim ID: %s] [Pattern: %s] [Raw value: %s] [Label: %s] "+
+					"[Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
+				expectedClaim.RawID, expectedClaim.Pattern, expectedClaim.RawValue, expectedClaim.Label,
+				expectedClaim.ValueType, expectedClaim.Value, getOrderIntPointerPointerAsString(expectedClaim.Order),
+				expectedClaim.Locale)
 		}
 	}
 }

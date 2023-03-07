@@ -21,10 +21,12 @@ const (
 	sampleCredentialDisplay = `{"overview":{"name":"University Credential","locale":"en-US","logo":{` +
 		`"url":"https://exampleuniversity.com/public/logo.png","alt_text":"a square logo of a university"},` +
 		`"background_color":"#12107c","text_color":"#FFFFFF"},"claims":[` +
-		`{"label":"ID","value_type":"string","order":0,"value":"1234","locale":"en-US"},` +
-		`{"label":"Given Name","value_type":"string","order":1,"value":"Alice","locale":"en-US"},` +
-		`{"label":"Surname","value_type":"string","order":2,"value":"Bowman","locale":"en-US"},` +
-		`{"label":"GPA","value_type":"number","value":"4.0","locale":"en-US"}]}`
+		`{"raw_id":"id","label":"ID","value_type":"string","order":0,"raw_value":"1234","locale":"en-US"},` +
+		`{"raw_id":"given_name","label":"Given Name","value_type":"string","order":1,"raw_value":"Alice","locale":"en-US"},` +
+		`{"raw_id":"surname","label":"Surname","value_type":"string","order":2,"raw_value":"Bowman","locale":"en-US"},` +
+		`{"raw_id":"gpa","label":"GPA","value_type":"number","raw_value":"4.0","locale":"en-US"},` +
+		`{"raw_id":"sensitive_id","label":"Sensitive ID","value_type":"string","value":"******789",` +
+		`"raw_value":"123456789","pattern":"mask:regex(^.{6})","locale":"en-US"}]}`
 
 	sampleDisplayData = `{"issuer_display":` + sampleIssuerDisplay +
 		`,"credential_displays":[` + sampleCredentialDisplay + `]}`
@@ -96,7 +98,7 @@ func TestCredentialDisplay_ClaimAtIndex_IndexOutOfBounds(t *testing.T) {
 	credentialDisplay, err := display.ParseCredentialDisplay(sampleCredentialDisplay)
 	require.NoError(t, err)
 
-	claim := credentialDisplay.ClaimAtIndex(4)
+	claim := credentialDisplay.ClaimAtIndex(5)
 	require.Nil(t, claim)
 
 	claim = credentialDisplay.ClaimAtIndex(-1)
