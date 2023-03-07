@@ -21,13 +21,13 @@ class IntegrationTest: XCTestCase {
     }
 
     func testFullFlow() throws {
-        let kms = LocalkmsNewKMS(kmsStore(), nil)!
-        let didResolver = DidNewResolver("http://localhost:8072/1.0/identifiers", nil)!
+        let kms = try LocalkmsConstructors().newKMS(kmsStore())
+        let didResolver = try DidConstructors().newResolver("http://localhost:8072/1.0/identifiers")
         let crypto = kms.getCrypto()
         let documentLoader = LdNewDocLoader()!
         let activityLogger = MemNewActivityLogger()!
 
-        let didCreator = DidNewCreatorWithKeyWriter(kms, nil)!
+        let didCreator = try DidConstructors().newCreator(with: kms as ApiKeyWriterProtocol)
         let userDID = try didCreator.create("ion", createDIDOpts: ApiCreateDIDOpts())
 
         // Issue VCs
@@ -36,14 +36,13 @@ class IntegrationTest: XCTestCase {
         
         XCTAssertTrue(requestURI != "", "requestURI:" + requestURI!)
 
-        let ciInteraction = Openid4ciNewInteraction(requestURI, cfg, nil)
-        XCTAssertNotNil(ciInteraction)
+        let ciInteraction = try Openid4ciConstructors().newInteraction(requestURI, config: cfg)
 
-        let authorizeResult = try ciInteraction!.authorize()
+        let authorizeResult = try ciInteraction.authorize()
         XCTAssertTrue(!authorizeResult.userPINRequired)
 
         let otp = ""
-        let issuedCreds = try ciInteraction!.requestCredential(
+        let issuedCreds = try ciInteraction.requestCredential(
             Openid4ciNewCredentialRequestOpts(otp), vm: userDID.assertionMethod())
         XCTAssertTrue(issuedCreds.length() > 0)
 
