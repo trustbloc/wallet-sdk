@@ -10,6 +10,7 @@ package display
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 
 	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 )
@@ -193,6 +194,12 @@ type Claim struct {
 	claim *goapicredentialschema.ResolvedClaim
 }
 
+// RawID returns the raw field name (key) from the VC associated with this claim.
+// It's not localized or formatted for display.
+func (c *Claim) RawID() string {
+	return c.claim.RawID
+}
+
 // Label returns the display label for this claim.
 // For example, if the UI were to display "Given Name: Alice", then the Label would be "Given Name".
 func (c *Claim) Label() string {
@@ -207,8 +214,33 @@ func (c *Claim) ValueType() string {
 
 // Value returns the display value for this claim.
 // For example, if the UI were to display "Given Name: Alice", then the Value would be "Alice".
+// If no special formatting was applied to the display value, then this method will be equivalent to calling RawValue.
 func (c *Claim) Value() string {
+	if c.claim.Value == "" {
+		return c.claim.RawValue
+	}
+
 	return c.claim.Value
+}
+
+// RawValue returns the raw display value for this claim without any formatting.
+// For example, if this claim is masked, this method will return the unmasked version.
+// If no special formatting was applied to the display value, then this method will be equivalent to calling Value.
+func (c *Claim) RawValue() string {
+	return c.claim.RawValue
+}
+
+// IsMasked indicates whether this claim's value is masked. If this method returns true, then the Value method
+// will return the masked value while the RawValue method will return the unmasked version.
+func (c *Claim) IsMasked() bool {
+	patternSplit := strings.Split(c.claim.Pattern, ":")
+
+	return len(patternSplit) == 2 && patternSplit[0] == "mask"
+}
+
+// Pattern returns the pattern information for this claim.
+func (c *Claim) Pattern() string {
+	return c.claim.Pattern
 }
 
 // HasOrder returns whether this Claim has a specified order in it.

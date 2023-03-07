@@ -197,10 +197,20 @@ func TestResolve(t *testing.T) {
 				expectedGivenNameOrder := 1
 				expectedSurnameOrder := 2
 				expectedClaims := []credentialschema.ResolvedClaim{
-					{Label: "ID", Value: "1234", Locale: "en-US", Order: &expectedIDOrder},
-					{Label: "Given Name", Value: "Alice", Locale: "en-US", Order: &expectedGivenNameOrder},
-					{Label: "Surname", Value: "Bowman", Locale: "en-US", Order: &expectedSurnameOrder},
-					{Label: "GPA", Value: "4.0", Locale: "en-US"},
+					{RawID: "id", Label: "ID", RawValue: "1234", ValueType: "string", Locale: "en-US", Order: &expectedIDOrder},
+					{
+						RawID: "given_name", Label: "Given Name", RawValue: "Alice", ValueType: "string", Locale: "en-US",
+						Order: &expectedGivenNameOrder,
+					},
+					{
+						RawID: "surname", Label: "Surname", RawValue: "Bowman", ValueType: "string", Locale: "en-US",
+						Order: &expectedSurnameOrder,
+					},
+					{RawID: "gpa", Label: "GPA", RawValue: "4.0", ValueType: "number", Locale: "en-US"},
+					{
+						RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789",
+						Value: "******789", ValueType: "string", Pattern: "mask:regex(^.{6})", Locale: "en-US",
+					},
 				}
 
 				verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
@@ -343,6 +353,50 @@ func TestResolve(t *testing.T) {
 			require.Nil(t, resolvedDisplayData)
 		})
 	})
+	t.Run("Fail to compile regex", func(t *testing.T) {
+		credential, err := verifiable.ParseCredential(credentialUniversityDegree,
+			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
+			verifiable.WithDisabledProofCheck())
+		require.NoError(t, err)
+
+		var issuerMetadata issuer.Metadata
+
+		err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
+		require.NoError(t, err)
+
+		issuerMetadata.CredentialsSupported[0].CredentialSubject["sensitive_id"] = issuer.Claim{
+			Displays: []issuer.Display{{}},
+			Pattern:  "mask:regex(()",
+		}
+
+		resolvedDisplayData, errResolve := credentialschema.Resolve(
+			credentialschema.WithCredentials([]*verifiable.Credential{credential}),
+			credentialschema.WithIssuerMetadata(&issuerMetadata))
+		require.EqualError(t, errResolve, "error parsing regexp: missing closing ): `(`")
+		require.Nil(t, resolvedDisplayData)
+	})
+	t.Run("Unsupported regex masking pattern", func(t *testing.T) {
+		credential, err := verifiable.ParseCredential(credentialUniversityDegree,
+			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
+			verifiable.WithDisabledProofCheck())
+		require.NoError(t, err)
+
+		var issuerMetadata issuer.Metadata
+
+		err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
+		require.NoError(t, err)
+
+		issuerMetadata.CredentialsSupported[0].CredentialSubject["sensitive_id"] = issuer.Claim{
+			Displays: []issuer.Display{{}},
+			Pattern:  "mask:regex(.{0,3}$)",
+		}
+
+		resolvedDisplayData, errResolve := credentialschema.Resolve(
+			credentialschema.WithCredentials([]*verifiable.Credential{credential}),
+			credentialschema.WithIssuerMetadata(&issuerMetadata))
+		require.EqualError(t, errResolve, "invalid or unsupported regex masking pattern")
+		require.Nil(t, resolvedDisplayData)
+	})
 }
 
 func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *credentialschema.ResolvedDisplayData) {
@@ -366,10 +420,20 @@ func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *crede
 	expectedGivenNameOrder := 1
 	expectedSurnameOrder := 2
 	expectedClaims := []credentialschema.ResolvedClaim{
-		{Label: "ID", Value: "1234", Locale: "en-US", Order: &expectedIDOrder},
-		{Label: "Given Name", Value: "Alice", Locale: "en-US", Order: &expectedGivenNameOrder},
-		{Label: "Surname", Value: "Bowman", Locale: "en-US", Order: &expectedSurnameOrder},
-		{Label: "GPA", Value: "4.0", Locale: "en-US"},
+		{RawID: "id", Label: "ID", RawValue: "1234", ValueType: "string", Locale: "en-US", Order: &expectedIDOrder},
+		{
+			RawID: "given_name", Label: "Given Name", RawValue: "Alice", ValueType: "string",
+			Locale: "en-US", Order: &expectedGivenNameOrder,
+		},
+		{
+			RawID: "surname", Label: "Surname", RawValue: "Bowman", ValueType: "string",
+			Locale: "en-US", Order: &expectedSurnameOrder,
+		},
+		{RawID: "gpa", Label: "GPA", RawValue: "4.0", ValueType: "number", Locale: "en-US"},
+		{
+			RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789", Value: "******789",
+			ValueType: "string", Pattern: "mask:regex(^.{6})", Locale: "en-US",
+		},
 	}
 
 	verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
@@ -383,17 +447,17 @@ func checkForDefaultDisplayData(t *testing.T, resolvedDisplayData *credentialsch
 	require.Len(t, resolvedDisplayData.CredentialDisplays, 1)
 	require.Equal(t, "http://example.edu/credentials/1872",
 		resolvedDisplayData.CredentialDisplays[0].Overview.Name)
-	require.Equal(t, "N/A",
-		resolvedDisplayData.CredentialDisplays[0].Overview.Locale)
+	require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Overview.Locale)
 	require.Nil(t, resolvedDisplayData.CredentialDisplays[0].Overview.Logo)
 	require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Overview.BackgroundColor)
 	require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
 
 	expectedClaims := []credentialschema.ResolvedClaim{
-		{Label: "ID", Value: "1234", Locale: "N/A"},
-		{Label: "given_name", Value: "Alice", Locale: "N/A"},
-		{Label: "surname", Value: "Bowman", Locale: "N/A"},
-		{Label: "gpa", Value: "4.0", Locale: "N/A"},
+		{RawID: "id", RawValue: "1234", ValueType: "string"},
+		{RawID: "given_name", RawValue: "Alice"},
+		{RawID: "surname", RawValue: "Bowman"},
+		{RawID: "gpa", RawValue: "4.0"},
+		{RawID: "sensitive_id", RawValue: "123456789"},
 	}
 
 	verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
@@ -417,13 +481,13 @@ func checkSDVCMatchedDisplayData(t *testing.T, resolvedDisplayData *credentialsc
 	require.Equal(t, "#FFFFFF", resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
 
 	expectedClaims := []credentialschema.ResolvedClaim{
-		{Label: "Employee", Value: "John Doe", Locale: "en-US"},
-		{Label: "Given Name", Value: "John", Locale: "en-US"},
-		{Label: "Surname", Value: "Doe", Locale: "en-US"},
-		{Label: "Job Title", Value: "Software Developer", Locale: "en-US"},
-		{Label: "Mail", Value: "john.doe@foo.bar", Locale: "en-US"},
-		{Label: "Photo", Value: "base64photo", Locale: ""},
-		{Label: "Preferred Language", Value: "English", Locale: "en-US"},
+		{RawID: "displayName", Label: "Employee", RawValue: "John Doe", ValueType: "string", Locale: "en-US"},
+		{RawID: "givenName", Label: "Given Name", RawValue: "John", ValueType: "string", Locale: "en-US"},
+		{RawID: "surname", Label: "Surname", RawValue: "Doe", ValueType: "string", Locale: "en-US"},
+		{RawID: "jobTitle", Label: "Job Title", RawValue: "Software Developer", ValueType: "string", Locale: "en-US"},
+		{RawID: "mail", Label: "Mail", RawValue: "john.doe@foo.bar", ValueType: "string", Locale: "en-US"},
+		{RawID: "photo", Label: "Photo", RawValue: "base64photo", ValueType: "image", Locale: ""},
+		{RawID: "preferredLanguage", Label: "Preferred Language", RawValue: "English", ValueType: "string", Locale: "en-US"},
 	}
 
 	verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
@@ -466,7 +530,11 @@ func verifyClaimsAnyOrder(t *testing.T, actualClaims []credentialschema.Resolved
 func claimsMatch(claim1, claim2 *credentialschema.ResolvedClaim) bool {
 	if claim1.Label == claim2.Label &&
 		claim1.Value == claim2.Value &&
-		claim1.Locale == claim2.Locale {
+		claim1.Locale == claim2.Locale &&
+		claim1.ValueType == claim2.ValueType &&
+		claim1.RawID == claim2.RawID &&
+		claim1.Pattern == claim2.Pattern &&
+		claim1.RawValue == claim2.RawValue {
 		return ordersMatch(claim1.Order, claim2.Order)
 	}
 

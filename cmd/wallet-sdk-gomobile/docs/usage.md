@@ -379,14 +379,22 @@ The structure of the display data object is as follows:
 ### `Claim`
 
 * Describes display information for a specific claim.
-* Has `label()`, `valueType()`, `value()`, `hasOrder()`, `order()`, and `locale()` methods.
+* Has `label()`, `rawID()`, `valueType()`, `value()`, `rawValue()`, `isMasked()`, `hasOrder()`, `order()`,
+`pattern()`, and `locale()` methods.
 * For example, if the UI were to display "Given Name: Alice", then `label()` would correspond to "Given Name" while
   `value()` would correspond to "Alice".
 * Display order data is optional and will only exist if the issuer provided it. Use the `hasOrder()` method
 to determine if there is a specified order before attempting to retrieve the order, since `order()` will return an
 error/throw an exception if the claim has no order information.
-* When the value type is "image", then you should expect the value data to be formatted using the
-  [data URL scheme](https://www.rfc-editor.org/rfc/rfc2397).
+* `IsMasked()` indicates whether this claim's value is masked. If this method returns true, then the `value()` method
+will return the masked value while the `rawValue()` method will return the unmasked version.
+* `rawValue()` returns the raw display value for this claim without any formatting.
+For example, if this claim is masked, this method will return the unmasked version.
+If no special formatting was applied to the display value, then this method will be equivalent to calling Value.
+* `rawID()` returns the claim's ID, which is the raw field name (key) from the VC associated with this claim.
+It's not localized or formatted for display.
+* `valueType()` returns the value type for this claim - when it's "image", then you should expect the value data to be
+formatted using the [data URL scheme](https://www.rfc-editor.org/rfc/rfc2397).
 
 ### A Note about `locale()`
 

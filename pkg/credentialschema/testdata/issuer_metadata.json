@@ -59,6 +59,16 @@
             }
           ],
           "value_type":"number"
+        },
+        "sensitive_id":{
+          "display":[
+            {
+              "name":"Sensitive ID",
+              "locale":"en-US"
+            }
+          ],
+          "value_type":"string",
+          "pattern":"mask:regex(^.{6})"
         }
       },
       "cryptographic_binding_methods_supported":[

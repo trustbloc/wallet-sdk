@@ -38,10 +38,15 @@ type CredentialOverview struct {
 
 // ResolvedClaim represents display data for a specific claim.
 type ResolvedClaim struct {
+	// RawID is the raw field name (key) from the VC associated with this claim.
+	// It's not localized or formatted for display.
+	RawID     string `json:"raw_id,omitempty"`
 	Label     string `json:"label,omitempty"`
 	ValueType string `json:"value_type,omitempty"`
+	RawValue  string `json:"raw_value,omitempty"`
 	Value     string `json:"value,omitempty"`
 	Order     *int   `json:"order,omitempty"`
+	Pattern   string `json:"pattern,omitempty"`
 	Locale    string `json:"locale,omitempty"`
 }
 
