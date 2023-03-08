@@ -857,7 +857,7 @@
                 "purpose": "So we can see that you are an expert.",
                 "schema": [
                   {
-                    "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+                    "uri": "VerifiableCredential"
                   }
                 ],
                 "constraints": {

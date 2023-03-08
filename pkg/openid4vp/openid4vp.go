@@ -312,7 +312,14 @@ func createAuthorizedResponseOneCred( //nolint:funlen
 
 	var presentation *verifiable.Presentation
 
-	presentation, err = requestObject.Claims.VPToken.PresentationDefinition.CreateVP(
+	pd := requestObject.Claims.VPToken.PresentationDefinition
+
+	// TODO: https://github.com/trustbloc/wallet-sdk/issues/165 remove this code after to re enable Schema check.
+	for i := range pd.InputDescriptors {
+		pd.InputDescriptors[i].Schema = nil
+	}
+
+	presentation, err = pd.CreateVP(
 		[]*verifiable.Credential{credential},
 		documentLoader,
 		verifiable.WithDisabledProofCheck(),
@@ -367,7 +374,14 @@ func createAuthorizedResponseMultiCred( //nolint:funlen
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
 ) (*authorizedResponse, error) {
-	presentations, submission, err := requestObject.Claims.VPToken.PresentationDefinition.CreateVPArray(
+	pd := requestObject.Claims.VPToken.PresentationDefinition
+
+	// TODO: https://github.com/trustbloc/wallet-sdk/issues/165 remove this code after to re enable Schema check.
+	for i := range pd.InputDescriptors {
+		pd.InputDescriptors[i].Schema = nil
+	}
+
+	presentations, submission, err := pd.CreateVPArray(
 		credentials,
 		documentLoader,
 		verifiable.WithDisabledProofCheck(),
