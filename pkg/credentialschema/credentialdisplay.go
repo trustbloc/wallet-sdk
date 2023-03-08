@@ -226,21 +226,10 @@ func getMaskedValue(rawValue, pattern string) (string, error) {
 		return "", err
 	}
 
-	matchingIndexRange := r.FindStringIndex(rawValue)
+	// Always use the first submatch.
+	valueToBeMasked := r.ReplaceAllString(rawValue, "$1")
 
-	if len(matchingIndexRange) != 2 ||
-		matchingIndexRange[0] != 0 ||
-		matchingIndexRange[0] > matchingIndexRange[1] {
-		return "", errors.New("invalid or unsupported regex masking pattern")
-	}
-
-	numberOfMaskedCharacters := matchingIndexRange[1]
-
-	maskedCharacters := strings.Repeat("*", numberOfMaskedCharacters)
-
-	valueToStayUnmasked := rawValue[numberOfMaskedCharacters:]
-
-	maskedValue := maskedCharacters + valueToStayUnmasked
+	maskedValue := strings.ReplaceAll(rawValue, valueToBeMasked, strings.Repeat("*", len(valueToBeMasked)))
 
 	return maskedValue, nil
 }

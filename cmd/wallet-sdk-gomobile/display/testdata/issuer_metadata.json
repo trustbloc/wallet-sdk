@@ -68,7 +68,7 @@
             }
           ],
           "value_type":"string",
-          "pattern":"mask:regex(^.{6})"
+          "pattern":"mask:regex(^(.*).{4}$)"
         }
       },
       "cryptographic_binding_methods_supported":[
