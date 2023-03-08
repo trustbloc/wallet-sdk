@@ -25,8 +25,8 @@ const (
 		`{"raw_id":"given_name","label":"Given Name","value_type":"string","order":1,"raw_value":"Alice","locale":"en-US"},` +
 		`{"raw_id":"surname","label":"Surname","value_type":"string","order":2,"raw_value":"Bowman","locale":"en-US"},` +
 		`{"raw_id":"gpa","label":"GPA","value_type":"number","raw_value":"4.0","locale":"en-US"},` +
-		`{"raw_id":"sensitive_id","label":"Sensitive ID","value_type":"string","value":"******789",` +
-		`"raw_value":"123456789","pattern":"mask:regex(^.{6})","locale":"en-US"}]}`
+		`{"raw_id":"sensitive_id","label":"Sensitive ID","value_type":"string","value":"*****6789",` +
+		`"raw_value":"123456789","pattern":"mask:regex(^(.*).{4}$)","locale":"en-US"}]}`
 
 	sampleDisplayData = `{"issuer_display":` + sampleIssuerDisplay +
 		`,"credential_displays":[` + sampleCredentialDisplay + `]}`

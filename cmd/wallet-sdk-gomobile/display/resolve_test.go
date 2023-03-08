@@ -201,10 +201,10 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 				RawID:     "sensitive_id",
 				Label:     "Sensitive ID",
 				ValueType: "string",
-				Value:     "******789",
+				Value:     "*****6789",
 				RawValue:  "123456789",
 				Locale:    "en-US",
-				Pattern:   "mask:regex(^.{6})",
+				Pattern:   "mask:regex(^(.*).{4}$)",
 			},
 		},
 	}

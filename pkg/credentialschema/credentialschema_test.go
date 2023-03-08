@@ -209,7 +209,7 @@ func TestResolve(t *testing.T) {
 					{RawID: "gpa", Label: "GPA", RawValue: "4.0", ValueType: "number", Locale: "en-US"},
 					{
 						RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789",
-						Value: "******789", ValueType: "string", Pattern: "mask:regex(^.{6})", Locale: "en-US",
+						Value: "*****6789", ValueType: "string", Pattern: "mask:regex(^(.*).{4}$)", Locale: "en-US",
 					},
 				}
 
@@ -375,28 +375,6 @@ func TestResolve(t *testing.T) {
 		require.EqualError(t, errResolve, "error parsing regexp: missing closing ): `(`")
 		require.Nil(t, resolvedDisplayData)
 	})
-	t.Run("Unsupported regex masking pattern", func(t *testing.T) {
-		credential, err := verifiable.ParseCredential(credentialUniversityDegree,
-			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
-			verifiable.WithDisabledProofCheck())
-		require.NoError(t, err)
-
-		var issuerMetadata issuer.Metadata
-
-		err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
-		require.NoError(t, err)
-
-		issuerMetadata.CredentialsSupported[0].CredentialSubject["sensitive_id"] = issuer.Claim{
-			Displays: []issuer.Display{{}},
-			Pattern:  "mask:regex(.{0,3}$)",
-		}
-
-		resolvedDisplayData, errResolve := credentialschema.Resolve(
-			credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-			credentialschema.WithIssuerMetadata(&issuerMetadata))
-		require.EqualError(t, errResolve, "invalid or unsupported regex masking pattern")
-		require.Nil(t, resolvedDisplayData)
-	})
 }
 
 func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *credentialschema.ResolvedDisplayData) {
@@ -431,8 +409,8 @@ func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *crede
 		},
 		{RawID: "gpa", Label: "GPA", RawValue: "4.0", ValueType: "number", Locale: "en-US"},
 		{
-			RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789", Value: "******789",
-			ValueType: "string", Pattern: "mask:regex(^.{6})", Locale: "en-US",
+			RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789", Value: "*****6789",
+			ValueType: "string", Pattern: "mask:regex(^(.*).{4}$)", Locale: "en-US",
 		},
 	}
 
