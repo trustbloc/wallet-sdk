@@ -186,6 +186,8 @@ func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *veri
 		}
 
 		value = maskedValue
+	} else {
+		value = rawValue
 	}
 
 	return &ResolvedClaim{
