@@ -12,7 +12,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/hyperledger/aries-framework-go/pkg/doc/sdjwt/common"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
@@ -29,7 +28,13 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 	var credentialDisplays []CredentialDisplay
 
 	for _, vc := range vcs {
-		subject, err := getSubject(vc)
+		// The call below creates a copy of the VC with the selective disclosures merged into the credential subject.
+		displayVC, err := vc.CreateDisplayCredential(verifiable.DisplayAllDisclosures())
+		if err != nil {
+			return nil, err
+		}
+
+		subject, err := getSubject(displayVC) // Will contain both selective and non-selective disclosures.
 		if err != nil {
 			return nil, err
 		}
@@ -37,12 +42,11 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 		var foundMatchingType bool
 
 		for i := range credentialsSupported {
-			if !haveMatchingTypes(&credentialsSupported[i], vc) {
+			if !haveMatchingTypes(&credentialsSupported[i], displayVC) {
 				continue
 			}
 
-			credentialDisplay, err := buildCredentialDisplay(&credentialsSupported[i], subject, vc.SDJWTDisclosures,
-				preferredLocale)
+			credentialDisplay, err := buildCredentialDisplay(&credentialsSupported[i], subject, preferredLocale)
 			if err != nil {
 				return nil, err
 			}
@@ -88,9 +92,9 @@ func haveMatchingTypes(supportedCredential *issuer.SupportedCredential, vc *veri
 }
 
 func buildCredentialDisplay(supportedCredential *issuer.SupportedCredential, subject *verifiable.Subject,
-	sdDisclosures []*common.DisclosureClaim, preferredLocale string,
+	preferredLocale string,
 ) (*CredentialDisplay, error) {
-	resolvedClaims, err := resolveClaims(supportedCredential, subject, sdDisclosures, preferredLocale)
+	resolvedClaims, err := resolveClaims(supportedCredential, subject, preferredLocale)
 	if err != nil {
 		return nil, err
 	}
@@ -141,14 +145,14 @@ func getSubject(vc *verifiable.Credential) (*verifiable.Subject, error) {
 }
 
 func resolveClaims(supportedCredential *issuer.SupportedCredential, credentialSubject *verifiable.Subject,
-	sdDisclosures []*common.DisclosureClaim, preferredLocale string,
+	preferredLocale string,
 ) ([]ResolvedClaim, error) {
 	var resolvedClaims []ResolvedClaim
 
 	for fieldName, claim := range supportedCredential.CredentialSubject {
 		claim := claim // Resolves implicit memory aliasing warning from linter
 
-		resolvedClaim, err := resolveClaim(fieldName, &claim, credentialSubject, sdDisclosures, preferredLocale)
+		resolvedClaim, err := resolveClaim(fieldName, &claim, credentialSubject, preferredLocale)
 		if err != nil && !errors.Is(err, errNoClaimDisplays) && !errors.Is(err, errClaimValueNotFoundInVC) {
 			return nil, err
 		}
@@ -162,7 +166,7 @@ func resolveClaims(supportedCredential *issuer.SupportedCredential, credentialSu
 }
 
 func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *verifiable.Subject,
-	sdDisclosures []*common.DisclosureClaim, preferredLocale string,
+	preferredLocale string,
 ) (*ResolvedClaim, error) {
 	if len(claim.Displays) == 0 {
 		return nil, errNoClaimDisplays
@@ -170,8 +174,8 @@ func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *veri
 
 	label, labelLocale := getLocalizedLabel(preferredLocale, claim)
 
-	untypedValue, exists := getValue(credentialSubject, sdDisclosures, fieldName)
-	if !exists {
+	untypedValue := getMatchingClaimValue(credentialSubject, fieldName)
+	if untypedValue == nil {
 		return nil, errClaimValueNotFoundInVC
 	}
 
@@ -250,28 +254,44 @@ func getLocalizedLabel(preferredLocale string, claim *issuer.Claim) (string, str
 	return claim.Displays[0].Name, claim.Displays[0].Locale
 }
 
-func getValue(credentialSubject *verifiable.Subject,
-	sdDisclosures []*common.DisclosureClaim, fieldName string,
-) (interface{}, bool) {
+// Returns nil if no matching claim value could be found.
+func getMatchingClaimValue(credentialSubject *verifiable.Subject, fieldName string) interface{} {
 	if strings.EqualFold(fieldName, "ID") {
 		if credentialSubject.ID == "" {
-			return "", false
+			return nil
 		}
 
-		return credentialSubject.ID, true
-	}
-
-	if len(sdDisclosures) > 0 {
-		for _, disclosure := range sdDisclosures {
-			if disclosure.Name == fieldName {
-				return disclosure.Value, true
-			}
-		}
+		return credentialSubject.ID
 	}
 
 	value, exists := credentialSubject.CustomFields[fieldName]
+	if exists {
+		return value
+	}
 
-	return value, exists
+	value = findMatchingClaimValueInMap(credentialSubject.CustomFields, fieldName)
+	if value != nil {
+		return value
+	}
+
+	return nil
+}
+
+// If nil is returned, then no matching claim was found.
+func findMatchingClaimValueInMap(claims map[string]interface{}, fieldName string) interface{} {
+	claim, found := claims[fieldName]
+	if found {
+		return claim
+	}
+
+	for _, value := range claims {
+		valueAsMap, ok := value.(map[string]interface{})
+		if ok {
+			return findMatchingClaimValueInMap(valueAsMap, fieldName)
+		}
+	}
+
+	return nil
 }
 
 func getOverviewDisplay(supportedCredential *issuer.SupportedCredential,
