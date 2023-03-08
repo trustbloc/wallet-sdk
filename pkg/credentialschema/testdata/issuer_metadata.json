@@ -69,6 +69,15 @@
           ],
           "value_type":"string",
           "pattern":"mask:regex(^(.*).{4}$)"
+        },
+        "chemistry":{
+          "display":[
+            {
+              "name":"Chemistry Final Grade",
+              "locale":"en-US"
+            }
+          ],
+          "value_type":"number"
         }
       },
       "cryptographic_binding_methods_supported":[

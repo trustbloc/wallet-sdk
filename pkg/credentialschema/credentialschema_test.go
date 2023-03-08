@@ -211,6 +211,10 @@ func TestResolve(t *testing.T) {
 						RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789",
 						Value: "*****6789", ValueType: "string", Pattern: "mask:regex(^(.*).{4}$)", Locale: "en-US",
 					},
+					{
+						RawID: "chemistry", Label: "Chemistry Final Grade", RawValue: "78",
+						ValueType: "number", Locale: "en-US",
+					},
 				}
 
 				verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
@@ -412,6 +416,10 @@ func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *crede
 			RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789", Value: "*****6789",
 			ValueType: "string", Pattern: "mask:regex(^(.*).{4}$)", Locale: "en-US",
 		},
+		{
+			RawID: "chemistry", Label: "Chemistry Final Grade", RawValue: "78",
+			ValueType: "number", Locale: "en-US",
+		},
 	}
 
 	verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
@@ -436,6 +444,7 @@ func checkForDefaultDisplayData(t *testing.T, resolvedDisplayData *credentialsch
 		{RawID: "surname", RawValue: "Bowman"},
 		{RawID: "gpa", RawValue: "4.0"},
 		{RawID: "sensitive_id", RawValue: "123456789"},
+		{RawID: "course_grades", RawValue: "map[chemistry:78 physics:85]"},
 	}
 
 	verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
