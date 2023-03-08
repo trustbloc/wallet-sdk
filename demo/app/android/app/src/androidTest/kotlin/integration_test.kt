@@ -86,10 +86,7 @@ class IntegrationTest {
         // Pick first credential from matched creds
         selectedCreds.add(requirementDescriptor.matchedVCs.atIndex(0))
 
-        // TODO: maybe better to rename query to createPresentation.
-        // Creating verifiable presentation from selected credentials.
-        val verifiablePres = inquirer.query(credentialsQuery, CredentialsOpt(selectedCreds))
-
-        vpInteraction.presentCredential(verifiablePres.content())
+        // Presenting from selected credentials.
+        vpInteraction.presentCredential(selectedCreds)
     }
 }

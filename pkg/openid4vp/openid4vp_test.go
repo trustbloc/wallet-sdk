@@ -12,13 +12,17 @@ import (
 	"crypto/rand"
 	_ "embed" //nolint:gci // required for go:embed
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
@@ -36,6 +40,9 @@ var (
 
 	//go:embed test_data/presentation.jsonld
 	presentationJSONLD []byte
+
+	//go:embed test_data/credentials.jsonld
+	credentialsJSONLD []byte
 )
 
 const (
@@ -61,7 +68,7 @@ func (f *failingMetricsLogger) Log(metricsEvent *api.MetricsEvent) error {
 
 func TestOpenID4VP_GetQuery(t *testing.T) {
 	t.Run("Inline Request Object", func(t *testing.T) {
-		instance := New(requestObjectJWT, &jwtSignatureVerifierMock{}, nil, nil)
+		instance := New(requestObjectJWT, &jwtSignatureVerifierMock{}, nil, nil, nil)
 
 		query, err := instance.GetQuery()
 		require.NoError(t, err)
@@ -69,8 +76,10 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 	})
 
 	t.Run("Fetch Request Object", func(t *testing.T) {
-		instance := New("openid-vc://?request_uri=https://request-object",
+		instance := New(
+			"openid-vc://?request_uri=https://request-object",
 			&jwtSignatureVerifierMock{},
+			nil,
 			nil,
 			nil,
 			WithHTTPClient(&httpClientMock{
@@ -86,8 +95,10 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 	})
 
 	t.Run("Fetch Request failed", func(t *testing.T) {
-		instance := New("openid-vc://?request_uri=https://request-object",
+		instance := New(
+			"openid-vc://?request_uri=https://request-object",
 			&jwtSignatureVerifierMock{},
+			nil,
 			nil,
 			nil,
 			WithHTTPClient(&httpClientMock{
@@ -102,7 +113,7 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 	t.Run("Inline Request Object", func(t *testing.T) {
 		instance := New(requestObjectJWT, &jwtSignatureVerifierMock{
 			err: errors.New("sig verification err"),
-		}, nil, nil, nil)
+		}, nil, nil, nil, nil)
 
 		_, err := instance.GetQuery()
 		require.Contains(t, err.Error(), "sig verification err")
@@ -113,6 +124,7 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 			&jwtSignatureVerifierMock{},
 			nil,
 			nil,
+			testutil.DocumentLoader(t),
 			WithHTTPClient(&httpClientMock{
 				Response:         requestObjectJWT,
 				StatusCode:       200,
@@ -129,14 +141,59 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 }
 
 func TestOpenID4VP_PresentCredential(t *testing.T) {
+	lddl := testutil.DocumentLoader(t)
+
 	presentation, presErr := verifiable.ParsePresentation(presentationJSONLD,
 		verifiable.WithPresDisabledProofCheck(),
-		verifiable.WithPresJSONLDDocumentLoader(testutil.DocumentLoader(t)))
+		verifiable.WithPresJSONLDDocumentLoader(lddl))
 
 	require.NoError(t, presErr)
 	require.NotNil(t, presentation)
 
+	var credentials, singleCred []*verifiable.Credential
+
+	var rawCreds []json.RawMessage
+
+	require.NoError(t, json.Unmarshal(credentialsJSONLD, &rawCreds))
+
+	for _, credBytes := range rawCreds {
+		cred, credErr := verifiable.ParseCredential(
+			credBytes,
+			verifiable.WithDisabledProofCheck(),
+			verifiable.WithJSONLDDocumentLoader(lddl),
+		)
+		require.NoError(t, credErr)
+
+		credentials = append(credentials, cred)
+	}
+
+	singleCred = append(singleCred, credentials[0])
+
 	mockDoc := mockResolution(t, mockDID)
+
+	mockPresentationDefinition := &presexch.PresentationDefinition{
+		ID: uuid.NewString(),
+		InputDescriptors: []*presexch.InputDescriptor{
+			{
+				ID: uuid.NewString(),
+				Schema: []*presexch.Schema{
+					{
+						URI: fmt.Sprintf("%s#%s", verifiable.ContextID, verifiable.VCType),
+					},
+				},
+			},
+		},
+	}
+
+	mockRequestObject := &requestObject{
+		Nonce: "test123456",
+		State: "test34566",
+		Claims: requestObjectClaims{
+			VPToken: vpToken{
+				PresentationDefinition: mockPresentationDefinition,
+			},
+		},
+	}
 
 	t.Run("Success", func(t *testing.T) {
 		httpClient := &httpClientMock{
@@ -148,6 +205,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			&jwtSignatureVerifierMock{},
 			&didResolverMock{ResolveValue: mockDoc},
 			&cryptoMock{SignVal: []byte(testSignature)},
+			lddl,
 			WithHTTPClient(httpClient),
 		)
 
@@ -155,7 +213,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, query)
 
-		err = instance.PresentCredential([]*verifiable.Presentation{presentation})
+		err = instance.PresentCredential(credentials)
 		require.NoError(t, err)
 
 		expectedState := "636df28459a07d50cc4b657e"
@@ -163,13 +221,70 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 		require.Contains(t, string(httpClient.SentBody), expectedState)
 		require.Contains(t, string(httpClient.SentBody), expectedSig)
+
+		// TODO: refactor this into validation helper functions
+		data, err := url.ParseQuery(string(httpClient.SentBody))
+		require.NoError(t, err)
+
+		var submissionWrapper struct {
+			VPToken struct {
+				PresentationSubmission *presexch.PresentationSubmission `json:"presentation_submission"`
+			} `json:"_vp_token"`
+		}
+
+		payloadBytes := func(jws string) []byte {
+			parts := strings.Split(jws, ".")
+			if len(parts) != 3 {
+				return nil
+			}
+
+			payload, e := base64.RawURLEncoding.DecodeString(parts[1])
+			require.NoError(t, e)
+
+			return payload
+		}
+
+		require.Contains(t, data, "id_token")
+		require.NotEmpty(t, data["id_token"])
+
+		require.NoError(t, json.Unmarshal(payloadBytes(data["id_token"][0]), &submissionWrapper))
+
+		require.Contains(t, data, "vp_token")
+		require.NotEmpty(t, data["vp_token"])
+		var vpTokenList []string
+		require.NoError(t, json.Unmarshal([]byte(data["vp_token"][0]), &vpTokenList))
+
+		var presentations []*verifiable.Presentation
+
+		for _, s := range vpTokenList {
+			parsedPresentation, e := verifiable.ParsePresentation(
+				[]byte(s),
+				verifiable.WithPresDisabledProofCheck(),
+				verifiable.WithDisabledJSONLDChecks())
+			require.NoError(t, e)
+
+			parsedPresentation.JWT = ""
+
+			presentations = append(presentations, parsedPresentation)
+		}
+
+		_, err = instance.requestObject.Claims.VPToken.PresentationDefinition.Match(
+			presentations,
+			lddl,
+			presexch.WithMergedSubmission(submissionWrapper.VPToken.PresentationSubmission),
+			presexch.WithCredentialOptions(verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(lddl)),
+		)
+		require.NoError(t, err)
 	})
 
 	t.Run("Check nonce", func(t *testing.T) {
-		response, err := createAuthorizedResponse([]*verifiable.Presentation{presentation}, &requestObject{
-			Nonce: "test123456",
-			State: "test34566",
-		}, &didResolverMock{ResolveValue: mockDoc}, &cryptoMock{SignVal: []byte(testSignature)})
+		response, err := createAuthorizedResponse(
+			singleCred,
+			mockRequestObject,
+			&didResolverMock{ResolveValue: mockDoc},
+			&cryptoMock{SignVal: []byte(testSignature)},
+			lddl,
+		)
 
 		require.NoError(t, err)
 		require.Equal(t, response.State, "test34566")
@@ -183,12 +298,13 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.Contains(t, string(vpToken), "test123456")
 	})
 
-	t.Run("no presentations provided", func(t *testing.T) {
+	t.Run("no credentials provided", func(t *testing.T) {
 		instance := New(
 			requestObjectJWT,
 			&jwtSignatureVerifierMock{},
 			&didResolverMock{ResolveValue: mockDoc},
 			&cryptoMock{SignVal: []byte(testSignature)},
+			lddl,
 			WithHTTPClient(&httpClientMock{
 				StatusCode: 200,
 			}),
@@ -197,63 +313,34 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		err := instance.PresentCredential(nil)
 
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "expected at least one presentation")
-	})
-
-	t.Run("no credentials provided", func(t *testing.T) {
-		_, err := createAuthorizedResponse([]*verifiable.Presentation{
-			{},
-		}, &requestObject{
-			Nonce: "test123456",
-			State: "test34566",
-		}, &didResolverMock{ResolveValue: mockDoc}, &cryptoMock{})
-
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "presentation has no credentials")
+		require.Contains(t, err.Error(), "expected at least one credential")
 	})
 
 	t.Run("no subject ID found", func(t *testing.T) {
 		testCases := []struct {
-			vpFunc func(t *testing.T) *verifiable.Presentation
+			vc []*verifiable.Credential
 		}{
 			{
-				vpFunc: func(t *testing.T) *verifiable.Presentation {
-					t.Helper()
-
-					vp, err := verifiable.NewPresentation(verifiable.WithCredentials(&verifiable.Credential{
-						ID: "foo",
-					}))
-					require.NoError(t, err)
-
-					return vp
+				vc: []*verifiable.Credential{
+					{
+						ID:      "foo",
+						Context: []string{verifiable.ContextURI},
+						Types:   []string{verifiable.VCType},
+					},
 				},
 			},
 			{
-				vpFunc: func(t *testing.T) *verifiable.Presentation {
-					t.Helper()
-
-					vp, err := verifiable.NewPresentation(verifiable.WithCredentials(&verifiable.Credential{
-						ID: "foo",
-					}))
-					require.NoError(t, err)
-
-					vp.Credentials()[0] = map[string]interface{}{}
-
-					return vp
-				},
-			},
-			{
-				vpFunc: func(t *testing.T) *verifiable.Presentation {
-					t.Helper()
-
-					vp, err := verifiable.NewPresentation(verifiable.WithCredentials(&verifiable.Credential{
-						ID: "foo",
-					}))
-					require.NoError(t, err)
-
-					vp.Credentials()[0] = struct{}{}
-
-					return vp
+				vc: []*verifiable.Credential{
+					{
+						ID:      "foo",
+						Context: []string{verifiable.ContextURI},
+						Types:   []string{verifiable.VCType},
+					},
+					{
+						ID:      "bar",
+						Context: []string{verifiable.ContextURI},
+						Types:   []string{verifiable.VCType},
+					},
 				},
 			},
 		}
@@ -261,14 +348,15 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		for _, testCase := range testCases {
 			t.Run("", func(t *testing.T) {
 				_, err := createAuthorizedResponse(
-					[]*verifiable.Presentation{testCase.vpFunc(t)},
-					&requestObject{
-						Nonce: "test123456",
-						State: "test34566",
-					}, &didResolverMock{ResolveValue: mockDoc}, &cryptoMock{})
+					testCase.vc,
+					mockRequestObject,
+					&didResolverMock{ResolveValue: mockDoc},
+					&cryptoMock{},
+					lddl,
+				)
 
 				require.Error(t, err)
-				require.Contains(t, err.Error(), "presentation VC does not have a subject ID")
+				require.Contains(t, err.Error(), "VC does not have a subject ID")
 			})
 		}
 	})
@@ -276,21 +364,20 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	t.Run("fail to resolve signing DID", func(t *testing.T) {
 		expectErr := errors.New("resolve failed")
 
-		_, err := createAuthorizedResponse([]*verifiable.Presentation{presentation}, &requestObject{
-			Nonce: "test123456",
-			State: "test34566",
-		}, &didResolverMock{ResolveErr: expectErr}, &cryptoMock{})
+		_, err := createAuthorizedResponse(singleCred, mockRequestObject,
+			&didResolverMock{ResolveErr: expectErr}, &cryptoMock{}, lddl)
+		require.ErrorIs(t, err, expectErr)
+
+		_, err = createAuthorizedResponse(credentials, mockRequestObject,
+			&didResolverMock{ResolveErr: expectErr}, &cryptoMock{}, lddl)
 
 		require.ErrorIs(t, err, expectErr)
 	})
 
 	t.Run("signing DID has no signing key", func(t *testing.T) {
-		_, err := createAuthorizedResponse([]*verifiable.Presentation{presentation}, &requestObject{
-			Nonce: "test123456",
-			State: "test34566",
-		}, &didResolverMock{ResolveValue: &did.DocResolution{
+		_, err := createAuthorizedResponse(singleCred, mockRequestObject, &didResolverMock{ResolveValue: &did.DocResolution{
 			DIDDocument: &did.Doc{},
-		}}, &cryptoMock{})
+		}}, &cryptoMock{}, lddl)
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "no assertion method for signing")
@@ -299,10 +386,13 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	t.Run("sign failed", func(t *testing.T) {
 		expectErr := errors.New("sign failed")
 
-		_, err := createAuthorizedResponse([]*verifiable.Presentation{presentation}, &requestObject{
-			Nonce: "test123456",
-			State: "test34566",
-		}, &didResolverMock{ResolveValue: mockDoc}, &cryptoMock{SignErr: expectErr})
+		_, err := createAuthorizedResponse(
+			singleCred,
+			mockRequestObject,
+			&didResolverMock{ResolveValue: mockDoc},
+			&cryptoMock{SignErr: expectErr},
+			lddl,
+		)
 
 		require.ErrorIs(t, err, expectErr)
 	})

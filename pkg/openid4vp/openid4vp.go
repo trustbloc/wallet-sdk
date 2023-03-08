@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math/big"
@@ -25,6 +26,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	"github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
@@ -61,6 +63,7 @@ type Interaction struct {
 	metricsLogger        api.MetricsLogger
 	didResolver          api.DIDResolver
 	crypto               api.Crypto
+	documentLoader       ld.DocumentLoader
 
 	requestObject *requestObject
 }
@@ -78,6 +81,7 @@ func New(
 	signatureVerifier jwtSignatureVerifier,
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
+	documentLoader ld.DocumentLoader,
 	opts ...Opt,
 ) *Interaction {
 	client, activityLogger, metricsLogger := processOpts(opts)
@@ -90,6 +94,7 @@ func New(
 		metricsLogger:        metricsLogger,
 		didResolver:          didResolver,
 		crypto:               crypto,
+		documentLoader:       documentLoader,
 	}
 }
 
@@ -125,10 +130,10 @@ func (o *Interaction) GetQuery() (*presexch.PresentationDefinition, error) {
 }
 
 // PresentCredential presents credentials to redirect uri from request object.
-func (o *Interaction) PresentCredential(presentations []*verifiable.Presentation) error {
+func (o *Interaction) PresentCredential(credentials []*verifiable.Credential) error {
 	timeStartPresentCredential := time.Now()
 
-	response, err := createAuthorizedResponse(presentations, o.requestObject, o.didResolver, o.crypto)
+	response, err := createAuthorizedResponse(credentials, o.requestObject, o.didResolver, o.crypto, o.documentLoader)
 	if err != nil {
 		return walleterror.NewExecutionError(
 			module,
@@ -274,48 +279,69 @@ func verifyTokenSignature(rawJwt string, claims interface{}, verifier jose.Signa
 	return nil
 }
 
-func createAuthorizedResponse( //nolint:funlen
-	presentations []*verifiable.Presentation,
+func createAuthorizedResponse(
+	credentials []*verifiable.Credential,
 	requestObject *requestObject,
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
+	documentLoader ld.DocumentLoader,
 ) (*authorizedResponse, error) {
-	if len(presentations) == 0 {
-		return nil, fmt.Errorf("expected at least one presentation to present to verifier")
+	switch len(credentials) {
+	case 0:
+		return nil, fmt.Errorf("expected at least one credential to present to verifier")
+	case 1:
+		return createAuthorizedResponseOneCred(credentials[0], requestObject, didResolver, crypto, documentLoader)
+	default:
+		return createAuthorizedResponseMultiCred(credentials, requestObject, didResolver, crypto, documentLoader)
 	}
+}
 
-	// TODO handle multiple presentations
-	presentation := presentations[0]
+func createAuthorizedResponseOneCred( //nolint:funlen
+	credential *verifiable.Credential,
+	requestObject *requestObject,
+	didResolver api.DIDResolver,
+	crypto api.Crypto,
+	documentLoader ld.DocumentLoader,
+) (*authorizedResponse, error) {
+	var (
+		err        error
+		vpTokenJWS string
+		did        string
+		signer     api.JWTSigner
+	)
 
-	did, err := getRandomHolderDID(presentation)
+	var presentation *verifiable.Presentation
+
+	presentation, err = requestObject.Claims.VPToken.PresentationDefinition.CreateVP(
+		[]*verifiable.Credential{credential},
+		documentLoader,
+		verifiable.WithDisabledProofCheck(),
+		verifiable.WithJSONLDDocumentLoader(documentLoader),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	signer, err := getHolderSigner(did, didResolver, crypto)
+	did, err = verifiable.SubjectID(credential.Subject)
+	if err != nil || did == "" {
+		return nil, fmt.Errorf("presentation VC does not have a subject ID")
+	}
+
+	signer, err = getHolderSigner(did, didResolver, crypto)
 	if err != nil {
 		return nil, err
 	}
 
 	presentationSubmission := presentation.CustomFields["presentation_submission"]
 
-	idToken := &idTokenClaims{
-		VPToken: idTokenVPToken{
-			PresentationSubmission: presentationSubmission,
-		},
-		Nonce: requestObject.Nonce,
-		Exp:   time.Now().Unix() + tokenLiveTimeSec,
-		Iss:   "https://self-issued.me/v2/openid-vc",
-		Sub:   did,
-		Aud:   requestObject.ClientID,
-		Nbf:   time.Now().Unix(),
-		Iat:   time.Now().Unix(),
-		Jti:   uuid.NewString(),
-	}
-
 	presentation.CustomFields["presentation_submission"] = nil
 
-	vpToken := vpTokenClaims{
+	idTokenJWS, err := createIDToken(requestObject, presentationSubmission, did, signer)
+	if err != nil {
+		return nil, err
+	}
+
+	vpTok := vpTokenClaims{
 		VP:    presentation,
 		Nonce: requestObject.Nonce,
 		Exp:   time.Now().Unix() + tokenLiveTimeSec,
@@ -326,17 +352,115 @@ func createAuthorizedResponse( //nolint:funlen
 		Jti:   uuid.NewString(),
 	}
 
-	idTokenJWS, err := signToken(idToken, signer)
-	if err != nil {
-		return nil, fmt.Errorf("sign id_token: %w", err)
-	}
-
-	vpTokenJWS, err := signToken(vpToken, signer)
+	vpTokenJWS, err = signToken(vpTok, signer)
 	if err != nil {
 		return nil, fmt.Errorf("sign vp_token: %w", err)
 	}
 
 	return &authorizedResponse{IDTokenJWS: idTokenJWS, VPTokenJWS: vpTokenJWS, State: requestObject.State}, nil
+}
+
+func createAuthorizedResponseMultiCred( //nolint:funlen
+	credentials []*verifiable.Credential,
+	requestObject *requestObject,
+	didResolver api.DIDResolver,
+	crypto api.Crypto,
+	documentLoader ld.DocumentLoader,
+) (*authorizedResponse, error) {
+	presentations, submission, err := requestObject.Claims.VPToken.PresentationDefinition.CreateVPArray(
+		credentials,
+		documentLoader,
+		verifiable.WithDisabledProofCheck(),
+		verifiable.WithJSONLDDocumentLoader(documentLoader),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var vpTokens []string
+
+	signers := map[string]api.JWTSigner{}
+
+	for _, presentation := range presentations {
+		holderDID, e := getSubjectID(presentation.Credentials()[0])
+		if e != nil {
+			return nil, e
+		}
+
+		signer, e := getHolderSigner(holderDID, didResolver, crypto)
+		if e != nil {
+			return nil, e
+		}
+
+		signers[holderDID] = signer
+
+		vpTok := vpTokenClaims{
+			VP:    presentation,
+			Nonce: requestObject.Nonce,
+			Exp:   time.Now().Unix() + tokenLiveTimeSec,
+			Iss:   holderDID,
+			Aud:   requestObject.ClientID,
+			Nbf:   time.Now().Unix(),
+			Iat:   time.Now().Unix(),
+			Jti:   uuid.NewString(),
+		}
+
+		vpTokJWS, e := signToken(vpTok, signer)
+		if e != nil {
+			return nil, fmt.Errorf("sign vp_token: %w", e)
+		}
+
+		vpTokens = append(vpTokens, vpTokJWS)
+	}
+
+	vpTokenListJSON, err := json.Marshal(vpTokens)
+	if err != nil {
+		return nil, err
+	}
+
+	idTokenSigningDID, err := pickRandomElement(mapKeys(signers))
+	if err != nil {
+		return nil, err
+	}
+
+	idTokenJWS, err := createIDToken(requestObject, submission, idTokenSigningDID, signers[idTokenSigningDID])
+	if err != nil {
+		return nil, err
+	}
+
+	return &authorizedResponse{
+		IDTokenJWS: idTokenJWS,
+		VPTokenJWS: string(vpTokenListJSON),
+		State:      requestObject.State,
+	}, nil
+}
+
+func createIDToken(
+	req *requestObject,
+	submission interface{},
+	signingDID string,
+	signer api.JWTSigner,
+) (string, error) {
+	idToken := &idTokenClaims{
+		VPToken: idTokenVPToken{
+			PresentationSubmission: submission,
+		},
+		Nonce: req.Nonce,
+		Exp:   time.Now().Unix() + tokenLiveTimeSec,
+		Iss:   "https://self-issued.me/v2/openid-vc",
+		Sub:   signingDID,
+		Aud:   req.ClientID,
+		Nbf:   time.Now().Unix(),
+		Iat:   time.Now().Unix(),
+		Jti:   uuid.NewString(),
+	}
+
+	idTokenJWS, err := signToken(idToken, signer)
+	if err != nil {
+		return "", fmt.Errorf("sign id_token: %w", err)
+	}
+
+	return idTokenJWS, nil
 }
 
 func signToken(claims interface{}, signer api.JWTSigner) (string, error) {
@@ -370,23 +494,13 @@ func getHolderSigner(holderDID string, didResolver api.DIDResolver, crypto api.C
 	return common.NewJWSSigner(models.VerificationMethodFromDoc(&signingVM), crypto)
 }
 
-func getRandomHolderDID(pres *verifiable.Presentation) (string, error) {
-	creds := pres.Credentials()
+func getSubjectID(vc interface{}) (string, error) {
+	var (
+		err    error
+		subjID string
+	)
 
-	if len(creds) == 0 {
-		return "", fmt.Errorf("presentation has no credentials")
-	}
-
-	idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(creds))))
-	if err != nil {
-		return "", err
-	}
-
-	selected := creds[idx.Int64()]
-
-	var subjID string
-
-	switch cred := selected.(type) {
+	switch cred := vc.(type) {
 	case *verifiable.Credential:
 		subjID, err = verifiable.SubjectID(cred.Subject)
 	case map[string]interface{}:
@@ -394,8 +508,27 @@ func getRandomHolderDID(pres *verifiable.Presentation) (string, error) {
 	}
 
 	if err != nil || subjID == "" {
-		return "", fmt.Errorf("presentation VC does not have a subject ID")
+		return "", fmt.Errorf("VC does not have a subject ID")
 	}
 
 	return subjID, nil
+}
+
+func mapKeys(in map[string]api.JWTSigner) []string {
+	var keys []string
+
+	for s := range in {
+		keys = append(keys, s)
+	}
+
+	return keys
+}
+
+func pickRandomElement(list []string) (string, error) {
+	idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(list))))
+	if err != nil {
+		return "", err
+	}
+
+	return list[idx.Int64()], nil
 }

@@ -69,7 +69,6 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_myprofile_jwt_verified_employee",
 		},
-
 		{
 			issuerProfileIDs:  []string{"bank_issuer", "bank_issuer"},
 			walletDIDMethod:   "ion",
@@ -148,10 +147,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		require.Equal(t, serializedIssuedVC, serializedMatchedVC)
 
-		verifiablePresContent, err := verifiablePres.Content()
-		require.NoError(t, err)
-
-		err = interaction.PresentCredential(verifiablePresContent)
+		err = interaction.PresentCredential(selectedCreds)
 		require.NoError(t, err)
 
 		checkActivityLogAfterOpenID4VPFlow(t, activityLogger, tc.verifierProfileID)

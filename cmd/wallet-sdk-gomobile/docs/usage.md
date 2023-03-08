@@ -451,9 +451,9 @@ The general pattern is as follows:
    * An LD document loader
    * An activity logger (optional, but if set then this will be used to log credential activities)
 2. Get the query by calling the `GetQuery` method on the `Interaction`.
-3. Create a verifiable presentation from the credentials that match the query from the previous step.
+3. Select the credentials that match the query from the previous step.
 4. Determine the key ID you want to use for signing (e.g. from one of the user's DID docs).
-5. Call the `PresentCredential` method on the `Interaction` object.
+5. Call the `PresentCredential` method on the `Interaction` object, with the selected credentials.
 
 ### Examples
 
@@ -498,8 +498,7 @@ val requirementDesc = matchedRequirement.descriptorAtIndex(0) // Usually require
 val selectedVCs = api.VerifiableCredentialsArray()
 selectedVCs.add(requirementDesc.matchedVCs.atIndex(0)) // Users should select one VC for each descriptor from the matched list and confirm that they want to share it
 
-val verifiablePres = inquirer.Query(query, credential.CredentialsOpt(selectedVCs))
-interaction.presentCredential(verifiablePres)
+interaction.presentCredential(selectedVCs)
 // Consider checking the activity log at some point after the interaction
 ```
 
@@ -529,8 +528,7 @@ let requirementDesc = matchedRequirement.descriptorAtIndex(0) // Usually require
 let selectedVCs = ApiVerifiableCredentialsArray()
 selectedVCs.add(requirementDesc.matchedVCs.atIndex(0)) // Users should select one VC for each descriptor from the matched list and confirm that they want to share it
 
-let verifiablePres = inquirer.Query(query, CredentialNewCredentialsOpt(selectedVCs))
-let credentials = interaction.presentCredential(verifiablePres)
+let credentials = interaction.presentCredential(selectedVCs)
 // Consider checking the activity log at some point after the interaction
 ```
 

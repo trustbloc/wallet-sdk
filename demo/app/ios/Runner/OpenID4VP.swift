@@ -58,16 +58,16 @@ public class OpenID4VP {
      * initiatedInteraction has PresentCredential method which presents credentials to redirect uri from request object.
      */
     func presentCredential(selectedCredentials: ApiVerifiableCredentialsArray) throws {
-        guard let vpQueryContent = self.vpQueryContent else {
-            throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
-        }
+//         guard let vpQueryContent = self.vpQueryContent else {
+//             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
+//         }
         guard let initiatedInteraction = self.initiatedInteraction else {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         }
         
-        let  verifiablePresentation = try CredentialNewInquirer(documentLoader)!.query(vpQueryContent, contents: CredentialCredentialsOpt(selectedCredentials))
+//         let  verifiablePresentation = try CredentialNewInquirer(documentLoader)!.query(vpQueryContent, contents: CredentialCredentialsOpt(selectedCredentials))
                        
-        try initiatedInteraction.presentCredential(verifiablePresentation.content())
+        try initiatedInteraction.presentCredential(selectedCredentials)
     }
     
 }

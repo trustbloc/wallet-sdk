@@ -54,9 +54,7 @@ class OpenID4VP constructor(
         val initiatedInteraction = this.initiatedInteraction
                 ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
 
-        val verifiablePresentation = createVerifiablePresentation(selectedCredentials);
-
-        initiatedInteraction.presentCredential(verifiablePresentation.content())
+        initiatedInteraction.presentCredential(selectedCredentials)
     }
 
     private fun createVerifiablePresentation(selectedCredentials: VerifiableCredentialsArray): VerifiablePresentation {

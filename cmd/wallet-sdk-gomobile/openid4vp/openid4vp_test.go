@@ -32,8 +32,8 @@ var (
 	//go:embed test_data/request_object.jwt
 	requestObjectJWT string
 
-	//go:embed test_data/presentation.jsonld
-	presentationJSONLD []byte
+	//go:embed test_data/credentials.jsonld
+	credentialsJSONLD []byte
 )
 
 func TestOpenID4VP_GetQuery(t *testing.T) {
@@ -85,8 +85,23 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 }
 
 func TestOpenID4VP_PresentCredential(t *testing.T) {
-	mockKey, _, err := ed25519.GenerateKey(rand.Reader)
-	require.NoError(t, err)
+	mockKey, _, e := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, e)
+
+	credentials := api.NewVerifiableCredentialsArray()
+
+	credentialData := []json.RawMessage{}
+
+	e = json.Unmarshal(credentialsJSONLD, &credentialData)
+	require.NoError(t, e)
+
+	for _, credBytes := range credentialData {
+		cred, err := verifiable.ParseCredential(credBytes,
+			verifiable.WithDisabledProofCheck(), verifiable.WithCredDisableValidation())
+		require.NoError(t, err)
+
+		credentials.Add(api.NewVerifiableCredential(cred))
+	}
 
 	t.Run("Success", func(t *testing.T) {
 		instance := &Interaction{
@@ -103,33 +118,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			})},
 		}
 
-		err := instance.PresentCredential(presentationJSONLD)
+		err := instance.PresentCredential(credentials)
 		require.NoError(t, err)
-	})
-
-	t.Run("parse presentation failed", func(t *testing.T) {
-		instance := &Interaction{
-			keyHandleReader:  &mockKeyHandleReader{},
-			crypto:           &mockCrypto{},
-			ldDocumentLoader: &documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
-			goAPIOpenID4VP: &mocGoAPIInteraction{
-				PresentCredentialErr: nil,
-			},
-			didResolver: &mocksDIDResolver{ResolveDocBytes: mockResolution(t, &api.VerificationMethod{
-				ID:   "did:example:12345#testId",
-				Type: "Ed25519VerificationKey2018",
-				Key:  models.VerificationKey{Raw: mockKey},
-			})},
-		}
-
-		err := instance.PresentCredential([]byte("random value"))
-		require.Contains(t, err.Error(), "CREDENTIAL_PARSE_FAILED")
-
-		err = instance.PresentCredential([]byte("[\"random value\"]"))
-		require.Contains(t, err.Error(), "CREDENTIAL_PARSE_FAILED")
-
-		err = instance.PresentCredential([]byte("[not actually a json list]"))
-		require.Contains(t, err.Error(), "CREDENTIAL_PARSE_FAILED")
 	})
 
 	t.Run("Present credentials failed", func(t *testing.T) {
@@ -147,7 +137,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			})},
 		}
 
-		err := instance.PresentCredential(presentationJSONLD)
+		err := instance.PresentCredential(credentials)
 		require.Contains(t, err.Error(), "present credentials failed")
 	})
 }
@@ -207,7 +197,7 @@ func (o *mocGoAPIInteraction) GetQuery() (*presexch.PresentationDefinition, erro
 	return o.GetQueryResult, o.GetQueryError
 }
 
-func (o *mocGoAPIInteraction) PresentCredential(presentation []*verifiable.Presentation) error {
+func (o *mocGoAPIInteraction) PresentCredential(credentials []*verifiable.Credential) error {
 	return o.PresentCredentialErr
 }
 

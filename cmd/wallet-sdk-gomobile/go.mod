@@ -9,7 +9,7 @@ go 1.19
 require (
 	github.com/go-jose/go-jose/v3 v3.0.1-0.20221117193127-916db76e8214
 	github.com/google/uuid v1.3.0
-	github.com/hyperledger/aries-framework-go v0.1.10-0.20230228201949-bd8e2716c084
+	github.com/hyperledger/aries-framework-go v0.1.10-0.20230307184157-877172747719
 	github.com/piprate/json-gold v0.4.2
 	github.com/stretchr/testify v1.8.1
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000

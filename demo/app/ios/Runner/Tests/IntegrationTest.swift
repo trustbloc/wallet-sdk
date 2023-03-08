@@ -81,10 +81,8 @@ class IntegrationTest: XCTestCase {
         // Pick first credential from matched creds
         selectedCreds.add(requirementDescriptor.matchedVCs!.atIndex(0))
 
-        // Creating verifiable presentation from selected credentials.
-        let verifiablePres = try inquirer.query(credentialsQuery, contents: CredentialCredentialsOpt(selectedCreds))
-
-        try vpInteraction.presentCredential(verifiablePres.content())
+        // Presenting from selected credentials.
+        try vpInteraction.presentCredential(selectedCreds)
     }
 
 }
