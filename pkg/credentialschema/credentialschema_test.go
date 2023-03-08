@@ -197,19 +197,16 @@ func TestResolve(t *testing.T) {
 				expectedGivenNameOrder := 1
 				expectedSurnameOrder := 2
 				expectedClaims := []credentialschema.ResolvedClaim{
+					{RawID: "id", Label: "ID", RawValue: "1234", ValueType: "string", Locale: "en-US", Order: &expectedIDOrder},
 					{
-						RawID: "id", Label: "ID", RawValue: "1234", Value: "1234",
-						ValueType: "string", Locale: "en-US", Order: &expectedIDOrder,
+						RawID: "given_name", Label: "Given Name", RawValue: "Alice", ValueType: "string", Locale: "en-US",
+						Order: &expectedGivenNameOrder,
 					},
 					{
-						RawID: "given_name", Label: "Given Name", Value: "Alice",
-						RawValue: "Alice", ValueType: "string", Locale: "en-US", Order: &expectedGivenNameOrder,
+						RawID: "surname", Label: "Surname", RawValue: "Bowman", ValueType: "string", Locale: "en-US",
+						Order: &expectedSurnameOrder,
 					},
-					{
-						RawID: "surname", Label: "Surname", Value: "Bowman", RawValue: "Bowman",
-						ValueType: "string", Locale: "en-US", Order: &expectedSurnameOrder,
-					},
-					{RawID: "gpa", Label: "GPA", Value: "4.0", RawValue: "4.0", ValueType: "number", Locale: "en-US"},
+					{RawID: "gpa", Label: "GPA", RawValue: "4.0", ValueType: "number", Locale: "en-US"},
 					{
 						RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789",
 						Value: "******789", ValueType: "string", Pattern: "mask:regex(^.{6})", Locale: "en-US",
@@ -423,19 +420,16 @@ func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *crede
 	expectedGivenNameOrder := 1
 	expectedSurnameOrder := 2
 	expectedClaims := []credentialschema.ResolvedClaim{
+		{RawID: "id", Label: "ID", RawValue: "1234", ValueType: "string", Locale: "en-US", Order: &expectedIDOrder},
 		{
-			RawID: "id", Label: "ID", Value: "1234", RawValue: "1234", ValueType: "string",
-			Locale: "en-US", Order: &expectedIDOrder,
-		},
-		{
-			RawID: "given_name", Label: "Given Name", Value: "Alice", RawValue: "Alice", ValueType: "string",
+			RawID: "given_name", Label: "Given Name", RawValue: "Alice", ValueType: "string",
 			Locale: "en-US", Order: &expectedGivenNameOrder,
 		},
 		{
-			RawID: "surname", Label: "Surname", Value: "Bowman", RawValue: "Bowman", ValueType: "string",
+			RawID: "surname", Label: "Surname", RawValue: "Bowman", ValueType: "string",
 			Locale: "en-US", Order: &expectedSurnameOrder,
 		},
-		{RawID: "gpa", Label: "GPA", Value: "4.0", RawValue: "4.0", ValueType: "number", Locale: "en-US"},
+		{RawID: "gpa", Label: "GPA", RawValue: "4.0", ValueType: "number", Locale: "en-US"},
 		{
 			RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789", Value: "******789",
 			ValueType: "string", Pattern: "mask:regex(^.{6})", Locale: "en-US",
@@ -487,33 +481,13 @@ func checkSDVCMatchedDisplayData(t *testing.T, resolvedDisplayData *credentialsc
 	require.Equal(t, "#FFFFFF", resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
 
 	expectedClaims := []credentialschema.ResolvedClaim{
-		{
-			RawID: "displayName", Label: "Employee", Value: "John Doe",
-			RawValue: "John Doe", ValueType: "string", Locale: "en-US",
-		},
-		{
-			RawID: "givenName", Label: "Given Name", Value: "John", RawValue: "John",
-			ValueType: "string", Locale: "en-US",
-		},
-		{
-			RawID: "surname", Label: "Surname", Value: "Doe", RawValue: "Doe", ValueType: "string", Locale: "en-US",
-		},
-		{
-			RawID: "jobTitle", Label: "Job Title", Value: "Software Developer",
-			RawValue: "Software Developer", ValueType: "string", Locale: "en-US",
-		},
-		{
-			RawID: "mail", Label: "Mail", Value: "john.doe@foo.bar",
-			RawValue: "john.doe@foo.bar", ValueType: "string", Locale: "en-US",
-		},
-		{
-			RawID: "photo", Label: "Photo", Value: "base64photo", RawValue: "base64photo",
-			ValueType: "image", Locale: "",
-		},
-		{
-			RawID: "preferredLanguage", Label: "Preferred Language", Value: "English",
-			RawValue: "English", ValueType: "string", Locale: "en-US",
-		},
+		{RawID: "displayName", Label: "Employee", RawValue: "John Doe", ValueType: "string", Locale: "en-US"},
+		{RawID: "givenName", Label: "Given Name", RawValue: "John", ValueType: "string", Locale: "en-US"},
+		{RawID: "surname", Label: "Surname", RawValue: "Doe", ValueType: "string", Locale: "en-US"},
+		{RawID: "jobTitle", Label: "Job Title", RawValue: "Software Developer", ValueType: "string", Locale: "en-US"},
+		{RawID: "mail", Label: "Mail", RawValue: "john.doe@foo.bar", ValueType: "string", Locale: "en-US"},
+		{RawID: "photo", Label: "Photo", RawValue: "base64photo", ValueType: "image", Locale: ""},
+		{RawID: "preferredLanguage", Label: "Preferred Language", RawValue: "English", ValueType: "string", Locale: "en-US"},
 	}
 
 	verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
