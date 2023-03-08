@@ -216,10 +216,6 @@ func (c *Claim) ValueType() string {
 // For example, if the UI were to display "Given Name: Alice", then the Value would be "Alice".
 // If no special formatting was applied to the display value, then this method will be equivalent to calling RawValue.
 func (c *Claim) Value() string {
-	if c.claim.Value == "" {
-		return c.claim.RawValue
-	}
-
 	return c.claim.Value
 }
 

@@ -21,10 +21,13 @@ const (
 	sampleCredentialDisplay = `{"overview":{"name":"University Credential","locale":"en-US","logo":{` +
 		`"url":"https://exampleuniversity.com/public/logo.png","alt_text":"a square logo of a university"},` +
 		`"background_color":"#12107c","text_color":"#FFFFFF"},"claims":[` +
-		`{"raw_id":"id","label":"ID","value_type":"string","order":0,"raw_value":"1234","locale":"en-US"},` +
-		`{"raw_id":"given_name","label":"Given Name","value_type":"string","order":1,"raw_value":"Alice","locale":"en-US"},` +
-		`{"raw_id":"surname","label":"Surname","value_type":"string","order":2,"raw_value":"Bowman","locale":"en-US"},` +
-		`{"raw_id":"gpa","label":"GPA","value_type":"number","raw_value":"4.0","locale":"en-US"},` +
+		`{"raw_id":"id","label":"ID","value_type":"string","order":0,"value":"1234",` +
+		`"raw_value":"1234","locale":"en-US"},` +
+		`{"raw_id":"given_name","label":"Given Name","value_type":"string","order":1,"value":"Alice",` +
+		`"raw_value":"Alice","locale":"en-US"},` +
+		`{"raw_id":"surname","label":"Surname","value_type":"string","order":2,"value":"Bowman",` +
+		`"raw_value":"Bowman","locale":"en-US"},` +
+		`{"raw_id":"gpa","label":"GPA","value_type":"number","value":"4.0","raw_value":"4.0","locale":"en-US"},` +
 		`{"raw_id":"sensitive_id","label":"Sensitive ID","value_type":"string","value":"******789",` +
 		`"raw_value":"123456789","pattern":"mask:regex(^.{6})","locale":"en-US"}]}`
 
