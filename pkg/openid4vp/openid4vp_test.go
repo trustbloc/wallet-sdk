@@ -271,6 +271,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		_, err = instance.requestObject.Claims.VPToken.PresentationDefinition.Match(
 			presentations,
 			lddl,
+			presexch.WithDisableSchemaValidation(),
 			presexch.WithMergedSubmission(submissionWrapper.VPToken.PresentationSubmission),
 			presexch.WithCredentialOptions(verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(lddl)),
 		)
