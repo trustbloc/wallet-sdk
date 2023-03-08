@@ -9,7 +9,7 @@ class CredentialPreviewData {
   factory CredentialPreviewData.fromJson(Map<String, dynamic> json) {
     return CredentialPreviewData(
         json["label"],
-        json["value"] ?? '',
+        json["raw_value"] ?? '',
         json["value_type"] ?? '',
         json["order"] ?? -1
     );}
