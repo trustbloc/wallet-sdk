@@ -49,6 +49,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "resolveCredentialDisplay":
             resolveCredentialDisplay(arguments: arguments!,  result: result)
             
+        case "resolveOrder":
+            resolveOrder(arguments: arguments!, result: result)
+            
         case "getCredID":
             getCredID(arguments: arguments!,  result: result)
             
@@ -332,6 +335,30 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
           } catch let error as NSError {
                 result(FlutterError.init(code: "Exception",
                                          message: "error while resolving credential",
+                                         details: error.description))
+            }
+    }
+    
+    public func resolveOrder(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
+        do {
+            guard let credentialDisplay = arguments["credentialDisplays"] as? String else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while resolve order display",
+                                                 details: "parameter credentialDisplayis missed"))
+            }
+            let displayData = DisplayParseData(credentialDisplay, nil)
+            var hasOrder = false;
+            
+            for i in 0...((displayData?.credentialDisplaysLength())!-1){
+                let credentialDisplay = displayData?.credentialDisplay(at: i)
+                let claim = credentialDisplay?.claim(at:i)
+                hasOrder = ((claim?.hasOrder()) != nil);
+            }
+            
+            result(hasOrder)
+          } catch let error as NSError {
+                result(FlutterError.init(code: "Exception",
+                                         message: "error while resolving order for credential display",
                                          details: error.description))
             }
     }
