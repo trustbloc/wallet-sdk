@@ -134,6 +134,13 @@ class MethodChannelWallet extends WalletPlatform {
     return null;
   }
 
+  Future<bool?> resolveOrder(String credentialDisplays) async {
+      final hasOrder = await methodChannel.invokeMethod<bool>(
+          'resolveOrder', <String, dynamic>{'credentialDisplays': credentialDisplays});
+      log("has order demo method $hasOrder");
+      return hasOrder;
+  }
+
   Future<List<String>> processAuthorizationRequest(
       {required String authorizationRequest, List<String>? storedCredentials}) async {
     return (await methodChannel.invokeMethod<List>('processAuthorizationRequest',

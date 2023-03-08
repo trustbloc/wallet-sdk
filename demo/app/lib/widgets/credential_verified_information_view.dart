@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/models/credential_preview.dart';
+
+import 'package:app/main.dart';
 
 class CredentialVerifiedInformation extends StatelessWidget {
 
@@ -12,11 +15,22 @@ class CredentialVerifiedInformation extends StatelessWidget {
 
   final ScrollController credDataController = ScrollController();
 
-  Widget getCredentialDetails() {
+  Future<Widget> getCredentialDetails() async {
     List<CredentialPreviewData> list;
     var data = json.decode(credentialData.credentialDisplayData!);
+    bool? hasOrder;
+    hasOrder = await WalletSDKPlugin.resolveOrder(credentialData.credentialDisplayData);
+    log("hasOrder $hasOrder");
     var credentialClaimsData = data['credential_displays'][0]['claims'] as List;
     list = credentialClaimsData.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
+    if (hasOrder == true){
+      log("hasOrder $hasOrder");
+      list.sort((a, b) {
+        int compare = a.order.compareTo(b.order);
+        return compare;
+      });
+    }
+
     return listViewWidget(list);
   }
 
@@ -116,9 +130,11 @@ class CredentialVerifiedInformation extends StatelessWidget {
                     child: ListView.builder(
                         itemCount: 1,
                         itemBuilder: (BuildContext context, int index) {
-                          return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: getCredentialDetails(),
+                          return FutureBuilder<Widget>(
+                              future: getCredentialDetails(),
+                              builder: (context, AsyncSnapshot<Widget> snapshot) {
+                                return Padding(padding: const EdgeInsets.all(8.0), child: snapshot.data,);
+                              }
                           );
                         }),
                   )),

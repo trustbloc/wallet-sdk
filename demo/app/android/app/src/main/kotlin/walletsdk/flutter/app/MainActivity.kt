@@ -98,6 +98,17 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
+                        "resolveOrder" -> {
+                            try {
+                                val resolveOrder = resolveOrder(call)
+                                println(resolveOrder)
+                                result.success(resolveOrder)
+
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while resolving credential display order", e)
+                            }
+                        }
+
                         "processAuthorizationRequest" -> {
                             try {
                                 val creds = processAuthorizationRequest(call)
@@ -255,6 +266,17 @@ class MainActivity : FlutterActivity() {
                 ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
         return openID4CI.resolveCredentialDisplay(issuerURI, convertToVerifiableCredentialsArray(vcCredentials))
+    }
+
+
+    private fun resolveOrder(call: MethodCall): Boolean? {
+        val credentialDisplay = call.argument<String>("credentialDisplays")
+            ?: throw java.lang.Exception("credentialDisplays params is missed")
+
+        val openID4CI = this.openID4CI
+            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+
+        return openID4CI.resolveOrder(credentialDisplay)
     }
 
     /**
