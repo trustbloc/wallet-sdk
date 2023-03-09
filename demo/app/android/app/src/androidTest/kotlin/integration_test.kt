@@ -18,6 +18,7 @@ import dev.trustbloc.wallet.sdk.openid4ci.CredentialRequestOpts
 import dev.trustbloc.wallet.sdk.openid4ci.Interaction
 import dev.trustbloc.wallet.sdk.openid4vp.ClientConfig as VPClientConfig
 import dev.trustbloc.wallet.sdk.openid4vp.Interaction as VPInteraction
+import dev.trustbloc.wallet.sdk.version.Version
 import org.junit.Before
 import org.junit.Test
 import walletsdk.kmsStorage.KmsStore
@@ -34,6 +35,10 @@ class IntegrationTest {
 
     @Test
     fun fullFlow() {
+        assertThat(Version.getVersion()).isEqualTo("testVer")
+        assertThat(Version.getGitRevision()).isEqualTo("testRev")
+        assertThat(Version.getBuildTime()).isEqualTo("testTime")
+
         val kms = Localkms.newKMS(KmsStore(instrumentationContext))
         val didResolver = Resolver("http://localhost:8072/1.0/identifiers")
         val crypto = kms.crypto
