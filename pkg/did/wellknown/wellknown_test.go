@@ -9,6 +9,7 @@ package wellknown_test
 import (
 	"bytes"
 	_ "embed"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -206,7 +207,14 @@ func TestValidate(t *testing.T) {
 		require.Empty(t, domain)
 	})
 	t.Run("DID service validation failure", func(t *testing.T) {
-		didDoc := `{
+		testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, _ *http.Request) {
+			_, err := res.Write([]byte(didCfg))
+			require.NoError(t, err)
+		}))
+
+		defer func() { testServer.Close() }()
+
+		didDocTemplate := `{
   "@context": ["https://www.w3.org/ns/did/v1","https://identity.foundation/.well-known/did-configuration/v1"],
   "id": "did:example:123",
   "verificationMethod": [{
@@ -223,10 +231,13 @@ func TestValidate(t *testing.T) {
     {
       "id":"did:example:123#foo",
       "type": "LinkedDomains",
-      "serviceEndpoint": "https://identity.foundation"
+      "serviceEndpoint": "%s"
     }
   ]
 }`
+
+		didDoc := fmt.Sprintf(didDocTemplate, testServer.URL)
+
 		valid, domain, err := wellknown.ValidateLinkedDomains("DID", newMockResolver(didDoc), nil)
 		testutil.RequireErrorContains(t, err, "DID service validation failed: "+
 			"domain linkage credential(s) not found")

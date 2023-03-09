@@ -8,6 +8,7 @@ package did //nolint:testpackage // uses internal implementation details so the 
 import (
 	"bytes"
 	_ "embed"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -143,7 +144,14 @@ func TestValidate(t *testing.T) {
 		require.Nil(t, validationResult)
 	})
 	t.Run("DID service validation failure", func(t *testing.T) {
-		validationResult, err := ValidateLinkedDomains("DID", newMockResolver())
+		testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, _ *http.Request) {
+			_, err := res.Write([]byte(didCfg))
+			require.NoError(t, err)
+		}))
+
+		defer func() { testServer.Close() }()
+
+		validationResult, err := ValidateLinkedDomains("DID", newMockResolver(testServer.URL))
 		requireErrorContains(t, err, "DOMAIN_AND_DID_VERIFICATION_FAILED")
 		require.Nil(t, validationResult)
 	})
@@ -172,15 +180,17 @@ func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	return m.DoFunc(req)
 }
 
-type mockResolver struct{}
+type mockResolver struct {
+	serviceEndpoint string
+}
 
-func newMockResolver() *mockResolver {
-	return &mockResolver{}
+func newMockResolver(serviceEndpoint string) *mockResolver {
+	return &mockResolver{serviceEndpoint: serviceEndpoint}
 }
 
 // Always returns a DID doc that will fail service validation.
 func (m *mockResolver) Resolve(string) ([]byte, error) {
-	didDoc := `{
+	didDocTemplate := `{
   "@context": ["https://www.w3.org/ns/did/v1","https://identity.foundation/.well-known/did-configuration/v1"],
   "id": "did:example:123",
   "verificationMethod": [{
@@ -197,10 +207,12 @@ func (m *mockResolver) Resolve(string) ([]byte, error) {
     {
       "id":"did:example:123#foo",
       "type": "LinkedDomains",
-      "serviceEndpoint": "https://identity.foundation"
+      "serviceEndpoint": "%s"
     }
   ]
 }`
+
+	didDoc := fmt.Sprintf(didDocTemplate, m.serviceEndpoint)
 
 	parsedDIDDoc, err := did.ParseDocument([]byte(didDoc))
 	if err != nil {
