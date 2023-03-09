@@ -14,6 +14,8 @@ endif
 ALPINE_VER ?= 3.16
 GO_VER ?= 1.19
 
+export TERM := xterm-256color
+
 ANDROID_EMULATOR_NAME ?= WalletSDKDeviceEmulator
 
 .PHONY: all
@@ -76,7 +78,7 @@ build-integration-cli:
 
 .PHONY: prepare-integration-test-flutter
 prepare-integration-test-flutter: build-integration-cli generate-test-keys
-	@cd test/integration/fixtures && docker-compose -f docker-compose.yml up --force-recreate -d
+	@scripts/prepare_integration_test_flutter.sh
 
 .PHONY: integration-test-flutter
 integration-test-flutter:
