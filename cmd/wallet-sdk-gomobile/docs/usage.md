@@ -7,6 +7,49 @@ This guide explains how to use this SDK in Android or iOS code.
 For the sake of readability, the following is omitted in the code examples:
 * Error handling
 * Optionals unwrapping (in Swift examples)
+* 
+## Error Handling
+
+Errors from Wallet-SDK come in a structured format that can be (optionally) parsed, allowing for individual fields to be accessed.
+
+Errors have three fields:
+
+* Category: A short descriptor of the general category of error.
+* Code: A short alphanumeric code that is used to broadly group various related errors.
+This contains the Category descriptor.
+* Details: Lower-level details about the precise cause of the error.
+
+### Examples
+
+
+#### Kotlin (Android)
+
+```kotlin
+import dev.trustbloc.wallet.sdk.walleterror.Walleterror
+
+try {
+    // Some code here
+} catch (e: Exception) {
+    val parsedError = Walleterror.parse(e.message)
+    // Access parsedError.code, parsedError.category, and parsedError.details as you see fit
+}
+```
+
+#### Swift (iOS)
+
+Note: For error parsing, make sure you pass `localizedDescription` from the `NSError` object into the
+`WalleterrorParse` function. Passing in `description` will cause the parsing to not work correctly.
+
+```swift
+import Walletsdk
+
+do {
+    try someSDKMethodHere()
+} catch let error as NSError {
+    let parsedError = WalleterrorParse(error.localizedDescription)
+    // Access parsedError.code, parsedError.category, and parsedError.details as you see fit
+}
+```
 
 ## API Package
 
@@ -184,6 +227,15 @@ let createDIDOpts = ApiCreateDIDOpts(keyID: keyHandle.keyID, verificationType: D
 let didDocResolution = didCreator.create("key", createDIDOpts) // Create a did:key doc
 ```
 
+### Error Codes & Troubleshooting Tips
+
+| Error                             | Possible Reasons                                                                                          |
+|-----------------------------------|-----------------------------------------------------------------------------------------------------------|
+| CREATE_DID_KEY_FAILED(DID1-0000)  | No verification type specified in the createDIDOpts object.                                               |
+| CREATE_DID_ION_FAILED(DID1-0001)  | No verification type specified in the createDIDOpts object.                                               |
+| CREATE_DID_JWK_FAILED(DID1-0002)  | No verification type specified in the createDIDOpts object.                                               |
+| UNSUPPORTED_DID_METHOD(DID0-0003) | The DID method specified in the `create` call is unsupported. Only `key`, `ion`, and `jwk` are supported. |
+
 ## DID Resolver
 
 ### Examples
@@ -207,6 +259,17 @@ let didResolver = DidNewResolver("", nil)
 
 let didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
 ```
+
+### Error Codes & Troubleshooting Tips
+
+| Error                                         | Possible Reasons                                                                                                                                                                                                                                            |
+|-----------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| CREATE_DID_KEY_FAILED(DID1-0000)              | No verification type specified in the createDIDOpts object.                                                                                                                                                                                                 |
+| CREATE_DID_ION_FAILED(DID1-0001)              | No verification type specified in the createDIDOpts object.                                                                                                                                                                                                 |
+| CREATE_DID_JWK_FAILED(DID1-0002)              | No verification type specified in the createDIDOpts object.                                                                                                                                                                                                 |
+| UNSUPPORTED_DID_METHOD(DID0-0003)             | The DID method specified in the `create` call is unsupported. Only `key`, `ion`, and `jwk` are supported.                                                                                                                                                   |
+| DID_RESOLVER_INITIALIZATION_FAILED(DID1-0005) | An invalid resolver server URI was specified. Note that the resolver server URI is optional, so if it's not required then leave this blank.                                                                                                                 |
+| DID_RESOLUTION_FAILED(DID1-0004)              | The specified DID doesn't exist.<br/><br/>The specified DID is incorrectly formatted.<br/><br/>The specified DID isn't supported by Wallet-SDK.<br/><br/>The specified DID requires remote resolution, but there was a communication error with the server. |
 
 ## DID Service Validation
 
@@ -325,6 +388,31 @@ let credentials = interaction.requestCredential(requestCredentialOpts, didDocRes
 let issuerURI = interaction.issuerURI() // Optional (but useful)
 // Consider checking the activity log at some point after the interaction
 ```
+
+### Error Codes & Troubleshooting Tips
+
+#### Creating New Interaction Object
+
+| Error                                             | Possible Reasons                                                                                                                                                                                                                      |
+|---------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| NO_CLIENT_CONFIG_PROVIDED(OCI0-0000)              | A nil/null client configuration object was passed in.                                                                                                                                                                                 |
+| CLIENT_CONFIG_NO_CLIENT_ID_PROVIDED(OCI0-0001)    | The client configuration doesn't specify a client ID).                                                                                                                                                                                |
+| CLIENT_CONFIG_NO_DID_RESOLVER_PROVIDED(OCI0-0002) | The client configuration doesn't specify a DID resolver (or it's nil).                                                                                                                                                                |
+| INVALID_ISSUANCE_URI(OCI0-0004)                   | The issuance URI used to initiate the OpenID4CI flow isn't a valid URL.<br/><br/>The issuance URI doesn't specify a credential offer.                                                                                                 |
+| INVALID_CREDENTIAL_OFFER(OCI0-0005)               | The credential offer object is malformed.<br/><br/>The issuance URI specified an endpoint for retrieving the credential offer, but there was an error during the HTTP GET call. The server may be down or have a configuration issue. |
+| PRE_AUTHORIZED_GRANT_TYPE_REQUIRED(OCI0-0003)     | The credential offer doesn't specify the pre-authorized grant type (which is the only grant type this SDK currently supports).                                                                                                        |
+
+##### Requesting Credential
+
+| Error                                  | Possible Reasons                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+|----------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| PIN_CODE_REQUIRED(OCI0-0007)           | The credential offer requires a user PIN but none was provided via the requestCredentialOpts object.                                                                                                                                                                                                                                                                                                                                                |
+| ISSUER_OPENID_FETCH_FAILED(OCI1-0008)  | An error occurred while doing an HTTP GET call on the issuer's OpenID configuration endpoint. The server may be down or have a configuration issue.<br/><br/>The issuer's OpenID configuration object is malformed.                                                                                                                                                                                                                                 |
+| TOKEN_FETCH_FAILED(OCI1-0010)          | The user PIN is incorrect.<br/><br/>An error occurred while doing an HTTP POST call on the issuer's token endpoint. The server may be down or have a configuration issue.<br/><br/>The token response object from the server is malformed.                                                                                                                                                                                                          |
+| JWT_SIGNING_FAILED(OCI1-0011)          | The KMS is missing the key that was used to create the DID that you're using. This could happen if your KMS storage is not storing and retrieving keys as expected, or if there is a mismatch between the KMS you used to create the DID (whose verification method you pass into the `requestCredential` function) and the `crypto` object (which should be obtained via the `getCrypto()` method on the KMS) passed in to the interaction object. |
+| KEY_ID_NOT_CONTAIN_DID_PART(OCI1-0013) | The DID is incompatible with Wallet-SDK.                                                                                                                                                                                                                                                                                                                                                                                                            |
+| METADATA_FETCH_FAILED(OCI1-0009)       | An error occurred while doing an HTTP GET call on the issuer's OpenID credential issuer endpoint. The server may be down or have a configuration issue.<br/><br/>The issuer metadata object from the server is malformed.                                                                                                                                                                                                                           |
+| CREDENTIAL_FETCH_FAILED(OCI1-0012)     | An error occurred while doing an HTTP GET call on the issuer's credential endpoint. The server may be down or have a configuration issue.<br/><br/>The credential response object from the server is malformed.                                                                                                                                                                                                                                     |
 
 ## Credential Display Data
 
@@ -532,47 +620,16 @@ let credentials = interaction.presentCredential(selectedVCs)
 // Consider checking the activity log at some point after the interaction
 ```
 
-## Errors
+### Error Codes & Troubleshooting Tips
 
-Errors from Wallet-SDK come in a structured format that can be parsed, allowing for individual fields to be accessed.
-
-Errors have three fields:
-
-* Code
-* Category
-* Details
-
-### Examples
-
-
-#### Kotlin (Android)
-
-```kotlin
-import dev.trustbloc.wallet.sdk.walleterror.Walleterror
-
-try {
-    // Some code here
-} catch (e: Exception) {
-    val parsedError = Walleterror.parse(e.message)
-    // Access parsedError.code, parsedError.category, and parsedError.details as you see fit
-}
-```
-
-#### Swift (iOS)
-
-Note: For error parsing, make sure you pass `localizedDescription` from the `NSError` object into the
-`WalleterrorParse` function. Passing in `description` will cause the parsing to not work correctly.
-
-```swift
-import Walletsdk
-
-do {
-    try someSDKMethodHere()
-} catch let error as NSError {
-    let parsedError = WalleterrorParse(error.localizedDescription)
-    // Access parsedError.code, parsedError.category, and parsedError.details as you see fit
-}
-```
+| Error                                             | Possible Reasons                                                                                                                                                                                |
+|---------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| REQUEST_OBJECT_FETCH_FAILED(OVP1-0000)            | An incorrect authorization request URI was specified.<br/><br/>The verifier server is down or incorrectly configured.                                                                           |
+| VERIFY_AUTHORIZATION_REQUEST_FAILED(OVP1-0001)    | The signature in the JWT received from the verified JWT is invalid.<br/><br/>Malformed request object received from the verifier server.                                                        |
+| FAIL_TO_GET_MATCH_REQUIREMENTS_RESULTS(CRQ0-0004) | Invalid presentation definition received from the verifier.                                                                                                                                     |
+| NO_CREDENTIAL_SATISFY_REQUIREMENTS(CRQ0-0003)     | None of your supplied credentials satisfy the requirements set by the verifier. Make sure you've gone through the full credential matching process correctly. See the OpenID4VP examples above. |
+| CREATE_AUTHORIZED_RESPONSE(OVP1-0002)             | No credentials provided in the `presentCredential` method call.                                                                                                                                 |
+| SEND_AUTHORIZED_RESPONSE(OVP1-0003)               | The verifier server rejected your credentials (couldn't be verified, wrong type, etc).<br/><br/>The verifier server is down or incorrectly configured.                                          |
 
 ## Metrics
 
