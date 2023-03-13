@@ -27,13 +27,18 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
+      - name: Derive the new version
+        run: |
+          echo "new version"
+          NEW_VER=$(git describe --tags --always `git rev-list --tags --max-count=1`)          
+          echo $NEW_VER
       - name: Generate Binding
         run: |
           export PATH=$PATH:$GOPATH/bin
           echo $PATH
           go install golang.org/x/mobile/cmd/gomobile@latest
           gomobile init
-          make generate-android-bindings
+          NEW_VERSION=$NEW_VER GIT_REV=$(git rev-parse HEAD) BUILD_TIME=$(date) make generate-android-bindings
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: /home/runner/work/wallet-sdk/go
@@ -93,7 +98,7 @@ jobs:
           echo $PATH
           go install golang.org/x/mobile/cmd/gomobile@latest
           gomobile init
-          make generate-ios-bindings
+          NEW_VERSION=$NEW_VER GIT_REV=$(git rev-parse HEAD) BUILD_TIME=$(date) make generate-ios-bindings
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: /Users/runner/work/wallet-sdk/go

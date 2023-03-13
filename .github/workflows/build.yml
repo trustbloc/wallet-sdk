@@ -105,8 +105,7 @@ jobs:
           echo $PATH
           go install golang.org/x/mobile/cmd/gomobile@latest
           gomobile init
-          make generate-ios-bindings
-          make copy-ios-bindings
+          NEW_VERSION=testVer GIT_REV=testRev BUILD_TIME=testTime make generate-ios-bindings copy-ios-bindings
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: /Users/runner/work/wallet-sdk/go
@@ -185,8 +184,7 @@ jobs:
           echo $PATH
           go install golang.org/x/mobile/cmd/gomobile@latest
           gomobile init
-          make generate-android-bindings
-          make copy-android-bindings
+          NEW_VERSION=testVer GIT_REV=testRev BUILD_TIME=testTime make generate-android-bindings copy-android-bindings
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: /Users/runner/work/wallet-sdk/go
@@ -295,7 +293,7 @@ jobs:
           echo $PATH
           go install golang.org/x/mobile/cmd/gomobile@latest
           gomobile init
-          make generate-ios-bindings
+          GIT_REV=$(git rev-parse HEAD) BUILD_TIME=$(date) make generate-ios-bindings
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: /Users/runner/work/wallet-sdk/go
@@ -378,7 +376,7 @@ jobs:
           echo $PATH
           go install golang.org/x/mobile/cmd/gomobile@latest
           gomobile init
-          make generate-android-bindings
+          GIT_REV=$(git rev-parse HEAD) BUILD_TIME=$(date) make generate-android-bindings
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: /home/runner/work/wallet-sdk/go

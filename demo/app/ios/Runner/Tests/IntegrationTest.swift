@@ -21,6 +21,10 @@ class IntegrationTest: XCTestCase {
     }
 
     func testFullFlow() throws {
+        XCTAssertEqual(VersionGetVersion(), "testVer")
+        XCTAssertEqual(VersionGetGitRevision(), "testRev")
+        XCTAssertEqual(VersionGetBuildTime(), "testTime")
+
         let kms = LocalkmsNewKMS(kmsStore(), nil)!
         let didResolver = DidNewResolver("http://localhost:8072/1.0/identifiers", nil)!
         let crypto = kms.getCrypto()
