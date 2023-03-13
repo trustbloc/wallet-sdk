@@ -12,7 +12,7 @@ const (
 	module                                 = "OCI"
 	NoClientConfigProvidedError            = "NO_CLIENT_CONFIG_PROVIDED"
 	ClientConfigNoClientIDProvidedError    = "CLIENT_CONFIG_NO_CLIENT_ID_PROVIDED"
-	ClientConfigNoDIDResolverProvidedError = "CLIENT_CONFIG_DID_RESOLVER_PROVIDED"
+	ClientConfigNoDIDResolverProvidedError = "CLIENT_CONFIG_NO_DID_RESOLVER_PROVIDED"
 	PreAuthorizedGrantTypeRequiredError    = "PRE_AUTHORIZED_GRANT_TYPE_REQUIRED"
 	InvalidIssuanceURIError                = "INVALID_ISSUANCE_URI"
 	InvalidCredentialOfferError            = "INVALID_CREDENTIAL_OFFER" //nolint:gosec //false positive
