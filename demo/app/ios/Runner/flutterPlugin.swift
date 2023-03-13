@@ -49,6 +49,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "resolveCredentialDisplay":
             resolveCredentialDisplay(arguments: arguments!,  result: result)
             
+        case "credentialDisplayRendering":
+            credentialDisplayRendering(arguments: arguments!, result: result)
+            
         case "resolveOrder":
             resolveOrder(arguments: arguments!, result: result)
             
@@ -289,7 +292,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              message: "error while process requestCredential credential",
                                              details: "Did document not initialized"))
         }
-        
+                
          do {
             let credentialCreated = try openID4CI.requestCredential(otp: otp,
                                                                     didVerificationMethod: didDocResolution.assertionMethod())
@@ -339,6 +342,55 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             }
     }
     
+    public func credentialDisplayRendering(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
+   
+        
+        guard let resolvedCredentialDisplayData = arguments["resolvedCredentialDisplayData"] as? String else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while credentialDisplayRendering",
+                                             details: "parameter resolvedCredentialDisplayData is missed"))
+        }
+        
+        let displayData = DisplayParseData(resolvedCredentialDisplayData, nil)
+        let issuerDisplayData = displayData?.issuerDisplay()
+        
+        var resolvedCredDisplayList : [Any] = []
+        var claimList:[Any] = []
+        
+        
+        for i in 0...((displayData!.credentialDisplaysLength())-1){
+            let credentialDisplay = displayData!.credentialDisplay(at: i)!
+            for i in 0...(credentialDisplay.claimsLength())-1{
+                let claim = credentialDisplay.claim(at: i)!
+                var claims : [String: Any] = [:]
+                
+                claims["rawValue"] = claim.rawValue()
+                claims["value"] = claim.value()
+                claims["valueType"] = claim.valueType()
+                claims["label"] = claim.label()
+                claimList.append(claims)
+            }
+     
+            let overview = credentialDisplay.overview()
+            let logo = overview?.logo()
+            
+            var resolveDisplayResp : [String: Any] = [:]
+            resolveDisplayResp["claims"] = claimList
+            resolveDisplayResp["overviewName"] = overview?.name()
+            resolveDisplayResp["logo"] = logo?.url()
+            resolveDisplayResp["textColor"] = overview?.textColor()
+            resolveDisplayResp["backgroundColor"] = overview?.backgroundColor()
+            resolveDisplayResp["issuerName"] = issuerDisplayData!.name()
+            
+            resolvedCredDisplayList.append(resolveDisplayResp)
+        }
+        
+       
+    
+        print("resolvedCredDisplay ->", resolvedCredDisplayList)
+        result(resolvedCredDisplayList)
+    }
+    
     public func resolveOrder(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
         do {
             guard let credentialDisplay = arguments["credentialDisplays"] as? String else{
@@ -381,7 +433,6 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             utcDateFormatter.dateStyle = .long
             utcDateFormatter.timeStyle = .short
             let updatedDate = date
-            var type = activityObj?.type()
             var activityDicResp:[String:Any] = [
                 "Status":  status,
                 "Issued By": activityObj?.client(),

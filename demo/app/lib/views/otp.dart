@@ -9,8 +9,8 @@ import 'package:app/widgets/common_title_appbar.dart';
 import 'package:flutter/services.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../widgets/primary_button.dart';
-import '../widgets/primary_input_field.dart';
+import 'package:app/widgets/primary_button.dart';
+import 'package:app/widgets/primary_input_field.dart';
 import 'credential_preview.dart';
 
 class OTP extends StatefulWidget {
@@ -132,6 +132,8 @@ class _OTPPage extends State<OTP> {
                           String? issuerURI = await WalletSDKPlugin.issuerURI();
                           resolvedCredentialDisplay = await WalletSDKPlugin.resolveCredentialDisplay([credentials], issuerURI!);
                           log("resolvedCredentialDisplay -$resolvedCredentialDisplay");
+                          var renderedCredDisplay =  await WalletSDKPlugin.resolveCredDisplayRendering(resolvedCredentialDisplay!);
+                          log("rendered cred display otp -${renderedCredDisplay}");
                           var activities = await WalletSDKPlugin.storeActivityLogger();
                           var credID = await WalletSDKPlugin.getCredID([credentials]);
                           log("activities and credID -$activities and $credID");

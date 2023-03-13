@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/models/credential_preview.dart';
@@ -17,20 +16,16 @@ class CredentialVerifiedInformation extends StatelessWidget {
 
   Future<Widget> getCredentialDetails() async {
     List<CredentialPreviewData> list;
-    var data = json.decode(credentialData.credentialDisplayData!);
-    bool? hasOrder;
-    hasOrder = await WalletSDKPlugin.resolveOrder(credentialData.credentialDisplayData);
-    log("hasOrder $hasOrder");
-    var credentialClaimsData = data['credential_displays'][0]['claims'] as List;
+    var credentialDisplayData  = await WalletSDKPlugin.resolveCredDisplayRendering(credentialData.credentialDisplayData);
+    var credentialDisplayEncodeData = json.encode(credentialDisplayData);
+    List<dynamic> responseJson = json.decode(credentialDisplayEncodeData);
+    var credentialClaimsData = responseJson.first['claims'] as List;
     list = credentialClaimsData.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
-    if (hasOrder == true){
-      log("hasOrder $hasOrder");
-      list.sort((a, b) {
+    // TODO order function in the sdk is not working properly
+/*      list.sort((a, b) {
         int compare = a.order.compareTo(b.order);
         return compare;
-      });
-    }
-
+      });*/
     return listViewWidget(list);
   }
 

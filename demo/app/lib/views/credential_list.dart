@@ -20,6 +20,7 @@ class _CredentialListState extends State<CredentialList> {
   final StorageService _storageService = StorageService();
   late List<CredentialDataObject> _credentialList;
   late List<Object?> activityLogger;
+  late List<Object?> resolveCredDisplay;
   String? credentialDisplayData;
   bool _loading = true;
   static String? username = '';
@@ -77,7 +78,7 @@ class _CredentialListState extends State<CredentialList> {
                   itemBuilder: (_, index) {
                     return Dismissible(
                       key: Key(_credentialList[index].toString()),
-                      child: CredentialCard(credentialData: _credentialList[index].value, activityLogger: activityLogger!, isDashboardWidget: true, isDetailArrowRequired: true,),
+                      child: CredentialCard(credentialData: _credentialList[index].value, activityLogger: activityLogger!, isDashboardWidget: true, isDetailArrowRequired: false,),
                       onDismissed: (direction) async {
                         await _storageService.deleteData(_credentialList[index])
                             .then((value) => _credentialList.removeAt(index));
