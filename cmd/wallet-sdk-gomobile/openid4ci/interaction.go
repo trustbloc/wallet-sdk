@@ -122,10 +122,14 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 // Relevant sections of the spec:
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#name-credential-endpoint
 func (i *Interaction) RequestCredential(
-	credentialRequest *CredentialRequestOpts,
+	credentialRequestOpts *CredentialRequestOpts,
 	vm *api.VerificationMethod,
 ) (*api.VerifiableCredentialsArray, error) {
-	goAPICredentialRequest := &openid4cigoapi.CredentialRequestOpts{UserPIN: credentialRequest.UserPIN}
+	if credentialRequestOpts == nil {
+		credentialRequestOpts = &CredentialRequestOpts{}
+	}
+
+	goAPICredentialRequest := &openid4cigoapi.CredentialRequestOpts{UserPIN: credentialRequestOpts.UserPIN}
 
 	signer, err := common.NewJWSSigner(vm.ToSDKVerificationMethod(), i.crypto)
 	if err != nil {

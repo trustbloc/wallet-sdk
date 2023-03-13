@@ -151,12 +151,16 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequestOpts, jwtSigner api.JWTSigner) ([]*verifiable.Credential, error) { //nolint:funlen,gocyclo,lll
 	timeStartRequestCredential := time.Now()
 
+	if credentialRequestOpts == nil {
+		credentialRequestOpts = &CredentialRequestOpts{}
+	}
+
 	if i.preAuthorizedCodeGrant.UserPINRequired && credentialRequestOpts.UserPIN == "" {
 		return nil, walleterror.NewValidationError(
 			module,
 			PinCodeRequiredCode,
 			PinCodeRequiredError,
-			errors.New("invalid user PIN"))
+			errors.New("the credential offer requires a user PIN, but it was not provided"))
 	}
 
 	config, err := i.fetchIssuerOpenIDConfig()
@@ -468,7 +472,12 @@ func (i *Interaction) getCredentialsFromResponses(
 
 		vc, err := verifiable.ParseCredential(credentialResponseBytes, credentialOpts...)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse credential from credential response at index %d: %w", j, err)
+			return nil,
+				walleterror.NewExecutionError(
+					module,
+					CredentialParseFailedCode,
+					CredentialParseError,
+					fmt.Errorf("failed to parse credential from credential response at index %d: %w", j, err))
 		}
 
 		err = i.metricsLogger.Log(&api.MetricsEvent{

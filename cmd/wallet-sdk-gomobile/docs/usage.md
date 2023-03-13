@@ -1,6 +1,6 @@
 # SDK Usage
 
-Last updated: March 13, 2023 (commit `57cea0315411332c6af691ee2a90bc362694a1a5`)
+Last updated: March 14, 2023 (commit `7936266814445f20bcd840b94399cebaf50872c7`)
 
 This guide explains how to use this SDK in Android or iOS code.
 
@@ -473,6 +473,7 @@ let issuerURI = interaction.issuerURI() // Optional (but useful)
 | KEY_ID_NOT_CONTAIN_DID_PART(OCI1-0013) | The DID is incompatible with Wallet-SDK.                                                                                                                                                                                                                                                                                                                                                                                                            |
 | METADATA_FETCH_FAILED(OCI1-0009)       | An error occurred while doing an HTTP GET call on the issuer's OpenID credential issuer endpoint. The server may be down or have a configuration issue.<br/><br/>The issuer metadata object from the server is malformed.                                                                                                                                                                                                                           |
 | CREDENTIAL_FETCH_FAILED(OCI1-0012)     | An error occurred while doing an HTTP GET call on the issuer's credential endpoint. The server may be down or have a configuration issue.<br/><br/>The credential response object from the server is malformed.                                                                                                                                                                                                                                     |
+| CREDENTIAL_PARSE_FAILED(OCI1-0014)     | The issued credential is invalid, signed incorrectly, or could not be verified.                                                                                                                                                                                                                                                                                                                                                                     |
 
 ## Credential Display Data
 

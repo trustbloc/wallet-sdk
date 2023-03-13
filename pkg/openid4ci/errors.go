@@ -24,6 +24,7 @@ const (
 	JWTSigningFailedError                  = "JWT_SIGNING_FAILED"
 	CredentialFetchFailedError             = "CREDENTIAL_FETCH_FAILED" //nolint:gosec //false positive
 	KeyIDNotContainDIDPartError            = "KEY_ID_NOT_CONTAIN_DID_PART"
+	CredentialParseError                   = "CREDENTIAL_PARSE_FAILED" //nolint:gosec //false positive
 )
 
 // Constants' names and reasons are obvious so they do not require additional comments.
@@ -43,4 +44,5 @@ const (
 	JWTSigningFailedCode
 	CredentialFetchFailedCode
 	KeyIDNotContainDIDPartCode
+	CredentialParseFailedCode
 )

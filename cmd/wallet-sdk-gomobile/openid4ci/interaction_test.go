@@ -239,6 +239,43 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		requireErrorContains(t, err, "UNSUPPORTED_ALGORITHM")
 		require.Nil(t, result)
 	})
+	t.Run("Missing user PIN", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t:                  t,
+			credentialResponse: sampleCredentialResponse,
+		}
+		server := httptest.NewServer(issuerServerHandler)
+
+		issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
+			TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+		}
+
+		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential",`+
+			`"credential_issuer":"https://server.example.com"}`, server.URL)
+
+		defer server.Close()
+
+		activityLogger := mem.NewActivityLogger()
+
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		interaction := createInteraction(t, kms, activityLogger, createTestRequestURI(server.URL))
+
+		keyHandle, err := kms.Create(arieskms.ED25519)
+		require.NoError(t, err)
+
+		pkBytes, err := keyHandle.JWK.PublicKeyBytes()
+		require.NoError(t, err)
+
+		credentials, err := interaction.RequestCredential(nil, &api.VerificationMethod{
+			ID:   "did:example:12345#testId",
+			Type: "Ed25519VerificationKey2018",
+			Key:  models.VerificationKey{Raw: pkBytes},
+		})
+		requireErrorContains(t, err, "the credential offer requires a user PIN, but it was not provided")
+		require.Nil(t, credentials)
+	})
 }
 
 func createInteraction(t *testing.T, kms *localkms.KMS, activityLogger api.ActivityLogger, requestURI string,
