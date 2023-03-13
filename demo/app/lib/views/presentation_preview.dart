@@ -64,7 +64,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
               subtitle: const Text('verifier.com', style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
               trailing: Image.asset('lib/assets/images/verified.png', width: 82, height: 26),
             ),
-            CredentialCard(credentialData: widget.credentialData, isDashboardWidget: false, isDetailArrowRequired: true,),
+            CredentialCard(credentialData:  widget.credentialData,  isDashboardWidget: false, isDetailArrowRequired: false),
             CredentialMetaDataCard(credentialData: widget.credentialData),
             CredentialVerifiedInformation(credentialData: widget.credentialData, height: MediaQuery.of(context).size.height*0.38,),
             Align(

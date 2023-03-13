@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'package:app/demo_platform_interface.dart';
 import 'package:app/main.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/views/credential_added.dart';
@@ -31,8 +30,15 @@ class CredentialPreviewState extends State<CredentialPreview> {
   @override
   void initState() {
     super.initState();
-    Map<String, dynamic> issuer = jsonDecode(widget.credentialData.credentialDisplayData);
-    issuerDisplayData = issuer['issuer_display']['name'];
+    WalletSDKPlugin.resolveCredDisplayRendering(widget.credentialData.credentialDisplayData!).then(
+            (response) {
+              setState(() {
+                var credentialDisplayEncodeData = json.encode(response);
+                List<dynamic> responseJson = json.decode(credentialDisplayEncodeData);
+                issuerDisplayData = responseJson.first["issuerName"];
+                log("issuerDisplayData state $issuerDisplayData");
+              });
+        });
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) async {
       UserLoginDetails userLoginDetails =  await getUser();
       userLoggedIn = userLoginDetails.username!;
@@ -62,7 +68,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
                 style: TextStyle(fontSize: 18, color: Colors.black),
                 "wants to issue the credential"),
           ),
-          CredentialCard(credentialData: widget.credentialData, isDashboardWidget: false, isDetailArrowRequired: true,),
+          CredentialCard(credentialData: widget.credentialData, isDashboardWidget: false, isDetailArrowRequired: false),
           Expanded(
             child: Align(
               alignment: Alignment.bottomCenter,
@@ -117,7 +123,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
   }
 
   _navigateToCredentialAdded() async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialAdded(credentialData: widget.credentialData,)));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialAdded(credentialData: widget.credentialData)));
   }
   _navigateToDashboard() async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));

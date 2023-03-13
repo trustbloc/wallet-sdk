@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:app/models/credential_data.dart';
 import 'package:app/views/credential_details.dart';
 import 'package:flutter/material.dart';
+import '../main.dart';
 import 'credential_metadata_card.dart';
 import 'credential_verified_information_view.dart';
 
@@ -19,13 +20,29 @@ class CredentialCard extends StatefulWidget {
 
 class _CredentialCardState extends State<CredentialCard> {
   bool showWidget = false;
+  String? credentialDisplayName;
+  late String logoURL;
+  String? backgroundColor;
+  String? textColor;
+
+  @override
+  void initState() {
+    super.initState();
+    WalletSDKPlugin.resolveCredDisplayRendering(widget.credentialData.credentialDisplayData!).then(
+            (response) {
+          setState(() {
+            var credentialDisplayEncodeData = json.encode(response);
+            List<dynamic> responseJson = json.decode(credentialDisplayEncodeData);
+            credentialDisplayName = responseJson.first['overviewName'];
+            logoURL = responseJson.first['logo'];
+            backgroundColor ='0xff${responseJson.first['backgroundColor'].toString().replaceAll('#', '')}';
+            textColor = '0xff${responseJson.first['textColor'].toString().replaceAll('#', '')}';
+          });
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
-    Map<String, dynamic> issuer = jsonDecode(widget.credentialData.credentialDisplayData!);
-    final credentialDisplayName = issuer['credential_displays'][0]['overview']['name'];
-    final logoURL = issuer['credential_displays'][0]['overview']['logo']['url'];
-    final backgroundColor ='0xff${issuer['credential_displays'][0]['overview']['background_color'].toString().replaceAll('#', '')}';
-    final textColor = '0xff${issuer['credential_displays'][0]['overview']['text_color'].toString().replaceAll('#', '')}';
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
       child: Column(
@@ -34,7 +51,7 @@ class _CredentialCardState extends State<CredentialCard> {
                height: 80,
                alignment: Alignment.center,
                decoration: BoxDecoration(
-                   color: backgroundColor.isNotEmpty ? Color(int.parse(backgroundColor)) : Colors.white,
+                   color: backgroundColor!.isNotEmpty ? Color(int.parse(backgroundColor!)) : Colors.white,
                    borderRadius: BorderRadius.circular(12),
                    boxShadow: [
                      BoxShadow(
@@ -48,7 +65,7 @@ class _CredentialCardState extends State<CredentialCard> {
                      style: TextStyle(
                        fontSize: 14,
                        fontWeight: FontWeight.bold,
-                       color: textColor.isNotEmpty ? Color(int.parse(textColor)) : const Color(0xff190C21),
+                       color: textColor!.isNotEmpty ? Color(int.parse(textColor!)) : const Color(0xff190C21),
                      ),
                      textAlign: TextAlign.start,
                    ),
@@ -62,12 +79,12 @@ class _CredentialCardState extends State<CredentialCard> {
                      },
                      fit: BoxFit.fitWidth,
                    ),
-                   trailing: widget.isDetailArrowRequired == true ? IconButton(
+                   trailing: widget.isDetailArrowRequired == false ? IconButton(
                      icon: const Icon(Icons.arrow_circle_right, size: 32, color: Color(0xffB6B7C7)),
                      onPressed: () async {
                        Navigator.push(
                          context,
-                         MaterialPageRoute(builder: (context) => CredentialDetails(credentialData: widget.credentialData, credentialName: credentialDisplayName!, isDashboardWidget: widget.isDashboardWidget, activityLogger: widget.activityLogger,)),
+                         MaterialPageRoute(builder: (context) => CredentialDetails(credentialData: widget.credentialData,credentialName: credentialDisplayName!, isDashboardWidget: widget.isDashboardWidget,  activityLogger: widget.activityLogger,)),
                        );
                      },
                    ): IconButton(

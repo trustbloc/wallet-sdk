@@ -67,7 +67,7 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
               for (var i = 0; i < widget.credentialData.length; i++)
                 RadioListTile(
                 controlAffinity: ListTileControlAffinity.leading,
-                title: CredentialCard(credentialData:  widget.credentialData[i], isDashboardWidget: false, isDetailArrowRequired: false,),
+                title: CredentialCard(credentialData:  widget.credentialData[i], isDashboardWidget: false, isDetailArrowRequired: true),
                 activeColor: Colors.deepPurple,
                 autofocus: false,
                 value:  i,

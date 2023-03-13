@@ -6,7 +6,7 @@ import 'dashboard.dart';
 class CredentialShared extends StatefulWidget {
   final String? verifierName;
   CredentialData credentialData;
-  CredentialShared({super.key, this.verifierName, required this.credentialData});
+  CredentialShared({super.key, this.verifierName, required this.credentialData,});
 
   @override
   State<CredentialShared> createState() => CredentialSharedState ();
