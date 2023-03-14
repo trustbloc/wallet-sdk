@@ -1,13 +1,18 @@
 # SDK Usage
 
-Last updated: March 8, 2023 (commit `4d551272ee72bd24e051e65aa62df94be6cfbd5d`)
+Last updated: March 13, 2023 (commit `57cea0315411332c6af691ee2a90bc362694a1a5`)
 
 This guide explains how to use this SDK in Android or iOS code.
 
-For the sake of readability, the following is omitted in the code examples:
+Note that the exact type/function/method names differ depending on whether you're using the Android bindings or iOS
+bindings. See [Packages](packages.md) for more information. Additionally, the examples in this document demonstrate
+how to use the various APIs from a Kotlin and Swift perspective. 
+
+For the sake of readability, the following is omitted in most code examples:
 * Error handling
+* Nullable type checks (in Kotlin examples)
 * Optionals unwrapping (in Swift examples)
-* 
+
 ## Error Handling
 
 Errors from Wallet-SDK come in a structured format that can be (optionally) parsed, allowing for individual fields to be accessed.
@@ -20,7 +25,6 @@ This contains the Category descriptor.
 * Details: Lower-level details about the precise cause of the error.
 
 ### Examples
-
 
 #### Kotlin (Android)
 
@@ -51,6 +55,10 @@ do {
 }
 ```
 
+For non-primitive return types from functions/methods, they will always be optionals (in Swift) or nullable
+(in Kotlin/Java). Some of these functions/methods may also throw exceptions (or return errors)
+
+
 ## API Package
 
 The API package contains various interfaces and types that are used across multiple places in the SDK.
@@ -61,9 +69,60 @@ A few examples of when you might want to do this:
 * Implementing platform-specific credential storage (perhaps in a secure enclave)
 * Implementing platform-specific crypto functionality (perhaps leveraging device-specific security chips)
 
+### Verifiable Credentials
+
+Verifiable Credential objects are present throughout Wallet-SDK. They have a number of useful methods:
+
+* `serialize()`: Returns a serialized representation of this VC. This is useful for storing VCs in a persistent
+database. To convert the serialized representation back into a `VerifiableCredential` object,
+see [Parsing Credentials](#parsing-credentials).
+* `id()`: Returns this VC's ID.
+* `issuerID()`: Returns the ID of this VC's issuer (typically a DID).
+* `name()`: Returns this VC's name.
+If the VC doesn't provide a name (or the name is not a string), then an empty string is returned.
+* `types()`: Returns the types of this VC. At a minimum, one of the types will be "VerifiableCredential".
+There may be additional more specific credential types as well.
+* `claimTypes()`: Returns the types specified in the claims of this VC. If none are found, then null/nil is returned.
+* `issuanceDate()`: Returns this VC's issuance date as a Unix timestamp.
+* `expirationDate()`: Returns this VC's expiration date as a Unix timestamp.
+
+## Parsing Credentials
+
+Serialized credentials cannot be used directly in Wallet-SDK. Instead, they must be parsed first.
+
+The `parse` function is located in the `vcparse` package. It can be provided with a number of parameters, all optional:
+* `disableProofCheck`: Disables the proof check operation when parsing the VC. The proof check can be an expensive
+operation - in certain scenarios, it may be appropriate to disable the check. By default, proofs are checked.
+* `documentLoader`: Specifies a JSON-LD document loader to use when parsing the VC. If none is specified, then a
+network-based loader will be used.
+
+### Examples
+
+#### Kotlin (Android)
+
+```kotlin
+import dev.trustbloc.wallet.sdk.vcparse.Vcparse
+
+// Specified options below: Don't disable the proof check, and use the default network-based document loader.
+// Equivalent to just passing null directly into the parse function instead of this object below.
+val opts = Opts(false, null)
+val vc = Vcparse.parse("Serialized VC goes here", opts)
+```
+
+#### Swift (iOS)
+
+```swift
+import Walletsdk
+
+// Specified options below: Don't disable the proof check, and use the default network-based document loader.
+// Equivalent to just passing null directly into the parse function instead of this object below.
+let opts = VcparseNewOpts(false, nil)
+let vc = VcparseParse("Serialized VC goes here", opts, nil)
+```
+
 ## In-Memory Credential Storage
-The credential package contains an in-memory credential storage implementation that can be used to satisfy both
-credential reader and credential writer interfaces. As it only uses in-memory storage, you will probably want to
+The credential package contains an in-memory credential storage implementation that can be used to store credentials
+in memory and also satisfy the credential reader interface. As it only uses in-memory storage, you will probably want to
 create your own implementation in your mobile code that uses platform-specific storage.
 
 ### Examples
@@ -73,11 +132,12 @@ create your own implementation in your mobile code that uses platform-specific s
 ```kotlin
 import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.credential.*
+import dev.trustbloc.wallet.sdk.vcparse.Vcparse
 
 val db = credential.newInMemoryDB()
 
-val opts = Opts(true, null)
-val vc = Vcparse.parse("VC JSON goes here", opts)
+val opts = Opts(false, null)
+val vc = Vcparse.parse("Serialized VC goes here", opts)
 
 db.add(vc)
 
@@ -95,8 +155,8 @@ import Walletsdk
 
 let db = CredentialNewInMemoryDB()
 
-let opts = VcparseNewOpts(true, nil)
-let vc = VcparseParse("VC JSON goes here", opts, nil)!
+let opts = VcparseNewOpts(false, nil)
+let vc = VcparseParse("Serialized VC goes here", opts, nil)!
 
 db.add(vc)
 
@@ -435,10 +495,12 @@ The structure of the display data object is as follows:
 ### `Data`
 
 * The root object.
+* Contains display information for the issuer and each of the credentials passed in to the `resolveDisplay`
+function.
 * Can be serialized using the `serialize()` method and parsed using the `parseDisplayData()` function.
 * The `issuerDisplay()` method returns the `IssuerDisplay` object.
 * Use the `credentialDisplaysLength()` and `credentialDisplayAtIndex()` methods to iterate over the `CredentialDisplay`
-  objects.
+  objects. There's one for each credential passed in to the `resolveDisplay` function, and they're in the same order.
 
 ### `IssuerDisplay`
 
@@ -448,14 +510,14 @@ The structure of the display data object is as follows:
 
 ### `CredentialDisplay`
 
-* Describes display information about the credential.
+* Describes display information about a credential.
 * Can be serialized using the `serialize()` method and parsed using the `parseCredentialDisplay()` function.
 * The `overview()` method returns the `CredentialOverview` object.
 * Use the `claimsLength()` and `claimAtIndex()` methods to iterate over the `Claim` objects.
 
 ### `CredentialOverview`
 
-* Describes display information for the credential as a whole.
+* Describes display information for a credential as a whole.
 * Has `name()`, `logo()`, `backgroundColor()`, `textColor()`, and `locale()` methods. The `logo()` method returns
   a `Logo` object.
 
@@ -466,14 +528,15 @@ The structure of the display data object is as follows:
 
 ### `Claim`
 
-* Describes display information for a specific claim.
+* Describes display information for a specific claim within a credential.
 * Has `label()`, `rawID()`, `valueType()`, `value()`, `rawValue()`, `isMasked()`, `hasOrder()`, `order()`,
 `pattern()`, and `locale()` methods.
 * For example, if the UI were to display "Given Name: Alice", then `label()` would correspond to "Given Name" while
   `value()` would correspond to "Alice".
 * Display order data is optional and will only exist if the issuer provided it. Use the `hasOrder()` method
 to determine if there is a specified order before attempting to retrieve the order, since `order()` will return an
-error/throw an exception if the claim has no order information.
+error/throw an exception if the claim has no order information. If you've ensured that the claim has an order
+(by using `hadOrder()`), then you can safely ignore the error/exception from the `order()` method.
 * `IsMasked()` indicates whether this claim's value is masked. If this method returns true, then the `value()` method
 will return the masked value while the `rawValue()` method will return the unmasked version.
 * `rawValue()` returns the raw display value for this claim without any formatting.

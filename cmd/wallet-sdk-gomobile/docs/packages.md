@@ -1,6 +1,6 @@
 # Packages
 
-Last updated: December 9, 2022 (commit `3534f83a7ed5899ae8f8ec8a368018d42075ae79`)
+Last updated: March 13, 2023 (commit `57cea0315411332c6af691ee2a90bc362694a1a5`)
 
 The way you use the SDK differs between Android and iOS. This comes down to differences in how the `gomobile` tool
 generates the bindings for the two platforms. Due to these differences (and the limitations of `gomobile`),
@@ -13,8 +13,6 @@ three versions.
 
 * `dev.trustbloc.wallet.sdk.api`
 * `dev.trustbloc.wallet.sdk.credential`
-* `dev.trustbloc.wallet.sdk.credentialsigner`
-* `dev.trustbloc.wallet.sdk.credentialverifier`
 * `dev.trustbloc.wallet.sdk.didcreator`
 * `dev.trustbloc.wallet.sdk.didresolver`
 * `dev.trustbloc.wallet.sdk.display`
@@ -23,8 +21,8 @@ three versions.
 * `dev.trustbloc.wallet.sdk.mem`
 * `dev.trustbloc.wallet.sdk.openid4ci`
 * `dev.trustbloc.wallet.sdk.openid4vp`
-* `dev.trustbloc.wallet.sdk.presentationexchange`
-* `dev.trustbloc.wallet.sdk.vdr`
+* `dev.trustbloc.wallet.sdk.openid4vp`
+* `dev.trustbloc.wallet.sdk.vcparse`
 
 ## iOS
 
@@ -38,8 +36,6 @@ Prefixes:
 
 * `Api`
 * `Credential`
-* `Credentialsigner`
-* `Credentialverifier`
 * `Didcreator`
 * `Didresolver`
 * `Display`
@@ -48,8 +44,7 @@ Prefixes:
 * `Mem`
 * `Openid4ci`
 * `Openid4vp`
-* `Presentationexchange`
-* `Vdr`
+* `Vcparse`
 
 ## Package/Module Examples
 
