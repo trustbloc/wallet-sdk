@@ -23,6 +23,9 @@ import (
 const (
 	composeDir      = "./fixtures/"
 	composeFilePath = composeDir + "docker-compose.yml"
+	caCertPath      = "fixtures/keys/tls/ec-cacert.pem"
+	vcsAPIDirectURL = "http://localhost:8075"
+	didResolverURL  = "http://did-resolver.trustbloc.local:8072/1.0/identifiers"
 )
 
 var logger = log.New("wallet-sdk-integration-test")
@@ -36,7 +39,7 @@ func TestMain(m *testing.M) {
 }
 
 func InitializeTestSuite() {
-	err := testenv.SetupTestEnv("fixtures/keys/tls/ec-cacert.pem")
+	err := testenv.SetupTestEnv(caCertPath)
 	if err != nil {
 		logger.Fatal("setup test environment", log.WithError(err))
 	}

@@ -10,8 +10,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
@@ -20,11 +18,9 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/ld"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4vp"
-	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
-
-	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4ci"
+	"github.com/trustbloc/wallet-sdk/test/integration/pkg/helpers"
+	"github.com/trustbloc/wallet-sdk/test/integration/pkg/metricslogger"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4vp"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/testenv"
 )
@@ -81,9 +77,9 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			"walletDIDMethod=%s\n", i,
 			tc.issuerProfileIDs, tc.verifierProfileID, tc.walletDIDMethod)
 
-		testHelper := newVPTestHelper(t, tc.walletDIDMethod, tc.signingKeyType)
+		testHelper := helpers.NewVPTestHelper(t, tc.walletDIDMethod, tc.signingKeyType)
 
-		issuedCredentials := testHelper.issueCredentials(t, tc.issuerProfileIDs)
+		issuedCredentials := testHelper.IssueCredentials(t, vcsAPIDirectURL, tc.issuerProfileIDs)
 		println("Issued", issuedCredentials.Length(), "credentials")
 		for k := 0; k < issuedCredentials.Length(); k++ {
 			cred, _ := issuedCredentials.AtIndex(k).Serialize()
@@ -92,20 +88,20 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		setup := oidc4vp.NewSetup(testenv.NewHttpRequest())
 
-		err := setup.AuthorizeVerifierBypassAuth("test_org")
+		err := setup.AuthorizeVerifierBypassAuth("test_org", vcsAPIDirectURL)
 		require.NoError(t, err)
 
 		initiateURL, err := setup.InitiateInteraction(tc.verifierProfileID)
 		require.NoError(t, err)
 
-		didResolver, err := did.NewResolver("http://did-resolver.trustbloc.local:8072/1.0/identifiers")
+		didResolver, err := did.NewResolver(didResolverURL)
 		require.NoError(t, err)
 
 		activityLogger := mem.NewActivityLogger()
 
 		docLoader := ld.NewDocLoader()
 
-		metricsLogger := NewMetricsLogger()
+		metricsLogger := metricslogger.NewMetricsLogger()
 
 		cfg := openid4vp.NewClientConfig(
 			testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver, docLoader, activityLogger)
@@ -150,137 +146,9 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		err = interaction.PresentCredential(selectedCreds)
 		require.NoError(t, err)
 
-		checkActivityLogAfterOpenID4VPFlow(t, activityLogger, tc.verifierProfileID)
-		checkMetricsLoggerAfterOpenID4VPFlow(t, metricsLogger)
+		testHelper.CheckActivityLogAfterOpenID4VPFlow(t, activityLogger, tc.verifierProfileID)
+		testHelper.CheckMetricsLoggerAfterOpenID4VPFlow(t, metricsLogger)
 
 		fmt.Printf("done test %d\n", i)
 	}
-}
-
-func checkActivityLogAfterOpenID4VPFlow(t *testing.T, activityLogger *mem.ActivityLogger, verifierProfileID string) {
-	numberOfActivitiesLogged := activityLogger.Length()
-	require.Equal(t, 1, numberOfActivitiesLogged)
-
-	activity := activityLogger.AtIndex(0)
-
-	require.NotEmpty(t, activity.ID())
-	require.Equal(t, goapi.LogTypeCredentialActivity, activity.Type())
-	require.NotEmpty(t, activity.UnixTimestamp())
-	require.Equal(t, verifierProfileID, activity.Client())
-	require.Equal(t, "oidc-presentation", activity.Operation())
-	require.Equal(t, goapi.ActivityLogStatusSuccess, activity.Status())
-	require.Equal(t, 0, activity.Params().AllKeyValuePairs().Length())
-}
-
-func checkMetricsLoggerAfterOpenID4VPFlow(t *testing.T, metricsLogger *MetricsLogger) {
-	require.Len(t, metricsLogger.events, 4)
-
-	checkFetchRequestObjectMetricsEvent(t, metricsLogger.events[0])
-	checkGetQueryMetricsEvent(t, metricsLogger.events[1])
-	checkSendAuthorizedResponseMetricsEvent(t, metricsLogger.events[2])
-	checkPresentCredentialMetricsEvent(t, metricsLogger.events[3])
-}
-
-func checkFetchRequestObjectMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
-	require.Contains(t, metricsEvent.Event(), "Fetch request object via an HTTP GET request to "+
-		"http://localhost:8075/request-object/")
-	require.Equal(t, "Get query", metricsEvent.ParentEvent())
-	require.Positive(t, metricsEvent.DurationNanoseconds())
-}
-
-func checkGetQueryMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
-	require.Equal(t, "Get query", metricsEvent.Event())
-	require.Empty(t, metricsEvent.ParentEvent())
-	require.Positive(t, metricsEvent.DurationNanoseconds())
-}
-
-func checkSendAuthorizedResponseMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
-	require.Equal(t, "Send authorized response via an HTTP POST request to http://localhost:8075/oidc/present",
-		metricsEvent.Event())
-	require.Equal(t, "Present credential", metricsEvent.ParentEvent())
-	require.Positive(t, metricsEvent.DurationNanoseconds())
-}
-
-func checkPresentCredentialMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
-	require.Equal(t, "Present credential", metricsEvent.Event())
-	require.Empty(t, metricsEvent.ParentEvent())
-	require.Positive(t, metricsEvent.DurationNanoseconds())
-}
-
-type vpTestHelper struct {
-	KMS    *localkms.KMS
-	DIDDoc *api.DIDDocResolution
-}
-
-func newVPTestHelper(t *testing.T, didMethod string, keyType string) *vpTestHelper {
-	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
-	require.NoError(t, err)
-
-	// create DID
-	c, err := did.NewCreatorWithKeyWriter(kms)
-	require.NoError(t, err)
-
-	didDoc, err := c.Create(didMethod, &api.CreateDIDOpts{
-		KeyType:       keyType,
-		MetricsLogger: stderr.NewMetricsLogger(),
-	})
-	require.NoError(t, err)
-
-	return &vpTestHelper{
-		KMS:    kms,
-		DIDDoc: didDoc,
-	}
-}
-
-func (h *vpTestHelper) issueCredentials(t *testing.T, issuerProfileIDs []string) *api.VerifiableCredentialsArray {
-	oidc4ciSetup, err := oidc4ci.NewSetup(testenv.NewHttpRequest())
-	require.NoError(t, err)
-
-	err = oidc4ciSetup.AuthorizeIssuerBypassAuth("test_org")
-	require.NoError(t, err)
-
-	credentials := api.NewVerifiableCredentialsArray()
-
-	for i := 0; i < len(issuerProfileIDs); i++ {
-		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i])
-		require.NoError(t, err)
-
-		didResolver, err := did.NewResolver("http://did-resolver.trustbloc.local:8072/1.0/identifiers")
-		require.NoError(t, err)
-
-		clientConfig := openid4ci.ClientConfig{
-			ClientID:      "ClientID",
-			DIDResolver:   didResolver,
-			Crypto:        h.KMS.GetCrypto(),
-			MetricsLogger: stderr.NewMetricsLogger(),
-		}
-
-		interaction, err := openid4ci.NewInteraction(offerCredentialURL, &clientConfig)
-		require.NoError(t, err)
-
-		authorizeResult, err := interaction.Authorize()
-		require.NoError(t, err)
-		require.False(t, authorizeResult.UserPINRequired)
-
-		vm, err := h.DIDDoc.AssertionMethod()
-		require.NoError(t, err)
-
-		result, err := interaction.RequestCredential(&openid4ci.CredentialRequestOpts{}, vm)
-
-		require.NoError(t, err)
-		require.NotEmpty(t, result)
-
-		for i := 0; i < result.Length(); i++ {
-			vc := result.AtIndex(i)
-
-			serializedVC, err := vc.Serialize()
-			require.NoError(t, err)
-
-			println(serializedVC)
-			credentials.Add(result.AtIndex(i))
-		}
-
-	}
-
-	return credentials
 }
