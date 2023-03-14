@@ -27,18 +27,18 @@ class _CredentialCardState extends State<CredentialCard> {
 
   @override
   void initState() {
-    super.initState();
-    WalletSDKPlugin.resolveCredDisplayRendering(widget.credentialData.credentialDisplayData!).then(
+    WalletSDKPlugin.resolveCredDisplayRendering(widget.credentialData.credentialDisplayData).then(
             (response) {
           setState(() {
             var credentialDisplayEncodeData = json.encode(response);
             List<dynamic> responseJson = json.decode(credentialDisplayEncodeData);
             credentialDisplayName = responseJson.first['overviewName'];
             logoURL = responseJson.first['logo'];
-            backgroundColor ='0xff${responseJson.first['backgroundColor'].toString().replaceAll('#', '')}';
+            backgroundColor ='0xff${responseJson.first['backgroundColor']!.toString().replaceAll('#', '')}';
             textColor = '0xff${responseJson.first['textColor'].toString().replaceAll('#', '')}';
           });
         });
+    super.initState();
   }
 
   @override
@@ -79,7 +79,7 @@ class _CredentialCardState extends State<CredentialCard> {
                      },
                      fit: BoxFit.fitWidth,
                    ),
-                   trailing: widget.isDetailArrowRequired == false ? IconButton(
+                   trailing: widget.isDashboardWidget == false ? Column() : widget.isDetailArrowRequired == false ? IconButton(
                      icon: const Icon(Icons.arrow_circle_right, size: 32, color: Color(0xffB6B7C7)),
                      onPressed: () async {
                        Navigator.push(

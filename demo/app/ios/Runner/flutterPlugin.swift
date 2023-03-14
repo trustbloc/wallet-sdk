@@ -363,9 +363,11 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             for i in 0...(credentialDisplay.claimsLength())-1{
                 let claim = credentialDisplay.claim(at: i)!
                 var claims : [String: Any] = [:]
-                
+                if claim.isMasked() == true {
+                     claims["value"] = claim.value()
+                     claims["rawValue"] = claim.rawValue()
+                }
                 claims["rawValue"] = claim.rawValue()
-                claims["value"] = claim.value()
                 claims["valueType"] = claim.valueType()
                 claims["label"] = claim.label()
                 claimList.append(claims)
