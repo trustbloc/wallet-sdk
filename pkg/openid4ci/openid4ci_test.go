@@ -407,18 +407,17 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			require.NotEmpty(t, credentials[0])
 		})
 	})
-	t.Run("Invalid user PIN", func(t *testing.T) {
+	t.Run("Missing user PIN", func(t *testing.T) {
 		config := getTestClientConfig(t)
 
 		interaction, err := openid4ci.NewInteraction(createCredentialOfferIssuanceURI(t, "example.com"), config)
 		require.NoError(t, err)
 
-		credentialRequest := &openid4ci.CredentialRequestOpts{}
-
-		credentialResponses, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
+		credentialResponses, err := interaction.RequestCredential(nil, &jwtSignerMock{
 			keyID: mockKeyID,
 		})
-		testutil.RequireErrorContains(t, err, "invalid user PIN")
+		testutil.RequireErrorContains(t, err,
+			"the credential offer requires a user PIN, but it was not provided")
 		require.Nil(t, credentialResponses)
 	})
 	t.Run("Fail to fetch issuer's OpenID configuration", func(t *testing.T) {
@@ -642,8 +641,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		vcs, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
 			keyID: mockKeyID,
 		})
-		require.EqualError(t, err, "failed to parse credential from credential response at index 0: "+
-			"unmarshal new credential: unexpected end of JSON input")
+		require.EqualError(t, err, "CREDENTIAL_PARSE_FAILED(OCI1-0014):failed to parse credential from "+
+			"credential response at index 0: unmarshal new credential: unexpected end of JSON input")
 		require.Nil(t, vcs)
 	})
 	t.Run("Fail VC proof check - public key not found for issuer DID", func(t *testing.T) {
@@ -678,7 +677,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		credentials, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
 			keyID: mockKeyID,
 		})
-		require.EqualError(t, err, "failed to parse credential from credential response at index 0: "+
+		require.EqualError(t, err, "CREDENTIAL_PARSE_FAILED(OCI1-0014):failed to parse credential from "+
+			"credential response at index 0: "+
 			"decode new JWT credential: JWS decoding: unmarshal VC JWT claims: parse JWT: "+
 			"parse JWT from compact JWS: public key with KID d3cfd36b-4f75-4041-b416-f0a7a3c6b9f6 is not "+
 			"found for DID did:orb:uAAA:EiDpzs0hy0q0If4ZfJA1kxBQd9ed6FoBFhhqDWSiBeKaIg")
