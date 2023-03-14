@@ -36,7 +36,7 @@ class CredentialMetaDataCard extends StatefulWidget {
       var claimsList = credentialClaimsData;
       for (var claims in claimsList) {
         if (claims["label"].toString().contains("Issue Date")) {
-          var issueDate = claims["value"];
+          var issueDate = claims["rawValue"];
           return issueDate;
         }
       }
@@ -49,7 +49,7 @@ class CredentialMetaDataCard extends StatefulWidget {
       var claimsList = credentialClaimsData;
       for (var claims in claimsList) {
         if (claims["label"].toString().contains("Expiry Date")) {
-          var expiryDate = claims["value"];
+          var expiryDate = claims["rawValue"];
           return expiryDate;
         }
       }

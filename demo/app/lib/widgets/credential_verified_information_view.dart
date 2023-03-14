@@ -6,21 +6,38 @@ import 'package:app/models/credential_preview.dart';
 
 import 'package:app/main.dart';
 
-class CredentialVerifiedInformation extends StatelessWidget {
+class CredentialVerifiedInformation extends StatefulWidget {
 
   CredentialData credentialData;
   double? height;
-  CredentialVerifiedInformation({required this.credentialData,  this.height, Key? key}) : super(key: key);
 
-  final ScrollController credDataController = ScrollController();
+  CredentialVerifiedInformation({required this.credentialData, this.height, Key? key}) : super(key: key);
+
+  @override
+  State<CredentialVerifiedInformation> createState() => CredentialVerifiedState();
+}
+  class CredentialVerifiedState extends State< CredentialVerifiedInformation> {
+    bool showMaskedValue = true;
+    Color maskIconColor = Colors.blueGrey;
+    final ScrollController credDataController = ScrollController();
+    dynamic credentialClaimsData;
+
+    @override
+    void initState() {
+      super.initState();
+      WalletSDKPlugin.resolveCredDisplayRendering(widget.credentialData.credentialDisplayData).then(
+              (response) {
+            setState(() {
+              var credentialDisplayEncodeData = json.encode(response);
+              List<dynamic> responseJson = json.decode(credentialDisplayEncodeData);
+              credentialClaimsData = responseJson.first['claims'];
+            });
+          });
+    }
 
   Future<Widget> getCredentialDetails() async {
-    List<CredentialPreviewData> list;
-    var credentialDisplayData  = await WalletSDKPlugin.resolveCredDisplayRendering(credentialData.credentialDisplayData);
-    var credentialDisplayEncodeData = json.encode(credentialDisplayData);
-    List<dynamic> responseJson = json.decode(credentialDisplayEncodeData);
-    var credentialClaimsData = responseJson.first['claims'] as List;
-    list = credentialClaimsData.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
+    var credentialClaimsDataList = credentialClaimsData as List;
+    List<CredentialPreviewData> list = credentialClaimsDataList.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
     // TODO order function in the sdk is not working properly
 /*      list.sort((a, b) {
         int compare = a.order.compareTo(b.order);
@@ -29,6 +46,7 @@ class CredentialVerifiedInformation extends StatelessWidget {
     return listViewWidget(list);
   }
 
+
   Widget listViewWidget(List<CredentialPreviewData> credPrev) {
     return ListView.builder(
         itemCount: credPrev.length,
@@ -36,7 +54,7 @@ class CredentialVerifiedInformation extends StatelessWidget {
         controller: credDataController,
         shrinkWrap: true,
         itemBuilder: (context, position) {
-          if (credPrev[position].label != "Photo" && credPrev[position].valueType != "image"){
+          if (credPrev[position].valueType != "image"){
               return Row(
                 children: [
                   const Divider(
@@ -50,14 +68,38 @@ class CredentialVerifiedInformation extends StatelessWidget {
                           style: const TextStyle(
                               fontSize: 14, fontFamily: 'SF Pro', fontWeight: FontWeight.w400, color: Color(0xff6C6D7C))
                       ),
-                      subtitle: Text(
+                      subtitle: showMaskedValue && credPrev[position].value.isNotEmpty? Text(
                         credPrev[position].value,
                         style: const TextStyle(
                             fontSize: 16,
                             color: Color(0xff190C21),
                             fontFamily: 'SF Pro',
                             fontWeight: FontWeight.normal),
+                      ):  Text(
+                        credPrev[position].rawValue,
+                        style: const TextStyle(
+                            fontSize: 16,
+                            color: Color(0xff190C21),
+                            fontFamily: 'SF Pro',
+                            fontWeight: FontWeight.normal),
                       ),
+                      trailing: credPrev[position].value.isNotEmpty?  Column(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.remove_red_eye_rounded, size: 32,
+                                color: maskIconColor),
+                            onPressed: () async {
+                              setState(() {
+                                showMaskedValue = !showMaskedValue;
+                                if(maskIconColor == Colors.blueGrey){
+                                    maskIconColor = Colors.green;
+                                    }else{
+                                    maskIconColor = Colors.blueGrey;
+                              }});
+                            },
+                          )
+                        ],
+                      ) :  Column()
                     ),
                   ),
                 ],
@@ -88,7 +130,7 @@ class CredentialVerifiedInformation extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Image.memory(const Base64Decoder().convert(credPrev[position].value.split(',').last), width: 80, height: 80,),
+                      Image.memory(const Base64Decoder().convert(credPrev[position].rawValue.split(',').last), width: 80, height: 80,),
                     ],
                   ),
                 ),
@@ -101,7 +143,7 @@ class CredentialVerifiedInformation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        height: height,
+        height: widget.height,
         padding: const EdgeInsets.fromLTRB(0, 24, 0, 0),
         child: SingleChildScrollView(
           child: Column(
@@ -126,7 +168,7 @@ class CredentialVerifiedInformation extends StatelessWidget {
                         itemCount: 1,
                         itemBuilder: (BuildContext context, int index) {
                           return FutureBuilder<Widget>(
-                              future: getCredentialDetails(),
+                              future:  getCredentialDetails(),
                               builder: (context, AsyncSnapshot<Widget> snapshot) {
                                 return Padding(padding: const EdgeInsets.all(8.0), child: snapshot.data,);
                               }
