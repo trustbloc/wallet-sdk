@@ -22,12 +22,9 @@ import (
 )
 
 const (
-	vcsAPIGateway            = "https://localhost:4455"
-	VCSAPIDirect             = "http://localhost:8075"
 	offerCredentialURLFormat = "%s" + "/issuer/profiles/%s/interactions/initiate-oidc"
 	vcsAuthorizeEndpoint     = "%s" + "/oidc/authorize"
 	vcsTokenEndpoint         = "%s" + "/oidc/token"
-	oidcProviderURL          = "https://localhost:4444"
 	claimDataURL             = "https://mock-login-consent.example.com:8099/claim-data"
 	xAPIKey                  = "rw_token"
 )
@@ -73,13 +70,13 @@ func NewSetup(httpRequest *httprequest.Request) (*Setup, error) {
 	}, nil
 }
 
-func (s *Setup) AuthorizeIssuerBypassAuth(orgID string) error {
+func (s *Setup) AuthorizeIssuerBypassAuth(orgID, VCSAPIDirect string) error {
 	s.organizationID = orgID
 	s.apiURL = VCSAPIDirect
 	return nil
 }
 
-func (s *Setup) AuthorizeIssuer(orgID string) error {
+func (s *Setup) AuthorizeIssuer(orgID, oidcProviderURL, vcsAPIGateway string) error {
 	accessToken, err := oauth.IssueAccessToken(context.Background(), oidcProviderURL,
 		orgID, "test-org-secret", []string{"org_admin"})
 	if err != nil {

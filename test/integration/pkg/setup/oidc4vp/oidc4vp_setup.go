@@ -16,9 +16,6 @@ import (
 )
 
 const (
-	oidcProviderURL                    = "https://localhost:4444"
-	vcsAPIGateway                      = "https://localhost:4455"
-	vcsAPIDirect                       = "http://localhost:8075"
 	verifierProfileURL                 = "%s" + "/verifier/profiles"
 	verifierProfileURLFormat           = verifierProfileURL + "/%s"
 	initiateOidcInteractionURLFormat   = verifierProfileURLFormat + "/interactions/initiate-oidc"
@@ -44,13 +41,13 @@ func NewSetup(httpRequest *httprequest.Request) *Setup {
 	}
 }
 
-func (s *Setup) AuthorizeVerifierBypassAuth(orgID string) error {
+func (s *Setup) AuthorizeVerifierBypassAuth(orgID, vcsAPIDirect string) error {
 	s.organizationID = orgID
 	s.apiURL = vcsAPIDirect
 	return nil
 }
 
-func (e *Setup) AuthorizeVerifier(orgID string) error {
+func (e *Setup) AuthorizeVerifier(orgID, oidcProviderURL, vcsAPIGateway string) error {
 	accessToken, err := oauth.IssueAccessToken(context.Background(), oidcProviderURL,
 		orgID, "test-org-secret", []string{"org_admin"})
 	if err != nil {

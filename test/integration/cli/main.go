@@ -11,8 +11,17 @@ import (
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/testenv"
 )
 
+const (
+	caCertPath      = "fixtures/keys/tls/ec-cacert.pem"
+	vcsAPIDirectURL = "http://localhost:8075"
+)
+
 func main() {
 	args := os.Args[1:]
+	err := testenv.SetupTestEnv(caCertPath)
+	if err != nil {
+		panic(err)
+	}
 
 	if len(args) >= 2 && args[0] == "issuance" && args[1] != "" {
 		initiatePreAuthorizedIssuance(args[1:])
@@ -34,7 +43,7 @@ func initiatePreAuthorizedIssuance(issuerProfileIDs []string) {
 		panic(err)
 	}
 
-	err = oidc4ciSetup.AuthorizeIssuerBypassAuth("test_org")
+	err = oidc4ciSetup.AuthorizeIssuerBypassAuth("test_org", vcsAPIDirectURL)
 	if err != nil {
 		panic(err)
 	}
@@ -62,14 +71,9 @@ func initiatePreAuthorizedIssuance(issuerProfileIDs []string) {
 }
 
 func initiatePreAuthorizedVerification(verifierProfileIDs []string) {
-	err := testenv.SetupTestEnv("fixtures/keys/tls/ec-cacert.pem")
-	if err != nil {
-		panic(err)
-	}
-
 	oidc4vpSetup := oidc4vp.NewSetup(testenv.NewHttpRequest())
 
-	err = oidc4vpSetup.AuthorizeVerifierBypassAuth("test_org")
+	err := oidc4vpSetup.AuthorizeVerifierBypassAuth("test_org", vcsAPIDirectURL)
 	if err != nil {
 		panic(err)
 	}
