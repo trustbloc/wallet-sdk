@@ -5,20 +5,16 @@ The TrustBloc Demo app demonstrates the wallet-sdk API usage. At a high level, t
 - OpenID4CI Issuance APIs
 - OpenID4VP Presentation APIs 
 
-## Getting Started
+### Installation
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-Download Flutter : https://docs.flutter.dev/get-started/install/
-
-Add export PATH="$PATH:`pwd`/flutter/bin"
-Verify that the flutter command is available by running: `which flutter`
-
-Things you need to install before running the app in your local: 
+- Download Flutter : https://docs.flutter.dev/get-started/install/
+- Add export PATH="$PATH:`pwd`/flutter/bin"
+- Verify that the flutter command is available by running: `which flutter`
 - After installing the flutter Run `flutter doctor`. This command checks your environment and displays a report to the terminal window.
-  - If everything is installed as required. Sample output will be like this 
+  - If everything is installed as required, the sample output will be like this
   ```
       [✓] Flutter (Channel stable, 3.3.5, on macOS 13.0 22A380 darwin-arm, locale en-CA)
       [✓] Android toolchain - develop for Android devices (Android SDK version 33.0.0)
@@ -29,14 +25,26 @@ Things you need to install before running the app in your local:
       [✓] HTTP Host Availability
     ```
 - The Dart SDK is bundled with Flutter; it is not necessary to install Dart separately.
-- For ios setup - install [XCode](https://docs.flutter.dev/get-started/install/macos#install-xcode)
-- Trustbloc app uses the plugin, therefore we uses third-party CocoaPods dependency manager `sudo gem install cocoapods`[See More here][https://docs.flutter.dev/get-started/install/macos#deploy-to-ios-devices]
-  - Once we clone the project, run `pod install` to get all the latest dependencies.
-- For android setup - install [Android Studio](https://docs.flutter.dev/get-started/install/macos#android-setup)
-- Build the sdk bindings by following this [document](https://github.com/trustbloc/wallet-sdk/blob/main/cmd/wallet-sdk-gomobile/README.md)
-- Either run the emulator for android or attach the usb device, android studio will detect the device to run the app on your phone/test device.
-- Frequent Issue and solutions:  
+- iOS
+  - For ios setup - install [XCode](https://docs.flutter.dev/get-started/install/macos#install-xcode)
+  - TrustBloc app uses the plugin, therefore we uses third-party CocoaPods dependency manager `sudo gem install cocoapods`[See More here][https://docs.flutter.dev/get-started/install/macos#deploy-to-ios-devices]
+  - Apple Developer Account
+- Android
+  - For android setup - install [Android Studio](https://docs.flutter.dev/get-started/install/macos#android-setup)
 
+### Build and Run
+- Build the SDK Bindings by following this [document](https://github.com/trustbloc/wallet-sdk/blob/main/cmd/wallet-sdk-gomobile/README.md)
+- Android
+  - Open the app in Android Studio
+  - Either run the Emulator for Android or attach the usb device, Android studio will detect the device to run the app on your phone/test device.
+- iOS
+  - run `flutter build`
+  - run `pod install`
+  - Open the app in XCode
+  - Install app to Simulator or Device from the XCode Build tab
+
+### Frequent Issues and Troubleshooting
+- Deprecation error in Android Studio
 ```
 Problem:
 Launching lib/main.dart on sdk gphone64 arm64 in debug mode...
@@ -49,7 +57,7 @@ Solution:
 In your android studio: 
 Preferences > Build, Execution, Deployment > Build Tools > Gradle > check "Generate .IML files for modules imported from Gradle 
 ```
-
+- Issues with Android SDK and NDK installation
 ```
 Problem: 
 Having issues with android sdk and ndk installation
@@ -60,7 +68,3 @@ Install the SDK Tools by following:
 Preferences | Appearance & Behavior | System Settings | Android SDK | SDK Tools | Android Tools 
 Preferences | Appearance & Behavior | System Settings | Android SDK | SDK Tools | NDK
 ```
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
