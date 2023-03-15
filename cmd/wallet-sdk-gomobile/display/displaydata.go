@@ -10,7 +10,6 @@ package display
 import (
 	"encoding/json"
 	"errors"
-	"strings"
 
 	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 )
@@ -233,9 +232,7 @@ func (c *Claim) RawValue() string {
 // IsMasked indicates whether this claim's value is masked. If this method returns true, then the Value method
 // will return the masked value while the RawValue method will return the unmasked version.
 func (c *Claim) IsMasked() bool {
-	patternSplit := strings.Split(c.claim.Pattern, ":")
-
-	return len(patternSplit) == 2 && patternSplit[0] == "mask"
+	return c.claim.Mask != ""
 }
 
 // Pattern returns the pattern information for this claim.

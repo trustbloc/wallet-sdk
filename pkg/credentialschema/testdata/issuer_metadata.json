@@ -68,7 +68,17 @@
             }
           ],
           "value_type":"string",
-          "pattern":"mask:regex(^(.*).{4}$)"
+          "mask":"regex(^(.*).{4}$)"
+        },
+        "really_sensitive_id":{
+          "display":[
+            {
+              "name":"Really Sensitive ID",
+              "locale":"en-US"
+            }
+          ],
+          "value_type":"string",
+          "mask":"regex((.*))"
         },
         "chemistry":{
           "display":[

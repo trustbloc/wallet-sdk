@@ -169,13 +169,18 @@ func checkCredentialDisplay(t *testing.T, actualCredentialDisplay, expectedCrede
 		for j := 0; j < len(expectedClaimsChecklist.Claims); j++ {
 			expectedClaim := expectedClaimsChecklist.Claims[j]
 			if claim.Label() == expectedClaim.Label() &&
+				claim.RawID() == expectedClaim.RawID() &&
+				claim.RawValue() == expectedClaim.RawValue() &&
 				claim.Value() == expectedClaim.Value() &&
 				claim.Locale() == expectedClaim.Locale() &&
+				claim.IsMasked() == expectedClaim.IsMasked() &&
 				claimOrderMatches(t, claim, expectedClaim) {
 				if expectedClaimsChecklist.Found[j] {
-					require.FailNow(t, "duplicate claim found: ",
-						"[Label: %s] [Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
-						claim.Label(), claim.ValueType(), claim.Value(), getOrderAsString(t, claim), claim.Locale())
+					require.FailNow(t, "duplicate claim found",
+						"[Claim ID: %s] [Pattern: %s] [Raw value: %s] [Label: %s] "+
+							"[Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
+						claim.RawID(), claim.Pattern(), claim.RawValue(), claim.Label(),
+						claim.ValueType(), claim.Value(), getOrderAsString(t, claim), claim.Locale())
 				}
 
 				expectedClaimsChecklist.Found[j] = true
@@ -184,9 +189,11 @@ func checkCredentialDisplay(t *testing.T, actualCredentialDisplay, expectedCrede
 			}
 
 			if j == len(expectedClaimsChecklist.Claims)-1 {
-				require.FailNow(t, "received unexpected claim: ",
-					"[Label: %s] [Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
-					claim.Label(), claim.ValueType(), claim.Value(), getOrderAsString(t, claim), claim.Locale())
+				require.FailNow(t, "received unexpected claim",
+					"[Claim ID: %s] [Pattern: %s] [Raw value: %s] [Label: %s] "+
+						"[Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
+					claim.RawID(), claim.Pattern(), claim.RawValue(), claim.Label(),
+					claim.ValueType(), claim.Value(), getOrderAsString(t, claim), claim.Locale())
 			}
 		}
 	}
@@ -194,9 +201,11 @@ func checkCredentialDisplay(t *testing.T, actualCredentialDisplay, expectedCrede
 	for i := 0; i < len(expectedClaimsChecklist.Claims); i++ {
 		if !expectedClaimsChecklist.Found[i] {
 			expectedClaim := expectedClaimsChecklist.Claims[i]
-			require.FailNow(t, "the following claim was expected but wasn't received: ",
-				"[Label: %s] [Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
-				expectedClaim.Label, expectedClaim.ValueType, expectedClaim.Value, getOrderAsString(t, expectedClaim),
+			require.FailNow(t, "claim was expected but wasn't received",
+				"[Claim ID: %s] [Pattern: %s] [Raw value: %s] [Label: %s] "+
+					"[Value Type: %s] [Value: %s] [Order: %s] [Locale: %s]",
+				expectedClaim.RawID, expectedClaim.Pattern, expectedClaim.RawValue, expectedClaim.Label,
+				expectedClaim.ValueType, expectedClaim.Value, getOrderAsString(t, expectedClaim),
 				expectedClaim.Locale)
 		}
 	}

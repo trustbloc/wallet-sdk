@@ -47,6 +47,7 @@ type Claim struct {
 	ValueType string    `json:"value_type,omitempty"`
 	Order     *int      `json:"order,omitempty"`
 	Pattern   string    `json:"pattern,omitempty"`
+	Mask      string    `json:"mask,omitempty"`
 }
 
 // Logo represents display information for a logo.

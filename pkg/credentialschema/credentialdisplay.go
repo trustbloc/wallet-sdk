@@ -183,8 +183,8 @@ func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *veri
 
 	var value string
 
-	if isMaskPattern(claim.Pattern) {
-		maskedValue, err := getMaskedValue(rawValue, claim.Pattern)
+	if claim.Mask != "" {
+		maskedValue, err := getMaskedValue(rawValue, claim.Mask)
 		if err != nil {
 			return nil, err
 		}
@@ -200,30 +200,14 @@ func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *veri
 		RawValue:  rawValue,
 		Value:     value,
 		Pattern:   claim.Pattern,
+		Mask:      claim.Mask,
 		Locale:    labelLocale,
 	}, nil
 }
 
-func isMaskPattern(pattern string) bool {
-	patternSplit := strings.Split(pattern, ":")
-
-	if len(patternSplit) == 2 &&
-		patternSplit[0] == "mask" &&
-		strings.HasPrefix(patternSplit[1], "regex(") &&
-		strings.HasSuffix(patternSplit[1], ")") {
-		return true
-	}
-
-	return false
-}
-
-func getMaskedValue(rawValue, pattern string) (string, error) {
-	patternSplitByColons := strings.Split(pattern, ":")
-
-	regexPattern := patternSplitByColons[1]
-
+func getMaskedValue(rawValue, maskingPattern string) (string, error) {
 	// Trim "regex(" from the beginning and ")" from the end
-	regex := regexPattern[6 : len(regexPattern)-1]
+	regex := maskingPattern[6 : len(maskingPattern)-1]
 
 	r, err := regexp.Compile(regex)
 	if err != nil {

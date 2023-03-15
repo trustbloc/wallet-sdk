@@ -209,7 +209,11 @@ func TestResolve(t *testing.T) {
 					{RawID: "gpa", Label: "GPA", RawValue: "4.0", ValueType: "number", Locale: "en-US"},
 					{
 						RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789",
-						Value: "*****6789", ValueType: "string", Pattern: "mask:regex(^(.*).{4}$)", Locale: "en-US",
+						Value: "*****6789", ValueType: "string", Mask: "regex(^(.*).{4}$)", Locale: "en-US",
+					},
+					{
+						RawID: "really_sensitive_id", Label: "Really Sensitive ID", RawValue: "abcdefg",
+						Value: "*******", ValueType: "string", Mask: "regex((.*))", Locale: "en-US",
 					},
 					{
 						RawID: "chemistry", Label: "Chemistry Final Grade", RawValue: "78",
@@ -370,7 +374,7 @@ func TestResolve(t *testing.T) {
 
 		issuerMetadata.CredentialsSupported[0].CredentialSubject["sensitive_id"] = issuer.Claim{
 			Displays: []issuer.Display{{}},
-			Pattern:  "mask:regex(()",
+			Mask:     "regex(()",
 		}
 
 		resolvedDisplayData, errResolve := credentialschema.Resolve(
@@ -414,7 +418,11 @@ func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *crede
 		{RawID: "gpa", Label: "GPA", RawValue: "4.0", ValueType: "number", Locale: "en-US"},
 		{
 			RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789", Value: "*****6789",
-			ValueType: "string", Pattern: "mask:regex(^(.*).{4}$)", Locale: "en-US",
+			ValueType: "string", Mask: "regex(^(.*).{4}$)", Locale: "en-US",
+		},
+		{
+			RawID: "really_sensitive_id", Label: "Really Sensitive ID", RawValue: "abcdefg", Value: "*******",
+			ValueType: "string", Mask: "regex((.*))", Locale: "en-US",
 		},
 		{
 			RawID: "chemistry", Label: "Chemistry Final Grade", RawValue: "78",
@@ -444,6 +452,7 @@ func checkForDefaultDisplayData(t *testing.T, resolvedDisplayData *credentialsch
 		{RawID: "surname", RawValue: "Bowman"},
 		{RawID: "gpa", RawValue: "4.0"},
 		{RawID: "sensitive_id", RawValue: "123456789"},
+		{RawID: "really_sensitive_id", RawValue: "abcdefg"},
 		{RawID: "course_grades", RawValue: "map[chemistry:78 physics:85]"},
 	}
 
@@ -489,16 +498,13 @@ func verifyClaimsAnyOrder(t *testing.T, actualClaims []credentialschema.Resolved
 
 	claimsMatched := make([]bool, len(expectedClaims))
 
-	for _, actualClaim := range actualClaims {
-		for j, expectedClaim := range expectedClaims {
+	for i := range actualClaims {
+		for j := range expectedClaims {
 			if claimsMatched[j] {
 				continue
 			}
 
-			actualClaim := actualClaim     // Resolves implicit memory aliasing warning from linter
-			expectedClaim := expectedClaim // Resolves implicit memory aliasing warning from linter
-
-			if claimsMatch(&actualClaim, &expectedClaim) {
+			if claimsMatch(&actualClaims[i], &expectedClaims[j]) {
 				claimsMatched[j] = true
 
 				break
@@ -521,6 +527,7 @@ func claimsMatch(claim1, claim2 *credentialschema.ResolvedClaim) bool {
 		claim1.ValueType == claim2.ValueType &&
 		claim1.RawID == claim2.RawID &&
 		claim1.Pattern == claim2.Pattern &&
+		claim1.Mask == claim2.Mask &&
 		claim1.RawValue == claim2.RawValue {
 		return ordersMatch(claim1.Order, claim2.Order)
 	}

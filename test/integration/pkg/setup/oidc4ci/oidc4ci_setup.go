@@ -167,6 +167,8 @@ func (s *Setup) InitiatePreAuthorizedIssuance(issuerProfileID string) (string, e
 			"preferredLanguage": "English",
 			"mail":              "john.doe@foo.bar",
 			"photo":             "data-URL-encoded image",
+			"sensitiveID":       "123456789",
+			"reallySensitiveID": "abcdefg",
 		}
 	}
 

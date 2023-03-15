@@ -26,7 +26,10 @@ const (
 		`{"raw_id":"surname","label":"Surname","value_type":"string","order":2,"raw_value":"Bowman","locale":"en-US"},` +
 		`{"raw_id":"gpa","label":"GPA","value_type":"number","raw_value":"4.0","locale":"en-US"},` +
 		`{"raw_id":"sensitive_id","label":"Sensitive ID","value_type":"string","value":"*****6789",` +
-		`"raw_value":"123456789","pattern":"mask:regex(^(.*).{4}$)","locale":"en-US"}]}`
+		`"raw_value":"123456789","mask":"regex(^(.*).{4}$)","locale":"en-US"},` +
+		`{"raw_id":"really_sensitive_id","label":"Really Sensitive ID","value_type":"string","value":"*******",` +
+		`"raw_value":"abcdefg","mask":"regex((.*))","locale":"en-US"}` +
+		`]}`
 
 	sampleDisplayData = `{"issuer_display":` + sampleIssuerDisplay +
 		`,"credential_displays":[` + sampleCredentialDisplay + `]}`
@@ -98,7 +101,7 @@ func TestCredentialDisplay_ClaimAtIndex_IndexOutOfBounds(t *testing.T) {
 	credentialDisplay, err := display.ParseCredentialDisplay(sampleCredentialDisplay)
 	require.NoError(t, err)
 
-	claim := credentialDisplay.ClaimAtIndex(5)
+	claim := credentialDisplay.ClaimAtIndex(6)
 	require.Nil(t, claim)
 
 	claim = credentialDisplay.ClaimAtIndex(-1)
