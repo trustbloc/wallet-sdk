@@ -131,12 +131,12 @@ func checkCredentialDisplay(t *testing.T, credentialDisplay *display.CredentialD
 	require.Equal(t, "#12107c", credentialOverview.BackgroundColor())
 	require.Equal(t, "#FFFFFF", credentialOverview.TextColor())
 
-	require.Equal(t, 5, credentialDisplay.ClaimsLength())
+	require.Equal(t, 6, credentialDisplay.ClaimsLength())
 
 	checkClaims(t, credentialDisplay)
 }
 
-func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { //nolint:gocyclo // Test file
+func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { //nolint:gocyclo,gocognit // Test file
 	t.Helper()
 
 	// Since the claims object in the supported_credentials object from the issuer is a map which effectively gets
@@ -150,6 +150,7 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 		RawValue  string
 		Locale    string
 		Pattern   string
+		IsMasked  bool
 		Order     *int
 	}
 
@@ -204,7 +205,16 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 				Value:     "*****6789",
 				RawValue:  "123456789",
 				Locale:    "en-US",
-				Pattern:   "mask:regex(^(.*).{4}$)",
+				IsMasked:  true,
+			},
+			{
+				RawID:     "really_sensitive_id",
+				Label:     "Really Sensitive ID",
+				ValueType: "string",
+				Value:     "*******",
+				RawValue:  "abcdefg",
+				Locale:    "en-US",
+				IsMasked:  true,
 			},
 		},
 	}
@@ -221,6 +231,7 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 				claim.Locale() == expectedClaim.Locale &&
 				claim.RawID() == expectedClaim.RawID &&
 				claim.Pattern() == expectedClaim.Pattern &&
+				claim.IsMasked() == expectedClaim.IsMasked &&
 				claim.RawValue() == expectedClaim.RawValue &&
 				claimOrderMatches(t, claim, expectedClaim.Order) {
 				if expectedClaimsChecklist.Found[j] {

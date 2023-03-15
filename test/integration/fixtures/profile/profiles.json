@@ -121,6 +121,26 @@
                     }
                   ],
                   "value_type":"string"
+                },
+                "sensitiveID":{
+                  "display":[
+                    {
+                      "name":"Sensitive ID",
+                      "locale":"en-US"
+                    }
+                  ],
+                  "value_type":"string",
+                  "mask":"regex(^(.*).{4}$)"
+                },
+                "reallySensitiveID":{
+                  "display":[
+                    {
+                      "name":"Really Sensitive ID",
+                      "locale":"en-US"
+                    }
+                  ],
+                  "value_type":"string",
+                  "mask":"regex((.*))"
                 }
               },
               "display":[
@@ -461,6 +481,26 @@
                     }
                   ],
                   "value_type":"image"
+                },
+                "sensitiveID":{
+                  "display":[
+                    {
+                      "name":"Sensitive ID",
+                      "locale":"en-US"
+                    }
+                  ],
+                  "value_type":"string",
+                  "mask":"regex(^(.*).{4}$)"
+                },
+                "reallySensitiveID":{
+                  "display":[
+                    {
+                      "name":"Really Sensitive ID",
+                      "locale":"en-US"
+                    }
+                  ],
+                  "value_type":"string",
+                  "mask":"regex((.*))"
                 }
               }
             }

@@ -17,44 +17,51 @@
       },
       "claims":[
         {
+          "raw_id": "displayName",
           "label":"Employee",
           "value_type": "string",
-          "value":"John Doe",
+          "raw_value":"John Doe",
           "locale":"en-US"
         },
         {
+          "raw_id": "givenName",
           "label":"Given Name",
           "value_type": "string",
-          "value":"John",
+          "raw_value":"John",
           "locale":"en-US"
         },
         {
+          "raw_id": "jobTitle",
           "label":"Job Title",
           "value_type": "string",
-          "value":"Software Developer",
+          "raw_value":"Software Developer",
           "locale":"en-US"
         },
         {
+          "raw_id": "mail",
           "label":"Mail",
           "value_type": "string",
-          "value":"john.doe@foo.bar",
+          "raw_value":"john.doe@foo.bar",
           "locale":"en-US"
         },
         {
+          "raw_id": "photo",
           "label":"Photo",
           "value_type": "image",
-          "value":"data-URL-encoded image"
+          "raw_value":"data-URL-encoded image"
         },
         {
+          "raw_id": "preferredLanguage",
           "label":"Preferred Language",
           "value_type": "string",
-          "value":"English",
+          "raw_value":"English",
           "locale":"en-US"
         },
         {
+          "raw_id": "surname",
           "label":"Surname",
           "value_type": "string",
-          "value":"Doe",
+          "raw_value":"Doe",
           "locale":"en-US"
         }
       ]
