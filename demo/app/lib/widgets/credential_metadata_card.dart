@@ -17,10 +17,14 @@ class CredentialMetaDataCard extends StatefulWidget {
   class CredentialMetaDataCardState extends State<CredentialMetaDataCard> {
     String issueDate = '';
     String expiryDate = '';
-    dynamic credentialClaimsData;
+    dynamic credentialClaimsData = [];
+    bool isLoading = false;
 
     @override
     void initState() {
+      setState(() {
+        isLoading = true;
+      });
       super.initState();
       WalletSDKPlugin.resolveCredDisplayRendering(widget.credentialData.credentialDisplayData).then(
               (response) {
@@ -28,6 +32,7 @@ class CredentialMetaDataCard extends StatefulWidget {
               var credentialDisplayEncodeData = json.encode(response);
               List<dynamic> responseJson = json.decode(credentialDisplayEncodeData);
               credentialClaimsData = responseJson.first['claims'];
+              isLoading = false;
             });
           });
     }
@@ -58,7 +63,7 @@ class CredentialMetaDataCard extends StatefulWidget {
 
     @override
     Widget build(BuildContext context) {
-      return Container(
+      return  isLoading ? const Center(child: LinearProgressIndicator()):Container(
           decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: const BorderRadius.only(
