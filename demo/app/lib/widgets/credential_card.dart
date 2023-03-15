@@ -79,7 +79,7 @@ class _CredentialCardState extends State<CredentialCard> {
                      },
                      fit: BoxFit.fitWidth,
                    ),
-                   trailing: widget.isDashboardWidget == false ? Column() : widget.isDetailArrowRequired == false ? IconButton(
+                   trailing: widget.isDetailArrowRequired == false ? IconButton(
                      icon: const Icon(Icons.arrow_circle_right, size: 32, color: Color(0xffB6B7C7)),
                      onPressed: () async {
                        Navigator.push(
