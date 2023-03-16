@@ -10,13 +10,39 @@ import (
 	"errors"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
-	"github.com/trustbloc/wallet-sdk/pkg/common"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 )
+
+// ResolveOpts contains the various parameters for the Resolve function.
+type ResolveOpts struct {
+	VCs               *api.VerifiableCredentialsArray // Required
+	IssuerURI         string                          // Required
+	PreferredLocale   string                          // Optional
+	MetricsLogger     api.MetricsLogger               // Optional
+	additionalHeaders api.Headers                     // Optional, must use the AddHeaders method to modify this
+}
+
+// NewResolveOpts creates a new ResolveOpts object. This function only takes in required parameters. Optional parameters
+// can be set by setting the fields on the ResolveOpts object that you get back from this function directly.
+func NewResolveOpts(vcs *api.VerifiableCredentialsArray, issuerURI string) *ResolveOpts {
+	return &ResolveOpts{
+		VCs:       vcs,
+		IssuerURI: issuerURI,
+	}
+}
+
+// AddHeaders adds the given HTTP headers to all REST calls made to the issuer during display resolution.
+func (r *ResolveOpts) AddHeaders(headers *api.Headers) {
+	headersAsArray := headers.GetAll()
+
+	for i := range headersAsArray {
+		r.additionalHeaders.Add(&headersAsArray[i])
+	}
+}
 
 func prepareOpts(resolveDisplayOpts *ResolveOpts) ([]goapicredentialschema.ResolveOpt, error) {
 	if resolveDisplayOpts == nil {
@@ -31,28 +57,22 @@ func prepareOpts(resolveDisplayOpts *ResolveOpts) ([]goapicredentialschema.Resol
 		return nil, errors.New("no issuer URI specified")
 	}
 
-	const minimumNumberOfOpts = 2
+	httpClient := wrapper.NewHTTPClient()
+	httpClient.AddHeaders(&resolveDisplayOpts.additionalHeaders)
 
-	opts := make([]goapicredentialschema.ResolveOpt, minimumNumberOfOpts)
-
-	opts[0] = goapicredentialschema.WithCredentials(mobileVCsArrayToGoAPIVCsArray(resolveDisplayOpts.VCs))
-	opts[1] = goapicredentialschema.WithIssuerURI(resolveDisplayOpts.IssuerURI)
-
-	if resolveDisplayOpts.PreferredLocale != "" {
-		opt := goapicredentialschema.WithPreferredLocale(resolveDisplayOpts.PreferredLocale)
-
-		opts = append(opts, opt) //nolint:makezero // false positive
+	opts := []goapicredentialschema.ResolveOpt{
+		goapicredentialschema.WithCredentials(mobileVCsArrayToGoAPIVCsArray(resolveDisplayOpts.VCs)),
+		goapicredentialschema.WithIssuerURI(resolveDisplayOpts.IssuerURI),
+		goapicredentialschema.WithPreferredLocale(resolveDisplayOpts.PreferredLocale),
+		goapicredentialschema.WithHTTPClient(httpClient),
 	}
 
 	if resolveDisplayOpts.MetricsLogger != nil {
 		opt := goapicredentialschema.WithMetricsLogger(
 			&wrapper.MobileMetricsLoggerWrapper{MobileAPIMetricsLogger: resolveDisplayOpts.MetricsLogger})
 
-		opts = append(opts, opt) //nolint:makezero // false positive
+		opts = append(opts, opt)
 	}
-
-	//nolint:makezero // false positive
-	opts = append(opts, goapicredentialschema.WithHTTPClient(common.DefaultHTTPClient()))
 
 	return opts, nil
 }

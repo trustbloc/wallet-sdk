@@ -32,9 +32,18 @@ var (
 type mockIssuerServerHandler struct {
 	t              *testing.T
 	issuerMetadata string
+	headersToCheck *api.Headers
 }
 
 func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if m.headersToCheck != nil {
+		for _, headerToCheck := range m.headersToCheck.GetAll() {
+			// Note: for these tests, we're assuming that there aren't multiple values under a single name/key.
+			value := request.Header.Get(headerToCheck.Name)
+			require.Equal(m.t, headerToCheck.Value, value)
+		}
+	}
+
 	_, err := writer.Write([]byte(m.issuerMetadata))
 	require.NoError(m.t, err)
 }
@@ -57,18 +66,33 @@ func TestResolve(t *testing.T) {
 		vcs := api.NewVerifiableCredentialsArray()
 		vcs.Add(vc)
 
-		resolveOpts := &display.ResolveOpts{
-			VCs:       vcs,
-			IssuerURI: server.URL,
-		}
+		t.Run("Without additional headers", func(t *testing.T) {
+			resolveOpts := display.NewResolveOpts(vcs, server.URL)
 
-		t.Run("Without a preferred locale specified", func(t *testing.T) {
-			resolvedDisplayData, err := display.Resolve(resolveOpts)
-			require.NoError(t, err)
-			checkResolvedDisplayData(t, resolvedDisplayData)
+			t.Run("Without a preferred locale specified", func(t *testing.T) {
+				resolvedDisplayData, err := display.Resolve(resolveOpts)
+				require.NoError(t, err)
+				checkResolvedDisplayData(t, resolvedDisplayData)
+			})
+			t.Run("With a preferred locale specified", func(t *testing.T) {
+				resolveOpts.PreferredLocale = "en-us"
+
+				resolvedDisplayData, err := display.Resolve(resolveOpts)
+				require.NoError(t, err)
+				checkResolvedDisplayData(t, resolvedDisplayData)
+			})
 		})
-		t.Run("With a preferred locale specified", func(t *testing.T) {
-			resolveOpts.PreferredLocale = "en-us"
+		t.Run("With additional headers", func(t *testing.T) {
+			resolveOpts := display.NewResolveOpts(vcs, server.URL)
+
+			additionalHeaders := api.NewHeaders()
+
+			additionalHeaders.Add(api.NewHeader("header-name-1", "header-value-1"))
+			additionalHeaders.Add(api.NewHeader("header-name-2", "header-value-2"))
+
+			resolveOpts.AddHeaders(additionalHeaders)
+
+			issuerServerHandler.headersToCheck = additionalHeaders
 
 			resolvedDisplayData, err := display.Resolve(resolveOpts)
 			require.NoError(t, err)

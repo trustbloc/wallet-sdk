@@ -9,12 +9,13 @@ SPDX-License-Identifier: Apache-2.0
 package vcparse
 
 import (
+	"net/http"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
-	"github.com/trustbloc/wallet-sdk/pkg/common"
 )
 
 // Opts represents various options for the Parse function.
@@ -45,7 +46,7 @@ func Parse(vc string, opts *Opts) (*api.VerifiableCredential, error) {
 
 	if opts.DocumentLoader == nil {
 		parseCredentialOpts = append(parseCredentialOpts,
-			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())))
+			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)))
 	} else {
 		wrappedLoader := &wrapper.DocumentLoaderWrapper{
 			DocumentLoader: opts.DocumentLoader,

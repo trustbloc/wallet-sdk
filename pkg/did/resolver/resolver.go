@@ -9,6 +9,7 @@ package resolver
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/longform"
@@ -18,7 +19,6 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/key"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/web"
 
-	"github.com/trustbloc/wallet-sdk/pkg/common"
 	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
@@ -49,7 +49,7 @@ func NewDIDResolver(resolverServerURI string) (*DIDResolver, error) {
 	}
 
 	if resolverServerURI != "" {
-		httpVDR, err := httpbinding.New(resolverServerURI, httpbinding.WithHTTPClient(common.DefaultHTTPClient()),
+		httpVDR, err := httpbinding.New(resolverServerURI, httpbinding.WithHTTPClient(http.DefaultClient),
 			httpbinding.WithAccept(func(method string) bool {
 				// For now, let the resolver server act as a fallback for all DID methods the sdk does not recognize.
 				return true

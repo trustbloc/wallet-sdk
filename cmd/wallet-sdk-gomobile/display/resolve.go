@@ -7,26 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package display
 
 import (
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 )
-
-// ResolveOpts contains the various parameters for the Resolve function.
-type ResolveOpts struct {
-	VCs             *api.VerifiableCredentialsArray // Required
-	IssuerURI       string                          // Required
-	PreferredLocale string                          // Optional
-	MetricsLogger   api.MetricsLogger               // Optional
-}
-
-// NewResolveOpts creates a new ResolveOpts object. This function only takes in required parameters. Optional parameters
-// can be set by setting the fields on the ResolveOpts object that you get back from this function directly.
-func NewResolveOpts(vcs *api.VerifiableCredentialsArray, issuerURI string) *ResolveOpts {
-	return &ResolveOpts{
-		VCs:       vcs,
-		IssuerURI: issuerURI,
-	}
-}
 
 // Resolve resolves display information for issued credentials based on an issuer's metadata, which is fetched
 // using the issuer's (base) URI.

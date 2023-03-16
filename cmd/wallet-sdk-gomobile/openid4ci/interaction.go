@@ -45,13 +45,14 @@ func NewCredentialRequestOpts(userPIN string) *CredentialRequestOpts {
 // ActivityLogger is optional, but if provided then activities will be logged there.
 // If not provided, then no activities will be logged.
 type ClientConfig struct {
-	ClientID                string
-	Crypto                  api.Crypto
-	DIDResolver             api.DIDResolver
-	ActivityLogger          api.ActivityLogger
-	MetricsLogger           api.MetricsLogger
-	disableVCProofChecks    bool
-	httpClientSkipTLSVerify bool
+	ClientID                         string
+	Crypto                           api.Crypto
+	DIDResolver                      api.DIDResolver
+	ActivityLogger                   api.ActivityLogger
+	MetricsLogger                    api.MetricsLogger
+	disableVCProofChecks             bool
+	additionalHeaders                api.Headers
+	disableHTTPClientTLSVerification bool
 }
 
 // NewClientConfig creates the client config object.
@@ -73,9 +74,18 @@ func (c *ClientConfig) DisableVCProofChecks() {
 	c.disableVCProofChecks = true
 }
 
+// AddHeaders adds the given HTTP headers to all REST calls made to the issuer during the OpenID4CI flow.
+func (c *ClientConfig) AddHeaders(headers *api.Headers) {
+	headersAsArray := headers.GetAll()
+
+	for i := range headersAsArray {
+		c.additionalHeaders.Add(&headersAsArray[i])
+	}
+}
+
 // DisableHTTPClientTLSVerify disables tls verification, should be used only for test purposes.
 func (c *ClientConfig) DisableHTTPClientTLSVerify() {
-	c.httpClientSkipTLSVerify = true
+	c.disableHTTPClientTLSVerification = true
 }
 
 // NewInteraction creates a new OpenID4CI Interaction.
@@ -164,12 +174,11 @@ func (i *Interaction) IssuerURI() string {
 func unwrapConfig(config *ClientConfig) *openid4cigoapi.ClientConfig {
 	activityLogger := createGoAPIActivityLogger(config.ActivityLogger)
 
-	httpClient := common.DefaultHTTPClient()
-	if config.httpClientSkipTLSVerify {
-		httpClient = common.InsecureHTTPClient()
-	}
+	httpClient := wrapper.NewHTTPClient()
+	httpClient.AddHeaders(&config.additionalHeaders)
+	httpClient.DisableTLSVerification = config.disableHTTPClientTLSVerification
 
-	return &openid4cigoapi.ClientConfig{
+	goAPIClientConfig := &openid4cigoapi.ClientConfig{
 		ClientID:             config.ClientID,
 		DIDResolver:          &wrapper.VDRResolverWrapper{DIDResolver: config.DIDResolver},
 		ActivityLogger:       activityLogger,
@@ -177,6 +186,8 @@ func unwrapConfig(config *ClientConfig) *openid4cigoapi.ClientConfig {
 		DisableVCProofChecks: config.disableVCProofChecks,
 		HTTPClient:           httpClient,
 	}
+
+	return goAPIClientConfig
 }
 
 func createGoAPIActivityLogger(mobileAPIActivityLogger api.ActivityLogger) goapi.ActivityLogger {

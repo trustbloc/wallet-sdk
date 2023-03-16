@@ -9,6 +9,7 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -26,7 +27,6 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	sdkapi "github.com/trustbloc/wallet-sdk/pkg/api"
-	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
 )
 
@@ -38,7 +38,7 @@ func TestCredentialAPI(t *testing.T) {
 
 	credStore := credential.NewInMemoryDB()
 
-	ldLoader := ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())
+	ldLoader := ld.NewDefaultDocumentLoader(http.DefaultClient)
 
 	ldLoaderWrapper := &documentLoaderReverseWrapper{DocumentLoader: ldLoader}
 

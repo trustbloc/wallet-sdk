@@ -13,7 +13,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/memstorage"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
@@ -60,7 +59,7 @@ func TestResolve(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Run("Credentials supported object contains display info for the given VC", func(t *testing.T) {
 			credential, err := verifiable.ParseCredential(credentialUniversityDegree,
-				verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
+				verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
 				verifiable.WithDisabledProofCheck())
 			require.NoError(t, err)
 
@@ -72,7 +71,6 @@ func TestResolve(t *testing.T) {
 			t.Run("Without preferred locale specified", func(t *testing.T) {
 				resolvedDisplayData, errResolve := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-					credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
 					credentialschema.WithIssuerMetadata(&issuerMetadata))
 				require.NoError(t, errResolve)
 
@@ -83,7 +81,7 @@ func TestResolve(t *testing.T) {
 					resolvedDisplayData, errResolve := credentialschema.Resolve(
 						credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 						credentialschema.WithIssuerMetadata(&issuerMetadata),
-						credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+						credentialschema.WithHTTPClient(http.DefaultClient),
 						credentialschema.WithPreferredLocale("en-US"))
 					require.NoError(t, errResolve)
 
@@ -93,7 +91,7 @@ func TestResolve(t *testing.T) {
 					resolvedDisplayData, errResolve := credentialschema.Resolve(
 						credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 						credentialschema.WithIssuerMetadata(&issuerMetadata),
-						credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+						credentialschema.WithHTTPClient(http.DefaultClient),
 						credentialschema.WithPreferredLocale("UnknownLocale"))
 					require.NoError(t, errResolve)
 
@@ -110,7 +108,7 @@ func TestResolve(t *testing.T) {
 					credentialschema.WithCredentialReader(memStorageProvider,
 						[]string{"http://example.edu/credentials/1872"}),
 					credentialschema.WithIssuerMetadata(&issuerMetadata),
-					credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+					credentialschema.WithHTTPClient(http.DefaultClient),
 					credentialschema.WithPreferredLocale("en-US"))
 				require.NoError(t, errResolve)
 
@@ -124,7 +122,7 @@ func TestResolve(t *testing.T) {
 
 				resolvedDisplayData, errResolve := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-					credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+					credentialschema.WithHTTPClient(http.DefaultClient),
 					credentialschema.WithIssuerURI(server.URL))
 				require.NoError(t, errResolve)
 
@@ -142,7 +140,7 @@ func TestResolve(t *testing.T) {
 				resolvedDisplayData, errResolve := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 					credentialschema.WithIssuerMetadata(&issuerMetadata),
-					credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+					credentialschema.WithHTTPClient(http.DefaultClient),
 					credentialschema.WithPreferredLocale("en-US"))
 				require.NoError(t, errResolve)
 				checkForDefaultDisplayData(t, resolvedDisplayData)
@@ -156,7 +154,7 @@ func TestResolve(t *testing.T) {
 				resolvedDisplayData, errResolve := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 					credentialschema.WithIssuerMetadata(&issuerMetadata),
-					credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+					credentialschema.WithHTTPClient(http.DefaultClient),
 					credentialschema.WithPreferredLocale("en-US"))
 				require.NoError(t, errResolve)
 				require.Equal(t, "Example University", resolvedDisplayData.IssuerDisplay.Name)
@@ -184,7 +182,7 @@ func TestResolve(t *testing.T) {
 
 				resolvedDisplayData, err := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-					credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+					credentialschema.WithHTTPClient(http.DefaultClient),
 					credentialschema.WithIssuerMetadata(&issuerMetadata))
 				require.NoError(t, err)
 
@@ -233,7 +231,7 @@ func TestResolve(t *testing.T) {
 			})
 			t.Run("VC does not have the subject fields specified by the claim display info", func(t *testing.T) {
 				credential, err := verifiable.ParseCredential(credentialUniversityDegree,
-					verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
+					verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
 					verifiable.WithDisabledProofCheck())
 				require.NoError(t, err)
 
@@ -251,7 +249,7 @@ func TestResolve(t *testing.T) {
 
 				resolvedDisplayData, err := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-					credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+					credentialschema.WithHTTPClient(http.DefaultClient),
 					credentialschema.WithIssuerMetadata(&issuerMetadata))
 				require.NoError(t, err)
 
@@ -275,7 +273,7 @@ func TestResolve(t *testing.T) {
 
 		t.Run("Correctly shown display info for selective disclosure JWT", func(t *testing.T) {
 			credential, err := verifiable.ParseCredential(credentialVerifiedEmployeeSD,
-				verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
+				verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
 				verifiable.WithDisabledProofCheck())
 			require.NoError(t, err)
 
@@ -286,7 +284,7 @@ func TestResolve(t *testing.T) {
 
 			resolvedDisplayData, errResolve := credentialschema.Resolve(
 				credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-				credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+				credentialschema.WithHTTPClient(http.DefaultClient),
 				credentialschema.WithIssuerMetadata(&issuerMetadata))
 			require.NoError(t, errResolve)
 
@@ -302,7 +300,7 @@ func TestResolve(t *testing.T) {
 		t.Run("Multiple credential sources", func(t *testing.T) {
 			resolvedDisplayData, err := credentialschema.Resolve(
 				credentialschema.WithCredentials([]*verifiable.Credential{{}}),
-				credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+				credentialschema.WithHTTPClient(http.DefaultClient),
 				credentialschema.WithCredentialReader(memstorage.NewProvider(), []string{}))
 			require.EqualError(t, err, "cannot have multiple credential sources specified - "+
 				"must use either WithCredentials or WithCredentialReader, but not both")
@@ -310,7 +308,7 @@ func TestResolve(t *testing.T) {
 		})
 		t.Run("Using credential reader, but no IDs specified", func(t *testing.T) {
 			resolvedDisplayData, err := credentialschema.Resolve(
-				credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+				credentialschema.WithHTTPClient(http.DefaultClient),
 				credentialschema.WithCredentialReader(memstorage.NewProvider(), []string{}))
 			require.EqualError(t, err, "credential IDs must be provided when using a credential reader")
 			require.Nil(t, resolvedDisplayData)
@@ -318,14 +316,14 @@ func TestResolve(t *testing.T) {
 		t.Run("Using credential reader, but credential could not be found", func(t *testing.T) {
 			resolvedDisplayData, err := credentialschema.Resolve(
 				credentialschema.WithCredentialReader(memstorage.NewProvider(), []string{"SomeID"}),
-				credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+				credentialschema.WithHTTPClient(http.DefaultClient),
 				credentialschema.WithIssuerMetadata(&issuer.Metadata{}))
 			require.EqualError(t, err, "no credential with an id of SomeID was found")
 			require.Nil(t, resolvedDisplayData)
 		})
 		t.Run("No issuer metadata source specified", func(t *testing.T) {
 			resolvedDisplayData, err := credentialschema.Resolve(
-				credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+				credentialschema.WithHTTPClient(http.DefaultClient),
 				credentialschema.WithCredentials([]*verifiable.Credential{{}}))
 			require.EqualError(t, err, "no issuer metadata source specified")
 			require.Nil(t, resolvedDisplayData)
@@ -333,7 +331,7 @@ func TestResolve(t *testing.T) {
 		t.Run("Using issuer URI option, but failed to fetch issuer metadata", func(t *testing.T) {
 			resolvedDisplayData, err := credentialschema.Resolve(
 				credentialschema.WithCredentials([]*verifiable.Credential{{}}),
-				credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+				credentialschema.WithHTTPClient(http.DefaultClient),
 				credentialschema.WithIssuerURI("http://BadURL"))
 			require.Contains(t, err.Error(), `Get "http://BadURL/.well-known/openid-credential-issuer":`+
 				` dial tcp: lookup BadURL:`)
@@ -343,7 +341,7 @@ func TestResolve(t *testing.T) {
 	t.Run("Unsupported VC", func(t *testing.T) {
 		t.Run("Unsupported subject type", func(t *testing.T) {
 			credential, err := verifiable.ParseCredential(unsupportedCredentialStringSubject,
-				verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
+				verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
 				verifiable.WithDisabledProofCheck())
 			require.NoError(t, err)
 
@@ -354,14 +352,14 @@ func TestResolve(t *testing.T) {
 
 			resolvedDisplayData, err := credentialschema.Resolve(
 				credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-				credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+				credentialschema.WithHTTPClient(http.DefaultClient),
 				credentialschema.WithIssuerMetadata(&issuerMetadata))
 			require.EqualError(t, err, "unsupported vc subject type")
 			require.Nil(t, resolvedDisplayData)
 		})
 		t.Run("Multiple subjects", func(t *testing.T) {
 			credential, err := verifiable.ParseCredential(unsupportedCredentialMultipleSubjects,
-				verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
+				verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
 				verifiable.WithDisabledProofCheck())
 			require.NoError(t, err)
 
@@ -372,7 +370,7 @@ func TestResolve(t *testing.T) {
 
 			resolvedDisplayData, err := credentialschema.Resolve(
 				credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-				credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+				credentialschema.WithHTTPClient(http.DefaultClient),
 				credentialschema.WithIssuerMetadata(&issuerMetadata))
 			require.EqualError(t, err, "only VCs with one credential subject are supported")
 			require.Nil(t, resolvedDisplayData)
@@ -380,7 +378,7 @@ func TestResolve(t *testing.T) {
 	})
 	t.Run("Fail to compile regex", func(t *testing.T) {
 		credential, err := verifiable.ParseCredential(credentialUniversityDegree,
-			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
+			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
 			verifiable.WithDisabledProofCheck())
 		require.NoError(t, err)
 
@@ -396,7 +394,7 @@ func TestResolve(t *testing.T) {
 
 		resolvedDisplayData, errResolve := credentialschema.Resolve(
 			credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-			credentialschema.WithHTTPClient(common.DefaultHTTPClient()),
+			credentialschema.WithHTTPClient(http.DefaultClient),
 			credentialschema.WithIssuerMetadata(&issuerMetadata))
 		require.EqualError(t, errResolve, "error parsing regexp: missing closing ): `(`")
 		require.Nil(t, resolvedDisplayData)

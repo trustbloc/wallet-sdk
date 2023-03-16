@@ -34,6 +34,10 @@ func Get(issuerURI string, httpClient httpClient, metricsLogger api.MetricsLogge
 		metricsLogger = noop.NewMetricsLogger()
 	}
 
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
+
 	metadataEndpoint := issuerURI + "/.well-known/openid-credential-issuer"
 
 	responseBytes, err := httprequest.New(httpClient, metricsLogger).Do(

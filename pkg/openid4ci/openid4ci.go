@@ -25,7 +25,6 @@ import (
 
 	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
-	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
 	noopmetricslogger "github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
@@ -83,7 +82,7 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 	}
 
 	if config.HTTPClient == nil {
-		config.HTTPClient = common.DefaultHTTPClient()
+		config.HTTPClient = http.DefaultClient
 	}
 
 	if config.ActivityLogger == nil {
@@ -344,28 +343,10 @@ func (i *Interaction) getCredentialResponse(credentialEndpoint, accessToken, tkn
 func (i *Interaction) getRawCredentialResponse(credentialEndpoint, accessToken, tkn, credentialFormat string,
 	credentialTypes []string, credNum, maxCredNum int,
 ) ([]byte, error) {
-	credentialReq := &credentialRequest{
-		Types:  credentialTypes,
-		Format: credentialFormat,
-		Proof: proof{
-			ProofType: "jwt", // TODO: https://github.com/trustbloc/wallet-sdk/issues/159 support other proof types
-			JWT:       tkn,
-		},
-	}
-
-	credentialReqBytes, err := json.Marshal(credentialReq)
+	request, err := i.createCredentialRequest(credentialEndpoint, accessToken, tkn, credentialFormat, credentialTypes)
 	if err != nil {
 		return nil, err
 	}
-
-	request, err := http.NewRequest(http.MethodPost, //nolint: noctx
-		credentialEndpoint, bytes.NewReader(credentialReqBytes))
-	if err != nil {
-		return nil, err
-	}
-
-	request.Header.Add("Content-Type", "application/json")
-	request.Header.Add("Authorization", "BEARER "+accessToken)
 
 	timeStartHTTPRequest := time.Now()
 
@@ -403,6 +384,35 @@ func (i *Interaction) getRawCredentialResponse(credentialEndpoint, accessToken, 
 	return responseBytes, nil
 }
 
+func (i *Interaction) createCredentialRequest(credentialEndpoint, accessToken, tkn, credentialFormat string,
+	credentialTypes []string,
+) (*http.Request, error) {
+	credentialReq := &credentialRequest{
+		Types:  credentialTypes,
+		Format: credentialFormat,
+		Proof: proof{
+			ProofType: "jwt", // TODO: https://github.com/trustbloc/wallet-sdk/issues/159 support other proof types
+			JWT:       tkn,
+		},
+	}
+
+	credentialReqBytes, err := json.Marshal(credentialReq)
+	if err != nil {
+		return nil, err
+	}
+
+	request, err := http.NewRequest(http.MethodPost, //nolint: noctx
+		credentialEndpoint, bytes.NewReader(credentialReqBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Authorization", "BEARER "+accessToken)
+
+	return request, nil
+}
+
 func (i *Interaction) getCredentialsFromResponses(
 	credentialResponses []CredentialResponse,
 ) ([]*verifiable.Credential, error) {
@@ -411,7 +421,7 @@ func (i *Interaction) getCredentialsFromResponses(
 	vdrKeyResolver := verifiable.NewVDRKeyResolver(i.didResolver)
 
 	credentialOpts := []verifiable.CredentialOpt{
-		verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
+		verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
 		verifiable.WithPublicKeyFetcher(vdrKeyResolver.PublicKeyFetcher()),
 	}
 
