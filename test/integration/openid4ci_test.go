@@ -14,6 +14,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/stretchr/testify/require"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/helpers"
@@ -141,6 +142,9 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 	err = oidc4ciSetup.AuthorizeIssuerBypassAuth("test_org", vcsAPIDirectURL)
 	require.NoError(t, err)
 
+	vcStatusVerifier, err := credential.NewStatusVerifier()
+	require.NoError(t, err)
+
 	for _, tc := range tests {
 		fmt.Println(fmt.Sprintf("running tests with issuerProfileID=%s issuerDIDMethod=%s walletDIDMethod=%s",
 			tc.issuerProfileID, tc.issuerDIDMethod, tc.walletDIDMethod))
@@ -197,6 +201,9 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		subID, err := verifiable.SubjectID(vc.VC.Subject)
 		require.NoError(t, err)
 		require.Contains(t, subID, didID)
+
+		require.NoError(t, vcStatusVerifier.Verify(vc))
+
 		testHelper.CheckActivityLogAfterOpenID4CIFlow(t, vcsAPIDirectURL, tc.issuerProfileID, subID)
 		testHelper.CheckMetricsLoggerAfterOpenID4CIFlow(t, tc.issuerProfileID)
 	}
