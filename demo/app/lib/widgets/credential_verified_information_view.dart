@@ -21,28 +21,31 @@ class CredentialVerifiedInformation extends StatefulWidget {
     Color maskIconColor = Colors.blueGrey;
     final ScrollController credDataController = ScrollController();
     dynamic credentialClaimsData;
-
+    bool isLoading = false;
     @override
     void initState() {
-      super.initState();
+      setState(() {
+        isLoading = true;
+      });
       WalletSDKPlugin.resolveCredDisplayRendering(widget.credentialData.credentialDisplayData).then(
               (response) {
             setState(() {
               var credentialDisplayEncodeData = json.encode(response);
               List<dynamic> responseJson = json.decode(credentialDisplayEncodeData);
               credentialClaimsData = responseJson.first['claims'];
+              isLoading = false;
             });
           });
+      super.initState();
     }
 
   Future<Widget> getCredentialDetails() async {
     var credentialClaimsDataList = credentialClaimsData as List;
     List<CredentialPreviewData> list = credentialClaimsDataList.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
-    // TODO order function in the sdk is not working properly
-/*      list.sort((a, b) {
+      list.sort((a, b) {
         int compare = a.order.compareTo(b.order);
         return compare;
-      });*/
+      });
     return listViewWidget(list);
   }
 
@@ -142,7 +145,7 @@ class CredentialVerifiedInformation extends StatefulWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return isLoading ? const Center(child: LinearProgressIndicator()) : Container(
         height: widget.height,
         padding: const EdgeInsets.fromLTRB(0, 24, 0, 0),
         child: SingleChildScrollView(

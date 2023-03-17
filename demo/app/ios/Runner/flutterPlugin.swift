@@ -350,7 +350,6 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              message: "error while credentialDisplayRendering",
                                              details: "parameter resolvedCredentialDisplayData is missed"))
         }
-        
         let displayData = DisplayParseData(resolvedCredentialDisplayData, nil)
         let issuerDisplayData = displayData?.issuerDisplay()
         
@@ -366,6 +365,15 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 if claim.isMasked() == true {
                      claims["value"] = claim.value()
                      claims["rawValue"] = claim.rawValue()
+                }
+                var order: Int = -1
+                if claim.hasOrder() {
+                    do {
+                        try claim.order(&order)
+                        claims["order"] = order
+                    } catch let err as NSError {
+                        print("Error: \(err)")
+                    }
                 }
                 claims["rawValue"] = claim.rawValue()
                 claims["valueType"] = claim.valueType()
