@@ -6,19 +6,40 @@ import 'package:flutter/material.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:intl/intl.dart';
 import 'package:app/widgets/credential_card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class CredentialDetails extends StatelessWidget {
+class CredentialDetails extends  StatefulWidget {
   CredentialData credentialData;
   bool isDashboardWidget = true;
   String credentialName;
   List<Object?>? activityLogger;
 
-  CredentialDetails({required this.credentialData, required this.isDashboardWidget, required this.credentialName, this.activityLogger, Key? key}) : super(key: key);
+  CredentialDetails(
+      {required this.credentialData, required this.isDashboardWidget, required this.credentialName, this.activityLogger, Key? key})
+      : super(key: key);
 
+  @override
+  State<CredentialDetails> createState() => CredentialDetailsState();
+}
+class CredentialDetailsState extends State<CredentialDetails> {
   final ScrollController credDataController = ScrollController();
   final ScrollController rawDataController = ScrollController();
   final ScrollController activityController = ScrollController();
   final ScrollController credentialDIDController = ScrollController();
+
+  bool isSwitched = false;
+
+  checkDevMode() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    setState(() {
+      isSwitched = preferences.getBool('devmode') ?? false;
+    });
+  }
+  @override
+  void initState() {
+    checkDevMode();
+    super.initState();
+  }
 
   getCurrentDate() {
     final now = DateTime.now();
@@ -28,21 +49,20 @@ class CredentialDetails extends StatelessWidget {
   }
 
   prettifyRawJson(){
-    final parsedJson = json.decode(credentialData.credentialDisplayData!);
+    final parsedJson = json.decode(widget.credentialData.credentialDisplayData!);
     final prettyString = const JsonEncoder.withIndent('  ').convert(parsedJson);
     return Text(prettyString);
   }
 
   activityLogDetails() {
-    if (activityLogger != null){
-      var activities = activityLogger!;
-      return listViewWidget(activities!.asMap().values);
+    if (widget.activityLogger != null){
+      var activities = widget.activityLogger!;
+      return listViewWidget(activities.asMap().values);
     }
   }
 
   getCredentialDID(){
-    log("getting credentialDID");
-    return Text(credentialData.credentialDID!);
+    return Text(widget.credentialData.credentialDID!);
   }
 
   Widget listViewWidget(Iterable<Object?> activitiesValue) {
@@ -100,14 +120,14 @@ class CredentialDetails extends StatelessWidget {
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                const TabBar(
-                  labelColor: Color(0xff190C21),
-                  labelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                  unselectedLabelColor: Color(0xff6C6D7C),
-                  indicatorColor: Color(0xff8A35B7),
-                  padding: EdgeInsets.fromLTRB(24, 0, 24, 0),
+                TabBar(
+                  labelColor: const Color(0xff190C21),
+                  labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  unselectedLabelColor: const Color(0xff6C6D7C),
+                  indicatorColor: const Color(0xff8A35B7),
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
                   tabs: [
-                    Tab(
+                    const Tab(
                       child: SizedBox(
                         width: 50,
                         child: Text(
@@ -120,19 +140,23 @@ class CredentialDetails extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Tab(  child: SizedBox(
-                      width: 150,
-                      child: Text(
-                        "Raw",
-                        textAlign: TextAlign.start,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
+                    Visibility(
+                      visible: isSwitched,
+                      child:const Tab(
+                      child: SizedBox(
+                        width: 150,
+                        child: Text(
+                          "Raw",
+                          textAlign: TextAlign.start,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
+                     )
                     ),
-                    ),
-                    Tab(  child: SizedBox(
+                    const Tab(  child: SizedBox(
                       width: 60,
                       child: Text(
                         "Activity",
@@ -144,7 +168,9 @@ class CredentialDetails extends StatelessWidget {
                       ),
                     ),
                     ),
-                    Tab(  child: SizedBox(
+                   Visibility(
+                    visible: isSwitched!=null?isSwitched!:false,
+                     child: const Tab(  child: SizedBox(
                       width: 50,
                       child: Text(
                         "DID",
@@ -156,6 +182,7 @@ class CredentialDetails extends StatelessWidget {
                       ),
                      ),
                     ),
+                   ),
                   ],
                 ),
                 Container(
@@ -169,10 +196,10 @@ class CredentialDetails extends StatelessWidget {
                       Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        CredentialCard(credentialData: credentialData, isDashboardWidget: false, isDetailArrowRequired: false),
-                        isDashboardWidget?
-                        CredentialMetaDataCard(credentialData: credentialData): Container(),
-                        CredentialVerifiedInformation(credentialData: credentialData, height: MediaQuery.of(context).size.height*0.42)
+                          CredentialCard(credentialData: widget.credentialData, isDashboardWidget: false, isDetailArrowRequired: false),
+                          widget.isDashboardWidget?
+                          CredentialMetaDataCard(credentialData: widget.credentialData): Container(),
+                          CredentialVerifiedInformation(credentialData: widget.credentialData, height: MediaQuery.of(context).size.height*0.42)
                       ],
                     )
                  ])),
