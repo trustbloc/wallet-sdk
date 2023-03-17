@@ -1,8 +1,11 @@
+import 'dart:developer';
+
 import 'package:app/main.dart';
 import 'package:app/models/store_credential_data.dart';
 import 'package:flutter/material.dart';
 
 import 'package:app/widgets/primary_button.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -14,9 +17,18 @@ class Settings extends StatefulWidget {
 
 class SettingsState extends State<Settings> {
   final TextEditingController _usernameController = TextEditingController();
+  final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
+  bool isSwitched = false;
 
+  checkDevMode() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    setState(() {
+      isSwitched = preferences.getBool('devmode') ?? false;
+    });
+  }
   @override
   initState() {
+    checkDevMode();
     super.initState();
     getUserDetails();
   }
@@ -60,6 +72,19 @@ class SettingsState extends State<Settings> {
                     )
                 ),
               ),
+              SwitchListTile(
+                value: isSwitched,
+                title: const Text("Dev Mode", style:TextStyle(color: Color(0xff190C21), fontWeight: FontWeight.w700,
+                    fontFamily: 'SF Pro', fontSize: 14, fontStyle: FontStyle.normal )),
+                onChanged: (value) {
+                  setState(() {
+                    isSwitched = value;
+                  });
+                  saveDevMode();
+                },
+                activeTrackColor: Colors.deepPurple,
+                activeColor: Colors.deepPurpleAccent,
+              ),
               Expanded(
                 child: Align(
                   alignment: Alignment.bottomCenter,
@@ -85,10 +110,22 @@ class SettingsState extends State<Settings> {
         )
     );
   }
+
+  saveDevMode() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    await preferences.setBool('devmode',isSwitched!);
+    print(isSwitched);
+  }
   getUserDetails() async {
     UserLoginDetails userLoginDetails =  await getUser();
     _usernameController.text = userLoginDetails.username!;
   }
+  initPreferences() async {
+    final SharedPreferences  prefs =  await SharedPreferences.getInstance();
+    log("hey ${prefs.getBool("devmode")!}");
+    return prefs.getBool("devmode")!;
+  }
+
   signOut() async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const MyApp()));
   }
