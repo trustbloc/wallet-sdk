@@ -97,7 +97,8 @@ func TestResolve(t *testing.T) {
 
 		resolvedDisplayData, err := display.Resolve(resolveOpts)
 		require.EqualError(t, err,
-			`Get "badURL/.well-known/openid-credential-issuer": unsupported protocol scheme ""`)
+			"openid configuration endpoint: "+
+				`Get "badURL/.well-known/openid-credential-issuer": unsupported protocol scheme ""`)
 		require.Nil(t, resolvedDisplayData)
 	})
 }

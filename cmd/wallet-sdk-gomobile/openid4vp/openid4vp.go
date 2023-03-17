@@ -14,6 +14,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -43,12 +44,18 @@ type Interaction struct {
 // ActivityLogger is optional, but if provided then activities will be logged there.
 // If not provided, then no activities will be logged.
 type ClientConfig struct {
-	KeyHandleReader api.KeyReader
-	Crypto          api.Crypto
-	DIDRes          api.DIDResolver
-	DocumentLoader  api.LDDocumentLoader
-	ActivityLogger  api.ActivityLogger
-	MetricsLogger   api.MetricsLogger
+	KeyHandleReader         api.KeyReader
+	Crypto                  api.Crypto
+	DIDRes                  api.DIDResolver
+	DocumentLoader          api.LDDocumentLoader
+	ActivityLogger          api.ActivityLogger
+	MetricsLogger           api.MetricsLogger
+	httpClientSkipTLSVerify bool
+}
+
+// DisableHTTPClientTLSVerify disables tls verification, should be used only for test purposes.
+func (c *ClientConfig) DisableHTTPClientTLSVerify() {
+	c.httpClientSkipTLSVerify = true
 }
 
 // NewClientConfig creates the client config object.
@@ -75,7 +82,12 @@ func NewInteraction(authorizationRequest string, config *ClientConfig) *Interact
 			DIDResolver: config.DIDRes,
 		}).PublicKeyFetcher()))
 
-	opts := []openid4vp.Opt{openid4vp.WithHTTPClient(common.DefaultHTTPClient())}
+	httpClient := common.DefaultHTTPClient()
+	if config.httpClientSkipTLSVerify {
+		httpClient = common.InsecureHTTPClient()
+	}
+
+	opts := []openid4vp.Opt{openid4vp.WithHTTPClient(httpClient)}
 
 	if config.ActivityLogger != nil {
 		mobileActivityLoggerWrapper := &wrapper.MobileActivityLoggerWrapper{MobileAPIActivityLogger: config.ActivityLogger}

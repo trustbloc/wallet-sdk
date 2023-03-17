@@ -9,11 +9,9 @@ package openid4vp
 
 import (
 	"bytes"
-	"context"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/big"
 	"net/http"
 	"net/url"
@@ -27,8 +25,10 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
+
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
+	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
@@ -179,7 +179,7 @@ func (o *Interaction) fetchRequestObject() (string, error) {
 
 	endpointURL := strings.TrimPrefix(o.authorizationRequest, requestURIPrefix)
 
-	respBytes, err := o.doHTTPRequest(http.MethodGet, endpointURL, "", nil,
+	respBytes, err := httprequest.New(o.httpClient, o.metricsLogger).Do(http.MethodGet, endpointURL, "", nil,
 		fmt.Sprintf(fetchRequestObjectEventText, endpointURL), getQueryEventText)
 	if err != nil {
 		return "", err
@@ -189,7 +189,7 @@ func (o *Interaction) fetchRequestObject() (string, error) {
 }
 
 func (o *Interaction) sendAuthorizedResponse(responseBody string) error {
-	_, err := o.doHTTPRequest(http.MethodPost,
+	_, err := httprequest.New(o.httpClient, o.metricsLogger).Do(http.MethodPost,
 		o.requestObject.RedirectURI, "application/x-www-form-urlencoded",
 		bytes.NewBuffer([]byte(responseBody)),
 		fmt.Sprintf(sendAuthorizedResponseEventText, o.requestObject.RedirectURI),
@@ -203,52 +203,6 @@ func (o *Interaction) sendAuthorizedResponse(responseBody string) error {
 	}
 
 	return nil
-}
-
-func (o *Interaction) doHTTPRequest(method, endpointURL, contentType string, body io.Reader,
-	event, parentEvent string,
-) ([]byte, error) {
-	req, err := http.NewRequestWithContext(context.Background(), method, endpointURL, body)
-	if err != nil {
-		return nil, err
-	}
-
-	if contentType != "" {
-		req.Header.Add("Content-Type", contentType)
-	}
-
-	timeStartHTTPRequest := time.Now()
-
-	resp, err := o.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	err = o.metricsLogger.Log(&api.MetricsEvent{
-		Event:       event,
-		ParentEvent: parentEvent,
-		Duration:    time.Since(timeStartHTTPRequest),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		_ = resp.Body.Close() //nolint: errcheck
-	}()
-
-	respBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf(
-			"expected status code %d but got status code %d with response body %s instead",
-			http.StatusOK, resp.StatusCode, respBytes)
-	}
-
-	return respBytes, nil
 }
 
 func verifyAuthorizationRequestAndDecodeClaims(

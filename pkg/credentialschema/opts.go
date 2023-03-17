@@ -8,7 +8,9 @@ package credentialschema
 
 import (
 	"errors"
+	"net/http"
 
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -42,11 +44,16 @@ type issuerMetadataSource struct {
 	metadata  *issuer.Metadata
 }
 
+type httpClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 type resolveOpts struct {
 	credentialSource     credentialSource
 	issuerMetadataSource issuerMetadataSource
 	preferredLocal       string
 	metricsLogger        api.MetricsLogger
+	httpClient           httpClient
 }
 
 // ResolveOpt represents an option for the Resolve function.
@@ -106,6 +113,13 @@ func WithIssuerMetadata(metadata *issuer.Metadata) ResolveOpt {
 func WithPreferredLocale(locale string) ResolveOpt {
 	return func(opts *resolveOpts) {
 		opts.preferredLocal = locale
+	}
+}
+
+// WithHTTPClient is an option allowing a caller set the http client that used to make requests.
+func WithHTTPClient(httpClient httpClient) ResolveOpt {
+	return func(opts *resolveOpts) {
+		opts.httpClient = httpClient
 	}
 }
 
@@ -177,7 +191,11 @@ func processValidatedOpts(opts *resolveOpts) ([]*verifiable.Credential, *issuer.
 		metricsLogger = opts.metricsLogger
 	}
 
-	issuerMetadata, err := processIssuerMetadataOpts(&opts.issuerMetadataSource, metricsLogger)
+	if opts.httpClient == nil {
+		opts.httpClient = common.DefaultHTTPClient()
+	}
+
+	issuerMetadata, err := processIssuerMetadataOpts(&opts.issuerMetadataSource, metricsLogger, opts.httpClient)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -206,12 +224,14 @@ func processVCOpts(credentialSource *credentialSource) ([]*verifiable.Credential
 
 func processIssuerMetadataOpts(issuerMetadataSource *issuerMetadataSource,
 	metricsLogger api.MetricsLogger,
+	httpClient httpClient,
 ) (*issuer.Metadata, error) {
 	if issuerMetadataSource.metadata != nil {
 		return issuerMetadataSource.metadata, nil
 	}
 
-	metadata, err := metadatafetcher.Get(issuerMetadataSource.issuerURI, metricsLogger, "Resolve display")
+	metadata, err := metadatafetcher.Get(issuerMetadataSource.issuerURI,
+		httpClient, metricsLogger, "Resolve display")
 	if err != nil {
 		return nil, err
 	}

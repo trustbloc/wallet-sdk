@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package openid4vp //nolint: testpackage
 
 import (
-	"bytes"
 	"crypto/ed25519"
 	"crypto/rand"
 	_ "embed" //nolint:gci // required for go:embed
@@ -15,15 +14,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 	"strings"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
+
 	"github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/internal/mock"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
@@ -31,7 +30,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
-	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
 )
 
 var (
@@ -82,7 +80,7 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 			nil,
 			nil,
 			nil,
-			WithHTTPClient(&httpClientMock{
+			WithHTTPClient(&mock.HTTPClientMock{
 				Response:         requestObjectJWT,
 				StatusCode:       200,
 				ExpectedEndpoint: "https://request-object",
@@ -101,7 +99,7 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 			nil,
 			nil,
 			nil,
-			WithHTTPClient(&httpClientMock{
+			WithHTTPClient(&mock.HTTPClientMock{
 				Err: errors.New("http error"),
 			}),
 		)
@@ -125,7 +123,7 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 			nil,
 			nil,
 			testutil.DocumentLoader(t),
-			WithHTTPClient(&httpClientMock{
+			WithHTTPClient(&mock.HTTPClientMock{
 				Response:         requestObjectJWT,
 				StatusCode:       200,
 				ExpectedEndpoint: "https://request-object",
@@ -196,7 +194,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	}
 
 	t.Run("Success", func(t *testing.T) {
-		httpClient := &httpClientMock{
+		httpClient := &mock.HTTPClientMock{
 			StatusCode: 200,
 		}
 
@@ -306,7 +304,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			&didResolverMock{ResolveValue: mockDoc},
 			&cryptoMock{SignVal: []byte(testSignature)},
 			lddl,
-			WithHTTPClient(&httpClientMock{
+			WithHTTPClient(&mock.HTTPClientMock{
 				StatusCode: 200,
 			}),
 		)
@@ -399,23 +397,6 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	})
 }
 
-func Test_doHTTPRequest(t *testing.T) {
-	t.Run("Invalid http method", func(t *testing.T) {
-		interaction := Interaction{httpClient: &httpClientMock{}}
-		_, err := interaction.doHTTPRequest("\n\n", "url", "", nil,
-			"", "")
-		require.Contains(t, err.Error(), "invalid method")
-	})
-
-	t.Run("Invalid http code", func(t *testing.T) {
-		interaction := Interaction{httpClient: &httpClientMock{}, metricsLogger: noop.NewMetricsLogger()}
-
-		_, err := interaction.doHTTPRequest(http.MethodGet, "url", "", nil,
-			"", "")
-		require.Contains(t, err.Error(), "xpected status code 200")
-	})
-}
-
 type jwtSignatureVerifierMock struct {
 	err error
 }
@@ -445,38 +426,6 @@ func (c *cryptoMock) Sign([]byte, string) ([]byte, error) {
 
 func (c *cryptoMock) Verify(_, _ []byte, _ string) error {
 	return c.VerifyErr
-}
-
-type httpClientMock struct {
-	Response         string
-	StatusCode       int
-	Err              error
-	ExpectedEndpoint string
-	SentBody         []byte
-}
-
-func (c *httpClientMock) Do(req *http.Request) (*http.Response, error) {
-	if c.ExpectedEndpoint != "" && c.ExpectedEndpoint != req.URL.String() {
-		return nil, fmt.Errorf("requested endpoint %s not match %s", req.URL.String(), c.ExpectedEndpoint)
-	}
-
-	if req.Body != nil {
-		respBytes, err := io.ReadAll(req.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		c.SentBody = respBytes
-	}
-
-	if c.Err != nil {
-		return nil, c.Err
-	}
-
-	return &http.Response{
-		StatusCode: c.StatusCode,
-		Body:       io.NopCloser(bytes.NewBuffer([]byte(c.Response))),
-	}, nil
 }
 
 func mockResolution(t *testing.T, mockDID string) *did.DocResolution {
