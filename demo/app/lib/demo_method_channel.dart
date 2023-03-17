@@ -134,7 +134,7 @@ class MethodChannelWallet extends WalletPlatform {
     return null;
   }
 
-  Future<List<Object?>> resolveCredDisplayRendering(String resolvedCredentialDisplayData) async {
+  Future<List<Object?>> resolveCredentialDisplay(String resolvedCredentialDisplayData) async {
     log("resolveCredDisplayRendering");
     var renderedCredDisplay = await methodChannel.invokeMethod('resolveCredentialDisplay', <String, dynamic>{'resolvedCredentialDisplayData': resolvedCredentialDisplayData});
     return renderedCredDisplay;
