@@ -38,7 +38,7 @@ public class OpenID4CI {
         return credResp.atIndex(0)!;
     }
     
-    public func resolveCredentialDisplay(issuerURI: String, vcCredentials: ApiVerifiableCredentialsArray) -> String{
+    public func serializeDisplayData(issuerURI: String, vcCredentials: ApiVerifiableCredentialsArray) -> String{
         let resolveOpts = DisplayNewResolveOpts(vcCredentials, issuerURI)
 
         let resolvedDisplayData = DisplayResolve(resolveOpts, nil)

@@ -1,6 +1,8 @@
 package dev.trustbloc.wallet
 
 import dev.trustbloc.wallet.sdk.api.*
+import dev.trustbloc.wallet.sdk.display.Display
+import dev.trustbloc.wallet.sdk.vcparse.Vcparse
 import dev.trustbloc.wallet.sdk.walleterror.Walleterror
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -88,9 +90,9 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
-                        "resolveCredentialDisplay" -> {
+                        "serializeDisplayData" -> {
                             try {
-                                val credentialDisplay = resolveCredentialDisplay(call)
+                                val credentialDisplay = serializeDisplayData(call)
                                 result.success(credentialDisplay)
 
                             } catch (e: Exception) {
@@ -98,14 +100,12 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
-                        "resolveOrder" -> {
-                            try {
-                                val resolveOrder = resolveOrder(call)
-                                println(resolveOrder)
-                                result.success(resolveOrder)
-
-                            } catch (e: Exception) {
-                                result.error("Exception", "Error while resolving credential display order", e)
+                        "resolveCredentialDisplay" -> {
+                            try{
+                                val credentialDisplay = resolveCredentialDisplay(call)
+                                result.success(credentialDisplay)
+                            } catch (e: Exception)  {
+                                result.error("Exception", "Error while resolving credential display 2", e)
                             }
                         }
 
@@ -256,7 +256,7 @@ class MainActivity : FlutterActivity() {
     same order. This method requires one or more VCs and the issuer's base URI.
     IssuerURI and array of credentials  are parsed using VcParse to be passed to resolveDisplay which returns the resolved Display Data
      */
-    private fun resolveCredentialDisplay(call: MethodCall): String? {
+    private fun serializeDisplayData(call: MethodCall): String? {
         val issuerURI = call.argument<String>("uri")
                 ?: throw java.lang.Exception("issuerURI params is missed")
         val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
@@ -265,31 +265,64 @@ class MainActivity : FlutterActivity() {
         val openID4CI = this.openID4CI
                 ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
-        return openID4CI.resolveCredentialDisplay(issuerURI, convertToVerifiableCredentialsArray(vcCredentials))
+        return openID4CI.serializeDisplayData(issuerURI, convertToVerifiableCredentialsArray(vcCredentials))
     }
 
+    private fun resolveCredentialDisplay(call: MethodCall): MutableList<Any> {
+        val resolvedCredentialDisplayData = call.argument<String>("resolvedCredentialDisplayData")
+            ?: throw java.lang.Exception("resolvedCredentialDisplayData params is missed")
 
-    private fun resolveOrder(call: MethodCall): Boolean? {
-        val credentialDisplay = call.argument<String>("credentialDisplays")
-            ?: throw java.lang.Exception("credentialDisplays params is missed")
+        val displayData = Display.parseData(resolvedCredentialDisplayData)
+        val issuerDisplayData = displayData.issuerDisplay()
+        val resolvedCredDisplayList = mutableListOf<Any>()
+        val claimList = mutableListOf<Any>()
 
-        val openID4CI = this.openID4CI
-            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+        for (i in 0 until (displayData.credentialDisplaysLength())) {
+            val credentialDisplay = displayData.credentialDisplayAtIndex(i)
+            for (i in 0 until credentialDisplay.claimsLength()){
+                val claim = credentialDisplay.claimAtIndex(i)
+                val claims: MutableMap<String, Any> = mutableMapOf()
+                if (claim.isMasked){
+                    claims["value"] = claim.value()
+                    claims["rawValue"] = claim.rawValue()
+                }
+                if (claim.hasOrder()) {
+                    val  order = claim.order()
+                    claims["order"] = order
+                }
+                claims["rawValue"] = claim.rawValue()
+                claims["valueType"] = claim.valueType()
+                claims["label"] = claim.label()
+                claimList.addAll(listOf(claims))
+            }
+            var overview = credentialDisplay.overview()
+            var resolveDisplayResp : MutableMap<String, Any> = mutableMapOf()
+            resolveDisplayResp["claims"] = claimList
+            resolveDisplayResp["overviewName"] = overview.name()
+            resolveDisplayResp["logo"] = overview.logo().url()
+            resolveDisplayResp["textColor"] = overview.textColor()
+            resolveDisplayResp["backgroundColor"] = overview.backgroundColor()
+            resolveDisplayResp["issuerName"] = issuerDisplayData.name()
 
-        return openID4CI.resolveOrder(credentialDisplay)
+            resolvedCredDisplayList.addAll(listOf(resolveDisplayResp))
+        }
+        return resolvedCredDisplayList
     }
 
     /**
      Local function  to get the credential IDs of the requested credentials
      */
-    private fun getCredID(call: MethodCall): String? {
+    private fun getCredID(call: MethodCall): String {
         val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
                 ?: throw java.lang.Exception("vcCredentials params is missed")
-
-        val openID4CI = this.openID4CI
-                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
-
-        return openID4CI.getCredID(vcCredentials)
+        val opts = Vcparse.newOpts(true, null)
+        val credIds = ArrayList<String>()
+        for (cred in vcCredentials) {
+            val parsedVC = Vcparse.parse(cred, opts)
+            var credID = parsedVC.id()
+            credIds.add(credID)
+        }
+        return credIds[0]
     }
 
     /**

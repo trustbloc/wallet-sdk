@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import 'credential_metadata_card.dart';
 import 'credential_verified_information_view.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class CredentialCard extends StatefulWidget {
   CredentialData credentialData;
@@ -20,10 +21,10 @@ class CredentialCard extends StatefulWidget {
 
 class _CredentialCardState extends State<CredentialCard> {
   bool showWidget = false;
-  String logoURL = '';
-  var backgroundColor = '';
-  var textColor = '';
-  var credentialDisplayName = '';
+  String? credentialDisplayName;
+  String? logoURL;
+  String? backgroundColor;
+  String? textColor;
 
   @override
   void initState() {
@@ -51,7 +52,7 @@ class _CredentialCardState extends State<CredentialCard> {
                height: 80,
                alignment: Alignment.center,
                decoration: BoxDecoration(
-                   color: backgroundColor.isNotEmpty ? Color(int.parse(backgroundColor)) : Colors.white,
+                   color: backgroundColor!.isNotEmpty ? Color(int.parse(backgroundColor!)) : Colors.white,
                    borderRadius: BorderRadius.circular(12),
                    boxShadow: [
                      BoxShadow(
@@ -61,22 +62,21 @@ class _CredentialCardState extends State<CredentialCard> {
                    ]),
                  child: ListTile(
                    title: Text(
-                     credentialDisplayName,
+                     credentialDisplayName!,
                      style: TextStyle(
                        fontSize: 14,
                        fontWeight: FontWeight.bold,
-                       color: textColor.isNotEmpty ? Color(int.parse(textColor)) : const Color(0xff190C21),
+                       color: textColor!.isNotEmpty ? Color(int.parse(textColor!)) : const Color(0xff190C21),
                      ),
                      textAlign: TextAlign.start,
                    ),
-                   leading: FadeInImage(
-                     image: NetworkImage(logoURL),
-                     placeholder: AssetImage(logoURL),
-                     imageErrorBuilder:(context, error, stackTrace) {
-                       return Image.asset('lib/assets/images/genericCredential.png',
-                           fit: BoxFit.fitWidth
-                       );
-                     },
+                   leading: CachedNetworkImage(
+                     imageUrl: logoURL!,
+                     placeholder: (context, url) =>
+                     const CircularProgressIndicator(),
+                     errorWidget: (context, url, error) =>  Image.asset('lib/assets/images/genericCredential.png',
+                         fit: BoxFit.fitWidth
+                     ),
                      fit: BoxFit.fitWidth,
                    ),
                    trailing: widget.isDetailArrowRequired == false ? IconButton(

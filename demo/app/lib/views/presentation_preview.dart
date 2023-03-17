@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:app/views/credential_shared.dart';
 import 'package:app/views/dashboard.dart';
 import 'package:app/widgets/credential_verified_information_view.dart';
@@ -12,11 +10,8 @@ import 'package:app/models/credential_data.dart';
 import 'package:app/widgets/primary_button.dart';
 import 'package:app/widgets/credential_metadata_card.dart';
 import 'package:app/main.dart';
-
 import 'package:app/services/storage_service.dart';
-
 import 'package:app/models/activity_data_object.dart';
-
 import 'package:app/widgets/credential_card.dart';
 
 class PresentationPreview extends StatefulWidget {
@@ -47,8 +42,6 @@ class PresentationPreviewState extends State<PresentationPreview> {
 
   @override
   Widget build(BuildContext context) {
-    final height = MediaQuery.of(context).size.height;
-    final width = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar:  const CustomTitleAppBar(pageTitle: 'Share Credential', addCloseIcon: true, height: 60,),
       body: SingleChildScrollView(
@@ -108,7 +101,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
               ),
           ],
         ),
-      ),
+       ),
       ),
     );
   }

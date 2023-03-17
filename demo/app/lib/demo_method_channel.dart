@@ -121,10 +121,10 @@ class MethodChannelWallet extends WalletPlatform {
     return issuerURI;
   }
 
-  Future<String?> resolveCredentialDisplay(List<String> credentials, String issuerURI) async {
+  Future<String?> serializeDisplayData(List<String> credentials, String issuerURI) async {
     try {
       final credentialResponse = await methodChannel.invokeMethod<String>(
-          'resolveCredentialDisplay', <String, dynamic>{'vcCredentials': credentials, 'uri': issuerURI});
+          'serializeDisplayData', <String, dynamic>{'vcCredentials': credentials, 'uri': issuerURI});
       return credentialResponse;
     } on PlatformException catch (error) {
       if (error.code == errorCode) {
@@ -134,16 +134,12 @@ class MethodChannelWallet extends WalletPlatform {
     return null;
   }
 
-  Future<bool?> resolveOrder(String credentialDisplays) async {
-      final hasOrder = await methodChannel.invokeMethod<bool>(
-          'resolveOrder', <String, dynamic>{'credentialDisplays': credentialDisplays});
-      return hasOrder;
-  }
-
   Future<List<Object?>> resolveCredDisplayRendering(String resolvedCredentialDisplayData) async {
-    var renderedCredDisplay = await methodChannel.invokeMethod('credentialDisplayRendering', <String, dynamic>{'resolvedCredentialDisplayData': resolvedCredentialDisplayData});
+    log("resolveCredDisplayRendering");
+    var renderedCredDisplay = await methodChannel.invokeMethod('resolveCredentialDisplay', <String, dynamic>{'resolvedCredentialDisplayData': resolvedCredentialDisplayData});
     return renderedCredDisplay;
   }
+
   Future<List<String>> processAuthorizationRequest(
       {required String authorizationRequest, List<String>? storedCredentials}) async {
     return (await methodChannel.invokeMethod<List>('processAuthorizationRequest',
