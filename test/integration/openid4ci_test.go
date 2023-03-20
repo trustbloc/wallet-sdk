@@ -15,10 +15,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/helpers"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4ci"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/testenv"
@@ -40,9 +40,47 @@ var (
 
 	//go:embed expecteddisplaydata/drivers_license_issuer.json
 	expectedDisplayDataDriversLicenseIssuer string
+
+	//go:embed expecteddisplaydata/university_degree_issuer.json
+	expectedUniversityDegreeIssuer string
 )
 
 func TestOpenID4CIFullFlow(t *testing.T) {
+	driverLicenseClaims := map[string]interface{}{
+		"birthdate":            "1990-01-01",
+		"document_number":      "123-456-789",
+		"driving_privileges":   "G2",
+		"expiry_date":          "2025-05-26",
+		"family_name":          "Smith",
+		"given_name":           "John",
+		"issue_date":           "2020-05-27",
+		"issuing_authority":    "Ministry of Transport Ontario",
+		"issuing_country":      "Canada",
+		"resident_address":     "4726 Pine Street",
+		"resident_city":        "Toronto",
+		"resident_postal_code": "A1B 2C3",
+		"resident_province":    "Ontario",
+	}
+
+	verifiableEmployeeClaims := map[string]interface{}{
+		"displayName":       "John Doe",
+		"givenName":         "John",
+		"jobTitle":          "Software Developer",
+		"surname":           "Doe",
+		"preferredLanguage": "English",
+		"mail":              "john.doe@foo.bar",
+		"photo":             "data-URL-encoded image",
+		"sensitiveID":       "123456789",
+		"reallySensitiveID": "abcdefg",
+	}
+
+	universityDegreeClaims := map[string]interface{}{
+		"familyName":   "John Doe",
+		"givenName":    "John",
+		"degree":       "MIT",
+		"degreeSchool": "MIT school",
+	}
+
 	type test struct {
 		issuerProfileID     string
 		issuerDIDMethod     string
@@ -50,6 +88,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		walletKeyType       string
 		expectedIssuerURI   string
 		expectedDisplayData *display.Data
+		claimData           map[string]interface{}
 	}
 
 	tests := []test{
@@ -58,6 +97,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 			issuerDIDMethod:     "orb",
 			walletDIDMethod:     "ion",
 			expectedIssuerURI:   "http://localhost:8075/issuer/bank_issuer_jwtsd",
+			claimData:           verifiableEmployeeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataBankIssuer),
 			walletKeyType:       localkms.KeyTypeP384,
 		},
@@ -65,6 +105,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 			issuerProfileID:     "bank_issuer",
 			issuerDIDMethod:     "orb",
 			walletDIDMethod:     "ion",
+			claimData:           verifiableEmployeeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataBankIssuer),
 			expectedIssuerURI:   "http://localhost:8075/issuer/bank_issuer",
 		},
@@ -72,6 +113,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 			issuerProfileID:     "did_ion_issuer",
 			issuerDIDMethod:     "ion",
 			walletDIDMethod:     "key",
+			claimData:           verifiableEmployeeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataDIDION),
 			expectedIssuerURI:   "http://localhost:8075/issuer/did_ion_issuer",
 		},
@@ -79,8 +121,17 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 			issuerProfileID:     "drivers_license_issuer",
 			issuerDIDMethod:     "ion",
 			walletDIDMethod:     "ion",
+			claimData:           driverLicenseClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataDriversLicenseIssuer),
 			expectedIssuerURI:   "http://localhost:8075/issuer/drivers_license_issuer",
+		},
+		{
+			issuerProfileID:     "university_degree_issuer",
+			issuerDIDMethod:     "ion",
+			walletDIDMethod:     "ion",
+			claimData:           universityDegreeClaims,
+			expectedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeIssuer),
+			expectedIssuerURI:   "http://localhost:8075/issuer/university_degree_issuer",
 		},
 	}
 
@@ -94,7 +145,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		fmt.Println(fmt.Sprintf("running tests with issuerProfileID=%s issuerDIDMethod=%s walletDIDMethod=%s",
 			tc.issuerProfileID, tc.issuerDIDMethod, tc.walletDIDMethod))
 
-		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(tc.issuerProfileID)
+		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(tc.issuerProfileID, tc.claimData)
 		require.NoError(t, err)
 
 		println(offerCredentialURL)

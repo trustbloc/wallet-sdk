@@ -48,7 +48,8 @@ func NewVPTestHelper(t *testing.T, didMethod string, keyType string) *VPTestHelp
 	}
 }
 
-func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, issuerProfileIDs []string) *api.VerifiableCredentialsArray {
+func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, issuerProfileIDs []string,
+	claimData []map[string]interface{}) *api.VerifiableCredentialsArray {
 	oidc4ciSetup, err := oidc4ci.NewSetup(testenv.NewHttpRequest())
 	require.NoError(t, err)
 
@@ -58,7 +59,7 @@ func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, is
 	credentials := api.NewVerifiableCredentialsArray()
 
 	for i := 0; i < len(issuerProfileIDs); i++ {
-		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i])
+		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i], claimData[i])
 		require.NoError(t, err)
 
 		didResolver, err := did.NewResolver("http://did-resolver.trustbloc.local:8072/1.0/identifiers")
