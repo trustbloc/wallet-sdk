@@ -130,31 +130,6 @@ class CredentialMetaDataCard extends StatefulWidget {
                       )
                   )
               ),
-              const Flexible(
-                  child: SizedBox(
-                      height: 60,
-                      child: ListTile(
-                          title: Text(
-                            'Last used',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xff190C21),
-                            ),
-                            textAlign: TextAlign.start,
-                          ),
-                          //TODO need to add fallback and network image url
-                          subtitle: Text(
-                            'Never',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xff6C6D7C),
-                            ),
-                            textAlign: TextAlign.start,
-                          )
-                      )
-                  )
-              )
             ],
           )
       );

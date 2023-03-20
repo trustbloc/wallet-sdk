@@ -130,8 +130,8 @@ class _OTPPage extends State<OTP> {
                              pref.setString('userDID',userDIDId);
                           credentials =  await WalletSDKPlugin.requestCredential(_otp!);
                           String? issuerURI = await WalletSDKPlugin.issuerURI();
-                          resolvedCredentialDisplay = await WalletSDKPlugin.resolveCredentialDisplay([credentials], issuerURI!);
-                          log("resolvedCredentialDisplay -$resolvedCredentialDisplay");
+                          resolvedCredentialDisplay = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
+                          log("resolvedCredentialDisplay -> $resolvedCredentialDisplay");
                           var renderedCredDisplay =  await WalletSDKPlugin.resolveCredDisplayRendering(resolvedCredentialDisplay!);
                           log("rendered cred display otp -${renderedCredDisplay}");
                           var activities = await WalletSDKPlugin.storeActivityLogger();

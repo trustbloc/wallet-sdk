@@ -66,7 +66,7 @@ void handleOpenIDUrl(BuildContext context, String qrCodeURL) async {
       pref.setString('userDID',didID!);
       String? credentials =  await WalletSDKPlugin.requestCredential('');
       String? issuerURL = await WalletSDKPlugin.issuerURI();
-      String? resolvedCredentialDisplay =  await WalletSDKPlugin.resolveCredentialDisplay([credentials],issuerURL!);
+      String? resolvedCredentialDisplay =  await WalletSDKPlugin.serializeDisplayData([credentials],issuerURL!);
       var activities = await WalletSDKPlugin.storeActivityLogger();
       var credID = await WalletSDKPlugin.getCredID([credentials]);
       log("activities and credID handle open id  -$activities and $credID");
@@ -101,7 +101,7 @@ void handleOpenIDUrl(BuildContext context, String qrCodeURL) async {
         if (cred != matchCred){
           log("selective disclosure flow - credentialDisplayData as credential doesnt match matched credentials");
           var issuerURI = storedCredentials.map((e) => e.value.issuerURL).toList();
-          var credentialDisplayData =  await WalletSDKPlugin.resolveCredentialDisplay(matchedCred, issuerURI.first);
+          var credentialDisplayData =  await WalletSDKPlugin.serializeDisplayData(matchedCred, issuerURI.first);
           _navigateToPresentationPreviewScreen(context, matchedCred.first,
               CredentialData(rawCredential: '', credentialDisplayData: credentialDisplayData!, issuerURL: ''));
           return;

@@ -38,31 +38,9 @@ class OpenID4CI constructor(
         return null
     }
 
-    fun resolveCredentialDisplay(issuerURI: String?, vcCredentials: VerifiableCredentialsArray): String? {
+    fun serializeDisplayData(issuerURI: String?, vcCredentials: VerifiableCredentialsArray): String? {
         val resolveOpts = ResolveOpts(vcCredentials, issuerURI)
 
         return Display.resolve(resolveOpts).serialize()
-    }
-
-    fun resolveOrder(credentialDisplay: String): Boolean? {
-        var hasOrder: Boolean? = false
-        val displayData = Display.parseData(credentialDisplay)
-        for (i in 0 until displayData.credentialDisplaysLength()) {
-           val credentialDisplay = displayData?.credentialDisplayAtIndex(i)
-            val claim = credentialDisplay?.claimAtIndex(i);
-            hasOrder = claim?.hasOrder();
-        }
-        return hasOrder
-    }
-
-    fun getCredID(vcCredentials: ArrayList<String>) : String?{
-        val opts = Vcparse.newOpts(true, null)
-        val credIds = ArrayList<String>()
-        for (cred in vcCredentials) {
-            val parsedVC = Vcparse.parse(cred, opts)
-            var credID = parsedVC.id()
-            credIds.add(credID)
-        }
-        return credIds[0];
     }
 }

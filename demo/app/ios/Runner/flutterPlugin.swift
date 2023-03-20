@@ -46,14 +46,12 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             let didID = fetchArgsKeyValue(call, key: "didID")
 
 
+        case "serializeDisplayData":
+            serializeDisplayData(arguments: arguments!,  result: result)
+            
         case "resolveCredentialDisplay":
-            resolveCredentialDisplay(arguments: arguments!,  result: result)
-            
-        case "credentialDisplayRendering":
-            credentialDisplayRendering(arguments: arguments!, result: result)
-            
-        case "resolveOrder":
-            resolveOrder(arguments: arguments!, result: result)
+            resolveCredentialDisplay(arguments: arguments!, result: result)
+
             
         case "getCredID":
             getCredID(arguments: arguments!,  result: result)
@@ -313,7 +311,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
        IssuerURI and array of credentials  are parsed using VcparseParse to be passed to Openid4ciResolveDisplay which returns the resolved Display Data
      */
     
-    public func resolveCredentialDisplay(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
+    public func serializeDisplayData(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
         guard let openID4CI = self.openID4CI else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
                                              message: "error while resolve credential display",
@@ -332,7 +330,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                  details: "parameter storedcredentials is missed"))
             }
       
-            let displayDataResp = openID4CI.resolveCredentialDisplay(issuerURI: issuerURI,
+            let displayDataResp = openID4CI.serializeDisplayData(issuerURI: issuerURI,
                                                                      vcCredentials: convertToVerifiableCredentialsArray(credentials: vcCredentials))
             result(displayDataResp)
           } catch let error as NSError {
@@ -342,12 +340,12 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             }
     }
     
-    public func credentialDisplayRendering(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
+    public func resolveCredentialDisplay(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
    
         
         guard let resolvedCredentialDisplayData = arguments["resolvedCredentialDisplayData"] as? String else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
-                                             message: "error while credentialDisplayRendering",
+                                             message: "error while resolveCredentialDisplay",
                                              details: "parameter resolvedCredentialDisplayData is missed"))
         }
         let displayData = DisplayParseData(resolvedCredentialDisplayData, nil)
@@ -362,7 +360,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             for i in 0...(credentialDisplay.claimsLength())-1{
                 let claim = credentialDisplay.claim(at: i)!
                 var claims : [String: Any] = [:]
-                if claim.isMasked() == true {
+                if claim.isMasked(){
                      claims["value"] = claim.value()
                      claims["rawValue"] = claim.rawValue()
                 }
@@ -400,30 +398,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         print("resolvedCredDisplay ->", resolvedCredDisplayList)
         result(resolvedCredDisplayList)
     }
-    
-    public func resolveOrder(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
-        do {
-            guard let credentialDisplay = arguments["credentialDisplays"] as? String else{
-                return  result(FlutterError.init(code: "NATIVE_ERR",
-                                                 message: "error while resolve order display",
-                                                 details: "parameter credentialDisplayis missed"))
-            }
-            let displayData = DisplayParseData(credentialDisplay, nil)
-            var hasOrder = false;
-            
-            for i in 0...((displayData?.credentialDisplaysLength())!-1){
-                let credentialDisplay = displayData?.credentialDisplay(at: i)
-                let claim = credentialDisplay?.claim(at:i)
-                hasOrder = ((claim?.hasOrder()) != nil);
-            }
-            
-            result(hasOrder)
-          } catch let error as NSError {
-                result(FlutterError.init(code: "Exception",
-                                         message: "error while resolving order for credential display",
-                                         details: error.description))
-            }
-    }
+
     /**
      ApiParseActivity is invoked to parse the list of activities which are stored in the app when we issue and present credential,
      */
