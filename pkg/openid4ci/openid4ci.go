@@ -26,6 +26,7 @@ import (
 	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
+	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
 	noopmetricslogger "github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
@@ -62,6 +63,7 @@ type Interaction struct {
 	activityLogger         api.ActivityLogger
 	metricsLogger          api.MetricsLogger
 	disableVCProofChecks   bool
+	httpClient             httpClient
 }
 
 // NewInteraction creates a new OpenID4CI Interaction.
@@ -80,6 +82,10 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 		return nil, err
 	}
 
+	if config.HTTPClient == nil {
+		config.HTTPClient = common.DefaultHTTPClient()
+	}
+
 	if config.ActivityLogger == nil {
 		config.ActivityLogger = noopactivitylogger.NewActivityLogger()
 	}
@@ -88,7 +94,7 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 		config.MetricsLogger = noopmetricslogger.NewMetricsLogger()
 	}
 
-	credentialOffer, err := getCredentialOffer(initiateIssuanceURI, config.MetricsLogger)
+	credentialOffer, err := getCredentialOffer(initiateIssuanceURI, config.HTTPClient, config.MetricsLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -120,6 +126,7 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 			activityLogger:         config.ActivityLogger,
 			metricsLogger:          config.MetricsLogger,
 			disableVCProofChecks:   config.DisableVCProofChecks,
+			httpClient:             config.HTTPClient,
 		}, config.MetricsLogger.Log(&api.MetricsEvent{
 			Event:    newInteractionEventText,
 			Duration: time.Since(timeStartNewInteraction),
@@ -213,7 +220,7 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 			fmt.Errorf("kid not containing did part %s", jwtSigner.GetKeyID()))
 	}
 
-	metadata, err := metadatafetcher.Get(i.issuerURI, i.metricsLogger, requestCredentialEventText)
+	metadata, err := metadatafetcher.Get(i.issuerURI, i.httpClient, i.metricsLogger, requestCredentialEventText)
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
 			module,
@@ -277,38 +284,12 @@ func (i *Interaction) IssuerURI() string {
 func (i *Interaction) fetchIssuerOpenIDConfig() (*OpenIDConfig, error) {
 	openIDConfigEndpoint := i.issuerURI + "/.well-known/openid-configuration"
 
-	timeStartHTTPRequest := time.Now()
-
-	response, err := http.Get(openIDConfigEndpoint) //nolint: noctx,gosec
+	responseBytes, err := httprequest.New(i.httpClient, i.metricsLogger).Do(
+		http.MethodGet, openIDConfigEndpoint, "", nil,
+		fmt.Sprintf(fetchOpenIDConfigViaGETReqEventText, openIDConfigEndpoint), requestCredentialEventText)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("openid configuration endpoint: %w", err)
 	}
-
-	err = i.metricsLogger.Log(&api.MetricsEvent{
-		Event:       fmt.Sprintf(fetchOpenIDConfigViaGETReqEventText, openIDConfigEndpoint),
-		ParentEvent: requestCredentialEventText,
-		Duration:    time.Since(timeStartHTTPRequest),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	responseBytes, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("received status code [%d] with body [%s] from issuer's "+
-			"OpenID configuration endpoint", response.StatusCode, string(responseBytes))
-	}
-
-	defer func() {
-		errClose := response.Body.Close()
-		if errClose != nil {
-			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
-		}
-	}()
 
 	var config OpenIDConfig
 
@@ -324,39 +305,12 @@ func (i *Interaction) fetchIssuerOpenIDConfig() (*OpenIDConfig, error) {
 func (i *Interaction) getTokenResponse(tokenEndpointURL string, params url.Values) (*tokenResponse, error) {
 	paramsReader := strings.NewReader(params.Encode())
 
-	timeStartHTTPRequest := time.Now()
-
-	response, err := http.Post(tokenEndpointURL, //nolint: noctx,gosec
-		"application/x-www-form-urlencoded", paramsReader)
+	responseBytes, err := httprequest.New(i.httpClient, i.metricsLogger).Do(
+		http.MethodPost, tokenEndpointURL, "application/x-www-form-urlencoded", paramsReader,
+		fmt.Sprintf(fetchTokenViaPOSTReqEventText, tokenEndpointURL), requestCredentialEventText)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("issuer's token endpoint: %w", err)
 	}
-
-	err = i.metricsLogger.Log(&api.MetricsEvent{
-		Event:       fmt.Sprintf(fetchTokenViaPOSTReqEventText, tokenEndpointURL),
-		ParentEvent: requestCredentialEventText,
-		Duration:    time.Since(timeStartHTTPRequest),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	responseBytes, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("received status code [%d] with body [%s] from issuer's token endpoint",
-			response.StatusCode, string(responseBytes))
-	}
-
-	defer func() {
-		errClose := response.Body.Close()
-		if errClose != nil {
-			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
-		}
-	}()
 
 	var tokenResp tokenResponse
 
@@ -415,7 +369,7 @@ func (i *Interaction) getRawCredentialResponse(credentialEndpoint, accessToken, 
 
 	timeStartHTTPRequest := time.Now()
 
-	response, err := common.DefaultHTTPClient().Do(request)
+	response, err := i.httpClient.Do(request)
 	if err != nil {
 		return nil, err
 	}
@@ -495,7 +449,8 @@ func (i *Interaction) getCredentialsFromResponses(
 	return vcs, nil
 }
 
-func getCredentialOffer(initiateIssuanceURI string, metricsLogger api.MetricsLogger) (*CredentialOffer, error) {
+func getCredentialOffer(initiateIssuanceURI string, httpClient httpClient, metricsLogger api.MetricsLogger,
+) (*CredentialOffer, error) {
 	requestURIParsed, err := url.Parse(initiateIssuanceURI)
 	if err != nil {
 		return nil, walleterror.NewValidationError(
@@ -513,7 +468,8 @@ func getCredentialOffer(initiateIssuanceURI string, metricsLogger api.MetricsLog
 	case requestURIParsed.Query().Has("credential_offer_uri"):
 		credentialOfferURI := requestURIParsed.Query().Get("credential_offer_uri")
 
-		credentialOfferJSON, err = getCredentialOfferJSONFromCredentialOfferURI(credentialOfferURI, metricsLogger)
+		credentialOfferJSON, err = getCredentialOfferJSONFromCredentialOfferURI(
+			credentialOfferURI, httpClient, metricsLogger)
 		if err != nil {
 			return nil, err
 		}
@@ -541,12 +497,11 @@ func getCredentialOffer(initiateIssuanceURI string, metricsLogger api.MetricsLog
 }
 
 func getCredentialOfferJSONFromCredentialOfferURI(credentialOfferURI string,
-	metricsLogger api.MetricsLogger,
+	httpClient httpClient, metricsLogger api.MetricsLogger,
 ) ([]byte, error) {
-	timeStartHTTPRequest := time.Now()
-
-	//nolint:gosec,noctx // Necessary for this to be a variable URL. noctx to be re-evaluated later.
-	response, err := http.Get(credentialOfferURI)
+	responseBytes, err := httprequest.New(httpClient, metricsLogger).Do(
+		http.MethodGet, credentialOfferURI, "", nil,
+		fmt.Sprintf(fetchCredOfferViaGETReqEventText, credentialOfferURI), newInteractionEventText)
 	if err != nil {
 		return nil, walleterror.NewValidationError(
 			module,
@@ -555,36 +510,6 @@ func getCredentialOfferJSONFromCredentialOfferURI(credentialOfferURI string,
 			fmt.Errorf("failed to get credential offer from the endpoint specified in the "+
 				"credential_offer_uri URL query parameter: %w", err))
 	}
-
-	err = metricsLogger.Log(&api.MetricsEvent{
-		Event:       fmt.Sprintf(fetchCredOfferViaGETReqEventText, credentialOfferURI),
-		ParentEvent: newInteractionEventText,
-		Duration:    time.Since(timeStartHTTPRequest),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	responseBytes, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if response.StatusCode != http.StatusOK {
-		return nil, walleterror.NewValidationError(
-			module,
-			InvalidCredentialOfferCode,
-			InvalidCredentialOfferError,
-			fmt.Errorf("received status code [%d] with body [%s] from the endpoint specified in"+
-				" the credential_offer_uri URL query parameter", response.StatusCode, string(responseBytes)))
-	}
-
-	defer func() {
-		errClose := response.Body.Close()
-		if errClose != nil {
-			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
-		}
-	}()
 
 	return responseBytes, nil
 }

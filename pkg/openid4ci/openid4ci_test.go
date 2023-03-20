@@ -200,9 +200,11 @@ func TestNewInteraction(t *testing.T) {
 			credentialOfferIssuanceURI := "openid-credential-offer://?credential_offer_uri=" + escapedCredentialOfferURI
 
 			interaction, err := openid4ci.NewInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
-			require.EqualError(t, err, "INVALID_CREDENTIAL_OFFER(OCI0-0005):received status code "+
-				"[500] with body [test failure] from the endpoint specified in the credential_offer_uri "+
-				"URL query parameter")
+
+			require.EqualError(t, err, "INVALID_CREDENTIAL_OFFER(OCI0-0005):failed to get credential offer "+
+				"from the endpoint specified in the credential_offer_uri URL query parameter: "+
+				"expected status code 200 but got status code 500 "+
+				"with response body test failure instead")
 			require.Nil(t, interaction)
 		})
 		t.Run("Fail to unmarshal credential offer", func(t *testing.T) {
@@ -431,7 +433,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			keyID: mockKeyID,
 		})
 		require.Contains(t, err.Error(), "ISSUER_OPENID_FETCH_FAILED(OCI1-0008):failed to fetch issuer's "+
-			`OpenID configuration: Get "BadURL/.well-known/openid-configuration": unsupported protocol scheme ""`)
+			`OpenID configuration: openid configuration endpoint: `+
+			`Get "BadURL/.well-known/openid-configuration": unsupported protocol scheme ""`)
 		require.Nil(t, credentialResponses)
 	})
 	t.Run("Fail to reach issuer token endpoint", func(t *testing.T) {
@@ -450,7 +453,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		credentialResponses, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
 			keyID: mockKeyID,
 		})
-		require.Contains(t, err.Error(), `failed to get token response: Post `+
+		require.Contains(t, err.Error(), `failed to get token response: issuer's token endpoint: Post `+
 			`"http://BadURL": dial tcp: lookup BadURL:`)
 		require.Nil(t, credentialResponses)
 	})
@@ -472,8 +475,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		credentialResponses, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
 			keyID: mockKeyID,
 		})
-		testutil.RequireErrorContains(t, err, "failed to get token response: received status code [500] with body "+
-			"[test failure] from issuer's token endpoint")
+		testutil.RequireErrorContains(t, err, "expected status code 200 but got status code 500"+
+			" with response body test failure instead")
 		require.Nil(t, credentialResponses)
 	})
 	t.Run("Fail to unmarshal response from issuer token endpoint", func(t *testing.T) {
@@ -763,6 +766,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			keyID: mockKeyID,
 		})
 		require.Contains(t, err.Error(), "METADATA_FETCH_FAILED(OCI1-0009):failed to get issuer metadata: "+
+			"openid configuration endpoint: "+
 			"failed to log event (Event=Fetch issuer metadata via an HTTP GET request to http://127.0.0.1:")
 		require.Nil(t, credentials)
 	})

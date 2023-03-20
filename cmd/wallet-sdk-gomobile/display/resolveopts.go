@@ -10,8 +10,10 @@ import (
 	"errors"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 )
@@ -48,6 +50,9 @@ func prepareOpts(resolveDisplayOpts *ResolveOpts) ([]goapicredentialschema.Resol
 
 		opts = append(opts, opt) //nolint:makezero // false positive
 	}
+
+	//nolint:makezero // false positive
+	opts = append(opts, goapicredentialschema.WithHTTPClient(common.DefaultHTTPClient()))
 
 	return opts, nil
 }

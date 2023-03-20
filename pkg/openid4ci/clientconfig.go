@@ -8,6 +8,7 @@ package openid4ci
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
@@ -24,6 +25,10 @@ func (d *didResolverWrapper) Resolve(did string, _ ...vdr.DIDMethodOption) (*did
 	return d.didResolver.Resolve(did)
 }
 
+type httpClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // ClientConfig contains the various parameters for an OpenID4CI Interaction.
 // TODO: https://github.com/trustbloc/wallet-sdk/issues/163 refactor to instead require a key ID and a signer.
 type ClientConfig struct {
@@ -32,6 +37,7 @@ type ClientConfig struct {
 	ActivityLogger       api.ActivityLogger // If not specified, then activities won't be logged.
 	MetricsLogger        api.MetricsLogger  // If not specified, then metrics events won't be logged.
 	DisableVCProofChecks bool
+	HTTPClient           httpClient
 }
 
 func validateClientConfig(config *ClientConfig) error {

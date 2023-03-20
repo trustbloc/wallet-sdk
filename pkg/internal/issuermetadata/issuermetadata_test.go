@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 
 	"github.com/stretchr/testify/require"
 
@@ -56,12 +57,12 @@ func TestGet(t *testing.T) {
 
 		defer server.Close()
 
-		issuerMetadata, err := issuermetadata.Get(server.URL, nil, "")
+		issuerMetadata, err := issuermetadata.Get(server.URL, common.DefaultHTTPClient(), nil, "")
 		require.NoError(t, err)
 		require.NotNil(t, issuerMetadata)
 	})
 	t.Run("Fail to reach issuer OpenID config endpoint", func(t *testing.T) {
-		issuerMetadata, err := issuermetadata.Get("http://BadURL", nil, "")
+		issuerMetadata, err := issuermetadata.Get("http://BadURL", common.DefaultHTTPClient(), nil, "")
 		require.Contains(t, err.Error(), `Get "http://BadURL/.well-known/openid-credential-issuer":`+
 			` dial tcp: lookup BadURL:`)
 		require.Nil(t, issuerMetadata)
@@ -72,9 +73,9 @@ func TestGet(t *testing.T) {
 
 		defer server.Close()
 
-		issuerMetadata, err := issuermetadata.Get(server.URL, nil, "")
-		require.Contains(t, err.Error(), "received status code [500] with body [test failure] from "+
-			"issuer's OpenID credential issuer endpoint")
+		issuerMetadata, err := issuermetadata.Get(server.URL, common.DefaultHTTPClient(), nil, "")
+		require.Contains(t, err.Error(), "openid configuration endpoint: "+
+			"expected status code 200 but got status code 500 with response body test failure instead")
 		require.Nil(t, issuerMetadata)
 	})
 	t.Run("Fail to unmarshal response from issuer OpenID config endpoint", func(t *testing.T) {
@@ -83,7 +84,7 @@ func TestGet(t *testing.T) {
 
 		defer server.Close()
 
-		issuerMetadata, err := issuermetadata.Get(server.URL, nil, "")
+		issuerMetadata, err := issuermetadata.Get(server.URL, common.DefaultHTTPClient(), nil, "")
 		require.Contains(t, err.Error(), "failed to unmarshal response from the issuer's OpenID "+
 			"configuration endpoint: invalid character 'i' looking for beginning of value")
 		require.Nil(t, issuerMetadata)
@@ -94,7 +95,7 @@ func TestGet(t *testing.T) {
 
 		defer server.Close()
 
-		issuerMetadata, err := issuermetadata.Get(server.URL, &failingMetricsLogger{}, "")
+		issuerMetadata, err := issuermetadata.Get(server.URL, common.DefaultHTTPClient(), &failingMetricsLogger{}, "")
 		require.Contains(t, err.Error(), "failed to log event (Event=Fetch issuer metadata via an HTTP GET "+
 			"request to http://127.0.0.1:")
 		require.Nil(t, issuerMetadata)

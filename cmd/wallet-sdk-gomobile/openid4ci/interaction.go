@@ -8,12 +8,11 @@ SPDX-License-Identifier: Apache-2.0
 package openid4ci
 
 import (
-	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
-	"github.com/trustbloc/wallet-sdk/pkg/common"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 	openid4cigoapi "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
 
@@ -46,12 +45,13 @@ func NewCredentialRequestOpts(userPIN string) *CredentialRequestOpts {
 // ActivityLogger is optional, but if provided then activities will be logged there.
 // If not provided, then no activities will be logged.
 type ClientConfig struct {
-	ClientID             string
-	Crypto               api.Crypto
-	DIDResolver          api.DIDResolver
-	ActivityLogger       api.ActivityLogger
-	MetricsLogger        api.MetricsLogger
-	disableVCProofChecks bool
+	ClientID                string
+	Crypto                  api.Crypto
+	DIDResolver             api.DIDResolver
+	ActivityLogger          api.ActivityLogger
+	MetricsLogger           api.MetricsLogger
+	disableVCProofChecks    bool
+	httpClientSkipTLSVerify bool
 }
 
 // NewClientConfig creates the client config object.
@@ -71,6 +71,11 @@ func NewClientConfig(clientID string, crypto api.Crypto,
 // DisableVCProofChecks disables VC proof checks during the OpenID4CI interaction flow.
 func (c *ClientConfig) DisableVCProofChecks() {
 	c.disableVCProofChecks = true
+}
+
+// DisableHTTPClientTLSVerify disables tls verification, should be used only for test purposes.
+func (c *ClientConfig) DisableHTTPClientTLSVerify() {
+	c.httpClientSkipTLSVerify = true
 }
 
 // NewInteraction creates a new OpenID4CI Interaction.
@@ -159,12 +164,18 @@ func (i *Interaction) IssuerURI() string {
 func unwrapConfig(config *ClientConfig) *openid4cigoapi.ClientConfig {
 	activityLogger := createGoAPIActivityLogger(config.ActivityLogger)
 
+	httpClient := common.DefaultHTTPClient()
+	if config.httpClientSkipTLSVerify {
+		httpClient = common.InsecureHTTPClient()
+	}
+
 	return &openid4cigoapi.ClientConfig{
 		ClientID:             config.ClientID,
 		DIDResolver:          &wrapper.VDRResolverWrapper{DIDResolver: config.DIDResolver},
 		ActivityLogger:       activityLogger,
 		MetricsLogger:        &wrapper.MobileMetricsLoggerWrapper{MobileAPIMetricsLogger: config.MetricsLogger},
 		DisableVCProofChecks: config.disableVCProofChecks,
+		HTTPClient:           httpClient,
 	}
 }
 
