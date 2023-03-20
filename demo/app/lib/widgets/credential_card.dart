@@ -75,9 +75,11 @@ class _CredentialCardState extends State<CredentialCard> {
                      placeholder: (context, url) =>
                      const CircularProgressIndicator(),
                      errorWidget: (context, url, error) =>  Image.asset('lib/assets/images/genericCredential.png',
-                         fit: BoxFit.fitWidth
+                         fit:  BoxFit.contain
                      ),
-                     fit: BoxFit.fitWidth,
+                     width: 60,
+                     height: 60,
+                     fit: BoxFit.contain,
                    ),
                    trailing: widget.isDetailArrowRequired == false ? IconButton(
                      icon: const Icon(Icons.arrow_circle_right, size: 32, color: Color(0xffB6B7C7)),
