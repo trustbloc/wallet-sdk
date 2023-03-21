@@ -22,7 +22,6 @@ class OTP extends StatefulWidget {
 class _OTPPage extends State<OTP> {
   final StorageService _storageService = StorageService();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
-  // 4 text editing controllers that associate with the 4 input fields
   final TextEditingController otpController = TextEditingController();
   var userDIDId = '';
 
@@ -132,7 +131,7 @@ class _OTPPage extends State<OTP> {
                           String? issuerURI = await WalletSDKPlugin.issuerURI();
                           resolvedCredentialDisplay = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
                           log("resolvedCredentialDisplay -> $resolvedCredentialDisplay");
-                          var renderedCredDisplay =  await WalletSDKPlugin.resolveCredDisplayRendering(resolvedCredentialDisplay!);
+                          var renderedCredDisplay =  await WalletSDKPlugin.resolveCredentialDisplay(resolvedCredentialDisplay!);
                           log("rendered cred display otp -${renderedCredDisplay}");
                           var activities = await WalletSDKPlugin.storeActivityLogger();
                           var credID = await WalletSDKPlugin.getCredID([credentials]);

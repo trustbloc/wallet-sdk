@@ -27,7 +27,7 @@ class CredentialVerifiedInformation extends StatefulWidget {
       setState(() {
         isLoading = true;
       });
-      WalletSDKPlugin.resolveCredDisplayRendering(widget.credentialData.credentialDisplayData).then(
+      WalletSDKPlugin.resolveCredentialDisplay(widget.credentialData.credentialDisplayData).then(
               (response) {
             setState(() {
               var credentialDisplayEncodeData = json.encode(response);

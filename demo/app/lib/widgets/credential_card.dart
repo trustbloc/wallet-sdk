@@ -28,7 +28,7 @@ class _CredentialCardState extends State<CredentialCard> {
 
   @override
   void initState() {
-    WalletSDKPlugin.resolveCredDisplayRendering(widget.credentialData.credentialDisplayData).then(
+    WalletSDKPlugin.resolveCredentialDisplay(widget.credentialData.credentialDisplayData).then(
             (response) {
           setState(() {
             var credentialDisplayEncodeData = json.encode(response);

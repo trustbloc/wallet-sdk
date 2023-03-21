@@ -26,7 +26,7 @@ class CredentialMetaDataCard extends StatefulWidget {
         isLoading = true;
       });
       super.initState();
-      WalletSDKPlugin.resolveCredDisplayRendering(widget.credentialData.credentialDisplayData).then(
+      WalletSDKPlugin.resolveCredentialDisplay(widget.credentialData.credentialDisplayData).then(
               (response) {
             setState(() {
               var credentialDisplayEncodeData = json.encode(response);
