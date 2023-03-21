@@ -33,8 +33,18 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
       return;
   }
 
-  var matchedCred = await WalletSDKPlugin.processAuthorizationRequest(
-      authorizationRequest: qrCodeURL, storedCredentials: credentials);
+  List<String> matchedCred = [];
+  try {
+    matchedCred =  await WalletSDKPlugin.processAuthorizationRequest(
+        authorizationRequest: qrCodeURL, storedCredentials: credentials);
+  } catch (error) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>
+                CustomError(requestErrorTitleMsg:"No matching credential found" ,requestErrorSubTitleMsg: error.toString())));
+  }
+
   // Get the matched VCIDs from the submission request.
   var getSubmissionRequest = await WalletSDKPlugin.getSubmissionRequirements(storedCredentials: credentials);
 
