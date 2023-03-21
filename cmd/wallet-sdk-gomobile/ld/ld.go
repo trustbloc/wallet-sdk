@@ -9,13 +9,12 @@ package ld
 
 import (
 	"encoding/json"
+	"net/http"
 
 	"github.com/piprate/json-gold/ld"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
-	"github.com/trustbloc/wallet-sdk/pkg/common"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 )
 
 // DocLoader represents a type that can help with linked domains.
@@ -26,7 +25,7 @@ type DocLoader struct {
 // NewDocLoader returns a new DocLoader instance.
 func NewDocLoader() *DocLoader {
 	return &DocLoader{
-		documentLoader: ld.NewDefaultDocumentLoader(common.DefaultHTTPClient()),
+		documentLoader: ld.NewDefaultDocumentLoader(http.DefaultClient),
 	}
 }
 

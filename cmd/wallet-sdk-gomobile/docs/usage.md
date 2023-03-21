@@ -373,9 +373,12 @@ The general pattern is as follows:
    * A crypto implementation
    * A DID resolver.
    * An activity logger (optional, but if set then this will be used to log credential activities)
+
+   Optionally, after creating a `ClientConfig` object, you can set additional headers to be sent to the issuer by
+calling the `addHeaders` method on the `ClientConfig`.
 2. Create a new `Interaction` object using an initiate issuance URI obtained from an issuer (e.g. via a QR code)
 and your `ClientConfig` from the last step. The `Interaction` object is a stateful object and is meant to be used
-for a single interaction of an OpenID4CI flow and then discarded.
+for a single instance of an OpenID4CI flow and then discarded.
 3. Call the `Authorize` method on the `Interaction`. Since only the pre-authorized flow is supported currently,
 the returned `AuthorizeResult` object can be ignored by the caller. All this step really does right now is ensures that
 the initiation request indicates that the user is pre-authorized (and if not, returns an error letting the caller
@@ -556,7 +559,10 @@ then a default locale may get used instead.
 
 ### Resolve Display
 
-The following examples show how the `ResolveDisplay` function can be used.
+The following examples show how the `ResolveDisplay` function can be used. The function accepts a `ResolveOpts` object,
+which contains the VCs and the issuer URI (both are mandatory parameters). Optionally, after creating a`ResolveOpts`
+object, you can set additional headers to be sent to the issuer by calling the `addHeaders` method on the
+`ResolveOpts` object.
 
 ##### Kotlin (Android)
 
@@ -595,17 +601,22 @@ to go through the [OpenID4VP](https://openid.net/specs/openid-connect-4-verifiab
 
 The general pattern is as follows:
 
-1. Create a new `Interaction` object. An `Interaction` object has the following parameters:
-   * An authorization request URL
+1. Create a new `ClientConfig` object. A `ClientConfig` object has the following parameters:
    * A key reader
    * A crypto implementation
    * A DID resolver
    * An LD document loader
    * An activity logger (optional, but if set then this will be used to log credential activities)
-2. Get the query by calling the `GetQuery` method on the `Interaction`.
-3. Select the credentials that match the query from the previous step.
-4. Determine the key ID you want to use for signing (e.g. from one of the user's DID docs).
-5. Call the `PresentCredential` method on the `Interaction` object, with the selected credentials.
+
+   Optionally, after creating a `ClientConfig` object, you can set additional headers to be sent to the verifier by
+calling the `addHeaders` method on the `ClientConfig`.
+2. Create a new `Interaction` object using an authorization request URI obtained from a verifier (e.g. via a QR code)
+and your `ClientConfig` from the last step. The `Interaction` object is a stateful object and is meant to be used
+for a single instance of an OpenID4VP flow and then discarded.
+3. Get the query by calling the `GetQuery` method on the `Interaction`.
+4. Select the credentials that match the query from the previous step.
+5. Determine the key ID you want to use for signing (e.g. from one of the user's DID docs).
+6. Call the `PresentCredential` method on the `Interaction` object with the selected credentials.
 
 ### Examples
 

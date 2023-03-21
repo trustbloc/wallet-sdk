@@ -30,7 +30,6 @@ type httpClient interface {
 }
 
 // ClientConfig contains the various parameters for an OpenID4CI Interaction.
-// TODO: https://github.com/trustbloc/wallet-sdk/issues/163 refactor to instead require a key ID and a signer.
 type ClientConfig struct {
 	ClientID             string
 	DIDResolver          api.DIDResolver

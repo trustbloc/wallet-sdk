@@ -10,7 +10,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -116,7 +115,7 @@ func WithPreferredLocale(locale string) ResolveOpt {
 	}
 }
 
-// WithHTTPClient is an option allowing a caller set the http client that used to make requests.
+// WithHTTPClient is an option allowing a caller to specify their own HTTP client implementation.
 func WithHTTPClient(httpClient httpClient) ResolveOpt {
 	return func(opts *resolveOpts) {
 		opts.httpClient = httpClient
@@ -192,10 +191,10 @@ func processValidatedOpts(opts *resolveOpts) ([]*verifiable.Credential, *issuer.
 	}
 
 	if opts.httpClient == nil {
-		opts.httpClient = common.DefaultHTTPClient()
+		opts.httpClient = http.DefaultClient
 	}
 
-	issuerMetadata, err := processIssuerMetadataOpts(&opts.issuerMetadataSource, metricsLogger, opts.httpClient)
+	issuerMetadata, err := processIssuerMetadataOpts(&opts.issuerMetadataSource, opts.httpClient, metricsLogger)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -222,9 +221,8 @@ func processVCOpts(credentialSource *credentialSource) ([]*verifiable.Credential
 	return vcs, nil
 }
 
-func processIssuerMetadataOpts(issuerMetadataSource *issuerMetadataSource,
+func processIssuerMetadataOpts(issuerMetadataSource *issuerMetadataSource, httpClient httpClient,
 	metricsLogger api.MetricsLogger,
-	httpClient httpClient,
 ) (*issuer.Metadata, error) {
 	if issuerMetadataSource.metadata != nil {
 		return issuerMetadataSource.metadata, nil

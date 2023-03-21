@@ -8,13 +8,13 @@ package did
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/hyperledger/aries-framework-go/pkg/client/didconfig"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
-	"github.com/trustbloc/wallet-sdk/pkg/common"
 	goapiwellknown "github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
 )
 
@@ -31,7 +31,7 @@ type ValidationResult struct {
 // The DID document must specify only a single service. If there are multiple URLs for a given service, only the
 // first will be checked.
 func ValidateLinkedDomains(did string, resolver api.DIDResolver) (*ValidationResult, error) {
-	return validateLinkedDomains(did, resolver, common.DefaultHTTPClient())
+	return validateLinkedDomains(did, resolver, http.DefaultClient)
 }
 
 func validateLinkedDomains(did string, resolver api.DIDResolver,

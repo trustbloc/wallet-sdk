@@ -9,6 +9,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	_ "embed"
+	"net/http"
 	"testing"
 
 	afgojwt "github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
@@ -18,7 +19,6 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api/vcparse"
-	"github.com/trustbloc/wallet-sdk/pkg/common"
 )
 
 var (
@@ -157,7 +157,7 @@ func TestVerifiableCredential_ClaimTypes(t *testing.T) {
 	t.Run("Claim types are in selective disclosures", func(t *testing.T) {
 		opts := []verifiable.CredentialOpt{
 			verifiable.WithDisabledProofCheck(),
-			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(common.DefaultHTTPClient())),
+			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
 		}
 
 		universityDegreeVC, err := verifiable.ParseCredential([]byte(universityDegreeCredential), opts...)

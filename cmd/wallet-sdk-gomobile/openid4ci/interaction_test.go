@@ -45,7 +45,7 @@ func TestNewInteraction(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		createInteraction(t, kms, nil, createTestRequestURI("example.com"))
+		createInteraction(t, kms, nil, createTestRequestURI("example.com"), nil, false)
 	})
 }
 
@@ -58,10 +58,21 @@ type mockIssuerServerHandler struct {
 	credentialRequestShouldFail                       bool
 	credentialRequestShouldGiveUnmarshallableResponse bool
 	credentialResponse                                []byte
+	headersToCheck                                    *api.Headers
 }
 
-func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint: gocyclo // test file
+	request *http.Request,
+) {
 	var err error
+
+	if m.headersToCheck != nil {
+		for _, headerToCheck := range m.headersToCheck.GetAll() {
+			// Note: for these tests, we're assuming that there aren't multiple values under a single name/key.
+			value := request.Header.Get(headerToCheck.Name)
+			require.Equal(m.t, headerToCheck.Value, value)
+		}
+	}
 
 	switch request.URL.Path {
 	case "/.well-known/openid-configuration":
@@ -102,78 +113,24 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 
 func TestInteraction_RequestCredential(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{
-			t:                  t,
-			credentialResponse: sampleCredentialResponse,
-		}
-		server := httptest.NewServer(issuerServerHandler)
-
-		issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
-			TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
-		}
-
-		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential",`+
-			`"credential_issuer":"https://server.example.com"}`, server.URL)
-
-		defer server.Close()
-
-		activityLogger := mem.NewActivityLogger()
-
-		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
-		require.NoError(t, err)
-
-		interaction := createInteraction(t, kms, activityLogger, createTestRequestURI(server.URL))
-
-		credentialRequest := openid4ci.NewCredentialRequestOpts("1234")
-
-		keyHandle, err := kms.Create(arieskms.ED25519)
-		require.NoError(t, err)
-
-		pkBytes, err := keyHandle.JWK.PublicKeyBytes()
-		require.NoError(t, err)
-
-		result, err := interaction.RequestCredential(credentialRequest, &api.VerificationMethod{
-			ID:   "did:example:12345#testId",
-			Type: "Ed25519VerificationKey2018",
-			Key:  models.VerificationKey{Raw: pkBytes},
+		t.Run("Using default options", func(t *testing.T) {
+			doRequestCredentialTest(t, nil, false)
 		})
-		require.NoError(t, err)
-		require.NotNil(t, result)
+		t.Run("With additional headers", func(t *testing.T) {
+			additionalHeaders := api.NewHeaders()
 
-		numberOfActivitiesLogged := activityLogger.Length()
-		require.Equal(t, 1, numberOfActivitiesLogged)
+			additionalHeaders.Add(api.NewHeader("header-name-1", "header-value-1"))
+			additionalHeaders.Add(api.NewHeader("header-name-2", "header-value-2"))
 
-		activity := activityLogger.AtIndex(0)
+			doRequestCredentialTest(t, additionalHeaders, false)
 
-		require.NotEmpty(t, activity.ID)
-		require.Equal(t, goapi.LogTypeCredentialActivity, activity.Type())
-		require.NotEmpty(t, activity.UnixTimestamp())
-		require.Equal(t, "https://server.example.com", activity.Client())
-		require.Equal(t, "oidc-issuance", activity.Operation())
-		require.Equal(t, goapi.ActivityLogStatusSuccess, activity.Status())
-
-		params := activity.Params()
-		require.NotNil(t, params)
-
-		keyValuePairs := params.AllKeyValuePairs()
-
-		numberOfKeyValuePairs := keyValuePairs.Length()
-
-		require.Equal(t, 1, numberOfKeyValuePairs)
-
-		keyValuePair := keyValuePairs.AtIndex(0)
-
-		key := keyValuePair.Key()
-		require.Equal(t, "subjectIDs", key)
-
-		subjectIDs, err := keyValuePair.ValueStringArray()
-		require.NoError(t, err)
-
-		numberOfSubjectIDs := subjectIDs.Length()
-		require.Equal(t, 1, numberOfSubjectIDs)
-
-		subjectID := subjectIDs.AtIndex(0)
-		require.Equal(t, "did:orb:uAAA:EiARTvvCsWFTSCc35447YpI2MJpFAaJZtFlceVz9lcMYVw", subjectID)
+			t.Run("With TLS verification disabled", func(t *testing.T) {
+				doRequestCredentialTest(t, additionalHeaders, true)
+			})
+		})
+		t.Run("With TLS verification disabled", func(t *testing.T) {
+			doRequestCredentialTest(t, nil, true)
+		})
 	})
 	t.Run("Success with jwk public key", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{
@@ -196,7 +153,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		config := getTestClientConfig(t, kms, nil)
+		config := getTestClientConfig(t, kms, nil, nil, false)
 
 		interaction, err := openid4ci.NewInteraction(requestURI, config)
 		require.NoError(t, err)
@@ -224,7 +181,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		config := getTestClientConfig(t, kms, nil)
+		config := getTestClientConfig(t, kms, nil, nil, false)
 
 		requestURI := createTestRequestURI(server.URL)
 
@@ -260,7 +217,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		interaction := createInteraction(t, kms, activityLogger, createTestRequestURI(server.URL))
+		interaction := createInteraction(t, kms, activityLogger, createTestRequestURI(server.URL), nil, false)
 
 		keyHandle, err := kms.Create(arieskms.ED25519)
 		require.NoError(t, err)
@@ -278,11 +235,92 @@ func TestInteraction_RequestCredential(t *testing.T) {
 	})
 }
 
+//nolint:thelper // Not a test helper function
+func doRequestCredentialTest(t *testing.T, additionalHeaders *api.Headers,
+	disableTLSVerification bool,
+) {
+	issuerServerHandler := &mockIssuerServerHandler{
+		t:                  t,
+		credentialResponse: sampleCredentialResponse,
+		headersToCheck:     additionalHeaders,
+	}
+	server := httptest.NewServer(issuerServerHandler)
+
+	issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
+		TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+	}
+
+	issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential",`+
+		`"credential_issuer":"https://server.example.com"}`, server.URL)
+
+	defer server.Close()
+
+	activityLogger := mem.NewActivityLogger()
+
+	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+	require.NoError(t, err)
+
+	interaction := createInteraction(t, kms, activityLogger, createTestRequestURI(server.URL), additionalHeaders,
+		disableTLSVerification)
+
+	credentialRequest := openid4ci.NewCredentialRequestOpts("1234")
+
+	keyHandle, err := kms.Create(arieskms.ED25519)
+	require.NoError(t, err)
+
+	pkBytes, err := keyHandle.JWK.PublicKeyBytes()
+	require.NoError(t, err)
+
+	result, err := interaction.RequestCredential(credentialRequest, &api.VerificationMethod{
+		ID:   "did:example:12345#testId",
+		Type: "Ed25519VerificationKey2018",
+		Key:  models.VerificationKey{Raw: pkBytes},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, result)
+
+	numberOfActivitiesLogged := activityLogger.Length()
+	require.Equal(t, 1, numberOfActivitiesLogged)
+
+	activity := activityLogger.AtIndex(0)
+
+	require.NotEmpty(t, activity.ID)
+	require.Equal(t, goapi.LogTypeCredentialActivity, activity.Type())
+	require.NotEmpty(t, activity.UnixTimestamp())
+	require.Equal(t, "https://server.example.com", activity.Client())
+	require.Equal(t, "oidc-issuance", activity.Operation())
+	require.Equal(t, goapi.ActivityLogStatusSuccess, activity.Status())
+
+	params := activity.Params()
+	require.NotNil(t, params)
+
+	keyValuePairs := params.AllKeyValuePairs()
+
+	numberOfKeyValuePairs := keyValuePairs.Length()
+
+	require.Equal(t, 1, numberOfKeyValuePairs)
+
+	keyValuePair := keyValuePairs.AtIndex(0)
+
+	key := keyValuePair.Key()
+	require.Equal(t, "subjectIDs", key)
+
+	subjectIDs, err := keyValuePair.ValueStringArray()
+	require.NoError(t, err)
+
+	numberOfSubjectIDs := subjectIDs.Length()
+	require.Equal(t, 1, numberOfSubjectIDs)
+
+	subjectID := subjectIDs.AtIndex(0)
+	require.Equal(t, "did:orb:uAAA:EiARTvvCsWFTSCc35447YpI2MJpFAaJZtFlceVz9lcMYVw", subjectID)
+}
+
 func createInteraction(t *testing.T, kms *localkms.KMS, activityLogger api.ActivityLogger, requestURI string,
+	additionalHeaders *api.Headers, disableTLSVerification bool,
 ) *openid4ci.Interaction {
 	t.Helper()
 
-	config := getTestClientConfig(t, kms, activityLogger)
+	config := getTestClientConfig(t, kms, activityLogger, additionalHeaders, disableTLSVerification)
 
 	interaction, err := openid4ci.NewInteraction(requestURI, config)
 	require.NoError(t, err)
@@ -292,8 +330,8 @@ func createInteraction(t *testing.T, kms *localkms.KMS, activityLogger api.Activ
 }
 
 // getTestClientConfig accepts an optional activityLogger and also one optional mockVMCreator.
-func getTestClientConfig(t *testing.T, kms *localkms.KMS,
-	activityLogger api.ActivityLogger,
+func getTestClientConfig(t *testing.T, kms *localkms.KMS, activityLogger api.ActivityLogger,
+	additionalHeaders *api.Headers, disableTLSVerification bool,
 ) *openid4ci.ClientConfig {
 	t.Helper()
 
@@ -301,6 +339,14 @@ func getTestClientConfig(t *testing.T, kms *localkms.KMS,
 
 	clientConfig := openid4ci.NewClientConfig("ClientID", kms.GetCrypto(), resolver, activityLogger)
 	clientConfig.DisableVCProofChecks()
+
+	if additionalHeaders != nil {
+		clientConfig.AddHeaders(additionalHeaders)
+	}
+
+	if disableTLSVerification {
+		clientConfig.DisableHTTPClientTLSVerify()
+	}
 
 	return clientConfig
 }

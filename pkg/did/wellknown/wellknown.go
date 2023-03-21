@@ -10,6 +10,7 @@ package wellknown
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/hyperledger/aries-framework-go/pkg/client/didconfig"
@@ -17,7 +18,6 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
-	"github.com/trustbloc/wallet-sdk/pkg/common"
 	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
@@ -42,7 +42,7 @@ func ValidateLinkedDomains(did string, resolver api.DIDResolver,
 	}
 
 	if httpClient == nil {
-		httpClient = common.DefaultHTTPClient()
+		httpClient = http.DefaultClient
 	}
 
 	didDocResolution, err := resolver.Resolve(did)

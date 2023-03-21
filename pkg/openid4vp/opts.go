@@ -7,9 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package openid4vp
 
 import (
+	"net/http"
+
 	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
-	"github.com/trustbloc/wallet-sdk/pkg/common"
 	noopmetricslogger "github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
 )
 
@@ -52,7 +53,7 @@ func processOpts(options []Opt) (httpClient, api.ActivityLogger, api.MetricsLogg
 	opts := mergeOpts(options)
 
 	if opts.httpClient == nil {
-		opts.httpClient = common.DefaultHTTPClient()
+		opts.httpClient = http.DefaultClient
 	}
 
 	if opts.activityLogger == nil {

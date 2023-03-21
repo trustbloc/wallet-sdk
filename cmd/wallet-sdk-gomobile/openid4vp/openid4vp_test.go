@@ -13,6 +13,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -36,39 +38,78 @@ var (
 	credentialsJSONLD []byte
 )
 
+type mockVerifierServerHandler struct {
+	t              *testing.T
+	headersToCheck *api.Headers
+}
+
+// Simply checks the headers and return an arbitrary invalid response.
+func (m *mockVerifierServerHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	for _, headerToCheck := range m.headersToCheck.GetAll() {
+		// Note: for these tests, we're assuming that there aren't multiple values under a single name/key.
+		value := request.Header.Get(headerToCheck.Name)
+		require.Equal(m.t, headerToCheck.Value, value)
+	}
+
+	_, err := writer.Write([]byte("invalid"))
+	require.NoError(m.t, err)
+}
+
 func TestOpenID4VP_GetQuery(t *testing.T) {
 	t.Run("NewInteraction success", func(t *testing.T) {
-		cfg := NewClientConfig(
-			&mockKeyHandleReader{},
-			&mockCrypto{},
-			&mocksDIDResolver{},
-			&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
-			mem.NewActivityLogger(),
-		)
+		t.Run("With default options", func(t *testing.T) {
+			cfg := NewClientConfig(
+				&mockKeyHandleReader{},
+				&mockCrypto{},
+				&mocksDIDResolver{},
+				&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
+				mem.NewActivityLogger(),
+			)
 
-		instance := NewInteraction(
-			requestObjectJWT,
-			cfg,
-		)
+			instance := NewInteraction(
+				requestObjectJWT,
+				cfg,
+			)
 
-		require.NotNil(t, instance)
-		require.NotNil(t, instance.crypto)
-		require.NotNil(t, instance.ldDocumentLoader)
-		require.NotNil(t, instance.keyHandleReader)
-		require.NotNil(t, instance.goAPIOpenID4VP)
+			require.NotNil(t, instance)
+			require.NotNil(t, instance.crypto)
+			require.NotNil(t, instance.ldDocumentLoader)
+			require.NotNil(t, instance.keyHandleReader)
+			require.NotNil(t, instance.goAPIOpenID4VP)
+		})
+		t.Run("TLS verification disabled", func(t *testing.T) {
+			cfg := NewClientConfig(
+				&mockKeyHandleReader{},
+				&mockCrypto{},
+				&mocksDIDResolver{},
+				&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
+				mem.NewActivityLogger(),
+			)
+
+			cfg.DisableHTTPClientTLSVerify()
+
+			instance := NewInteraction(
+				requestObjectJWT,
+				cfg,
+			)
+
+			require.NotNil(t, instance)
+		})
 	})
 
 	t.Run("GetQuery success", func(t *testing.T) {
-		instance := &Interaction{
-			keyHandleReader: &mockKeyHandleReader{},
-			goAPIOpenID4VP: &mocGoAPIInteraction{
-				GetQueryResult: &presexch.PresentationDefinition{},
-			},
-		}
+		t.Run("Without additional headers", func(t *testing.T) {
+			instance := &Interaction{
+				keyHandleReader: &mockKeyHandleReader{},
+				goAPIOpenID4VP: &mocGoAPIInteraction{
+					GetQueryResult: &presexch.PresentationDefinition{},
+				},
+			}
 
-		query, err := instance.GetQuery()
-		require.NoError(t, err)
-		require.NotNil(t, query)
+			query, err := instance.GetQuery()
+			require.NoError(t, err)
+			require.NotNil(t, query)
+		})
 	})
 
 	t.Run("GetQuery failed", func(t *testing.T) {
@@ -80,6 +121,44 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 
 		query, err := instance.GetQuery()
 		require.Contains(t, err.Error(), "get query failed")
+		require.Nil(t, query)
+	})
+
+	t.Run("With additional headers, and the server receives them", func(t *testing.T) {
+		cfg := NewClientConfig(
+			&mockKeyHandleReader{},
+			&mockCrypto{},
+			&mocksDIDResolver{},
+			&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
+			mem.NewActivityLogger(),
+		)
+
+		additionalHeaders := api.NewHeaders()
+
+		additionalHeaders.Add(api.NewHeader("header-name-1", "header-value-1"))
+		additionalHeaders.Add(api.NewHeader("header-name-2", "header-value-2"))
+
+		cfg.AddHeaders(additionalHeaders)
+
+		mockServer := &mockVerifierServerHandler{t: t, headersToCheck: additionalHeaders}
+		testServer := httptest.NewServer(mockServer)
+
+		defer testServer.Close()
+
+		instance := NewInteraction(
+			"openid-vc://?request_uri="+testServer.URL,
+			cfg,
+		)
+
+		// The purpose of this test is to make sure the mock server receives the additional headers
+		// as set above. It doesn't return a valid response, hence why GetQuery still fails.
+		// If the server doesn't receive the headers as expected, the server itself will fail the
+		// test (see the mockVerifierServerHandler.ServeHTTP method).
+		// Any other error being returned by GetQuery is unexpected.
+		query, err := instance.GetQuery()
+		require.EqualError(t, err, `{"code":"OVP1-0001","category":`+
+			`"VERIFY_AUTHORIZATION_REQUEST_FAILED","details":"verify authorization request: `+
+			`parse JWT: JWT of compacted JWS form is supported only"}`)
 		require.Nil(t, query)
 	})
 }

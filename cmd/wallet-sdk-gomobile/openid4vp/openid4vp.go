@@ -44,18 +44,14 @@ type Interaction struct {
 // ActivityLogger is optional, but if provided then activities will be logged there.
 // If not provided, then no activities will be logged.
 type ClientConfig struct {
-	KeyHandleReader         api.KeyReader
-	Crypto                  api.Crypto
-	DIDRes                  api.DIDResolver
-	DocumentLoader          api.LDDocumentLoader
-	ActivityLogger          api.ActivityLogger
-	MetricsLogger           api.MetricsLogger
-	httpClientSkipTLSVerify bool
-}
-
-// DisableHTTPClientTLSVerify disables tls verification, should be used only for test purposes.
-func (c *ClientConfig) DisableHTTPClientTLSVerify() {
-	c.httpClientSkipTLSVerify = true
+	KeyHandleReader                  api.KeyReader
+	Crypto                           api.Crypto
+	DIDRes                           api.DIDResolver
+	DocumentLoader                   api.LDDocumentLoader
+	ActivityLogger                   api.ActivityLogger
+	MetricsLogger                    api.MetricsLogger
+	additionalHeaders                api.Headers
+	disableHTTPClientTLSVerification bool
 }
 
 // NewClientConfig creates the client config object.
@@ -73,6 +69,20 @@ func NewClientConfig(keyHandleReader api.KeyReader, crypto api.Crypto,
 	}
 }
 
+// AddHeaders adds the given HTTP headers to all REST calls made to the verifier during the OpenID4VP flow.
+func (c *ClientConfig) AddHeaders(headers *api.Headers) {
+	headersAsArray := headers.GetAll()
+
+	for i := range headersAsArray {
+		c.additionalHeaders.Add(&headersAsArray[i])
+	}
+}
+
+// DisableHTTPClientTLSVerify disables tls verification, should be used only for test purposes.
+func (c *ClientConfig) DisableHTTPClientTLSVerify() {
+	c.disableHTTPClientTLSVerification = true
+}
+
 // NewInteraction creates a new OpenID4VP Interaction.
 // The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
 // If activityLogger is nil, then no activity logging will take place.
@@ -82,10 +92,9 @@ func NewInteraction(authorizationRequest string, config *ClientConfig) *Interact
 			DIDResolver: config.DIDRes,
 		}).PublicKeyFetcher()))
 
-	httpClient := common.DefaultHTTPClient()
-	if config.httpClientSkipTLSVerify {
-		httpClient = common.InsecureHTTPClient()
-	}
+	httpClient := wrapper.NewHTTPClient()
+	httpClient.AddHeaders(&config.additionalHeaders)
+	httpClient.DisableTLSVerification = config.disableHTTPClientTLSVerification
 
 	opts := []openid4vp.Opt{openid4vp.WithHTTPClient(httpClient)}
 
