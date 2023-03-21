@@ -93,15 +93,8 @@ class _MainWidgetState extends State<MainWidget> {
             width: double.infinity,
             onPressed: () async {
               final SharedPreferences pref = await prefs;
-              String? userLoggedIn = pref.getString("userLoggedIn");
-              if (_usernameController.text == userLoggedIn.toString()) {
-                var fetchedUserDID = pref.getString('userDID');
-                WalletSDKPlugin.fetchStoredDID(fetchedUserDID!);
-                _loginCompleted();
-              } else {
                 pref.setString('userLoggedIn', _usernameController.text);
                 _loginCompleted();
-              }
             },
             child: const Text('Sign In ', style: TextStyle(fontSize: 16, color: Colors.white)),
           ),

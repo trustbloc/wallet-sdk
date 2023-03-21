@@ -8,9 +8,8 @@ class StorageItem {
 }
 
 class UserLoginDetails {
-  UserLoginDetails(this.username, this.userDID);
-  String username;
-  String userDID;
+  UserLoginDetails(this.username);
+  String? username;
 }
 
 
@@ -18,6 +17,6 @@ Future<UserLoginDetails> getUser() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   final SharedPreferences p = prefs;
   String? userLoggedIn =  p.getString("userLoggedIn");
-  String? userDID=  p.getString("userDID");
-  return UserLoginDetails(userLoggedIn!, userDID!);
+  print("userLoginDetails -> $userLoggedIn");
+  return UserLoginDetails(userLoggedIn);
 }

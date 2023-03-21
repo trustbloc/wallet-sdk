@@ -29,8 +29,8 @@ class SettingsState extends State<Settings> {
   @override
   initState() {
     checkDevMode();
-    super.initState();
     getUserDetails();
+    super.initState();
   }
 
   @override
@@ -118,11 +118,11 @@ class SettingsState extends State<Settings> {
   }
   getUserDetails() async {
     UserLoginDetails userLoginDetails =  await getUser();
+    log("userLoginDetails -> $userLoginDetails");
     _usernameController.text = userLoginDetails.username!;
   }
   initPreferences() async {
     final SharedPreferences  prefs =  await SharedPreferences.getInstance();
-    log("hey ${prefs.getBool("devmode")!}");
     return prefs.getBool("devmode")!;
   }
 
