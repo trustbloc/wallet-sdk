@@ -25,9 +25,38 @@ import (
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/testenv"
 )
 
+type claimData = map[string]interface{}
+
 func TestOpenID4VPFullFlow(t *testing.T) {
+	driverLicenseClaims := claimData{
+		"birthdate":            "1990-01-01",
+		"document_number":      "123-456-789",
+		"driving_privileges":   "G2",
+		"expiry_date":          "2025-05-26",
+		"family_name":          "Smith",
+		"given_name":           "John",
+		"issue_date":           "2020-05-27",
+		"issuing_authority":    "Ministry of Transport Ontario",
+		"issuing_country":      "Canada",
+		"resident_address":     "4726 Pine Street",
+		"resident_city":        "Toronto",
+		"resident_postal_code": "A1B 2C3",
+		"resident_province":    "Ontario",
+	}
+
+	verifiableEmployeeClaims := claimData{
+		"displayName":       "John Doe",
+		"givenName":         "John",
+		"jobTitle":          "Software Developer",
+		"surname":           "Doe",
+		"preferredLanguage": "English",
+		"mail":              "john.doe@foo.bar",
+		"photo":             "data-URL-encoded image",
+	}
+
 	type test struct {
 		issuerProfileIDs  []string
+		claimData         []claimData
 		walletDIDMethod   string
 		verifierProfileID string
 		signingKeyType    string
@@ -36,37 +65,44 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 	tests := []test{
 		{
 			issuerProfileIDs:  []string{"bank_issuer"},
+			claimData:         []claimData{verifiableEmployeeClaims},
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_myprofile_jwt_verified_employee",
 		},
 		{
 			issuerProfileIDs:  []string{"bank_issuer"},
+			claimData:         []claimData{verifiableEmployeeClaims},
 			walletDIDMethod:   "key",
 			verifierProfileID: "v_myprofile_jwt_verified_employee",
 		},
 		{
 			issuerProfileIDs:  []string{"bank_issuer"},
+			claimData:         []claimData{verifiableEmployeeClaims},
 			walletDIDMethod:   "jwk",
 			verifierProfileID: "v_myprofile_jwt_verified_employee",
 		},
 		{
 			issuerProfileIDs:  []string{"bank_issuer_jwtsd"},
+			claimData:         []claimData{verifiableEmployeeClaims},
 			walletDIDMethod:   "jwk",
 			verifierProfileID: "v_myprofile_sdjwt",
 			signingKeyType:    localkms.KeyTypeP384,
 		},
 		{
 			issuerProfileIDs:  []string{"drivers_license_issuer"},
+			claimData:         []claimData{driverLicenseClaims},
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_myprofile_jwt_drivers_license",
 		},
 		{
 			issuerProfileIDs:  []string{"bank_issuer", "drivers_license_issuer"},
+			claimData:         []claimData{verifiableEmployeeClaims, driverLicenseClaims},
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_myprofile_jwt_verified_employee",
 		},
 		{
 			issuerProfileIDs:  []string{"bank_issuer", "bank_issuer"},
+			claimData:         []claimData{verifiableEmployeeClaims, verifiableEmployeeClaims},
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_myprofile_jwt_verified_employee",
 		},
@@ -79,7 +115,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		testHelper := helpers.NewVPTestHelper(t, tc.walletDIDMethod, tc.signingKeyType)
 
-		issuedCredentials := testHelper.IssueCredentials(t, vcsAPIDirectURL, tc.issuerProfileIDs)
+		issuedCredentials := testHelper.IssueCredentials(t, vcsAPIDirectURL, tc.issuerProfileIDs, tc.claimData)
 		println("Issued", issuedCredentials.Length(), "credentials")
 		for k := 0; k < issuedCredentials.Length(); k++ {
 			cred, _ := issuedCredentials.AtIndex(k).Serialize()

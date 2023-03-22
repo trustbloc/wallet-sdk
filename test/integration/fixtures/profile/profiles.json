@@ -513,6 +513,119 @@
     },
     {
       "issuer": {
+        "id": "university_degree_issuer",
+        "name": "University Degree Issuer",
+        "organizationID": "test_org",
+        "url": "http://localhost:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "JsonWebSignature2020",
+          "signatureRepresentation": 0,
+          "keyType": "ECDSASecp256k1DER",
+          "format": "jwt",
+          "didMethod": "ion",
+          "status": {
+            "type": "StatusList2021Entry"
+          }
+        },
+        "oidcConfig": {
+          "client_id": "university_degree_issuer",
+          "client_secret_handle": "university_degree_issuer-secret",
+          "scope": [
+            "openid",
+            "profile"
+          ],
+          "redirect_uri": "https://localhost:4455/oidc/redirect",
+          "issuer_well_known": "https://oidc-provider.example.com:4444/.well-known/openid-configuration"
+        },
+        "credentialTemplates": [
+          {
+            "contexts": [
+              "https://www.w3.org/2018/credentials/v1",
+              "https://www.w3.org/2018/credentials/examples/v1"
+            ],
+            "type": "UniversityDegreeCredential",
+            "id": "templateID",
+            "issuer": "did:ion:university_degree_issuer",
+            "checks": {
+              "strict": true
+            }
+          }
+        ],
+        "credentialMetadata": {
+          "credentials_supported": [
+            {
+              "id": "UniversityDegreeCredential",
+              "format": "jwt_vc_json",
+              "types":[
+                "VerifiableCredential",
+                "UniversityDegreeCredential"
+              ],
+              "cryptographic_binding_methods_supported":[
+                "did"
+              ],
+              "cryptographic_suites_supported":[
+                "EcdsaSecp256k1Signature2019"
+              ],
+              "display": [
+                {
+                  "name": "University Degree Credential",
+                  "locale": "en-US",
+                  "logo": {
+                    "url": "https://example.com/public/logo.png",
+                    "alt_text": "a square logo of a degree verification"
+                  },
+                  "background_color": "#12107c",
+                  "text_color": "#FFFFFF"
+                }
+              ],
+              "credentialSubject": {
+                "familyName": {
+                  "display": [
+                    {
+                      "name": "Family Name",
+                      "locale": "en-US"
+                    }
+                  ],
+                  "value_type":"string"
+                },
+                "givenName": {
+                  "display": [
+                    {
+                      "name": "Given Name",
+                      "locale": "en-US"
+                    }
+                  ],
+                  "value_type":"string"
+                },
+                "degree": {
+                  "display": [
+                    {
+                      "name": "Degree",
+                      "locale": "en-US"
+                    }
+                  ],
+                  "value_type":"string"
+                },
+                "degreeSchool": {
+                  "display": [
+                    {
+                      "name": "Degree School",
+                      "locale": "en-US"
+                    }
+                  ],
+                  "value_type":"string"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "createDID": true
+    },
+
+    {
+      "issuer": {
         "id": "did_ion_issuer",
         "name": "DID Ion Issuer",
         "organizationID": "test_org",
