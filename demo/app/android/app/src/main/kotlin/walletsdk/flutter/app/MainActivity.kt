@@ -3,6 +3,7 @@ package dev.trustbloc.wallet
 import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.display.Display
 import dev.trustbloc.wallet.sdk.vcparse.Vcparse
+import dev.trustbloc.wallet.sdk.version.Version
 import dev.trustbloc.wallet.sdk.walleterror.Walleterror
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -42,7 +43,14 @@ class MainActivity : FlutterActivity() {
                                 result.error("Exception", "Error while creating basic sdk services", e)
                             }
                         }
-
+                        "getVersionDetails" -> {
+                            try {
+                                val walletSDKVersion = getVersionDetails()
+                                result.success(walletSDKVersion)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while get wallet sdk version", e)
+                            }
+                        }
                         "createDID" -> {
                             try {
                                 val didCreated = createDID(call)
@@ -184,12 +192,20 @@ class MainActivity : FlutterActivity() {
         this.walletSDK = walletSDK;
     }
 
+    private fun getVersionDetails(): MutableMap<String, Any> {
+        var versionResp: MutableMap<String, Any> = mutableMapOf()
+        versionResp["walletSDKVersion"] = Version.getVersion()
+        versionResp["gitRevision"] = Version.getGitRevision()
+        versionResp["buildTimeRev"] = Version.getBuildTime()
+        return  versionResp
+    }
+
     /**
     Create method of Creator (dev.trustbloc.wallet.sdk.did.Creator) creates a DID document using the given DID method.
     The usage of CreateDIDOpts(dev.trustbloc.wallet.sdk.did.api) depends on the DID method you're using.
     In the app when user logins we invoke sdk Creator create method to create new did per user.
      */
-    private fun createDID(call: MethodCall): String {
+    private fun createDID(call: MethodCall): MutableMap<String, Any> {
         val walletSDK = this.walletSDK
                 ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
 
@@ -197,9 +213,11 @@ class MainActivity : FlutterActivity() {
                 ?: throw java.lang.Exception("didMethodType params is missed")
 
         val doc = walletSDK.createDID(didMethodType)
-
         didDocResolution = doc
-        return doc.id()
+        val docResolution: MutableMap<String, Any> = mutableMapOf()
+        docResolution["did"] = doc.id()
+        docResolution["didDoc"] = doc.content
+        return docResolution
     }
 
     /**

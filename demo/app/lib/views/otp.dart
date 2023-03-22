@@ -24,9 +24,16 @@ class _OTPPage extends State<OTP> {
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   final TextEditingController otpController = TextEditingController();
   var userDIDId = '';
+  var userDIDDoc = '';
 
   Future<String?> _createDid() async {
-    var didID = await WalletSDKPlugin.createDID("jwk");
+    var didResolution = await WalletSDKPlugin.createDID("jwk");
+    var didDocEncoded = json.encode(didResolution!);
+    Map<String, dynamic> responseJson = json.decode(didDocEncoded);
+    var didID = responseJson["did"];
+    var didDoc = responseJson["didDoc"];
+    log("did $didID");
+    log("didDoc $didDoc");
     setState(() {
       userDIDId = didID!;
     });

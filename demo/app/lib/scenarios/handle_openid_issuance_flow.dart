@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,7 +20,10 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
     return;
   } else {
     final SharedPreferences pref = await prefs;
-    var didID = await WalletSDKPlugin.createDID("jwk");
+    var didResolution = await WalletSDKPlugin.createDID("jwk");
+    var didDocEncoded = json.encode(didResolution);
+    List<dynamic> responseJson = json.decode(didDocEncoded);
+    var didID = responseJson.first["didID"];
     log("created didID :$didID");
     pref.setString('userDID',didID!);
 

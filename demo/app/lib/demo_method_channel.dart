@@ -88,9 +88,9 @@ class MethodChannelWallet extends WalletPlatform {
     await methodChannel.invokeMethod<bool>('initSDK');
   }
 
-  Future<String?> createDID(String didMethodType) async {
+  Future<Map<Object?, Object?>?> createDID(String didMethodType) async {
     final createDIDMsg =
-        await methodChannel.invokeMethod<String>('createDID', <String, dynamic>{'didMethodType': didMethodType});
+        await methodChannel.invokeMethod<Map<Object?, Object?>?>('createDID', <String, dynamic>{'didMethodType': didMethodType});
     return createDIDMsg;
   }
 
@@ -153,6 +153,13 @@ class MethodChannelWallet extends WalletPlatform {
             'getMatchedSubmissionRequirements', <String, dynamic>{'storedCredentials': storedCredentials}))!
         .map((obj) => SubmissionRequirement.fromMap(obj.cast<String, dynamic>()))
         .toList();
+  }
+
+  Future<Map<Object?, Object?>?> getVersionDetails() async {
+   var versionDetailResp = await methodChannel
+        .invokeMethod('getVersionDetails');
+   log("getVersionDetails in the app, $versionDetailResp");
+   return versionDetailResp;
   }
 
   Future<void> presentCredential({List<String>? selectedCredentials}) async {

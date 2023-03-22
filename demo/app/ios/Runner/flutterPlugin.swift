@@ -48,20 +48,22 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
 
         case "serializeDisplayData":
             serializeDisplayData(arguments: arguments!,  result: result)
-            
+
         case "resolveCredentialDisplay":
             resolveCredentialDisplay(arguments: arguments!, result: result)
 
-            
+        case "getVersionDetails":
+           getVersionDetails(result:result)
+
         case "getCredID":
             getCredID(arguments: arguments!,  result: result)
-            
+
         case "parseActivities":
             parseActivities(arguments: arguments!,  result: result)
-            
+
         case "initSDK":
             initSDK(result:result)
-            
+
         case "issuerURI":
             issuerURI(result:result)
 
@@ -70,26 +72,36 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
 
         case "processAuthorizationRequest":
             processAuthorizationRequest(arguments: arguments!, result: result)
-        
+
         case "getMatchedSubmissionRequirements":
             getMatchedSubmissionRequirements(arguments: arguments!, result: result)
-            
+
         case "presentCredential":
             presentCredential(arguments: arguments!, result: result)
-            
+
         default:
             print("No call method is found")
         }
     }
-    
+
     private func initSDK(result: @escaping FlutterResult) {
         let walletSDK = WalletSDK();
         walletSDK.InitSDK(kmsStore: kmsStore())
-        
+
         self.walletSDK = walletSDK
         result(true)
     }
-    
+  /**
+    This method gets the version detail if we build sdk using the env variable
+    For Example: NEW_VERSION=testVer GIT_REV=testRev BUILD_TIME=testTime make generate-ios-bindings copy-ios-bindings
+    */
+     public func getVersionDetails(result: @escaping FlutterResult) {
+      var versionResp : [String: Any] = [:]
+      versionResp["walletSDKVersion"] = VersionGetVersion()
+      versionResp["gitRevision"] = VersionGetGitRevision()
+      versionResp["buildTimeRev"] = VersionGetBuildTime()
+      result(versionResp)
+    }
 
     /**
      This method  invoke processAuthorizationRequest defined in OpenID4Vp file.
@@ -107,6 +119,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                  message: "error while process authorization request",
                                                  details: "parameter authorizationRequest is missed"))
             }
+            
 
             let storedCredentials = arguments["storedCredentials"] as? Array<String>
             
@@ -126,9 +139,11 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                     return result(FlutterError.init(code: "NATIVE_ERR",
                                              message: "error while process authorization request",
                                              details: "no matching submission requirement is found"))
+                
                 }
                 result(resp)
             }
+            
             return result(Array<String>())
             
         } catch OpenID4VPError.runtimeError(let errorMsg){
@@ -234,8 +249,10 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             }
             let doc = try walletSDK.createDID(didMethodType: didMethodType)
             didDocResolution = doc
-        
-            result(doc.id_(nil))
+            var docResolution : [String: Any] = [:]
+            docResolution["did"] = doc.id_(nil)
+            docResolution["didDoc"] = doc.content
+            result(docResolution)
         } catch {
             result(FlutterError.init(code: "NATIVE_ERR",
                                      message: "error while creating did",
