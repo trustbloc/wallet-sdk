@@ -28,6 +28,7 @@ class CredentialDetailsState extends State<CredentialDetails> {
   final ScrollController credentialDIDController = ScrollController();
 
   bool isSwitched = false;
+  String didDoc = '';
 
   checkDevMode() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
@@ -38,6 +39,7 @@ class CredentialDetailsState extends State<CredentialDetails> {
   @override
   void initState() {
     checkDevMode();
+    getDidDocument();
     super.initState();
   }
 
@@ -63,6 +65,14 @@ class CredentialDetailsState extends State<CredentialDetails> {
 
   getCredentialDID(){
     return Text(widget.credentialData.credentialDID!);
+  }
+
+  getDidDocument() async {
+    final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
+    final SharedPreferences pref = await prefs;
+    var userDIDDoc = pref.getString("userDIDDoc");
+    final parsedJson = json.decode(userDIDDoc!);
+    didDoc = const JsonEncoder.withIndent('  ').convert(parsedJson);
   }
 
   Widget listViewWidget(Iterable<Object?> activitiesValue) {
@@ -242,9 +252,42 @@ class CredentialDetailsState extends State<CredentialDetails> {
                                 controller: credentialDIDController,
                                 itemCount: 1,
                                 itemBuilder: (BuildContext context, int index) {
-                                  return Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: getCredentialDID()
+                                  return Column(
+                                    children: [
+                                      const Padding(
+                                          padding:EdgeInsets.all(8.0),
+                                          child:  Text(
+                                            "DID",
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              color: Color(0xff190C21),
+                                              fontFamily: 'SF Pro',
+                                              fontWeight: FontWeight.bold),)
+                                      ),
+                                        Padding(
+                                          padding:const EdgeInsets.all(8.0),
+                                            child: getCredentialDID()
+                                        ),
+                                      const Padding(
+                                          padding:EdgeInsets.all(8.0),
+                                          child:  Text(
+                                            "DidDocument",
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              color: Color(0xff190C21),
+                                              fontFamily: 'SF Pro',
+                                              fontWeight: FontWeight.bold),)
+                                      ),
+                                      Padding(
+                                          padding:const EdgeInsets.all(8.0),
+                                          child: Text(didDoc, style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xff190C21),
+                                              fontFamily: 'SF Pro',
+                                              fontWeight: FontWeight.normal),)
+                                       ),
+                                      ],
+
                                   );
                                 }),
                           ))

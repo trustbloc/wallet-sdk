@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:app/demo_method_channel.dart';
@@ -25,7 +26,10 @@ void main() async {
     for (int i = 0; i < issuanceURLsList.length; i++) {
       String didMethodType = didMethodTypesList[i];
       print("wallet DID Type : $didMethodType");
-      final didContent = await walletSDKPlugin.createDID(didMethodTypesList[i]);
+      var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[i]);
+      var didDocEncoded = json.encode(didDocData!);
+      Map<String, dynamic> responseJson = json.decode(didDocEncoded);
+      final didContent= responseJson["did"];
       print("wallet DID : $didContent");
 
       String issuanceURL = issuanceURLsList[i];
@@ -68,7 +72,11 @@ void main() async {
     var didMethodTypesList = didMethodTypes.split(' ');
     String didMethodType = didMethodTypesList[0];
     print("wallet DID type : $didMethodType");
-    final didContent = await walletSDKPlugin.createDID(didMethodTypesList[0]);
+    var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[0]);
+    print("wallet didDocData : $didDocData");
+    var didDocEncoded = json.encode(didDocData!);
+    Map<String, dynamic> responseJson = json.decode(didDocEncoded);
+    var didContent= responseJson["did"];
     print("wallet DID : $didContent");
 
     const issuanceURLs = String.fromEnvironment("INITIATE_ISSUANCE_URLS_MULTIPLE_CREDS");

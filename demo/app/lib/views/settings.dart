@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:app/main.dart';
@@ -6,6 +7,8 @@ import 'package:flutter/material.dart';
 
 import 'package:app/widgets/primary_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:app/demo_method_channel.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -16,9 +19,12 @@ class Settings extends StatefulWidget {
 }
 
 class SettingsState extends State<Settings> {
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController usernameController = TextEditingController();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   bool isSwitched = false;
+  String walletSDKVersion  = '';
+  String gitRevision  = '';
+  String buildTimeRev  = '';
 
   checkDevMode() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
@@ -30,6 +36,7 @@ class SettingsState extends State<Settings> {
   initState() {
     checkDevMode();
     getUserDetails();
+    getVersionDetails();
     super.initState();
   }
 
@@ -62,7 +69,7 @@ class SettingsState extends State<Settings> {
               Flexible(
                 child: TextFormField(
                     enabled: false,
-                    controller: _usernameController,
+                    controller: usernameController,
                     decoration: const InputDecoration(
                       fillColor:  Color(0xff8D8A8E),
                       border: UnderlineInputBorder(),
@@ -85,6 +92,7 @@ class SettingsState extends State<Settings> {
                 activeTrackColor: Colors.deepPurple,
                 activeColor: Colors.deepPurpleAccent,
               ),
+              const Spacer(),
               Expanded(
                 child: Align(
                   alignment: Alignment.bottomCenter,
@@ -105,6 +113,37 @@ class SettingsState extends State<Settings> {
                   ),
                 ),
               ),
+              Expanded(
+                child: Column(
+                  children: [
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Text('Version: $walletSDKVersion',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              fontSize: 16, color: Color(0xff6C6D7C))
+                      ),
+                    ),
+                  Align(
+                  alignment: Alignment.center,
+                    child: Text('GitRevision: $gitRevision',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontSize: 16, color: Color(0xff6C6D7C))
+                    )
+                  ),
+                Align(
+                  alignment: Alignment.center,
+                   child: Text('Build Time: $buildTimeRev',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontSize: 16, color: Color(0xff6C6D7C))
+                    ),
+                  )
+                  ],
+
+                 ),
+              ),
             ],
           ),
         )
@@ -113,13 +152,22 @@ class SettingsState extends State<Settings> {
 
   saveDevMode() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
-    await preferences.setBool('devmode',isSwitched!);
-    print(isSwitched);
+    await preferences.setBool('devmode',isSwitched);
+  }
+
+  getVersionDetails() async {
+    var walletSDKPlugin = MethodChannelWallet();
+    var versionDetailResp = await walletSDKPlugin.getVersionDetails();
+    var didDocEncoded = json.encode(versionDetailResp!);
+    Map<String, dynamic> responseJson = json.decode(didDocEncoded);
+    walletSDKVersion = responseJson["walletSDKVersion"];
+    gitRevision = responseJson["gitRevision"];
+    buildTimeRev = responseJson["buildTimeRev"];
   }
   getUserDetails() async {
     UserLoginDetails userLoginDetails =  await getUser();
     log("userLoginDetails -> $userLoginDetails");
-    _usernameController.text = userLoginDetails.username!;
+    usernameController.text = userLoginDetails.username!;
   }
   initPreferences() async {
     final SharedPreferences  prefs =  await SharedPreferences.getInstance();
