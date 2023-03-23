@@ -45,6 +45,13 @@ var (
 	verifiedEmployeeVC []byte
 )
 
+func TestNewInquirer(t *testing.T) {
+	t.Run("Using the default network-based document loader", func(t *testing.T) {
+		inquirer := credential.NewInquirer(nil)
+		require.NotNil(t, inquirer)
+	})
+}
+
 func TestInstance_Query(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		query := credential.NewInquirer(&documentLoaderReverseWrapper{

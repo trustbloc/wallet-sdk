@@ -81,7 +81,7 @@ type LDDocument struct {
 
 // LDDocumentLoader is capable of loading linked domains documents.
 type LDDocumentLoader interface {
-	LoadDocument(u string) (*LDDocument, error)
+	LoadDocument(url string) (*LDDocument, error)
 }
 
 // A Signer is capable of signing data.

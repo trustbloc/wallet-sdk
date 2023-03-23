@@ -10,11 +10,14 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/trustbloc/wallet-sdk/pkg/api"
-	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
-
 	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
+	"github.com/piprate/json-gold/ld"
+
+	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
+	"github.com/trustbloc/wallet-sdk/pkg/api"
+	noopmetricslogger "github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 type didResolverWrapper struct {
@@ -37,9 +40,10 @@ type ClientConfig struct {
 	MetricsLogger        api.MetricsLogger  // If not specified, then metrics events won't be logged.
 	DisableVCProofChecks bool
 	HTTPClient           httpClient
+	DocumentLoader       ld.DocumentLoader // If not specified, then a network-based loader will be used.
 }
 
-func validateClientConfig(config *ClientConfig) error {
+func validateRequiredParameters(config *ClientConfig) error {
 	if config == nil {
 		return walleterror.NewValidationError(
 			module,
@@ -65,4 +69,22 @@ func validateClientConfig(config *ClientConfig) error {
 	}
 
 	return nil
+}
+
+func setDefaults(config *ClientConfig) {
+	if config.HTTPClient == nil {
+		config.HTTPClient = http.DefaultClient
+	}
+
+	if config.ActivityLogger == nil {
+		config.ActivityLogger = noopactivitylogger.NewActivityLogger()
+	}
+
+	if config.MetricsLogger == nil {
+		config.MetricsLogger = noopmetricslogger.NewMetricsLogger()
+	}
+
+	if config.DocumentLoader == nil {
+		config.DocumentLoader = ld.NewDefaultDocumentLoader(http.DefaultClient)
+	}
 }

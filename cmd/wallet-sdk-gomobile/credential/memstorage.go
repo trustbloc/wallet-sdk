@@ -9,28 +9,19 @@ SPDX-License-Identifier: Apache-2.0
 package credential
 
 import (
-	"net/http"
-
-	"github.com/piprate/json-gold/ld"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	goapimemstorage "github.com/trustbloc/wallet-sdk/pkg/memstorage"
 )
 
 // A DB allows for credential storage and retrieval using in-memory storage only.
 type DB struct {
-	goAPIProvider  *goapimemstorage.Provider
-	documentLoader ld.DocumentLoader
+	goAPIProvider *goapimemstorage.Provider
 }
 
 // NewInMemoryDB returns a new in-memory credential DB.
-// It uses a network-based JSON-LD document loader.
-// TODO: https://github.com/trustbloc/wallet-sdk/issues/160 Support custom document
-// loaders so that contexts can be preloaded.
 func NewInMemoryDB() *DB {
 	return &DB{
-		goAPIProvider:  goapimemstorage.NewProvider(),
-		documentLoader: ld.NewDefaultDocumentLoader(http.DefaultClient),
+		goAPIProvider: goapimemstorage.NewProvider(),
 	}
 }
 

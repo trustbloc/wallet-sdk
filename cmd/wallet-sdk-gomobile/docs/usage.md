@@ -1,6 +1,6 @@
 # SDK Usage
 
-Last updated: March 14, 2023 (commit `7936266814445f20bcd840b94399cebaf50872c7`)
+Last updated: March 23, 2023 (commit `ed04b7c22c0634e62f58a40597ebd3e967835b61`)
 
 This guide explains how to use this SDK in Android or iOS code.
 
@@ -120,7 +120,15 @@ let opts = VcparseNewOpts(false, nil)
 let vc = VcparseParse("Serialized VC goes here", opts, nil)
 ```
 
+## LD Document Loading
+
+Several APIs allow for an LD document loader to be specified.
+If no custom LD document loader is specified (or is nil/null), then network-based document loading will be used instead.
+For performance and/or security reasons, you may wish to implement a custom LD document loader that uses
+preloaded local contexts.
+
 ## In-Memory Credential Storage
+
 The credential package contains an in-memory credential storage implementation that can be used to store credentials
 in memory and also satisfy the credential reader interface. As it only uses in-memory storage, you will probably want to
 create your own implementation in your mobile code that uses platform-specific storage.

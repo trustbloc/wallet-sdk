@@ -16,9 +16,9 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/ld"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4vp"
+	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/helpers"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/metricslogger"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4vp"
@@ -135,7 +135,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		activityLogger := mem.NewActivityLogger()
 
-		docLoader := ld.NewDocLoader()
+		docLoader := &documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)}
 
 		metricsLogger := metricslogger.NewMetricsLogger()
 

@@ -14,10 +14,10 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
-
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
+	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
@@ -56,6 +56,7 @@ type ClientConfig struct {
 
 // NewClientConfig creates the client config object.
 // ActivityLogger is optional, but if provided then activities will be logged there.
+// If ldDocumentLoader is set to nil, then a network-based loader will be used.
 // If not provided, then no activities will be logged.
 func NewClientConfig(keyHandleReader api.KeyReader, crypto api.Crypto,
 	didResolver api.DIDResolver, ldDocumentLoader api.LDDocumentLoader, activityLogger api.ActivityLogger,
@@ -110,6 +111,14 @@ func NewInteraction(authorizationRequest string, config *ClientConfig) *Interact
 		opts = append(opts, openid4vp.WithMetricsLogger(mobileMetricsLoggerWrapper))
 	}
 
+	var goAPIDocumentLoader ld.DocumentLoader
+
+	if config.DocumentLoader != nil {
+		goAPIDocumentLoader = &wrapper.DocumentLoaderWrapper{
+			DocumentLoader: config.DocumentLoader,
+		}
+	}
+
 	inquirer := credential.NewInquirer(config.DocumentLoader)
 
 	return &Interaction{
@@ -121,7 +130,7 @@ func NewInteraction(authorizationRequest string, config *ClientConfig) *Interact
 			jwtVerifier,
 			&wrapper.VDRResolverWrapper{DIDResolver: config.DIDRes},
 			config.Crypto,
-			&wrapper.DocumentLoaderWrapper{DocumentLoader: config.DocumentLoader},
+			goAPIDocumentLoader,
 			opts...,
 		),
 		didResolver: config.DIDRes,

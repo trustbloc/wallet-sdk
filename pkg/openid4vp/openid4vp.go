@@ -86,6 +86,10 @@ func New(
 ) *Interaction {
 	client, activityLogger, metricsLogger := processOpts(opts)
 
+	if documentLoader == nil {
+		documentLoader = ld.NewDefaultDocumentLoader(http.DefaultClient)
+	}
+
 	return &Interaction{
 		authorizationRequest: authorizationRequest,
 		signatureVerifier:    signatureVerifier,

@@ -11,6 +11,7 @@ package credential
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
@@ -24,7 +25,6 @@ import (
 
 // Inquirer implements querying credentials using presentation definition.
 type Inquirer struct {
-	documentLoader       ld.DocumentLoader
 	goAPICredentialQuery *credentialquery.Instance
 }
 
@@ -89,14 +89,20 @@ func (vp *VerifiablePresentation) Credentials() (*api.VerifiableCredentialsArray
 }
 
 // NewInquirer returns a new Inquirer.
+// If documentLoader is set to nil, then a network-based loader will be used.
 func NewInquirer(documentLoader api.LDDocumentLoader) *Inquirer {
-	wrappedLoader := &wrapper.DocumentLoaderWrapper{
-		DocumentLoader: documentLoader,
+	var goAPIDocumentLoader ld.DocumentLoader
+
+	if documentLoader != nil {
+		goAPIDocumentLoader = &wrapper.DocumentLoaderWrapper{
+			DocumentLoader: documentLoader,
+		}
+	} else {
+		goAPIDocumentLoader = ld.NewDefaultDocumentLoader(http.DefaultClient)
 	}
 
 	return &Inquirer{
-		documentLoader:       wrappedLoader,
-		goAPICredentialQuery: credentialquery.NewInstance(wrappedLoader),
+		goAPICredentialQuery: credentialquery.NewInstance(goAPIDocumentLoader),
 	}
 }
 

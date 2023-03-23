@@ -23,11 +23,9 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 
-	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
-	noopmetricslogger "github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
@@ -63,6 +61,7 @@ type Interaction struct {
 	metricsLogger          api.MetricsLogger
 	disableVCProofChecks   bool
 	httpClient             httpClient
+	documentLoader         ld.DocumentLoader
 }
 
 // NewInteraction creates a new OpenID4CI Interaction.
@@ -76,22 +75,12 @@ type Interaction struct {
 func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interaction, error) {
 	timeStartNewInteraction := time.Now()
 
-	err := validateClientConfig(config)
+	err := validateRequiredParameters(config)
 	if err != nil {
 		return nil, err
 	}
 
-	if config.HTTPClient == nil {
-		config.HTTPClient = http.DefaultClient
-	}
-
-	if config.ActivityLogger == nil {
-		config.ActivityLogger = noopactivitylogger.NewActivityLogger()
-	}
-
-	if config.MetricsLogger == nil {
-		config.MetricsLogger = noopmetricslogger.NewMetricsLogger()
-	}
+	setDefaults(config)
 
 	credentialOffer, err := getCredentialOffer(initiateIssuanceURI, config.HTTPClient, config.MetricsLogger)
 	if err != nil {
@@ -126,6 +115,7 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 			metricsLogger:          config.MetricsLogger,
 			disableVCProofChecks:   config.DisableVCProofChecks,
 			httpClient:             config.HTTPClient,
+			documentLoader:         config.DocumentLoader,
 		}, config.MetricsLogger.Log(&api.MetricsEvent{
 			Event:    newInteractionEventText,
 			Duration: time.Since(timeStartNewInteraction),
@@ -421,7 +411,7 @@ func (i *Interaction) getCredentialsFromResponses(
 	vdrKeyResolver := verifiable.NewVDRKeyResolver(i.didResolver)
 
 	credentialOpts := []verifiable.CredentialOpt{
-		verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)),
+		verifiable.WithJSONLDDocumentLoader(i.documentLoader),
 		verifiable.WithPublicKeyFetcher(vdrKeyResolver.PublicKeyFetcher()),
 	}
 

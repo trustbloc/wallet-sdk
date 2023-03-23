@@ -15,12 +15,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
-	"github.com/trustbloc/wallet-sdk/test/integration/pkg/helpers"
-
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
+	"github.com/trustbloc/wallet-sdk/internal/testutil"
+	"github.com/trustbloc/wallet-sdk/test/integration/pkg/helpers"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4ci"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/testenv"
 )
@@ -169,6 +169,8 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 			Crypto:         testHelper.KMS.GetCrypto(),
 			MetricsLogger:  testHelper.MetricsLogger,
 		}
+
+		clientConfig.SetDocumentLoader(&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)})
 
 		interaction, err := openid4ci.NewInteraction(offerCredentialURL, &clientConfig)
 		require.NoError(t, err)

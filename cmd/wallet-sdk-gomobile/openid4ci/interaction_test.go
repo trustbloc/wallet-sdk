@@ -17,6 +17,7 @@ import (
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
+	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
@@ -27,6 +28,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
+	"github.com/trustbloc/wallet-sdk/internal/testutil"
 )
 
 //go:embed testdata/sample_credential_response.json
@@ -113,7 +115,7 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 
 func TestInteraction_RequestCredential(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		t.Run("Using default options", func(t *testing.T) {
+		t.Run("Without additional headers, TLS verification enabled", func(t *testing.T) {
 			doRequestCredentialTest(t, nil, false)
 		})
 		t.Run("With additional headers", func(t *testing.T) {
@@ -339,6 +341,7 @@ func getTestClientConfig(t *testing.T, kms *localkms.KMS, activityLogger api.Act
 
 	clientConfig := openid4ci.NewClientConfig("ClientID", kms.GetCrypto(), resolver, activityLogger)
 	clientConfig.DisableVCProofChecks()
+	clientConfig.SetDocumentLoader(&documentLoaderWrapper{DocumentLoader: testutil.DocumentLoader(t)})
 
 	if additionalHeaders != nil {
 		clientConfig.AddHeaders(additionalHeaders)
@@ -349,6 +352,29 @@ func getTestClientConfig(t *testing.T, kms *localkms.KMS, activityLogger api.Act
 	}
 
 	return clientConfig
+}
+
+type documentLoaderWrapper struct {
+	DocumentLoader ld.DocumentLoader
+}
+
+func (l *documentLoaderWrapper) LoadDocument(u string) (*api.LDDocument, error) {
+	doc, err := l.DocumentLoader.LoadDocument(u)
+	if err != nil {
+		return nil, err
+	}
+
+	wrappedDoc := &api.LDDocument{
+		DocumentURL: doc.DocumentURL,
+		ContextURL:  doc.ContextURL,
+	}
+
+	wrappedDoc.Document, err = json.Marshal(doc.Document)
+	if err != nil {
+		return nil, fmt.Errorf("fail to unmarshal ld document bytes: %w", err)
+	}
+
+	return wrappedDoc, nil
 }
 
 type mockVMCreator func(key *api.JSONWebKey, keyType string) (*did.VerificationMethod, error)
