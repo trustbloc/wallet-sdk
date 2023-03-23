@@ -382,7 +382,8 @@
         "credentialTemplates": [
           {
             "contexts": [
-              "https://www.w3.org/2018/credentials/v1"
+              "https://www.w3.org/2018/credentials/v1",
+              "https://www.w3.org/2018/credentials/examples/v1"
             ],
             "type": "VerifiedEmployee",
             "id": "templateID",
@@ -522,7 +523,7 @@
           "signingAlgorithm": "JsonWebSignature2020",
           "signatureRepresentation": 0,
           "keyType": "ECDSASecp256k1DER",
-          "format": "jwt",
+          "format": "ldp",
           "didMethod": "ion",
           "status": {
             "type": "StatusList2021Entry"
@@ -556,7 +557,7 @@
           "credentials_supported": [
             {
               "id": "UniversityDegreeCredential",
-              "format": "jwt_vc_json",
+              "format": "ldp_vc",
               "types":[
                 "VerifiableCredential",
                 "UniversityDegreeCredential"

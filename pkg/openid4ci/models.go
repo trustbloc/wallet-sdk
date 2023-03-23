@@ -6,6 +6,8 @@ SPDX-License-Identifier: Apache-2.0
 
 package openid4ci
 
+import "encoding/json"
+
 // CredentialOffer represents the Credential Offer object as defined in
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#section-4.1.1.
 type CredentialOffer struct {
@@ -48,10 +50,21 @@ type CredentialRequestOpts struct {
 
 // CredentialResponse is the object returned from the Client.Callback method.
 // It contains the issued credential and the credential's format.
-// The credential must be JWT (or represented as a string somehow), or unmarshalling will not work correctly.
 type CredentialResponse struct {
-	Credential string `json:"credential,omitempty"` // Optional for deferred credential flow.
-	Format     string `json:"format,omitempty"`
+	Credential interface{} `json:"credential,omitempty"` // Optional for deferred credential flow.
+	Format     string      `json:"format,omitempty"`
+}
+
+// SerializeToCredentialsBytes serializes underlying credential to proper bytes representation depending on
+// credential format.
+func (r *CredentialResponse) SerializeToCredentialsBytes() ([]byte, error) {
+	// TODO: check response.Format after VCS starts return valid value.
+	switch cred := r.Credential.(type) {
+	case string:
+		return []byte(cred), nil
+	default:
+		return json.Marshal(cred)
+	}
 }
 
 type tokenResponse struct {

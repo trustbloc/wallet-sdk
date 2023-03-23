@@ -35,6 +35,7 @@ const (
 	activityLogOperation        = "oidc-issuance"
 	jwtVCJSONCredentialFormat   = "jwt_vc_json"    //nolint:gosec // false positive
 	jwtVCJSONLDCredentialFormat = "jwt_vc_json-ld" //nolint:gosec // false positive
+	ldpVCCredentialFormat       = "ldp_vc"
 
 	newInteractionEventText = "Instantiating OpenID4CI interaction object"
 	//nolint:gosec //false positive
@@ -245,7 +246,10 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 
 	vcs, err := i.getCredentialsFromResponses(credentialResponses)
 	if err != nil {
-		return nil, err
+		return nil, walleterror.NewExecutionError(
+			module,
+			CredentialParseFailedCode,
+			CredentialParseError, err)
 	}
 
 	subjectIDs, err := getSubjectIDs(vcs)
@@ -432,16 +436,14 @@ func (i *Interaction) getCredentialsFromResponses(
 	for j := range credentialResponses {
 		timeStartParseCredential := time.Now()
 
-		credentialResponseBytes := []byte(credentialResponses[j].Credential)
+		credentialResponseBytes, err := credentialResponses[j].SerializeToCredentialsBytes()
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse credential from credential response at index %d: %w", j, err)
+		}
 
 		vc, err := verifiable.ParseCredential(credentialResponseBytes, credentialOpts...)
 		if err != nil {
-			return nil,
-				walleterror.NewExecutionError(
-					module,
-					CredentialParseFailedCode,
-					CredentialParseError,
-					fmt.Errorf("failed to parse credential from credential response at index %d: %w", j, err))
+			return nil, fmt.Errorf("failed to parse credential from credential response at index %d: %w", j, err)
 		}
 
 		err = i.metricsLogger.Log(&api.MetricsEvent{
@@ -532,7 +534,8 @@ func determineCredentialTypesAndFormats(credentialOffer *CredentialOffer) ([][]s
 
 	for i := 0; i < len(credentialOffer.Credentials); i++ {
 		if credentialOffer.Credentials[i].Format != jwtVCJSONCredentialFormat &&
-			credentialOffer.Credentials[i].Format != jwtVCJSONLDCredentialFormat {
+			credentialOffer.Credentials[i].Format != jwtVCJSONLDCredentialFormat &&
+			credentialOffer.Credentials[i].Format != ldpVCCredentialFormat {
 			return nil, nil, walleterror.NewValidationError(
 				module,
 				UnsupportedCredentialTypeInOfferCode,
