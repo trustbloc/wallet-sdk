@@ -32,12 +32,10 @@ class _OTPPage extends State<OTP> {
     Map<String, dynamic> responseJson = json.decode(didDocEncoded);
     var didID = responseJson["did"];
     var didDoc = responseJson["didDoc"];
-    log("did $didID");
-    log("didDoc $didDoc");
     setState(() {
-      userDIDId = didID!;
+      userDIDId = didID;
+      userDIDDoc = didDoc;
     });
-    log("created didID :$didID");
     return didID;
   }
 
@@ -134,6 +132,7 @@ class _OTPPage extends State<OTP> {
                           final SharedPreferences pref = await prefs;
                              await _createDid();
                              pref.setString('userDID',userDIDId);
+                             pref.setString('userDIDDoc',userDIDDoc);
                           credentials =  await WalletSDKPlugin.requestCredential(_otp!);
                           String? issuerURI = await WalletSDKPlugin.issuerURI();
                           resolvedCredentialDisplay = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
