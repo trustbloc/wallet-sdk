@@ -14,6 +14,10 @@ endif
 ALPINE_VER ?= 3.16
 GO_VER ?= 1.19
 
+NEW_VERSION ?= $(shell git describe --tags --always `git rev-list --tags --max-count=1`)-SNAPSHOT-$(shell git rev-parse --short=7 HEAD)
+GIT_REV ?= $(shell git rev-parse HEAD)
+BUILD_TIME ?= $(shell date)
+
 export TERM := xterm-256color
 
 ANDROID_EMULATOR_NAME ?= WalletSDKDeviceEmulator
@@ -38,11 +42,11 @@ unit-test:
 
 .PHONY: generate-android-bindings
 generate-android-bindings:
-	@make generate-android-bindings -C ./cmd/wallet-sdk-gomobile
+	@GIT_REV="${GIT_REV}" NEW_VERSION="${NEW_VERSION}" BUILD_TIME="${BUILD_TIME}" make generate-android-bindings -C ./cmd/wallet-sdk-gomobile
 
 .PHONY: generate-ios-bindings
 generate-ios-bindings:
-	@make generate-ios-bindings -C ./cmd/wallet-sdk-gomobile
+	@GIT_REV="${GIT_REV}" NEW_VERSION="${NEW_VERSION}" BUILD_TIME="${BUILD_TIME}" make generate-ios-bindings -C ./cmd/wallet-sdk-gomobile
 
 .PHONY: copy-android-bindings
 copy-android-bindings:
