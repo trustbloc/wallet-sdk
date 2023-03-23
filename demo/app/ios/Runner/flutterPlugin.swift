@@ -123,13 +123,13 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                     credentials: storedCredentials!))
                 var resp = convertVerifiableCredentialsArray(arr: matchedReq.atIndex(0)!.descriptor(at:0)!.matchedVCs!)
                 if (resp.isEmpty) {
-                    result(FlutterError.init(code: "NATIVE_ERR",
+                    return result(FlutterError.init(code: "NATIVE_ERR",
                                              message: "error while process authorization request",
                                              details: "no matching submission requirement is found"))
-                    return;
                 }
                 result(resp)
             }
+            return result(Array<String>())
             
         } catch OpenID4VPError.runtimeError(let errorMsg){
             result(FlutterError.init(code: "NATIVE_ERR",
