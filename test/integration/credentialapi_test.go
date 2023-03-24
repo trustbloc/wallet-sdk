@@ -9,11 +9,8 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"testing"
 	"time"
-
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
 
 	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util"
@@ -26,6 +23,8 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
+	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	sdkapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
 )
@@ -38,7 +37,7 @@ func TestCredentialAPI(t *testing.T) {
 
 	credStore := credential.NewInMemoryDB()
 
-	ldLoader := ld.NewDefaultDocumentLoader(http.DefaultClient)
+	ldLoader := testutil.DocumentLoader(t)
 
 	ldLoaderWrapper := &documentLoaderReverseWrapper{DocumentLoader: ldLoader}
 
@@ -149,8 +148,8 @@ type documentLoaderReverseWrapper struct {
 	DocumentLoader ld.DocumentLoader
 }
 
-func (l *documentLoaderReverseWrapper) LoadDocument(u string) (*api.LDDocument, error) {
-	doc, err := l.DocumentLoader.LoadDocument(u)
+func (l *documentLoaderReverseWrapper) LoadDocument(url string) (*api.LDDocument, error) {
+	doc, err := l.DocumentLoader.LoadDocument(url)
 	if err != nil {
 		return nil, err
 	}

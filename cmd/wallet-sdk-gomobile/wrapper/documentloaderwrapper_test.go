@@ -47,7 +47,7 @@ func TestDocumentLoaderWrapper_LoadDocument(t *testing.T) {
 		require.Contains(t, err.Error(), "load failed")
 	})
 
-	t.Run("DOc parse failed", func(t *testing.T) {
+	t.Run("Doc parse failed", func(t *testing.T) {
 		documentLoaderWrapper := wrapper.DocumentLoaderWrapper{
 			DocumentLoader: &documentLoaderMock{
 				LoadResult: &api.LDDocument{
@@ -69,6 +69,6 @@ type documentLoaderMock struct {
 	LoadErr    error
 }
 
-func (d *documentLoaderMock) LoadDocument(u string) (*api.LDDocument, error) {
+func (d *documentLoaderMock) LoadDocument(string) (*api.LDDocument, error) {
 	return d.LoadResult, d.LoadErr
 }

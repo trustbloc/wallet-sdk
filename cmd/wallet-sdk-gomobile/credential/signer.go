@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialsigner"
@@ -18,8 +17,7 @@ import (
 
 // Signer issues self-signed credentials.
 type Signer struct {
-	signer   *credentialsigner.Signer
-	ldLoader ld.DocumentLoader
+	signer *credentialsigner.Signer
 }
 
 // NewSigner initializes a credential Signer for issuing self-signed credentials.
@@ -29,15 +27,13 @@ func NewSigner(
 	crypto api.Crypto,
 	ldLoader api.LDDocumentLoader,
 ) (*Signer, error) {
-	ldLoaderWrapper := &wrapper.DocumentLoaderWrapper{DocumentLoader: ldLoader}
 	readerWrapper := &wrapper.CredentialReaderWrapper{CredentialReader: credReader}
 	resolverWrapper := &wrapper.VDRResolverWrapper{DIDResolver: didResolver}
 
 	sdkSigner := credentialsigner.New(readerWrapper, resolverWrapper, crypto)
 
 	return &Signer{
-		signer:   sdkSigner,
-		ldLoader: ldLoaderWrapper,
+		signer: sdkSigner,
 	}, nil
 }
 

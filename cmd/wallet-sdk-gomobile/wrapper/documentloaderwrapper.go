@@ -22,8 +22,8 @@ type DocumentLoaderWrapper struct {
 }
 
 // LoadDocument wraps LoadDocument of api.LDDocumentLoader.
-func (l *DocumentLoaderWrapper) LoadDocument(u string) (*ld.RemoteDocument, error) {
-	doc, err := l.DocumentLoader.LoadDocument(u)
+func (l *DocumentLoaderWrapper) LoadDocument(url string) (*ld.RemoteDocument, error) {
+	doc, err := l.DocumentLoader.LoadDocument(url)
 	if err != nil {
 		return nil, err
 	}

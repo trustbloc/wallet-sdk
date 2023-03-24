@@ -53,6 +53,7 @@ type ClientConfig struct {
 	disableVCProofChecks             bool
 	additionalHeaders                api.Headers
 	disableHTTPClientTLSVerification bool
+	documentLoader                   api.LDDocumentLoader
 }
 
 // NewClientConfig creates the client config object.
@@ -86,6 +87,12 @@ func (c *ClientConfig) AddHeaders(headers *api.Headers) {
 // DisableHTTPClientTLSVerify disables tls verification, should be used only for test purposes.
 func (c *ClientConfig) DisableHTTPClientTLSVerify() {
 	c.disableHTTPClientTLSVerification = true
+}
+
+// SetDocumentLoader sets the document loader to use when parsing VCs received from the issuer.
+// If no document loader is explicitly set, then a network-based loader will be used.
+func (c *ClientConfig) SetDocumentLoader(documentLoader api.LDDocumentLoader) {
+	c.documentLoader = documentLoader
 }
 
 // NewInteraction creates a new OpenID4CI Interaction.
@@ -185,6 +192,14 @@ func unwrapConfig(config *ClientConfig) *openid4cigoapi.ClientConfig {
 		MetricsLogger:        &wrapper.MobileMetricsLoggerWrapper{MobileAPIMetricsLogger: config.MetricsLogger},
 		DisableVCProofChecks: config.disableVCProofChecks,
 		HTTPClient:           httpClient,
+	}
+
+	if config.documentLoader != nil {
+		documentLoaderWrapper := &wrapper.DocumentLoaderWrapper{
+			DocumentLoader: config.documentLoader,
+		}
+
+		goAPIClientConfig.DocumentLoader = documentLoaderWrapper
 	}
 
 	return goAPIClientConfig
