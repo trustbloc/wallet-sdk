@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -37,21 +38,19 @@ func TestCredentialAPI(t *testing.T) {
 
 	credStore := credential.NewInMemoryDB()
 
-	ldLoader := testutil.DocumentLoader(t)
-
-	ldLoaderWrapper := &documentLoaderReverseWrapper{DocumentLoader: ldLoader}
-
-	didResolver, e := did.NewResolver("")
+	didResolver, e := did.NewResolver(nil)
 	require.NoError(t, e)
 
-	signer, e := credential.NewSigner(credStore, didResolver, crypto, ldLoaderWrapper)
+	signer, e := credential.NewSigner(credStore, didResolver, crypto)
 	require.NoError(t, e)
 
-	c, e := did.NewCreatorWithKeyWriter(kms)
+	c, e := did.NewCreator(kms)
 	require.NoError(t, e)
 
 	sdkResolver, e := resolver.NewDIDResolver("")
 	require.NoError(t, e)
+
+	ldLoader := testutil.DocumentLoader(t)
 
 	verifier := jwtvcVerifier{
 		ldLoader:         ldLoader,
@@ -82,7 +81,10 @@ func TestCredentialAPI(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			didDoc, err := c.Create(tc.didMethod, &api.CreateDIDOpts{MetricsLogger: stderr.NewMetricsLogger()})
+			createDIDOptionalArgs := did.NewCreateOpts()
+			createDIDOptionalArgs.SetMetricsLogger(stderr.NewMetricsLogger())
+
+			didDoc, err := c.Create(tc.didMethod, createDIDOptionalArgs)
 			require.NoError(t, err)
 
 			docID, err := didDoc.ID()
@@ -154,14 +156,15 @@ func (l *documentLoaderReverseWrapper) LoadDocument(url string) (*api.LDDocument
 		return nil, err
 	}
 
-	wrappedDoc := &api.LDDocument{
-		DocumentURL: doc.DocumentURL,
-		ContextURL:  doc.ContextURL,
-	}
-
-	wrappedDoc.Document, err = json.Marshal(doc.Document)
+	documentBytes, err := json.Marshal(doc.Document)
 	if err != nil {
 		return nil, fmt.Errorf("fail to unmarshal ld document bytes: %w", err)
+	}
+
+	wrappedDoc := &api.LDDocument{
+		DocumentURL: doc.DocumentURL,
+		Document:    string(documentBytes),
+		ContextURL:  doc.ContextURL,
 	}
 
 	return wrappedDoc, nil

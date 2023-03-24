@@ -155,8 +155,8 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 	if i.preAuthorizedCodeGrant.UserPINRequired && credentialRequestOpts.UserPIN == "" {
 		return nil, walleterror.NewValidationError(
 			module,
-			PinCodeRequiredCode,
-			PinCodeRequiredError,
+			PINRequiredCode,
+			PINRequiredError,
 			errors.New("the credential offer requires a user PIN, but it was not provided"))
 	}
 

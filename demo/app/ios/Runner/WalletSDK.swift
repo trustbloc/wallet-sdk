@@ -15,7 +15,6 @@ enum WalletSDKError: Error {
 class WalletSDK {
     private var kms:LocalkmsKMS?
     private var didResolver: ApiDIDResolverProtocol?
-    private var documentLoader: ApiLDDocumentLoaderProtocol?
     private var crypto: ApiCryptoProtocol?
     var activityLogger: MemActivityLogger?
 
@@ -23,20 +22,23 @@ class WalletSDK {
 
     func InitSDK(kmsStore: LocalkmsStoreProtocol) {
         kms = LocalkmsNewKMS(kmsStore, nil)
-        didResolver = DidNewResolver("http://did-resolver.trustbloc.local:8072/1.0/identifiers", nil)
-        crypto = kms?.getCrypto()
-        documentLoader = LdNewDocLoader()
+        
+        let opts = DidNewResolverOpts()
+        opts!.setResolverServerURI("http://did-resolver.trustbloc.local:8072/1.0/identifiers")
+        
+        didResolver = DidNewResolver(opts, nil)
+        crypto = kms!.getCrypto()
         activityLogger = MemNewActivityLogger()
     }
 
     func createDID(didMethodType: String) throws -> ApiDIDDocResolution {
-        let didCreator = DidNewCreatorWithKeyWriter(self.kms, nil)
-            let apiCreate = ApiCreateDIDOpts.init()
-            if (didMethodType == "jwk"){
-                apiCreate.keyType = "ECDSAP384IEEEP1363"
-            }
-          
-            return try didCreator!.create(didMethodType, createDIDOpts: apiCreate)
+        let didCreator = DidNewCreator(self.kms, nil)
+        let opts = DidNewCreateOpts()
+        if (didMethodType == "jwk"){
+            opts!.setKeyType("ECDSAP384IEEEP1363")
+        }
+      
+        return try didCreator!.create(didMethodType, opts: opts)
          
     }
     
@@ -69,13 +71,10 @@ class WalletSDK {
         guard let didResolver = self.didResolver else {
             throw WalletSDKError.runtimeError("SDK is not initialized, call initSDK()")
         }
-        guard let documentLoader = self.documentLoader else {
-            throw WalletSDKError.runtimeError("SDK is not initialized, call initSDK()")
-        }        
         guard let activityLogger = self.activityLogger else {
             throw WalletSDKError.runtimeError("SDK is not initialized, call initSDK()")
         }
         
-        return OpenID4VP(keyReader: kms, didResolver: didResolver, documentLoader: documentLoader, crypto: crypto, activityLogger: activityLogger)
+        return OpenID4VP(keyReader: kms, didResolver: didResolver, crypto: crypto, activityLogger: activityLogger)
     }
 }

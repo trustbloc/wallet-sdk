@@ -26,46 +26,45 @@ class IntegrationTest: XCTestCase {
         XCTAssertEqual(VersionGetBuildTime(), "testTime")
 
         let kms = LocalkmsNewKMS(kmsStore(), nil)!
-        let didResolver = DidNewResolver("http://localhost:8072/1.0/identifiers", nil)!
+        
+        let resolverOpts = DidNewResolverOpts()
+        resolverOpts!.setResolverServerURI("http://localhost:8072/1.0/identifiers")
+        let didResolver = DidNewResolver(resolverOpts, nil)!
+        
         let crypto = kms.getCrypto()
-        let documentLoader = LdNewDocLoader()!
-        let activityLogger = MemNewActivityLogger()!
 
-        let didCreator = DidNewCreatorWithKeyWriter(kms, nil)!
-        let userDID = try didCreator.create("ion", createDIDOpts: ApiCreateDIDOpts())
+        let didCreator = DidNewCreator(kms, nil)!
+        let userDID = try didCreator.create("ion", opts: nil)
 
         // Issue VCs
-        let cfg = Openid4ciClientConfig("ClientID", crypto: crypto, didRes:didResolver, activityLogger:	activityLogger)
         let requestURI = ProcessInfo.processInfo.environment["INITIATE_ISSUANCE_URL"]
         
         XCTAssertTrue(requestURI != "", "requestURI:" + requestURI!)
+        
+        let openID4CIInteractionArgs = Openid4ciNewArgs(requestURI, "ClientID", crypto, didResolver)
 
-        let ciInteraction = Openid4ciNewInteraction(requestURI, cfg, nil)
+        let ciInteraction = Openid4ciNewInteraction(openID4CIInteractionArgs, nil, nil)
         XCTAssertNotNil(ciInteraction)
 
         let authorizeResult = try ciInteraction!.authorize()
-        XCTAssertTrue(!authorizeResult.userPINRequired)
-
-        let otp = ""
-        let issuedCreds = try ciInteraction!.requestCredential(
-            Openid4ciNewCredentialRequestOpts(otp), vm: userDID.assertionMethod())
+        XCTAssertFalse(authorizeResult.userPINRequired)
+        
+        let issuedCreds = try ciInteraction!.requestCredential(userDID.assertionMethod())
         XCTAssertTrue(issuedCreds.length() > 0)
 
         //Presenting VCs
-        let vpConfig = Openid4vpClientConfig(kms,
-                                             crypto: crypto,
-                                             didResolver: didResolver,
-                                             ldDocumentLoader: documentLoader,
-                                             activityLogger: activityLogger)
         let authorizationRequestURI = ProcessInfo.processInfo.environment["INITIATE_VERIFICATION_URL"]
         XCTAssertTrue(authorizationRequestURI != "", "authorizationRequestURI:" + authorizationRequestURI!)
-        let vpInteraction = Openid4vpInteraction(authorizationRequestURI, config: vpConfig)!
+        
+        let openID4VPArgs = Openid4vpNewArgs(authorizationRequestURI, kms, crypto, didResolver)
+        
+        let vpInteraction = Openid4vpInteraction(openID4VPArgs, opts: nil)!
 
         let credentialsQuery = try vpInteraction.getQuery()
-        let inquirer = CredentialNewInquirer(documentLoader)!
+        let inquirer = CredentialNewInquirer(nil)!
 
         let submissionRequirements = try inquirer.getSubmissionRequirements(
-            credentialsQuery, contents: CredentialCredentialsOpt(issuedCreds))
+            credentialsQuery, contents: CredentialCredentialsArg(fromVCArray: issuedCreds))
 
         XCTAssertTrue(submissionRequirements.len() > 0)
         let requirement = submissionRequirements.atIndex(0)!

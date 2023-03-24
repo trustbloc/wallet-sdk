@@ -240,9 +240,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     /**
-     Create method of  DidNewCreatorWithKeyWriter creates a DID document using the given DID method.
+     Create method of DidNewCreator creates a DID document using the given DID method.
      The usage of ApiCreateDIDOpts depends on the DID method you're using.
-     In the app when user logins we invoke sdk DidNewCreatorWithKeyWriter create method to create new did per user.
+     In the app when user logins we invoke sdk DidNewCreator create method to create new did per user.
      */
     public func createDid(didMethodType: String, result: @escaping FlutterResult) {
         do {
@@ -252,10 +252,6 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                  details: "WalletSDK interaction is not initialized, call initSDK()"))
             }
             
-            let apiCreate = ApiCreateDIDOpts.init()
-            if (didMethodType == "jwk"){
-                apiCreate.keyType = "ECDSAP384IEEEP1363"
-            }
             let doc = try walletSDK.createDID(didMethodType: didMethodType)
             didDocResolution = doc
             var docResolution : [String: Any] = [:]
@@ -321,9 +317,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
                 
          do {
-            let credentialCreated = try openID4CI.requestCredential(otp: otp,
-                                                                    didVerificationMethod: didDocResolution.assertionMethod())
-             
+            let credentialCreated = try openID4CI.requestCredential(didVerificationMethod: didDocResolution.assertionMethod(), otp: otp)
+
             result(credentialCreated.serialize(nil))
           } catch let error as NSError{
               result(FlutterError.init(code: "Exception",
@@ -434,7 +429,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              details: "parameter credentials is missed"))
         }
         do {
-            let statusVerifier = CredentialNewStatusVerifier(CredentialStatusVerifierOptionalArgs(), nil);
+            let statusVerifier = CredentialNewStatusVerifier(nil, nil);
             let credentialArray = convertToVerifiableCredentialsArray(credentials: credentials)
             try statusVerifier?.verify(credentialArray.atIndex(0))
             result(true)
@@ -454,7 +449,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              details: "issuer id is missing"))
             }
         
-            let didResolver = DidNewResolver("", nil)
+            let didResolver = DidNewResolver(nil, nil)
             var error: NSError?
 
             var didValidateResult = DidValidateLinkedDomains(issuerID, didResolver, &error)
@@ -539,7 +534,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              message: "error while fetching credential ID",
                                              details: "parameter storedcredentials is missed"))
         }
-        let opts = VcparseNewOpts(true, nil)
+        let opts = VcparseNewOpts()
+        opts!.disableProofCheck()
+        
         var credIDs: [Any] = []
 
         for cred in vcCredentials{
@@ -558,7 +555,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              message: "error while fetching issuer ID",
                                              details: "parameter storedcredentials is missed"))
         }
-        let opts = VcparseNewOpts(true, nil)
+        let opts = VcparseNewOpts()
+        opts!.disableProofCheck()
 
         for cred in vcCredentials{
             let parsedVC = VcparseParse(cred, opts, nil)!

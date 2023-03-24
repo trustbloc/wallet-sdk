@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -155,21 +156,21 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		config := getTestClientConfig(t, kms, nil, nil, false)
+		interactionRequiredArgs, interactionOptionalArgs := getTestArgs(t, requestURI, kms, nil, nil, false)
 
-		interaction, err := openid4ci.NewInteraction(requestURI, config)
+		interaction, err := openid4ci.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)
-
-		credentialRequest := openid4ci.NewCredentialRequestOpts("1234")
 
 		keyHandle, err := kms.Create(arieskms.ED25519)
 		require.NoError(t, err)
 
-		result, err := interaction.RequestCredential(credentialRequest, &api.VerificationMethod{
+		verificationMethod := &api.VerificationMethod{
 			ID:   mockKeyID,
 			Type: creator.JSONWebKey2020,
 			Key:  models.VerificationKey{JSONWebKey: keyHandle.JWK},
-		})
+		}
+
+		result, err := interaction.RequestCredentialWithPIN(verificationMethod, "1234")
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -183,18 +184,22 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		config := getTestClientConfig(t, kms, nil, nil, false)
-
 		requestURI := createTestRequestURI(server.URL)
 
-		interaction, err := openid4ci.NewInteraction(requestURI, config)
+		interactionRequiredArgs, interactionOptionalArgs := getTestArgs(t, requestURI, kms, nil, nil, false)
+
+		// Setting this for test coverage purposes. Actual testing of metrics logger functionality is handled
+		// in the integration tests.
+		interactionOptionalArgs.SetMetricsLogger(nil)
+
+		interaction, err := openid4ci.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)
 
-		credentialRequest := openid4ci.NewCredentialRequestOpts("")
-
-		result, err := interaction.RequestCredential(credentialRequest, &api.VerificationMethod{
+		verificationMethod := &api.VerificationMethod{
 			ID: "did:example:12345#testId", Type: "Invalid",
-		})
+		}
+
+		result, err := interaction.RequestCredential(verificationMethod)
 		requireErrorContains(t, err, "UNSUPPORTED_ALGORITHM")
 		require.Nil(t, result)
 	})
@@ -227,12 +232,15 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		pkBytes, err := keyHandle.JWK.PublicKeyBytes()
 		require.NoError(t, err)
 
-		credentials, err := interaction.RequestCredential(nil, &api.VerificationMethod{
+		verificationMethod := &api.VerificationMethod{
 			ID:   "did:example:12345#testId",
 			Type: "Ed25519VerificationKey2018",
 			Key:  models.VerificationKey{Raw: pkBytes},
-		})
-		requireErrorContains(t, err, "the credential offer requires a user PIN, but it was not provided")
+		}
+
+		credentials, err := interaction.RequestCredential(verificationMethod)
+		requireErrorContains(t, err, "the credential offer requires a user PIN, but it was not provided. "+
+			"Use the requestCredentialWithPIN method instead")
 		require.Nil(t, credentials)
 	})
 }
@@ -265,19 +273,17 @@ func doRequestCredentialTest(t *testing.T, additionalHeaders *api.Headers,
 	interaction := createInteraction(t, kms, activityLogger, createTestRequestURI(server.URL), additionalHeaders,
 		disableTLSVerification)
 
-	credentialRequest := openid4ci.NewCredentialRequestOpts("1234")
-
 	keyHandle, err := kms.Create(arieskms.ED25519)
 	require.NoError(t, err)
 
 	pkBytes, err := keyHandle.JWK.PublicKeyBytes()
 	require.NoError(t, err)
 
-	result, err := interaction.RequestCredential(credentialRequest, &api.VerificationMethod{
+	result, err := interaction.RequestCredentialWithPIN(&api.VerificationMethod{
 		ID:   "did:example:12345#testId",
 		Type: "Ed25519VerificationKey2018",
 		Key:  models.VerificationKey{Raw: pkBytes},
-	})
+	}, "1234")
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -322,36 +328,44 @@ func createInteraction(t *testing.T, kms *localkms.KMS, activityLogger api.Activ
 ) *openid4ci.Interaction {
 	t.Helper()
 
-	config := getTestClientConfig(t, kms, activityLogger, additionalHeaders, disableTLSVerification)
+	requiredArgs, opts := getTestArgs(t, requestURI, kms, activityLogger, additionalHeaders,
+		disableTLSVerification)
 
-	interaction, err := openid4ci.NewInteraction(requestURI, config)
+	interaction, err := openid4ci.NewInteraction(requiredArgs, opts)
 	require.NoError(t, err)
 	require.NotNil(t, interaction)
 
 	return interaction
 }
 
-// getTestClientConfig accepts an optional activityLogger and also one optional mockVMCreator.
-func getTestClientConfig(t *testing.T, kms *localkms.KMS, activityLogger api.ActivityLogger,
-	additionalHeaders *api.Headers, disableTLSVerification bool,
-) *openid4ci.ClientConfig {
+// getTestArgs accepts an optional activityLogger and also one optional mockVMCreator.
+func getTestArgs(t *testing.T, initiateIssuanceURI string, kms *localkms.KMS,
+	activityLogger api.ActivityLogger, additionalHeaders *api.Headers,
+	disableTLSVerification bool,
+) (*openid4ci.Args, *openid4ci.Opts) {
 	t.Helper()
 
 	resolver := &mockResolver{keyWriter: kms}
 
-	clientConfig := openid4ci.NewClientConfig("ClientID", kms.GetCrypto(), resolver, activityLogger)
-	clientConfig.DisableVCProofChecks()
-	clientConfig.SetDocumentLoader(&documentLoaderWrapper{DocumentLoader: testutil.DocumentLoader(t)})
+	opts := openid4ci.NewOpts()
+	opts.DisableVCProofChecks()
+	opts.SetDocumentLoader(&documentLoaderWrapper{DocumentLoader: testutil.DocumentLoader(t)})
+
+	if activityLogger != nil {
+		opts.SetActivityLogger(activityLogger)
+	}
 
 	if additionalHeaders != nil {
-		clientConfig.AddHeaders(additionalHeaders)
+		opts.AddHeaders(additionalHeaders)
 	}
 
 	if disableTLSVerification {
-		clientConfig.DisableHTTPClientTLSVerify()
+		opts.DisableHTTPClientTLSVerify()
 	}
 
-	return clientConfig
+	requiredArgs := openid4ci.NewArgs(initiateIssuanceURI, "ClientID", kms.GetCrypto(), resolver)
+
+	return requiredArgs, opts
 }
 
 type documentLoaderWrapper struct {
@@ -369,10 +383,12 @@ func (l *documentLoaderWrapper) LoadDocument(u string) (*api.LDDocument, error) 
 		ContextURL:  doc.ContextURL,
 	}
 
-	wrappedDoc.Document, err = json.Marshal(doc.Document)
+	documentBytes, err := json.Marshal(doc.Document)
 	if err != nil {
 		return nil, fmt.Errorf("fail to unmarshal ld document bytes: %w", err)
 	}
+
+	wrappedDoc.Document = string(documentBytes)
 
 	return wrappedDoc, nil
 }

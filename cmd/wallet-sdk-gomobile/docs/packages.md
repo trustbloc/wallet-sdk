@@ -163,7 +163,7 @@ inquirer.query(...)
 ```
 package did
 
-func NewCreatorWithKeyWriter(
+func NewCreator(
 	...
 ) (*Creator, error) {
     ...
@@ -181,7 +181,7 @@ func NewResolver() *Resolver {
 ```kotlin
 import dev.trustbloc.wallet.sdk.did
 
-did.newCreatorWithKeyWriter(...)
+did.newCreator(...)
 did.newResolver()
 ```
 
@@ -191,7 +191,7 @@ did.newResolver()
 ```swift
 import Walletsdk
 
-DidNewCreatorWithKeyWriter(...)
+DidNewCreator(...)
 DidNewResolver()
 ```
 
@@ -271,45 +271,6 @@ localkms.newKMS(...)
 import Walletsdk
 
 LocalkmsNewKMS(...)
-```
-
-</td>
-</tr>
-</table>
-
-### Linked Domains
-
-<table>
-<tr>
-<td> Go Source Code </td> <td> Java (as called from Kotlin) </td> <td> Obj-C (as called from Swift) </td>
-</tr>
-<tr>
-<td> 
-
-```
-package ld
-
-func NewDocLoader() *DocLoader {
-	...
-}
-```
-
-</td>
-<td>
-
-```kotlin
-import dev.trustbloc.wallet.sdk.ld
-
-ld.newDocLoader()
-```
-
-</td>
-<td>
-
-```swift
-import Walletsdk
-
-LdNewDocLoader()
 ```
 
 </td>

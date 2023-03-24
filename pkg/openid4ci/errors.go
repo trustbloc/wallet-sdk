@@ -17,7 +17,7 @@ const (
 	InvalidIssuanceURIError                = "INVALID_ISSUANCE_URI"
 	InvalidCredentialOfferError            = "INVALID_CREDENTIAL_OFFER" //nolint:gosec //false positive
 	UnsupportedCredentialTypeInOfferError  = "UNSUPPORTED_CREDENTIAL_TYPE_IN_OFFER"
-	PinCodeRequiredError                   = "PIN_CODE_REQUIRED"
+	PINRequiredError                       = "PIN_REQUIRED"
 	IssuerOpenIDConfigFetchFailedError     = "ISSUER_OPENID_FETCH_FAILED"
 	MetadataFetchFailedError               = "METADATA_FETCH_FAILED"
 	TokenFetchFailedError                  = "TOKEN_FETCH_FAILED" //nolint:gosec //false positive
@@ -37,7 +37,7 @@ const (
 	InvalidIssuanceURICode
 	InvalidCredentialOfferCode
 	UnsupportedCredentialTypeInOfferCode
-	PinCodeRequiredCode
+	PINRequiredCode
 	IssuerOpenIDConfigFetchFailedCode
 	MetadataFetchFailedCode
 	TokenFetchFailedCode

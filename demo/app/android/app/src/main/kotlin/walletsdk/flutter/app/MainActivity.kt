@@ -2,9 +2,9 @@ package dev.trustbloc.wallet
 
 import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.credential.Credential
-import dev.trustbloc.wallet.sdk.credential.StatusVerifierOptionalArgs
 import dev.trustbloc.wallet.sdk.did.*
 import dev.trustbloc.wallet.sdk.display.Display
+import dev.trustbloc.wallet.sdk.vcparse.Opts
 import dev.trustbloc.wallet.sdk.vcparse.Vcparse
 import dev.trustbloc.wallet.sdk.version.Version
 import dev.trustbloc.wallet.sdk.walleterror.Walleterror
@@ -295,7 +295,7 @@ class MainActivity : FlutterActivity() {
         val openID4CI = this.openID4CI
                 ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
-        return openID4CI.requestCredential(otp, didDocResolution.assertionMethod())
+        return openID4CI.requestCredential(didDocResolution.assertionMethod(), otp)
     }
     /**
      * ResolveDisplay resolves display information for issued credentials based on an issuer's metadata, which is fetched
@@ -362,7 +362,10 @@ class MainActivity : FlutterActivity() {
     private fun getCredID(call: MethodCall): String {
         val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
                 ?: throw java.lang.Exception("vcCredentials params is missed")
-        val opts = Vcparse.newOpts(true, null)
+
+        val opts = Opts()
+        opts.disableProofCheck()
+
         val credIds = ArrayList<String>()
         for (cred in vcCredentials) {
             val parsedVC = Vcparse.parse(cred, opts)
@@ -376,7 +379,9 @@ class MainActivity : FlutterActivity() {
         val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
             ?: throw java.lang.Exception("vcCredentials params is missed")
 
-        val opts = Vcparse.newOpts(true, null)
+        val opts = Opts()
+        opts.disableProofCheck()
+
         for (cred in vcCredentials) {
             val parsedVC = Vcparse.parse(cred, opts)
             var issuerID = parsedVC.issuerID()
@@ -450,7 +455,7 @@ class MainActivity : FlutterActivity() {
         val credentials = call.argument<List<String>>("credentials")
             ?: throw java.lang.Exception("credentials params is missed")
 
-            val statusVerifier = Credential.newStatusVerifier(StatusVerifierOptionalArgs())
+            val statusVerifier = Credential.newStatusVerifier(null)
             val credentialArray = convertToVerifiableCredentialsArray(credentials)
         return try {
             statusVerifier.verify(credentialArray.atIndex(0))

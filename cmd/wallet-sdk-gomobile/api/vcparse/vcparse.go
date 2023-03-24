@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -18,20 +19,6 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 )
 
-// Opts represents various options for the Parse function.
-type Opts struct {
-	DisableProofCheck bool
-	DocumentLoader    api.LDDocumentLoader
-}
-
-// NewOpts returns a new Opts object for use with the Parse function.
-func NewOpts(disableProofCheck bool, documentLoader api.LDDocumentLoader) *Opts {
-	return &Opts{
-		DisableProofCheck: disableProofCheck,
-		DocumentLoader:    documentLoader,
-	}
-}
-
 // Parse parses the given serialized VC into a VC object.
 func Parse(vc string, opts *Opts) (*api.VerifiableCredential, error) {
 	if opts == nil {
@@ -40,16 +27,16 @@ func Parse(vc string, opts *Opts) (*api.VerifiableCredential, error) {
 
 	var parseCredentialOpts []verifiable.CredentialOpt
 
-	if opts.DisableProofCheck {
+	if opts.disableProofCheck {
 		parseCredentialOpts = append(parseCredentialOpts, verifiable.WithDisabledProofCheck())
 	}
 
-	if opts.DocumentLoader == nil {
+	if opts.documentLoader == nil {
 		parseCredentialOpts = append(parseCredentialOpts,
 			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)))
 	} else {
 		wrappedLoader := &wrapper.DocumentLoaderWrapper{
-			DocumentLoader: opts.DocumentLoader,
+			DocumentLoader: opts.documentLoader,
 		}
 
 		parseCredentialOpts = append(parseCredentialOpts, verifiable.WithJSONLDDocumentLoader(wrappedLoader))

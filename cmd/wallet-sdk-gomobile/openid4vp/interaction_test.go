@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -26,7 +27,6 @@ import (
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )
 
@@ -57,42 +57,36 @@ func (m *mockVerifierServerHandler) ServeHTTP(writer http.ResponseWriter, reques
 
 func TestOpenID4VP_GetQuery(t *testing.T) {
 	t.Run("NewInteraction success", func(t *testing.T) {
-		t.Run("With default options", func(t *testing.T) {
-			cfg := NewClientConfig(
+		t.Run("Without any optional args", func(t *testing.T) {
+			requiredArgs := NewArgs(
+				requestObjectJWT,
 				&mockKeyHandleReader{},
 				&mockCrypto{},
 				&mocksDIDResolver{},
-				&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
-				mem.NewActivityLogger(),
 			)
 
-			instance := NewInteraction(
-				requestObjectJWT,
-				cfg,
-			)
-
+			instance := NewInteraction(requiredArgs, nil)
 			require.NotNil(t, instance)
 			require.NotNil(t, instance.crypto)
-			require.NotNil(t, instance.ldDocumentLoader)
 			require.NotNil(t, instance.keyHandleReader)
 			require.NotNil(t, instance.goAPIOpenID4VP)
 		})
-		t.Run("TLS verification disabled", func(t *testing.T) {
-			cfg := NewClientConfig(
+		t.Run("With optional args", func(t *testing.T) {
+			requiredArgs := NewArgs(
+				requestObjectJWT,
 				&mockKeyHandleReader{},
 				&mockCrypto{},
 				&mocksDIDResolver{},
-				&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
-				mem.NewActivityLogger(),
 			)
 
-			cfg.DisableHTTPClientTLSVerify()
+			// Note: in-depth testing of opts functionality is done in the integration tests.
+			opts := NewOpts()
+			opts.SetDocumentLoader(nil)
+			opts.SetActivityLogger(nil)
+			opts.SetMetricsLogger(nil)
+			opts.DisableHTTPClientTLSVerify()
 
-			instance := NewInteraction(
-				requestObjectJWT,
-				cfg,
-			)
-
+			instance := NewInteraction(requiredArgs, opts)
 			require.NotNil(t, instance)
 		})
 	})
@@ -125,30 +119,27 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 	})
 
 	t.Run("With additional headers, and the server receives them", func(t *testing.T) {
-		cfg := NewClientConfig(
-			&mockKeyHandleReader{},
-			&mockCrypto{},
-			&mocksDIDResolver{},
-			&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
-			mem.NewActivityLogger(),
-		)
-
 		additionalHeaders := api.NewHeaders()
 
 		additionalHeaders.Add(api.NewHeader("header-name-1", "header-value-1"))
 		additionalHeaders.Add(api.NewHeader("header-name-2", "header-value-2"))
 
-		cfg.AddHeaders(additionalHeaders)
+		opts := NewOpts()
+		opts.AddHeaders(additionalHeaders)
 
 		mockServer := &mockVerifierServerHandler{t: t, headersToCheck: additionalHeaders}
 		testServer := httptest.NewServer(mockServer)
 
 		defer testServer.Close()
 
-		instance := NewInteraction(
+		requiredArgs := NewArgs(
 			"openid-vc://?request_uri="+testServer.URL,
-			cfg,
+			&mockKeyHandleReader{},
+			&mockCrypto{},
+			&mocksDIDResolver{},
 		)
+
+		instance := NewInteraction(requiredArgs, opts)
 
 		// The purpose of this test is to make sure the mock server receives the additional headers
 		// as set above. It doesn't return a valid response, hence why GetQuery still fails.
@@ -238,7 +229,7 @@ func (dl *documentLoaderWrapper) LoadDocument(u string) (*api.LDDocument, error)
 
 	return &api.LDDocument{
 		DocumentURL: ldDoc.DocumentURL,
-		Document:    docBytes,
+		Document:    string(docBytes),
 		ContextURL:  ldDoc.ContextURL,
 	}, nil
 }

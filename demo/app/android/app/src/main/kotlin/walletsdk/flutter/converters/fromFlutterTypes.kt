@@ -1,15 +1,14 @@
 package walletsdk.flutter.converters
 
 import dev.trustbloc.wallet.sdk.api.VerifiableCredentialsArray
-import dev.trustbloc.wallet.sdk.credential.SubmissionRequirementArray
-import dev.trustbloc.wallet.sdk.vcparse.Opts
-import dev.trustbloc.wallet.sdk.vcparse.Vcparse
+import dev.trustbloc.wallet.sdk.vcparse.*
 import java.lang.Exception
 
 fun convertToVerifiableCredentialsArray(credentials: List<String>): VerifiableCredentialsArray {
     val credArray = VerifiableCredentialsArray()
     for (cred in credentials) {
-        val opts = Opts(true, null)
+        val opts = Opts()
+        opts.disableProofCheck()
 
         val parsedCred = Vcparse.parse(cred, opts)
         credArray.add(parsedCred)

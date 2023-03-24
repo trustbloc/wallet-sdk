@@ -17,7 +17,7 @@ import (
 
 func TestStatusVerifier(t *testing.T) {
 	t.Run("test pass-through to go-sdk status verifier", func(t *testing.T) {
-		sv, err := credential.NewStatusVerifier(credential.NewStatusVerifierOptionalArgs())
+		sv, err := credential.NewStatusVerifier(credential.NewStatusVerifierOpts())
 		require.NoError(t, err)
 
 		err = sv.Verify(&api.VerifiableCredential{
@@ -25,5 +25,11 @@ func TestStatusVerifier(t *testing.T) {
 		})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "status verification failed")
+	})
+	t.Run("NewStatusVerifierWithDIDResolver called with a nil DID resolver", func(t *testing.T) {
+		sv, err := credential.NewStatusVerifierWithDIDResolver(nil, nil)
+		require.EqualError(t, err, "DID resolver must be provided. If support for DID-URL "+
+			"resolution of status credentials is not needed, then use NewStatusVerifier instead")
+		require.Nil(t, sv)
 	})
 }

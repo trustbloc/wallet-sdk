@@ -29,7 +29,10 @@ var (
 
 func TestCredentialReaderWrapper_Get(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		vc, err := vcparse.Parse(universityDegreeVC, &vcparse.Opts{DisableProofCheck: true})
+		opts := vcparse.NewOpts()
+		opts.DisableProofCheck()
+
+		vc, err := vcparse.Parse(universityDegreeVC, opts)
 		require.NoError(t, err)
 
 		reader := wrapper.CredentialReaderWrapper{
@@ -57,10 +60,13 @@ func TestCredentialReaderWrapper_Get(t *testing.T) {
 
 func TestCredentialReaderWrapper_GetAll(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		prCardVC, err := vcparse.Parse(permanentResidentCardVC, &vcparse.Opts{DisableProofCheck: true})
+		opts := vcparse.NewOpts()
+		opts.DisableProofCheck()
+
+		prCardVC, err := vcparse.Parse(permanentResidentCardVC, opts)
 		require.NoError(t, err)
 
-		uniDegreeVC, err := vcparse.Parse(universityDegreeVC, &vcparse.Opts{DisableProofCheck: true})
+		uniDegreeVC, err := vcparse.Parse(universityDegreeVC, opts)
 		require.NoError(t, err)
 
 		vcArray := api.NewVerifiableCredentialsArray()

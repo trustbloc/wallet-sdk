@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -26,16 +27,18 @@ func TestParse(t *testing.T) {
 		require.Equal(t, "http://example.edu/credentials/1872", universityDegreeVC.VC.ID)
 	})
 	t.Run("Success - proof check disabled", func(t *testing.T) {
-		parseOpts := vcparse.NewOpts(true, nil)
+		opts := vcparse.NewOpts()
+		opts.DisableProofCheck()
 
-		universityDegreeVC, err := vcparse.Parse(universityDegreeCredential, parseOpts)
+		universityDegreeVC, err := vcparse.Parse(universityDegreeCredential, opts)
 		require.NoError(t, err)
 		require.Equal(t, "http://example.edu/credentials/1872", universityDegreeVC.VC.ID)
 	})
 	t.Run("Failure - blank VC", func(t *testing.T) {
-		parseOpts := &vcparse.Opts{DocumentLoader: &documentLoaderMock{}}
+		opts := &vcparse.Opts{}
+		opts.SetDocumentLoader(&documentLoaderMock{})
 
-		universityDegreeVC, err := vcparse.Parse("", parseOpts)
+		universityDegreeVC, err := vcparse.Parse("", opts)
 		require.EqualError(t, err, "decode new credential: embedded proof is not JSON: "+
 			"unexpected end of JSON input")
 		require.Nil(t, universityDegreeVC)

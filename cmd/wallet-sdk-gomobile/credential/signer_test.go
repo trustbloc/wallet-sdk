@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -17,8 +18,6 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/stretchr/testify/require"
-	"github.com/trustbloc/wallet-sdk/internal/testutil"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	. "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 )
@@ -52,7 +51,6 @@ func TestSigner_Issue(t *testing.T) {
 				&mockReader{},
 				&mockResolver{ResolveVal: mockDocResolution(t)},
 				&mockCrypto{SignVal: []byte("foo")},
-				&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)},
 			)
 			require.NoError(t, err)
 
@@ -66,7 +64,6 @@ func TestSigner_Issue(t *testing.T) {
 				&mockReader{getVal: api.NewVerifiableCredential(mockCredential)},
 				&mockResolver{ResolveVal: mockDocResolution(t)},
 				&mockCrypto{SignVal: []byte("foo")},
-				&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)},
 			)
 			require.NoError(t, err)
 
@@ -82,7 +79,6 @@ func TestSigner_Issue(t *testing.T) {
 				&mockReader{},
 				&mockResolver{ResolveVal: mockDocResolution(t)},
 				&mockCrypto{SignErr: expectErr},
-				&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)},
 			)
 			require.NoError(t, err)
 

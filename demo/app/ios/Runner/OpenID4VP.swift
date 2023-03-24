@@ -15,17 +15,15 @@ enum OpenID4VPError: Error {
 public class OpenID4VP {
     private var keyReader:LocalkmsKMS
     private var didResolver: ApiDIDResolverProtocol
-    private var documentLoader: ApiLDDocumentLoaderProtocol
     private var crypto: ApiCryptoProtocol
     private var activityLogger: ApiActivityLoggerProtocol
     
     private var initiatedInteraction: Openid4vpInteraction?
     private var vpQueryContent: Data?
     
-    init (keyReader:LocalkmsKMS, didResolver: ApiDIDResolverProtocol, documentLoader: ApiLDDocumentLoaderProtocol, crypto: ApiCryptoProtocol, activityLogger: ApiActivityLoggerProtocol) {
+    init (keyReader:LocalkmsKMS, didResolver: ApiDIDResolverProtocol, crypto: ApiCryptoProtocol, activityLogger: ApiActivityLoggerProtocol) {
         self.keyReader = keyReader
         self.didResolver = didResolver
-        self.documentLoader = documentLoader
         self.crypto = crypto
         self.activityLogger = activityLogger
     }
@@ -37,9 +35,11 @@ public class OpenID4VP {
      * The methods defined on this object are used to help guide the calling code through the OpenID4VP flow.
      */
     func startVPInteraction(authorizationRequest: String) throws {
-        let clientConfig = Openid4vpClientConfig(keyReader, crypto: crypto, didResolver: didResolver, ldDocumentLoader: documentLoader, activityLogger: activityLogger)
-
-        let interaction = Openid4vpInteraction(authorizationRequest, config: clientConfig)
+        let args = Openid4vpNewArgs(authorizationRequest, keyReader, crypto, didResolver)
+        let opts = Openid4vpNewOpts()
+        opts!.setActivityLogger(activityLogger)
+        
+        let interaction = Openid4vpNewInteraction(args, opts)
         
         vpQueryContent = try interaction!.getQuery()
         initiatedInteraction = interaction
@@ -51,7 +51,7 @@ public class OpenID4VP {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         }
         
-        return  try CredentialNewInquirer(documentLoader)!.getSubmissionRequirements(vpQueryContent, contents: CredentialCredentialsOpt(storedCredentials))
+            return try CredentialNewInquirer(nil)!.getSubmissionRequirements(vpQueryContent, credentials: CredentialCredentialsArg(fromVCArray: storedCredentials))
     }
     
     /**

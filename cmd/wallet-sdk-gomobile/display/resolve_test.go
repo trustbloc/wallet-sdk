@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -58,68 +59,63 @@ func TestResolve(t *testing.T) {
 
 		defer server.Close()
 
-		opts := vcparse.NewOpts(true, nil)
+		parseVCOptionalArgs := vcparse.NewOpts()
+		parseVCOptionalArgs.DisableProofCheck()
 
-		vc, err := vcparse.Parse(credentialUniversityDegree, opts)
+		vc, err := vcparse.Parse(credentialUniversityDegree, parseVCOptionalArgs)
 		require.NoError(t, err)
 
 		vcs := api.NewVerifiableCredentialsArray()
 		vcs.Add(vc)
 
 		t.Run("Without additional headers", func(t *testing.T) {
-			resolveOpts := display.NewResolveOpts(vcs, server.URL)
-
 			t.Run("Without a preferred locale specified", func(t *testing.T) {
-				resolvedDisplayData, err := display.Resolve(resolveOpts)
+				resolvedDisplayData, err := display.Resolve(vcs, server.URL, nil)
 				require.NoError(t, err)
 				checkResolvedDisplayData(t, resolvedDisplayData)
 			})
 			t.Run("With a preferred locale specified", func(t *testing.T) {
-				resolveOpts.PreferredLocale = "en-us"
+				opts := display.NewOpts()
+				opts.SetPreferredLocale("en-us")
 
-				resolvedDisplayData, err := display.Resolve(resolveOpts)
+				resolvedDisplayData, err := display.Resolve(vcs, server.URL, opts)
 				require.NoError(t, err)
 				checkResolvedDisplayData(t, resolvedDisplayData)
 			})
 		})
 		t.Run("With additional headers", func(t *testing.T) {
-			resolveOpts := display.NewResolveOpts(vcs, server.URL)
-
 			additionalHeaders := api.NewHeaders()
-
 			additionalHeaders.Add(api.NewHeader("header-name-1", "header-value-1"))
 			additionalHeaders.Add(api.NewHeader("header-name-2", "header-value-2"))
 
-			resolveOpts.AddHeaders(additionalHeaders)
+			opts := display.NewOpts()
+			opts.AddHeaders(additionalHeaders)
 
 			issuerServerHandler.headersToCheck = additionalHeaders
 
-			resolvedDisplayData, err := display.Resolve(resolveOpts)
+			resolvedDisplayData, err := display.Resolve(vcs, server.URL, opts)
 			require.NoError(t, err)
 			checkResolvedDisplayData(t, resolvedDisplayData)
 		})
 	})
 	t.Run("No credentials specified", func(t *testing.T) {
-		resolvedDisplayData, err := display.Resolve(&display.ResolveOpts{})
+		resolvedDisplayData, err := display.Resolve(nil, "", nil)
 		require.EqualError(t, err, "no credentials specified")
 		require.Nil(t, resolvedDisplayData)
 	})
 	t.Run("No issuer URI specified", func(t *testing.T) {
-		resolveOpts := &display.ResolveOpts{
-			VCs: api.NewVerifiableCredentialsArray(),
-		}
-
-		resolvedDisplayData, err := display.Resolve(resolveOpts)
+		resolvedDisplayData, err := display.Resolve(api.NewVerifiableCredentialsArray(), "", nil)
 		require.EqualError(t, err, "no issuer URI specified")
 		require.Nil(t, resolvedDisplayData)
 	})
 	t.Run("Malformed issuer URI", func(t *testing.T) {
-		resolveOpts := &display.ResolveOpts{
-			VCs:       api.NewVerifiableCredentialsArray(),
-			IssuerURI: "badURL",
-		}
+		opts := display.NewOpts()
 
-		resolvedDisplayData, err := display.Resolve(resolveOpts)
+		// Setting this for test coverage purposes. Actual testing of metrics logger functionality is handled
+		// in the integration tests.
+		opts.SetMetricsLogger(nil)
+
+		resolvedDisplayData, err := display.Resolve(api.NewVerifiableCredentialsArray(), "badURL", opts)
 		require.EqualError(t, err,
 			"openid configuration endpoint: "+
 				`Get "badURL/.well-known/openid-credential-issuer": unsupported protocol scheme ""`)

@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -43,12 +44,12 @@ func TestNewCreatorWithKeyWriter(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		localKMS := createTestKMS(t)
 
-		didCreator, err := did.NewCreatorWithKeyWriter(localKMS)
+		didCreator, err := did.NewCreator(localKMS)
 		require.NoError(t, err)
 		require.NotNil(t, didCreator)
 	})
 	t.Run("Failure - no KeyWriter specified", func(t *testing.T) {
-		didCreator, err := did.NewCreatorWithKeyWriter(nil)
+		didCreator, err := did.NewCreator(nil)
 		require.EqualError(t, err, "a KeyWriter must be specified")
 		require.Nil(t, didCreator)
 	})
@@ -74,10 +75,10 @@ func TestCreator_Create(t *testing.T) {
 		t.Run("success", func(t *testing.T) {
 			localKMS := createTestKMS(t)
 
-			creator, err := did.NewCreatorWithKeyWriter(localKMS)
+			creator, err := did.NewCreator(localKMS)
 			require.NoError(t, err)
 
-			didDocResolution, err := creator.Create(did.DIDMethodKey, &api.CreateDIDOpts{})
+			didDocResolution, err := creator.Create(did.DIDMethodKey, nil)
 			require.NoError(t, err)
 			require.NotEmpty(t, didDocResolution)
 		})
@@ -87,10 +88,16 @@ func TestCreator_Create(t *testing.T) {
 				getKeyErr: errors.New("expected error"),
 			}
 
-			creator, err := did.NewCreatorWithKeyWriter(kw)
+			creator, err := did.NewCreator(kw)
 			require.NoError(t, err)
 
-			didDocResolution, err := creator.Create(did.DIDMethodKey, &api.CreateDIDOpts{})
+			opts := did.NewCreateOpts()
+			opts.SetKeyType("")
+			// Calling SetMetricsLogger here to increase code coverage - actual functionality tests are in the
+			// integration tests.
+			opts.SetMetricsLogger(nil)
+
+			didDocResolution, err := creator.Create(did.DIDMethodKey, nil)
 			requireErrorContains(t, err, "CREATE_DID_KEY_FAILED")
 			require.Empty(t, didDocResolution)
 		})
@@ -111,12 +118,10 @@ func TestCreator_Create(t *testing.T) {
 			creator, err := did.NewCreatorWithKeyReader(mockKHR)
 			require.NoError(t, err)
 
-			createDIDOpts := &api.CreateDIDOpts{
-				KeyID:            "SomeKeyID",
-				VerificationType: did.JSONWebKey2020,
-			}
+			opts := did.NewCreateOpts()
+			opts.SetVerificationType(did.JSONWebKey2020)
 
-			didDocResolution, err := creator.Create(did.DIDMethodKey, createDIDOpts)
+			didDocResolution, err := creator.Create(did.DIDMethodKey, "SomeKeyID", opts)
 			require.NoError(t, err)
 			require.NotEmpty(t, didDocResolution)
 		})
@@ -128,12 +133,10 @@ func TestCreator_Create(t *testing.T) {
 			creator, err := did.NewCreatorWithKeyReader(mockKHR)
 			require.NoError(t, err)
 
-			createDIDOpts := &api.CreateDIDOpts{
-				KeyID:            "SomeKeyID",
-				VerificationType: did.Ed25519VerificationKey2018,
-			}
+			opts := did.NewCreateOpts()
+			opts.SetVerificationType(did.Ed25519VerificationKey2018)
 
-			didDocResolution, err := creator.Create(did.DIDMethodKey, createDIDOpts)
+			didDocResolution, err := creator.Create(did.DIDMethodKey, "SomeKeyID", opts)
 			requireErrorContains(t, err, "CREATE_DID_KEY_FAILED")
 			require.Empty(t, didDocResolution)
 		})
@@ -149,12 +152,10 @@ func TestCreator_Create(t *testing.T) {
 			creator, err := did.NewCreatorWithKeyReader(mockKHR)
 			require.NoError(t, err)
 
-			createDIDOpts := &api.CreateDIDOpts{
-				KeyID:            "SomeKeyID",
-				VerificationType: did.Ed25519VerificationKey2018,
-			}
+			opts := did.NewCreateOpts()
+			opts.SetVerificationType(did.Ed25519VerificationKey2018)
 
-			didDocResolution, err := creator.Create(did.DIDMethodKey, createDIDOpts)
+			didDocResolution, err := creator.Create(did.DIDMethodKey, "SomeKeyID", opts)
 			requireErrorContains(t, err, "CREATE_DID_KEY_FAILED")
 			require.Empty(t, didDocResolution)
 		})

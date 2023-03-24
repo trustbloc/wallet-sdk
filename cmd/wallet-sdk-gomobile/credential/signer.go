@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -25,7 +26,6 @@ func NewSigner(
 	credReader api.CredentialReader,
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
-	ldLoader api.LDDocumentLoader,
 ) (*Signer, error) {
 	readerWrapper := &wrapper.CredentialReaderWrapper{CredentialReader: credReader}
 	resolverWrapper := &wrapper.VDRResolverWrapper{DIDResolver: didResolver}
