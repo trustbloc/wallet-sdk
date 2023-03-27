@@ -763,6 +763,96 @@
   "verifiers": [
     {
       "verifier": {
+        "id": "v_ldp_university_degree",
+        "name": "v_ldp_university_degree",
+        "organizationID": "test_org",
+        "url": "https://test-verifier.com",
+        "active": true,
+        "webHook": "http://vcs.webhook.example.com:8180",
+        "checks": {
+          "credential": {
+            "format": [
+              "ldp"
+            ],
+            "proof": true,
+            "status": true
+          },
+          "presentation": {
+            "format": [
+              "ldp",
+              "jwt"
+            ],
+            "vcSubject": true,
+            "proof": true
+          }
+        },
+        "oidcConfig": {
+          "roSigningAlgorithm": "EcdsaSecp256k1Signature2019",
+          "keyType": "ECDSASecp256k1DER",
+          "didMethod": "orb"
+        },
+        "presentationDefinitions": [
+          {
+            "id": "32f54163-7166-48f1-93d8-ff217bdb0653",
+            "format": {
+              "ldp_vc": {
+                "proof_type": [
+                  "JsonWebSignature2020",
+                  "Ed25519Signature2018",
+                  "EcdsaSecp256k1Signature2019",
+                  "RsaSignature2018"
+                ]
+              },
+              "ldp_vp": {
+                "proof_type": [
+                  "JsonWebSignature2020",
+                  "Ed25519Signature2018",
+                  "EcdsaSecp256k1Signature2019",
+                  "RsaSignature2018"
+                ]
+              },
+              "ldp": {
+                "proof_type": [
+                  "JsonWebSignature2020",
+                  "Ed25519Signature2018",
+                  "EcdsaSecp256k1Signature2019",
+                  "RsaSignature2018"
+                ]
+              }
+            },
+            "input_descriptors": [
+              {
+                "id": "degree",
+                "name": "Degree",
+                "purpose": "We can only hire with university degree.",
+                "constraints": {
+                  "fields": [
+                    {
+                      "path": [
+                        "$.type",
+                        "$.vc.type"
+                      ],
+                      "filter": {
+                        "type": "array",
+                        "contains": {
+                          "type": "string",
+                          "const": "UniversityDegreeCredential"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "createDID": true,
+      "didDomain": "https://testnet.orb.local",
+      "didServiceAuthToken": "tk1"
+    },
+    {
+      "verifier": {
         "id": "v_myprofile_ldp",
         "name": "v_myprofile_ldp",
         "organizationID": "test_org",
