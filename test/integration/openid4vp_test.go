@@ -54,6 +54,13 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		"photo":             "data-URL-encoded image",
 	}
 
+	universityDegreeClaims := map[string]interface{}{
+		"familyName":   "John Doe",
+		"givenName":    "John",
+		"degree":       "MIT",
+		"degreeSchool": "MIT school",
+	}
+
 	type test struct {
 		issuerProfileIDs  []string
 		claimData         []claimData
@@ -63,6 +70,12 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 	}
 
 	tests := []test{
+		{
+			issuerProfileIDs:  []string{"university_degree_issuer"},
+			claimData:         []claimData{universityDegreeClaims},
+			walletDIDMethod:   "ion",
+			verifierProfileID: "v_ldp_university_degree",
+		},
 		{
 			issuerProfileIDs:  []string{"bank_issuer"},
 			claimData:         []claimData{verifiableEmployeeClaims},
@@ -153,6 +166,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		require.NoError(t, err)
 
 		requirements, err := inquirer.GetSubmissionRequirements(query, credential.NewCredentialsOpt(issuedCredentials))
+		require.NoError(t, err)
 		require.GreaterOrEqual(t, requirements.Len(), 1)
 		require.GreaterOrEqual(t, requirements.AtIndex(0).DescriptorLen(), 1)
 
