@@ -1,6 +1,7 @@
 package dev.trustbloc.wallet
 
 import dev.trustbloc.wallet.sdk.api.*
+import dev.trustbloc.wallet.sdk.credential.Credential
 import dev.trustbloc.wallet.sdk.display.Display
 import dev.trustbloc.wallet.sdk.vcparse.Vcparse
 import dev.trustbloc.wallet.sdk.version.Version
@@ -77,6 +78,14 @@ class MainActivity : FlutterActivity() {
                                         "code: ${err.code}, error: ${err.category}, details: ${err.details}"
                                 )
 
+                            }
+                        }
+                        "credentialStatusVerifier" -> {
+                            try {
+                                val credentialStatus = credentialStatusVerifier(call)
+                                result.success(credentialStatus)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while credential status verifier", e.localizedMessage)
                             }
                         }
                         "requestCredential" -> {
@@ -376,6 +385,20 @@ class MainActivity : FlutterActivity() {
 
         return convertSubmissionRequirementArray(
                 openID4VP.getMatchedSubmissionRequirements(convertToVerifiableCredentialsArray(storedCredentials)))
+    }
+
+    private fun credentialStatusVerifier(call: MethodCall): Boolean {
+        val credentials = call.argument<List<String>>("credentials")
+            ?: throw java.lang.Exception("credentials params is missed")
+
+            val statusVerifier = Credential.newStatusVerifier()
+            val credentialArray = convertToVerifiableCredentialsArray(credentials)
+        return try {
+            statusVerifier.verify(credentialArray.atIndex(0))
+            true
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
 

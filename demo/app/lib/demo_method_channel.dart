@@ -116,6 +116,22 @@ class MethodChannelWallet extends WalletPlatform {
     }
   }
 
+  Future<bool?> credentialStatusVerifier(List<String> credentials) async {
+    log("inside credentialStatusVerifier");
+    try {
+      var credentialStatusVerifier =
+      await methodChannel.invokeMethod<bool>('credentialStatusVerifier', <String, dynamic>{'credentials': credentials});
+      return credentialStatusVerifier!;
+    } on PlatformException catch (error) {
+      if (error.toString().contains("status verification failed: revoked")){
+        return false;
+      } else {
+        debugPrint(error.toString());
+      }
+      rethrow;
+    }
+  }
+
   Future<String?> issuerURI() async {
     final issuerURI = await methodChannel.invokeMethod<String>('issuerURI');
     return issuerURI;
@@ -135,7 +151,6 @@ class MethodChannelWallet extends WalletPlatform {
   }
 
   Future<List<Object?>> resolveCredentialDisplay(String resolvedCredentialDisplayData) async {
-    log("resolveCredDisplayRendering");
     var renderedCredDisplay = await methodChannel.invokeMethod('resolveCredentialDisplay', <String, dynamic>{'resolvedCredentialDisplayData': resolvedCredentialDisplayData});
     return renderedCredDisplay;
   }

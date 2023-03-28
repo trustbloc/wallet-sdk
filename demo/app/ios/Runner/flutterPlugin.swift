@@ -44,6 +44,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
 
         case "fetchDID":
             let didID = fetchArgsKeyValue(call, key: "didID")
+            
+        case "credentialStatusVerifier":
+            credentialStatusVerifier(arguments: arguments!,  result: result)
 
 
         case "serializeDisplayData":
@@ -314,7 +317,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
          do {
             let credentialCreated = try openID4CI.requestCredential(otp: otp,
                                                                     didVerificationMethod: didDocResolution.assertionMethod())
-
+             
             result(credentialCreated.serialize(nil))
           } catch let error as NSError{
               result(FlutterError.init(code: "Exception",
@@ -414,9 +417,30 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
         
        
-    
-        print("resolvedCredDisplay ->", resolvedCredDisplayList)
         result(resolvedCredDisplayList)
+    }
+    
+    public func credentialStatusVerifier(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
+        
+        guard let credentials = arguments["credentials"] as? Array<String> else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while getting get credential status verifier",
+                                             details: "parameter credentials is missed"))
+        }
+        
+        
+        do {
+            let statusVerifier = CredentialNewStatusVerifier(nil);
+            let credentialArray = convertToVerifiableCredentialsArray(credentials: credentials)
+            try statusVerifier?.verify(credentialArray.atIndex(0))
+            result(true)
+         } catch let error as NSError{
+             result(FlutterError.init(code: "Exception",
+                                      message: "error while getting get credential status verifier",
+                                      details: error.localizedDescription))
+         }
+
+        
     }
 
     /**
@@ -487,11 +511,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         for cred in vcCredentials{
             let parsedVC = VcparseParse(cred, opts, nil)!
             let credID = parsedVC.id_()
-            print("credid -->", credID)
             credIDs.append(credID)
             
         }
-        print("first credid -->", credIDs[0])
         result(credIDs[0])
     }
     

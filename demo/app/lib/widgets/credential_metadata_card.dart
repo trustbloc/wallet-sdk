@@ -19,6 +19,7 @@ class CredentialMetaDataCard extends StatefulWidget {
     String expiryDate = '';
     dynamic credentialClaimsData = [];
     bool isLoading = false;
+    bool verifiedStatus = true;
 
     @override
     void initState() {
@@ -35,8 +36,15 @@ class CredentialMetaDataCard extends StatefulWidget {
               isLoading = false;
             });
           });
+      WalletSDKPlugin.credentialStatusVerifier([widget.credentialData.rawCredential]).then(
+              (response) =>
+          {
+            setState(() {
+              log("status $response");
+              verifiedStatus = response!;
+            }
+            )});
     }
-
     getIssuanceDate() {
       var claimsList = credentialClaimsData;
       for (var claims in claimsList) {
@@ -101,7 +109,36 @@ class CredentialMetaDataCard extends StatefulWidget {
                             color: Color(0xff6C6D7C),
                           ),
                           textAlign: TextAlign.start,
-                        )
+                        ),
+                      trailing: verifiedStatus ? const Text.rich(
+                        TextSpan(
+                          children: [
+                            WidgetSpan(child: Icon(Icons.verified_user_outlined,color: Colors.lightGreen, size: 18,)),
+                           TextSpan(
+                           text: 'Active',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.lightGreen,
+                            ),
+                           ),
+                          ],
+                        ),
+                      ) : const Text.rich(
+                        TextSpan(
+                          children: [
+                            WidgetSpan(child: Icon(Icons.dangerous_outlined, color: Colors.redAccent, size: 18,)),
+                            TextSpan(
+                              text: 'Revoked',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.redAccent,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   )
               ),
