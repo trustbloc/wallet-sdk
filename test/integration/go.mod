@@ -32,7 +32,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/tink/go v1.7.0 // indirect
-	github.com/hyperledger/aries-framework-go-ext/component/vc/status v0.0.0-20230318200817-7de3c50e12b2 // indirect
+	github.com/hyperledger/aries-framework-go-ext/component/vc/status v0.0.0-20230328135254-c39a101bd279 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk v0.0.0-20221209153644-5a3273a805c1 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/longform v0.0.0-20221209153644-5a3273a805c1 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v1.0.0-rc3.0.20221104150937-07bfbe450122 // indirect

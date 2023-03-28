@@ -17,7 +17,7 @@ import (
 
 func TestStatusVerifier(t *testing.T) {
 	t.Run("test pass-through to go-sdk status verifier", func(t *testing.T) {
-		sv, err := credential.NewStatusVerifier()
+		sv, err := credential.NewStatusVerifier(credential.NewStatusVerifierOptionalArgs())
 		require.NoError(t, err)
 
 		err = sv.Verify(&api.VerifiableCredential{

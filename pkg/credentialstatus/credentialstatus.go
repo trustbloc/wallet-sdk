@@ -15,12 +15,17 @@ import (
 	"github.com/hyperledger/aries-framework-go-ext/component/vc/status"
 	"github.com/hyperledger/aries-framework-go-ext/component/vc/status/resolver"
 	"github.com/hyperledger/aries-framework-go-ext/component/vc/status/validator"
+	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
+
+	"github.com/trustbloc/wallet-sdk/pkg/api"
 )
 
 // Config holds parameters for initializing a Verifier.
 type Config struct {
-	HTTPClient *http.Client
+	HTTPClient  *http.Client
+	DIDResolver api.DIDResolver
 }
 
 // Verifier verifies Credential Status.
@@ -36,7 +41,11 @@ type statusClient interface {
 func NewVerifier(config *Config) (*Verifier, error) {
 	client := &status.Client{
 		ValidatorGetter: validator.GetValidator,
-		Resolver:        resolver.NewResolver(config.HTTPClient, ""),
+		Resolver: resolver.NewResolver(
+			config.HTTPClient,
+			&wrapResolver{resolver: config.DIDResolver},
+			"",
+		),
 	}
 
 	return &Verifier{
@@ -52,5 +61,29 @@ func (v *Verifier) Verify(vc *verifiable.Credential) error {
 		return fmt.Errorf("status verification failed: %w", err)
 	}
 
+	return nil
+}
+
+type wrapResolver struct {
+	resolver api.DIDResolver
+}
+
+func (w *wrapResolver) Resolve(did string, _ ...vdr.DIDMethodOption) (*diddoc.DocResolution, error) {
+	return w.resolver.Resolve(did)
+}
+
+func (w *wrapResolver) Create(string, *diddoc.Doc, ...vdr.DIDMethodOption) (*diddoc.DocResolution, error) {
+	return nil, fmt.Errorf("create operation is not supported")
+}
+
+func (w *wrapResolver) Update(*diddoc.Doc, ...vdr.DIDMethodOption) error {
+	return fmt.Errorf("update operation is not supported")
+}
+
+func (w *wrapResolver) Deactivate(string, ...vdr.DIDMethodOption) error {
+	return fmt.Errorf("deactivate operation is not supported")
+}
+
+func (w *wrapResolver) Close() error {
 	return nil
 }
