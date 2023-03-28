@@ -142,7 +142,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 	err = oidc4ciSetup.AuthorizeIssuerBypassAuth("test_org", vcsAPIDirectURL)
 	require.NoError(t, err)
 
-	vcStatusVerifier, err := credential.NewStatusVerifier()
+	vcStatusVerifier, err := credential.NewStatusVerifier(credential.NewStatusVerifierOptionalArgs())
 	require.NoError(t, err)
 
 	for _, tc := range tests {
