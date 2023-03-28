@@ -21,10 +21,10 @@ class CredentialCard extends StatefulWidget {
 
 class _CredentialCardState extends State<CredentialCard> {
   bool showWidget = false;
-  String? credentialDisplayName;
-  String? logoURL;
-  String? backgroundColor;
-  String? textColor;
+  String credentialDisplayName = '';
+  String logoURL = '';
+  String backgroundColor = '';
+  String textColor = '';
 
   @override
   void initState() {
@@ -39,6 +39,7 @@ class _CredentialCardState extends State<CredentialCard> {
             textColor = '0xff${responseJson.first['textColor'].toString().replaceAll('#', '')}';
           });
         });
+
     super.initState();
   }
 
@@ -52,7 +53,7 @@ class _CredentialCardState extends State<CredentialCard> {
                height: 80,
                alignment: Alignment.center,
                decoration: BoxDecoration(
-                   color: backgroundColor!.isNotEmpty ? Color(int.parse(backgroundColor!)) : Colors.white,
+                   color: backgroundColor.isNotEmpty ? Color(int.parse(backgroundColor)) : Colors.white,
                    borderRadius: BorderRadius.circular(12),
                    boxShadow: [
                      BoxShadow(
@@ -62,16 +63,16 @@ class _CredentialCardState extends State<CredentialCard> {
                    ]),
                  child: ListTile(
                    title: Text(
-                     credentialDisplayName!,
+                     credentialDisplayName,
                      style: TextStyle(
                        fontSize: 14,
                        fontWeight: FontWeight.bold,
-                       color: textColor!.isNotEmpty ? Color(int.parse(textColor!)) : const Color(0xff190C21),
+                       color: textColor.isNotEmpty ? Color(int.parse(textColor)) : const Color(0xff190C21),
                      ),
                      textAlign: TextAlign.start,
                    ),
                    leading: CachedNetworkImage(
-                     imageUrl: logoURL!,
+                     imageUrl: logoURL,
                      placeholder: (context, url) =>
                      const CircularProgressIndicator(),
                      errorWidget: (context, url, error) =>  Image.asset('lib/assets/images/genericCredential.png',
