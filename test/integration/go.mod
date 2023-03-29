@@ -1,4 +1,5 @@
 // Copyright Avast Software. All Rights Reserved.
+// Copyright Gen Digital Inc. All Rights Reserved.
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -8,7 +9,7 @@ go 1.19
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/hyperledger/aries-framework-go v0.1.10-0.20230307184157-877172747719
+	github.com/hyperledger/aries-framework-go v0.1.10-0.20230329184452-901fc917529d
 	github.com/piprate/json-gold v0.4.2
 	github.com/stretchr/testify v1.8.1
 	github.com/trustbloc/cmdutil-go v0.0.0-20221125151303-09d42adcc811

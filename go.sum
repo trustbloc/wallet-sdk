@@ -53,8 +53,8 @@ github.com/google/tink/go v1.7.0/go.mod h1:GAUOd+QE3pgj9q8VKIGTCP33c/B7eb4NhxLcg
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
-github.com/hyperledger/aries-framework-go v0.1.10-0.20230307184157-877172747719 h1:7eXY4+oFhD0keVIV9mf2K9HQS8wykfllg21XW/p3egE=
-github.com/hyperledger/aries-framework-go v0.1.10-0.20230307184157-877172747719/go.mod h1:qrOxEGVsu8M2RahaJgM8nz9AcAHjR/dKd1JIJ3ieJhY=
+github.com/hyperledger/aries-framework-go v0.1.10-0.20230329184452-901fc917529d h1:xroMfM3EJn2puwRhCpcBggm7TFEE/6RUrPAq/OYtiR0=
+github.com/hyperledger/aries-framework-go v0.1.10-0.20230329184452-901fc917529d/go.mod h1:qrOxEGVsu8M2RahaJgM8nz9AcAHjR/dKd1JIJ3ieJhY=
 github.com/hyperledger/aries-framework-go-ext/component/vc/status v0.0.0-20230328135254-c39a101bd279 h1:IxhvAEKcXtiRbNI+pfzuXMgnHF+u9vdkC4A2B2na0Lg=
 github.com/hyperledger/aries-framework-go-ext/component/vc/status v0.0.0-20230328135254-c39a101bd279/go.mod h1:hRll2wtkpmMZze8Bb5vHkosMy/7hz2p8X79Mjw3t3k8=
 github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk v0.0.0-20221209153644-5a3273a805c1 h1:eYsO49G3er0udPOAykDgPNJvJESjYWNbwjcjOTQtw5s=
