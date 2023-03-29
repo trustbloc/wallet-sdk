@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -71,7 +72,7 @@ func ValidateLinkedDomains(did string, resolver api.DIDResolver,
 			diderrors.WellknownInitializationFailed, err)
 	}
 
-	err = client.VerifyDIDAndDomain(did, uri)
+	err = client.VerifyDIDAndDomain(did, strings.TrimSuffix(uri, "/"))
 	if err != nil {
 		return false, "", walleterror.NewExecutionError(
 			diderrors.Module,
