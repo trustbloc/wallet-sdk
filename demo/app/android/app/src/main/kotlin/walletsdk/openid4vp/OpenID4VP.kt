@@ -7,10 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package walletsdk.openid4vp
 
 import dev.trustbloc.wallet.sdk.api.*
-import dev.trustbloc.wallet.sdk.vcparse.*
 import dev.trustbloc.wallet.sdk.openid4vp.Interaction
 import dev.trustbloc.wallet.sdk.openid4vp.ClientConfig
-import dev.trustbloc.wallet.sdk.api.VerificationMethod
 import dev.trustbloc.wallet.sdk.credential.*
 import java.lang.Exception
 

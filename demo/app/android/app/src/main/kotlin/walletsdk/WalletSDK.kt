@@ -15,7 +15,7 @@ import dev.trustbloc.wallet.sdk.openid4ci.AuthorizeResult
 
 class WalletSDK {
     private var kms: KMS? = null
-    private var didResolver: DIDResolver? = null
+    var didResolver: DIDResolver? = null
     private var documentLoader: LDDocumentLoader? = null
     private var crypto: Crypto? = null
     var activityLogger: ActivityLogger? = null

@@ -117,7 +117,7 @@ class SettingsState extends State<Settings> {
                 child: Column(
                   children: [
                     Align(
-                      alignment: Alignment.bottomCenter,
+                      alignment: Alignment.bottomLeft,
                       child: Text('Version: $walletSDKVersion',
                           textAlign: TextAlign.center,
                           style: const TextStyle(
@@ -125,7 +125,7 @@ class SettingsState extends State<Settings> {
                       ),
                     ),
                   Align(
-                  alignment: Alignment.center,
+                  alignment: Alignment.bottomLeft,
                     child: Text('GitRevision: $gitRevision',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
@@ -133,7 +133,7 @@ class SettingsState extends State<Settings> {
                     )
                   ),
                 Align(
-                  alignment: Alignment.center,
+                  alignment: Alignment.bottomLeft,
                    child: Text('Build Time: $buildTimeRev',
                         textAlign: TextAlign.center,
                         style: const TextStyle(

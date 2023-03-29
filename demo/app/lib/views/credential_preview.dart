@@ -26,6 +26,9 @@ class CredentialPreviewState extends State<CredentialPreview> {
   var uuid = const Uuid();
   late final String userLoggedIn;
   late String issuerDisplayData;
+  bool verifiedDomain = true;
+  late String serviceURL = '';
+  String? issuerID;
 
   @override
   void initState() {
@@ -39,6 +42,25 @@ class CredentialPreviewState extends State<CredentialPreview> {
                 log("issuerDisplayData state $issuerDisplayData");
               });
         });
+
+    WalletSDKPlugin.getIssuerID([widget.credentialData.rawCredential]).then(
+            (response) {
+          setState(() {
+            issuerID = response!;
+            log("issuerID INSIDE, $issuerID");
+          });
+        }).whenComplete(() =>
+        WalletSDKPlugin.wellKnownDidConfig(issuerID!).then(
+                (response) =>
+                setState(() {
+                  log("well known domain $response");
+                  var wellKnownDidConfig = json.encode(response);
+                  Map<String, dynamic> responseJson = json.decode(wellKnownDidConfig);
+                  verifiedDomain = responseJson["isValid"];
+                  serviceURL = responseJson["serviceURL"];
+                }
+                ))
+    );
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) async {
       UserLoginDetails userLoginDetails =  await getUser();
       userLoggedIn = userLoginDetails.username!;
@@ -56,12 +78,48 @@ class CredentialPreviewState extends State<CredentialPreview> {
         children: [
           const SizedBox(height: 50),
           SizedBox(
-            height: 50,
+            height: 30,
             child:  Text(
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 22, color: Color(0xff190C21), fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 24, color: Color(0xff190C21), fontWeight: FontWeight.bold),
                 issuerDisplayData),
           ),
+          ListTile(
+            title: verifiedDomain ? const Text.rich(
+              textAlign: TextAlign.center,
+              TextSpan(
+                children: [
+                  WidgetSpan(child: Icon(Icons.verified_user_outlined,color: Colors.lightGreen, size: 18,)),
+                  TextSpan(
+                    text: 'Verified',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.lightGreen,
+                    ),
+                  ),
+                ],
+              ),
+            ) : const Text.rich(
+              textAlign: TextAlign.center,
+              TextSpan(
+                children: [
+                  WidgetSpan(child: Icon(Icons.dangerous_outlined, color: Colors.redAccent, size: 18,)),
+                  TextSpan(
+                    text: 'Unverified',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            subtitle: Text(serviceURL!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12,fontWeight: FontWeight.normal)),
+
+          ),
+          const SizedBox(height: 20),
           const SizedBox(
             child:  Text(
                 textAlign: TextAlign.center,

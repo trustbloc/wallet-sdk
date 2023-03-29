@@ -2,6 +2,8 @@ package dev.trustbloc.wallet
 
 import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.credential.Credential
+import dev.trustbloc.wallet.sdk.credential.StatusVerifierOptionalArgs
+import dev.trustbloc.wallet.sdk.did.*
 import dev.trustbloc.wallet.sdk.display.Display
 import dev.trustbloc.wallet.sdk.vcparse.Vcparse
 import dev.trustbloc.wallet.sdk.version.Version
@@ -142,6 +144,24 @@ class MainActivity : FlutterActivity() {
                                 result.success(issuerURIResp)
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while getting issuerURI", e)
+                            }
+                        }
+
+                        "getIssuerID" -> {
+                            try {
+                                val issuerID = getIssuerID(call)
+                                result.success(issuerID)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while getting issuer ID", e)
+                            }
+                        }
+
+                        "wellKnownDidConfig" -> {
+                            try {
+                                val didValidateResultResp = wellKnownDidConfig(call)
+                                result.success(didValidateResultResp)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while getting well known did config", e)
                             }
                         }
 
@@ -352,6 +372,45 @@ class MainActivity : FlutterActivity() {
         return credIds[0]
     }
 
+    private fun getIssuerID(call: MethodCall): String {
+        val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
+            ?: throw java.lang.Exception("vcCredentials params is missed")
+
+        val opts = Vcparse.newOpts(true, null)
+        for (cred in vcCredentials) {
+            val parsedVC = Vcparse.parse(cred, opts)
+            var issuerID = parsedVC.issuerID()
+            return issuerID
+        }
+        return  ""
+    }
+
+    private fun wellKnownDidConfig(call: MethodCall): MutableMap<String, Any> {
+        val issuerID = call.argument<String>("issuerID")
+            ?: throw java.lang.Exception("issuer id is missing")
+
+        val walletSDK = this.walletSDK
+            ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
+
+        val validationResult = try {
+            Did.validateLinkedDomains(issuerID, walletSDK.didResolver)
+        } catch (e: Exception) {
+            println("error received while getting well known didConfig $e")
+            val didValidateResultResp: MutableMap<String, Any> = mutableMapOf()
+            didValidateResultResp["isValid"] = false
+            didValidateResultResp["serviceURL"] = ""
+            return didValidateResultResp
+        }
+
+        val didValidateResultResp: MutableMap<String, Any> = mutableMapOf()
+        didValidateResultResp["isValid"] = validationResult.isValid
+        didValidateResultResp["serviceURL"] = validationResult.serviceURL
+        println("well known config")
+        println(didValidateResultResp)
+
+       return didValidateResultResp
+    }
+
     /**
     This method invoke processAuthorizationRequest defined in OpenID4Vp.kt file.
      */
@@ -391,7 +450,7 @@ class MainActivity : FlutterActivity() {
         val credentials = call.argument<List<String>>("credentials")
             ?: throw java.lang.Exception("credentials params is missed")
 
-            val statusVerifier = Credential.newStatusVerifier()
+            val statusVerifier = Credential.newStatusVerifier(StatusVerifierOptionalArgs())
             val credentialArray = convertToVerifiableCredentialsArray(credentials)
         return try {
             statusVerifier.verify(credentialArray.atIndex(0))

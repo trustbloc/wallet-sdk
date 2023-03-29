@@ -69,7 +69,10 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
 
         case "issuerURI":
             issuerURI(result:result)
-
+            
+        case "getIssuerID":
+             getIssuerID(arguments: arguments!, result:result)
+            
         case "activityLogger":
             storeActivityLogger(result:result)
 
@@ -81,6 +84,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
 
         case "presentCredential":
             presentCredential(arguments: arguments!, result: result)
+            
+        case "wellKnownDidConfig":
+            wellKnownDidConfig(arguments: arguments!, result: result)
 
         default:
             print("No call method is found")
@@ -427,10 +433,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              message: "error while getting get credential status verifier",
                                              details: "parameter credentials is missed"))
         }
-        
-        
         do {
-            let statusVerifier = CredentialNewStatusVerifier(nil);
+            let statusVerifier = CredentialNewStatusVerifier(CredentialStatusVerifierOptionalArgs(), nil);
             let credentialArray = convertToVerifiableCredentialsArray(credentials: credentials)
             try statusVerifier?.verify(credentialArray.atIndex(0))
             result(true)
@@ -441,6 +445,36 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
          }
 
         
+    }
+    
+    public func wellKnownDidConfig(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
+        guard let issuerID = arguments["issuerID"] as? String else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while getting well known did config",
+                                             details: "issuer id is missing"))
+            }
+        
+            let didResolver = DidNewResolver("", nil)
+            var error: NSError?
+
+            var didValidateResult = DidValidateLinkedDomains(issuerID, didResolver, &error)
+           
+            if let actualError = error {
+               print("error in validate result", error!.localizedDescription)
+                var didValidateResultResp :[String:Any] = [
+                    "isValid": false,
+                    "serviceURL":  "",
+                ]
+                return result(didValidateResultResp)
+              }
+
+            var didValidateResultResp :[String:Any] = [
+                "isValid":   didValidateResult!.isValid,
+                "serviceURL":  didValidateResult!.serviceURL,
+            ]
+
+           return result(didValidateResultResp)
+    
     }
 
     /**
@@ -517,6 +551,22 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         result(credIDs[0])
     }
     
+    public func getIssuerID(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
+        
+        guard let vcCredentials = arguments["vcCredentials"] as? Array<String> else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while fetching issuer ID",
+                                             details: "parameter storedcredentials is missed"))
+        }
+        let opts = VcparseNewOpts(true, nil)
+
+        for cred in vcCredentials{
+            let parsedVC = VcparseParse(cred, opts, nil)!
+            let issuerID = parsedVC.issuerID()
+            print("issuerid - function", issuerID)
+            return result(issuerID)
+        }
+    }
     /**
      * IssuerURI returns the issuer's URI from the initiation request. It's useful to store this somewhere in case
         there's a later need to refresh credential display data using the latest display information from the issuer.
