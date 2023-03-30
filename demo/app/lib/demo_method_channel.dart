@@ -117,7 +117,6 @@ class MethodChannelWallet extends WalletPlatform {
   }
 
   Future<bool?> credentialStatusVerifier(List<String> credentials) async {
-    log("inside credentialStatusVerifier");
     try {
       var credentialStatusVerifier =
       await methodChannel.invokeMethod<bool>('credentialStatusVerifier', <String, dynamic>{'credentials': credentials});
@@ -177,6 +176,13 @@ class MethodChannelWallet extends WalletPlatform {
    return versionDetailResp;
   }
 
+  Future<Map<Object?, Object?>?> wellKnownDidConfig(String issuerID) async {
+    log("wellKnownDidConfig inside");
+    var didLinkedResp = await methodChannel.invokeMethod('wellKnownDidConfig', <String, dynamic>{'issuerID': issuerID});
+    log("well known config, $didLinkedResp");
+    return didLinkedResp;
+  }
+
   Future<void> presentCredential({List<String>? selectedCredentials}) async {
     await methodChannel
         .invokeMethod('presentCredential', <String, dynamic>{'selectedCredentials': selectedCredentials});
@@ -190,6 +196,20 @@ class MethodChannelWallet extends WalletPlatform {
   Future<List<Object?>> parseActivities(List activities) async {
     var activityObj = await methodChannel.invokeMethod('parseActivities', <String, dynamic>{'activities': activities});
     return activityObj;
+  }
+
+  Future<String?> getIssuerID(List<String> credentials) async {
+    try {
+      final issuerID =
+      await methodChannel.invokeMethod<String>('getIssuerID', <String, dynamic>{'vcCredentials': credentials});
+      log("get issuerID - , $issuerID");
+      return issuerID;
+    } on PlatformException catch (error) {
+      if (error.code == errorCode) {
+        return error.details.toString();
+      }
+    }
+    return null;
   }
 
   Future<String?> getCredID(List<String> credentials) async {

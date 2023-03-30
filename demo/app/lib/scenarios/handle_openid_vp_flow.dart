@@ -71,7 +71,7 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
 
         var credentialDisplayData =  await WalletSDKPlugin.serializeDisplayData(matchedCred, issuerURI.first);
         navigateToPresentationPreviewScreen(context, matchedCred.first,
-            CredentialData(rawCredential: '', credentialDisplayData: credentialDisplayData!, issuerURL: ''));
+            CredentialData(rawCredential: credentials.first, credentialDisplayData: credentialDisplayData!, issuerURL: ''));
         return;
       } else {
         log("single matched vc id flow");
@@ -83,7 +83,7 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
         if (matchedCred.isNotEmpty) {
           //TODO: in future we can show all the credential
           navigateToPresentationPreviewScreen(context, matchedCred.first,
-              CredentialData(rawCredential: '', credentialDisplayData: credentialDisplayData.first, issuerURL: ''));
+              CredentialData(rawCredential: credentials.first, credentialDisplayData: credentialDisplayData.first, issuerURL: ''));
           return;
         }
       }
