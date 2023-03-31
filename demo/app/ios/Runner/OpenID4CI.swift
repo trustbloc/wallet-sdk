@@ -20,8 +20,12 @@ public class OpenID4CI {
         self.crypto = crypto
         self.activityLogger = activityLogger
         
-        let clientConfig =  Openid4ciClientConfig("ClientID", crypto: self.crypto, didRes: self.didResolver, activityLogger: activityLogger)
-        self.initiatedInteraction = Openid4ciNewInteraction(requestURI, clientConfig, nil)!
+        let args = Openid4ciNewArgs(requestURI, "ClientID", self.crypto, self.didResolver)
+        
+        let opts = Openid4ciNewOpts()
+        opts!.setActivityLogger(activityLogger)
+        
+        self.initiatedInteraction = Openid4ciNewInteraction(args, opts, nil)!
     }
     
     func authorize() throws -> Openid4ciAuthorizeResult {
@@ -32,16 +36,13 @@ public class OpenID4CI {
         return initiatedInteraction.issuerURI()
     }
     
-    func requestCredential(otp: String, didVerificationMethod: ApiVerificationMethod) throws -> ApiVerifiableCredential{
-        let credentialRequest = Openid4ciNewCredentialRequestOpts( otp )
-        let credResp  = try initiatedInteraction.requestCredential(credentialRequest, vm: didVerificationMethod)
-        return credResp.atIndex(0)!;
+    func requestCredential(didVerificationMethod: ApiVerificationMethod, otp: String) throws -> ApiVerifiableCredential{
+        let credentials  = try initiatedInteraction.requestCredential(withPIN: didVerificationMethod, pin:otp)
+        return credentials.atIndex(0)!;
     }
     
     public func serializeDisplayData(issuerURI: String, vcCredentials: ApiVerifiableCredentialsArray) -> String{
-        let resolveOpts = DisplayNewResolveOpts(vcCredentials, issuerURI)
-
-        let resolvedDisplayData = DisplayResolve(resolveOpts, nil)
+       let resolvedDisplayData = DisplayResolve(vcCredentials, issuerURI, nil, nil)
         return resolvedDisplayData!.serialize(nil)
     }
 }

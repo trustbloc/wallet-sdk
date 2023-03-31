@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -143,7 +144,10 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		initiateURL, err := setup.InitiateInteraction(tc.verifierProfileID)
 		require.NoError(t, err)
 
-		didResolver, err := did.NewResolver(didResolverURL)
+		opts := did.NewResolverOpts()
+		opts.SetResolverServerURI(didResolverURL)
+
+		didResolver, err := did.NewResolver(opts)
 		require.NoError(t, err)
 
 		activityLogger := mem.NewActivityLogger()
@@ -152,20 +156,26 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		metricsLogger := metricslogger.NewMetricsLogger()
 
-		cfg := openid4vp.NewClientConfig(
-			testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver, docLoader, activityLogger)
-		cfg.MetricsLogger = metricsLogger
+		interactionRequiredArgs := openid4vp.NewArgs(initiateURL,
+			testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver)
 
-		interaction := openid4vp.NewInteraction(initiateURL, cfg)
+		interactionOptionalArgs := openid4vp.NewOpts()
+		interactionOptionalArgs.SetDocumentLoader(docLoader)
+		interactionOptionalArgs.SetActivityLogger(activityLogger)
+		interactionOptionalArgs.SetMetricsLogger(metricsLogger)
+
+		interaction := openid4vp.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
 
 		query, err := interaction.GetQuery()
 		require.NoError(t, err)
 		println("query", string(query))
 
-		inquirer := credential.NewInquirer(docLoader)
+		inquirerOpts := credential.NewInquirerOpts()
+		inquirerOpts.SetDocumentLoader(docLoader)
+		inquirer := credential.NewInquirer(inquirerOpts)
 		require.NoError(t, err)
 
-		requirements, err := inquirer.GetSubmissionRequirements(query, credential.NewCredentialsOpt(issuedCredentials))
+		requirements, err := inquirer.GetSubmissionRequirements(query, credential.NewCredentialsArgFromVCArray(issuedCredentials))
 		require.NoError(t, err)
 		require.GreaterOrEqual(t, requirements.Len(), 1)
 		require.GreaterOrEqual(t, requirements.AtIndex(0).DescriptorLen(), 1)
@@ -176,7 +186,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		selectedCreds := api.NewVerifiableCredentialsArray()
 		selectedCreds.Add(requirementDescriptor.MatchedVCs.AtIndex(0))
 
-		verifiablePres, err := inquirer.Query(query, credential.NewCredentialsOpt(selectedCreds))
+		verifiablePres, err := inquirer.Query(query, credential.NewCredentialsArgFromVCArray(selectedCreds))
 		require.NoError(t, err)
 
 		matchedCreds, err := verifiablePres.Credentials()

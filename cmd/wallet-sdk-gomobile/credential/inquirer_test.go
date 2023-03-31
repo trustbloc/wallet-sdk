@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -53,10 +54,16 @@ func TestNewInquirer(t *testing.T) {
 }
 
 func TestInstance_Query(t *testing.T) {
+	opts := credential.NewInquirerOpts()
+
+	documentLoader := &documentLoaderReverseWrapper{
+		DocumentLoader: testutil.DocumentLoader(t),
+	}
+
+	opts.SetDocumentLoader(documentLoader)
+
 	t.Run("Success", func(t *testing.T) {
-		query := credential.NewInquirer(&documentLoaderReverseWrapper{
-			DocumentLoader: testutil.DocumentLoader(t),
-		})
+		query := credential.NewInquirer(opts)
 
 		presentation, err := query.Query(presentationDefinition,
 			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
@@ -74,9 +81,7 @@ func TestInstance_Query(t *testing.T) {
 	})
 
 	t.Run("No matched credential", func(t *testing.T) {
-		query := credential.NewInquirer(&documentLoaderReverseWrapper{
-			DocumentLoader: testutil.DocumentLoader(t),
-		})
+		query := credential.NewInquirer(opts)
 
 		_, err := query.Query(presentationDefinition,
 			createCredJSONArray(t, [][]byte{permanentResidentCardVC}),
@@ -85,9 +90,7 @@ func TestInstance_Query(t *testing.T) {
 	})
 
 	t.Run("PD parse failed", func(t *testing.T) {
-		query := credential.NewInquirer(&documentLoaderReverseWrapper{
-			DocumentLoader: testutil.DocumentLoader(t),
-		})
+		query := credential.NewInquirer(opts)
 
 		_, err := query.Query(nil,
 			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
@@ -97,9 +100,7 @@ func TestInstance_Query(t *testing.T) {
 	})
 
 	t.Run("PD validation failed", func(t *testing.T) {
-		query := credential.NewInquirer(&documentLoaderReverseWrapper{
-			DocumentLoader: testutil.DocumentLoader(t),
-		})
+		query := credential.NewInquirer(opts)
 
 		_, err := query.Query([]byte("{}"),
 			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
@@ -109,13 +110,11 @@ func TestInstance_Query(t *testing.T) {
 	})
 
 	t.Run("Nil credentials and nil reader", func(t *testing.T) {
-		query := credential.NewInquirer(&documentLoaderReverseWrapper{
-			DocumentLoader: testutil.DocumentLoader(t),
-		})
+		query := credential.NewInquirer(opts)
 
-		_, err := query.Query(presentationDefinition, credential.NewCredentialsOptFromReader(nil))
+		_, err := query.Query(presentationDefinition, credential.NewCredentialsArgFromReader(nil))
 
-		require.Contains(t, err.Error(), "either credential reader or vc array should be set")
+		require.Contains(t, err.Error(), "either credential reader or vc array must be set")
 	})
 }
 
@@ -127,10 +126,16 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 		verifiedEmployeeVC,
 	}
 
+	opts := credential.NewInquirerOpts()
+
+	documentLoader := &documentLoaderReverseWrapper{
+		DocumentLoader: testutil.DocumentLoader(t),
+	}
+
+	opts.SetDocumentLoader(documentLoader)
+
 	t.Run("Success", func(t *testing.T) {
-		query := credential.NewInquirer(&documentLoaderReverseWrapper{
-			DocumentLoader: testutil.DocumentLoader(t),
-		})
+		query := credential.NewInquirer(opts)
 
 		requirements, err := query.GetSubmissionRequirements(multiInputPD, createCredJSONArray(t, contents))
 
@@ -156,9 +161,7 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 	})
 
 	t.Run("Success nested requirements", func(t *testing.T) {
-		query := credential.NewInquirer(&documentLoaderReverseWrapper{
-			DocumentLoader: testutil.DocumentLoader(t),
-		})
+		query := credential.NewInquirer(opts)
 
 		requirements, err := query.GetSubmissionRequirements(nestedRequirementsPD, createCredJSONArray(t, contents))
 
@@ -186,9 +189,7 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 	})
 
 	t.Run("PD parse failed", func(t *testing.T) {
-		query := credential.NewInquirer(&documentLoaderReverseWrapper{
-			DocumentLoader: testutil.DocumentLoader(t),
-		})
+		query := credential.NewInquirer(opts)
 
 		_, err := query.GetSubmissionRequirements(nil,
 			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
@@ -198,19 +199,22 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 	})
 }
 
-func createCredJSONArray(t *testing.T, creds [][]byte) *credential.CredentialsOpt {
+func createCredJSONArray(t *testing.T, creds [][]byte) *credential.CredentialsArg {
 	t.Helper()
 
 	credsArray := api.NewVerifiableCredentialsArray()
 
 	for _, credContent := range creds {
-		vc, err := vcparse.Parse(string(credContent), &vcparse.Opts{DisableProofCheck: true})
+		opts := vcparse.NewOpts()
+		opts.DisableProofCheck()
+
+		vc, err := vcparse.Parse(string(credContent), opts)
 		require.NoError(t, err)
 
 		credsArray.Add(vc)
 	}
 
-	return credential.NewCredentialsOpt(credsArray)
+	return credential.NewCredentialsArgFromVCArray(credsArray)
 }
 
 type documentLoaderReverseWrapper struct {
@@ -223,14 +227,15 @@ func (l *documentLoaderReverseWrapper) LoadDocument(u string) (*api.LDDocument, 
 		return nil, err
 	}
 
-	wrappedDoc := &api.LDDocument{
-		DocumentURL: doc.DocumentURL,
-		ContextURL:  doc.ContextURL,
-	}
-
-	wrappedDoc.Document, err = json.Marshal(doc.Document)
+	documentBytes, err := json.Marshal(doc.Document)
 	if err != nil {
 		return nil, fmt.Errorf("fail to unmarshal ld document bytes: %w", err)
+	}
+
+	wrappedDoc := &api.LDDocument{
+		DocumentURL: doc.DocumentURL,
+		Document:    string(documentBytes),
+		ContextURL:  doc.ContextURL,
 	}
 
 	return wrappedDoc, nil

@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -19,8 +20,12 @@ type Resolver struct {
 }
 
 // NewResolver returns a new Resolver.
-func NewResolver(resolverServerURI string) (*Resolver, error) {
-	didResolver, err := resolver.NewDIDResolver(resolverServerURI)
+func NewResolver(opts *ResolverOpts) (*Resolver, error) {
+	if opts == nil {
+		opts = NewResolverOpts()
+	}
+
+	didResolver, err := resolver.NewDIDResolver(opts.resolverServerURI)
 	if err != nil {
 		return nil, walleterror.ToMobileError(err)
 	}

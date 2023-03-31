@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -22,7 +23,7 @@ func TestDocumentLoaderWrapper_LoadDocument(t *testing.T) {
 			DocumentLoader: &documentLoaderMock{
 				LoadResult: &api.LDDocument{
 					DocumentURL: "testURL",
-					Document:    []byte("{}"),
+					Document:    "{}",
 					ContextURL:  "testContext",
 				},
 			},
@@ -52,7 +53,7 @@ func TestDocumentLoaderWrapper_LoadDocument(t *testing.T) {
 			DocumentLoader: &documentLoaderMock{
 				LoadResult: &api.LDDocument{
 					DocumentURL: "testURL",
-					Document:    nil,
+					Document:    "",
 					ContextURL:  "testContext",
 				},
 			},

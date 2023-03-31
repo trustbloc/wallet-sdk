@@ -33,7 +33,7 @@ type KeyReader interface {
 type CreateDIDOpts struct {
 	KeyID            string
 	VerificationType string
-	KeyType          kms.KeyType
+	KeyType          kms.KeyType // Not used for DID:ion's update and recovery key types (they're hardcoded)
 	MetricsLogger    MetricsLogger
 }
 

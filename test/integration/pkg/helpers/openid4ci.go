@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -36,18 +37,19 @@ func NewCITestHelper(t *testing.T, didMethod string, keyType string) *CITestHelp
 	require.NoError(t, err)
 
 	// create DID
-	c, err := did.NewCreatorWithKeyWriter(kms)
+	c, err := did.NewCreator(kms)
 	require.NoError(t, err)
 
-	didMetricsLogger := metricslogger.NewMetricsLogger()
+	metricsLogger := metricslogger.NewMetricsLogger()
 
-	didDoc, err := c.Create(didMethod, &api.CreateDIDOpts{
-		KeyType:       keyType,
-		MetricsLogger: didMetricsLogger,
-	})
+	opts := did.NewCreateOpts()
+	opts.SetKeyType(keyType)
+	opts.SetMetricsLogger(metricsLogger)
+
+	didDoc, err := c.Create(didMethod, opts)
 	require.NoError(t, err)
 
-	checkDIDCreationMetricsLoggerEvents(t, didMetricsLogger)
+	checkDIDCreationMetricsLoggerEvents(t, metricsLogger)
 
 	return &CITestHelper{
 		KMS:            kms,

@@ -7,13 +7,15 @@ SPDX-License-Identifier: Apache-2.0
 package credential
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
-	pkgapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialstatus"
 )
 
@@ -22,36 +24,29 @@ type StatusVerifier struct {
 	verifier *credentialstatus.Verifier
 }
 
-// StatusVerifierOptionalArgs contains optional parameters for initializing a credential StatusVerifier.
-type StatusVerifierOptionalArgs struct {
-	didResolver api.DIDResolver
-}
-
-// NewStatusVerifierOptionalArgs returns a StatusVerifierOptionalArgs object.
-func NewStatusVerifierOptionalArgs() *StatusVerifierOptionalArgs {
-	return &StatusVerifierOptionalArgs{}
-}
-
-// SetDIDResolver sets the DID resolver to use.
-// If no DID resolver is explicitly set, then the initialized StatusVerifier will not support
-// DID-URL resolution of Status Credentials, but will still support HTTP resolution.
-func (o *StatusVerifierOptionalArgs) SetDIDResolver(didResolver api.DIDResolver) {
-	o.didResolver = didResolver
-}
-
 // NewStatusVerifier creates a credential status verifier.
-func NewStatusVerifier(optionalArgs *StatusVerifierOptionalArgs) (*StatusVerifier, error) {
-	var useDIDResolver pkgapi.DIDResolver
+// This StatusVerifier only supports HTTP resolution.
+// To create a credential status verifier that also supports DID-URL resolution of Status Credentials,
+// use NewStatusVerifierWithDIDResolver instead.
+func NewStatusVerifier(opts *StatusVerifierOpts) (*StatusVerifier, error) {
+	return newStatusVerifier(&unsupportedResolver{})
+}
 
-	if optionalArgs.didResolver == nil {
-		useDIDResolver = &unsupportedResolver{}
-	} else {
-		useDIDResolver = &wrapper.VDRResolverWrapper{DIDResolver: optionalArgs.didResolver}
+// NewStatusVerifierWithDIDResolver creates a credential status verifier with a DID resolver.
+func NewStatusVerifierWithDIDResolver(didResolver api.DIDResolver, opts *StatusVerifierOpts,
+) (*StatusVerifier, error) {
+	if didResolver == nil {
+		return nil, errors.New("DID resolver must be provided. " +
+			"If support for DID-URL resolution of status credentials is not needed, then use NewStatusVerifier instead")
 	}
 
+	return newStatusVerifier(&wrapper.VDRResolverWrapper{DIDResolver: didResolver})
+}
+
+func newStatusVerifier(didResolver goapi.DIDResolver) (*StatusVerifier, error) {
 	v, err := credentialstatus.NewVerifier(&credentialstatus.Config{
 		HTTPClient:  http.DefaultClient,
-		DIDResolver: useDIDResolver,
+		DIDResolver: didResolver,
 	})
 	if err != nil {
 		return nil, err
@@ -70,5 +65,6 @@ func (s *StatusVerifier) Verify(vc *api.VerifiableCredential) error {
 type unsupportedResolver struct{}
 
 func (u *unsupportedResolver) Resolve(string) (*did.DocResolution, error) {
-	return nil, fmt.Errorf("did resolution not enabled for this VC status verifier")
+	return nil, fmt.Errorf("DID resolution not enabled for this VC status verifier. " +
+		"Use NewStatusVerifierWithDIDResolver to enable support")
 }

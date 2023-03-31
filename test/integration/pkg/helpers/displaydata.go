@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -28,13 +29,10 @@ func ResolveDisplayData(t *testing.T, credentials *api.VerifiableCredentialsArra
 ) {
 	metricsLogger := metricslogger.NewMetricsLogger()
 
-	resolveDisplayOpts := &display.ResolveOpts{
-		VCs:           credentials,
-		IssuerURI:     issuerURI,
-		MetricsLogger: metricsLogger,
-	}
+	opts := display.NewOpts()
+	opts.SetMetricsLogger(metricsLogger)
 
-	displayData, err := display.Resolve(resolveDisplayOpts)
+	displayData, err := display.Resolve(credentials, issuerURI, opts)
 	require.NoError(t, err)
 	checkResolvedDisplayData(t, displayData, expectedDisplayData)
 

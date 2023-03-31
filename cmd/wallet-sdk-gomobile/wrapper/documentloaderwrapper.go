@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -33,7 +34,7 @@ func (l *DocumentLoaderWrapper) LoadDocument(url string) (*ld.RemoteDocument, er
 		ContextURL:  doc.ContextURL,
 	}
 
-	err = json.Unmarshal(doc.Document, &wrappedDoc.Document)
+	err = json.Unmarshal([]byte(doc.Document), &wrappedDoc.Document)
 	if err != nil {
 		return nil, fmt.Errorf("fail to unmarshal ld document bytes: %w", err)
 	}

@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -31,9 +32,10 @@ func TestVerifiableCredential(t *testing.T) {
 	t.Run("Valid VCs", func(t *testing.T) {
 		vcArray := api.NewVerifiableCredentialsArray()
 
-		parseOpts := &vcparse.Opts{DisableProofCheck: true}
+		opts := &vcparse.Opts{}
+		opts.DisableProofCheck()
 
-		universityDegreeVC, err := vcparse.Parse(universityDegreeCredential, parseOpts)
+		universityDegreeVC, err := vcparse.Parse(universityDegreeCredential, opts)
 		require.NoError(t, err)
 
 		id := universityDegreeVC.ID()
@@ -64,7 +66,7 @@ func TestVerifiableCredential(t *testing.T) {
 
 		require.Equal(t, 1, vcArray.Length())
 
-		driversLicenceVC, err := vcparse.Parse(driversLicenceCredential, parseOpts)
+		driversLicenceVC, err := vcparse.Parse(driversLicenceCredential, opts)
 		require.NoError(t, err)
 
 		id = driversLicenceVC.ID()
@@ -117,9 +119,10 @@ func TestVerifiableCredential(t *testing.T) {
 }
 
 func TestVerifiableCredential_NameIsNotAString(t *testing.T) {
-	parseOpts := &vcparse.Opts{DisableProofCheck: true}
+	opts := &vcparse.Opts{}
+	opts.DisableProofCheck()
 
-	universityDegreeVC, err := vcparse.Parse(universityDegreeCredential, parseOpts)
+	universityDegreeVC, err := vcparse.Parse(universityDegreeCredential, opts)
 	require.NoError(t, err)
 
 	universityDegreeVC.VC.CustomFields["name"] = 0
@@ -130,10 +133,11 @@ func TestVerifiableCredential_NameIsNotAString(t *testing.T) {
 
 func TestVerifiableCredential_ClaimTypes(t *testing.T) {
 	t.Run("Claim types are in credential subject", func(t *testing.T) {
-		t.Run("Types were an array of interfaces", func(t *testing.T) {
-			parseOpts := &vcparse.Opts{DisableProofCheck: true}
+		opts := &vcparse.Opts{}
+		opts.DisableProofCheck()
 
-			universityDegreeVC, err := vcparse.Parse(universityDegreeCredential, parseOpts)
+		t.Run("Types were an array of interfaces", func(t *testing.T) {
+			universityDegreeVC, err := vcparse.Parse(universityDegreeCredential, opts)
 			require.NoError(t, err)
 
 			types := universityDegreeVC.Types()
@@ -142,9 +146,7 @@ func TestVerifiableCredential_ClaimTypes(t *testing.T) {
 			require.Equal(t, "UniversityDegreeCredential", types.AtIndex(1))
 		})
 		t.Run("Type was a string", func(t *testing.T) {
-			parseOpts := &vcparse.Opts{DisableProofCheck: true}
-
-			driversLicenceVC, err := vcparse.Parse(driversLicenceCredential, parseOpts)
+			driversLicenceVC, err := vcparse.Parse(driversLicenceCredential, opts)
 			require.NoError(t, err)
 
 			types := driversLicenceVC.Types()

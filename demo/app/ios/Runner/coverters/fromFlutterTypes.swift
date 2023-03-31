@@ -9,7 +9,9 @@ import Foundation
 import Walletsdk
 
 func convertToVerifiableCredentialsArray(credentials: Array<String>) -> ApiVerifiableCredentialsArray {
-    let opts = VcparseNewOpts(true, nil)
+    let opts = VcparseNewOpts()
+    opts!.disableProofCheck()
+    
     let parsedCredentials = ApiVerifiableCredentialsArray()!
     
     for cred in credentials{

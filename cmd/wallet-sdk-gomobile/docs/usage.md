@@ -1,17 +1,34 @@
 # SDK Usage
 
-Last updated: March 23, 2023 (commit `ed04b7c22c0634e62f58a40597ebd3e967835b61`)
+Last updated: March 28, 2023 (commit `ebdd56f4b780ca87024db967ce3573fd2af1d377`)
 
 This guide explains how to use this SDK in Android or iOS code.
 
 Note that the exact type/function/method names differ depending on whether you're using the Android bindings or iOS
 bindings. See [Packages](packages.md) for more information. Additionally, the examples in this document demonstrate
-how to use the various APIs from a Kotlin and Swift perspective. 
+how to use the various APIs from a Kotlin and Swift perspective.
+
+Note that the languages for the generated bindings are Java (for Android) and Objective-C (for iOS).
 
 For the sake of readability, the following is omitted in most code examples:
 * Error handling
 * Nullable type checks (in Kotlin examples)
 * Optionals unwrapping (in Swift examples)
+
+## General API Patterns
+
+Wallet-SDK APIs follow a certain pattern. Arguments to functions and methods are always mandatory unless
+they are in an `Opts` object. If a function or method has an `Opts` argument, it will be the last
+argument (after all the mandatory arguments). The exact name of this object may differ depending on the function/method,
+but they will all have `Opts` in the name.
+
+`Opts` objects are created by calling their constructors, which always have zero arguments.
+To set specific options, use the exposed methods available on the object after you've created it.
+
+If an optional argument is not explicitly set then a default will be used.
+
+If no optional arguments are needed, you can simply pass in `null`/`nil` as the `Opts` argument, which will
+result in defaults being used for all the options.
 
 ## Error Handling
 
@@ -48,16 +65,12 @@ Note: For error parsing, make sure you pass `localizedDescription` from the `NSE
 import Walletsdk
 
 do {
-    try someSDKMethodHere()
+    try someSDKObject.someMethodHere()
 } catch let error as NSError {
     let parsedError = WalleterrorParse(error.localizedDescription)
     // Access parsedError.code, parsedError.category, and parsedError.details as you see fit
 }
 ```
-
-For non-primitive return types from functions/methods, they will always be optionals (in Swift) or nullable
-(in Kotlin/Java). Some of these functions/methods may also throw exceptions (or return errors)
-
 
 ## API Package
 
@@ -90,10 +103,11 @@ There may be additional more specific credential types as well.
 
 Serialized credentials cannot be used directly in Wallet-SDK. Instead, they must be parsed first.
 
-The `parse` function is located in the `vcparse` package. It can be provided with a number of parameters, all optional:
+The `parse` function is located in the `vcparse` package. It has a few optional arguments that can be passed in via the
+methods available on an `Opts` object:
 * `disableProofCheck`: Disables the proof check operation when parsing the VC. The proof check can be an expensive
 operation - in certain scenarios, it may be appropriate to disable the check. By default, proofs are checked.
-* `documentLoader`: Specifies a JSON-LD document loader to use when parsing the VC. If none is specified, then a
+* `setDocumentLoader`: Specifies a JSON-LD document loader to use when parsing the VC. If none is specified, then a
 network-based loader will be used.
 
 ### Examples
@@ -103,10 +117,8 @@ network-based loader will be used.
 ```kotlin
 import dev.trustbloc.wallet.sdk.vcparse.Vcparse
 
-// Specified options below: Don't disable the proof check, and use the default network-based document loader.
-// Equivalent to just passing null directly into the parse function instead of this object below.
-val opts = Opts(false, null)
-val vc = Vcparse.parse("Serialized VC goes here", opts)
+// Passing in null instead of an Opts object will cause the default options to be used.
+val vc = Vcparse.parse("Serialized VC goes here", null)
 ```
 
 #### Swift (iOS)
@@ -114,15 +126,16 @@ val vc = Vcparse.parse("Serialized VC goes here", opts)
 ```swift
 import Walletsdk
 
-// Specified options below: Don't disable the proof check, and use the default network-based document loader.
-// Equivalent to just passing null directly into the parse function instead of this object below.
-let opts = VcparseNewOpts(false, nil)
-let vc = VcparseParse("Serialized VC goes here", opts, nil)
+var error: NSError?
+
+// Passing in nil instead of an Opts object will cause the default options to be used.
+let vc = VcparseParse("Serialized VC goes here", nil, &error)
 ```
 
 ## LD Document Loading
 
-Several APIs allow for an LD document loader to be specified.
+Several APIs allow for an LD document loader to be specified via the `setDocumentLoader` method on their respective
+`Opts` objects.
 If no custom LD document loader is specified (or is nil/null), then network-based document loading will be used instead.
 For performance and/or security reasons, you may wish to implement a custom LD document loader that uses
 preloaded local contexts.
@@ -144,8 +157,7 @@ import dev.trustbloc.wallet.sdk.vcparse.Vcparse
 
 val db = credential.newInMemoryDB()
 
-val opts = Opts(false, null)
-val vc = Vcparse.parse("Serialized VC goes here", opts)
+val vc = Vcparse.parse("Serialized VC goes here", null)
 
 db.add(vc)
 
@@ -163,8 +175,8 @@ import Walletsdk
 
 let db = CredentialNewInMemoryDB()
 
-let opts = VcparseNewOpts(false, nil)
-let vc = VcparseParse("Serialized VC goes here", opts, nil)!
+var error: NSError?
+let vc = VcparseParse("Serialized VC goes here", nil, &error)!
 
 db.add(vc)
 
@@ -204,7 +216,9 @@ val jwk2 = kms.create(localkms.KeyTypeP384)
 import Walletsdk
 
 let memKMSStore = LocalkmsNewMemKMSStore()
-let kms = LocalkmsNewKMS(memKMSStore, nil)
+
+var error: NSError?
+let kms = LocalkmsNewKMS(memKMSStore, &error)
 
 let jwk1 = kms.create(LocalkmsKeyTypeED25519)
 let jwk2 = kms.create(LocalkmsKeyTypeP384)
@@ -234,7 +248,7 @@ import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 val memKMSStore = MemKMSStore.MemKMSStore()
 val kms = Localkms.newKMS(memKMSStore)
 val didCreator = Creator(kms as KeyWriter)
-val didDocResolution = didCreator.create("key", CreateDIDOpts()) // Create a did:key doc
+val didDocResolution = didCreator.create("key", null) // Create a did:key doc with default options
 ```
 
 ##### Swift (iOS)
@@ -243,65 +257,23 @@ val didDocResolution = didCreator.create("key", CreateDIDOpts()) // Create a did
 import Walletsdk
 
 let memKMSStore = LocalkmsNewMemKMSStore()
-let kms = LocalkmsNewKMS(memKMSStore, nil)
-let didCreator = DidNewCreatorWithKeyWriter(kms, nil)
-let didDocResolution = didCreator.create("key", ApiCreateDIDOpts()) // Create a did:key doc
-```
 
-### With Key Reader
-The keys used for DID documents are not automatically generated on the caller's behalf.
-They must be passed in by the caller.
+var newKMSError: NSError?
+let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
 
-#### Examples
+var newDIDCreatorError: NSError?
+let didCreator = DidNewCreatorWithKeyWriter(kms, &newDIDCreatorError)
 
-##### Kotlin (Android)
-
-```kotlin
-
-import dev.trustbloc.wallet.sdk.api.CreateDIDOpts
-import dev.trustbloc.wallet.sdk.did.Creator
-import dev.trustbloc.wallet.sdk.did.Did.Ed25519VerificationKey2018
-import dev.trustbloc.wallet.sdk.localkms.Localkms
-import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
-
-val memKMSStore = MemKMSStore.MemKMSStore()
-val kms = Localkms.newKMS(memKMSStore)
-
-val keyHandle = kms.create(localkms.KeyTypeED25519)
-
-val didCreator = Creator(kms as KeyReader)
-
-val createDIDOpts = api.CreateDIDOpts()
-createDIDOpts.setKeyID = keyHandle.getKeyID()
-createDIDOpts.setVerificationType = Ed25519VerificationKey2018
-
-val didDocResolution = didCreator.create("key", createDIDOpts) // Create a did:key doc
-```
-
-##### Swift (iOS)
-
-```swift
-import Walletsdk
-
-let memKMSStore = LocalkmsNewMemKMSStore()
-let kms = LocalkmsNewKMS(memKMSStore)
-
-let keyHandle = kms.create(LocalkmsKeyTypeED25519)
-
-let didCreator = DidNewCreatorWithKeyReader(kms, nil)
-
-let createDIDOpts = ApiCreateDIDOpts(keyID: keyHandle.keyID, verificationType: DidEd25519VerificationKey2018)
-
-let didDocResolution = didCreator.create("key", createDIDOpts) // Create a did:key doc
+let didDocResolution = didCreator.create("key", nil) // Create a did:key doc with default options
 ```
 
 ### Error Codes & Troubleshooting Tips
 
 | Error                             | Possible Reasons                                                                                          |
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------|
-| CREATE_DID_KEY_FAILED(DID1-0000)  | No verification type specified in the createDIDOpts object.                                               |
-| CREATE_DID_ION_FAILED(DID1-0001)  | No verification type specified in the createDIDOpts object.                                               |
-| CREATE_DID_JWK_FAILED(DID1-0002)  | No verification type specified in the createDIDOpts object.                                               |
+| CREATE_DID_KEY_FAILED(DID1-0000)  | Failed to create a key during DID creation. Check your KeyWriter implementation.                          |
+| CREATE_DID_ION_FAILED(DID1-0001)  | Failed to create a key during DID creation. Check your KeyWriter implementation.                          |
+| CREATE_DID_JWK_FAILED(DID1-0002)  | Failed to create a key during DID creation. Check your KeyWriter implementation.                          |
 | UNSUPPORTED_DID_METHOD(DID0-0003) | The DID method specified in the `create` call is unsupported. Only `key`, `ion`, and `jwk` are supported. |
 
 ## DID Resolver
@@ -313,7 +285,7 @@ let didDocResolution = didCreator.create("key", createDIDOpts) // Create a did:k
 ```kotlin
 import dev.trustbloc.wallet.sdk.did.*
 
-val didResolver = did.Resolver("") // argument is resolverServerURI, can be empty.
+val didResolver = did.Resolver(null)
 
 val didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
 ```
@@ -323,7 +295,7 @@ val didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpb
 ```swift
 import Walletsdk
 
-let didResolver = DidNewResolver("", nil)
+let didResolver = DidNewResolver(nil)
 
 let didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
 ```
@@ -332,10 +304,6 @@ let didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpb
 
 | Error                                         | Possible Reasons                                                                                                                                                                                                                                            |
 |-----------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| CREATE_DID_KEY_FAILED(DID1-0000)              | No verification type specified in the createDIDOpts object.                                                                                                                                                                                                 |
-| CREATE_DID_ION_FAILED(DID1-0001)              | No verification type specified in the createDIDOpts object.                                                                                                                                                                                                 |
-| CREATE_DID_JWK_FAILED(DID1-0002)              | No verification type specified in the createDIDOpts object.                                                                                                                                                                                                 |
-| UNSUPPORTED_DID_METHOD(DID0-0003)             | The DID method specified in the `create` call is unsupported. Only `key`, `ion`, and `jwk` are supported.                                                                                                                                                   |
 | DID_RESOLVER_INITIALIZATION_FAILED(DID1-0005) | An invalid resolver server URI was specified. Note that the resolver server URI is optional, so if it's not required then leave this blank.                                                                                                                 |
 | DID_RESOLUTION_FAILED(DID1-0004)              | The specified DID doesn't exist.<br/><br/>The specified DID is incorrectly formatted.<br/><br/>The specified DID isn't supported by Wallet-SDK.<br/><br/>The specified DID requires remote resolution, but there was a communication error with the server. |
 
@@ -352,7 +320,7 @@ Note the following limitations:
 ```kotlin
 import dev.trustbloc.wallet.sdk.did.*
 
-val didResolver = Resolver()
+val didResolver = Resolver(null)
 
 val validationResult = Did.validateLinkedDomains("YourDIDHere", didResolver)
 ```
@@ -362,7 +330,7 @@ val validationResult = Did.validateLinkedDomains("YourDIDHere", didResolver)
 ```swift
 import Walletsdk
 
-let didResolver = DidNewResolver("", nil)
+let didResolver = DidNewResolver(nil)
 
 let validationResult = ValidateLinkedDomains("YourDIDHere", didResolver)
 ```
@@ -370,32 +338,36 @@ let validationResult = ValidateLinkedDomains("YourDIDHere", didResolver)
 ## OpenID4CI
 
 The OpenID4CI package contains an API that can be used by a [holder](https://www.w3.org/TR/vc-data-model/#dfn-holders)
-to go through the [OpenID4CI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-08.html) flow.
+to go through the [OpenID4CI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html) flow.
 
 Note that the implementation currently only supports the pre-authorized flow.
 
 The general pattern is as follows:
 
-1. Create a `ClientConfig` object. A `ClientConfig` contains the following parameters:
+1. Create an `Args` object. An `Args` object contains the following mandatory parameters:
+   * An initiate issuance URI obtained from an issuer (e.g. via a QR code).
    * A client ID to use.
-   * A crypto implementation
+   * A crypto implementation.
    * A DID resolver.
-   * An activity logger (optional, but if set then this will be used to log credential activities)
+2. (Optional) Create an `Opts` object. To set optional arguments, use the supplied methods available
+on the `Opts` object. For example:
+   * `setActivityLogger`: Used to log credential activities.
+   * `setDocumentLoader`: Used when parsing JSON-LD VCs. If this option isn't used, then a network-based loader will be
+   used.
+   * `addHeaders`: Allows you to set additional headers to be sent to the issuer.
 
-   Optionally, after creating a `ClientConfig` object, you can set additional headers to be sent to the issuer by
-calling the `addHeaders` method on the `ClientConfig`.
-2. Create a new `Interaction` object using an initiate issuance URI obtained from an issuer (e.g. via a QR code)
-and your `ClientConfig` from the last step. The `Interaction` object is a stateful object and is meant to be used
-for a single instance of an OpenID4CI flow and then discarded.
-3. Call the `Authorize` method on the `Interaction`. Since only the pre-authorized flow is supported currently,
-the returned `AuthorizeResult` object can be ignored by the caller. All this step really does right now is ensures that
-the initiation request indicates that the user is pre-authorized (and if not, returns an error letting the caller
-know that the non-pre-authorized flow isn't implemented).
-4. Create a `CredentialRequestOpts` object containing the user's PIN.
-5. Call the `RequestCredential` method on the `Interaction`, passing in the `CredentialRequestOpts` object from the
-last step. If successful, this method will return `CredentialResponses` to the caller, which contain the issued
-credentials.
-6. (Optional, can be called at any point after step 2) - Call the `IssuerURI` method on the `Interaction` object to
+   Options can be chained together if you wish (e.g. `newOpts().setActivityLogger(...).setHeaders(...)`).
+   Check the generated bindings headers files to see all the available options.
+3. Create a new `Interaction` object using your `Args` and`Opts` objects.
+If none of the optional arguments are needed, then a nil `Opts` can be passed in instead.
+The `Interaction` object is a stateful object and is meant to be used for a single instance of an OpenID4CI flow and
+then discarded.
+4. Call the `authorize` method on the `Interaction`. the returned `AuthorizeResult` object indicates whether a user PIN
+is required.
+5. Call the `requestCredential` method on the `Interaction`.
+If a user PIN is required, then use the `requestCredentialWithPIN` method instead.
+If this call is successful, this method will return the issued credentials.
+6. (Optional, can be called at any point after step 3) - Call the `IssuerURI` method on the `Interaction` object to
 get the issuer URI. The issuer URI should be stored somewhere for later use, since it can be used to get the
 display data. See [Credential Display Data](#credential-display-data) for more information.
 
@@ -408,31 +380,41 @@ They use in-memory key storage and the Tink crypto library.
 #### Kotlin (Android)
 
 ```kotlin
+import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.did.Creator
-import dev.trustbloc.wallet.sdk.openid4ci.Interaction
-import dev.trustbloc.wallet.sdk.openid4ci.ClientConfig
-import dev.trustbloc.wallet.sdk.openid4ci.CredentialRequestOpts
-import dev.trustbloc.wallet.sdk.openid4ci.mem
+import dev.trustbloc.wallet.sdk.openid4ci.*
+import dev.trustbloc.wallet.sdk.openid4ci.Opts
 
 // Setup
 val memKMSStore = MemKMSStore.MemKMSStore()
 val kms = Localkms.newKMS(memKMSStore)
-val didResolver = Resolver("")
+val didResolver = Resolver(null)
 val didCreator = Creator(kms as KeyWriter)
-val didDocResolution = didCreator.create("key", CreateDIDOpts()) // Create a did:key doc
-val activityLogger = mem.ActivityLogger() // Optional, but useful for tracking credential activities
-val cfg = ClientConfig("ClientID", kms.crypto, didResolver, activityLogger)
+val didDocResolution = didCreator.create("key", null) // Create a did:key doc
+
+val args = Args("YourRequestURIHere", "ClientID", kms.getCrypto(), didResolver)
+
+val activityLogger = mem.ActivityLogger()
+val opts = Opts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
 
 // Going through the flow
-val interaction = Interaction("YourRequestURIHere", cfg)
-interaction.authorize() // Returned object doesn't matter with current implementation limitations
-val userPIN = "1234"
-val requestCredentialOpts = CredentialRequestOpts(userPIN)
-val credentials = interaction.requestCredential(requestCredentialOpts, didDocResolution.assertionMethod()) // Should probably store these somewhere
+val interaction = Interaction(args, opts)
+
+val result = interaction.authorize()
+
+val credentials: VerifiableCredentialsArray
+
+if (result.UserPINRequired) {
+    credentials = interaction.requestCredentialWithPIN(didVerificationMethod, "1234")
+} else {
+    credentials = interaction.requestCredential(didDocResolution.assertionMethod())
+}
+
 val issuerURI = interaction.issuerURI() // Optional (but useful)
+
 // Consider checking the activity log at some point after the interaction
 ```
 
@@ -443,20 +425,38 @@ import Walletsdk
 
 // Setup
 let memKMSStore = LocalkmsNewMemKMSStore()
-let kms = LocalkmsNewKMS(memKMSStore, nil)
-let didResolver = DidNewResolver("", nil)
-let didCreator = DidNewCreatorWithKeyWriter(kms, nil)
-let didDocResolution = didCreator.create("key", ApiCreateDIDOpts()) // Create a did:key doc
-let activityLogger = MemNewActivityLogger() // Optional, but useful for tracking credential activities
-let cfg =  Openid4ciClientConfig(didDocResolution.id, clientID: "ClientID", didRes: didResolver, activityLogger: activityLogger)
+
+var newKMSError: NSError?
+let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
+
+let didResolver = DidNewResolver(nil)
+
+var newDIDCreatorError: NSError?
+let didCreator = DidNewCreatorWithKeyWriter(kms, &newDIDCreatorError)
+
+let didDocResolution = didCreator.create("key", nil) // Create a did:key doc with default options
+
+let args = Openid4ciNewArgs("YourRequestURIHere", "ClientID", kms.getCrypto(), didResolver)
+
+let activityLogger = MemNewActivityLogger()
+let opts = Openid4ciNewOpts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
 
 // Going through the flow
-let interaction = Openid4ciNewInteraction("YourRequestURIHere", cfg, nil)
-interaction.authorize() // Returned object doesn't matter with current implementation limitations
-let userPIN = "1234"
-let requestCredentialOpts = Openid4ciNewCredentialRequestOpts(userPIN)
-let credentials = interaction.requestCredential(requestCredentialOpts, didDocResolution.assertionMethod()) // Should probably store these somewhere
+var newInteractionError: NSError?
+let interaction = Openid4ciNewInteraction(args, opts, &newInteractionError)
+
+let result = interaction.authorize()
+
+var credentials: ApiVerifiableCredentialsArray
+
+if result.UserPINRequired {
+    credentials = interaction.requestCredential(withPIN: didDocResolution.assertionMethod(), pin:"1234")
+} else {
+    credentials = interaction.requestCredential(didDocResolution.assertionMethod())
+}
+
 let issuerURI = interaction.issuerURI() // Optional (but useful)
+
 // Consider checking the activity log at some point after the interaction
 ```
 
@@ -477,7 +477,7 @@ let issuerURI = interaction.issuerURI() // Optional (but useful)
 
 | Error                                  | Possible Reasons                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 |----------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| PIN_CODE_REQUIRED(OCI0-0007)           | The credential offer requires a user PIN but none was provided via the requestCredentialOpts object.                                                                                                                                                                                                                                                                                                                                                |
+| PIN_REQUIRED(OCI0-0007)                | The credential offer requires a user PIN but none was provided. Make sure to use the `requestCredentialWithPIN` method with a non-empty PIN.                                                                                                                                                                                                                                                                                                        |
 | ISSUER_OPENID_FETCH_FAILED(OCI1-0008)  | An error occurred while doing an HTTP GET call on the issuer's OpenID configuration endpoint. The server may be down or have a configuration issue.<br/><br/>The issuer's OpenID configuration object is malformed.                                                                                                                                                                                                                                 |
 | TOKEN_FETCH_FAILED(OCI1-0010)          | The user PIN is incorrect.<br/><br/>An error occurred while doing an HTTP POST call on the issuer's token endpoint. The server may be down or have a configuration issue.<br/><br/>The token response object from the server is malformed.                                                                                                                                                                                                          |
 | JWT_SIGNING_FAILED(OCI1-0011)          | The KMS is missing the key that was used to create the DID that you're using. This could happen if your KMS storage is not storing and retrieving keys as expected, or if there is a mismatch between the KMS you used to create the DID (whose verification method you pass into the `requestCredential` function) and the `crypto` object (which should be obtained via the `getCrypto()` method on the KMS) passed in to the interaction object. |
@@ -567,10 +567,11 @@ then a default locale may get used instead.
 
 ### Resolve Display
 
-The following examples show how the `ResolveDisplay` function can be used. The function accepts a `ResolveOpts` object,
-which contains the VCs and the issuer URI (both are mandatory parameters). Optionally, after creating a`ResolveOpts`
-object, you can set additional headers to be sent to the issuer by calling the `addHeaders` method on the
-`ResolveOpts` object.
+The following examples show how the `ResolveDisplay` function can be used. The function requires you to pass in
+one or more VCs and the issuer URI.
+
+A preferred locale and/or addition headers to be sent to the issuer can be specified by creating an `Opts`
+object, setting your desired parameters using the supplied methods, and passing the object in.
 
 ##### Kotlin (Android)
 
@@ -583,9 +584,7 @@ val vcArray = VerifiableCredentialsArray()
 
 vcArray.add(yourVCHere)
 
-val resolveOpts = ResolveOpts(vcCredentials, "Issuer_URI_Goes_Here")
-
-val displayData = Display.resolve(resolveOpts)
+val displayData = Display.resolve(vcArray, "Issuer_URI_Goes_Here", nil)
 ```
 
 ##### Swift (iOS)
@@ -597,9 +596,8 @@ let vcArray = ApiVerifiableCredentialsArray()
 
 vcArray.add(yourVCHere)
 
-let resolveOpts = DisplayNewResolveOpts(vcArray, "Issuer_URI_Goes_Here")
-
-let displayData = DisplayResolve(vcArray, "Issuer_URI_Goes_Here")
+var error: NSError?
+let displayData = DisplayResolve(vcArray, "Issuer_URI_Goes_Here", nil, &error)
 ```
 
 ## OpenID4VP
@@ -609,22 +607,26 @@ to go through the [OpenID4VP](https://openid.net/specs/openid-connect-4-verifiab
 
 The general pattern is as follows:
 
-1. Create a new `ClientConfig` object. A `ClientConfig` object has the following parameters:
-   * A key reader
-   * A crypto implementation
-   * A DID resolver
-   * An LD document loader
-   * An activity logger (optional, but if set then this will be used to log credential activities)
+1. Create a new `Args` object. An `Args` contains the following mandatory
+parameters:
+   * An authorization request URI obtained from a verifier (e.g. via a QR code).
+   * A key reader.
+   * A crypto implementation.
+   * A DID resolver.
+2. (optional) Create an `opts` object. To set optional arguments, use the supplied methods available
+   on the `Opts` object. For example:
+   * `setActivityLogger`: Used to log credential activities.
+   * `addHeaders`: Allows you to set additional headers to be sent to the issuer.
 
-   Optionally, after creating a `ClientConfig` object, you can set additional headers to be sent to the verifier by
-calling the `addHeaders` method on the `ClientConfig`.
-2. Create a new `Interaction` object using an authorization request URI obtained from a verifier (e.g. via a QR code)
-and your `ClientConfig` from the last step. The `Interaction` object is a stateful object and is meant to be used
-for a single instance of an OpenID4VP flow and then discarded.
-3. Get the query by calling the `GetQuery` method on the `Interaction`.
-4. Select the credentials that match the query from the previous step.
-5. Determine the key ID you want to use for signing (e.g. from one of the user's DID docs).
-6. Call the `PresentCredential` method on the `Interaction` object with the selected credentials.
+   Options can be chained together if you wish (e.g. `newOpts().setActivityLogger(...).setHeaders(...)`).
+3. Create a new `Interaction` object using your `Args` and`Opts` objects.
+If none of the optional arguments are needed, then a nil `Opts` can be passed in instead.
+The `Interaction` object is a stateful object and is meant to be used for a single instance of an OpenID4VP flow and
+then discarded.
+4. Get the query by calling the `GetQuery` method on the `Interaction`.
+5. Select the credentials that match the query from the previous step.
+6. Determine the key ID you want to use for signing (e.g. from one of the user's DID docs).
+7. Call the `PresentCredential` method on the `Interaction` object with the selected credentials.
 
 ### Examples
 
@@ -640,33 +642,32 @@ import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.ld.DocLoader
 import dev.trustbloc.wallet.sdk.localkms
-import dev.trustbloc.wallet.sdk.openid4vp
+import dev.trustbloc.wallet.sdk.openid4vp.*
 import dev.trustbloc.wallet.sdk.ld
-import dev.trustbloc.wallet.sdk.credential
-import dev.trustbloc.wallet.sdk.openid4ci.mem
-import dev.trustbloc.wallet.sdk.openid4vp.ClientConfig
-import dev.trustbloc.wallet.sdk.openid4vp.Interaction
+import dev.trustbloc.wallet.sdk.credential.*
+import dev.trustbloc.wallet.sdk.api.*
 
 // Setup
 val memKMSStore = MemKMSStore.MemKMSStore()
 val kms = Localkms.newKMS(memKMSStore)
-val didResolver = Resolver("")
-val didCreator = Creator(kms as KeyWriter)
-val documentLoader = DocLoader()
-val activityLogger = mem.ActivityLogger() // Optional, but useful for tracking credential activities
-val cfg = ClientConfig(kms, kms.getCrypto(), didResolver, documentLoader, activityLogger)
+val didResolver = Resolver(nil)
+
+val args = Args("YourAuthRequestURIHere", kms, kms.getCrypto(), didResolver)
+
+val activityLogger = mem.ActivityLogger()
+val opts = Opts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
 
 // Going through the flow
-val interaction = openid4vp.Interaction("YourAuthRequestURIHere", cfg)
+val interaction = Interaction(args, opts)
 val query = interaction.getQuery()
-val inquirer = credential.Inquirer(docLoader)
-val savedCredentials = api.VerifiableCredentialsArray() // Would need some actual credentials for this to actually work
+val inquirer = Inquirer(docLoader)
+val savedCredentials = VerifiableCredentialsArray() // Would need some actual credentials for this to work
 
 // Use this code to display the list of VCs to select which of them to send.
 val matchedRequirements = inquirer.getSubmissionRequirements(query, savedCredentials) 
 val matchedRequirement = matchedRequirements.atIndex(0) // Usually we will have one requirement
 val requirementDesc = matchedRequirement.descriptorAtIndex(0) // Usually requirement will contain one descriptor
-val selectedVCs = api.VerifiableCredentialsArray()
+val selectedVCs = VerifiableCredentialsArray()
 selectedVCs.add(requirementDesc.matchedVCs.atIndex(0)) // Users should select one VC for each descriptor from the matched list and confirm that they want to share it
 
 interaction.presentCredential(selectedVCs)
@@ -680,17 +681,22 @@ import Walletsdk
 
 // Setup
 let memKMSStore = LocalkmsNewMemKMSStore()
-let kms = LocalkmsNewKMS(memKMSStore, nil)
-let didResolver = DidNewResolver("", nil)
-let documentLoader = LdNewDocLoader()
-let activityLogger = MemNewActivityLogger() // Optional, but useful for tracking credential activities
-let clientConfig = Openid4vpClientConfig(keyHandleReader: kms, crypto: kms.getCrypto(), didResolver: didResolver, ldDocumentLoader: documentLoader, activityLogger: activityLogger)
+
+var error: NSError?
+let kms = LocalkmsNewKMS(memKMSStore, &error)
+
+let didResolver = DidNewResolver(nil)
+
+let args = Openid4vpNewArgs("YourAuthRequestURIHere", kms, kms.getCrypto(), didResolver)
+
+let activityLogger = mem.ActivityLogger()
+let opts = Openid4vpNewOpts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
 
 // Going through the flow
-let interaction = Openid4vpInteraction("YourAuthRequestURIHere", config: clientConfig)
+let interaction = Openid4vpNewInteraction(args, opts)
 let query = interaction.getQuery()
 let inquirer = CredentialNewInquirer(docLoader)
-let savedCredentials = ApiVerifiableCredentialsArray() // Would need some actual credentials for this to actually work
+let savedCredentials = ApiVerifiableCredentialsArray() // Would need some actual credentials for this to work
 
 // Use this code to display the list of VCs to select which of them to send.
 let matchedRequirements = inquirer.getSubmissionRequirements(query, savedCredentials) 
@@ -755,5 +761,5 @@ Note: performance numbers given below are illustrative only and are not intended
  Parsing and checking proof               (event)                            ------------------------------ (5.10s)
 ```
                               
-Note that the sum of all sub-event durations may not add to the duration of the parent event, as not every possible operation during the parent event will be timed.
+Note that the sum of all sub-event durations may not add up to the duration of the parent event, as not every possible operation during the parent event will be timed.
 Generally, short/trivial operations are not tracked.

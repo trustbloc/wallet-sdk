@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -28,20 +29,6 @@ type KeyWriter interface {
 type KeyReader interface {
 	// ExportPubKey returns the public key associated with the given keyID as a JWK object.
 	ExportPubKey(keyID string) (*JSONWebKey, error)
-}
-
-// CreateDIDOpts represents the various options for the DIDCreator.Create method.
-type CreateDIDOpts struct {
-	KeyID            string
-	VerificationType string
-	KeyType          string
-	MetricsLogger    MetricsLogger
-}
-
-// DIDCreator defines the method required for a type to create DID documents.
-type DIDCreator interface {
-	// Create creates a new DID Document using the given method.
-	Create(method string, createDIDOpts *CreateDIDOpts) (*DIDDocResolution, error)
 }
 
 // DIDResolver defines the method required for a type to resolve DIDs.
@@ -73,10 +60,9 @@ type Crypto interface {
 
 // LDDocument is linked domains document.
 type LDDocument struct {
-	DocumentURL string `json:"documentUrl,omitempty"`
-	// bytes of json document.
-	Document   []byte `json:"document,omitempty"`
-	ContextURL string `json:"contextUrl,omitempty"`
+	DocumentURL string `json:"documentURL,omitempty"`
+	Document    string `json:"document,omitempty"` // Must be an LD document in JSON form.
+	ContextURL  string `json:"contextURL,omitempty"`
 }
 
 // LDDocumentLoader is capable of loading linked domains documents.

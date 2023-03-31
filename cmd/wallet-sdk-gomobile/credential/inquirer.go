@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -28,46 +29,6 @@ type Inquirer struct {
 	goAPICredentialQuery *credentialquery.Instance
 }
 
-// CredentialsOpt represents the different ways that credentials can be passed in to the Query method.
-// At most one out of VCs and CredentialReader should be used for a given call to Resolve. If both are specified,
-// then VCs will take precedence.
-type CredentialsOpt struct {
-	// VCs is an array of Verifiable CredentialsOpt. If specified, this takes precedence over the CredentialReader
-	// used in the constructor (NewResolver).
-	VCs *api.VerifiableCredentialsArray
-	// CredentialReader allows for access to a VC storage mechanism.
-	CredentialReader api.CredentialReader
-}
-
-// NewCredentialsOpt creates CredentialsOpt from VCs.
-func NewCredentialsOpt(vcArr *api.VerifiableCredentialsArray) *CredentialsOpt {
-	return &CredentialsOpt{
-		VCs: vcArr,
-	}
-}
-
-// NewCredentialsOptFromReader creates CredentialsOpt from CredentialReader.
-func NewCredentialsOptFromReader(credentialReader api.CredentialReader) *CredentialsOpt {
-	return &CredentialsOpt{
-		CredentialReader: credentialReader,
-	}
-}
-
-// VerifiablePresentation typed wrapper around go implementation of verifiable presentation.
-type VerifiablePresentation struct {
-	wrapped *verifiable.Presentation
-}
-
-// wrapVerifiablePresentation wraps go implementation of verifiable presentation into gomobile compatible struct.
-func wrapVerifiablePresentation(vp *verifiable.Presentation) *VerifiablePresentation {
-	return &VerifiablePresentation{wrapped: vp}
-}
-
-// Content return marshaled representation of verifiable presentation.
-func (vp *VerifiablePresentation) Content() ([]byte, error) {
-	return vp.wrapped.MarshalJSON()
-}
-
 // Credentials returns marshaled representation of credentials from this verifiable presentation.
 func (vp *VerifiablePresentation) Credentials() (*api.VerifiableCredentialsArray, error) {
 	result := api.NewVerifiableCredentialsArray()
@@ -89,13 +50,16 @@ func (vp *VerifiablePresentation) Credentials() (*api.VerifiableCredentialsArray
 }
 
 // NewInquirer returns a new Inquirer.
-// If documentLoader is set to nil, then a network-based loader will be used.
-func NewInquirer(documentLoader api.LDDocumentLoader) *Inquirer {
+func NewInquirer(opts *InquirerOpts) *Inquirer {
+	if opts == nil {
+		opts = &InquirerOpts{}
+	}
+
 	var goAPIDocumentLoader ld.DocumentLoader
 
-	if documentLoader != nil {
+	if opts.documentLoader != nil {
 		goAPIDocumentLoader = &wrapper.DocumentLoaderWrapper{
-			DocumentLoader: documentLoader,
+			DocumentLoader: opts.documentLoader,
 		}
 	} else {
 		goAPIDocumentLoader = ld.NewDefaultDocumentLoader(http.DefaultClient)
@@ -107,16 +71,16 @@ func NewInquirer(documentLoader api.LDDocumentLoader) *Inquirer {
 }
 
 // Query returns credentials that match PresentationDefinition.
-func (c *Inquirer) Query(query []byte, contents *CredentialsOpt) (*VerifiablePresentation, error) {
-	pdQuery, credentials, err := unwrapInputs(query, contents)
+func (c *Inquirer) Query(query []byte, credentials *CredentialsArg) (*VerifiablePresentation, error) {
+	pdQuery, vcs, err := unwrapInputs(query, credentials)
 	if err != nil {
 		return nil, err
 	}
 
 	presentation, err := c.goAPICredentialQuery.Query(pdQuery,
-		credentialquery.WithCredentialsArray(credentials),
+		credentialquery.WithCredentialsArray(vcs),
 		credentialquery.WithCredentialReader(&wrapper.CredentialReaderWrapper{
-			CredentialReader: contents.CredentialReader,
+			CredentialReader: credentials.reader,
 		}),
 	)
 	if err != nil {
@@ -127,17 +91,17 @@ func (c *Inquirer) Query(query []byte, contents *CredentialsOpt) (*VerifiablePre
 }
 
 // GetSubmissionRequirements returns information about VCs matching requirements.
-func (c *Inquirer) GetSubmissionRequirements(query []byte, contents *CredentialsOpt,
+func (c *Inquirer) GetSubmissionRequirements(query []byte, credentials *CredentialsArg,
 ) (*SubmissionRequirementArray, error) {
-	pdQuery, credentials, err := unwrapInputs(query, contents)
+	pdQuery, vcs, err := unwrapInputs(query, credentials)
 	if err != nil {
 		return nil, err
 	}
 
 	requirements, err := c.goAPICredentialQuery.GetSubmissionRequirements(pdQuery,
-		credentialquery.WithCredentialsArray(credentials),
+		credentialquery.WithCredentialsArray(vcs),
 		credentialquery.WithCredentialReader(&wrapper.CredentialReaderWrapper{
-			CredentialReader: contents.CredentialReader,
+			CredentialReader: credentials.reader,
 		}),
 	)
 	if err != nil {
@@ -147,7 +111,7 @@ func (c *Inquirer) GetSubmissionRequirements(query []byte, contents *Credentials
 	return &SubmissionRequirementArray{wrapped: requirements}, nil
 }
 
-func unwrapInputs(query []byte, contents *CredentialsOpt,
+func unwrapInputs(query []byte, credentials *CredentialsArg,
 ) (*presexch.PresentationDefinition, []*verifiable.Credential, error) {
 	pdQuery := &presexch.PresentationDefinition{}
 
@@ -169,17 +133,17 @@ func unwrapInputs(query []byte, contents *CredentialsOpt,
 		return nil, nil, fmt.Errorf("validation of presentation definition failed: %w", err)
 	}
 
-	if contents.CredentialReader == nil && contents.VCs == nil {
-		return nil, nil, fmt.Errorf("either credential reader or vc array should be set")
+	if credentials.reader == nil && credentials.vcs == nil {
+		return nil, nil, fmt.Errorf("either credential reader or vc array must be set")
 	}
 
-	var credentials []*verifiable.Credential
+	var vcs []*verifiable.Credential
 
-	if contents.VCs != nil {
-		credentials = unwrapVCs(contents.VCs)
+	if credentials.vcs != nil {
+		vcs = unwrapVCs(credentials.vcs)
 	}
 
-	return pdQuery, credentials, nil
+	return pdQuery, vcs, nil
 }
 
 func unwrapVCs(vcs *api.VerifiableCredentialsArray) []*verifiable.Credential {

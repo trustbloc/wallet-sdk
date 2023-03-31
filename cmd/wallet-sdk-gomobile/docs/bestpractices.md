@@ -27,5 +27,5 @@ ensuring that `hasOrder()` returns true).
 In the mobile bindings, non-primitive types are always nullable types due to a limitation with `gomobile`.
 For functions/methods that return errors/throw exceptions, if you've ensured that no error has occurred, then it's
 safe to assume that the returned object is not null/nil.
+Object constructors that don't return an error also never return null/nil.
 This assumption may be useful in Swift or Kotlin code, where the compiler forces null/nil checks.
-Note that for functions/methods that don't return errors/throw exceptions, the return types should still be checked.

@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -7,6 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package display
 
 import (
+	"errors"
+
+	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 )
 
@@ -15,22 +22,61 @@ import (
 // The CredentialDisplays in the returned Data object correspond to the VCs passed in and are in the
 // same order.
 // This method requires one or more VCs and the issuer's base URI.
-// PreferredLocale is optional parameter that allows the caller to specify their preferred locale to look for while
-// resolving VC display data. If the preferred locale is not available (or the parameter is not specified),
-// then the first locale specified by the issuer's metadata will be used during resolution. The actual locales used
-// for various pieces of display information are available in the Data object.
-// MetricsLogger is optional parameter that, if set, will enable performance metrics logging. Metrics events will
-// be pushed to the provided implementation.
-func Resolve(resolveDisplayOpts *ResolveOpts) (*Data, error) {
-	opts, err := prepareOpts(resolveDisplayOpts)
+func Resolve(vcs *api.VerifiableCredentialsArray, issuerURI string, opts *Opts) (*Data, error) {
+	goAPIOpts, err := generateGoAPIOpts(vcs, issuerURI, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	resolvedDisplayData, err := goapicredentialschema.Resolve(opts...)
+	resolvedDisplayData, err := goapicredentialschema.Resolve(goAPIOpts...)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Data{resolvedDisplayData: resolvedDisplayData}, nil
+}
+
+func generateGoAPIOpts(vcs *api.VerifiableCredentialsArray, issuerURI string,
+	opts *Opts,
+) ([]goapicredentialschema.ResolveOpt, error) {
+	if vcs == nil {
+		return nil, errors.New("no credentials specified")
+	}
+
+	if issuerURI == "" {
+		return nil, errors.New("no issuer URI specified")
+	}
+
+	if opts == nil {
+		opts = NewOpts()
+	}
+
+	httpClient := wrapper.NewHTTPClient()
+	httpClient.AddHeaders(&opts.additionalHeaders)
+
+	goAPIOpts := []goapicredentialschema.ResolveOpt{
+		goapicredentialschema.WithCredentials(mobileVCsArrayToGoAPIVCsArray(vcs)),
+		goapicredentialschema.WithIssuerURI(issuerURI),
+		goapicredentialschema.WithPreferredLocale(opts.preferredLocale),
+		goapicredentialschema.WithHTTPClient(httpClient),
+	}
+
+	if opts.metricsLogger != nil {
+		goAPIOpt := goapicredentialschema.WithMetricsLogger(
+			&wrapper.MobileMetricsLoggerWrapper{MobileAPIMetricsLogger: opts.metricsLogger})
+
+		goAPIOpts = append(goAPIOpts, goAPIOpt)
+	}
+
+	return goAPIOpts, nil
+}
+
+func mobileVCsArrayToGoAPIVCsArray(vcs *api.VerifiableCredentialsArray) []*verifiable.Credential {
+	goAPIVCs := make([]*verifiable.Credential, vcs.Length())
+
+	for i := 0; i < vcs.Length(); i++ {
+		goAPIVCs[i] = vcs.AtIndex(i).VC
+	}
+
+	return goAPIVCs
 }

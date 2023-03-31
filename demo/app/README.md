@@ -38,8 +38,8 @@ samples, guidance on mobile development, and a full API reference.
   - Open the app in Android Studio
   - Either run the Emulator for Android or attach the usb device, Android studio will detect the device to run the app on your phone/test device.
 - iOS
-  - run `flutter build`
-  - run `pod install`
+  - run `flutter build ios`
+  - run `pod install` in the `ios` folder
   - Open the app in XCode
   - Install app to Simulator or Device from the XCode Build tab
 

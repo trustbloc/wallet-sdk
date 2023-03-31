@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -32,16 +33,17 @@ func TestProvider(t *testing.T) {
 
 	const universityDegreeVCID = "http://example.edu/credentials/1872"
 
-	parseOpts := &vcparse.Opts{DisableProofCheck: true}
+	opts := vcparse.NewOpts()
+	opts.DisableProofCheck()
 
-	universityDegreeVerifiableCredential, err := vcparse.Parse(universityDegreeVC, parseOpts)
+	universityDegreeVerifiableCredential, err := vcparse.Parse(universityDegreeVC, opts)
 	require.NoError(t, err)
 
 	// Store two VCs.
 	err = provider.Add(universityDegreeVerifiableCredential)
 	require.NoError(t, err)
 
-	driversLicenseVerifiableCredential, err := vcparse.Parse(driversLicenseDegreeVC, parseOpts)
+	driversLicenseVerifiableCredential, err := vcparse.Parse(driversLicenseDegreeVC, opts)
 	require.NoError(t, err)
 
 	err = provider.Add(driversLicenseVerifiableCredential)

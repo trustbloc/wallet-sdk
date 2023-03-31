@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -142,7 +143,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 	err = oidc4ciSetup.AuthorizeIssuerBypassAuth("test_org", vcsAPIDirectURL)
 	require.NoError(t, err)
 
-	vcStatusVerifier, err := credential.NewStatusVerifier(credential.NewStatusVerifierOptionalArgs())
+	vcStatusVerifier, err := credential.NewStatusVerifier(credential.NewStatusVerifierOpts())
 	require.NoError(t, err)
 
 	for _, tc := range tests {
@@ -156,23 +157,24 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 
 		testHelper := helpers.NewCITestHelper(t, tc.walletDIDMethod, tc.walletKeyType)
 
-		didResolver, err := did.NewResolver(didResolverURL)
+		opts := did.NewResolverOpts()
+		opts.SetResolverServerURI(didResolverURL)
+
+		didResolver, err := did.NewResolver(opts)
 		require.NoError(t, err)
 
 		didID, err := testHelper.DIDDoc.ID()
 		require.NoError(t, err)
 
-		clientConfig := openid4ci.ClientConfig{
-			ClientID:       "ClientID",
-			DIDResolver:    didResolver,
-			ActivityLogger: testHelper.ActivityLogger,
-			Crypto:         testHelper.KMS.GetCrypto(),
-			MetricsLogger:  testHelper.MetricsLogger,
-		}
+		interactionRequiredArgs := openid4ci.NewArgs(offerCredentialURL, "ClientID",
+			testHelper.KMS.GetCrypto(), didResolver)
 
-		clientConfig.SetDocumentLoader(&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)})
+		interactionOptionalArgs := openid4ci.NewOpts()
+		interactionOptionalArgs.SetDocumentLoader(&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)})
+		interactionOptionalArgs.SetActivityLogger(testHelper.ActivityLogger)
+		interactionOptionalArgs.SetMetricsLogger(testHelper.MetricsLogger)
 
-		interaction, err := openid4ci.NewInteraction(offerCredentialURL, &clientConfig)
+		interaction, err := openid4ci.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)
 
 		authorizeResult, err := interaction.Authorize()
@@ -182,7 +184,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		vm, err := testHelper.DIDDoc.AssertionMethod()
 		require.NoError(t, err)
 
-		credentials, err := interaction.RequestCredential(openid4ci.NewCredentialRequestOpts(""), vm)
+		credentials, err := interaction.RequestCredential(vm)
 		require.NoError(t, err)
 		require.NotNil(t, credentials)
 

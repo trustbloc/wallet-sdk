@@ -1,31 +1,29 @@
 package walletsdk
 
 import dev.trustbloc.wallet.sdk.api.*
-import dev.trustbloc.wallet.sdk.credential.SubmissionRequirementArray
-import dev.trustbloc.wallet.sdk.did.Creator
-import dev.trustbloc.wallet.sdk.did.Resolver
-import dev.trustbloc.wallet.sdk.ld.DocLoader
+import dev.trustbloc.wallet.sdk.did.*
 import dev.trustbloc.wallet.sdk.localkms.KMS
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.mem.ActivityLogger
 import walletsdk.openid4ci.OpenID4CI
 import walletsdk.openid4vp.OpenID4VP
 import dev.trustbloc.wallet.sdk.localkms.Store
-import dev.trustbloc.wallet.sdk.openid4ci.AuthorizeResult
 
 class WalletSDK {
     private var kms: KMS? = null
     var didResolver: DIDResolver? = null
-    private var documentLoader: LDDocumentLoader? = null
     private var crypto: Crypto? = null
     var activityLogger: ActivityLogger? = null
 
 
     fun InitSDK(kmsStore: Store) {
         val kms = Localkms.newKMS(kmsStore)
-        didResolver = Resolver("http://localhost:8072/1.0/identifiers")
+
+        val opts = ResolverOpts()
+        opts.setResolverServerURI("http://localhost:8072/1.0/identifiers")
+        didResolver = Resolver(opts)
+
         crypto = kms.crypto
-        documentLoader = DocLoader()
         activityLogger = ActivityLogger()
         this.kms = kms
     }
@@ -33,9 +31,9 @@ class WalletSDK {
     fun createDID(didMethodType: String): DIDDocResolution {
         val kms = this.kms ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
-        val createDIDOpts = CreateDIDOpts()
-        if(didMethodType == "jwk"){
-            createDIDOpts.keyType = "ECDSAP384IEEEP1363"
+        val createDIDOpts = CreateOpts()
+        if (didMethodType == "jwk"){
+            createDIDOpts.setKeyType("ECDSAP384IEEEP1363")
         }
 
         val creatorDID = Creator(kms as KeyWriter)
@@ -67,13 +65,10 @@ class WalletSDK {
                 ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
         val didResolver = this.didResolver
                 ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
-        val documentLoader = this.documentLoader
-                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
         val activityLogger = this.activityLogger
                 ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
-
-        return OpenID4VP(kms, crypto, didResolver, documentLoader, activityLogger)
+        return OpenID4VP(kms, crypto, didResolver, activityLogger)
     }
 }

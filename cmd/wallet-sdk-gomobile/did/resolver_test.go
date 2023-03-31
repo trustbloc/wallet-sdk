@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -16,7 +17,7 @@ import (
 
 func TestDIDResolver(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		didResolver, err := did.NewResolver("")
+		didResolver, err := did.NewResolver(nil)
 		require.NoError(t, err)
 
 		didDocResolution, err := didResolver.Resolve("did:key:z6MkjfbzWitsSUyFMTbBUSWNsJBHR7BefFp1WmABE3kRw8Qr")
@@ -25,7 +26,10 @@ func TestDIDResolver(t *testing.T) {
 	})
 
 	t.Run("fail to initialize with invalid resolver server URI", func(t *testing.T) {
-		didResolver, err := did.NewResolver("not a uri")
+		opts := did.NewResolverOpts()
+		opts.SetResolverServerURI("not a uri")
+
+		didResolver, err := did.NewResolver(opts)
 		require.Error(t, err)
 		require.Nil(t, didResolver)
 		require.Contains(t, err.Error(), "failed to initialize client for DID resolution server")
@@ -33,7 +37,7 @@ func TestDIDResolver(t *testing.T) {
 }
 
 func TestDIDResolver_InvalidDID(t *testing.T) {
-	didResolver, err := did.NewResolver("")
+	didResolver, err := did.NewResolver(nil)
 	require.NoError(t, err)
 
 	didDocResolution, err := didResolver.Resolve("did:example:abc")

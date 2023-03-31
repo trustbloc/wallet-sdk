@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -33,13 +34,16 @@ func NewVPTestHelper(t *testing.T, didMethod string, keyType string) *VPTestHelp
 	require.NoError(t, err)
 
 	// create DID
-	c, err := did.NewCreatorWithKeyWriter(kms)
+	c, err := did.NewCreator(kms)
 	require.NoError(t, err)
 
-	didDoc, err := c.Create(didMethod, &api.CreateDIDOpts{
-		KeyType:       keyType,
-		MetricsLogger: stderr.NewMetricsLogger(),
-	})
+	metricsLogger := stderr.NewMetricsLogger()
+
+	opts := did.NewCreateOpts()
+	opts.SetKeyType(keyType)
+	opts.SetMetricsLogger(metricsLogger)
+
+	didDoc, err := c.Create(didMethod, opts)
 	require.NoError(t, err)
 
 	return &VPTestHelper{
@@ -49,7 +53,8 @@ func NewVPTestHelper(t *testing.T, didMethod string, keyType string) *VPTestHelp
 }
 
 func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, issuerProfileIDs []string,
-	claimData []map[string]interface{}) *api.VerifiableCredentialsArray {
+	claimData []map[string]interface{},
+) *api.VerifiableCredentialsArray {
 	oidc4ciSetup, err := oidc4ci.NewSetup(testenv.NewHttpRequest())
 	require.NoError(t, err)
 
@@ -62,17 +67,19 @@ func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, is
 		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i], claimData[i])
 		require.NoError(t, err)
 
-		didResolver, err := did.NewResolver("http://did-resolver.trustbloc.local:8072/1.0/identifiers")
+		opts := did.NewResolverOpts()
+		opts.SetResolverServerURI("http://did-resolver.trustbloc.local:8072/1.0/identifiers")
+
+		didResolver, err := did.NewResolver(opts)
 		require.NoError(t, err)
 
-		clientConfig := openid4ci.ClientConfig{
-			ClientID:      "ClientID",
-			DIDResolver:   didResolver,
-			Crypto:        h.KMS.GetCrypto(),
-			MetricsLogger: stderr.NewMetricsLogger(),
-		}
+		requiredArgs := openid4ci.NewArgs(offerCredentialURL, "ClientID", h.KMS.GetCrypto(),
+			didResolver)
 
-		interaction, err := openid4ci.NewInteraction(offerCredentialURL, &clientConfig)
+		interactionOptionalArgs := openid4ci.NewOpts()
+		interactionOptionalArgs.SetMetricsLogger(stderr.NewMetricsLogger())
+
+		interaction, err := openid4ci.NewInteraction(requiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)
 
 		authorizeResult, err := interaction.Authorize()
@@ -82,8 +89,7 @@ func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, is
 		vm, err := h.DIDDoc.AssertionMethod()
 		require.NoError(t, err)
 
-		result, err := interaction.RequestCredential(&openid4ci.CredentialRequestOpts{}, vm)
-
+		result, err := interaction.RequestCredential(vm)
 		require.NoError(t, err)
 		require.NotEmpty(t, result)
 

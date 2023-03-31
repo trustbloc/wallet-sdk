@@ -8,15 +8,15 @@ package walletsdk.openid4vp
 
 import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.openid4vp.Interaction
-import dev.trustbloc.wallet.sdk.openid4vp.ClientConfig
 import dev.trustbloc.wallet.sdk.credential.*
+import dev.trustbloc.wallet.sdk.openid4vp.Opts
+import dev.trustbloc.wallet.sdk.openid4vp.Args
 import java.lang.Exception
 
 class OpenID4VP constructor(
         private val keyReader: KeyReader,
         private val crypto: Crypto,
         private val didResolver: DIDResolver,
-        private val documentLoader: LDDocumentLoader,
         private val activityLogger: ActivityLogger,
 ) {
 
@@ -30,8 +30,12 @@ class OpenID4VP constructor(
      * The methods defined on this object are used to help guide the calling code through the OpenID4VP flow.
      */
     fun startVPInteraction(authorizationRequest: String) {
-        val cfg = ClientConfig(keyReader, crypto, didResolver, documentLoader, activityLogger)
-        val interaction = Interaction(authorizationRequest, cfg)
+        val args = Args(authorizationRequest, keyReader, crypto, didResolver)
+
+        val opts = Opts()
+        opts.setActivityLogger(activityLogger)
+
+        val interaction = Interaction(args, opts)
 
         vpQueryContent = interaction.getQuery()
         initiatedInteraction = interaction
@@ -42,8 +46,8 @@ class OpenID4VP constructor(
                 ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
 
 
-        return Inquirer(documentLoader)
-                .getSubmissionRequirements(vpQueryContent, CredentialsOpt(storedCredentials))
+        return Inquirer(null)
+                .getSubmissionRequirements(vpQueryContent, CredentialsArg(storedCredentials))
     }
     /**
      * initiatedInteraction has PresentCredential method which presents credentials to redirect uri from request object.
@@ -53,13 +57,5 @@ class OpenID4VP constructor(
                 ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
 
         initiatedInteraction.presentCredential(selectedCredentials)
-    }
-
-    private fun createVerifiablePresentation(selectedCredentials: VerifiableCredentialsArray): VerifiablePresentation {
-        val vpQueryContent = this.vpQueryContent
-                ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
-
-
-        return Inquirer(documentLoader).query(vpQueryContent, CredentialsOpt(selectedCredentials))
     }
 }

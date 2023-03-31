@@ -216,6 +216,10 @@ func (d *Creator) createDIDIonLongFormDoc(createDIDOpts *api.CreateDIDOpts) (*di
 		return nil, err
 	}
 
+	if d.keyWriter == nil {
+		return nil, errors.New("DID:ion creation requires a key writer")
+	}
+
 	creator, err := didioncreator.NewCreator(d.keyWriter)
 	if err != nil {
 		return nil, fmt.Errorf("initializing Ion longform DID creator: %w", err)

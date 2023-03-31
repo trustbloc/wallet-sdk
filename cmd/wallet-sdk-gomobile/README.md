@@ -53,12 +53,11 @@ For usage documentation + examples, see [here](docs/usage.md).
 ## Helpful Tips
 
 * After importing `walletsdk.aar` into your Android project, to use the Wallet SDK packages in a Kotlin or 
-  Java file,
-  you import them in a roughly similar way as you would the equivalent Go package:
+  Java file, you import them in a roughly similar way as you would the equivalent Go package:
   ```java
   // Follow the pattern below for other packages/types as well
-  import dev.trustbloc.wallet.sdk.api.Api;
-  import dev.trustbloc.wallet.sdk.storage.Provider;
+  import dev.trustbloc.wallet.sdk.api.*;
+  import dev.trustbloc.wallet.sdk.openid4ci.*;
   ```
 * After importing the iOS bindings into Xcode, to use the Wallet SDK in a Swift file, add the following:
   ```swift
