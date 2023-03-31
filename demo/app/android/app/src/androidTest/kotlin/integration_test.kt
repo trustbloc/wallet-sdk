@@ -69,7 +69,6 @@ class IntegrationTest {
 
         val openID4VPInteractionRequiredArgs = dev.trustbloc.wallet.sdk.openid4vp.Args(
             authorizationRequestURI,
-            kms,
             crypto,
             didResolver
         )

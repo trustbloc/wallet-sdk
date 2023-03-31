@@ -32,7 +32,6 @@ type goAPIOpenID4VP interface {
 // Interaction represents a single OpenID4VP interaction between a wallet and a verifier. The methods defined on this
 // object are used to help guide the calling code through the OpenID4VP flow.
 type Interaction struct {
-	keyHandleReader  api.KeyReader
 	crypto           api.Crypto
 	ldDocumentLoader api.LDDocumentLoader
 	goAPIOpenID4VP   goAPIOpenID4VP
@@ -85,7 +84,6 @@ func NewInteraction(args *Args, opts *Opts) *Interaction {
 	inquirer := credential.NewInquirer(inquirerOpts)
 
 	return &Interaction{
-		keyHandleReader:  args.keyHandleReader,
 		ldDocumentLoader: opts.documentLoader,
 		crypto:           args.crypto,
 		goAPIOpenID4VP: openid4vp.New(

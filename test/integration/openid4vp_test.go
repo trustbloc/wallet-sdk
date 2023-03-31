@@ -166,8 +166,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		println("traceID:", trace.TraceID())
 		traceIDs = append(traceIDs, trace.TraceID())
 
-		interactionRequiredArgs := openid4vp.NewArgs(initiateURL,
-			testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver)
+		interactionRequiredArgs := openid4vp.NewArgs(initiateURL, testHelper.KMS.GetCrypto(), didResolver)
 
 		interactionOptionalArgs := openid4vp.NewOpts()
 		interactionOptionalArgs.SetDocumentLoader(docLoader)

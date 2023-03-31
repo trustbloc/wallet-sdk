@@ -69,6 +69,6 @@ class WalletSDK {
         val activityLogger = this.activityLogger
                 ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
-        return OpenID4VP(kms, crypto, didResolver, activityLogger)
+        return OpenID4VP(crypto, didResolver, activityLogger)
     }
 }

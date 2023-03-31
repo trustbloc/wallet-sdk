@@ -751,7 +751,6 @@ The general pattern is as follows:
 1. Create a new `Args` object. An `Args` contains the following mandatory
 parameters:
    * An authorization request URI obtained from a verifier (e.g. via a QR code).
-   * A key reader.
    * A crypto implementation.
    * A DID resolver.
 2. (optional) Create an `opts` object. To set optional arguments, use the supplied methods available
@@ -793,7 +792,7 @@ val memKMSStore = MemKMSStore.MemKMSStore()
 val kms = Localkms.newKMS(memKMSStore)
 val didResolver = Resolver(nil)
 
-val args = Args("YourAuthRequestURIHere", kms, kms.getCrypto(), didResolver)
+val args = Args("YourAuthRequestURIHere", kms.getCrypto(), didResolver)
 
 val activityLogger = mem.ActivityLogger()
 val opts = Opts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
@@ -828,7 +827,7 @@ let kms = LocalkmsNewKMS(memKMSStore, &error)
 
 let didResolver = DidNewResolver(nil)
 
-let args = Openid4vpNewArgs("YourAuthRequestURIHere", kms, kms.getCrypto(), didResolver)
+let args = Openid4vpNewArgs("YourAuthRequestURIHere", kms.getCrypto(), didResolver)
 
 let activityLogger = mem.ActivityLogger()
 let opts = Openid4vpNewOpts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity

@@ -61,7 +61,7 @@ class IntegrationTest: XCTestCase {
         let authorizationRequestURI = ProcessInfo.processInfo.environment["INITIATE_VERIFICATION_URL"]
         XCTAssertTrue(authorizationRequestURI != "", "authorizationRequestURI:" + authorizationRequestURI!)
         
-        let openID4VPArgs = Openid4vpNewArgs(authorizationRequestURI, kms, crypto, didResolver)
+        let openID4VPArgs = Openid4vpNewArgs(authorizationRequestURI, crypto, didResolver)
 
         let opts = Openid4vpNewOpts()
         opts!.add(trace!.traceHeader())

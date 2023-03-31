@@ -60,7 +60,6 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 		t.Run("Without any optional args", func(t *testing.T) {
 			requiredArgs := NewArgs(
 				requestObjectJWT,
-				&mockKeyHandleReader{},
 				&mockCrypto{},
 				&mocksDIDResolver{},
 			)
@@ -68,13 +67,11 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 			instance := NewInteraction(requiredArgs, nil)
 			require.NotNil(t, instance)
 			require.NotNil(t, instance.crypto)
-			require.NotNil(t, instance.keyHandleReader)
 			require.NotNil(t, instance.goAPIOpenID4VP)
 		})
 		t.Run("With optional args", func(t *testing.T) {
 			requiredArgs := NewArgs(
 				requestObjectJWT,
-				&mockKeyHandleReader{},
 				&mockCrypto{},
 				&mocksDIDResolver{},
 			)
@@ -94,7 +91,6 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 	t.Run("GetQuery success", func(t *testing.T) {
 		t.Run("Without additional headers", func(t *testing.T) {
 			instance := &Interaction{
-				keyHandleReader: &mockKeyHandleReader{},
 				goAPIOpenID4VP: &mocGoAPIInteraction{
 					GetQueryResult: &presexch.PresentationDefinition{},
 				},
@@ -134,7 +130,6 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 
 		requiredArgs := NewArgs(
 			"openid-vc://?request_uri="+testServer.URL,
-			&mockKeyHandleReader{},
 			&mockCrypto{},
 			&mocksDIDResolver{},
 		)
@@ -175,7 +170,6 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		instance := &Interaction{
-			keyHandleReader:  &mockKeyHandleReader{},
 			crypto:           &mockCrypto{},
 			ldDocumentLoader: &documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
 			goAPIOpenID4VP: &mocGoAPIInteraction{
@@ -194,7 +188,6 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 	t.Run("Present credentials failed", func(t *testing.T) {
 		instance := &Interaction{
-			keyHandleReader:  &mockKeyHandleReader{},
 			crypto:           &mockCrypto{},
 			ldDocumentLoader: &documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
 			goAPIOpenID4VP: &mocGoAPIInteraction{
@@ -232,15 +225,6 @@ func (dl *documentLoaderWrapper) LoadDocument(u string) (*api.LDDocument, error)
 		Document:    string(docBytes),
 		ContextURL:  ldDoc.ContextURL,
 	}, nil
-}
-
-type mockKeyHandleReader struct {
-	exportPubKeyResult *api.JSONWebKey
-	exportPubKeyErr    error
-}
-
-func (m *mockKeyHandleReader) ExportPubKey(string) (*api.JSONWebKey, error) {
-	return m.exportPubKeyResult, m.exportPubKeyErr
 }
 
 type mockCrypto struct {
