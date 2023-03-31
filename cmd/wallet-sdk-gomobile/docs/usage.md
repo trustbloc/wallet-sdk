@@ -1,14 +1,11 @@
 # SDK Usage
 
-Last updated: March 28, 2023 (commit `ebdd56f4b780ca87024db967ce3573fd2af1d377`)
+Last updated: March 31, 2023 (commit `0e6527fc60428008561599ff87f6c981376f187e`)
 
-This guide explains how to use this SDK in Android or iOS code.
-
-Note that the exact type/function/method names differ depending on whether you're using the Android bindings or iOS
-bindings. See [Packages](packages.md) for more information. Additionally, the examples in this document demonstrate
+This guide explains how to use this SDK in Android or iOS code. The examples in this document demonstrate
 how to use the various APIs from a Kotlin and Swift perspective.
 
-Note that the languages for the generated bindings are Java (for Android) and Objective-C (for iOS).
+The languages for the generated bindings are Java (for Android) and Objective-C (for iOS).
 
 For the sake of readability, the following is omitted in most code examples:
 * Error handling
@@ -79,8 +76,23 @@ Wallet-SDK contains implementations of these various interfaces that can be used
 fairly quickly.
 Implementations of these interfaces can be done in on the mobile side and injected in to the API methods that use them.
 A few examples of when you might want to do this:
-* Implementing platform-specific credential storage (perhaps in a secure enclave)
 * Implementing platform-specific crypto functionality (perhaps leveraging device-specific security chips)
+* Implement a custom LD document loader that uses preloaded local contexts for performance and/or security reasons.
+See [LD Document Loading](#ld-document-loading) for more information.
+
+### KeyWriter and KeyReader
+
+The KeyWriter and KeyReader interfaces appear in various places across Wallet-SDK.
+
+The `KeyWriter` interface has a single method called `create` defined on it which accepts a `keyType` argument.
+Wallet-SDK expects that `KeyWriter` implementations also store the keys they create for later retrieval.
+
+The `KeyReader` interface has a single method called `exportPubKey` defined on it which accepts a `keyID` argument.
+Wallet-SDK expects this method to return the public key associated with the given `keyID` argument.
+
+If either one of these behaviours is not implemented, then certain Wallet-SDK functionality will not work as expected:
+* DID creation, credential issuance, and credential presentation will fail since keys won't be found
+
 
 ### Verifiable Credentials
 
@@ -110,26 +122,48 @@ operation - in certain scenarios, it may be appropriate to disable the check. By
 * `setDocumentLoader`: Specifies a JSON-LD document loader to use when parsing the VC. If none is specified, then a
 network-based loader will be used.
 
+Passing in `null`/`nil` will cause all default options to be used.
+
 ### Examples
 
 #### Kotlin (Android)
 
+##### Using Default Options
+
 ```kotlin
 import dev.trustbloc.wallet.sdk.vcparse.Vcparse
 
-// Passing in null instead of an Opts object will cause the default options to be used.
 val vc = Vcparse.parse("Serialized VC goes here", null)
 ```
 
+##### Using Specified Options
+
+```kotlin
+import dev.trustbloc.wallet.sdk.vcparse.*
+
+val opts = Opts().disableProofCheck()
+val vc = Vcparse.parse("Serialized VC goes here", opts)
+```
+
 #### Swift (iOS)
+
+##### Using Default Options
 
 ```swift
 import Walletsdk
 
 var error: NSError?
-
-// Passing in nil instead of an Opts object will cause the default options to be used.
 let vc = VcparseParse("Serialized VC goes here", nil, &error)
+```
+
+##### Using Specified Options
+
+```swift
+import Walletsdk
+
+var error: NSError?
+let opts = VcparseNewOpts()?.disableProofCheck()
+let vc = VcparseParse("Serialized VC goes here", opts, &error)
 ```
 
 ## LD Document Loading
@@ -226,21 +260,33 @@ let jwk2 = kms.create(LocalkmsKeyTypeP384)
 
 ## DID Creator
 
-These examples will use an in-memory KMS.
+The DID creator can be used to create DIDs using various supported DID methods.
 
-A DID creator can be instantiated in one of two ways: with a key writer or with a key reader.
-The behaviour and usage of the DID creator will differ depending on which way you chose.
+It needs to be instantiated with a KeyWriter implementation. As part of the DID creation process, one or more keys
+need to be created - the KeyWriter is used to create any required keys as needed.
 
-### With Key Writer
+Call the `create` method to create a new DID. The `method` parameter is required and must be specified. The
+following DID methods are supported: `key`, `ion`, and `jwk`.
 
-The Keys used for DID documents are created for you automatically by the key writer.
+The following optional arguments can be passed in via the methods available on the `CreateOpts` object:
+* `setVerificationType`: Sets the verification type to use. If not set, then an appropriate default for the given
+DID method will be used.
+* `setKeyType`: Sets the key type to use for keys generated during DID creation.
+If not set, then Ed25519 keys will be generated. Note that when using the `ion` DID method, update and recovery keys
+will also be generated. The key type used for generation of these update and recovery keys is not affected by this
+option. They will always be ECDSA P-256 keys.
+* `setMetricsLogger`: Sets a metrics logger to use for capturing performance metrics events. If not set, then
+no performance metrics events will be logged.
 
-#### Examples
+### Examples
 
-##### Kotlin (Android)
+These examples make use of the [in-memory KMS](#local-kms) implementation as the KeyWriter.
+
+#### Kotlin (Android)
+
+##### Using Default Options
 
 ```kotlin
-import dev.trustbloc.wallet.sdk.api.CreateDIDOpts
 import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
@@ -248,10 +294,28 @@ import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 val memKMSStore = MemKMSStore.MemKMSStore()
 val kms = Localkms.newKMS(memKMSStore)
 val didCreator = Creator(kms as KeyWriter)
-val didDocResolution = didCreator.create("key", null) // Create a did:key doc with default options
+
+val didDocResolution = didCreator.create("key", null)
 ```
 
-##### Swift (iOS)
+##### Using Specified Options
+
+```kotlin
+import dev.trustbloc.wallet.sdk.did.*
+import dev.trustbloc.wallet.sdk.localkms.Localkms
+import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
+
+val memKMSStore = MemKMSStore.MemKMSStore()
+val kms = Localkms.newKMS(memKMSStore)
+val didCreator = Creator(kms as KeyWriter)
+
+val createDIDOpts = CreateOpts().setKeyType("ED25519").setVerificationType("JsonWebKey2020")
+val didDocResolution = didCreator.create("key", createDIDOpts)
+```
+
+#### Swift (iOS)
+
+##### Using Default Options
 
 ```swift
 import Walletsdk
@@ -264,7 +328,24 @@ let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
 var newDIDCreatorError: NSError?
 let didCreator = DidNewCreatorWithKeyWriter(kms, &newDIDCreatorError)
 
-let didDocResolution = didCreator.create("key", nil) // Create a did:key doc with default options
+let didDocResolution = didCreator.create("key", nil)
+```
+
+##### Using Specified Options
+
+```swift
+import Walletsdk
+
+let memKMSStore = LocalkmsNewMemKMSStore()
+
+var newKMSError: NSError?
+let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
+
+var newDIDCreatorError: NSError?
+let didCreator = DidNewCreatorWithKeyWriter(kms, &newDIDCreatorError)
+
+let opts = DidNewCreateOpts().setKeyType("ED25519").setVerificationType("JsonWebKey2020")
+let didDocResolution = didCreator.create("key", opts)
 ```
 
 ### Error Codes & Troubleshooting Tips
@@ -278,9 +359,16 @@ let didDocResolution = didCreator.create("key", nil) // Create a did:key doc wit
 
 ## DID Resolver
 
+A DID resolver can be used to resolve DIDs.
+
+A resolver can be created with an optional resolver server URI, which will only be used for resolving DIDs that
+require a remote resolver server.
+
 ### Examples
 
 #### Kotlin (Android)
+
+##### Using Default Options
 
 ```kotlin
 import dev.trustbloc.wallet.sdk.did.*
@@ -290,12 +378,36 @@ val didResolver = did.Resolver(null)
 val didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
 ```
 
+##### Using Specified Options
+
+```kotlin
+import dev.trustbloc.wallet.sdk.did.*
+
+val opts = ResolverOpts().setResolverServerURI("https://example.com/")
+val didResolver = did.Resolver(opts)
+
+val didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
+```
+
 #### Swift (iOS)
+
+##### Using Default Options
 
 ```swift
 import Walletsdk
 
 let didResolver = DidNewResolver(nil)
+
+let didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
+```
+
+##### Using Specified Options
+
+```swift
+import Walletsdk
+
+let resolverOpts = DidNewResolverOpts()?.setResolverServerURI("https://example.com/")
+let didResolver = DidNewResolver(resolverOpts)
 
 let didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
 ```
@@ -395,12 +507,11 @@ val didResolver = Resolver(null)
 val didCreator = Creator(kms as KeyWriter)
 val didDocResolution = didCreator.create("key", null) // Create a did:key doc
 
-val args = Args("YourRequestURIHere", "ClientID", kms.getCrypto(), didResolver)
-
 val activityLogger = mem.ActivityLogger()
-val opts = Opts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
 
 // Going through the flow
+val args = Args("YourRequestURIHere", "ClientID", kms.getCrypto(), didResolver)
+val opts = Opts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
 val interaction = Interaction(args, opts)
 
 val result = interaction.authorize()
@@ -436,12 +547,11 @@ let didCreator = DidNewCreatorWithKeyWriter(kms, &newDIDCreatorError)
 
 let didDocResolution = didCreator.create("key", nil) // Create a did:key doc with default options
 
-let args = Openid4ciNewArgs("YourRequestURIHere", "ClientID", kms.getCrypto(), didResolver)
-
 let activityLogger = MemNewActivityLogger()
-let opts = Openid4ciNewOpts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
 
 // Going through the flow
+let args = Openid4ciNewArgs("YourRequestURIHere", "ClientID", kms.getCrypto(), didResolver)
+let opts = Openid4ciNewOpts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
 var newInteractionError: NSError?
 let interaction = Openid4ciNewInteraction(args, opts, &newInteractionError)
 
@@ -565,15 +675,17 @@ The locale returned by the various `locale()` methods may not be the same as the
 `ResolveDisplay` function under certain circumstances. For instance, if the locale you passed in wasn't available,
 then a default locale may get used instead.
 
-### Resolve Display
+### Resolve Display Examples
 
 The following examples show how the `ResolveDisplay` function can be used. The function requires you to pass in
 one or more VCs and the issuer URI.
 
-A preferred locale and/or addition headers to be sent to the issuer can be specified by creating an `Opts`
+A preferred locale and/or additional headers to be sent to the issuer can be specified by creating an `Opts`
 object, setting your desired parameters using the supplied methods, and passing the object in.
 
-##### Kotlin (Android)
+#### Kotlin (Android)
+
+##### Using Default Options
 
 ```kotlin
 import dev.trustbloc.wallet.sdk.api.VerifiableCredentialsArray
@@ -581,13 +693,28 @@ import dev.trustbloc.wallet.sdk.display.*
 import dev.trustbloc.wallet.sdk.openid4ci.Openid4ci
 
 val vcArray = VerifiableCredentialsArray()
-
 vcArray.add(yourVCHere)
 
 val displayData = Display.resolve(vcArray, "Issuer_URI_Goes_Here", nil)
 ```
 
-##### Swift (iOS)
+##### Using Specified Options
+
+```kotlin
+import dev.trustbloc.wallet.sdk.api.VerifiableCredentialsArray
+import dev.trustbloc.wallet.sdk.display.*
+import dev.trustbloc.wallet.sdk.openid4ci.Openid4ci
+
+val vcArray = VerifiableCredentialsArray()
+vcArray.add(yourVCHere)
+
+val opts = Opts().setPreferredLocale("en-us")
+val displayData = Display.resolve(vcArray, "Issuer_URI_Goes_Here", opts)
+```
+
+#### Swift (iOS)
+
+##### Using Default Options
 
 ```kotlin
 import Walletsdk
@@ -598,6 +725,20 @@ vcArray.add(yourVCHere)
 
 var error: NSError?
 let displayData = DisplayResolve(vcArray, "Issuer_URI_Goes_Here", nil, &error)
+```
+
+##### Using Specified Options
+
+```kotlin
+import Walletsdk
+
+let vcArray = ApiVerifiableCredentialsArray()
+
+vcArray.add(yourVCHere)
+
+var error: NSError?
+let opts = DisplayNewOpts().setPreferredLocale("en-us")
+let displayData = DisplayResolve(vcArray, "Issuer_URI_Goes_Here", opts, &error)
 ```
 
 ## OpenID4VP
