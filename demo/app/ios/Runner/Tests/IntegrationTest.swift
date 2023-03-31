@@ -25,6 +25,8 @@ class IntegrationTest: XCTestCase {
         XCTAssertEqual(VersionGetGitRevision(), "testRev")
         XCTAssertEqual(VersionGetBuildTime(), "testTime")
 
+        let trace = OtelNewTrace(nil)
+
         let kms = LocalkmsNewKMS(kmsStore(), nil)!
         
         let resolverOpts = DidNewResolverOpts()
@@ -43,7 +45,10 @@ class IntegrationTest: XCTestCase {
         
         let openID4CIInteractionArgs = Openid4ciNewArgs(requestURI, "ClientID", crypto, didResolver)
 
-        let ciInteraction = Openid4ciNewInteraction(openID4CIInteractionArgs, nil, nil)
+        let ciOpts = Openid4ciNewOpts()
+        ciOpts!.add(trace!.traceHeader())
+
+        let ciInteraction = Openid4ciNewInteraction(openID4CIInteractionArgs, ciOpts, nil)
         XCTAssertNotNil(ciInteraction)
 
         let authorizeResult = try ciInteraction!.authorize()
@@ -57,14 +62,17 @@ class IntegrationTest: XCTestCase {
         XCTAssertTrue(authorizationRequestURI != "", "authorizationRequestURI:" + authorizationRequestURI!)
         
         let openID4VPArgs = Openid4vpNewArgs(authorizationRequestURI, kms, crypto, didResolver)
-        
-        let vpInteraction = Openid4vpInteraction(openID4VPArgs, opts: nil)!
+
+        let opts = Openid4vpNewOpts()
+        opts!.add(trace!.traceHeader())
+
+        let vpInteraction = Openid4vpInteraction(openID4VPArgs, opts: opts)!
 
         let credentialsQuery = try vpInteraction.getQuery()
         let inquirer = CredentialNewInquirer(nil)!
 
         let submissionRequirements = try inquirer.getSubmissionRequirements(
-            credentialsQuery, contents: CredentialCredentialsArg(fromVCArray: issuedCreds))
+                    credentialsQuery, credentials: CredentialCredentialsArg(fromVCArray: issuedCreds))
 
         XCTAssertTrue(submissionRequirements.len() > 0)
         let requirement = submissionRequirements.atIndex(0)!

@@ -3,6 +3,7 @@
     {
       "issuer": {
         "id": "bank_issuer_jwtsd",
+        "groupID": "group_bank_issuer_jwtsd",
         "name": "Bank Issuer",
         "organizationID": "test_org",
         "url": "http://localhost:8075",
@@ -166,6 +167,7 @@
     {
       "issuer": {
         "id": "drivers_license_issuer",
+        "groupID": "group_drivers_license_issuer",
         "name": "Driver's License Issuer",
         "organizationID": "test_org",
         "url": "http://localhost:8075",
@@ -355,6 +357,7 @@
     {
       "issuer": {
         "id": "bank_issuer",
+        "groupID": "group_bank_issuer",
         "name": "Bank Issuer",
         "organizationID": "test_org",
         "url": "http://localhost:8075",
@@ -515,6 +518,7 @@
     {
       "issuer": {
         "id": "university_degree_issuer",
+        "groupID": "group_university_degree_issuer",
         "name": "University Degree Issuer",
         "organizationID": "test_org",
         "url": "http://localhost:8075",
@@ -628,6 +632,7 @@
     {
       "issuer": {
         "id": "did_ion_issuer",
+        "groupID": "group_did_ion_issuer",
         "name": "DID Ion Issuer",
         "organizationID": "test_org",
         "url": "http://localhost:8075",
