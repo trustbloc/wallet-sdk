@@ -15,7 +15,7 @@ echo "starting containers..."
 cd $ROOT/test/integration/fixtures
 (source .env && docker-compose -f docker-compose.yml up --force-recreate -d)
 
-sleep 40
+sleep 60
 
 echo "running healthcheck..."
 
@@ -39,6 +39,9 @@ healthCheck() {
 
 	until [ $n -ge $maxAttempts ]
 	do
+	  docker-compose -f docker-compose.yml logs --no-color >& docker-compose.log
+    cat ./docker-compose.log
+
 	  response=$(curl -H 'Cache-Control: no-cache' -o /dev/null -s -w "%{http_code}" "$2")
 	  echo "running health check : httpResponseCode=$response"
 
