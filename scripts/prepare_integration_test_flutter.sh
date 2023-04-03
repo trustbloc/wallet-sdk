@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 # Copyright Avast Software. All Rights Reserved.
+# Copyright Gen Digital Inc. All Rights Reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -39,26 +40,29 @@ healthCheck() {
 	until [ $n -ge $maxAttempts ]
 	do
 	  response=$(curl -H 'Cache-Control: no-cache' -o /dev/null -s -w "%{http_code}" "$2")
+	  echo "running health check : httpResponseCode=$response"
+
 	  if [ "$response" == "$3" ]
 	  then
 	    echo "${GREEN}$1 $2 is up ${NONE}"
-		break
-	   fi
-	   n=$((n+1))
-	   if [ $n -eq $maxAttempts ]
-	   then
+		  break
+	  fi
+
+	  n=$((n+1))
+	  if [ $n -eq $maxAttempts ]
+	  then
 	     echo "${RED}failed health check : app=$1 url=$2 responseCode=$response ${NONE}"
 	     healthCheckFailed=1
 	     docker-compose -f docker-compose.yml logs --no-color >& docker-compose.log
 	     cat ./docker-compose.log
-	   fi
-	   sleep 1
-	done
+	  fi
+	  sleep 1
+	 done
 }
 
 # healthcheck
-healthCheck vc-rest http://localhost:8075/version 200
 healthCheck did-resolver http://did-resolver.trustbloc.local:8072/healthcheck 200
+healthCheck vc-rest http://localhost:8075/version 200
 
 if [ $healthCheckFailed == 1 ]
 then
