@@ -13,7 +13,6 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/client/didconfig"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	goapiwellknown "github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
 )
@@ -45,7 +44,7 @@ func validateLinkedDomains(did string, resolver api.DIDResolver,
 
 	valid, uri, err := goapiwellknown.ValidateLinkedDomains(did, vdrWrapper, client)
 	if err != nil {
-		return nil, walleterror.ToMobileError(err)
+		return nil, wrapper.ToMobileError(err)
 	}
 
 	return &ValidationResult{IsValid: valid, ServiceURL: uri}, nil

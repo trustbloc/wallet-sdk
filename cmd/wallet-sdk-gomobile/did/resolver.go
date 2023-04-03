@@ -10,7 +10,7 @@ package did
 import (
 	// helps gomobile bind api.DIDResolver interface to Resolver implementation in ios-bindings.
 	_ "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
 )
 
@@ -27,7 +27,7 @@ func NewResolver(opts *ResolverOpts) (*Resolver, error) {
 
 	didResolver, err := resolver.NewDIDResolver(opts.resolverServerURI)
 	if err != nil {
-		return nil, walleterror.ToMobileError(err)
+		return nil, wrapper.ToMobileError(err)
 	}
 
 	return &Resolver{resolver: didResolver}, nil
@@ -37,7 +37,7 @@ func NewResolver(opts *ResolverOpts) (*Resolver, error) {
 func (d *Resolver) Resolve(did string) ([]byte, error) {
 	didDocResolution, err := d.resolver.Resolve(did)
 	if err != nil {
-		return nil, walleterror.ToMobileError(err)
+		return nil, wrapper.ToMobileError(err)
 	}
 
 	return didDocResolution.JSONBytes()

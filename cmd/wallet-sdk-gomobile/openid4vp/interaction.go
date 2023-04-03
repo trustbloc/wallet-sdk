@@ -19,7 +19,6 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/openid4vp"
@@ -106,12 +105,12 @@ func NewInteraction(args *Args, opts *Opts) *Interaction {
 func (o *Interaction) GetQuery() ([]byte, error) {
 	presentationDefinition, err := o.goAPIOpenID4VP.GetQuery()
 	if err != nil {
-		return nil, walleterror.ToMobileError(err)
+		return nil, wrapper.ToMobileError(err)
 	}
 
 	pdBytes, err := json.Marshal(presentationDefinition)
 	if err != nil {
-		return nil, walleterror.ToMobileError(
+		return nil, wrapper.ToMobileError(
 			fmt.Errorf("presentation definition marshal: %w", err))
 	}
 
@@ -120,7 +119,7 @@ func (o *Interaction) GetQuery() ([]byte, error) {
 
 // PresentCredential presents credentials to redirect uri from request object.
 func (o *Interaction) PresentCredential(credentials *api.VerifiableCredentialsArray) error {
-	return walleterror.ToMobileError(o.goAPIOpenID4VP.PresentCredential(unwrapVCs(credentials)))
+	return wrapper.ToMobileError(o.goAPIOpenID4VP.PresentCredential(unwrapVCs(credentials)))
 }
 
 func unwrapVCs(vcs *api.VerifiableCredentialsArray) []*verifiable.Credential {

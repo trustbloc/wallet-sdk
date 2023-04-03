@@ -12,7 +12,7 @@ import (
 	"errors"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	goapicreator "github.com/trustbloc/wallet-sdk/pkg/did/creator"
 )
 
@@ -41,7 +41,7 @@ func NewCreator(keyWriter api.KeyWriter) (*Creator, error) {
 
 	goAPICreator, err := goapicreator.NewCreatorWithKeyWriter(gomobileKeyWriterWrapper)
 	if err != nil {
-		return nil, walleterror.ToMobileError(err)
+		return nil, wrapper.ToMobileError(err)
 	}
 
 	return &Creator{
