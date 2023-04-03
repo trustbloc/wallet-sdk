@@ -14,6 +14,7 @@ import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.openid4ci.*
 import dev.trustbloc.wallet.sdk.openid4vp.Interaction as VPInteraction
 import dev.trustbloc.wallet.sdk.version.Version
+import dev.trustbloc.wallet.sdk.otel.Otel
 import org.junit.Before
 import org.junit.Test
 import walletsdk.kmsStorage.KmsStore
@@ -30,6 +31,8 @@ class IntegrationTest {
 
     @Test
     fun fullFlow() {
+        val trace = Otel.newTrace()
+
         assertThat(Version.getVersion()).isEqualTo("testVer")
         assertThat(Version.getGitRevision()).isEqualTo("testRev")
         assertThat(Version.getBuildTime()).isEqualTo("testTime")
@@ -50,7 +53,10 @@ class IntegrationTest {
 
         val requiredOpenID4CIArgs = Args(requestURI, "ClientID", crypto, didResolver)
 
-        val ciInteraction = Interaction(requiredOpenID4CIArgs, null)
+        val ciOpts = Opts()
+        ciOpts.addHeader(trace.traceHeader())
+
+        val ciInteraction = Interaction(requiredOpenID4CIArgs, ciOpts)
 
         val authorizeResult = ciInteraction.authorize()
         assertThat(authorizeResult.userPINRequired).isFalse()
@@ -68,7 +74,10 @@ class IntegrationTest {
             didResolver
         )
 
-        val vpInteraction = VPInteraction(openID4VPInteractionRequiredArgs, null)
+        val vpOpts = dev.trustbloc.wallet.sdk.openid4vp.Opts()
+        vpOpts.addHeader(trace.traceHeader())
+
+        val vpInteraction = VPInteraction(openID4VPInteractionRequiredArgs, vpOpts)
 
         val credentialsQuery = vpInteraction.getQuery()
 

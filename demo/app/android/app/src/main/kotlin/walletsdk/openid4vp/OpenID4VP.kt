@@ -11,6 +11,7 @@ import dev.trustbloc.wallet.sdk.openid4vp.Interaction
 import dev.trustbloc.wallet.sdk.credential.*
 import dev.trustbloc.wallet.sdk.openid4vp.Opts
 import dev.trustbloc.wallet.sdk.openid4vp.Args
+import dev.trustbloc.wallet.sdk.otel.Otel
 import java.lang.Exception
 
 class OpenID4VP constructor(
@@ -30,10 +31,13 @@ class OpenID4VP constructor(
      * The methods defined on this object are used to help guide the calling code through the OpenID4VP flow.
      */
     fun startVPInteraction(authorizationRequest: String) {
+        val trace = Otel.newTrace()
+
         val args = Args(authorizationRequest, keyReader, crypto, didResolver)
 
         val opts = Opts()
         opts.setActivityLogger(activityLogger)
+        opts.addHeader(trace.traceHeader())
 
         val interaction = Interaction(args, opts)
 

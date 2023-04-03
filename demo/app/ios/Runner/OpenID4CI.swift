@@ -19,11 +19,14 @@ public class OpenID4CI {
         self.didResolver = didResolver
         self.crypto = crypto
         self.activityLogger = activityLogger
-        
+
+        let trace = OtelNewTrace(nil)
+
         let args = Openid4ciNewArgs(requestURI, "ClientID", self.crypto, self.didResolver)
         
         let opts = Openid4ciNewOpts()
         opts!.setActivityLogger(activityLogger)
+        opts!.add(trace!.traceHeader())
         
         self.initiatedInteraction = Openid4ciNewInteraction(args, opts, nil)!
     }

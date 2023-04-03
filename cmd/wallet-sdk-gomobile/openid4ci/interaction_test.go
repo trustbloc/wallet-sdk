@@ -20,6 +20,7 @@ import (
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
+
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 	"github.com/trustbloc/wallet-sdk/pkg/models"

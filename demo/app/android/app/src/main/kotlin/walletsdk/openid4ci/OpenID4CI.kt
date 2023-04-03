@@ -4,6 +4,7 @@ import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.display.*
 import dev.trustbloc.wallet.sdk.openid4ci.*
 import dev.trustbloc.wallet.sdk.openid4ci.Opts
+import dev.trustbloc.wallet.sdk.otel.Otel
 import dev.trustbloc.wallet.sdk.vcparse.Vcparse
 
 class OpenID4CI constructor(
@@ -15,9 +16,12 @@ class OpenID4CI constructor(
     private var newInteraction: Interaction
 
     init {
+        val trace = Otel.newTrace()
+
         val args = Args(requestURI, "ClientID", crypto, didResolver)
 
         val opts = Opts()
+        opts.addHeader(trace.traceHeader())
         opts.setActivityLogger(activityLogger)
 
         newInteraction = Interaction(args, opts)

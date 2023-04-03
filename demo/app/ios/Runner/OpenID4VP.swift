@@ -35,9 +35,13 @@ public class OpenID4VP {
      * The methods defined on this object are used to help guide the calling code through the OpenID4VP flow.
      */
     func startVPInteraction(authorizationRequest: String) throws {
+        let trace = OtelNewTrace(nil)
+
         let args = Openid4vpNewArgs(authorizationRequest, keyReader, crypto, didResolver)
+
         let opts = Openid4vpNewOpts()
         opts!.setActivityLogger(activityLogger)
+        opts!.add(trace!.traceHeader())
         
         let interaction = Openid4vpNewInteraction(args, opts)
         

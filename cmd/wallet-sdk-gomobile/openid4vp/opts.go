@@ -46,6 +46,11 @@ func (o *Opts) AddHeaders(headers *api.Headers) {
 	}
 }
 
+// AddHeader adds the given HTTP header to all REST calls made to the issuer during the OpenID4CI flow.
+func (o *Opts) AddHeader(header *api.Header) {
+	o.additionalHeaders.Add(header)
+}
+
 // DisableHTTPClientTLSVerify disables tls verification, should be used only for test purposes.
 func (o *Opts) DisableHTTPClientTLSVerify() {
 	o.disableHTTPClientTLSVerification = true

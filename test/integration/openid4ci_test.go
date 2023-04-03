@@ -10,7 +10,9 @@ package integration
 import (
 	_ "embed"
 	"fmt"
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/stretchr/testify/require"
@@ -20,6 +22,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/helpers"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4ci"
@@ -46,6 +49,8 @@ var (
 	//go:embed expecteddisplaydata/university_degree_issuer.json
 	expectedUniversityDegreeIssuer string
 )
+
+const queryTraceURL = "http://localhost:16686/api/traces/"
 
 func TestOpenID4CIFullFlow(t *testing.T) {
 	driverLicenseClaims := map[string]interface{}{
@@ -146,6 +151,8 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 	vcStatusVerifier, err := credential.NewStatusVerifier(credential.NewStatusVerifierOpts())
 	require.NoError(t, err)
 
+	var traceIDs []string
+
 	for _, tc := range tests {
 		fmt.Println(fmt.Sprintf("running tests with issuerProfileID=%s issuerDIDMethod=%s walletDIDMethod=%s",
 			tc.issuerProfileID, tc.issuerDIDMethod, tc.walletDIDMethod))
@@ -173,6 +180,13 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		interactionOptionalArgs.SetDocumentLoader(&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)})
 		interactionOptionalArgs.SetActivityLogger(testHelper.ActivityLogger)
 		interactionOptionalArgs.SetMetricsLogger(testHelper.MetricsLogger)
+
+		trace, err := otel.NewTrace()
+		require.NoError(t, err)
+		println("traceID:", trace.TraceID())
+		traceIDs = append(traceIDs, trace.TraceID())
+
+		interactionOptionalArgs.AddHeader(trace.TraceHeader())
 
 		interaction, err := openid4ci.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)
@@ -210,5 +224,17 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 
 		testHelper.CheckActivityLogAfterOpenID4CIFlow(t, vcsAPIDirectURL, tc.issuerProfileID, subID)
 		testHelper.CheckMetricsLoggerAfterOpenID4CIFlow(t, tc.issuerProfileID)
+	}
+
+	time.Sleep(5 * time.Second)
+	for _, traceID := range traceIDs {
+		_, err = testenv.NewHttpRequest().Send(http.MethodGet,
+			queryTraceURL+traceID,
+			"",
+			nil,
+			nil,
+			nil,
+		)
+		require.NoError(t, err)
 	}
 }

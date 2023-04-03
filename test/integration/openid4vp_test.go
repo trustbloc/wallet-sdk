@@ -9,7 +9,9 @@ package integration
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -19,6 +21,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4vp"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/helpers"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/metricslogger"
@@ -122,6 +125,8 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		},
 	}
 
+	var traceIDs []string
+
 	for i, tc := range tests {
 		fmt.Printf("running test %d: issuerProfileIDs=%s verifierProfileID=%s "+
 			"walletDIDMethod=%s\n", i,
@@ -156,6 +161,11 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		metricsLogger := metricslogger.NewMetricsLogger()
 
+		trace, err := otel.NewTrace()
+		require.NoError(t, err)
+		println("traceID:", trace.TraceID())
+		traceIDs = append(traceIDs, trace.TraceID())
+
 		interactionRequiredArgs := openid4vp.NewArgs(initiateURL,
 			testHelper.KMS, testHelper.KMS.GetCrypto(), didResolver)
 
@@ -163,6 +173,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		interactionOptionalArgs.SetDocumentLoader(docLoader)
 		interactionOptionalArgs.SetActivityLogger(activityLogger)
 		interactionOptionalArgs.SetMetricsLogger(metricsLogger)
+		interactionOptionalArgs.AddHeader(trace.TraceHeader())
 
 		interaction := openid4vp.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
 
@@ -210,5 +221,17 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		testHelper.CheckMetricsLoggerAfterOpenID4VPFlow(t, metricsLogger)
 
 		fmt.Printf("done test %d\n", i)
+	}
+
+	time.Sleep(5 * time.Second)
+	for _, traceID := range traceIDs {
+		_, err := testenv.NewHttpRequest().Send(http.MethodGet,
+			queryTraceURL+traceID,
+			"",
+			nil,
+			nil,
+			nil,
+		)
+		require.NoError(t, err)
 	}
 }
