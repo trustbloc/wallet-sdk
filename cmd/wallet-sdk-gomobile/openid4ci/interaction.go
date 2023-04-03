@@ -54,7 +54,7 @@ func NewInteraction(args *Args, opts *Opts) (*Interaction, error) {
 
 	goAPIInteraction, err := openid4cigoapi.NewInteraction(args.initiateIssuanceURI, goAPIClientConfig)
 	if err != nil {
-		return nil, walleterror.ToMobileError(err)
+		return nil, wrapper.ToMobileError(err)
 	}
 
 	return &Interaction{
@@ -72,7 +72,7 @@ func NewInteraction(args *Args, opts *Opts) (*Interaction, error) {
 func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 	authorizationResultGoAPI, err := i.goAPIInteraction.Authorize()
 	if err != nil {
-		return nil, walleterror.ToMobileError(err)
+		return nil, wrapper.ToMobileError(err)
 	}
 
 	authorizationResult := &AuthorizeResult{
@@ -129,14 +129,14 @@ func (i *Interaction) requestCredential(
 
 	signer, err := common.NewJWSSigner(vm.ToSDKVerificationMethod(), i.crypto)
 	if err != nil {
-		return nil, walleterror.ToMobileError(err)
+		return nil, wrapper.ToMobileError(err)
 	}
 
 	goAPICredentialRequest := &openid4cigoapi.CredentialRequestOpts{UserPIN: pin}
 
 	credentials, err := i.goAPIInteraction.RequestCredential(goAPICredentialRequest, signer)
 	if err != nil {
-		return nil, walleterror.ToMobileError(err)
+		return nil, wrapper.ToMobileError(err)
 	}
 
 	gomobileCredentials := api.NewVerifiableCredentialsArray()

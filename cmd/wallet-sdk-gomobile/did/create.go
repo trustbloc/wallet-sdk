@@ -12,7 +12,6 @@ import (
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	goapicreator "github.com/trustbloc/wallet-sdk/pkg/did/creator"
@@ -36,12 +35,12 @@ func create(method, keyID string, goAPICreator *goapicreator.Creator, opts *Crea
 
 	didDocResolution, err := goAPICreator.Create(method, goAPIOpts)
 	if err != nil {
-		return nil, walleterror.ToMobileError(err)
+		return nil, wrapper.ToMobileError(err)
 	}
 
 	didDocResolutionBytes, err := didDocResolution.JSONBytes()
 	if err != nil {
-		return nil, walleterror.ToMobileError(err)
+		return nil, wrapper.ToMobileError(err)
 	}
 
 	return &api.DIDDocResolution{Content: string(didDocResolutionBytes)}, nil

@@ -19,7 +19,6 @@ import (
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialquery"
 )
@@ -84,7 +83,7 @@ func (c *Inquirer) Query(query []byte, credentials *CredentialsArg) (*Verifiable
 		}),
 	)
 	if err != nil {
-		return nil, walleterror.ToMobileError(err)
+		return nil, wrapper.ToMobileError(err)
 	}
 
 	return wrapVerifiablePresentation(presentation), err
@@ -105,7 +104,7 @@ func (c *Inquirer) GetSubmissionRequirements(query []byte, credentials *Credenti
 		}),
 	)
 	if err != nil {
-		return nil, walleterror.ToMobileError(err)
+		return nil, wrapper.ToMobileError(err)
 	}
 
 	return &SubmissionRequirementArray{wrapped: requirements}, nil
