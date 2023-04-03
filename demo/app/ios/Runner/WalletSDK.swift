@@ -62,9 +62,6 @@ class WalletSDK {
     }
 
     func createOpenID4VPInteraction() throws -> OpenID4VP {
-        guard let kms = self.kms else {
-            throw WalletSDKError.runtimeError("SDK is not initialized, call initSDK()")
-        }
         guard let crypto = self.crypto else {
             throw WalletSDKError.runtimeError("SDK is not initialized, call initSDK()")
         }
@@ -75,6 +72,6 @@ class WalletSDK {
             throw WalletSDKError.runtimeError("SDK is not initialized, call initSDK()")
         }
         
-        return OpenID4VP(keyReader: kms, didResolver: didResolver, crypto: crypto, activityLogger: activityLogger)
+        return OpenID4VP(didResolver: didResolver, crypto: crypto, activityLogger: activityLogger)
     }
 }

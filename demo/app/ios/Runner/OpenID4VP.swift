@@ -13,7 +13,6 @@ enum OpenID4VPError: Error {
 }
 
 public class OpenID4VP {
-    private var keyReader:LocalkmsKMS
     private var didResolver: ApiDIDResolverProtocol
     private var crypto: ApiCryptoProtocol
     private var activityLogger: ApiActivityLoggerProtocol
@@ -21,8 +20,7 @@ public class OpenID4VP {
     private var initiatedInteraction: Openid4vpInteraction?
     private var vpQueryContent: Data?
     
-    init (keyReader:LocalkmsKMS, didResolver: ApiDIDResolverProtocol, crypto: ApiCryptoProtocol, activityLogger: ApiActivityLoggerProtocol) {
-        self.keyReader = keyReader
+    init (didResolver: ApiDIDResolverProtocol, crypto: ApiCryptoProtocol, activityLogger: ApiActivityLoggerProtocol) {
         self.didResolver = didResolver
         self.crypto = crypto
         self.activityLogger = activityLogger
@@ -37,7 +35,7 @@ public class OpenID4VP {
     func startVPInteraction(authorizationRequest: String) throws {
         let trace = OtelNewTrace(nil)
 
-        let args = Openid4vpNewArgs(authorizationRequest, keyReader, crypto, didResolver)
+        let args = Openid4vpNewArgs(authorizationRequest, crypto, didResolver)
 
         let opts = Openid4vpNewOpts()
         opts!.setActivityLogger(activityLogger)

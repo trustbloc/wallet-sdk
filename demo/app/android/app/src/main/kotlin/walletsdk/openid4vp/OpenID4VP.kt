@@ -15,7 +15,6 @@ import dev.trustbloc.wallet.sdk.otel.Otel
 import java.lang.Exception
 
 class OpenID4VP constructor(
-        private val keyReader: KeyReader,
         private val crypto: Crypto,
         private val didResolver: DIDResolver,
         private val activityLogger: ActivityLogger,
@@ -33,7 +32,7 @@ class OpenID4VP constructor(
     fun startVPInteraction(authorizationRequest: String) {
         val trace = Otel.newTrace()
 
-        val args = Args(authorizationRequest, keyReader, crypto, didResolver)
+        val args = Args(authorizationRequest, crypto, didResolver)
 
         val opts = Opts()
         opts.setActivityLogger(activityLogger)
