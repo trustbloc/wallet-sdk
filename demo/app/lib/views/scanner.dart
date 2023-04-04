@@ -89,7 +89,6 @@ class QRScannerState extends State<QRScanner> {
         ),
         PrimaryButton(
             onPressed: () async {
-              log("whats the text ${textController.text.toString()}");
               handleOpenIDUrl(context, textController.text.toString());
             },
             width: double.infinity,

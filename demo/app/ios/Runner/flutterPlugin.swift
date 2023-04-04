@@ -31,8 +31,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         
         switch call.method {
         case "createDID":
-            let didMethodType = fetchArgsKeyValue(call, key: "didMethodType")
-            createDid(didMethodType: didMethodType!, result: result)
+            createDid(arguments: arguments!, result: result)
             
         case "authorize":
             let requestURI = fetchArgsKeyValue(call, key: "requestURI")
@@ -152,7 +151,6 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 }
                 result(resp)
             }
-            
             return result(Array<String>())
             
         } catch OpenID4VPError.runtimeError(let errorMsg){
@@ -244,7 +242,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
      The usage of ApiCreateDIDOpts depends on the DID method you're using.
      In the app when user logins we invoke sdk DidNewCreator create method to create new did per user.
      */
-    public func createDid(didMethodType: String, result: @escaping FlutterResult) {
+    public func createDid(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
         do {
             guard let walletSDK = self.walletSDK else{
                 return  result(FlutterError.init(code: "NATIVE_ERR",
@@ -252,7 +250,19 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                  details: "WalletSDK interaction is not initialized, call initSDK()"))
             }
             
-            let doc = try walletSDK.createDID(didMethodType: didMethodType)
+            guard let didMethodType = arguments["didMethodType"] as? String else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while create did operation",
+                                                 details: "parameter didMethodType is missed"))
+            }
+
+            guard let didKeyType = arguments["didKeyType"] as? String else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while create did operation",
+                                                 details: "parameter didKeyType is missed"))
+            }
+            
+            let doc = try walletSDK.createDID(didMethodType: didMethodType, didKeyType: didKeyType)
             didDocResolution = doc
             var docResolution : [String: Any] = [:]
             docResolution["did"] = doc.id_(nil)
@@ -318,7 +328,6 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 
          do {
             let credentialCreated = try openID4CI.requestCredential(didVerificationMethod: didDocResolution.assertionMethod(), otp: otp)
-
             result(credentialCreated.serialize(nil))
           } catch let error as NSError{
               result(FlutterError.init(code: "Exception",

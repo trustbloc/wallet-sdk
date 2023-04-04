@@ -28,13 +28,11 @@ class WalletSDK {
         this.kms = kms
     }
 
-    fun createDID(didMethodType: String): DIDDocResolution {
+    fun createDID(didMethodType: String, didKeyType: String): DIDDocResolution {
         val kms = this.kms ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
         val createDIDOpts = CreateOpts()
-        if (didMethodType == "jwk"){
-            createDIDOpts.setKeyType("ECDSAP384IEEEP1363")
-        }
+        createDIDOpts.setKeyType(didKeyType)
 
         val creatorDID = Creator(kms as KeyWriter)
 

@@ -88,9 +88,9 @@ class MethodChannelWallet extends WalletPlatform {
     await methodChannel.invokeMethod<bool>('initSDK');
   }
 
-  Future<Map<Object?, Object?>?> createDID(String didMethodType) async {
+  Future<Map<Object?, Object?>?> createDID(String didMethodType, String didKeyType) async {
     final createDIDMsg =
-        await methodChannel.invokeMethod<Map<Object?, Object?>?>('createDID', <String, dynamic>{'didMethodType': didMethodType});
+        await methodChannel.invokeMethod<Map<Object?, Object?>?>('createDID', <String, dynamic>{'didMethodType': didMethodType, 'didKeyType': didKeyType});
     return createDIDMsg;
   }
 

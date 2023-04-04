@@ -31,13 +31,11 @@ class WalletSDK {
         activityLogger = MemNewActivityLogger()
     }
 
-    func createDID(didMethodType: String) throws -> ApiDIDDocResolution {
+    func createDID(didMethodType: String, didKeyType: String) throws -> ApiDIDDocResolution {
         let didCreator = DidNewCreator(self.kms, nil)
         let opts = DidNewCreateOpts()
-        if (didMethodType == "jwk"){
-            opts!.setKeyType("ECDSAP384IEEEP1363")
-        }
-      
+        opts!.setKeyType(didKeyType)
+    
         return try didCreator!.create(didMethodType, opts: opts)
          
     }
