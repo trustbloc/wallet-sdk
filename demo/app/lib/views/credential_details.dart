@@ -135,7 +135,7 @@ class CredentialDetailsState extends State<CredentialDetails> {
                   labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                   unselectedLabelColor: const Color(0xff6C6D7C),
                   indicatorColor: const Color(0xff8A35B7),
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+                  padding: const EdgeInsets.fromLTRB(24, 0, 0, 0),
                   tabs: [
                     const Tab(
                       child: SizedBox(
@@ -143,10 +143,6 @@ class CredentialDetailsState extends State<CredentialDetails> {
                         child: Text(
                           "Details",
                           textAlign: TextAlign.start,
-                          style: TextStyle(
-                               fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                          ),
                         ),
                       ),
                     ),
@@ -158,23 +154,17 @@ class CredentialDetailsState extends State<CredentialDetails> {
                         child: Text(
                           "Raw",
                           textAlign: TextAlign.start,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
                         ),
                       ),
                      )
                     ),
-                    const Tab(  child: SizedBox(
+                    const Tab(
+                      child: SizedBox(
                       width: 60,
                       child: Text(
                         "Activity",
                         textAlign: TextAlign.start,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
+                        textScaleFactor:1.0,
                       ),
                     ),
                     ),
@@ -185,10 +175,6 @@ class CredentialDetailsState extends State<CredentialDetails> {
                       child: Text(
                         "DID",
                         textAlign: TextAlign.start,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
                       ),
                      ),
                     ),
