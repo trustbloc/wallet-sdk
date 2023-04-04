@@ -48,27 +48,12 @@ func TestSigner_Issue(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Run("given raw credential", func(t *testing.T) {
-			s, err := NewSigner(
-				&mockReader{},
+			s := NewSigner(
 				&mockResolver{ResolveVal: mockDocResolution(t)},
 				&mockCrypto{SignVal: []byte("foo")},
 			)
-			require.NoError(t, err)
 
-			issuedCred, err := s.Issue(verifiable.NewCredential(mockCredential), "", mockKID)
-			require.NoError(t, err)
-			require.NotNil(t, issuedCred)
-		})
-
-		t.Run("given credential ID", func(t *testing.T) {
-			s, err := NewSigner(
-				&mockReader{getVal: verifiable.NewCredential(mockCredential)},
-				&mockResolver{ResolveVal: mockDocResolution(t)},
-				&mockCrypto{SignVal: []byte("foo")},
-			)
-			require.NoError(t, err)
-
-			issuedCred, err := s.Issue(nil, credID, mockKID)
+			issuedCred, err := s.Issue(verifiable.NewCredential(mockCredential), mockKID)
 			require.NoError(t, err)
 			require.NotNil(t, issuedCred)
 		})
@@ -76,14 +61,12 @@ func TestSigner_Issue(t *testing.T) {
 
 	t.Run("failure", func(t *testing.T) {
 		t.Run("signing credential", func(t *testing.T) {
-			s, err := NewSigner(
-				&mockReader{},
+			s := NewSigner(
 				&mockResolver{ResolveVal: mockDocResolution(t)},
 				&mockCrypto{SignErr: expectErr},
 			)
-			require.NoError(t, err)
 
-			_, err = s.Issue(verifiable.NewCredential(mockCredential), "", "")
+			_, err := s.Issue(verifiable.NewCredential(mockCredential), "")
 			require.Error(t, err)
 			require.Contains(t, err.Error(), "signing credential")
 			require.ErrorIs(t, err, expectErr)
@@ -132,20 +115,6 @@ func makeDoc(vm *did.VerificationMethod) *did.Doc {
 			*vm,
 		},
 	}
-}
-
-type mockReader struct {
-	getVal    *verifiable.Credential
-	getAllVal *verifiable.CredentialsArray
-	getErr    error
-}
-
-func (m *mockReader) Get(string) (*verifiable.Credential, error) {
-	return m.getVal, m.getErr
-}
-
-func (m *mockReader) GetAll() (*verifiable.CredentialsArray, error) {
-	return m.getAllVal, m.getErr
 }
 
 type mockResolver struct {

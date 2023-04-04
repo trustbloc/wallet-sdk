@@ -186,7 +186,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		inquirer := credential.NewInquirer(inquirerOpts)
 		require.NoError(t, err)
 
-		requirements, err := inquirer.GetSubmissionRequirements(query, credential.NewCredentialsArgFromVCArray(issuedCredentials))
+		requirements, err := inquirer.GetSubmissionRequirements(query, issuedCredentials)
 		require.NoError(t, err)
 		require.GreaterOrEqual(t, requirements.Len(), 1)
 		require.GreaterOrEqual(t, requirements.AtIndex(0).DescriptorLen(), 1)
@@ -197,7 +197,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		selectedCreds := verifiable.NewCredentialsArray()
 		selectedCreds.Add(requirementDescriptor.MatchedVCs.AtIndex(0))
 
-		verifiablePres, err := inquirer.Query(query, credential.NewCredentialsArgFromVCArray(selectedCreds))
+		verifiablePres, err := inquirer.Query(query, selectedCreds)
 		require.NoError(t, err)
 
 		matchedCreds, err := verifiablePres.Credentials()

@@ -43,18 +43,11 @@ func TestSigner_Issue(t *testing.T) {
 	}
 
 	t.Run("success", func(t *testing.T) {
-		signer := New(&mockReader{credential: mockCredential}, &mockResolver{
+		signer := New(&mockResolver{
 			doc: mockDoc(t),
 		}, &mockCrypto{})
 
-		jwtVC, err := signer.Issue(GivenCredential(mockCredential), &ProofOptions{
-			KeyID:       mockKID,
-			ProofFormat: ExternalJWTProofFormat,
-		})
-		require.NoError(t, err)
-		require.NotEmpty(t, jwtVC)
-
-		jwtVC, err = signer.Issue(GivenCredentialID("foo"), &ProofOptions{
+		jwtVC, err := signer.Issue(mockCredential, &ProofOptions{
 			KeyID:       mockKID,
 			ProofFormat: ExternalJWTProofFormat,
 		})
@@ -63,52 +56,25 @@ func TestSigner_Issue(t *testing.T) {
 	})
 
 	t.Run("no credential provided for signing", func(t *testing.T) {
-		signer := New(&mockReader{credential: mockCredential}, &mockResolver{
+		signer := New(&mockResolver{
 			doc: mockDoc(t),
 		}, &mockCrypto{})
 
-		jwtVC, err := signer.Issue(GivenCredentialID(""), &ProofOptions{
+		jwtVC, err := signer.Issue(nil, &ProofOptions{
 			KeyID:       mockKID,
 			ProofFormat: ExternalJWTProofFormat,
 		})
 		require.Error(t, err)
 		require.Empty(t, jwtVC)
-		require.Contains(t, err.Error(), "no Credential provided")
-	})
-
-	t.Run("can't read credential without credentialReader", func(t *testing.T) {
-		signer := New(nil, &mockResolver{
-			doc: mockDoc(t),
-		}, &mockCrypto{})
-
-		jwtVC, err := signer.Issue(GivenCredentialID("foo"), &ProofOptions{
-			KeyID:       mockKID,
-			ProofFormat: ExternalJWTProofFormat,
-		})
-		require.Error(t, err)
-		require.Empty(t, jwtVC)
-		require.Contains(t, err.Error(), "does not have a CredentialReader")
-	})
-
-	t.Run("failed to read credential", func(t *testing.T) {
-		signer := New(&mockReader{err: expectErr}, &mockResolver{}, &mockCrypto{})
-
-		jwtVC, err := signer.Issue(GivenCredentialID("foo"), &ProofOptions{
-			KeyID:       mockKID,
-			ProofFormat: ExternalJWTProofFormat,
-		})
-		require.Error(t, err)
-		require.Empty(t, jwtVC)
-		require.ErrorIs(t, err, expectErr)
-		require.Contains(t, err.Error(), "failed to fetch credential")
+		require.Contains(t, err.Error(), "no credential provided")
 	})
 
 	t.Run("json-ld currently not implemented", func(t *testing.T) {
-		signer := New(&mockReader{}, &mockResolver{
+		signer := New(&mockResolver{
 			doc: mockDoc(t),
 		}, &mockCrypto{})
 
-		jwtVC, err := signer.Issue(GivenCredential(mockCredential), &ProofOptions{
+		jwtVC, err := signer.Issue(mockCredential, &ProofOptions{
 			KeyID:       mockKID,
 			ProofFormat: EmbeddedLDProofFormat,
 		})
@@ -118,11 +84,11 @@ func TestSigner_Issue(t *testing.T) {
 	})
 
 	t.Run("proof format not recognized", func(t *testing.T) {
-		signer := New(&mockReader{}, &mockResolver{
+		signer := New(&mockResolver{
 			doc: mockDoc(t),
 		}, &mockCrypto{})
 
-		jwtVC, err := signer.Issue(GivenCredential(mockCredential), &ProofOptions{
+		jwtVC, err := signer.Issue(mockCredential, &ProofOptions{
 			KeyID:       mockKID,
 			ProofFormat: "foo bar baz",
 		})
@@ -132,11 +98,11 @@ func TestSigner_Issue(t *testing.T) {
 	})
 
 	t.Run("fail to resolve signing DID", func(t *testing.T) {
-		signer := New(&mockReader{}, &mockResolver{
+		signer := New(&mockResolver{
 			err: expectErr,
 		}, &mockCrypto{})
 
-		jwtVC, err := signer.Issue(GivenCredential(mockCredential), &ProofOptions{
+		jwtVC, err := signer.Issue(mockCredential, &ProofOptions{
 			KeyID:       mockKID,
 			ProofFormat: ExternalJWTProofFormat,
 		})
@@ -150,11 +116,11 @@ func TestSigner_Issue(t *testing.T) {
 		vm := mockVM(t)
 		vm.Type = "unknown verification method type"
 
-		signer := New(&mockReader{}, &mockResolver{
+		signer := New(&mockResolver{
 			doc: makeDoc(vm),
 		}, &mockCrypto{})
 
-		jwtVC, err := signer.Issue(GivenCredential(mockCredential), &ProofOptions{
+		jwtVC, err := signer.Issue(mockCredential, &ProofOptions{
 			KeyID:       mockKID,
 			ProofFormat: ExternalJWTProofFormat,
 		})
@@ -175,11 +141,11 @@ func TestSigner_Issue(t *testing.T) {
 			Issued: util.NewTime(time.Now()),
 		}
 
-		signer := New(&mockReader{}, &mockResolver{
+		signer := New(&mockResolver{
 			doc: mockDoc(t),
 		}, &mockCrypto{})
 
-		jwtVC, err := signer.Issue(GivenCredential(badCredential), &ProofOptions{
+		jwtVC, err := signer.Issue(badCredential, &ProofOptions{
 			KeyID:       mockKID,
 			ProofFormat: ExternalJWTProofFormat,
 		})
@@ -189,13 +155,13 @@ func TestSigner_Issue(t *testing.T) {
 	})
 
 	t.Run("signing error", func(t *testing.T) {
-		signer := New(&mockReader{}, &mockResolver{
+		signer := New(&mockResolver{
 			doc: mockDoc(t),
 		}, &mockCrypto{
 			Err: expectErr,
 		})
 
-		jwtVC, err := signer.Issue(GivenCredential(mockCredential), &ProofOptions{
+		jwtVC, err := signer.Issue(mockCredential, &ProofOptions{
 			KeyID:       mockKID,
 			ProofFormat: ExternalJWTProofFormat,
 		})
@@ -239,19 +205,6 @@ func makeDoc(vm *did.VerificationMethod) *did.Doc {
 			*vm,
 		},
 	}
-}
-
-type mockReader struct {
-	credential *verifiable.Credential
-	err        error
-}
-
-func (r *mockReader) Get(string) (*verifiable.Credential, error) {
-	return r.credential, r.err
-}
-
-func (r *mockReader) GetAll() ([]*verifiable.Credential, error) {
-	return []*verifiable.Credential{r.credential}, r.err
 }
 
 type mockResolver struct {

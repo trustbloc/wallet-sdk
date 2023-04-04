@@ -42,8 +42,7 @@ func TestCredentialAPI(t *testing.T) {
 	didResolver, e := did.NewResolver(nil)
 	require.NoError(t, e)
 
-	signer, e := credential.NewSigner(credStore, didResolver, crypto)
-	require.NoError(t, e)
+	signer := credential.NewSigner(didResolver, crypto)
 
 	c, e := did.NewCreator(kms)
 	require.NoError(t, e)
@@ -61,24 +60,20 @@ func TestCredentialAPI(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name          string
-		didMethod     string
-		getCredByName bool
+		name      string
+		didMethod string
 	}{
 		{
-			name:          "did:ion signing DID",
-			didMethod:     "ion",
-			getCredByName: false,
+			name:      "did:ion signing DID",
+			didMethod: "ion",
 		},
 		{
-			name:          "did:ion signing DID, with stored credential",
-			didMethod:     "ion",
-			getCredByName: true,
+			name:      "did:ion signing DID, with stored credential",
+			didMethod: "ion",
 		},
 		{
-			name:          "did:key signing DID",
-			didMethod:     "key",
-			getCredByName: false,
+			name:      "did:key signing DID",
+			didMethod: "key",
 		},
 	}
 
@@ -109,19 +104,15 @@ func TestCredentialAPI(t *testing.T) {
 			err = credStore.Add(verifiable.NewCredential(templateCredential))
 			require.NoError(t, err)
 
-			var cred *verifiable.Credential
-			var credID string
+			cred := verifiable.NewCredential(templateCredential)
 
-			if tc.getCredByName {
-				credID = templateCredential.ID
-			} else {
-				cred = verifiable.NewCredential(templateCredential)
-			}
-
-			issuedCred, err := signer.Issue(cred, credID, docID)
+			issuedCred, err := signer.Issue(cred, docID)
 			require.NoError(t, err)
 
-			require.NoError(t, verifier.verify(issuedCred))
+			serializedCred, err := issuedCred.Serialize()
+			require.NoError(t, err)
+
+			require.NoError(t, verifier.verify([]byte(serializedCred)))
 		})
 	}
 }

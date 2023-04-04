@@ -72,7 +72,7 @@ class IntegrationTest: XCTestCase {
         let inquirer = CredentialNewInquirer(nil)!
 
         let submissionRequirements = try inquirer.getSubmissionRequirements(
-                    credentialsQuery, credentials: CredentialCredentialsArg(fromVCArray: issuedCreds))
+                    credentialsQuery, credentials: issuedCreds)
 
         XCTAssertTrue(submissionRequirements.len() > 0)
         let requirement = submissionRequirements.atIndex(0)!
