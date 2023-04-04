@@ -4,22 +4,20 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package wrapper contains wrappers that convert between the Go and gomobile APIs.
-package wrapper
+package credential
 
 import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )
 
-// CredentialReaderWrapper wraps a gomobile-compatible version of api.CredentialReader and translates methods calls to
+// ReaderWrapper wraps a gomobile-compatible version of Reader and translates methods calls to
 // their corresponding Go API versions.
-type CredentialReaderWrapper struct {
-	CredentialReader api.CredentialReader
+type ReaderWrapper struct {
+	CredentialReader Reader
 }
 
 // Get wraps Get of api.CredentialReader.
-func (r *CredentialReaderWrapper) Get(id string) (*verifiable.Credential, error) {
+func (r *ReaderWrapper) Get(id string) (*verifiable.Credential, error) {
 	vc, err := r.CredentialReader.Get(id)
 	if err != nil {
 		return nil, err
@@ -29,7 +27,7 @@ func (r *CredentialReaderWrapper) Get(id string) (*verifiable.Credential, error)
 }
 
 // GetAll wraps GetAll of api.CredentialReader.
-func (r *CredentialReaderWrapper) GetAll() ([]*verifiable.Credential, error) {
+func (r *ReaderWrapper) GetAll() ([]*verifiable.Credential, error) {
 	vcs, err := r.CredentialReader.GetAll()
 	if err != nil {
 		return nil, err

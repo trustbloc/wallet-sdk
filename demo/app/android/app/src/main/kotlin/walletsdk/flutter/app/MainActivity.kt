@@ -1,11 +1,14 @@
 package dev.trustbloc.wallet
 
 import dev.trustbloc.wallet.sdk.api.*
-import dev.trustbloc.wallet.sdk.credential.Credential
+import dev.trustbloc.wallet.sdk.credential.Credential.newStatusVerifier
+import dev.trustbloc.wallet.sdk.credential.StatusVerifier
 import dev.trustbloc.wallet.sdk.did.*
 import dev.trustbloc.wallet.sdk.display.Display
-import dev.trustbloc.wallet.sdk.vcparse.Opts
-import dev.trustbloc.wallet.sdk.vcparse.Vcparse
+import dev.trustbloc.wallet.sdk.verifiable.Credential
+import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
+import dev.trustbloc.wallet.sdk.verifiable.Opts
+import dev.trustbloc.wallet.sdk.verifiable.Verifiable
 import dev.trustbloc.wallet.sdk.version.Version
 import dev.trustbloc.wallet.sdk.walleterror.Walleterror
 import io.flutter.embedding.android.FlutterActivity
@@ -29,7 +32,7 @@ class MainActivity : FlutterActivity() {
 
 
     // TODO: remove next three variables after refactoring finished.
-    private var processAuthorizationRequestVCs: VerifiableCredentialsArray? = null
+    private var processAuthorizationRequestVCs: CredentialsArray? = null
     private var didDocResolution: DIDDocResolution? = null
 
     @Override
@@ -286,7 +289,7 @@ class MainActivity : FlutterActivity() {
     Here if the pin required is true in the authorize method, then user need to enter OTP which is intercepted to create CredentialRequest Object using
     CredentialRequestOpts.If flow doesnt not require pin than Credential Request Opts will have empty string otp and sdk will return credential Data based on empty otp.
      */
-    private fun requestCredential(call: MethodCall): VerifiableCredential? {
+    private fun requestCredential(call: MethodCall): Credential? {
         val otp = call.argument<String>("otp") ?: throw java.lang.Exception("otp params is missed")
 
         val didDocResolution = this.didDocResolution
@@ -368,7 +371,7 @@ class MainActivity : FlutterActivity() {
 
         val credIds = ArrayList<String>()
         for (cred in vcCredentials) {
-            val parsedVC = Vcparse.parse(cred, opts)
+            val parsedVC = Verifiable.parseCredential(cred, opts)
             var credID = parsedVC.id()
             credIds.add(credID)
         }
@@ -383,7 +386,7 @@ class MainActivity : FlutterActivity() {
         opts.disableProofCheck()
 
         for (cred in vcCredentials) {
-            val parsedVC = Vcparse.parse(cred, opts)
+            val parsedVC = Verifiable.parseCredential(cred, opts)
             var issuerID = parsedVC.issuerID()
             return issuerID
         }
@@ -455,7 +458,7 @@ class MainActivity : FlutterActivity() {
         val credentials = call.argument<List<String>>("credentials")
             ?: throw java.lang.Exception("credentials params is missed")
 
-            val statusVerifier = Credential.newStatusVerifier(null)
+            val statusVerifier = StatusVerifier(null)
             val credentialArray = convertToVerifiableCredentialsArray(credentials)
         return try {
             statusVerifier.verify(credentialArray.atIndex(0))

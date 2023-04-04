@@ -18,6 +18,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/metricslogger"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4ci"
@@ -54,14 +55,14 @@ func NewVPTestHelper(t *testing.T, didMethod string, keyType string) *VPTestHelp
 
 func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, issuerProfileIDs []string,
 	claimData []map[string]interface{},
-) *api.VerifiableCredentialsArray {
+) *verifiable.CredentialsArray {
 	oidc4ciSetup, err := oidc4ci.NewSetup(testenv.NewHttpRequest())
 	require.NoError(t, err)
 
 	err = oidc4ciSetup.AuthorizeIssuerBypassAuth("test_org", vcsAPIDirectURL)
 	require.NoError(t, err)
 
-	credentials := api.NewVerifiableCredentialsArray()
+	credentials := verifiable.NewCredentialsArray()
 
 	for i := 0; i < len(issuerProfileIDs); i++ {
 		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i], claimData[i])

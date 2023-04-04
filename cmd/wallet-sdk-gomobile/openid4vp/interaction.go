@@ -12,9 +12,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	afgoverifiable "github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -26,7 +28,7 @@ import (
 
 type goAPIOpenID4VP interface {
 	GetQuery() (*presexch.PresentationDefinition, error)
-	PresentCredential(credentials []*verifiable.Credential) error
+	PresentCredential(credentials []*afgoverifiable.Credential) error
 }
 
 // Interaction represents a single OpenID4VP interaction between a wallet and a verifier. The methods defined on this
@@ -116,12 +118,12 @@ func (o *Interaction) GetQuery() ([]byte, error) {
 }
 
 // PresentCredential presents credentials to redirect uri from request object.
-func (o *Interaction) PresentCredential(credentials *api.VerifiableCredentialsArray) error {
+func (o *Interaction) PresentCredential(credentials *verifiable.CredentialsArray) error {
 	return wrapper.ToMobileError(o.goAPIOpenID4VP.PresentCredential(unwrapVCs(credentials)))
 }
 
-func unwrapVCs(vcs *api.VerifiableCredentialsArray) []*verifiable.Credential {
-	var credentials []*verifiable.Credential
+func unwrapVCs(vcs *verifiable.CredentialsArray) []*afgoverifiable.Credential {
+	var credentials []*afgoverifiable.Credential
 
 	for i := 0; i < vcs.Length(); i++ {
 		credentials = append(credentials, vcs.AtIndex(i).VC)

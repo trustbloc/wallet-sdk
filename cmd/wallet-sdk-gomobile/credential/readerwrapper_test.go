@@ -4,38 +4,29 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package wrapper_test
+package credential_test
 
 import (
 	_ "embed"
 	"errors"
 	"testing"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api/vcparse"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
-)
-
-var (
-	//go:embed test_data/university_degree.jwt
-	universityDegreeVC string
-
-	//go:embed test_data/permanent_resident_card.jwt
-	permanentResidentCardVC string
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 )
 
 func TestCredentialReaderWrapper_Get(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		opts := vcparse.NewOpts()
+		opts := verifiable.NewOpts()
 		opts.DisableProofCheck()
 
-		vc, err := vcparse.Parse(universityDegreeVC, opts)
+		vc, err := verifiable.ParseCredential(universityDegreeVC, opts)
 		require.NoError(t, err)
 
-		reader := wrapper.CredentialReaderWrapper{
+		reader := credential.ReaderWrapper{
 			CredentialReader: &readerMock{
 				getReturn: vc,
 			},
@@ -47,7 +38,7 @@ func TestCredentialReaderWrapper_Get(t *testing.T) {
 	})
 
 	t.Run("Reader error", func(t *testing.T) {
-		reader := wrapper.CredentialReaderWrapper{
+		reader := credential.ReaderWrapper{
 			CredentialReader: &readerMock{
 				err: errors.New("reader error"),
 			},
@@ -60,21 +51,21 @@ func TestCredentialReaderWrapper_Get(t *testing.T) {
 
 func TestCredentialReaderWrapper_GetAll(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		opts := vcparse.NewOpts()
+		opts := verifiable.NewOpts()
 		opts.DisableProofCheck()
 
-		prCardVC, err := vcparse.Parse(permanentResidentCardVC, opts)
+		prCardVC, err := verifiable.ParseCredential(string(permanentResidentCardVC), opts)
 		require.NoError(t, err)
 
-		uniDegreeVC, err := vcparse.Parse(universityDegreeVC, opts)
+		uniDegreeVC, err := verifiable.ParseCredential(universityDegreeVC, opts)
 		require.NoError(t, err)
 
-		vcArray := api.NewVerifiableCredentialsArray()
+		vcArray := verifiable.NewCredentialsArray()
 
 		vcArray.Add(prCardVC)
 		vcArray.Add(uniDegreeVC)
 
-		reader := wrapper.CredentialReaderWrapper{
+		reader := credential.ReaderWrapper{
 			CredentialReader: &readerMock{
 				getAllReturn: vcArray,
 			},
@@ -86,7 +77,7 @@ func TestCredentialReaderWrapper_GetAll(t *testing.T) {
 	})
 
 	t.Run("Reader error", func(t *testing.T) {
-		reader := wrapper.CredentialReaderWrapper{
+		reader := credential.ReaderWrapper{
 			CredentialReader: &readerMock{
 				err: errors.New("reader error"),
 			},
@@ -98,15 +89,15 @@ func TestCredentialReaderWrapper_GetAll(t *testing.T) {
 }
 
 type readerMock struct {
-	getReturn    *api.VerifiableCredential
-	getAllReturn *api.VerifiableCredentialsArray
+	getReturn    *verifiable.Credential
+	getAllReturn *verifiable.CredentialsArray
 	err          error
 }
 
-func (r *readerMock) Get(id string) (*api.VerifiableCredential, error) {
+func (r *readerMock) Get(string) (*verifiable.Credential, error) {
 	return r.getReturn, r.err
 }
 
-func (r *readerMock) GetAll() (*api.VerifiableCredentialsArray, error) {
+func (r *readerMock) GetAll() (*verifiable.CredentialsArray, error) {
 	return r.getAllReturn, r.err
 }

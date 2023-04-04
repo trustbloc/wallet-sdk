@@ -99,7 +99,7 @@ If either one of these behaviours is not implemented, then certain Wallet-SDK fu
 Verifiable Credential objects are present throughout Wallet-SDK. They have a number of useful methods:
 
 * `serialize()`: Returns a serialized representation of this VC. This is useful for storing VCs in a persistent
-database. To convert the serialized representation back into a `VerifiableCredential` object,
+database. To convert the serialized representation back into a `Credential` object,
 see [Parsing Credentials](#parsing-credentials).
 * `id()`: Returns this VC's ID.
 * `issuerID()`: Returns the ID of this VC's issuer (typically a DID).
@@ -115,8 +115,8 @@ There may be additional more specific credential types as well.
 
 Serialized credentials cannot be used directly in Wallet-SDK. Instead, they must be parsed first.
 
-The `parse` function is located in the `vcparse` package. It has a few optional arguments that can be passed in via the
-methods available on an `Opts` object:
+The `parseCredential` function is located in the `Verifiable` package. It has a few optional arguments that can be
+passed in via the methods available on the `Opts` object:
 * `disableProofCheck`: Disables the proof check operation when parsing the VC. The proof check can be an expensive
 operation - in certain scenarios, it may be appropriate to disable the check. By default, proofs are checked.
 * `setDocumentLoader`: Specifies a JSON-LD document loader to use when parsing the VC. If none is specified, then a
@@ -131,18 +131,19 @@ Passing in `null`/`nil` will cause all default options to be used.
 ##### Using Default Options
 
 ```kotlin
-import dev.trustbloc.wallet.sdk.vcparse.Vcparse
+import dev.trustbloc.wallet.sdk.verifiable.Verifiable
 
-val vc = Vcparse.parse("Serialized VC goes here", null)
+val vc = Verifiable.parseCredential("Serialized VC goes here", null)
 ```
 
 ##### Using Specified Options
 
 ```kotlin
-import dev.trustbloc.wallet.sdk.vcparse.*
+import dev.trustbloc.wallet.sdk.verifiable.Opts
+import dev.trustbloc.wallet.sdk.verifiable.Verifiable
 
 val opts = Opts().disableProofCheck()
-val vc = Vcparse.parse("Serialized VC goes here", opts)
+val vc = Verifiable.parseCredential("Serialized VC goes here", opts)
 ```
 
 #### Swift (iOS)
@@ -153,7 +154,7 @@ val vc = Vcparse.parse("Serialized VC goes here", opts)
 import Walletsdk
 
 var error: NSError?
-let vc = VcparseParse("Serialized VC goes here", nil, &error)
+let vc = VerifiableParseCredential("Serialized VC goes here", nil, &error)
 ```
 
 ##### Using Specified Options
@@ -162,8 +163,8 @@ let vc = VcparseParse("Serialized VC goes here", nil, &error)
 import Walletsdk
 
 var error: NSError?
-let opts = VcparseNewOpts()?.disableProofCheck()
-let vc = VcparseParse("Serialized VC goes here", opts, &error)
+let opts = VerifiableNewOpts()?.disableProofCheck()
+let vc = VerifiableParseCredential("Serialized VC goes here", opts, &error)
 ```
 
 ## LD Document Loading
@@ -185,13 +186,12 @@ create your own implementation in your mobile code that uses platform-specific s
 #### Kotlin (Android)
 
 ```kotlin
-import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.credential.*
-import dev.trustbloc.wallet.sdk.vcparse.Vcparse
+import dev.trustbloc.wallet.sdk.verifiable.Verifiable
 
 val db = credential.newInMemoryDB()
 
-val vc = Vcparse.parse("Serialized VC goes here", null)
+val vc = Verifiable.parseCredential("Serialized VC goes here", null)
 
 db.add(vc)
 
@@ -210,7 +210,7 @@ import Walletsdk
 let db = CredentialNewInMemoryDB()
 
 var error: NSError?
-let vc = VcparseParse("Serialized VC goes here", nil, &error)!
+let vc = VerifiableParseCredential("Serialized VC goes here", nil, &error)!
 
 db.add(vc)
 
@@ -492,13 +492,13 @@ They use in-memory key storage and the Tink crypto library.
 #### Kotlin (Android)
 
 ```kotlin
-import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.openid4ci.*
 import dev.trustbloc.wallet.sdk.openid4ci.Opts
+import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
 // Setup
 val memKMSStore = MemKMSStore.MemKMSStore()
@@ -516,7 +516,7 @@ val interaction = Interaction(args, opts)
 
 val result = interaction.authorize()
 
-val credentials: VerifiableCredentialsArray
+val credentials: CredentialsArray
 
 if (result.UserPINRequired) {
     credentials = interaction.requestCredentialWithPIN(didVerificationMethod, "1234")
@@ -557,7 +557,7 @@ let interaction = Openid4ciNewInteraction(args, opts, &newInteractionError)
 
 let result = interaction.authorize()
 
-var credentials: ApiVerifiableCredentialsArray
+var credentials: VerifiableCredentialsArray
 
 if result.UserPINRequired {
     credentials = interaction.requestCredential(withPIN: didDocResolution.assertionMethod(), pin:"1234")
@@ -688,11 +688,11 @@ object, setting your desired parameters using the supplied methods, and passing 
 ##### Using Default Options
 
 ```kotlin
-import dev.trustbloc.wallet.sdk.api.VerifiableCredentialsArray
 import dev.trustbloc.wallet.sdk.display.*
 import dev.trustbloc.wallet.sdk.openid4ci.Openid4ci
+import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
-val vcArray = VerifiableCredentialsArray()
+val vcArray = CredentialsArray()
 vcArray.add(yourVCHere)
 
 val displayData = Display.resolve(vcArray, "Issuer_URI_Goes_Here", nil)
@@ -701,11 +701,11 @@ val displayData = Display.resolve(vcArray, "Issuer_URI_Goes_Here", nil)
 ##### Using Specified Options
 
 ```kotlin
-import dev.trustbloc.wallet.sdk.api.VerifiableCredentialsArray
 import dev.trustbloc.wallet.sdk.display.*
 import dev.trustbloc.wallet.sdk.openid4ci.Openid4ci
+import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
-val vcArray = VerifiableCredentialsArray()
+val vcArray = CredentialsArray()
 vcArray.add(yourVCHere)
 
 val opts = Opts().setPreferredLocale("en-us")
@@ -719,7 +719,7 @@ val displayData = Display.resolve(vcArray, "Issuer_URI_Goes_Here", opts)
 ```kotlin
 import Walletsdk
 
-let vcArray = ApiVerifiableCredentialsArray()
+let vcArray = VerifiableCredentialsArray()
 
 vcArray.add(yourVCHere)
 
@@ -732,7 +732,7 @@ let displayData = DisplayResolve(vcArray, "Issuer_URI_Goes_Here", nil, &error)
 ```kotlin
 import Walletsdk
 
-let vcArray = ApiVerifiableCredentialsArray()
+let vcArray = VerifiableCredentialsArray()
 
 vcArray.add(yourVCHere)
 
@@ -785,7 +785,7 @@ import dev.trustbloc.wallet.sdk.localkms
 import dev.trustbloc.wallet.sdk.openid4vp.*
 import dev.trustbloc.wallet.sdk.ld
 import dev.trustbloc.wallet.sdk.credential.*
-import dev.trustbloc.wallet.sdk.api.*
+import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
 // Setup
 val memKMSStore = MemKMSStore.MemKMSStore()
@@ -801,13 +801,13 @@ val opts = Opts().setActivityLogger(activityLogger) // Optional, but useful for 
 val interaction = Interaction(args, opts)
 val query = interaction.getQuery()
 val inquirer = Inquirer(docLoader)
-val savedCredentials = VerifiableCredentialsArray() // Would need some actual credentials for this to work
+val savedCredentials = CredentialsArray() // Would need some actual credentials for this to work
 
 // Use this code to display the list of VCs to select which of them to send.
 val matchedRequirements = inquirer.getSubmissionRequirements(query, savedCredentials) 
 val matchedRequirement = matchedRequirements.atIndex(0) // Usually we will have one requirement
 val requirementDesc = matchedRequirement.descriptorAtIndex(0) // Usually requirement will contain one descriptor
-val selectedVCs = VerifiableCredentialsArray()
+val selectedVCs = CredentialsArray()
 selectedVCs.add(requirementDesc.matchedVCs.atIndex(0)) // Users should select one VC for each descriptor from the matched list and confirm that they want to share it
 
 interaction.presentCredential(selectedVCs)
@@ -836,13 +836,13 @@ let opts = Openid4vpNewOpts().setActivityLogger(activityLogger) // Optional, but
 let interaction = Openid4vpNewInteraction(args, opts)
 let query = interaction.getQuery()
 let inquirer = CredentialNewInquirer(docLoader)
-let savedCredentials = ApiVerifiableCredentialsArray() // Would need some actual credentials for this to work
+let savedCredentials = VerifiableCredentialsArray() // Would need some actual credentials for this to work
 
 // Use this code to display the list of VCs to select which of them to send.
 let matchedRequirements = inquirer.getSubmissionRequirements(query, savedCredentials) 
 let matchedRequirement = matchedRequirements.atIndex(0) // Usually we will have one requirement
 let requirementDesc = matchedRequirement.descriptorAtIndex(0) // Usually requirement will contain one descriptor
-let selectedVCs = ApiVerifiableCredentialsArray()
+let selectedVCs = VerifiableCredentialsArray()
 selectedVCs.add(requirementDesc.matchedVCs.atIndex(0)) // Users should select one VC for each descriptor from the matched list and confirm that they want to share it
 
 let credentials = interaction.presentCredential(selectedVCs)

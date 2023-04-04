@@ -14,11 +14,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	afgoverifiable "github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/stretchr/testify/require"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	. "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 )
 
@@ -32,14 +33,14 @@ const (
 func TestSigner_Issue(t *testing.T) {
 	expectErr := errors.New("expected error")
 
-	mockCredential := &verifiable.Credential{
+	mockCredential := &afgoverifiable.Credential{
 		ID:      credID,
-		Types:   []string{verifiable.VCType},
-		Context: []string{verifiable.ContextURI},
-		Subject: verifiable.Subject{
+		Types:   []string{afgoverifiable.VCType},
+		Context: []string{afgoverifiable.ContextURI},
+		Subject: afgoverifiable.Subject{
 			ID: "foo",
 		},
-		Issuer: verifiable.Issuer{
+		Issuer: afgoverifiable.Issuer{
 			ID: mockDID,
 		},
 		Issued: util.NewTime(time.Now()),
@@ -54,14 +55,14 @@ func TestSigner_Issue(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			issuedCred, err := s.Issue(api.NewVerifiableCredential(mockCredential), "", mockKID)
+			issuedCred, err := s.Issue(verifiable.NewCredential(mockCredential), "", mockKID)
 			require.NoError(t, err)
 			require.NotNil(t, issuedCred)
 		})
 
 		t.Run("given credential ID", func(t *testing.T) {
 			s, err := NewSigner(
-				&mockReader{getVal: api.NewVerifiableCredential(mockCredential)},
+				&mockReader{getVal: verifiable.NewCredential(mockCredential)},
 				&mockResolver{ResolveVal: mockDocResolution(t)},
 				&mockCrypto{SignVal: []byte("foo")},
 			)
@@ -82,7 +83,7 @@ func TestSigner_Issue(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			_, err = s.Issue(api.NewVerifiableCredential(mockCredential), "", "")
+			_, err = s.Issue(verifiable.NewCredential(mockCredential), "", "")
 			require.Error(t, err)
 			require.Contains(t, err.Error(), "signing credential")
 			require.ErrorIs(t, err, expectErr)
@@ -134,16 +135,16 @@ func makeDoc(vm *did.VerificationMethod) *did.Doc {
 }
 
 type mockReader struct {
-	getVal    *api.VerifiableCredential
-	getAllVal *api.VerifiableCredentialsArray
+	getVal    *verifiable.Credential
+	getAllVal *verifiable.CredentialsArray
 	getErr    error
 }
 
-func (m *mockReader) Get(string) (*api.VerifiableCredential, error) {
+func (m *mockReader) Get(string) (*verifiable.Credential, error) {
 	return m.getVal, m.getErr
 }
 
-func (m *mockReader) GetAll() (*api.VerifiableCredentialsArray, error) {
+func (m *mockReader) GetAll() (*verifiable.CredentialsArray, error) {
 	return m.getAllVal, m.getErr
 }
 

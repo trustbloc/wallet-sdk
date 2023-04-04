@@ -12,6 +12,7 @@ import dev.trustbloc.wallet.sdk.credential.*
 import dev.trustbloc.wallet.sdk.openid4vp.Opts
 import dev.trustbloc.wallet.sdk.openid4vp.Args
 import dev.trustbloc.wallet.sdk.otel.Otel
+import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import java.lang.Exception
 
 class OpenID4VP constructor(
@@ -44,7 +45,7 @@ class OpenID4VP constructor(
         initiatedInteraction = interaction
     }
 
-    fun getMatchedSubmissionRequirements(storedCredentials: VerifiableCredentialsArray): SubmissionRequirementArray {
+    fun getMatchedSubmissionRequirements(storedCredentials: CredentialsArray): SubmissionRequirementArray {
         val vpQueryContent = this.vpQueryContent
                 ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
 
@@ -55,7 +56,7 @@ class OpenID4VP constructor(
     /**
      * initiatedInteraction has PresentCredential method which presents credentials to redirect uri from request object.
      */
-    fun presentCredential(selectedCredentials: VerifiableCredentialsArray) {
+    fun presentCredential(selectedCredentials: CredentialsArray) {
         val initiatedInteraction = this.initiatedInteraction
                 ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
 
