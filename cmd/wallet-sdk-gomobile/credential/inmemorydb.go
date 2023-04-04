@@ -13,20 +13,20 @@ import (
 	goapimemstorage "github.com/trustbloc/wallet-sdk/pkg/memstorage"
 )
 
-// A DB allows for credential storage and retrieval using in-memory storage only.
-type DB struct {
+// A InMemoryDB allows for credential storage and retrieval using in-memory storage only.
+type InMemoryDB struct {
 	goAPIProvider *goapimemstorage.Provider
 }
 
-// NewInMemoryDB returns a new in-memory credential DB.
-func NewInMemoryDB() *DB {
-	return &DB{
+// NewInMemoryDB returns a new InMemoryDB.
+func NewInMemoryDB() *InMemoryDB {
+	return &InMemoryDB{
 		goAPIProvider: goapimemstorage.NewProvider(),
 	}
 }
 
 // Get returns a credential with the given id. An error is returned if no credential exists with the given id.
-func (p *DB) Get(id string) (*verifiable.Credential, error) {
+func (p *InMemoryDB) Get(id string) (*verifiable.Credential, error) {
 	vc, err := p.goAPIProvider.Get(id)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (p *DB) Get(id string) (*verifiable.Credential, error) {
 }
 
 // GetAll returns all stored credentials.
-func (p *DB) GetAll() (*verifiable.CredentialsArray, error) {
+func (p *InMemoryDB) GetAll() (*verifiable.CredentialsArray, error) {
 	vcs, err := p.goAPIProvider.GetAll()
 	if err != nil {
 		return nil, err
@@ -52,11 +52,11 @@ func (p *DB) GetAll() (*verifiable.CredentialsArray, error) {
 }
 
 // Add stores the given credential.
-func (p *DB) Add(vc *verifiable.Credential) error {
+func (p *InMemoryDB) Add(vc *verifiable.Credential) error {
 	return p.goAPIProvider.Add(vc.VC)
 }
 
 // Remove removes the credential with the matching id, if it exists.
-func (p *DB) Remove(id string) error {
+func (p *InMemoryDB) Remove(id string) error {
 	return p.goAPIProvider.Remove(id)
 }

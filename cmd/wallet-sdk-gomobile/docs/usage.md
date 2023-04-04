@@ -178,18 +178,19 @@ preloaded local contexts.
 ## In-Memory Credential Storage
 
 The credential package contains an in-memory credential storage implementation that can be used to store credentials
-in memory and also satisfy the credential reader interface. As it only uses in-memory storage, you will probably want to
-create your own implementation in your mobile code that uses platform-specific storage.
+in memory and also satisfy the `Reader` interface (in the `Credential` package). As it only uses in-memory storage,
+it's generally only suitable for testing purposes. You will probably want to create your own implementation in your
+mobile code that uses platform-specific storage.
 
 ### Examples
 
 #### Kotlin (Android)
 
 ```kotlin
-import dev.trustbloc.wallet.sdk.credential.*
+import dev.trustbloc.wallet.sdk.credential.InMemoryDB
 import dev.trustbloc.wallet.sdk.verifiable.Verifiable
 
-val db = credential.newInMemoryDB()
+val db = InMemoryDB()
 
 val vc = Verifiable.parseCredential("Serialized VC goes here", null)
 
