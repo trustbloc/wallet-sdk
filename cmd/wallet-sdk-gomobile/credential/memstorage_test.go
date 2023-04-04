@@ -12,13 +12,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api/vcparse"
+	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
-
-	"github.com/stretchr/testify/require"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 )
 
 var (
@@ -33,17 +30,17 @@ func TestProvider(t *testing.T) {
 
 	const universityDegreeVCID = "http://example.edu/credentials/1872"
 
-	opts := vcparse.NewOpts()
+	opts := verifiable.NewOpts()
 	opts.DisableProofCheck()
 
-	universityDegreeVerifiableCredential, err := vcparse.Parse(universityDegreeVC, opts)
+	universityDegreeVerifiableCredential, err := verifiable.ParseCredential(universityDegreeVC, opts)
 	require.NoError(t, err)
 
 	// Store two VCs.
 	err = provider.Add(universityDegreeVerifiableCredential)
 	require.NoError(t, err)
 
-	driversLicenseVerifiableCredential, err := vcparse.Parse(driversLicenseDegreeVC, opts)
+	driversLicenseVerifiableCredential, err := verifiable.ParseCredential(driversLicenseDegreeVC, opts)
 	require.NoError(t, err)
 
 	err = provider.Add(driversLicenseVerifiableCredential)
@@ -78,6 +75,6 @@ func TestProvider(t *testing.T) {
 func TestProvider_Add_Failure_Nil_VC(t *testing.T) {
 	provider := credential.NewInMemoryDB()
 
-	err := provider.Add(api.NewVerifiableCredential(nil))
+	err := provider.Add(verifiable.NewCredential(nil))
 	require.EqualError(t, err, "VC cannot be nil")
 }

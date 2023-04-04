@@ -9,7 +9,7 @@ SPDX-License-Identifier: Apache-2.0
 package credential
 
 import (
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	goapimemstorage "github.com/trustbloc/wallet-sdk/pkg/memstorage"
 )
 
@@ -26,33 +26,33 @@ func NewInMemoryDB() *DB {
 }
 
 // Get returns a credential with the given id. An error is returned if no credential exists with the given id.
-func (p *DB) Get(id string) (*api.VerifiableCredential, error) {
+func (p *DB) Get(id string) (*verifiable.Credential, error) {
 	vc, err := p.goAPIProvider.Get(id)
 	if err != nil {
 		return nil, err
 	}
 
-	return api.NewVerifiableCredential(vc), nil
+	return verifiable.NewCredential(vc), nil
 }
 
 // GetAll returns all stored credentials.
-func (p *DB) GetAll() (*api.VerifiableCredentialsArray, error) {
+func (p *DB) GetAll() (*verifiable.CredentialsArray, error) {
 	vcs, err := p.goAPIProvider.GetAll()
 	if err != nil {
 		return nil, err
 	}
 
-	gomobileVCs := api.NewVerifiableCredentialsArray()
+	gomobileVCs := verifiable.NewCredentialsArray()
 
 	for i := range vcs {
-		gomobileVCs.Add(api.NewVerifiableCredential(&vcs[i]))
+		gomobileVCs.Add(verifiable.NewCredential(&vcs[i]))
 	}
 
 	return gomobileVCs, nil
 }
 
 // Add stores the given credential.
-func (p *DB) Add(vc *api.VerifiableCredential) error {
+func (p *DB) Add(vc *verifiable.Credential) error {
 	return p.goAPIProvider.Add(vc.VC)
 }
 

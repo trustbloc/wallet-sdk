@@ -19,9 +19,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	afgoverifiable "github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
@@ -158,7 +160,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	mockKey, _, e := ed25519.GenerateKey(rand.Reader)
 	require.NoError(t, e)
 
-	credentials := api.NewVerifiableCredentialsArray()
+	credentials := verifiable.NewCredentialsArray()
 
 	credentialData := []json.RawMessage{}
 
@@ -166,11 +168,11 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	require.NoError(t, e)
 
 	for _, credBytes := range credentialData {
-		cred, err := verifiable.ParseCredential(credBytes,
-			verifiable.WithDisabledProofCheck(), verifiable.WithCredDisableValidation())
+		cred, err := afgoverifiable.ParseCredential(credBytes,
+			afgoverifiable.WithDisabledProofCheck(), afgoverifiable.WithCredDisableValidation())
 		require.NoError(t, err)
 
-		credentials.Add(api.NewVerifiableCredential(cred))
+		credentials.Add(verifiable.NewCredential(cred))
 	}
 
 	t.Run("Success", func(t *testing.T) {
@@ -267,7 +269,7 @@ func (o *mocGoAPIInteraction) GetQuery() (*presexch.PresentationDefinition, erro
 	return o.GetQueryResult, o.GetQueryError
 }
 
-func (o *mocGoAPIInteraction) PresentCredential(credentials []*verifiable.Credential) error {
+func (o *mocGoAPIInteraction) PresentCredential(credentials []*afgoverifiable.Credential) error {
 	return o.PresentCredentialErr
 }
 

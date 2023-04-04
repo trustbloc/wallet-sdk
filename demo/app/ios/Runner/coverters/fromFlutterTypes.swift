@@ -8,14 +8,14 @@
 import Foundation
 import Walletsdk
 
-func convertToVerifiableCredentialsArray(credentials: Array<String>) -> ApiVerifiableCredentialsArray {
-    let opts = VcparseNewOpts()
+func convertToVerifiableCredentialsArray(credentials: Array<String>) -> VerifiableCredentialsArray {
+    let opts = VerifiableNewOpts()
     opts!.disableProofCheck()
     
-    let parsedCredentials = ApiVerifiableCredentialsArray()!
+    let parsedCredentials = VerifiableCredentialsArray()!
     
     for cred in credentials{
-        let parsedVC = VcparseParse(cred, opts, nil)!
+        let parsedVC = VerifiableParseCredential(cred, opts, nil)!
         parsedCredentials.add(parsedVC)
     }
 

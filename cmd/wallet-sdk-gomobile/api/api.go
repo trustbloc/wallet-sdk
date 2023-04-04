@@ -37,14 +37,6 @@ type DIDResolver interface {
 	Resolve(did string) ([]byte, error)
 }
 
-// A CredentialReader is capable of reading VCs from some underlying storage mechanism.
-type CredentialReader interface {
-	// Get retrieves a VC.
-	Get(id string) (*VerifiableCredential, error)
-	// GetAll retrieves all VCs.
-	GetAll() (*VerifiableCredentialsArray, error)
-}
-
 // Crypto defines useful Crypto operations.
 type Crypto interface {
 	// Sign will sign msg using a matching signature primitive from key referenced by keyID

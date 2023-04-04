@@ -5,16 +5,17 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package vcparse_test
+package verifiable_test
 
 import (
 	_ "embed"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api/vcparse"
 )
 
 //go:embed testdata/credential_university_degree.jsonld
@@ -22,23 +23,23 @@ var universityDegreeCredential string
 
 func TestParse(t *testing.T) {
 	t.Run("Success - default options", func(t *testing.T) {
-		universityDegreeVC, err := vcparse.Parse(universityDegreeCredential, nil)
+		universityDegreeVC, err := verifiable.ParseCredential(universityDegreeCredential, nil)
 		require.NoError(t, err)
 		require.Equal(t, "http://example.edu/credentials/1872", universityDegreeVC.VC.ID)
 	})
 	t.Run("Success - proof check disabled", func(t *testing.T) {
-		opts := vcparse.NewOpts()
+		opts := verifiable.NewOpts()
 		opts.DisableProofCheck()
 
-		universityDegreeVC, err := vcparse.Parse(universityDegreeCredential, opts)
+		universityDegreeVC, err := verifiable.ParseCredential(universityDegreeCredential, opts)
 		require.NoError(t, err)
 		require.Equal(t, "http://example.edu/credentials/1872", universityDegreeVC.VC.ID)
 	})
 	t.Run("Failure - blank VC", func(t *testing.T) {
-		opts := &vcparse.Opts{}
+		opts := &verifiable.Opts{}
 		opts.SetDocumentLoader(&documentLoaderMock{})
 
-		universityDegreeVC, err := vcparse.Parse("", opts)
+		universityDegreeVC, err := verifiable.ParseCredential("", opts)
 		require.EqualError(t, err, "decode new credential: embedded proof is not JSON: "+
 			"unexpected end of JSON input")
 		require.Nil(t, universityDegreeVC)

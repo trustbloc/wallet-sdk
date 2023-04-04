@@ -15,7 +15,7 @@ import (
 
 	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	afgoverifiable "github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
@@ -25,6 +25,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	sdkapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
@@ -53,8 +54,10 @@ func TestCredentialAPI(t *testing.T) {
 	ldLoader := testutil.DocumentLoader(t)
 
 	verifier := jwtvcVerifier{
-		ldLoader:         ldLoader,
-		publicKeyFetcher: verifiable.NewVDRKeyResolver(&didResolverWrapper{didResolver: sdkResolver}).PublicKeyFetcher(),
+		ldLoader: ldLoader,
+		publicKeyFetcher: afgoverifiable.NewVDRKeyResolver(&didResolverWrapper{
+			didResolver: sdkResolver,
+		}).PublicKeyFetcher(),
 	}
 
 	testCases := []struct {
@@ -90,29 +93,29 @@ func TestCredentialAPI(t *testing.T) {
 			docID, err := didDoc.ID()
 			require.NoError(t, err)
 
-			templateCredential := &verifiable.Credential{
+			templateCredential := &afgoverifiable.Credential{
 				ID:      "cred-ID",
-				Types:   []string{verifiable.VCType},
-				Context: []string{verifiable.ContextURI},
-				Subject: verifiable.Subject{
+				Types:   []string{afgoverifiable.VCType},
+				Context: []string{afgoverifiable.ContextURI},
+				Subject: afgoverifiable.Subject{
 					ID: "foo",
 				},
-				Issuer: verifiable.Issuer{
+				Issuer: afgoverifiable.Issuer{
 					ID: docID,
 				},
 				Issued: util.NewTime(time.Now()),
 			}
 
-			err = credStore.Add(api.NewVerifiableCredential(templateCredential))
+			err = credStore.Add(verifiable.NewCredential(templateCredential))
 			require.NoError(t, err)
 
-			var cred *api.VerifiableCredential
+			var cred *verifiable.Credential
 			var credID string
 
 			if tc.getCredByName {
 				credID = templateCredential.ID
 			} else {
-				cred = api.NewVerifiableCredential(templateCredential)
+				cred = verifiable.NewCredential(templateCredential)
 			}
 
 			issuedCred, err := signer.Issue(cred, credID, docID)
@@ -125,14 +128,14 @@ func TestCredentialAPI(t *testing.T) {
 
 type jwtvcVerifier struct {
 	ldLoader         ld.DocumentLoader
-	publicKeyFetcher verifiable.PublicKeyFetcher
+	publicKeyFetcher afgoverifiable.PublicKeyFetcher
 }
 
 func (j *jwtvcVerifier) verify(cred []byte) error {
-	_, err := verifiable.ParseCredential(
+	_, err := afgoverifiable.ParseCredential(
 		cred,
-		verifiable.WithJSONLDDocumentLoader(j.ldLoader),
-		verifiable.WithPublicKeyFetcher(j.publicKeyFetcher),
+		afgoverifiable.WithJSONLDDocumentLoader(j.ldLoader),
+		afgoverifiable.WithPublicKeyFetcher(j.publicKeyFetcher),
 	)
 
 	return err

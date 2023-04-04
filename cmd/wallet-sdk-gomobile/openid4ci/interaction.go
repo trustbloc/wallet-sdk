@@ -11,6 +11,8 @@ package openid4ci
 import (
 	"errors"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
+
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
@@ -88,7 +90,7 @@ func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 // This is called after the wallet is authorized and is ready to receive credential(s).
 // Relevant section of the spec:
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#name-credential-endpoint
-func (i *Interaction) RequestCredential(vm *api.VerificationMethod) (*api.VerifiableCredentialsArray, error) {
+func (i *Interaction) RequestCredential(vm *api.VerificationMethod) (*verifiable.CredentialsArray, error) {
 	credentials, err := i.requestCredential(vm, "")
 	if err != nil {
 		parsedErr := walleterror.Parse(err.Error())
@@ -116,13 +118,13 @@ func (i *Interaction) RequestCredential(vm *api.VerificationMethod) (*api.Verifi
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#name-credential-endpoint
 func (i *Interaction) RequestCredentialWithPIN(
 	vm *api.VerificationMethod, pin string,
-) (*api.VerifiableCredentialsArray, error) {
+) (*verifiable.CredentialsArray, error) {
 	return i.requestCredential(vm, pin)
 }
 
 func (i *Interaction) requestCredential(
 	vm *api.VerificationMethod, pin string,
-) (*api.VerifiableCredentialsArray, error) {
+) (*verifiable.CredentialsArray, error) {
 	if vm == nil {
 		return nil, errors.New("verification method must be provided")
 	}
@@ -139,10 +141,10 @@ func (i *Interaction) requestCredential(
 		return nil, wrapper.ToMobileError(err)
 	}
 
-	gomobileCredentials := api.NewVerifiableCredentialsArray()
+	gomobileCredentials := verifiable.NewCredentialsArray()
 
 	for i := range credentials {
-		gomobileCredentials.Add(api.NewVerifiableCredential(credentials[i]))
+		gomobileCredentials.Add(verifiable.NewCredential(credentials[i]))
 	}
 
 	return gomobileCredentials, nil

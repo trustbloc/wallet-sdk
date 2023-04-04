@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
+
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
@@ -58,7 +60,7 @@ func newStatusVerifier(didResolver goapi.DIDResolver) (*StatusVerifier, error) {
 }
 
 // Verify verifies credential status.
-func (s *StatusVerifier) Verify(vc *api.VerifiableCredential) error {
+func (s *StatusVerifier) Verify(vc *verifiable.Credential) error {
 	return s.verifier.Verify(vc.VC)
 }
 

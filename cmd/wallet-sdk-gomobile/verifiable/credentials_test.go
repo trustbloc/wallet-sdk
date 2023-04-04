@@ -4,7 +4,7 @@ Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
-package api_test
+package verifiable_test
 
 import (
 	"crypto/ed25519"
@@ -13,29 +13,23 @@ import (
 	"testing"
 
 	afgojwt "github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	afgoverifiable "github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/stretchr/testify/require"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api/vcparse"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 )
 
-var (
-	//go:embed testdata/credential_university_degree.jsonld
-	universityDegreeCredential string
-
-	//go:embed testdata/credential_drivers_licence.jsonld
-	driversLicenceCredential string
-)
+//go:embed testdata/credential_drivers_licence.jsonld
+var driversLicenceCredential string
 
 func TestVerifiableCredential(t *testing.T) {
 	t.Run("Valid VCs", func(t *testing.T) {
-		vcArray := api.NewVerifiableCredentialsArray()
+		vcArray := verifiable.NewCredentialsArray()
 
-		opts := &vcparse.Opts{}
+		opts := &verifiable.Opts{}
 		opts.DisableProofCheck()
 
-		universityDegreeVC, err := vcparse.Parse(universityDegreeCredential, opts)
+		universityDegreeVC, err := verifiable.ParseCredential(universityDegreeCredential, opts)
 		require.NoError(t, err)
 
 		id := universityDegreeVC.ID()
@@ -66,7 +60,7 @@ func TestVerifiableCredential(t *testing.T) {
 
 		require.Equal(t, 1, vcArray.Length())
 
-		driversLicenceVC, err := vcparse.Parse(driversLicenceCredential, opts)
+		driversLicenceVC, err := verifiable.ParseCredential(driversLicenceCredential, opts)
 		require.NoError(t, err)
 
 		id = driversLicenceVC.ID()
@@ -108,9 +102,9 @@ func TestVerifiableCredential(t *testing.T) {
 		require.NotEmpty(t, serializedVC)
 	})
 	t.Run("Invalid VC", func(t *testing.T) {
-		invalidVC := verifiable.Credential{}
+		invalidVC := afgoverifiable.Credential{}
 
-		vcWrapper := api.NewVerifiableCredential(&invalidVC)
+		vcWrapper := verifiable.NewCredential(&invalidVC)
 
 		issuanceDate, err := vcWrapper.IssuanceDate()
 		require.EqualError(t, err, "issuance date missing (invalid VC)")
@@ -119,10 +113,10 @@ func TestVerifiableCredential(t *testing.T) {
 }
 
 func TestVerifiableCredential_NameIsNotAString(t *testing.T) {
-	opts := &vcparse.Opts{}
+	opts := &verifiable.Opts{}
 	opts.DisableProofCheck()
 
-	universityDegreeVC, err := vcparse.Parse(universityDegreeCredential, opts)
+	universityDegreeVC, err := verifiable.ParseCredential(universityDegreeCredential, opts)
 	require.NoError(t, err)
 
 	universityDegreeVC.VC.CustomFields["name"] = 0
@@ -133,11 +127,11 @@ func TestVerifiableCredential_NameIsNotAString(t *testing.T) {
 
 func TestVerifiableCredential_ClaimTypes(t *testing.T) {
 	t.Run("Claim types are in credential subject", func(t *testing.T) {
-		opts := &vcparse.Opts{}
+		opts := &verifiable.Opts{}
 		opts.DisableProofCheck()
 
 		t.Run("Types were an array of interfaces", func(t *testing.T) {
-			universityDegreeVC, err := vcparse.Parse(universityDegreeCredential, opts)
+			universityDegreeVC, err := verifiable.ParseCredential(universityDegreeCredential, opts)
 			require.NoError(t, err)
 
 			types := universityDegreeVC.Types()
@@ -146,7 +140,7 @@ func TestVerifiableCredential_ClaimTypes(t *testing.T) {
 			require.Equal(t, "UniversityDegreeCredential", types.AtIndex(1))
 		})
 		t.Run("Type was a string", func(t *testing.T) {
-			driversLicenceVC, err := vcparse.Parse(driversLicenceCredential, opts)
+			driversLicenceVC, err := verifiable.ParseCredential(driversLicenceCredential, opts)
 			require.NoError(t, err)
 
 			types := driversLicenceVC.Types()
@@ -155,12 +149,12 @@ func TestVerifiableCredential_ClaimTypes(t *testing.T) {
 		})
 	})
 	t.Run("Claim types are in selective disclosures", func(t *testing.T) {
-		opts := []verifiable.CredentialOpt{
-			verifiable.WithDisabledProofCheck(),
-			verifiable.WithCredDisableValidation(),
+		opts := []afgoverifiable.CredentialOpt{
+			afgoverifiable.WithDisabledProofCheck(),
+			afgoverifiable.WithCredDisableValidation(),
 		}
 
-		universityDegreeVC, err := verifiable.ParseCredential([]byte(universityDegreeCredential), opts...)
+		universityDegreeVC, err := afgoverifiable.ParseCredential([]byte(universityDegreeCredential), opts...)
 		require.NoError(t, err)
 
 		_, privKey, err := ed25519.GenerateKey(rand.Reader)
@@ -170,25 +164,25 @@ func TestVerifiableCredential_ClaimTypes(t *testing.T) {
 			universityDegreeVC.Issuer.ID+"#keys-1")
 		require.NoError(t, err)
 
-		universityDegreeVCSD, err := verifiable.ParseCredential([]byte(universityDegreeVCSDJWT), opts...)
+		universityDegreeVCSD, err := afgoverifiable.ParseCredential([]byte(universityDegreeVCSDJWT), opts...)
 		require.NoError(t, err)
 
 		universityDegreeVCWithOnlyTypeSDJWT, err := universityDegreeVCSD.MarshalWithDisclosure(
-			verifiable.DiscloseGivenRequired([]string{"type"}))
+			afgoverifiable.DiscloseGivenRequired([]string{"type"}))
 		require.NoError(t, err)
 
-		vcWithOnlyTypeSD, err := verifiable.ParseCredential(
+		vcWithOnlyTypeSD, err := afgoverifiable.ParseCredential(
 			[]byte(universityDegreeVCWithOnlyTypeSDJWT), opts...)
 		require.NoError(t, err)
 
-		wrappedUniversityDegreeVCWithOnlyTypeSD := api.NewVerifiableCredential(vcWithOnlyTypeSD)
+		wrappedUniversityDegreeVCWithOnlyTypeSD := verifiable.NewCredential(vcWithOnlyTypeSD)
 
 		types := wrappedUniversityDegreeVCWithOnlyTypeSD.ClaimTypes()
 		require.Equal(t, 1, types.Length())
 		require.Equal(t, "UniversityDegreeCredential", types.AtIndex(0))
 	})
 	t.Run("No claim types", func(t *testing.T) {
-		vc := api.NewVerifiableCredential(&verifiable.Credential{})
+		vc := verifiable.NewCredential(&afgoverifiable.Credential{})
 
 		types := vc.ClaimTypes()
 		require.Nil(t, types)

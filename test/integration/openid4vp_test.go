@@ -13,10 +13,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
@@ -194,7 +195,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		requirementDescriptor := requirements.AtIndex(0).DescriptorAtIndex(0)
 		require.GreaterOrEqual(t, requirementDescriptor.MatchedVCs.Length(), 1)
 
-		selectedCreds := api.NewVerifiableCredentialsArray()
+		selectedCreds := verifiable.NewCredentialsArray()
 		selectedCreds.Add(requirementDescriptor.MatchedVCs.AtIndex(0))
 
 		verifiablePres, err := inquirer.Query(query, credential.NewCredentialsArgFromVCArray(selectedCreds))

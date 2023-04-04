@@ -49,7 +49,7 @@ public class OpenID4VP {
         initiatedInteraction = interaction
     }
     
-    func getMatchedSubmissionRequirements(storedCredentials: ApiVerifiableCredentialsArray)
+    func getMatchedSubmissionRequirements(storedCredentials: VerifiableCredentialsArray)
         throws -> CredentialSubmissionRequirementArray {
         guard let vpQueryContent = self.vpQueryContent else {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
@@ -61,7 +61,7 @@ public class OpenID4VP {
     /**
      * initiatedInteraction has PresentCredential method which presents credentials to redirect uri from request object.
      */
-    func presentCredential(selectedCredentials: ApiVerifiableCredentialsArray) throws {
+    func presentCredential(selectedCredentials: VerifiableCredentialsArray) throws {
 //         guard let vpQueryContent = self.vpQueryContent else {
 //             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
 //         }

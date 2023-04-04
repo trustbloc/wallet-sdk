@@ -13,10 +13,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
+
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
-
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api/vcparse"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
@@ -202,13 +202,13 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 func createCredJSONArray(t *testing.T, creds [][]byte) *credential.CredentialsArg {
 	t.Helper()
 
-	credsArray := api.NewVerifiableCredentialsArray()
+	credsArray := verifiable.NewCredentialsArray()
 
 	for _, credContent := range creds {
-		opts := vcparse.NewOpts()
+		opts := verifiable.NewOpts()
 		opts.DisableProofCheck()
 
-		vc, err := vcparse.Parse(string(credContent), opts)
+		vc, err := verifiable.ParseCredential(string(credContent), opts)
 		require.NoError(t, err)
 
 		credsArray.Add(vc)

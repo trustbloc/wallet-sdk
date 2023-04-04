@@ -4,6 +4,7 @@ Copyright Avast Software. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+// Package wrapper contains wrappers that convert between the Go and gomobile APIs.
 package wrapper
 
 import (

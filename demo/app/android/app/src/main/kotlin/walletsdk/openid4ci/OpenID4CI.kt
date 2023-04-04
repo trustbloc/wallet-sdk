@@ -5,7 +5,8 @@ import dev.trustbloc.wallet.sdk.display.*
 import dev.trustbloc.wallet.sdk.openid4ci.*
 import dev.trustbloc.wallet.sdk.openid4ci.Opts
 import dev.trustbloc.wallet.sdk.otel.Otel
-import dev.trustbloc.wallet.sdk.vcparse.Vcparse
+import dev.trustbloc.wallet.sdk.verifiable.Credential
+import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
 class OpenID4CI constructor(
         private val requestURI: String,
@@ -35,7 +36,7 @@ class OpenID4CI constructor(
         return newInteraction.issuerURI()
     }
 
-    fun requestCredential(didVerificationMethod: VerificationMethod, otp: String?): VerifiableCredential? {
+    fun requestCredential(didVerificationMethod: VerificationMethod, otp: String?): Credential? {
         val credsArr = newInteraction.requestCredentialWithPIN(didVerificationMethod, otp)
 
         if (credsArr.length() != 0L) {
@@ -45,7 +46,7 @@ class OpenID4CI constructor(
         return null
     }
 
-    fun serializeDisplayData(issuerURI: String?, vcCredentials: VerifiableCredentialsArray): String? {
+    fun serializeDisplayData(issuerURI: String?, vcCredentials: CredentialsArray): String? {
         return Display.resolve(vcCredentials, issuerURI, null).serialize()
     }
 }

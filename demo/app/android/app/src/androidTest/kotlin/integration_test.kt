@@ -4,7 +4,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import dev.trustbloc.wallet.BuildConfig
 import dev.trustbloc.wallet.sdk.api.KeyWriter
-import dev.trustbloc.wallet.sdk.api.VerifiableCredentialsArray
+import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import dev.trustbloc.wallet.sdk.credential.CredentialsArg
 import dev.trustbloc.wallet.sdk.credential.Inquirer
 import dev.trustbloc.wallet.sdk.did.Creator
@@ -101,7 +101,7 @@ class IntegrationTest {
         // matchedVCs contains list of credentials that match given input descriptor.
         assertThat(requirementDescriptor.matchedVCs.length()).isGreaterThan(0)
 
-        val selectedCreds = VerifiableCredentialsArray()
+        val selectedCreds = CredentialsArray()
         // Pick first credential from matched creds
         selectedCreds.add(requirementDescriptor.matchedVCs.atIndex(0))
 
