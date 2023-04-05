@@ -24,38 +24,23 @@ type Signer struct {
 }
 
 // NewSigner initializes a credential Signer for issuing self-signed credentials.
-func NewSigner(
-	credReader Reader,
-	didResolver api.DIDResolver,
-	crypto api.Crypto,
-) (*Signer, error) {
-	readerWrapper := &ReaderWrapper{CredentialReader: credReader}
+func NewSigner(didResolver api.DIDResolver, crypto api.Crypto) *Signer {
 	resolverWrapper := &wrapper.VDRResolverWrapper{DIDResolver: didResolver}
 
-	sdkSigner := credentialsigner.New(readerWrapper, resolverWrapper, crypto)
+	sdkSigner := credentialsigner.New(resolverWrapper, crypto)
 
 	return &Signer{
 		signer: sdkSigner,
-	}, nil
+	}
 }
 
-// Issue signs the given Verifiable Credential with the key identified by keyID, returning a serialized JWT VC.
-// The Verifiable Credential can either be provided directly or it can be specified by credID, in which case it will be
-// retrieved from this Signer's CredentialReader.
-func (s *Signer) Issue(credential *verifiable.Credential, credID, keyID string) ([]byte, error) {
-	var credOpt credentialsigner.CredentialOpt
-
-	if credential == nil && credID == "" {
+// Issue signs the given Verifiable Credential with the key identified by keyID, returning the signed VC.
+func (s *Signer) Issue(credential *verifiable.Credential, keyID string) (*verifiable.Credential, error) {
+	if credential == nil {
 		return nil, errors.New("no credential specified")
 	}
 
-	if credential != nil {
-		credOpt = credentialsigner.GivenCredential(credential.VC)
-	} else {
-		credOpt = credentialsigner.GivenCredentialID(credID)
-	}
-
-	signedCred, err := s.signer.Issue(credOpt, &credentialsigner.ProofOptions{
+	signedCred, err := s.signer.Issue(credential.VC, &credentialsigner.ProofOptions{
 		ProofFormat: credentialsigner.ExternalJWTProofFormat,
 		KeyID:       keyID,
 	})
@@ -63,10 +48,5 @@ func (s *Signer) Issue(credential *verifiable.Credential, credID, keyID string) 
 		return nil, fmt.Errorf("signing credential: %w", err)
 	}
 
-	marshalledCred, err := signedCred.MarshalJSON()
-	if err != nil {
-		return nil, fmt.Errorf("marshalling signed credential: %w", err)
-	}
-
-	return marshalledCred, nil
+	return verifiable.NewCredential(signedCred), nil
 }

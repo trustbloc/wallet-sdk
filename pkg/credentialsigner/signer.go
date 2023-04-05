@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package credentialsigner
 
 import (
+	"errors"
 	"fmt"
 
 	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
@@ -22,39 +23,15 @@ import (
 
 // Signer signs credentials.
 type Signer struct {
-	credReader  api.CredentialReader
 	didResolver api.DIDResolver
 	crypto      api.Crypto
 }
 
 // New initializes a credential Signer.
-func New(credReader api.CredentialReader, didResolver api.DIDResolver, crypto api.Crypto) *Signer {
+func New(didResolver api.DIDResolver, crypto api.Crypto) *Signer {
 	return &Signer{
-		credReader:  credReader,
 		didResolver: didResolver,
 		crypto:      crypto,
-	}
-}
-
-type credOptData struct {
-	vc   *verifiable.Credential
-	vcID string
-}
-
-// CredentialOpt provides the credential for Signer to sign.
-type CredentialOpt func(data *credOptData)
-
-// GivenCredential provides a verifiable.Credential to Signer.
-func GivenCredential(credential *verifiable.Credential) CredentialOpt {
-	return func(data *credOptData) {
-		data.vc = credential
-	}
-}
-
-// GivenCredentialID provides a credential ID for a credential for Signer to load.
-func GivenCredentialID(credID string) CredentialOpt {
-	return func(data *credOptData) {
-		data.vcID = credID
 	}
 }
 
@@ -79,44 +56,19 @@ type ProofOptions struct {
 }
 
 // Issue signs the given credential.
-func (s *Signer) Issue(credential CredentialOpt, proofOptions *ProofOptions) (*verifiable.Credential, error) {
-	vc, err := s.readCredential(credential)
-	if err != nil {
-		return nil, err
+func (s *Signer) Issue(credential *verifiable.Credential, proofOptions *ProofOptions) (*verifiable.Credential, error) {
+	if credential == nil {
+		return nil, errors.New("no credential provided")
 	}
 
 	switch proofOptions.ProofFormat {
 	case ExternalJWTProofFormat:
-		return s.issueJWTVC(vc, proofOptions)
+		return s.issueJWTVC(credential, proofOptions)
 	case EmbeddedLDProofFormat:
 		return nil, fmt.Errorf("JSON-LD proof format not currently supported")
 	default:
 		return nil, fmt.Errorf("proof format not recognized")
 	}
-}
-
-func (s *Signer) readCredential(credential CredentialOpt) (*verifiable.Credential, error) {
-	input := &credOptData{}
-	credential(input)
-
-	if input.vc != nil {
-		return input.vc, nil
-	}
-
-	if input.vcID == "" {
-		return nil, fmt.Errorf("no Credential provided")
-	}
-
-	if s.credReader == nil {
-		return nil, fmt.Errorf("credential ID provided for fetching, but Signer instance does not have a CredentialReader")
-	}
-
-	vc, err := s.credReader.Get(input.vcID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch credential: %w", err)
-	}
-
-	return vc, nil
 }
 
 func (s *Signer) issueJWTVC(vc *verifiable.Credential, proofOptions *ProofOptions) (*verifiable.Credential, error) {

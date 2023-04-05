@@ -51,7 +51,7 @@ class OpenID4VP constructor(
 
 
         return Inquirer(null)
-                .getSubmissionRequirements(vpQueryContent, CredentialsArg(storedCredentials))
+                .getSubmissionRequirements(vpQueryContent, storedCredentials)
     }
     /**
      * initiatedInteraction has PresentCredential method which presents credentials to redirect uri from request object.

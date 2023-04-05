@@ -5,7 +5,6 @@ import com.google.common.truth.Truth.assertThat
 import dev.trustbloc.wallet.BuildConfig
 import dev.trustbloc.wallet.sdk.api.KeyWriter
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
-import dev.trustbloc.wallet.sdk.credential.CredentialsArg
 import dev.trustbloc.wallet.sdk.credential.Inquirer
 import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.did.Resolver
@@ -84,7 +83,7 @@ class IntegrationTest {
 
         // TODO: maybe better to rename getSubmissionRequirements to something like matchCredentialsWithRequirements
         val submissionRequirements =
-                inquirer.getSubmissionRequirements(credentialsQuery, CredentialsArg(issuedCreds))
+                inquirer.getSubmissionRequirements(credentialsQuery, issuedCreds)
 
         assertThat(submissionRequirements.len()).isGreaterThan(0)
         val requirement = submissionRequirements.atIndex(0)

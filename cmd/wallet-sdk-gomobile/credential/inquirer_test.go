@@ -71,13 +71,7 @@ func TestInstance_Query(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, presentation)
 
-		content, err := presentation.Content()
-		require.NoError(t, err)
-		require.NotNil(t, content)
-
-		credentials, err := presentation.Credentials()
-		require.NoError(t, err)
-		require.Equal(t, 1, credentials.Length())
+		checkPresentationFromQuery(t, presentation)
 	})
 
 	t.Run("No matched credential", func(t *testing.T) {
@@ -109,12 +103,13 @@ func TestInstance_Query(t *testing.T) {
 		require.Contains(t, err.Error(), "validation of presentation definition failed:")
 	})
 
-	t.Run("Nil credentials and nil reader", func(t *testing.T) {
+	t.Run("Nil credentials", func(t *testing.T) {
 		query := credential.NewInquirer(opts)
 
-		_, err := query.Query(presentationDefinition, credential.NewCredentialsArgFromReader(nil))
+		presentation, err := query.Query(presentationDefinition, nil)
 
-		require.Contains(t, err.Error(), "either credential reader or vc array must be set")
+		require.EqualError(t, err, "credentials must be provided")
+		require.Nil(t, presentation)
 	})
 }
 
@@ -197,9 +192,18 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 
 		require.Contains(t, err.Error(), "unmarshal of presentation definition failed:")
 	})
+
+	t.Run("Nil credentials", func(t *testing.T) {
+		query := credential.NewInquirer(opts)
+
+		submissionRequirements, err := query.GetSubmissionRequirements(nil, nil)
+
+		require.EqualError(t, err, "credentials must be provided")
+		require.Nil(t, submissionRequirements)
+	})
 }
 
-func createCredJSONArray(t *testing.T, creds [][]byte) *credential.CredentialsArg {
+func createCredJSONArray(t *testing.T, creds [][]byte) *verifiable.CredentialsArray {
 	t.Helper()
 
 	credsArray := verifiable.NewCredentialsArray()
@@ -214,7 +218,19 @@ func createCredJSONArray(t *testing.T, creds [][]byte) *credential.CredentialsAr
 		credsArray.Add(vc)
 	}
 
-	return credential.NewCredentialsArgFromVCArray(credsArray)
+	return credsArray
+}
+
+func checkPresentationFromQuery(t *testing.T, presentation *credential.VerifiablePresentation) {
+	t.Helper()
+
+	content, err := presentation.Content()
+	require.NoError(t, err)
+	require.NotNil(t, content)
+
+	credentials, err := presentation.Credentials()
+	require.NoError(t, err)
+	require.Equal(t, 1, credentials.Length())
 }
 
 type documentLoaderReverseWrapper struct {

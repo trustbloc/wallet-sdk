@@ -53,7 +53,7 @@ public class OpenID4VP {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         }
         
-            return try CredentialNewInquirer(nil)!.getSubmissionRequirements(vpQueryContent, credentials: CredentialCredentialsArg(fromVCArray: storedCredentials))
+            return try CredentialNewInquirer(nil)!.getSubmissionRequirements(vpQueryContent, credentials: storedCredentials)
     }
     
     /**
@@ -67,7 +67,7 @@ public class OpenID4VP {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         }
         
-//         let  verifiablePresentation = try CredentialNewInquirer(documentLoader)!.query(vpQueryContent, contents: CredentialCredentialsOpt(selectedCredentials))
+//         let  verifiablePresentation = try CredentialNewInquirer(documentLoader)!.query(vpQueryContent, credentials: selectedCredentials)
                        
         try initiatedInteraction.presentCredential(selectedCredentials)
     }

@@ -11,6 +11,7 @@ package credential
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -70,18 +71,18 @@ func NewInquirer(opts *InquirerOpts) *Inquirer {
 }
 
 // Query returns credentials that match PresentationDefinition.
-func (c *Inquirer) Query(query []byte, credentials *CredentialsArg) (*VerifiablePresentation, error) {
-	pdQuery, vcs, err := unwrapInputs(query, credentials)
+func (c *Inquirer) Query(query []byte, credentials *verifiable.CredentialsArray) (*VerifiablePresentation, error) {
+	if credentials == nil {
+		return nil, errors.New("credentials must be provided")
+	}
+
+	pdQuery, err := unwrapQuery(query)
 	if err != nil {
 		return nil, err
 	}
 
 	presentation, err := c.goAPICredentialQuery.Query(pdQuery,
-		credentialquery.WithCredentialsArray(vcs),
-		credentialquery.WithCredentialReader(&ReaderWrapper{
-			CredentialReader: credentials.reader,
-		}),
-	)
+		credentialquery.WithCredentialsArray(unwrapVCs(credentials)))
 	if err != nil {
 		return nil, wrapper.ToMobileError(err)
 	}
@@ -90,19 +91,19 @@ func (c *Inquirer) Query(query []byte, credentials *CredentialsArg) (*Verifiable
 }
 
 // GetSubmissionRequirements returns information about VCs matching requirements.
-func (c *Inquirer) GetSubmissionRequirements(query []byte, credentials *CredentialsArg,
+func (c *Inquirer) GetSubmissionRequirements(query []byte, credentials *verifiable.CredentialsArray,
 ) (*SubmissionRequirementArray, error) {
-	pdQuery, vcs, err := unwrapInputs(query, credentials)
+	if credentials == nil {
+		return nil, errors.New("credentials must be provided")
+	}
+
+	pdQuery, err := unwrapQuery(query)
 	if err != nil {
 		return nil, err
 	}
 
 	requirements, err := c.goAPICredentialQuery.GetSubmissionRequirements(pdQuery,
-		credentialquery.WithCredentialsArray(vcs),
-		credentialquery.WithCredentialReader(&ReaderWrapper{
-			CredentialReader: credentials.reader,
-		}),
-	)
+		credentialquery.WithCredentialsArray(unwrapVCs(credentials)))
 	if err != nil {
 		return nil, wrapper.ToMobileError(err)
 	}
@@ -110,13 +111,12 @@ func (c *Inquirer) GetSubmissionRequirements(query []byte, credentials *Credenti
 	return &SubmissionRequirementArray{wrapped: requirements}, nil
 }
 
-func unwrapInputs(query []byte, credentials *CredentialsArg,
-) (*presexch.PresentationDefinition, []*afgoverifiable.Credential, error) {
+func unwrapQuery(query []byte) (*presexch.PresentationDefinition, error) {
 	pdQuery := &presexch.PresentationDefinition{}
 
 	err := json.Unmarshal(query, pdQuery)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unmarshal of presentation definition failed: %w", err)
+		return nil, fmt.Errorf("unmarshal of presentation definition failed: %w", err)
 	}
 
 	if pdQuery.Format == nil {
@@ -129,20 +129,10 @@ func unwrapInputs(query []byte, credentials *CredentialsArg,
 
 	err = pdQuery.ValidateSchema()
 	if err != nil {
-		return nil, nil, fmt.Errorf("validation of presentation definition failed: %w", err)
+		return nil, fmt.Errorf("validation of presentation definition failed: %w", err)
 	}
 
-	if credentials.reader == nil && credentials.vcs == nil {
-		return nil, nil, fmt.Errorf("either credential reader or vc array must be set")
-	}
-
-	var vcs []*afgoverifiable.Credential
-
-	if credentials.vcs != nil {
-		vcs = unwrapVCs(credentials.vcs)
-	}
-
-	return pdQuery, vcs, nil
+	return pdQuery, nil
 }
 
 func unwrapVCs(vcs *verifiable.CredentialsArray) []*afgoverifiable.Credential {
