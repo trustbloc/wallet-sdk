@@ -17,6 +17,8 @@ func NewResolverOpts() *ResolverOpts {
 }
 
 // SetResolverServerURI sets a resolver server to use when resolving certain types of DIDs.
-func (c *ResolverOpts) SetResolverServerURI(resolverServerURI string) {
+func (c *ResolverOpts) SetResolverServerURI(resolverServerURI string) *ResolverOpts {
 	c.resolverServerURI = resolverServerURI
+
+	return c
 }

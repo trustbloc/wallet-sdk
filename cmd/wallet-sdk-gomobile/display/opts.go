@@ -24,20 +24,26 @@ func NewOpts() *Opts {
 // If the preferred locale is not available (or no preferred locale is specified), then the first locale specified by
 // the issuer's metadata will be used during resolution.
 // The actual locales used for various pieces of display information are available in the Data object.
-func (o *Opts) SetPreferredLocale(preferredLocale string) {
+func (o *Opts) SetPreferredLocale(preferredLocale string) *Opts {
 	o.preferredLocale = preferredLocale
+
+	return o
 }
 
 // SetMetricsLogger sets a metrics logger to use.
-func (o *Opts) SetMetricsLogger(metricsLogger api.MetricsLogger) {
+func (o *Opts) SetMetricsLogger(metricsLogger api.MetricsLogger) *Opts {
 	o.metricsLogger = metricsLogger
+
+	return o
 }
 
 // AddHeaders adds the given HTTP headers to all REST calls made to the issuer during display resolution.
-func (o *Opts) AddHeaders(headers *api.Headers) {
+func (o *Opts) AddHeaders(headers *api.Headers) *Opts {
 	headersAsArray := headers.GetAll()
 
 	for i := range headersAsArray {
 		o.additionalHeaders.Add(&headersAsArray[i])
 	}
+
+	return o
 }

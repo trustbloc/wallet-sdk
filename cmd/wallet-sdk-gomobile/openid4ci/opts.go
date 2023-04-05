@@ -24,42 +24,56 @@ func NewOpts() *Opts {
 }
 
 // DisableVCProofChecks disables VC proof checks during the OpenID4CI interaction flow.
-func (o *Opts) DisableVCProofChecks() {
+func (o *Opts) DisableVCProofChecks() *Opts {
 	o.disableVCProofChecks = true
+
+	return o
 }
 
 // AddHeaders adds the given HTTP headers to all REST calls made to the issuer during the OpenID4CI flow.
-func (o *Opts) AddHeaders(headers *api.Headers) {
+func (o *Opts) AddHeaders(headers *api.Headers) *Opts {
 	headersAsArray := headers.GetAll()
 
 	for i := range headersAsArray {
 		o.additionalHeaders.Add(&headersAsArray[i])
 	}
+
+	return o
 }
 
 // AddHeader adds the given HTTP header to all REST calls made to the issuer during the OpenID4CI flow.
-func (o *Opts) AddHeader(header *api.Header) {
+func (o *Opts) AddHeader(header *api.Header) *Opts {
 	o.additionalHeaders.Add(header)
+
+	return o
 }
 
 // DisableHTTPClientTLSVerify disables tls verification, should be used only for test purposes.
-func (o *Opts) DisableHTTPClientTLSVerify() {
+func (o *Opts) DisableHTTPClientTLSVerify() *Opts {
 	o.disableHTTPClientTLSVerification = true
+
+	return o
 }
 
 // SetDocumentLoader sets the document loader to use when parsing VCs received from the issuer.
 // If no document loader is explicitly set, then a network-based loader will be used.
-func (o *Opts) SetDocumentLoader(documentLoader api.LDDocumentLoader) {
+func (o *Opts) SetDocumentLoader(documentLoader api.LDDocumentLoader) *Opts {
 	o.documentLoader = documentLoader
+
+	return o
 }
 
 // SetActivityLogger sets an activity logger to be used for logging activities.
 // If this option isn't used, then no activities will be logged.
-func (o *Opts) SetActivityLogger(activityLogger api.ActivityLogger) {
+func (o *Opts) SetActivityLogger(activityLogger api.ActivityLogger) *Opts {
 	o.activityLogger = activityLogger
+
+	return o
 }
 
 // SetMetricsLogger sets a metrics logger to use.
-func (o *Opts) SetMetricsLogger(metricsLogger api.MetricsLogger) {
+func (o *Opts) SetMetricsLogger(metricsLogger api.MetricsLogger) *Opts {
 	o.metricsLogger = metricsLogger
+
+	return o
 }
