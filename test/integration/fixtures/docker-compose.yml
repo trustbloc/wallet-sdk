@@ -44,7 +44,7 @@ services:
       - did-resolver.trustbloc.local
       - sidetree
     entrypoint: ""
-    command: /bin/sh -c "sleep 5;vc-rest start"
+    command: /bin/sh -c "sleep 10;vc-rest start"
     volumes:
       - ./keys/tls:/etc/tls
       - ./profile:/profile/
@@ -104,11 +104,9 @@ services:
       - ALLOWED_ORIGINS=https://testnet.orb.local
       - CAS_TYPE=local
       - ANCHOR_CREDENTIAL_SIGNATURE_SUITE=Ed25519Signature2018
-      - DATABASE_TYPE=mongodb
-      - DATABASE_URL=mongodb://mongodb.example.com:27017
+      - DATABASE_TYPE=mem
       - ORB_KMS_TYPE=local
-      - KMSSECRETS_DATABASE_TYPE=mongodb
-      - KMSSECRETS_DATABASE_URL=mongodb://mongodb.example.com:27017
+      - KMSSECRETS_DATABASE_TYPE=mem
       - INCLUDE_PUBLISHED_OPERATIONS_IN_METADATA=true
       - INCLUDE_UNPUBLISHED_OPERATIONS_IN_METADATA=true
       - UNPUBLISHED_OPERATION_STORE_ENABLED=true
