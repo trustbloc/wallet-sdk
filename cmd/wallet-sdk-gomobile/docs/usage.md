@@ -741,6 +741,114 @@ let opts = DisplayNewOpts().setPreferredLocale("en-us")
 let displayData = DisplayResolve(vcArray, "Issuer_URI_Goes_Here", opts, &error)
 ```
 
+## Credential Status
+
+After a Verifiable Credential is issued, many credentials support the ability for the issuer to later _revoke_ the
+credential, making it no longer valid. If your use case expects that a certain type of Verifiable Credential should
+support credential status verification, then you can verify these credentials using a `StatusVerifier`.
+
+A `StatusVerifier` can be instantiated once and used to verify the status of multiple Verifiable Credentials,
+using the `verify` API. This will return an error if:
+- The provided credential does not support status verification. Your use case will determine whether you should expect
+  credentials to support status verification, and your application should handle any logic if you want to handle this
+  on a case-by-case basis.
+- The status verification process fails, e.g. due to the issuer server being unavailable to report status.
+- The credential has been revoked.
+
+By default, `StatusVerifier` only supports status APIs that fetch status metadata via an http URL to the issuer's
+status endpoint. If you need to also support status APIs that use DID-URL resolution, create a `StatusVerifier`
+using the `NewStatusVerifierWithDIDResolver` constructor.
+
+### Examples
+
+#### Kotlin
+
+##### Without DID Resolver
+
+```kotlin
+import dev.trustbloc.wallet.sdk.credential.StatusVerifier
+import dev.trustbloc.wallet.sdk.verifiable.Verifiable
+
+val cred = Verifiable.parseCredential("Your VC here", opts)
+
+// The StatusVerifierOpts argument is a placeholder for future options.
+// There are currently no options that can be set, so pass in null for now.
+val statusVerifier = StatusVerifier(null)
+
+try {
+    // If no exception is thrown, then status verification succeeded.
+    statusVerifier.verify(cred)
+} catch (e: Exception) {
+    // Status verification failed. Check the exception for details.
+}
+```
+
+##### With DID Resolver
+
+```kotlin
+import dev.trustbloc.wallet.sdk.did.Resolver
+import dev.trustbloc.wallet.sdk.credential.StatusVerifier
+import dev.trustbloc.wallet.sdk.verifiable.Verifiable
+
+val cred = Verifiable.parseCredential("Your VC here", opts)
+
+val didResolver = Resolver(null)
+
+// In this case, we pass in the DID Resolver, meaning the status verifier supports
+// DID-URL resolution for fetching status metadata.
+val statusVerifier = StatusVerifier(didResolver, null)
+
+try {
+    // If no exception is thrown, then status verification succeeded.
+    statusVerifier.verify(cred)
+} catch (e: Exception) {
+    // Status verification failed. Check the exception for details.
+}
+```
+
+#### Swift
+
+##### Without DID Resolver
+
+```swift
+import Walletsdk
+
+var parseError: NSError?
+let cred = VerifiableParseCredential("yourVCHere", nil, &parseError)
+
+var newStatusVerifierError: NSError?
+let statusVerifier = CredentialNewStatusVerifier(nil, &newStatusVerifierError)
+
+do {
+    // If no exception is thrown, then status verification succeeded.
+    try statusVerifier?.verify(cred)
+} catch let verifyError as NSError {
+    // Status verification failed. Check the error for details.
+}
+```
+
+##### With DID Resolver
+
+```swift
+import Walletsdk
+
+var parseError: NSError?
+let cred = VerifiableParseCredential("yourVCHere", nil, &parseError)
+
+var newResolverError: NSError?
+let didResolver = DidNewResolver(nil, &newResolverError)
+
+var newStatusVerifierError: NSError?
+let statusVerifier = CredentialNewStatusVerifierWithDIDResolver(didResolver, nil, &newStatusVerifierError)
+
+do {
+    // If no error is thrown, then status verification succeeded.
+    try statusVerifier?.verify(cred)
+} catch let verifyError as NSError {
+    // Status verification failed. Check the error for details.
+}
+```
+
 ## OpenID4VP
 
 The OpenID4VP package contains an API that can be used by a [holder](https://www.w3.org/TR/vc-data-model/#dfn-holders)

@@ -237,6 +237,45 @@ CredentialNewInMemoryDB()
 </tr>
 </table>
 
+### Credential Status
+
+<table>
+<tr>
+<td> Go Source Code </td> <td> Java (as called from Kotlin) </td> <td> Obj-C (as called from Swift) </td>
+</tr>
+<tr>
+<td>
+
+```
+package credential
+
+func NewStatusVerifier(...) (*StatusVerifier, error) {
+	...
+}
+```
+
+</td>
+<td>
+
+```kotlin
+import dev.trustbloc.wallet.sdk.credential
+
+credential.newStatusVerifier(...)
+```
+
+</td>
+<td>
+
+```swift
+import Walletsdk
+
+CredentialNewStatusVerifier(...)
+```
+
+</td>
+</tr>
+</table>
+
 ### Local KMS
 
 <table>
