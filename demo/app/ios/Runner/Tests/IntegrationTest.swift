@@ -66,7 +66,7 @@ class IntegrationTest: XCTestCase {
         let opts = Openid4vpNewOpts()
         opts!.add(trace!.traceHeader())
 
-        let vpInteraction = Openid4vpInteraction(openID4VPArgs, opts: opts)!
+        let vpInteraction = Openid4vpNewInteraction(openID4VPArgs, opts, nil)!
 
         let credentialsQuery = try vpInteraction.getQuery()
         let inquirer = CredentialNewInquirer(nil)!

@@ -11,14 +11,25 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	goapiwalleterror "github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 // ToMobileError translates Go API errors to gomobile API errors.
 func ToMobileError(err error) error {
+	return ToMobileErrorWithTrace(err, nil)
+}
+
+// ToMobileErrorWithTrace translates Go API errors to gomobile API errors.
+func ToMobileErrorWithTrace(err error, trace *otel.Trace) error {
 	if err == nil {
 		return nil
+	}
+
+	traceID := ""
+	if trace != nil {
+		traceID = trace.TraceID()
 	}
 
 	var result *walleterror.Error
@@ -30,12 +41,14 @@ func ToMobileError(err error) error {
 			Code:     walletError.Code,
 			Category: walletError.Scenario,
 			Details:  walletError.ParentError,
+			TraceID:  traceID,
 		}
 	} else {
 		result = &walleterror.Error{
 			Code:     "UKN2-000",
 			Category: "UNEXPECTED_ERROR",
 			Details:  err.Error(),
+			TraceID:  traceID,
 		}
 	}
 

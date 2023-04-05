@@ -11,6 +11,7 @@ package openid4ci
 import (
 	"errors"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -27,6 +28,7 @@ import (
 type Interaction struct {
 	goAPIInteraction *openid4cigoapi.Interaction
 	crypto           api.Crypto
+	oTel             *otel.Trace
 }
 
 // AuthorizeResult is the object returned from the Client.Authorize method.
@@ -52,16 +54,30 @@ func NewInteraction(args *Args, opts *Opts) (*Interaction, error) {
 		opts = NewOpts()
 	}
 
+	var oTel *otel.Trace
+
+	if !opts.disableOpenTelemetry {
+		var err error
+
+		oTel, err = otel.NewTrace()
+		if err != nil {
+			return nil, wrapper.ToMobileError(err)
+		}
+
+		opts.AddHeader(oTel.TraceHeader())
+	}
+
 	goAPIClientConfig := createGoAPIClientConfig(args, opts)
 
 	goAPIInteraction, err := openid4cigoapi.NewInteraction(args.initiateIssuanceURI, goAPIClientConfig)
 	if err != nil {
-		return nil, wrapper.ToMobileError(err)
+		return nil, wrapper.ToMobileErrorWithTrace(err, oTel)
 	}
 
 	return &Interaction{
 		crypto:           args.crypto,
 		goAPIInteraction: goAPIInteraction,
+		oTel:             oTel,
 	}, nil
 }
 
@@ -74,7 +90,7 @@ func NewInteraction(args *Args, opts *Opts) (*Interaction, error) {
 func (i *Interaction) Authorize() (*AuthorizeResult, error) {
 	authorizationResultGoAPI, err := i.goAPIInteraction.Authorize()
 	if err != nil {
-		return nil, wrapper.ToMobileError(err)
+		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
 
 	authorizationResult := &AuthorizeResult{
@@ -105,7 +121,7 @@ func (i *Interaction) RequestCredential(vm *api.VerificationMethod) (*verifiable
 			ParentError: parsedErr.Details,
 		}
 
-		return nil, goAPIWalletErr
+		return nil, wrapper.ToMobileErrorWithTrace(goAPIWalletErr, i.oTel)
 	}
 
 	return credentials, nil
@@ -122,6 +138,16 @@ func (i *Interaction) RequestCredentialWithPIN(
 	return i.requestCredential(vm, pin)
 }
 
+// OTelTraceID returns open telemetry trace id.
+func (i *Interaction) OTelTraceID() string {
+	traceID := ""
+	if i.oTel != nil {
+		traceID = i.oTel.TraceID()
+	}
+
+	return traceID
+}
+
 func (i *Interaction) requestCredential(
 	vm *api.VerificationMethod, pin string,
 ) (*verifiable.CredentialsArray, error) {
@@ -131,14 +157,14 @@ func (i *Interaction) requestCredential(
 
 	signer, err := common.NewJWSSigner(vm.ToSDKVerificationMethod(), i.crypto)
 	if err != nil {
-		return nil, wrapper.ToMobileError(err)
+		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
 
 	goAPICredentialRequest := &openid4cigoapi.CredentialRequestOpts{UserPIN: pin}
 
 	credentials, err := i.goAPIInteraction.RequestCredential(goAPICredentialRequest, signer)
 	if err != nil {
-		return nil, wrapper.ToMobileError(err)
+		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
 
 	gomobileCredentials := verifiable.NewCredentialsArray()

@@ -41,7 +41,7 @@ public class OpenID4VP {
         opts!.setActivityLogger(activityLogger)
         opts!.add(trace!.traceHeader())
         
-        let interaction = Openid4vpNewInteraction(args, opts)
+        let interaction = Openid4vpNewInteraction(args, opts, nil)
         
         vpQueryContent = try interaction!.getQuery()
         initiatedInteraction = interaction
