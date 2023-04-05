@@ -11,8 +11,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialsigner"
@@ -25,11 +23,11 @@ type Signer struct {
 
 // NewSigner initializes a credential Signer for issuing self-signed credentials.
 func NewSigner(
-	credReader Reader,
+	credReader api.CredentialReader,
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
 ) (*Signer, error) {
-	readerWrapper := &ReaderWrapper{CredentialReader: credReader}
+	readerWrapper := &wrapper.CredentialReaderWrapper{CredentialReader: credReader}
 	resolverWrapper := &wrapper.VDRResolverWrapper{DIDResolver: didResolver}
 
 	sdkSigner := credentialsigner.New(readerWrapper, resolverWrapper, crypto)
@@ -42,7 +40,7 @@ func NewSigner(
 // Issue signs the given Verifiable Credential with the key identified by keyID, returning a serialized JWT VC.
 // The Verifiable Credential can either be provided directly or it can be specified by credID, in which case it will be
 // retrieved from this Signer's CredentialReader.
-func (s *Signer) Issue(credential *verifiable.Credential, credID, keyID string) ([]byte, error) {
+func (s *Signer) Issue(credential *api.VerifiableCredential, credID, keyID string) ([]byte, error) {
 	var credOpt credentialsigner.CredentialOpt
 
 	if credential == nil && credID == "" {

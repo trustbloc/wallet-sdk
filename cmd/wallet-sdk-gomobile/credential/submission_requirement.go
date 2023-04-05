@@ -8,7 +8,8 @@ package credential
 
 import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )
 
 // SubmissionRequirement contains information about VCs that matched a presentation definition.
@@ -26,7 +27,7 @@ type InputDescriptor struct {
 	ID         string
 	Name       string
 	Purpose    string
-	MatchedVCs *verifiable.CredentialsArray
+	MatchedVCs *api.VerifiableCredentialsArray
 }
 
 // Len returns len of wrapper array.
@@ -82,11 +83,11 @@ func (s *SubmissionRequirement) DescriptorAtIndex(index int) *InputDescriptor {
 		ID:         wrapped.ID,
 		Name:       wrapped.Name,
 		Purpose:    wrapped.Purpose,
-		MatchedVCs: verifiable.NewCredentialsArray(),
+		MatchedVCs: api.NewVerifiableCredentialsArray(),
 	}
 
 	for _, cred := range wrapped.MatchedVCs {
-		descriptor.MatchedVCs.Add(verifiable.NewCredential(cred))
+		descriptor.MatchedVCs.Add(api.NewVerifiableCredential(cred))
 	}
 
 	return descriptor

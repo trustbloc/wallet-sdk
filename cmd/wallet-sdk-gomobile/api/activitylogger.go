@@ -244,10 +244,10 @@ func interfaceAsStringArray(value interface{}) (*StringArray, error) {
 			}
 		}
 
-		return &StringArray{Strings: strings}, nil
+		return &StringArray{strings: strings}, nil
 	}
 
-	return &StringArray{Strings: valueAsStringArray}, nil
+	return &StringArray{strings: valueAsStringArray}, nil
 }
 
 // An ActivityLogger logs activities.

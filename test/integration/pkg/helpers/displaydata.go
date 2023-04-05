@@ -10,10 +10,9 @@ package helpers
 import (
 	"testing"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
-
 	"github.com/stretchr/testify/require"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/metricslogger"
 )
@@ -25,7 +24,7 @@ func ParseDisplayData(t *testing.T, displayData string) *display.Data {
 	return parsedDisplayData
 }
 
-func ResolveDisplayData(t *testing.T, credentials *verifiable.CredentialsArray, expectedDisplayData *display.Data,
+func ResolveDisplayData(t *testing.T, credentials *api.VerifiableCredentialsArray, expectedDisplayData *display.Data,
 	issuerURI, issuerProfileID string,
 ) {
 	metricsLogger := metricslogger.NewMetricsLogger()

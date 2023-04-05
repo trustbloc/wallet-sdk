@@ -16,12 +16,13 @@ three versions.
 * `dev.trustbloc.wallet.sdk.didcreator`
 * `dev.trustbloc.wallet.sdk.didresolver`
 * `dev.trustbloc.wallet.sdk.display`
+* `dev.trustbloc.wallet.sdk.linkeddomains`
 * `dev.trustbloc.wallet.sdk.localkms`
 * `dev.trustbloc.wallet.sdk.mem`
 * `dev.trustbloc.wallet.sdk.openid4ci`
 * `dev.trustbloc.wallet.sdk.openid4vp`
-* `dev.trustbloc.wallet.sdk.otel`
-* `dev.trustbloc.wallet.sdk.verifiable`
+* `dev.trustbloc.wallet.sdk.openid4vp`
+* `dev.trustbloc.wallet.sdk.vcparse`
 
 ## iOS
 
@@ -38,12 +39,12 @@ Prefixes:
 * `Didcreator`
 * `Didresolver`
 * `Display`
+* `Linkeddomains`
 * `Localkms`
 * `Mem`
 * `Openid4ci`
 * `Openid4vp`
-* `Otel`
-* `Verifiable`
+* `Vcparse`
 
 ## Package/Module Examples
 

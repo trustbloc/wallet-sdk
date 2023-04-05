@@ -1,11 +1,11 @@
 package walletsdk.flutter.converters
 
+import dev.trustbloc.wallet.sdk.api.VerifiableCredentialsArray
 import dev.trustbloc.wallet.sdk.credential.InputDescriptor
 import dev.trustbloc.wallet.sdk.credential.SubmissionRequirement
 import dev.trustbloc.wallet.sdk.credential.SubmissionRequirementArray
-import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
-fun convertVerifiableCredentialsArray(arr: CredentialsArray): List<String> {
+fun convertVerifiableCredentialsArray(arr: VerifiableCredentialsArray): List<String> {
     return List(arr.length().toInt()
     ) { i: Int ->
         arr.atIndex(i.toLong()).serialize()

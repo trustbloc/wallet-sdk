@@ -15,10 +15,10 @@ import (
 	"net/http"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
-	afgoverifiable "github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialquery"
 )
@@ -29,20 +29,20 @@ type Inquirer struct {
 }
 
 // Credentials returns marshaled representation of credentials from this verifiable presentation.
-func (vp *VerifiablePresentation) Credentials() (*verifiable.CredentialsArray, error) {
-	result := verifiable.NewCredentialsArray()
+func (vp *VerifiablePresentation) Credentials() (*api.VerifiableCredentialsArray, error) {
+	result := api.NewVerifiableCredentialsArray()
 
 	vp.wrapped.Credentials()
 
 	credentialsRaw := vp.wrapped.Credentials()
 
 	for i := range credentialsRaw {
-		cred, ok := credentialsRaw[i].(*afgoverifiable.Credential)
+		cred, ok := credentialsRaw[i].(*verifiable.Credential)
 		if !ok {
 			return nil, fmt.Errorf("credential at index %d could not be asserted as a *verifiable.Credential", i)
 		}
 
-		result.Add(verifiable.NewCredential(cred))
+		result.Add(api.NewVerifiableCredential(cred))
 	}
 
 	return result, nil
@@ -78,7 +78,7 @@ func (c *Inquirer) Query(query []byte, credentials *CredentialsArg) (*Verifiable
 
 	presentation, err := c.goAPICredentialQuery.Query(pdQuery,
 		credentialquery.WithCredentialsArray(vcs),
-		credentialquery.WithCredentialReader(&ReaderWrapper{
+		credentialquery.WithCredentialReader(&wrapper.CredentialReaderWrapper{
 			CredentialReader: credentials.reader,
 		}),
 	)
@@ -99,7 +99,7 @@ func (c *Inquirer) GetSubmissionRequirements(query []byte, credentials *Credenti
 
 	requirements, err := c.goAPICredentialQuery.GetSubmissionRequirements(pdQuery,
 		credentialquery.WithCredentialsArray(vcs),
-		credentialquery.WithCredentialReader(&ReaderWrapper{
+		credentialquery.WithCredentialReader(&wrapper.CredentialReaderWrapper{
 			CredentialReader: credentials.reader,
 		}),
 	)
@@ -111,7 +111,7 @@ func (c *Inquirer) GetSubmissionRequirements(query []byte, credentials *Credenti
 }
 
 func unwrapInputs(query []byte, credentials *CredentialsArg,
-) (*presexch.PresentationDefinition, []*afgoverifiable.Credential, error) {
+) (*presexch.PresentationDefinition, []*verifiable.Credential, error) {
 	pdQuery := &presexch.PresentationDefinition{}
 
 	err := json.Unmarshal(query, pdQuery)
@@ -136,7 +136,7 @@ func unwrapInputs(query []byte, credentials *CredentialsArg,
 		return nil, nil, fmt.Errorf("either credential reader or vc array must be set")
 	}
 
-	var vcs []*afgoverifiable.Credential
+	var vcs []*verifiable.Credential
 
 	if credentials.vcs != nil {
 		vcs = unwrapVCs(credentials.vcs)
@@ -145,8 +145,8 @@ func unwrapInputs(query []byte, credentials *CredentialsArg,
 	return pdQuery, vcs, nil
 }
 
-func unwrapVCs(vcs *verifiable.CredentialsArray) []*afgoverifiable.Credential {
-	var credentials []*afgoverifiable.Credential
+func unwrapVCs(vcs *api.VerifiableCredentialsArray) []*verifiable.Credential {
+	var credentials []*verifiable.Credential
 
 	for i := 0; i < vcs.Length(); i++ {
 		credentials = append(credentials, vcs.AtIndex(i).VC)

@@ -39,12 +39,12 @@ public class OpenID4CI {
         return initiatedInteraction.issuerURI()
     }
     
-    func requestCredential(didVerificationMethod: ApiVerificationMethod, otp: String) throws -> VerifiableCredential{
+    func requestCredential(didVerificationMethod: ApiVerificationMethod, otp: String) throws -> ApiVerifiableCredential{
         let credentials  = try initiatedInteraction.requestCredential(withPIN: didVerificationMethod, pin:otp)
         return credentials.atIndex(0)!;
     }
     
-    public func serializeDisplayData(issuerURI: String, vcCredentials: VerifiableCredentialsArray) -> String{
+    public func serializeDisplayData(issuerURI: String, vcCredentials: ApiVerifiableCredentialsArray) -> String{
        let resolvedDisplayData = DisplayResolve(vcCredentials, issuerURI, nil, nil)
         return resolvedDisplayData!.serialize(nil)
     }

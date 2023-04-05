@@ -10,9 +10,9 @@ package display
 import (
 	"errors"
 
-	afgoverifiable "github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 )
@@ -22,7 +22,7 @@ import (
 // The CredentialDisplays in the returned Data object correspond to the VCs passed in and are in the
 // same order.
 // This method requires one or more VCs and the issuer's base URI.
-func Resolve(vcs *verifiable.CredentialsArray, issuerURI string, opts *Opts) (*Data, error) {
+func Resolve(vcs *api.VerifiableCredentialsArray, issuerURI string, opts *Opts) (*Data, error) {
 	goAPIOpts, err := generateGoAPIOpts(vcs, issuerURI, opts)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func Resolve(vcs *verifiable.CredentialsArray, issuerURI string, opts *Opts) (*D
 	return &Data{resolvedDisplayData: resolvedDisplayData}, nil
 }
 
-func generateGoAPIOpts(vcs *verifiable.CredentialsArray, issuerURI string,
+func generateGoAPIOpts(vcs *api.VerifiableCredentialsArray, issuerURI string,
 	opts *Opts,
 ) ([]goapicredentialschema.ResolveOpt, error) {
 	if vcs == nil {
@@ -71,8 +71,8 @@ func generateGoAPIOpts(vcs *verifiable.CredentialsArray, issuerURI string,
 	return goAPIOpts, nil
 }
 
-func mobileVCsArrayToGoAPIVCsArray(vcs *verifiable.CredentialsArray) []*afgoverifiable.Credential {
-	goAPIVCs := make([]*afgoverifiable.Credential, vcs.Length())
+func mobileVCsArrayToGoAPIVCsArray(vcs *api.VerifiableCredentialsArray) []*verifiable.Credential {
+	goAPIVCs := make([]*verifiable.Credential, vcs.Length())
 
 	for i := 0; i < vcs.Length(); i++ {
 		goAPIVCs[i] = vcs.AtIndex(i).VC

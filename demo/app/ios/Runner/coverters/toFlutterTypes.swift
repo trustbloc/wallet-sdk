@@ -8,7 +8,7 @@
 import Foundation
 import Walletsdk
 
-func convertVerifiableCredentialsArray(arr: VerifiableCredentialsArray)-> Array<String> {
+func convertVerifiableCredentialsArray(arr: ApiVerifiableCredentialsArray)-> Array<String> {
    var credList: [String] = []
    for i in 0..<arr.length() {
       credList.append((arr.atIndex(i)?.serialize(nil))!)

@@ -23,7 +23,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     private var openID4VP: OpenID4VP?
 
     // TODO: remove next three variables after refactoring finished.
-    private var processAuthorizationRequestVCs: VerifiableCredentialsArray?
+    private var processAuthorizationRequestVCs: ApiVerifiableCredentialsArray?
     private var didDocResolution: ApiDIDDocResolution?
    
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -211,7 +211,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             
             let selectedCredentials = arguments["selectedCredentials"] as? Array<String>
             
-            let selectedCredentialsArray: VerifiableCredentialsArray?
+            let selectedCredentialsArray: ApiVerifiableCredentialsArray?
             if (selectedCredentials != nil) {
                 selectedCredentialsArray = convertToVerifiableCredentialsArray(credentials: selectedCredentials!)
             } else {
@@ -534,13 +534,13 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              message: "error while fetching credential ID",
                                              details: "parameter storedcredentials is missed"))
         }
-        let opts = VerifiableNewOpts()
+        let opts = VcparseNewOpts()
         opts!.disableProofCheck()
         
         var credIDs: [Any] = []
 
         for cred in vcCredentials{
-            let parsedVC = VerifiableParseCredential(cred, opts, nil)!
+            let parsedVC = VcparseParse(cred, opts, nil)!
             let credID = parsedVC.id_()
             credIDs.append(credID)
             
@@ -555,11 +555,11 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              message: "error while fetching issuer ID",
                                              details: "parameter storedcredentials is missed"))
         }
-        let opts = VerifiableNewOpts()
+        let opts = VcparseNewOpts()
         opts!.disableProofCheck()
 
         for cred in vcCredentials{
-            let parsedVC = VerifiableParseCredential(cred, opts, nil)!
+            let parsedVC = VcparseParse(cred, opts, nil)!
             let issuerID = parsedVC.issuerID()
             print("issuerid - function", issuerID)
             return result(issuerID)

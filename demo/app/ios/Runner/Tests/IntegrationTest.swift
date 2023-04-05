@@ -88,7 +88,7 @@ class IntegrationTest: XCTestCase {
         // matchedVCs contains list of credentials that match given input descriptor.
         XCTAssertTrue(requirementDescriptor.matchedVCs!.length() > 0)
 
-        let selectedCreds = VerifiableCredentialsArray()!
+        let selectedCreds = ApiVerifiableCredentialsArray()!
         // Pick first credential from matched creds
         selectedCreds.add(requirementDescriptor.matchedVCs!.atIndex(0))
 

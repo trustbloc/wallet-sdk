@@ -9,11 +9,10 @@ package credential_test
 import (
 	"testing"
 
-	afgoverifiable "github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
-
+	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/stretchr/testify/require"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 )
 
 func TestStatusVerifier(t *testing.T) {
@@ -21,8 +20,8 @@ func TestStatusVerifier(t *testing.T) {
 		sv, err := credential.NewStatusVerifier(credential.NewStatusVerifierOpts())
 		require.NoError(t, err)
 
-		err = sv.Verify(&verifiable.Credential{
-			VC: &afgoverifiable.Credential{},
+		err = sv.Verify(&api.VerifiableCredential{
+			VC: &verifiable.Credential{},
 		})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "status verification failed")

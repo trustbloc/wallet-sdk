@@ -14,11 +14,12 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api/vcparse"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 )
 
 var (
@@ -58,13 +59,13 @@ func TestResolve(t *testing.T) {
 
 		defer server.Close()
 
-		parseVCOptionalArgs := verifiable.NewOpts()
+		parseVCOptionalArgs := vcparse.NewOpts()
 		parseVCOptionalArgs.DisableProofCheck()
 
-		vc, err := verifiable.ParseCredential(credentialUniversityDegree, parseVCOptionalArgs)
+		vc, err := vcparse.Parse(credentialUniversityDegree, parseVCOptionalArgs)
 		require.NoError(t, err)
 
-		vcs := verifiable.NewCredentialsArray()
+		vcs := api.NewVerifiableCredentialsArray()
 		vcs.Add(vc)
 
 		t.Run("Without additional headers", func(t *testing.T) {
@@ -103,7 +104,7 @@ func TestResolve(t *testing.T) {
 		require.Nil(t, resolvedDisplayData)
 	})
 	t.Run("No issuer URI specified", func(t *testing.T) {
-		resolvedDisplayData, err := display.Resolve(verifiable.NewCredentialsArray(), "", nil)
+		resolvedDisplayData, err := display.Resolve(api.NewVerifiableCredentialsArray(), "", nil)
 		require.EqualError(t, err, "no issuer URI specified")
 		require.Nil(t, resolvedDisplayData)
 	})
@@ -114,7 +115,7 @@ func TestResolve(t *testing.T) {
 		// in the integration tests.
 		opts.SetMetricsLogger(nil)
 
-		resolvedDisplayData, err := display.Resolve(verifiable.NewCredentialsArray(), "badURL", opts)
+		resolvedDisplayData, err := display.Resolve(api.NewVerifiableCredentialsArray(), "badURL", opts)
 		require.EqualError(t, err,
 			"openid configuration endpoint: "+
 				`Get "badURL/.well-known/openid-credential-issuer": unsupported protocol scheme ""`)
