@@ -695,7 +695,7 @@ import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 val vcArray = CredentialsArray()
 vcArray.add(yourVCHere)
 
-val displayData = Display.resolve(vcArray, "Issuer_URI_Goes_Here", nil)
+val displayData = Display.resolve(vcArray, "Issuer_URI_Goes_Here", null)
 ```
 
 ##### Using Specified Options
@@ -898,7 +898,7 @@ import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 // Setup
 val memKMSStore = MemKMSStore.MemKMSStore()
 val kms = Localkms.newKMS(memKMSStore)
-val didResolver = Resolver(nil)
+val didResolver = Resolver(null)
 
 val args = Args("YourAuthRequestURIHere", kms.getCrypto(), didResolver)
 
