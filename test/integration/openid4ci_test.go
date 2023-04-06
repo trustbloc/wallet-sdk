@@ -22,7 +22,6 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/helpers"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4ci"
@@ -181,15 +180,10 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		interactionOptionalArgs.SetActivityLogger(testHelper.ActivityLogger)
 		interactionOptionalArgs.SetMetricsLogger(testHelper.MetricsLogger)
 
-		trace, err := otel.NewTrace()
-		require.NoError(t, err)
-		println("traceID:", trace.TraceID())
-		traceIDs = append(traceIDs, trace.TraceID())
-
-		interactionOptionalArgs.AddHeader(trace.TraceHeader())
-
 		interaction, err := openid4ci.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)
+
+		traceIDs = append(traceIDs, interaction.OTelTraceID())
 
 		authorizeResult, err := interaction.Authorize()
 		require.NoError(t, err)
@@ -225,6 +219,8 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		testHelper.CheckActivityLogAfterOpenID4CIFlow(t, vcsAPIDirectURL, tc.issuerProfileID, subID)
 		testHelper.CheckMetricsLoggerAfterOpenID4CIFlow(t, tc.issuerProfileID)
 	}
+
+	require.Len(t, traceIDs, len(tests))
 
 	time.Sleep(5 * time.Second)
 	for _, traceID := range traceIDs {

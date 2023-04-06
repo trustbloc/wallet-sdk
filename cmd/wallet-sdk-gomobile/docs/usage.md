@@ -37,6 +37,7 @@ Errors have three fields:
 * Code: A short alphanumeric code that is used to broadly group various related errors.
 This contains the Category descriptor.
 * Details: Lower-level details about the precise cause of the error.
+* TraceID: ID of Open Telemetry root trace. Can be used to trace API calls. Only present on certain APIs.
 
 ### Examples
 
@@ -941,7 +942,8 @@ let activityLogger = mem.ActivityLogger()
 let opts = Openid4vpNewOpts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
 
 // Going through the flow
-let interaction = Openid4vpNewInteraction(args, opts)
+var newInteractionError: NSError?
+let interaction = Openid4vpNewInteraction(args, opts, &newInteractionError)
 let query = interaction.getQuery()
 let inquirer = CredentialNewInquirer(docLoader)
 let savedCredentials = VerifiableCredentialsArray() // Would need some actual credentials for this to work

@@ -15,6 +15,7 @@ type Opts struct {
 	metricsLogger                    api.MetricsLogger
 	additionalHeaders                api.Headers
 	disableHTTPClientTLSVerification bool
+	disableOpenTelemetry             bool
 }
 
 // NewOpts returns a new Opts object.
@@ -54,4 +55,11 @@ func (o *Opts) AddHeader(header *api.Header) {
 // DisableHTTPClientTLSVerify disables tls verification, should be used only for test purposes.
 func (o *Opts) DisableHTTPClientTLSVerify() {
 	o.disableHTTPClientTLSVerification = true
+}
+
+// DisableOpenTelemetry disables sending of open telemetry header.
+func (o *Opts) DisableOpenTelemetry() *Opts {
+	o.disableOpenTelemetry = true
+
+	return o
 }

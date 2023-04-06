@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
@@ -39,13 +40,27 @@ type Interaction struct {
 	goAPIOpenID4VP   goAPIOpenID4VP
 	didResolver      api.DIDResolver
 	inquirer         *credential.Inquirer
+	oTel             *otel.Trace
 }
 
 // NewInteraction creates a new OpenID4VP Interaction.
 // The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
-func NewInteraction(args *Args, opts *Opts) *Interaction {
+func NewInteraction(args *Args, opts *Opts) (*Interaction, error) { //nolint:funlen
 	if opts == nil {
 		opts = NewOpts()
+	}
+
+	var oTel *otel.Trace
+
+	if !opts.disableOpenTelemetry {
+		var err error
+
+		oTel, err = otel.NewTrace()
+		if err != nil {
+			return nil, wrapper.ToMobileError(err)
+		}
+
+		opts.AddHeader(oTel.TraceHeader())
 	}
 
 	jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
@@ -98,20 +113,21 @@ func NewInteraction(args *Args, opts *Opts) *Interaction {
 		),
 		didResolver: args.didRes,
 		inquirer:    inquirer,
-	}
+		oTel:        oTel,
+	}, nil
 }
 
 // GetQuery creates query based on authorization request data.
 func (o *Interaction) GetQuery() ([]byte, error) {
 	presentationDefinition, err := o.goAPIOpenID4VP.GetQuery()
 	if err != nil {
-		return nil, wrapper.ToMobileError(err)
+		return nil, wrapper.ToMobileErrorWithTrace(err, o.oTel)
 	}
 
 	pdBytes, err := json.Marshal(presentationDefinition)
 	if err != nil {
-		return nil, wrapper.ToMobileError(
-			fmt.Errorf("presentation definition marshal: %w", err))
+		return nil, wrapper.ToMobileErrorWithTrace(
+			fmt.Errorf("presentation definition marshal: %w", err), o.oTel)
 	}
 
 	return pdBytes, nil
@@ -119,7 +135,17 @@ func (o *Interaction) GetQuery() ([]byte, error) {
 
 // PresentCredential presents credentials to redirect uri from request object.
 func (o *Interaction) PresentCredential(credentials *verifiable.CredentialsArray) error {
-	return wrapper.ToMobileError(o.goAPIOpenID4VP.PresentCredential(unwrapVCs(credentials)))
+	return wrapper.ToMobileErrorWithTrace(o.goAPIOpenID4VP.PresentCredential(unwrapVCs(credentials)), o.oTel)
+}
+
+// OTelTraceID returns open telemetry trace id.
+func (o *Interaction) OTelTraceID() string {
+	traceID := ""
+	if o.oTel != nil {
+		traceID = o.oTel.TraceID()
+	}
+
+	return traceID
 }
 
 func unwrapVCs(vcs *verifiable.CredentialsArray) []*afgoverifiable.Credential {

@@ -22,7 +22,6 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4vp"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/helpers"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/metricslogger"
@@ -162,20 +161,17 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		metricsLogger := metricslogger.NewMetricsLogger()
 
-		trace, err := otel.NewTrace()
-		require.NoError(t, err)
-		println("traceID:", trace.TraceID())
-		traceIDs = append(traceIDs, trace.TraceID())
-
 		interactionRequiredArgs := openid4vp.NewArgs(initiateURL, testHelper.KMS.GetCrypto(), didResolver)
 
 		interactionOptionalArgs := openid4vp.NewOpts()
 		interactionOptionalArgs.SetDocumentLoader(docLoader)
 		interactionOptionalArgs.SetActivityLogger(activityLogger)
 		interactionOptionalArgs.SetMetricsLogger(metricsLogger)
-		interactionOptionalArgs.AddHeader(trace.TraceHeader())
 
-		interaction := openid4vp.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
+		interaction, err := openid4vp.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
+		require.NoError(t, err)
+
+		traceIDs = append(traceIDs, interaction.OTelTraceID())
 
 		query, err := interaction.GetQuery()
 		require.NoError(t, err)
@@ -222,6 +218,8 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		fmt.Printf("done test %d\n", i)
 	}
+
+	require.Len(t, traceIDs, len(tests))
 
 	time.Sleep(5 * time.Second)
 	for _, traceID := range traceIDs {

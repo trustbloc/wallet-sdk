@@ -26,6 +26,7 @@ import (
 	afgoverifiable "github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
+
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 
@@ -66,10 +67,12 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 				&mocksDIDResolver{},
 			)
 
-			instance := NewInteraction(requiredArgs, nil)
+			instance, err := NewInteraction(requiredArgs, nil)
+			require.NoError(t, err)
 			require.NotNil(t, instance)
 			require.NotNil(t, instance.crypto)
 			require.NotNil(t, instance.goAPIOpenID4VP)
+			require.NotEmpty(t, instance.OTelTraceID())
 		})
 		t.Run("With optional args", func(t *testing.T) {
 			requiredArgs := NewArgs(
@@ -84,9 +87,12 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 			opts.SetActivityLogger(nil)
 			opts.SetMetricsLogger(nil)
 			opts.DisableHTTPClientTLSVerify()
+			opts.DisableOpenTelemetry()
 
-			instance := NewInteraction(requiredArgs, opts)
+			instance, err := NewInteraction(requiredArgs, opts)
+			require.NoError(t, err)
 			require.NotNil(t, instance)
+			require.Empty(t, instance.OTelTraceID())
 		})
 	})
 
@@ -136,7 +142,8 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 			&mocksDIDResolver{},
 		)
 
-		instance := NewInteraction(requiredArgs, opts)
+		instance, err := NewInteraction(requiredArgs, opts)
+		require.NoError(t, err)
 
 		// The purpose of this test is to make sure the mock server receives the additional headers
 		// as set above. It doesn't return a valid response, hence why GetQuery still fails.
@@ -144,9 +151,10 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 		// test (see the mockVerifierServerHandler.ServeHTTP method).
 		// Any other error being returned by GetQuery is unexpected.
 		query, err := instance.GetQuery()
-		require.EqualError(t, err, `{"code":"OVP1-0001","category":`+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), `{"code":"OVP1-0001","category":`+
 			`"VERIFY_AUTHORIZATION_REQUEST_FAILED","details":"verify authorization request: `+
-			`parse JWT: JWT of compacted JWS form is supported only"}`)
+			`parse JWT: JWT of compacted JWS form is supported only"`)
 		require.Nil(t, query)
 	})
 }

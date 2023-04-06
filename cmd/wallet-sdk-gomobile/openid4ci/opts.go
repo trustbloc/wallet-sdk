@@ -16,6 +16,7 @@ type Opts struct {
 	additionalHeaders                api.Headers
 	disableHTTPClientTLSVerification bool
 	documentLoader                   api.LDDocumentLoader
+	disableOpenTelemetry             bool
 }
 
 // NewOpts returns a new Opts object.
@@ -62,4 +63,11 @@ func (o *Opts) SetActivityLogger(activityLogger api.ActivityLogger) {
 // SetMetricsLogger sets a metrics logger to use.
 func (o *Opts) SetMetricsLogger(metricsLogger api.MetricsLogger) {
 	o.metricsLogger = metricsLogger
+}
+
+// DisableOpenTelemetry disables sending of open telemetry header.
+func (o *Opts) DisableOpenTelemetry() *Opts {
+	o.disableOpenTelemetry = true
+
+	return o
 }

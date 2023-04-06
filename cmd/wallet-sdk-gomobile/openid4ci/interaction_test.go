@@ -49,7 +49,45 @@ func TestNewInteraction(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		createInteraction(t, kms, nil, createTestRequestURI("example.com"), nil, false)
+		i := createInteraction(t, kms, nil, createTestRequestURI("example.com"), nil, false)
+		require.NotEmpty(t, i.OTelTraceID())
+	})
+
+	t.Run("Success with disable otel", func(t *testing.T) {
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		resolver := &mockResolver{keyWriter: kms}
+
+		opts := openid4ci.NewOpts()
+		opts.DisableOpenTelemetry()
+
+		requiredArgs := openid4ci.NewArgs(createTestRequestURI("example.com"), "ClientID", kms.GetCrypto(), resolver)
+
+		interaction, err := openid4ci.NewInteraction(requiredArgs, opts)
+		require.NoError(t, err)
+		require.NotNil(t, interaction)
+
+		require.Empty(t, interaction.OTelTraceID())
+	})
+
+	t.Run("Success with out optional args", func(t *testing.T) {
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		resolver := &mockResolver{keyWriter: kms}
+
+		requiredArgs := openid4ci.NewArgs(createTestRequestURI("example.com"), "ClientID", kms.GetCrypto(), resolver)
+
+		interaction, err := openid4ci.NewInteraction(requiredArgs, nil)
+		require.NoError(t, err)
+		require.NotNil(t, interaction)
+	})
+
+	t.Run("Failed, args is nil", func(t *testing.T) {
+		interaction, err := openid4ci.NewInteraction(nil, nil)
+		require.Error(t, err)
+		require.Nil(t, interaction)
 	})
 }
 
