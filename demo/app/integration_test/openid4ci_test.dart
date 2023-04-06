@@ -12,6 +12,7 @@ void main() async {
   print("Init SDK");
 
   await walletSDKPlugin.initSDK();
+  var didKeyType = "";
 
   testWidgets('Testing openid4vc with a single credential', (tester) async {
     const didMethodTypes = String.fromEnvironment("WALLET_DID_METHODS");
@@ -26,7 +27,8 @@ void main() async {
     for (int i = 0; i < issuanceURLsList.length; i++) {
       String didMethodType = didMethodTypesList[i];
       print("wallet DID Type : $didMethodType");
-      var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[i]);
+      print("wallet DID Key Type : $didKeyType");
+      var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[i], didKeyType);
       var didDocEncoded = json.encode(didDocData!);
       Map<String, dynamic> responseJson = json.decode(didDocEncoded);
       final didContent= responseJson["did"];
@@ -72,7 +74,8 @@ void main() async {
     var didMethodTypesList = didMethodTypes.split(' ');
     String didMethodType = didMethodTypesList[0];
     print("wallet DID type : $didMethodType");
-    var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[0]);
+    print("wallet DID Key type : $didKeyType");
+    var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[0], didKeyType);
     print("wallet didDocData : $didDocData");
     var didDocEncoded = json.encode(didDocData!);
     Map<String, dynamic> responseJson = json.decode(didDocEncoded);

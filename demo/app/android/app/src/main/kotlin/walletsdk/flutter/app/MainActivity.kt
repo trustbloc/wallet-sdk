@@ -244,7 +244,10 @@ class MainActivity : FlutterActivity() {
         val didMethodType = call.argument<String>("didMethodType")
                 ?: throw java.lang.Exception("didMethodType params is missed")
 
-        val doc = walletSDK.createDID(didMethodType)
+        val didKeyType = call.argument<String>("didKeyType")
+            ?: throw java.lang.Exception("didKeyType params is missed")
+
+        val doc = walletSDK.createDID(didMethodType, didKeyType)
         didDocResolution = doc
         val docResolution: MutableMap<String, Any> = mutableMapOf()
         docResolution["did"] = doc.id()

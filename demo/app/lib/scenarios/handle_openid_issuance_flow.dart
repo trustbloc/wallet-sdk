@@ -20,12 +20,19 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
     return;
   } else {
     final SharedPreferences pref = await prefs;
-    var didResolution = await WalletSDKPlugin.createDID("jwk");
+    var didType = pref.getString('didType');
+    var keyType = pref.getString('keyType');
+    // choosing default if no selection is made
+    didType = didType ?? "jwk";
+    keyType = keyType ?? "ECDSAP384IEEEP1363";
+    var didResolution = await WalletSDKPlugin.createDID(didType, keyType);
     var didDocEncoded = json.encode(didResolution);
-    List<dynamic> responseJson = json.decode(didDocEncoded);
-    var didID = responseJson.first["didID"];
+    Map<String, dynamic> responseJson = json.decode(didDocEncoded);
+    var didID = responseJson["did"];
+    var didDoc = responseJson["didDoc"];
     log("created didID :$didID");
-    pref.setString('userDID',didID!);
+    pref.setString('userDID',didID);
+    pref.setString('userDIDDoc',didDoc);
 
     String? credentials =  await WalletSDKPlugin.requestCredential('');
 
@@ -40,7 +47,7 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
     log("activities and credID handle open id  -$activities and $credID");
     storageService.addActivities(ActivityDataObj(credID!, activities));
 
-    navigateToCredPreviewScreen(context, credentials, issuerURL, resolvedCredentialDisplay!);
+    navigateToCredPreviewScreen(context, credentials, issuerURL, resolvedCredentialDisplay!, didID);
   }
 }
 
@@ -49,10 +56,10 @@ void navigateToOTPScreen(BuildContext context) async {
 }
 
 navigateToCredPreviewScreen(
-    BuildContext context, String credentialResp, String issuerURL, String resolvedCredentialDisplay) async {
+    BuildContext context, String credentialResp, String issuerURL, String resolvedCredentialDisplay, String didID) async {
   Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) =>
-            CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURL, credentialDisplayData: resolvedCredentialDisplay)),));
+            CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURL, credentialDisplayData: resolvedCredentialDisplay, credentialDID: didID)),));
 }
