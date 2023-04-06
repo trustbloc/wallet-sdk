@@ -150,7 +150,7 @@ class SettingsState extends State<Settings> {
                 onChanged: (value) {
                   setState(() {
                     selectedKeyType = value as String;
-                    saveDidSelection();
+                    saveDidKeySelection();
                   });
                 },
               ),
@@ -236,6 +236,11 @@ class SettingsState extends State<Settings> {
   saveDidSelection() async {
     final SharedPreferences preferences = await SharedPreferences.getInstance();
     await preferences.setString('didType', selectedDIDType!);
+  }
+
+  saveDidKeySelection() async {
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
+    await preferences.setString('keyType', selectedKeyType!);
   }
 
   checkDevMode() async {
