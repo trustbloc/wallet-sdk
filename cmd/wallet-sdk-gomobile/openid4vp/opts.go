@@ -24,37 +24,49 @@ func NewOpts() *Opts {
 }
 
 // SetDocumentLoader sets a document loader to use.
-func (o *Opts) SetDocumentLoader(documentLoader api.LDDocumentLoader) {
+func (o *Opts) SetDocumentLoader(documentLoader api.LDDocumentLoader) *Opts {
 	o.documentLoader = documentLoader
+
+	return o
 }
 
 // SetActivityLogger sets an activity logger to use.
-func (o *Opts) SetActivityLogger(activityLogger api.ActivityLogger) {
+func (o *Opts) SetActivityLogger(activityLogger api.ActivityLogger) *Opts {
 	o.activityLogger = activityLogger
+
+	return o
 }
 
 // SetMetricsLogger sets a metrics logger to use.
-func (o *Opts) SetMetricsLogger(metricsLogger api.MetricsLogger) {
+func (o *Opts) SetMetricsLogger(metricsLogger api.MetricsLogger) *Opts {
 	o.metricsLogger = metricsLogger
+
+	return o
 }
 
 // AddHeaders adds the given HTTP headers to all REST calls made to the verifier during the OpenID4VP flow.
-func (o *Opts) AddHeaders(headers *api.Headers) {
+func (o *Opts) AddHeaders(headers *api.Headers) *Opts {
 	headersAsArray := headers.GetAll()
 
 	for i := range headersAsArray {
 		o.additionalHeaders.Add(&headersAsArray[i])
 	}
+
+	return o
 }
 
 // AddHeader adds the given HTTP header to all REST calls made to the issuer during the OpenID4CI flow.
-func (o *Opts) AddHeader(header *api.Header) {
+func (o *Opts) AddHeader(header *api.Header) *Opts {
 	o.additionalHeaders.Add(header)
+
+	return o
 }
 
 // DisableHTTPClientTLSVerify disables tls verification, should be used only for test purposes.
-func (o *Opts) DisableHTTPClientTLSVerify() {
+func (o *Opts) DisableHTTPClientTLSVerify() *Opts {
 	o.disableHTTPClientTLSVerification = true
+
+	return o
 }
 
 // DisableOpenTelemetry disables sending of open telemetry header.

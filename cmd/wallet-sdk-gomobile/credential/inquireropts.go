@@ -20,6 +20,8 @@ func NewInquirerOpts() *InquirerOpts {
 
 // SetDocumentLoader sets the document loader to use.
 // If no document loader is explicitly set, then a network-based loader will be used.
-func (o *InquirerOpts) SetDocumentLoader(documentLoader api.LDDocumentLoader) {
+func (o *InquirerOpts) SetDocumentLoader(documentLoader api.LDDocumentLoader) *InquirerOpts {
 	o.documentLoader = documentLoader
+
+	return o
 }
