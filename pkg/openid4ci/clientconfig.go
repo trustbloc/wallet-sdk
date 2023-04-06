@@ -9,6 +9,7 @@ package openid4ci
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
@@ -34,13 +35,14 @@ type httpClient interface {
 
 // ClientConfig contains the various parameters for an OpenID4CI Interaction.
 type ClientConfig struct {
-	ClientID             string
-	DIDResolver          api.DIDResolver
-	ActivityLogger       api.ActivityLogger // If not specified, then activities won't be logged.
-	MetricsLogger        api.MetricsLogger  // If not specified, then metrics events won't be logged.
-	DisableVCProofChecks bool
-	HTTPClient           httpClient
-	DocumentLoader       ld.DocumentLoader // If not specified, then a network-based loader will be used.
+	ClientID                         string
+	DIDResolver                      api.DIDResolver
+	ActivityLogger                   api.ActivityLogger // If not specified, then activities won't be logged.
+	MetricsLogger                    api.MetricsLogger  // If not specified, then metrics events won't be logged.
+	DisableVCProofChecks             bool
+	HTTPClient                       httpClient
+	DocumentLoader                   ld.DocumentLoader // If not specified, then a network-based loader will be used.
+	NetworkDocumentLoaderHTTPTimeout *time.Duration    // Only used if the default network-based loader is used.
 }
 
 func validateRequiredParameters(config *ClientConfig) error {
@@ -73,7 +75,7 @@ func validateRequiredParameters(config *ClientConfig) error {
 
 func setDefaults(config *ClientConfig) {
 	if config.HTTPClient == nil {
-		config.HTTPClient = http.DefaultClient
+		config.HTTPClient = &http.Client{Timeout: api.DefaultHTTPTimeout}
 	}
 
 	if config.ActivityLogger == nil {
@@ -85,6 +87,14 @@ func setDefaults(config *ClientConfig) {
 	}
 
 	if config.DocumentLoader == nil {
-		config.DocumentLoader = ld.NewDefaultDocumentLoader(http.DefaultClient)
+		httpClient := &http.Client{}
+
+		if config.NetworkDocumentLoaderHTTPTimeout != nil {
+			httpClient.Timeout = *config.NetworkDocumentLoaderHTTPTimeout
+		} else {
+			httpClient.Timeout = api.DefaultHTTPTimeout
+		}
+
+		config.DocumentLoader = ld.NewDefaultDocumentLoader(httpClient)
 	}
 }

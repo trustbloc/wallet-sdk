@@ -35,7 +35,7 @@ func Get(issuerURI string, httpClient httpClient, metricsLogger api.MetricsLogge
 	}
 
 	if httpClient == nil {
-		httpClient = http.DefaultClient
+		httpClient = &http.Client{Timeout: api.DefaultHTTPTimeout}
 	}
 
 	metadataEndpoint := issuerURI + "/.well-known/openid-credential-issuer"

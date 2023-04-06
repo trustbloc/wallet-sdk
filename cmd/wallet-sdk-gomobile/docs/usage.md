@@ -176,6 +176,12 @@ If no custom LD document loader is specified (or is nil/null), then network-base
 For performance and/or security reasons, you may wish to implement a custom LD document loader that uses
 preloaded local contexts.
 
+## HTTP Timeout
+
+By default, HTTP calls in Wallet-SDK have a timeout of 30 seconds. This can be overridden by passing in a
+custom timeout via the `setHTTPTimeoutNanoseconds` method, which, if available, will be on the API's `Opts` object.
+Passing in 0 will disable timeouts.
+
 ## In-Memory Credential Storage
 
 The credential package contains an in-memory credential storage implementation that can be used to store credentials

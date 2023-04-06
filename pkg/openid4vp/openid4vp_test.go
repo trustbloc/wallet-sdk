@@ -17,6 +17,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
@@ -66,7 +67,9 @@ func (f *failingMetricsLogger) Log(metricsEvent *api.MetricsEvent) error {
 
 func TestOpenID4VP_GetQuery(t *testing.T) {
 	t.Run("Inline Request Object", func(t *testing.T) {
-		instance := New(requestObjectJWT, &jwtSignatureVerifierMock{}, nil, nil, nil)
+		opt := WithNetworkDocumentLoaderHTTPTimeout(time.Second * 10)
+
+		instance := New(requestObjectJWT, &jwtSignatureVerifierMock{}, nil, nil, nil, opt)
 
 		query, err := instance.GetQuery()
 		require.NoError(t, err)

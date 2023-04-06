@@ -6,12 +6,17 @@ SPDX-License-Identifier: Apache-2.0
 
 package verifiable
 
-import "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+import (
+	"time"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+)
 
 // Opts contains all optional arguments that can be passed into the Parse function.
 type Opts struct {
 	disableProofCheck bool
 	documentLoader    api.LDDocumentLoader
+	httpTimeout       *time.Duration
 }
 
 // NewOpts returns a new Opts object for use with the Parse function.
@@ -27,8 +32,19 @@ func (o *Opts) DisableProofCheck() *Opts {
 }
 
 // SetDocumentLoader sets the document loader to use while parsing the VC.
+// If this option isn't used, then a network-based document loader will be used.
 func (o *Opts) SetDocumentLoader(documentLoader api.LDDocumentLoader) *Opts {
 	o.documentLoader = documentLoader
+
+	return o
+}
+
+// SetHTTPTimeoutNanoseconds sets the timeout (in nanoseconds) for HTTP calls made by the default network-based
+// document loader. This option is only used if no document loader was explicitly set via the SetDocumentLoader option.
+// Passing in 0 will disable timeouts.
+func (o *Opts) SetHTTPTimeoutNanoseconds(timeout int64) *Opts {
+	timeoutDuration := time.Duration(timeout)
+	o.httpTimeout = &timeoutDuration
 
 	return o
 }

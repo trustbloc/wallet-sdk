@@ -139,7 +139,9 @@ func TestValidate(t *testing.T) {
 		require.Equal(t, "https://did.rohitgulati.com", validationResult.ServiceURL)
 	})
 	t.Run("No resolver provided", func(t *testing.T) {
-		validationResult, err := ValidateLinkedDomains(testDID, nil)
+		opts := NewValidateLinkedDomainsOpts().SetHTTPTimeoutNanoseconds(0)
+
+		validationResult, err := ValidateLinkedDomains(testDID, nil, opts)
 		require.EqualError(t, err, "no resolver provided")
 		require.Nil(t, validationResult)
 	})
@@ -151,7 +153,7 @@ func TestValidate(t *testing.T) {
 
 		defer func() { testServer.Close() }()
 
-		validationResult, err := ValidateLinkedDomains("DID", newMockResolver(testServer.URL))
+		validationResult, err := ValidateLinkedDomains("DID", newMockResolver(testServer.URL), nil)
 		requireErrorContains(t, err, "DOMAIN_AND_DID_VERIFICATION_FAILED")
 		require.Nil(t, validationResult)
 	})

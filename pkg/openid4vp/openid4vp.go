@@ -84,10 +84,18 @@ func New(
 	documentLoader ld.DocumentLoader,
 	opts ...Opt,
 ) *Interaction {
-	client, activityLogger, metricsLogger := processOpts(opts)
+	client, activityLogger, metricsLogger, networkDocumentLoaderHTTPTimeout := processOpts(opts)
 
 	if documentLoader == nil {
-		documentLoader = ld.NewDefaultDocumentLoader(http.DefaultClient)
+		httpClient := &http.Client{}
+
+		if networkDocumentLoaderHTTPTimeout != nil {
+			httpClient.Timeout = *networkDocumentLoaderHTTPTimeout
+		} else {
+			httpClient.Timeout = api.DefaultHTTPTimeout
+		}
+
+		documentLoader = ld.NewDefaultDocumentLoader(httpClient)
 	}
 
 	return &Interaction{

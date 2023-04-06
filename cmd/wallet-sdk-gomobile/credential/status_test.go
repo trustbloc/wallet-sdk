@@ -18,7 +18,9 @@ import (
 
 func TestStatusVerifier(t *testing.T) {
 	t.Run("test pass-through to go-sdk status verifier", func(t *testing.T) {
-		sv, err := credential.NewStatusVerifier(credential.NewStatusVerifierOpts())
+		opts := credential.NewStatusVerifierOpts().SetHTTPTimeoutNanoseconds(0)
+
+		sv, err := credential.NewStatusVerifier(opts)
 		require.NoError(t, err)
 
 		err = sv.Verify(&verifiable.Credential{

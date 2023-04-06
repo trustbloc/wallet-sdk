@@ -8,6 +8,7 @@ package openid4vp
 
 import (
 	"net/http"
+	"time"
 
 	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -15,9 +16,10 @@ import (
 )
 
 type opts struct {
-	httpClient     httpClient
-	activityLogger api.ActivityLogger
-	metricsLogger  api.MetricsLogger
+	httpClient                       httpClient
+	activityLogger                   api.ActivityLogger
+	metricsLogger                    api.MetricsLogger
+	networkDocumentLoaderHTTPTimeout *time.Duration // Only used if the default network-based loader is used.
 }
 
 // An Opt is a single option for an OpenID4VP instance.
@@ -49,11 +51,19 @@ func WithMetricsLogger(metricsLogger api.MetricsLogger) Opt {
 	}
 }
 
-func processOpts(options []Opt) (httpClient, api.ActivityLogger, api.MetricsLogger) {
+// WithNetworkDocumentLoaderHTTPTimeout sets the timeout for HTTP calls made by the default network-based
+// document loader. This option is only used if no document loader was explicitly set via the New function.
+func WithNetworkDocumentLoaderHTTPTimeout(timeout time.Duration) Opt {
+	return func(opts *opts) {
+		opts.networkDocumentLoaderHTTPTimeout = &timeout
+	}
+}
+
+func processOpts(options []Opt) (httpClient, api.ActivityLogger, api.MetricsLogger, *time.Duration) {
 	opts := mergeOpts(options)
 
 	if opts.httpClient == nil {
-		opts.httpClient = http.DefaultClient
+		opts.httpClient = &http.Client{Timeout: api.DefaultHTTPTimeout}
 	}
 
 	if opts.activityLogger == nil {
@@ -64,7 +74,7 @@ func processOpts(options []Opt) (httpClient, api.ActivityLogger, api.MetricsLogg
 		opts.metricsLogger = noopmetricslogger.NewMetricsLogger()
 	}
 
-	return opts.httpClient, opts.activityLogger, opts.metricsLogger
+	return opts.httpClient, opts.activityLogger, opts.metricsLogger, opts.networkDocumentLoaderHTTPTimeout
 }
 
 func mergeOpts(options []Opt) *opts {

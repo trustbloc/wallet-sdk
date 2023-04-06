@@ -88,6 +88,7 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 			opts.SetMetricsLogger(nil)
 			opts.DisableHTTPClientTLSVerify()
 			opts.DisableOpenTelemetry()
+			opts.SetHTTPTimeoutNanoseconds(0)
 
 			instance, err := NewInteraction(requiredArgs, opts)
 			require.NoError(t, err)

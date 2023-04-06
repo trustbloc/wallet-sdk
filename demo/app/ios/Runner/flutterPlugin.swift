@@ -452,7 +452,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             let didResolver = DidNewResolver(nil, nil)
             var error: NSError?
 
-            var didValidateResult = DidValidateLinkedDomains(issuerID, didResolver, &error)
+            var didValidateResult = DidValidateLinkedDomains(issuerID, didResolver, nil, &error)
            
             if let actualError = error {
                print("error in validate result", error!.localizedDescription)

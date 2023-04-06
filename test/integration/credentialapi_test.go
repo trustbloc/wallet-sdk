@@ -47,7 +47,7 @@ func TestCredentialAPI(t *testing.T) {
 	c, e := did.NewCreator(kms)
 	require.NoError(t, e)
 
-	sdkResolver, e := resolver.NewDIDResolver("")
+	sdkResolver, e := resolver.NewDIDResolver()
 	require.NoError(t, e)
 
 	ldLoader := testutil.DocumentLoader(t)

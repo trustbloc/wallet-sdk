@@ -10,13 +10,11 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
-
-	"github.com/trustbloc/wallet-sdk/pkg/api"
-
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 
+	"github.com/trustbloc/wallet-sdk/pkg/api"
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
+	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
@@ -191,7 +189,7 @@ func processValidatedOpts(opts *resolveOpts) ([]*verifiable.Credential, *issuer.
 	}
 
 	if opts.httpClient == nil {
-		opts.httpClient = http.DefaultClient
+		opts.httpClient = &http.Client{Timeout: api.DefaultHTTPTimeout}
 	}
 
 	issuerMetadata, err := processIssuerMetadataOpts(&opts.issuerMetadataSource, opts.httpClient, metricsLogger)

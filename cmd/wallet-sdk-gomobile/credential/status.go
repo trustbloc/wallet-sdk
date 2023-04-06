@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 
@@ -31,7 +32,11 @@ type StatusVerifier struct {
 // To create a credential status verifier that also supports DID-URL resolution of Status Credentials,
 // use NewStatusVerifierWithDIDResolver instead.
 func NewStatusVerifier(opts *StatusVerifierOpts) (*StatusVerifier, error) {
-	return newStatusVerifier(&unsupportedResolver{})
+	if opts == nil {
+		opts = NewStatusVerifierOpts()
+	}
+
+	return newStatusVerifier(&unsupportedResolver{}, opts.httpTimeout)
 }
 
 // NewStatusVerifierWithDIDResolver creates a credential status verifier with a DID resolver.
@@ -42,12 +47,24 @@ func NewStatusVerifierWithDIDResolver(didResolver api.DIDResolver, opts *StatusV
 			"If support for DID-URL resolution of status credentials is not needed, then use NewStatusVerifier instead")
 	}
 
-	return newStatusVerifier(&wrapper.VDRResolverWrapper{DIDResolver: didResolver})
+	if opts == nil {
+		opts = NewStatusVerifierOpts()
+	}
+
+	return newStatusVerifier(&wrapper.VDRResolverWrapper{DIDResolver: didResolver}, opts.httpTimeout)
 }
 
-func newStatusVerifier(didResolver goapi.DIDResolver) (*StatusVerifier, error) {
+func newStatusVerifier(didResolver goapi.DIDResolver, httpTimeout *time.Duration) (*StatusVerifier, error) {
+	httpClient := &http.Client{}
+
+	if httpTimeout != nil {
+		httpClient.Timeout = *httpTimeout
+	} else {
+		httpClient.Timeout = goapi.DefaultHTTPTimeout
+	}
+
 	v, err := credentialstatus.NewVerifier(&credentialstatus.Config{
-		HTTPClient:  http.DefaultClient,
+		HTTPClient:  httpClient,
 		DIDResolver: didResolver,
 	})
 	if err != nil {
