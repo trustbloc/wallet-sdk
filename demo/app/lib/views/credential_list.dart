@@ -79,12 +79,47 @@ class _CredentialListState extends State<CredentialList> {
                   itemBuilder: (_, index) {
                     return Dismissible(
                       key: Key(_credentialList[index].toString()),
-                      child: CredentialCard(credentialData: _credentialList[index].value, activityLogger: activityLogger, isDashboardWidget: true, isDetailArrowRequired: false,),
+                      direction: DismissDirection.endToStart,
                       onDismissed: (direction) async {
-                        await _storageService.deleteData(_credentialList[index])
-                            .then((value) => _credentialList.removeAt(index));
-                        initList();
+                        if (direction == DismissDirection.endToStart) {
+                          await _storageService.deleteData(_credentialList[index])
+                              .then((value) => _credentialList.removeAt(index));
+                          initList();
+                        }
                       },
+                      background: const ColoredBox(
+                        color: Colors.white,
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Padding(
+                            padding: EdgeInsets.all(0),
+                            child: Icon(Icons.delete, color: Colors.red),
+                          ),
+                        ),
+                      ),
+                      confirmDismiss: (DismissDirection direction) async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: const Text('Are you sure you want to delete?',  style: TextStyle(fontSize: 12)),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, false),
+                                  child: const Text('No'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text('Yes'),
+                                )
+                              ],
+                            );
+                          },
+                        );
+                        log('Deletion confirmed: $confirmed');
+                        return confirmed;
+                      },
+                      child: CredentialCard(credentialData: _credentialList[index].value, activityLogger: activityLogger, isDashboardWidget: true, isDetailArrowRequired: false,),
                     );
                   }),
             ),
