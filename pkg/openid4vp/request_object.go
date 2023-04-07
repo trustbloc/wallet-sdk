@@ -28,6 +28,7 @@ type requestObjectRegistration struct {
 	SubjectSyntaxTypesSupported []string         `json:"subject_syntax_types_supported"` //nolint: tagliatelle
 	VPFormats                   *presexch.Format `json:"vp_formats"`                     //nolint: tagliatelle
 	ClientPurpose               string           `json:"client_purpose"`                 //nolint: tagliatelle
+	ClientLogoURI               string           `json:"logo_uri"`                       //nolint: tagliatelle
 }
 
 type requestObjectClaims struct {

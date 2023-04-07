@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
+	"github.com/trustbloc/wallet-sdk/pkg/openid4vp"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
@@ -215,6 +216,34 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	})
 }
 
+func TestInteraction_VerifierDisplayData(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		instance := &Interaction{
+			goAPIOpenID4VP: &mocGoAPIInteraction{
+				VerifierDisplayDataRes: &openid4vp.VerifierDisplayData{
+					Name: "testName",
+				},
+			},
+		}
+
+		data, err := instance.VerifierDisplayData()
+		require.NoError(t, err)
+		require.Equal(t, "testName", data.Name)
+	})
+
+	t.Run("Error", func(t *testing.T) {
+		instance := &Interaction{
+			goAPIOpenID4VP: &mocGoAPIInteraction{
+				VerifierDisplayDataError: errors.New("testErr"),
+			},
+		}
+
+		_, err := instance.VerifierDisplayData()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "testErr")
+	})
+}
+
 type documentLoaderWrapper struct {
 	goAPIDocumentLoader ld.DocumentLoader
 }
@@ -252,9 +281,11 @@ func (c *mockCrypto) Verify(signature, msg []byte, keyID string) error {
 }
 
 type mocGoAPIInteraction struct {
-	GetQueryResult       *presexch.PresentationDefinition
-	GetQueryError        error
-	PresentCredentialErr error
+	GetQueryResult           *presexch.PresentationDefinition
+	GetQueryError            error
+	PresentCredentialErr     error
+	VerifierDisplayDataRes   *openid4vp.VerifierDisplayData
+	VerifierDisplayDataError error
 }
 
 func (o *mocGoAPIInteraction) GetQuery() (*presexch.PresentationDefinition, error) {
@@ -263,6 +294,10 @@ func (o *mocGoAPIInteraction) GetQuery() (*presexch.PresentationDefinition, erro
 
 func (o *mocGoAPIInteraction) PresentCredential(credentials []*afgoverifiable.Credential) error {
 	return o.PresentCredentialErr
+}
+
+func (o *mocGoAPIInteraction) VerifierDisplayData() (*openid4vp.VerifierDisplayData, error) {
+	return o.VerifierDisplayDataRes, o.VerifierDisplayDataError
 }
 
 type mocksDIDResolver struct {

@@ -30,6 +30,7 @@ import (
 type goAPIOpenID4VP interface {
 	GetQuery() (*presexch.PresentationDefinition, error)
 	PresentCredential(credentials []*afgoverifiable.Credential) error
+	VerifierDisplayData() (*openid4vp.VerifierDisplayData, error)
 }
 
 // Interaction represents a single OpenID4VP interaction between a wallet and a verifier. The methods defined on this
@@ -131,6 +132,16 @@ func (o *Interaction) GetQuery() ([]byte, error) {
 	}
 
 	return pdBytes, nil
+}
+
+// VerifierDisplayData returns display information about verifier.
+func (o *Interaction) VerifierDisplayData() (*openid4vp.VerifierDisplayData, error) {
+	displayData, err := o.goAPIOpenID4VP.VerifierDisplayData()
+	if err != nil {
+		return nil, wrapper.ToMobileErrorWithTrace(err, o.oTel)
+	}
+
+	return displayData, nil
 }
 
 // PresentCredential presents credentials to redirect uri from request object.

@@ -41,6 +41,9 @@ var (
 
 	//go:embed test_data/credentials.jsonld
 	credentialsJSONLD []byte
+
+	//go:embed test_data/verifier_did.data
+	verifierDID string
 )
 
 const (
@@ -211,6 +214,13 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, query)
 
+		displayData, err := instance.VerifierDisplayData()
+		require.NoError(t, err)
+		require.Equal(t, verifierDID, displayData.DID)
+		require.Equal(t, "v_myprofile_jwt", displayData.Name)
+		require.Equal(t, "", displayData.Purpose)
+		require.Equal(t, "", displayData.LogoURI)
+
 		err = instance.PresentCredential(credentials)
 		require.NoError(t, err)
 
@@ -276,6 +286,29 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("GetQuery not called", func(t *testing.T) {
+		httpClient := &mock.HTTPClientMock{
+			StatusCode: 200,
+		}
+
+		instance := New(
+			requestObjectJWT,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockDoc},
+			&cryptoMock{SignVal: []byte(testSignature)},
+			lddl,
+			WithHTTPClient(httpClient),
+		)
+
+		err := instance.PresentCredential(credentials)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "NOT_INITIALIZED_PROPERLY")
+
+		_, err = instance.VerifierDisplayData()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "NOT_INITIALIZED_PROPERLY")
+	})
+
 	t.Run("Check nonce", func(t *testing.T) {
 		response, err := createAuthorizedResponse(
 			singleCred,
@@ -309,8 +342,11 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			}),
 		)
 
-		err := instance.PresentCredential(nil)
+		query, err := instance.GetQuery()
+		require.NoError(t, err)
+		require.NotNil(t, query)
 
+		err = instance.PresentCredential(nil)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "expected at least one credential")
 	})

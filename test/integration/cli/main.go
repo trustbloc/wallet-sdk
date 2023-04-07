@@ -1,3 +1,10 @@
+/*
+Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package main
 
 import (
@@ -115,7 +122,7 @@ func initiatePreAuthorizedVerification(verifierProfileIDs []string) {
 
 	for i := 0; i < len(verifierProfileIDs); i++ {
 		for j := 0; j < 120; j++ {
-			initiateVerificationURL, err := oidc4vpSetup.InitiateInteraction(verifierProfileIDs[i])
+			initiateVerificationURL, err := oidc4vpSetup.InitiateInteraction(verifierProfileIDs[i], "test purpose.")
 			if err == nil {
 				initiateVerificationURLs = append(initiateVerificationURLs, initiateVerificationURL)
 				break
