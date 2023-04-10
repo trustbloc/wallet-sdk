@@ -180,9 +180,9 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		displayData, err := interaction.VerifierDisplayData()
 		require.NoError(t, err)
 		require.NotEmpty(t, displayData.DID)
-		require.Equal(t, tc.verifierProfileID, displayData.Name)
-		require.Equal(t, "test purpose.", displayData.Purpose)
-		require.Equal(t, "", displayData.LogoURI)
+		require.Equal(t, tc.verifierProfileID, displayData.Name())
+		require.Equal(t, "test purpose.", displayData.Purpose())
+		require.Equal(t, "", displayData.LogoURI())
 
 		inquirerOpts := credential.NewInquirerOpts()
 		inquirerOpts.SetDocumentLoader(docLoader)

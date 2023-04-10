@@ -136,13 +136,13 @@ func (o *Interaction) GetQuery() ([]byte, error) {
 }
 
 // VerifierDisplayData returns display information about verifier.
-func (o *Interaction) VerifierDisplayData() (*openid4vp.VerifierDisplayData, error) {
+func (o *Interaction) VerifierDisplayData() (*VerifierDisplayData, error) {
 	displayData, err := o.goAPIOpenID4VP.VerifierDisplayData()
 	if err != nil {
 		return nil, wrapper.ToMobileErrorWithTrace(err, o.oTel)
 	}
 
-	return displayData, nil
+	return &VerifierDisplayData{displayData: displayData}, nil
 }
 
 // PresentCredential presents credentials to redirect uri from request object.
