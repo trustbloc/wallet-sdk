@@ -146,7 +146,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		err := setup.AuthorizeVerifierBypassAuth("test_org", vcsAPIDirectURL)
 		require.NoError(t, err)
 
-		initiateURL, err := setup.InitiateInteraction(tc.verifierProfileID)
+		initiateURL, err := setup.InitiateInteraction(tc.verifierProfileID, "test purpose.")
 		require.NoError(t, err)
 
 		opts := did.NewResolverOpts()
@@ -176,6 +176,13 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		query, err := interaction.GetQuery()
 		require.NoError(t, err)
 		println("query", string(query))
+
+		displayData, err := interaction.VerifierDisplayData()
+		require.NoError(t, err)
+		require.NotEmpty(t, displayData.DID)
+		require.Equal(t, tc.verifierProfileID, displayData.Name)
+		require.Equal(t, "test purpose.", displayData.Purpose)
+		require.Equal(t, "", displayData.LogoURI)
 
 		inquirerOpts := credential.NewInquirerOpts()
 		inquirerOpts.SetDocumentLoader(docLoader)

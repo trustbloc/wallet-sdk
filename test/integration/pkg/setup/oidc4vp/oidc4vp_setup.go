@@ -7,7 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package oidc4vp
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -35,6 +37,10 @@ type Setup struct {
 	httpRequest         *httprequest.Request
 }
 
+type initiateOIDC4VPData struct {
+	Purpose *string `json:"purpose,omitempty"`
+}
+
 func NewSetup(httpRequest *httprequest.Request) *Setup {
 	return &Setup{
 		httpRequest: httpRequest,
@@ -60,13 +66,20 @@ func (e *Setup) AuthorizeVerifier(orgID, oidcProviderURL, vcsAPIGateway string) 
 	return nil
 }
 
-func (e *Setup) InitiateInteraction(profileName string) (string, error) {
+func (e *Setup) InitiateInteraction(profileName, purpose string) (string, error) {
 	endpointURL := fmt.Sprintf(initiateOidcInteractionURLFormat, e.apiURL, profileName)
+
+	reqBody, err := json.Marshal(&initiateOIDC4VPData{
+		Purpose: &purpose,
+	})
+	if err != nil {
+		return "", fmt.Errorf("marshal initiate oidc4vp req: %w", err)
+	}
 
 	result := &initiateOIDC4VPResponse{}
 
-	_, err := e.httpRequest.Send(http.MethodPost, endpointURL, "application/json", e.getAuthHeaders(), //nolint: bodyclose
-		nil, &result)
+	_, err = e.httpRequest.Send(http.MethodPost, endpointURL, "application/json", e.getAuthHeaders(), //nolint: bodyclose
+		bytes.NewReader(reqBody), &result)
 	if err != nil {
 		return "", err
 	}

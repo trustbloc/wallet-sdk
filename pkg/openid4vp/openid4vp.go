@@ -133,9 +133,35 @@ func (o *Interaction) GetQuery() (*presexch.PresentationDefinition, error) {
 		})
 }
 
+// VerifierDisplayData returns display information about verifier.
+func (o *Interaction) VerifierDisplayData() (*VerifierDisplayData, error) {
+	if o.requestObject == nil {
+		return nil, walleterror.NewExecutionError(
+			module,
+			NotInitializedProperlyErrorCode,
+			NotInitializedProperlyError,
+			fmt.Errorf("call GetQuery first"))
+	}
+
+	return &VerifierDisplayData{
+		DID:     o.requestObject.ClientID,
+		Name:    o.requestObject.Registration.ClientName,
+		Purpose: o.requestObject.Registration.ClientPurpose,
+		LogoURI: o.requestObject.Registration.ClientLogoURI,
+	}, nil
+}
+
 // PresentCredential presents credentials to redirect uri from request object.
 func (o *Interaction) PresentCredential(credentials []*verifiable.Credential) error {
 	timeStartPresentCredential := time.Now()
+
+	if o.requestObject == nil {
+		return walleterror.NewExecutionError(
+			module,
+			NotInitializedProperlyErrorCode,
+			NotInitializedProperlyError,
+			fmt.Errorf("call GetQuery first"))
+	}
 
 	response, err := createAuthorizedResponse(credentials, o.requestObject, o.didResolver, o.crypto, o.documentLoader)
 	if err != nil {

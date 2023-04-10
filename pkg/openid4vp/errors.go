@@ -14,6 +14,7 @@ const (
 	VerifyAuthorizationRequestFailedError = "VERIFY_AUTHORIZATION_REQUEST_FAILED"
 	CreateAuthorizedResponseFailedError   = "CREATE_AUTHORIZED_RESPONSE"
 	SendAuthorizedResponseFailedError     = "SEND_AUTHORIZED_RESPONSE"
+	NotInitializedProperlyError           = "NOT_INITIALIZED_PROPERLY"
 )
 
 // Constants' names and reasons are obvious so they do not require additional comments.
@@ -23,4 +24,5 @@ const (
 	VerifyAuthorizationRequestFailedCode
 	CreateAuthorizedResponseFailedCode
 	SendAuthorizedResponseFailedCode
+	NotInitializedProperlyErrorCode
 )
