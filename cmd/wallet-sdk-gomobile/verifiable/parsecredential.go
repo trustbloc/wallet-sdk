@@ -13,6 +13,7 @@ import (
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 )
 
 // ParseCredential parses the given serialized VC into a VC object.
@@ -28,8 +29,16 @@ func ParseCredential(vc string, opts *Opts) (*Credential, error) {
 	}
 
 	if opts.documentLoader == nil {
+		httpClient := &http.Client{}
+
+		if opts.httpTimeout != nil {
+			httpClient.Timeout = *opts.httpTimeout
+		} else {
+			httpClient.Timeout = goapi.DefaultHTTPTimeout
+		}
+
 		parseCredentialOpts = append(parseCredentialOpts,
-			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)))
+			verifiable.WithJSONLDDocumentLoader(ld.NewDefaultDocumentLoader(httpClient)))
 	} else {
 		wrappedLoader := &wrapper.DocumentLoaderWrapper{
 			DocumentLoader: opts.documentLoader,

@@ -48,7 +48,9 @@ var (
 
 func TestNewInquirer(t *testing.T) {
 	t.Run("Using the default network-based document loader", func(t *testing.T) {
-		inquirer := credential.NewInquirer(nil)
+		opts := credential.NewInquirerOpts().SetHTTPTimeoutNanoseconds(0)
+
+		inquirer := credential.NewInquirer(opts)
 		require.NotNil(t, inquirer)
 	})
 }

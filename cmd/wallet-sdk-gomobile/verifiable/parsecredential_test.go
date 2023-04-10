@@ -30,6 +30,7 @@ func TestParse(t *testing.T) {
 	t.Run("Success - proof check disabled", func(t *testing.T) {
 		opts := verifiable.NewOpts()
 		opts.DisableProofCheck()
+		opts.SetHTTPTimeoutNanoseconds(0)
 
 		universityDegreeVC, err := verifiable.ParseCredential(universityDegreeCredential, opts)
 		require.NoError(t, err)

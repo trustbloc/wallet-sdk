@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -26,7 +27,7 @@ const (
 
 func TestDIDResolver(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		didResolver, err := resolver.NewDIDResolver("")
+		didResolver, err := resolver.NewDIDResolver(resolver.WithHTTPTimeout(time.Second * 10))
 		require.NoError(t, err)
 
 		testcases := []struct {
@@ -53,7 +54,7 @@ func TestDIDResolver(t *testing.T) {
 	})
 
 	t.Run("httpbinding initialization error", func(t *testing.T) {
-		didResolver, err := resolver.NewDIDResolver("not a uri")
+		didResolver, err := resolver.NewDIDResolver(resolver.WithResolverServerURI("not a uri"))
 		require.Error(t, err)
 		require.Nil(t, didResolver)
 		require.Contains(t, err.Error(), "failed to initialize client for DID resolution server")
@@ -70,7 +71,7 @@ func TestDIDResolver(t *testing.T) {
 
 		defer func() { testServer.Close() }()
 
-		didResolver, err := resolver.NewDIDResolver(testServer.URL)
+		didResolver, err := resolver.NewDIDResolver(resolver.WithResolverServerURI(testServer.URL))
 		require.NoError(t, err)
 
 		didDocResolution, err := didResolver.Resolve(docID)
@@ -82,7 +83,7 @@ func TestDIDResolver(t *testing.T) {
 }
 
 func TestDIDResolver_InvalidDID(t *testing.T) {
-	didResolver, err := resolver.NewDIDResolver("")
+	didResolver, err := resolver.NewDIDResolver()
 	require.NoError(t, err)
 
 	didDocResolution, err := didResolver.Resolve("did:example:abc")

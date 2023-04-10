@@ -6,7 +6,11 @@ SPDX-License-Identifier: Apache-2.0
 
 package openid4ci
 
-import "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+import (
+	"time"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+)
 
 // Opts contains all optional arguments that can be passed into the NewInteraction function.
 type Opts struct {
@@ -17,6 +21,7 @@ type Opts struct {
 	disableHTTPClientTLSVerification bool
 	documentLoader                   api.LDDocumentLoader
 	disableOpenTelemetry             bool
+	httpTimeout                      *time.Duration
 }
 
 // NewOpts returns a new Opts object.
@@ -27,6 +32,15 @@ func NewOpts() *Opts {
 // DisableVCProofChecks disables VC proof checks during the OpenID4CI interaction flow.
 func (o *Opts) DisableVCProofChecks() *Opts {
 	o.disableVCProofChecks = true
+
+	return o
+}
+
+// SetHTTPTimeoutNanoseconds sets the timeout (in nanoseconds) for HTTP calls.
+// Passing in 0 will disable timeouts.
+func (o *Opts) SetHTTPTimeoutNanoseconds(timeout int64) *Opts {
+	timeoutDuration := time.Duration(timeout)
+	o.httpTimeout = &timeoutDuration
 
 	return o
 }

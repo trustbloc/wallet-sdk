@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -9,7 +10,8 @@ package resolver
 
 import (
 	"fmt"
-	"net/http"
+
+	"github.com/trustbloc/wallet-sdk/pkg/api"
 
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/longform"
@@ -28,10 +30,8 @@ type DIDResolver struct {
 	vdr *vdr.Registry
 }
 
-// NewDIDResolver new DID Resolver instance.
-//
-// Parameter resolverServerURI (optional): if present, provides the URI for a DID resolution server.
-func NewDIDResolver(resolverServerURI string) (*DIDResolver, error) {
+// NewDIDResolver returns a new DID Resolver.
+func NewDIDResolver(opts ...Opt) (*DIDResolver, error) {
 	ion, err := longform.New()
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
@@ -41,19 +41,32 @@ func NewDIDResolver(resolverServerURI string) (*DIDResolver, error) {
 			fmt.Errorf("initializing did:ion longform resolver: %w", err))
 	}
 
-	opts := []vdr.Option{
+	vdrOpts := []vdr.Option{
 		vdr.WithVDR(key.New()),
 		vdr.WithVDR(web.New()),
 		vdr.WithVDR(jwk.New()),
 		vdr.WithVDR(ion),
 	}
 
-	if resolverServerURI != "" {
-		httpVDR, err := httpbinding.New(resolverServerURI, httpbinding.WithHTTPClient(http.DefaultClient),
-			httpbinding.WithAccept(func(method string) bool {
-				// For now, let the resolver server act as a fallback for all DID methods the sdk does not recognize.
-				return true
-			}))
+	mergedOpts := mergeOpts(opts)
+
+	if mergedOpts.resolverServerURI != "" {
+		acceptOpt := httpbinding.WithAccept(func(method string) bool {
+			// For now, let the resolver server act as a fallback for all DID methods the SDK does not recognize.
+			return true
+		})
+
+		var httpTimeoutOpt httpbinding.Option
+
+		if mergedOpts.httpTimeout != nil {
+			httpTimeoutOpt = httpbinding.WithTimeout(*mergedOpts.httpTimeout)
+		} else {
+			httpTimeoutOpt = httpbinding.WithTimeout(api.DefaultHTTPTimeout)
+		}
+
+		httpBindingOpts := []httpbinding.Option{acceptOpt, httpTimeoutOpt}
+
+		httpVDR, err := httpbinding.New(mergedOpts.resolverServerURI, httpBindingOpts...)
 		if err != nil {
 			return nil,
 				walleterror.NewExecutionError(
@@ -63,11 +76,11 @@ func NewDIDResolver(resolverServerURI string) (*DIDResolver, error) {
 					fmt.Errorf("failed to initialize client for DID resolution server: %w", err))
 		}
 
-		opts = append(opts, vdr.WithVDR(httpVDR))
+		vdrOpts = append(vdrOpts, vdr.WithVDR(httpVDR))
 	}
 
 	return &DIDResolver{
-		vdr: vdr.New(opts...),
+		vdr: vdr.New(vdrOpts...),
 	}, nil
 }
 

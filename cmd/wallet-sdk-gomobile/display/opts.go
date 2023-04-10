@@ -6,13 +6,18 @@ SPDX-License-Identifier: Apache-2.0
 
 package display
 
-import "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+import (
+	"time"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+)
 
 // Opts contains all optional arguments that can be passed into the Resolve function.
 type Opts struct {
 	preferredLocale   string
 	metricsLogger     api.MetricsLogger
 	additionalHeaders api.Headers
+	httpTimeout       *time.Duration
 }
 
 // NewOpts returns a new Opts object.
@@ -33,6 +38,15 @@ func (o *Opts) SetPreferredLocale(preferredLocale string) *Opts {
 // SetMetricsLogger sets a metrics logger to use.
 func (o *Opts) SetMetricsLogger(metricsLogger api.MetricsLogger) *Opts {
 	o.metricsLogger = metricsLogger
+
+	return o
+}
+
+// SetHTTPTimeoutNanoseconds sets the timeout (in nanoseconds) for HTTP calls.
+// Passing in 0 will disable timeouts.
+func (o *Opts) SetHTTPTimeoutNanoseconds(timeout int64) *Opts {
+	timeoutDuration := time.Duration(timeout)
+	o.httpTimeout = &timeoutDuration
 
 	return o
 }

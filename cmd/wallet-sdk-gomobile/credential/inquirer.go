@@ -21,6 +21,7 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialquery"
 )
 
@@ -62,7 +63,15 @@ func NewInquirer(opts *InquirerOpts) *Inquirer {
 			DocumentLoader: opts.documentLoader,
 		}
 	} else {
-		goAPIDocumentLoader = ld.NewDefaultDocumentLoader(http.DefaultClient)
+		httpClient := &http.Client{}
+
+		if opts.httpTimeout != nil {
+			httpClient.Timeout = *opts.httpTimeout
+		} else {
+			httpClient.Timeout = goapi.DefaultHTTPTimeout
+		}
+
+		goAPIDocumentLoader = ld.NewDefaultDocumentLoader(httpClient)
 	}
 
 	return &Inquirer{

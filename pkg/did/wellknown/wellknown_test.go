@@ -150,7 +150,7 @@ func TestValidate(t *testing.T) {
 		require.Empty(t, domain)
 	})
 	t.Run("Fail to resolve DID (invalid DID format)", func(t *testing.T) {
-		didResolver, err := resolver.NewDIDResolver("")
+		didResolver, err := resolver.NewDIDResolver()
 		require.NoError(t, err)
 
 		valid, domain, err := wellknown.ValidateLinkedDomains("InvalidDID", didResolver, nil)
@@ -159,7 +159,7 @@ func TestValidate(t *testing.T) {
 		require.Empty(t, domain)
 	})
 	t.Run("Resolved DID document has no services", func(t *testing.T) {
-		didResolver, err := resolver.NewDIDResolver("")
+		didResolver, err := resolver.NewDIDResolver()
 		require.NoError(t, err)
 
 		sampleDIDWithoutServices := "did:key:z6MkoTHsgNNrby8JzCNQ1iRLyW5QQ6R8Xuu6AA8igGrMVPUM"

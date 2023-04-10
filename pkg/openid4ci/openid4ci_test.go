@@ -15,6 +15,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
@@ -835,10 +836,13 @@ func getTestClientConfig(t *testing.T) *openid4ci.ClientConfig {
 
 	didResolver := &mockResolver{keyWriter: localKMS}
 
+	networkDocumentLoaderHTTPTimeout := time.Second * 10
+
 	return &openid4ci.ClientConfig{
-		ClientID:             "ClientID",
-		DIDResolver:          didResolver,
-		DisableVCProofChecks: true,
+		ClientID:                         "ClientID",
+		DIDResolver:                      didResolver,
+		DisableVCProofChecks:             true,
+		NetworkDocumentLoaderHTTPTimeout: &networkDocumentLoaderHTTPTimeout,
 	}
 }
 

@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -8,7 +9,6 @@ package did
 
 import (
 	"errors"
-	"net/http"
 
 	"github.com/hyperledger/aries-framework-go/pkg/client/didconfig"
 
@@ -29,8 +29,17 @@ type ValidationResult struct {
 // It returns a ValidationResult.
 // The DID document must specify only a single service. If there are multiple URLs for a given service, only the
 // first will be checked.
-func ValidateLinkedDomains(did string, resolver api.DIDResolver) (*ValidationResult, error) {
-	return validateLinkedDomains(did, resolver, http.DefaultClient)
+func ValidateLinkedDomains(did string, resolver api.DIDResolver,
+	opts *ValidateLinkedDomainsOpts,
+) (*ValidationResult, error) {
+	if opts == nil {
+		opts = NewValidateLinkedDomainsOpts()
+	}
+
+	httpClient := wrapper.NewHTTPClient()
+	httpClient.Timeout = opts.httpTimeout
+
+	return validateLinkedDomains(did, resolver, httpClient)
 }
 
 func validateLinkedDomains(did string, resolver api.DIDResolver,

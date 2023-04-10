@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -57,6 +58,22 @@ func TestHTTPClient_Do(t *testing.T) {
 		require.NoError(t, response.Body.Close())
 	})
 	t.Run("With additional headers", func(t *testing.T) {
+		additionalHeaders := api.NewHeaders()
+
+		additionalHeaders.Add(api.NewHeader("header-name-1", "header-value-1"))
+		additionalHeaders.Add(api.NewHeader("header-name-2", "header-value-2"))
+
+		httpClient.AddHeaders(additionalHeaders)
+
+		response, err := httpClient.Do(request)
+		require.NoError(t, err)
+		require.NotNil(t, response)
+		require.NoError(t, response.Body.Close())
+	})
+	t.Run("With custom timeout", func(t *testing.T) {
+		timeout := time.Second * 10
+		httpClient.Timeout = &timeout
+
 		additionalHeaders := api.NewHeaders()
 
 		additionalHeaders.Add(api.NewHeader("header-name-1", "header-value-1"))

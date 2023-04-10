@@ -25,7 +25,21 @@ func NewResolver(opts *ResolverOpts) (*Resolver, error) {
 		opts = NewResolverOpts()
 	}
 
-	didResolver, err := resolver.NewDIDResolver(opts.resolverServerURI)
+	var goAPIResolverOpts []resolver.Opt
+
+	if opts.resolverServerURI != "" {
+		resolverServerURIOpt := resolver.WithResolverServerURI(opts.resolverServerURI)
+
+		goAPIResolverOpts = append(goAPIResolverOpts, resolverServerURIOpt)
+	}
+
+	if opts.httpTimeout != nil {
+		httpTimeoutOpt := resolver.WithHTTPTimeout(*opts.httpTimeout)
+
+		goAPIResolverOpts = append(goAPIResolverOpts, httpTimeoutOpt)
+	}
+
+	didResolver, err := resolver.NewDIDResolver(goAPIResolverOpts...)
 	if err != nil {
 		return nil, wrapper.ToMobileError(err)
 	}

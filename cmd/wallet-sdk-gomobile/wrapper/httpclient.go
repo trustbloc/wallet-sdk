@@ -9,8 +9,10 @@ package wrapper
 import (
 	"crypto/tls"
 	"net/http"
+	"time"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 )
 
 // HTTPClient is the HTTP client implementation that gets injected in from the gomobile layer.
@@ -18,6 +20,7 @@ import (
 type HTTPClient struct {
 	additionalHeaders      []api.Header
 	DisableTLSVerification bool // Should only be set to true for testing purposes.
+	Timeout                *time.Duration
 }
 
 // NewHTTPClient returns a new HTTPClient.
@@ -39,16 +42,22 @@ func (m *HTTPClient) Do(req *http.Request) (*http.Response, error) {
 		req.Header.Add(additionalHeader.Name, additionalHeader.Value)
 	}
 
+	httpClient := http.Client{}
+
 	if m.DisableTLSVerification {
 		//nolint:gosec // The ability to disable TLS is an option we provide that has to be explicitly set by the user.
 		// By default, we don't disable TLS. We have documentation specifying that this option is only intended for
 		// testing purposes - it's up to the user to use this option appropriately.
 		tlsConfig := &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true}
 
-		insecureHTTPClient := http.Client{Transport: &http.Transport{TLSClientConfig: tlsConfig}}
-
-		return insecureHTTPClient.Do(req)
+		httpClient.Transport = &http.Transport{TLSClientConfig: tlsConfig}
 	}
 
-	return http.DefaultClient.Do(req)
+	if m.Timeout != nil {
+		httpClient.Timeout = *m.Timeout
+	} else {
+		httpClient.Timeout = goapi.DefaultHTTPTimeout
+	}
+
+	return httpClient.Do(req)
 }

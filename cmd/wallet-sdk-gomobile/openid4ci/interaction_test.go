@@ -15,22 +15,22 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
 
-	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
-	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
-	"github.com/trustbloc/wallet-sdk/pkg/models"
-	goapiopenid4ci "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
+	"github.com/trustbloc/wallet-sdk/pkg/models"
+	goapiopenid4ci "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
 
 //go:embed testdata/sample_credential_response.json
@@ -389,6 +389,9 @@ func getTestArgs(t *testing.T, initiateIssuanceURI string, kms *localkms.KMS,
 	opts := openid4ci.NewOpts()
 	opts.DisableVCProofChecks()
 	opts.SetDocumentLoader(&documentLoaderWrapper{DocumentLoader: testutil.DocumentLoader(t)})
+
+	timeout := time.Second * 10
+	opts.SetHTTPTimeoutNanoseconds(timeout.Nanoseconds())
 
 	if activityLogger != nil {
 		opts.SetActivityLogger(activityLogger)

@@ -17,7 +17,9 @@ import (
 
 func TestDIDResolver(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		didResolver, err := did.NewResolver(nil)
+		opts := did.NewResolverOpts().SetHTTPTimeoutNanoseconds(0)
+
+		didResolver, err := did.NewResolver(opts)
 		require.NoError(t, err)
 
 		didDocResolution, err := didResolver.Resolve("did:key:z6MkjfbzWitsSUyFMTbBUSWNsJBHR7BefFp1WmABE3kRw8Qr")

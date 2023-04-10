@@ -190,14 +190,16 @@ func createGoAPIClientConfig(config *Args,
 	httpClient := wrapper.NewHTTPClient()
 	httpClient.AddHeaders(&opts.additionalHeaders)
 	httpClient.DisableTLSVerification = opts.disableHTTPClientTLSVerification
+	httpClient.Timeout = opts.httpTimeout
 
 	goAPIClientConfig := &openid4cigoapi.ClientConfig{
-		ClientID:             config.clientID,
-		DIDResolver:          &wrapper.VDRResolverWrapper{DIDResolver: config.didResolver},
-		ActivityLogger:       activityLogger,
-		MetricsLogger:        &wrapper.MobileMetricsLoggerWrapper{MobileAPIMetricsLogger: opts.metricsLogger},
-		DisableVCProofChecks: opts.disableVCProofChecks,
-		HTTPClient:           httpClient,
+		ClientID:                         config.clientID,
+		DIDResolver:                      &wrapper.VDRResolverWrapper{DIDResolver: config.didResolver},
+		ActivityLogger:                   activityLogger,
+		MetricsLogger:                    &wrapper.MobileMetricsLoggerWrapper{MobileAPIMetricsLogger: opts.metricsLogger},
+		DisableVCProofChecks:             opts.disableVCProofChecks,
+		HTTPClient:                       httpClient,
+		NetworkDocumentLoaderHTTPTimeout: opts.httpTimeout,
 	}
 
 	if opts.documentLoader != nil {

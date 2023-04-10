@@ -43,7 +43,7 @@ func ValidateLinkedDomains(did string, resolver api.DIDResolver,
 	}
 
 	if httpClient == nil {
-		httpClient = http.DefaultClient
+		httpClient = &http.Client{Timeout: api.DefaultHTTPTimeout}
 	}
 
 	didDocResolution, err := resolver.Resolve(did)

@@ -404,7 +404,7 @@ class MainActivity : FlutterActivity() {
             ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
 
         val validationResult = try {
-            Did.validateLinkedDomains(issuerID, walletSDK.didResolver)
+            Did.validateLinkedDomains(issuerID, walletSDK.didResolver, null)
         } catch (e: Exception) {
             println("error received while getting well known didConfig $e")
             val didValidateResultResp: MutableMap<String, Any> = mutableMapOf()
