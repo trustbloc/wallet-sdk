@@ -222,14 +222,21 @@ func TestInteraction_VerifierDisplayData(t *testing.T) {
 		instance := &Interaction{
 			goAPIOpenID4VP: &mocGoAPIInteraction{
 				VerifierDisplayDataRes: &openid4vp.VerifierDisplayData{
-					Name: "testName",
+					DID:     "DID",
+					Name:    "testName",
+					Purpose: "purpose",
+					LogoURI: "logoURI",
 				},
 			},
 		}
 
 		data, err := instance.VerifierDisplayData()
 		require.NoError(t, err)
-		require.Equal(t, "testName", data.Name)
+		require.NotNil(t, data)
+		require.Equal(t, "DID", data.DID())
+		require.Equal(t, "testName", data.Name())
+		require.Equal(t, "purpose", data.Purpose())
+		require.Equal(t, "logoURI", data.LogoURI())
 	})
 
 	t.Run("Error", func(t *testing.T) {
