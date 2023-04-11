@@ -1,6 +1,6 @@
 # SDK Usage
 
-Last updated: March 31, 2023 (commit `0e6527fc60428008561599ff87f6c981376f187e`)
+Last updated: April 11, 2023 (commit `b088e45684521d0ebddb8a4eb6a065604964e66f`)
 
 This guide explains how to use this SDK in Android or iOS code. The examples in this document demonstrate
 how to use the various APIs from a Kotlin and Swift perspective.
