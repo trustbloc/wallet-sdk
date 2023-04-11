@@ -177,11 +177,16 @@ class MethodChannelWallet extends WalletPlatform {
   }
 
   Future<Map<Object?, Object?>?> wellKnownDidConfig(String issuerID) async {
-    log("wellKnownDidConfig inside");
     var didLinkedResp = await methodChannel.invokeMethod('wellKnownDidConfig', <String, dynamic>{'issuerID': issuerID});
     log("well known config, $didLinkedResp");
     return didLinkedResp;
   }
+
+  Future<Map<Object?, Object?>?> getVerifierDisplayData() async {
+    var verifierDisplayData = await methodChannel.invokeMethod('getVerifierDisplayData');
+    return verifierDisplayData;
+  }
+
 
   Future<void> presentCredential({List<String>? selectedCredentials}) async {
     await methodChannel

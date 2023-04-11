@@ -72,4 +72,13 @@ public class OpenID4VP {
         try initiatedInteraction.presentCredential(selectedCredentials)
     }
     
+    func getVerifierDisplayData() throws -> Openid4vpVerifierDisplayData {
+        guard self.initiatedInteraction != nil else {
+            throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
+        }
+        
+      let verifierDisplayData =  try initiatedInteraction?.verifierDisplayData()
+      return verifierDisplayData!
+         
+    }
 }

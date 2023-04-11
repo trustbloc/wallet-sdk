@@ -11,6 +11,7 @@ import dev.trustbloc.wallet.sdk.openid4vp.Interaction
 import dev.trustbloc.wallet.sdk.credential.*
 import dev.trustbloc.wallet.sdk.openid4vp.Opts
 import dev.trustbloc.wallet.sdk.openid4vp.Args
+import dev.trustbloc.wallet.sdk.openid4vp.VerifierDisplayData
 import dev.trustbloc.wallet.sdk.otel.Otel
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import java.lang.Exception
@@ -61,5 +62,12 @@ class OpenID4VP constructor(
                 ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
 
         initiatedInteraction.presentCredential(selectedCredentials)
+    }
+
+    fun getVerifierDisplayData(): VerifierDisplayData {
+        val initiatedInteraction = this.initiatedInteraction
+            ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
+
+        return initiatedInteraction.verifierDisplayData()
     }
 }

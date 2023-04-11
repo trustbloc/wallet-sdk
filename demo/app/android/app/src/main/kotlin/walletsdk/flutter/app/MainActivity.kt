@@ -212,6 +212,14 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
+                       "getVerifierDisplayData" -> {
+                           try {
+                               val verifierDisplayData = getVerifierDisplayData()
+                               result.success(verifierDisplayData)
+                           } catch (e: Exception) {
+                               result.error("Exception", "Error while getting verifier display data", e)
+                           }
+                       }
 
                     }
                 }
@@ -416,10 +424,22 @@ class MainActivity : FlutterActivity() {
         val didValidateResultResp: MutableMap<String, Any> = mutableMapOf()
         didValidateResultResp["isValid"] = validationResult.isValid
         didValidateResultResp["serviceURL"] = validationResult.serviceURL
-        println("well known config")
         println(didValidateResultResp)
 
        return didValidateResultResp
+    }
+
+    private fun getVerifierDisplayData() : MutableMap<String, Any> {
+        val openID4VP = this.openID4VP
+            ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
+
+        val verifierDisplayDataResp = openID4VP.getVerifierDisplayData()
+        val verifierDisplayData: MutableMap<String, Any> = mutableMapOf()
+        verifierDisplayData["did"] = verifierDisplayDataResp.did()
+        verifierDisplayData["logoUri"] = verifierDisplayDataResp.logoURI()
+        verifierDisplayData["name"] = verifierDisplayDataResp.name()
+        verifierDisplayData["purpose"] = verifierDisplayDataResp.purpose()
+        return verifierDisplayData
     }
 
     /**

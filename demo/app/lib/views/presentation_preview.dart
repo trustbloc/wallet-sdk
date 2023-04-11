@@ -13,6 +13,9 @@ import 'package:app/main.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:app/models/activity_data_object.dart';
 import 'package:app/widgets/credential_card.dart';
+import 'package:app/main.dart';
+import 'dart:developer';
+import 'dart:convert';
 
 class PresentationPreview extends StatefulWidget {
   final String matchedCredential;
@@ -27,16 +30,26 @@ class PresentationPreviewState extends State<PresentationPreview> {
   final StorageService _storageService = StorageService();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   var uuid = const Uuid();
-  late final String userLoggedIn;
-  // Todo fetch the name of the  verifier name from the presentation
-  late String verifierName = 'Verifier';
+  late Map<Object?, Object?>? verifiedDisplayData;
+  late String verifierName = '';
+  late String serviceURL = '';
+  bool verifiedDomain = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) async {
-      UserLoginDetails userLoginDetails =  await getUser();
-      userLoggedIn = userLoginDetails.username!;
+      verifiedDisplayData = await WalletSDKPlugin.getVerifierDisplayData();
+      var verifiedDisplayDataResp = json.encode(verifiedDisplayData);
+      Map<String, dynamic> responseJson = json.decode(verifiedDisplayDataResp);
+      var resp = await WalletSDKPlugin.wellKnownDidConfig(responseJson["did"]);
+      var wellKnownDidConfig = json.encode(resp);
+      Map<String, dynamic> wellKnownDidConfigResp = json.decode(wellKnownDidConfig);
+      setState(() {
+        verifierName = responseJson["name"] != '' ? responseJson["name"] : 'Verifier' ;
+        serviceURL =  wellKnownDidConfigResp ["serviceURL"];
+        verifiedDomain = wellKnownDidConfigResp["isValid"];
+      });
     });
   }
 
@@ -51,11 +64,50 @@ class PresentationPreviewState extends State<PresentationPreview> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             ListTile(
-              //todo Issue-174 read the meta data from the backend on page load
               leading: Image.asset('lib/assets/images/credLogo.png'),
               title: Text(verifierName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              subtitle: const Text('verifier.com', style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
-              trailing: Image.asset('lib/assets/images/verified.png', width: 82, height: 26),
+              subtitle: Text(serviceURL != "" ? serviceURL: 'verifier.com', style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+              trailing: FittedBox(
+                  child: verifiedDomain ? Row(
+                    children: [
+                      Text.rich(
+                        textAlign: TextAlign.center,
+                        TextSpan(
+                          children: [
+                            WidgetSpan(child: Icon(Icons.verified_user_outlined,color: Colors.lightGreen, size: 18,)),
+                            TextSpan(
+                              text: 'Verified',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.lightGreen,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ]):  Row(
+                    children: [
+                      Text.rich(
+                      textAlign: TextAlign.center,
+                      TextSpan(
+                        children: [
+                          WidgetSpan(child: Icon(Icons.dangerous_outlined, color: Colors.redAccent, size: 18,)),
+                          TextSpan(
+                            text: 'Unverified',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.redAccent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                      ],
+                  )
+                ),
+
             ),
             CredentialCard(credentialData:  widget.credentialData,  isDashboardWidget: false, isDetailArrowRequired: false),
             CredentialMetaDataCard(credentialData: widget.credentialData),
@@ -76,7 +128,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
                             var activities = await WalletSDKPlugin.storeActivityLogger();
                             var credID = pref.getString('credID');
                             _storageService.addActivities(ActivityDataObj(credID!, activities));
-                            _navigateToCredentialShareSuccess(verifierName);
+                            _navigateToCredentialShareSuccess(verifierName!);
                           },
                           width: double.infinity,
                           child: const Text('Share Credential', style: TextStyle(fontSize: 16, color: Colors.white))

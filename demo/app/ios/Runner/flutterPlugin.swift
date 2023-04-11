@@ -75,6 +75,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "activityLogger":
             storeActivityLogger(result:result)
 
+        case "getVerifierDisplayData":
+             getVerifierDisplayData(result:result)
+            
         case "processAuthorizationRequest":
             processAuthorizationRequest(arguments: arguments!, result: result)
 
@@ -303,6 +306,31 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                        message: "error while creating new OIDC interaction",
                                        details: error))
           }
+    }
+    
+    public func getVerifierDisplayData(result: @escaping FlutterResult){
+        guard let openID4VP = self.openID4VP else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while process present credential",
+                                             details: "OpenID4VP interaction is not initialted"))
+        }
+        do {
+           let verifierData =  try openID4VP.getVerifierDisplayData()
+            var verifierDisplayData:[String:Any] = [
+                "did":   verifierData.did(),
+                "logoUri": verifierData.logoURI(),
+                "name":  verifierData.name(),
+                "purpose" : verifierData.purpose()
+            ]
+
+           result(verifierDisplayData)
+    
+        } catch {
+        result(FlutterError.init(code: "NATIVE_ERR",
+                                 message: "error while getting verifier display data",
+                                 details: error))
+       }
+        
     }
     
     /**

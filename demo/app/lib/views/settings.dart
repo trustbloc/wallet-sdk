@@ -35,6 +35,10 @@ class SettingsState extends State<Settings> {
     'ECDSAP384IEEEP1363',
     'ECDSAP256IEEEP1363',
     'ED25519',
+    'ECDSAP521IEEEP1363',
+    'ECDSAP256DER',
+    'ECDSAP384DER',
+    'ECDSAP521DER'
   ];
   String? selectedDIDType;
   String? selectedKeyType;
