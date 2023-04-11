@@ -1,6 +1,6 @@
 # SDK Usage
 
-Last updated: April 11, 2023 (commit `b088e45684521d0ebddb8a4eb6a065604964e66f`)
+Last updated: April 11, 2023 (commit `f2fb58089f254110339ff2605374966660e8063c`)
 
 This guide explains how to use this SDK in Android or iOS code. The examples in this document demonstrate
 how to use the various APIs from a Kotlin and Swift perspective.
@@ -334,7 +334,7 @@ var newKMSError: NSError?
 let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
 
 var newDIDCreatorError: NSError?
-let didCreator = DidNewCreatorWithKeyWriter(kms, &newDIDCreatorError)
+let didCreator = DidNewCreator(kms, &newDIDCreatorError)
 
 let didDocResolution = didCreator.create("key", nil)
 ```
@@ -697,7 +697,6 @@ object, setting your desired parameters using the supplied methods, and passing 
 
 ```kotlin
 import dev.trustbloc.wallet.sdk.display.*
-import dev.trustbloc.wallet.sdk.openid4ci.Openid4ci
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
 val vcArray = CredentialsArray()
@@ -710,7 +709,6 @@ val displayData = Display.resolve(vcArray, "Issuer_URI_Goes_Here", null)
 
 ```kotlin
 import dev.trustbloc.wallet.sdk.display.*
-import dev.trustbloc.wallet.sdk.openid4ci.Openid4ci
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
 val vcArray = CredentialsArray()
@@ -724,7 +722,7 @@ val displayData = Display.resolve(vcArray, "Issuer_URI_Goes_Here", opts)
 
 ##### Using Default Options
 
-```kotlin
+```swift
 import Walletsdk
 
 let vcArray = VerifiableCredentialsArray()
@@ -737,7 +735,7 @@ let displayData = DisplayResolve(vcArray, "Issuer_URI_Goes_Here", nil, &error)
 
 ##### Using Specified Options
 
-```kotlin
+```swift
 import Walletsdk
 
 let vcArray = VerifiableCredentialsArray()
