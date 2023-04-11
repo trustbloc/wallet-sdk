@@ -9,7 +9,7 @@ go 1.19
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/hyperledger/aries-framework-go v0.1.10-0.20230329184452-901fc917529d
+	github.com/hyperledger/aries-framework-go v0.2.0
 	github.com/piprate/json-gold v0.4.2
 	github.com/stretchr/testify v1.8.1
 	github.com/trustbloc/cmdutil-go v0.0.0-20221125151303-09d42adcc811
