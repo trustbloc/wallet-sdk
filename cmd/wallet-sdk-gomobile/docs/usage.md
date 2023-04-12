@@ -917,6 +917,13 @@ val query = interaction.getQuery()
 val inquirer = Inquirer(docLoader)
 val savedCredentials = CredentialsArray() // Would need some actual credentials for this to work
 
+// Use this code to display information about the verifier.
+val verifierDisplayData = openID4VP.getVerifierDisplayData()
+val verifierDID = verifierDisplayData.did()
+val verifierName = verifierDisplayData.name()
+val verifierLogoURI = verifierDisplayData.logoURI()
+val verifierPurpose = verifierDisplayData.purpose()
+
 // Use this code to display the list of VCs to select which of them to send.
 val matchedRequirements = inquirer.getSubmissionRequirements(query, savedCredentials) 
 val matchedRequirement = matchedRequirements.atIndex(0) // Usually we will have one requirement
@@ -952,6 +959,13 @@ let interaction = Openid4vpNewInteraction(args, opts, &newInteractionError)
 let query = interaction.getQuery()
 let inquirer = CredentialNewInquirer(docLoader)
 let savedCredentials = VerifiableCredentialsArray() // Would need some actual credentials for this to work
+
+// Use this code to display information about the verifier.
+let verifierDisplayData =  try openID4VP.getVerifierDisplayData()
+let verifierDID = verifierDisplayData.did(),
+let verifierLogoURI = verifierDisplayData.logoURI(),
+let verifierName = verifierDisplayData.name(),
+let verifierPurpose = verifierDisplayData.purpose()
 
 // Use this code to display the list of VCs to select which of them to send.
 let matchedRequirements = inquirer.getSubmissionRequirements(query, savedCredentials) 
