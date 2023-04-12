@@ -39,10 +39,6 @@ class WalletSDK {
         return try didCreator!.create(didMethodType, opts: opts)
          
     }
-    
-    func wellKnownConfig(did: String) {
-        
-    }
 
     func createOpenID4CIInteraction(requestURI: String) throws -> OpenID4CI {
         guard let crypto = self.crypto else {
