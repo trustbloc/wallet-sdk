@@ -88,7 +88,7 @@ func getLinkedDomainsService(didDoc *diddoc.Doc) (*diddoc.Service, error) {
 	var linkedDomainsService *diddoc.Service
 
 	for i := range didDoc.Service {
-		serviceType, isString := didDoc.Service[0].Type.(string)
+		serviceType, isString := didDoc.Service[i].Type.(string)
 		if !isString {
 			return nil, fmt.Errorf("resolved DID document is not supported since it contains a service "+
 				"type at index %d that is not a simple string", i)
