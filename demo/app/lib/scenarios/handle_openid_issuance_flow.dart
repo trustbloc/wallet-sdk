@@ -23,8 +23,8 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
     var didType = pref.getString('didType');
     var keyType = pref.getString('keyType');
     // choosing default if no selection is made
-    didType = didType ?? "jwk";
-    keyType = keyType ?? "ECDSAP384IEEEP1363";
+    didType = didType ?? "ion";
+    keyType = keyType ?? "ED25519";
     var didResolution = await WalletSDKPlugin.createDID(didType, keyType);
     var didDocEncoded = json.encode(didResolution);
     Map<String, dynamic> responseJson = json.decode(didDocEncoded);

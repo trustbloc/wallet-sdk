@@ -32,9 +32,9 @@ class SettingsState extends State<Settings> {
     'jwk',
   ];
   final List<String> supportedKeyTypes = [
-    'ECDSAP384IEEEP1363',
-    'ECDSAP256IEEEP1363',
     'ED25519',
+    'ECDSAP256IEEEP1363',
+    'ECDSAP384IEEEP1363',
     'ECDSAP521IEEEP1363',
     'ECDSAP256DER',
     'ECDSAP384DER',
