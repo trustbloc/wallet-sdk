@@ -527,7 +527,7 @@ val result = interaction.authorize()
 val credentials: CredentialsArray
 
 if (result.UserPINRequired) {
-    credentials = interaction.requestCredentialWithPIN(didVerificationMethod, "1234")
+    credentials = interaction.requestCredentialWithPIN(didDocResolution.assertionMethod(), "1234")
 } else {
     credentials = interaction.requestCredential(didDocResolution.assertionMethod())
 }
@@ -894,10 +894,8 @@ import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.did.Creator
-import dev.trustbloc.wallet.sdk.ld.DocLoader
 import dev.trustbloc.wallet.sdk.localkms
 import dev.trustbloc.wallet.sdk.openid4vp.*
-import dev.trustbloc.wallet.sdk.ld
 import dev.trustbloc.wallet.sdk.credential.*
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
@@ -914,7 +912,7 @@ val opts = Opts().setActivityLogger(activityLogger) // Optional, but useful for 
 // Going through the flow
 val interaction = Interaction(args, opts)
 val query = interaction.getQuery()
-val inquirer = Inquirer(docLoader)
+val inquirer = Inquirer(null)
 val savedCredentials = CredentialsArray() // Would need some actual credentials for this to work
 
 // Use this code to display information about the verifier.
@@ -957,7 +955,7 @@ let opts = Openid4vpNewOpts().setActivityLogger(activityLogger) // Optional, but
 var newInteractionError: NSError?
 let interaction = Openid4vpNewInteraction(args, opts, &newInteractionError)
 let query = interaction.getQuery()
-let inquirer = CredentialNewInquirer(docLoader)
+let inquirer = CredentialNewInquirer(nil)
 let savedCredentials = VerifiableCredentialsArray() // Would need some actual credentials for this to work
 
 // Use this code to display information about the verifier.
