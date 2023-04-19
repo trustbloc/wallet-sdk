@@ -198,7 +198,7 @@ class MethodChannelWallet extends WalletPlatform {
     return activityObj;
   }
 
-  Future<List<Object?>> parseActivities(List activities) async {
+  Future<List<Object?>> parseActivities(List<dynamic> activities) async {
     var activityObj = await methodChannel.invokeMethod('parseActivities', <String, dynamic>{'activities': activities});
     return activityObj;
   }

@@ -5,7 +5,8 @@ class ActivityLogger {
   final String issuedBy;
   final String activityType;
 
-  ActivityLogger({ required this.status, required this.operation, required this.date, required this.issuedBy, required this.activityType});
+  ActivityLogger(
+      { required this.status, required this.operation, required this.date, required this.issuedBy, required this.activityType});
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
@@ -16,7 +17,8 @@ class ActivityLogger {
     data['Activity Type'] = activityType;
     return data;
   }
-  factory   ActivityLogger.fromJson(Map<String, dynamic> json) {
+
+  factory ActivityLogger.fromJson(Map<String, dynamic> json) {
     return ActivityLogger(
       status: json['Status'],
       operation: json['Operation'],
@@ -25,6 +27,4 @@ class ActivityLogger {
       activityType: json['Activity Type'],
     );
   }
-
-
 }
