@@ -85,6 +85,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		"givenName":    "John",
 		"degree":       "MIT",
 		"degreeSchool": "MIT school",
+		"photo":        "binary data",
 	}
 
 	type test struct {
@@ -98,6 +99,14 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 	}
 
 	tests := []test{
+		{
+			issuerProfileID:     "university_degree_issuer_bbs",
+			issuerDIDMethod:     "key",
+			walletDIDMethod:     "ion",
+			claimData:           universityDegreeClaims,
+			expectedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeIssuer),
+			expectedIssuerURI:   "http://localhost:8075/issuer/university_degree_issuer_bbs",
+		},
 		{
 			issuerProfileID:     "bank_issuer_jwtsd",
 			issuerDIDMethod:     "orb",

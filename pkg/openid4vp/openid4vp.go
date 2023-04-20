@@ -24,6 +24,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	vdrapi "github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -316,6 +317,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen
 		documentLoader,
 		verifiable.WithDisabledProofCheck(),
 		verifiable.WithJSONLDDocumentLoader(documentLoader),
+		verifiable.WithPublicKeyFetcher(verifiable.NewVDRKeyResolver(wrapResolver(didResolver)).PublicKeyFetcher()),
 	)
 	if err != nil {
 		return nil, err
@@ -537,4 +539,16 @@ func pickRandomElement(list []string) (string, error) {
 	}
 
 	return list[idx.Int64()], nil
+}
+
+type resolverAdapter struct {
+	didResolver api.DIDResolver
+}
+
+func (r *resolverAdapter) Resolve(did string, opts ...vdrapi.DIDMethodOption) (*diddoc.DocResolution, error) {
+	return r.didResolver.Resolve(did)
+}
+
+func wrapResolver(didResolver api.DIDResolver) *resolverAdapter {
+	return &resolverAdapter{didResolver: didResolver}
 }

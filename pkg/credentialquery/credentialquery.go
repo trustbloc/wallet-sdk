@@ -77,8 +77,6 @@ func (c *Instance) GetSubmissionRequirements(
 	results, err := query.MatchSubmissionRequirement(
 		credentials,
 		c.documentLoader,
-		verifiable.WithDisabledProofCheck(),
-		verifiable.WithJSONLDDocumentLoader(c.documentLoader),
 	)
 	if err != nil {
 		return nil,

@@ -11,7 +11,7 @@
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",
           "signatureRepresentation": 0,
-          "keyType": "ECDSASecp256k1DER",
+          "keyType": "ED25519",
           "format": "jwt",
           "didMethod": "orb",
           "status": {
@@ -55,7 +55,7 @@
                 "did"
               ],
               "cryptographic_suites_supported":[
-                "EcdsaSecp256k1Signature2019"
+                "Ed25519Signature2018"
               ],
               "credentialSubject":{
                 "displayName":{
@@ -175,7 +175,7 @@
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",
           "signatureRepresentation": 0,
-          "keyType": "ECDSASecp256k1DER",
+          "keyType": "ED25519",
           "format": "jwt",
           "didMethod": "ion",
           "status": {
@@ -215,7 +215,7 @@
                 "did"
               ],
               "cryptographic_suites_supported":[
-                "EcdsaSecp256k1Signature2019"
+                "Ed25519Signature2018"
               ],
               "display": [
                 {
@@ -365,7 +365,7 @@
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",
           "signatureRepresentation": 0,
-          "keyType": "ECDSASecp256k1DER",
+          "keyType": "ED25519",
           "format": "jwt",
           "didMethod": "orb",
           "status": {
@@ -406,7 +406,7 @@
                 "did"
               ],
               "cryptographic_suites_supported":[
-                "EcdsaSecp256k1Signature2019"
+                "Ed25519Signature2018"
               ],
               "display": [
                 {
@@ -526,7 +526,7 @@
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",
           "signatureRepresentation": 0,
-          "keyType": "ECDSASecp256k1DER",
+          "keyType": "ED25519",
           "format": "ldp",
           "didMethod": "ion",
           "status": {
@@ -570,7 +570,7 @@
                 "did"
               ],
               "cryptographic_suites_supported":[
-                "EcdsaSecp256k1Signature2019"
+                "Ed25519Signature2018"
               ],
               "display": [
                 {
@@ -612,6 +612,14 @@
                   ],
                   "value_type":"string"
                 },
+                "photo":{
+                  "display":[
+                    {
+                      "name":"Photo"
+                    }
+                  ],
+                  "value_type":"image"
+                },
                 "degreeSchool": {
                   "display": [
                     {
@@ -631,6 +639,127 @@
 
     {
       "issuer": {
+        "id": "university_degree_issuer_bbs",
+        "groupID": "group_university_degree_issuer_bbs",
+        "name": "University Degree Issuer",
+        "organizationID": "test_org",
+        "url": "http://localhost:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "BbsBlsSignature2020",
+          "signatureRepresentation": 0,
+          "keyType": "BLS12381G2",
+          "format": "ldp",
+          "didMethod": "jwk",
+          "status": {
+            "type": "StatusList2021Entry"
+          }
+        },
+        "oidcConfig": {
+          "client_id": "university_degree_issuer_bbs",
+          "client_secret_handle": "university_degree_issuer_bbs-secret",
+          "scope": [
+            "openid",
+            "profile"
+          ],
+          "redirect_uri": "https://localhost:4455/oidc/redirect",
+          "issuer_well_known": "https://oidc-provider.example.com:4444/.well-known/openid-configuration"
+        },
+        "credentialTemplates": [
+          {
+            "contexts": [
+              "https://www.w3.org/2018/credentials/v1",
+              "https://www.w3.org/2018/credentials/examples/v1"
+            ],
+            "type": "UniversityDegreeCredential",
+            "id": "templateID",
+            "issuer": "did:jwk:university_degree_issuer",
+            "checks": {
+              "strict": true
+            }
+          }
+        ],
+        "credentialMetadata": {
+          "credentials_supported": [
+            {
+              "id": "UniversityDegreeCredential",
+              "format": "ldp_vc",
+              "types":[
+                "VerifiableCredential",
+                "UniversityDegreeCredential"
+              ],
+              "cryptographic_binding_methods_supported":[
+                "did"
+              ],
+              "cryptographic_suites_supported":[
+                "Ed25519Signature2018"
+              ],
+              "display": [
+                {
+                  "name": "University Degree Credential",
+                  "locale": "en-US",
+                  "logo": {
+                    "url": "https://example.com/public/logo.png",
+                    "alt_text": "a square logo of a degree verification"
+                  },
+                  "background_color": "#12107c",
+                  "text_color": "#FFFFFF"
+                }
+              ],
+              "credentialSubject": {
+                "familyName": {
+                  "display": [
+                    {
+                      "name": "Family Name",
+                      "locale": "en-US"
+                    }
+                  ],
+                  "value_type":"string"
+                },
+                "givenName": {
+                  "display": [
+                    {
+                      "name": "Given Name",
+                      "locale": "en-US"
+                    }
+                  ],
+                  "value_type":"string"
+                },
+                "photo":{
+                  "display":[
+                    {
+                      "name":"Photo"
+                    }
+                  ],
+                  "value_type":"image"
+                },
+                "degree": {
+                  "display": [
+                    {
+                      "name": "Degree",
+                      "locale": "en-US"
+                    }
+                  ],
+                  "value_type":"string"
+                },
+                "degreeSchool": {
+                  "display": [
+                    {
+                      "name": "Degree School",
+                      "locale": "en-US"
+                    }
+                  ],
+                  "value_type":"string"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "createDID": true
+    },
+    {
+      "issuer": {
         "id": "did_ion_issuer",
         "groupID": "group_did_ion_issuer",
         "name": "DID Ion Issuer",
@@ -640,7 +769,7 @@
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",
           "signatureRepresentation": 0,
-          "keyType": "ECDSASecp256k1DER",
+          "keyType": "ED25519",
           "format": "jwt",
           "didMethod": "ion",
           "status": {
@@ -680,7 +809,7 @@
                 "did"
               ],
               "cryptographic_suites_supported":[
-                "EcdsaSecp256k1Signature2019"
+                "Ed25519Signature2018"
               ],
               "display": [
                 {
@@ -792,8 +921,8 @@
           }
         },
         "oidcConfig": {
-          "roSigningAlgorithm": "EcdsaSecp256k1Signature2019",
-          "keyType": "ECDSASecp256k1DER",
+          "roSigningAlgorithm": "Ed25519Signature2018",
+          "keyType": "ED25519",
           "didMethod": "orb"
         },
         "presentationDefinitions": [
@@ -858,6 +987,91 @@
     },
     {
       "verifier": {
+        "id": "v_ldp_university_degree_sd_bbs",
+        "name": "v_ldp_university_degree_sd_bbs",
+        "organizationID": "test_org",
+        "url": "https://test-verifier.com",
+        "active": true,
+        "webHook": "http://vcs.webhook.example.com:8180",
+        "checks": {
+          "credential": {
+            "format": [
+              "ldp"
+            ],
+            "proof": true,
+            "status": true
+          },
+          "presentation": {
+            "format": [
+              "ldp",
+              "jwt"
+            ],
+            "vcSubject": true,
+            "proof": true
+          }
+        },
+        "oidcConfig": {
+          "roSigningAlgorithm": "Ed25519Signature2018",
+          "keyType": "ED25519",
+          "didMethod": "orb"
+        },
+        "presentationDefinitions": [
+          {
+            "id": "32f54163-7166-48f1-93d8-ff217bdb0653",
+            "format": {
+              "ldp_vc": {
+                "proof_type": [
+                  "JsonWebSignature2020",
+                  "BbsBlsSignature2020"
+                ]
+              },
+              "ldp_vp": {
+                "proof_type": [
+                  "JsonWebSignature2020",
+                  "BbsBlsSignature2020"
+                ]
+              },
+              "ldp": {
+                "proof_type": [
+                  "JsonWebSignature2020",
+                  "BbsBlsSignature2020"
+                ]
+              }
+            },
+            "input_descriptors": [
+              {
+                "id": "degree",
+                "name": "Degree",
+                "purpose": "We can only hire with university degree.",
+                "constraints": {
+                  "limit_disclosure":"required",
+                  "fields": [
+                    {
+                      "path": [
+                        "$.type",
+                        "$.vc.type"
+                      ],
+                      "filter": {
+                        "type": "array",
+                        "contains": {
+                          "type": "string",
+                          "const": "UniversityDegreeCredential"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "createDID": true,
+      "didDomain": "https://testnet.orb.local",
+      "didServiceAuthToken": "tk1"
+    },
+    {
+      "verifier": {
         "id": "v_myprofile_ldp",
         "name": "v_myprofile_ldp",
         "organizationID": "test_org",
@@ -882,8 +1096,8 @@
           }
         },
         "oidcConfig": {
-          "roSigningAlgorithm": "EcdsaSecp256k1Signature2019",
-          "keyType": "ECDSASecp256k1DER",
+          "roSigningAlgorithm": "Ed25519Signature2018",
+          "keyType": "ED25519",
           "didMethod": "orb"
         },
         "presentationDefinitions": [
@@ -974,8 +1188,8 @@
           }
         },
         "oidcConfig": {
-          "roSigningAlgorithm": "EcdsaSecp256k1Signature2019",
-          "keyType": "ECDSASecp256k1DER",
+          "roSigningAlgorithm": "Ed25519Signature2018",
+          "keyType": "ED25519",
           "didMethod": "ion"
         },
         "presentationDefinitions": [
@@ -1033,8 +1247,8 @@
           }
         },
         "oidcConfig": {
-          "roSigningAlgorithm": "EcdsaSecp256k1Signature2019",
-          "keyType": "ECDSASecp256k1DER",
+          "roSigningAlgorithm": "Ed25519Signature2018",
+          "keyType": "ED25519",
           "didMethod": "ion"
         },
         "presentationDefinitions": [
@@ -1092,8 +1306,8 @@
           }
         },
         "oidcConfig": {
-          "roSigningAlgorithm": "EcdsaSecp256k1Signature2019",
-          "keyType": "ECDSASecp256k1DER",
+          "roSigningAlgorithm": "Ed25519Signature2018",
+          "keyType": "ED25519",
           "didMethod": "ion"
         },
         "presentationDefinitions": [
