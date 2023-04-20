@@ -39,7 +39,6 @@ class _CredentialListState extends State<CredentialList> {
       if (_credentialList.isNotEmpty) {
         for (var cred in _credentialList) {
           var credID = await WalletSDKPlugin.getCredID([cred.value.rawCredential]);
-          log("whats credid $credID");
           var activities = await _storageService.retrieveActivities(credID!);
           activityLogger = await WalletSDKPlugin.parseActivities(activities);
         }

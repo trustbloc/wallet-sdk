@@ -7,6 +7,7 @@ import 'package:app/models/credential_data.dart';
 import 'package:intl/intl.dart';
 import 'package:app/widgets/credential_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:app/models/activity_logger.dart';
 
 class CredentialDetails extends  StatefulWidget {
   CredentialData credentialData;
@@ -59,7 +60,10 @@ class CredentialDetailsState extends State<CredentialDetails> {
   activityLogDetails() {
     if (widget.activityLogger != null){
       var activities = widget.activityLogger!;
-      return listViewWidget(activities.asMap().values);
+      var activityLoggerEncodeData = json.encode(activities);
+      List<dynamic> activityLoggerResp = json.decode(activityLoggerEncodeData);
+      log("activityLogger $activityLoggerResp");
+      return listViewWidget(activityLoggerResp);
     }
   }
 
@@ -84,6 +88,8 @@ class CredentialDetailsState extends State<CredentialDetails> {
         itemBuilder: (context, index)
     {
       var value = const JsonEncoder.withIndent('  ').convert(activitiesValue.toList().elementAt(index));
+      log(value);
+      var resp =  ActivityLogger.fromJson(activitiesValue.toList().elementAt(index) as  Map<String, dynamic>);
       return Row(
         children: [
           const Divider(
@@ -92,18 +98,32 @@ class CredentialDetailsState extends State<CredentialDetails> {
           ),
           Expanded(
             child: ListTile(
-              title: const Text(
-                  "",
-                  style: TextStyle(
-                      fontSize: 14, fontFamily: 'SF Pro', fontWeight: FontWeight.w400, color: Color(0xff6C6D7C))
+              title: Text(
+                resp.date,
+                textAlign: TextAlign.start,
+                style: TextStyle(fontSize: 14.0),
               ),
-              subtitle: Text(
-                value.toString(),
-                style: const TextStyle(
-                    fontSize: 16,
-                    color: Color(0xff190C21),
-                    fontFamily: 'SF Pro',
-                    fontWeight: FontWeight.normal),
+              subtitle: resp.operation == 'oidc-issuance' ? Text(
+                "Issued by: ${resp.issuedBy}",
+                textAlign: TextAlign.start,
+                style: TextStyle(fontSize: 13.0, color: Colors.blue),
+              ) : Text(
+                "Presented to: ${resp.issuedBy!}",
+                textAlign: TextAlign.start,
+                style: TextStyle(fontSize: 13.0, color: Colors.purple),
+              ),
+              leading: resp.status == 'success' ? IconButton(
+                icon: const Icon(Icons.check_circle, size: 32, color: Color(0xff66BB6A)),
+                onPressed: () async {
+                  setState(() {
+                  });
+                },
+              ): IconButton(
+                icon: const Icon(Icons.error, size: 32, color: Colors.red),
+                onPressed: () async {
+                  setState(() {
+                  });
+                },
               ),
             ),
           ),
