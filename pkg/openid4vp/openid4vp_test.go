@@ -436,6 +436,15 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	})
 }
 
+func TestResolverAdapter(t *testing.T) {
+	mockDoc := mockResolution(t, mockDID)
+	adapter := wrapResolver(&didResolverMock{ResolveValue: mockDoc})
+
+	doc, err := adapter.Resolve(mockDID)
+	require.NoError(t, err)
+	require.Equal(t, mockDoc.DIDDocument.ID, doc.DIDDocument.ID)
+}
+
 type jwtSignatureVerifierMock struct {
 	err error
 }

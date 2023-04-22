@@ -63,6 +63,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		"givenName":    "John",
 		"degree":       "MIT",
 		"degreeSchool": "MIT school",
+		"photo":        "binary data",
 	}
 
 	type test struct {
@@ -74,6 +75,12 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 	}
 
 	tests := []test{
+		{
+			issuerProfileIDs:  []string{"university_degree_issuer_bbs"},
+			claimData:         []claimData{universityDegreeClaims},
+			walletDIDMethod:   "ion",
+			verifierProfileID: "v_ldp_university_degree_sd_bbs",
+		},
 		{
 			issuerProfileIDs:  []string{"university_degree_issuer"},
 			claimData:         []claimData{universityDegreeClaims},
@@ -134,7 +141,11 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		testHelper := helpers.NewVPTestHelper(t, tc.walletDIDMethod, tc.signingKeyType)
 
-		issuedCredentials := testHelper.IssueCredentials(t, vcsAPIDirectURL, tc.issuerProfileIDs, tc.claimData)
+		issuedCredentials := testHelper.IssueCredentials(t,
+			vcsAPIDirectURL,
+			tc.issuerProfileIDs,
+			tc.claimData,
+			&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)})
 		println("Issued", issuedCredentials.Length(), "credentials")
 		for k := 0; k < issuedCredentials.Length(); k++ {
 			cred, _ := issuedCredentials.AtIndex(k).Serialize()
@@ -184,8 +195,9 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		require.Equal(t, "test purpose.", displayData.Purpose())
 		require.Equal(t, "", displayData.LogoURI())
 
-		inquirerOpts := credential.NewInquirerOpts()
-		inquirerOpts.SetDocumentLoader(docLoader)
+		inquirerOpts := credential.NewInquirerOpts().
+			SetDocumentLoader(docLoader)
+
 		inquirer := credential.NewInquirer(inquirerOpts)
 		require.NoError(t, err)
 
@@ -200,18 +212,10 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		selectedCreds := verifiable.NewCredentialsArray()
 		selectedCreds.Add(requirementDescriptor.MatchedVCs.AtIndex(0))
 
-		verifiablePres, err := inquirer.Query(query, selectedCreds)
-		require.NoError(t, err)
-
-		matchedCreds, err := verifiablePres.Credentials()
-		require.NoError(t, err)
-
-		require.Equal(t, 1, matchedCreds.Length())
-
 		serializedIssuedVC, err := issuedCredentials.AtIndex(0).Serialize()
 		require.NoError(t, err)
 
-		serializedMatchedVC, err := matchedCreds.AtIndex(0).Serialize()
+		serializedMatchedVC, err := selectedCreds.AtIndex(0).Serialize()
 		require.NoError(t, err)
 		println(serializedMatchedVC)
 

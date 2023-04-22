@@ -54,7 +54,7 @@ func NewVPTestHelper(t *testing.T, didMethod string, keyType string) *VPTestHelp
 }
 
 func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, issuerProfileIDs []string,
-	claimData []map[string]interface{},
+	claimData []map[string]interface{}, documentLoader api.LDDocumentLoader,
 ) *verifiable.CredentialsArray {
 	oidc4ciSetup, err := oidc4ci.NewSetup(testenv.NewHttpRequest())
 	require.NoError(t, err)
@@ -79,6 +79,7 @@ func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, is
 
 		interactionOptionalArgs := openid4ci.NewOpts()
 		interactionOptionalArgs.SetMetricsLogger(stderr.NewMetricsLogger())
+		interactionOptionalArgs.SetDocumentLoader(documentLoader)
 
 		interaction, err := openid4ci.NewInteraction(requiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)

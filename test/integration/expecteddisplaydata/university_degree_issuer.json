@@ -43,6 +43,12 @@
           "value_type": "string",
           "raw_value": "MIT school",
           "locale": "en-US"
+        },
+        {
+          "raw_id": "photo",
+          "label": "Photo",
+          "value_type": "image",
+          "raw_value": "binary data"
         }
       ]
     }
