@@ -22,9 +22,6 @@ import (
 )
 
 var (
-	//go:embed test_data/presentation_definition.json
-	presentationDefinition []byte
-
 	//go:embed test_data/multi_inputs_pd.json
 	multiInputPD []byte
 
@@ -87,6 +84,13 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 		require.Error(t, err, "credential reader failed: get all error")
 	})
 
+	t.Run("Credentials not provided", func(t *testing.T) {
+		instance := credentialquery.NewInstance(docLoader)
+		_, err := instance.GetSubmissionRequirements(pdQuery)
+
+		testutil.RequireErrorContains(t, err, "CREDENTIAL_READER_NOT_SET")
+	})
+
 	t.Run("Checks schema", func(t *testing.T) {
 		incorrectPD := &presexch.PresentationDefinition{ID: uuid.New().String()}
 
@@ -97,91 +101,6 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 
 		testutil.RequireErrorContains(t, err, "FAIL_TO_GET_MATCH_REQUIREMENTS_RESULTS")
 		require.Nil(t, requirements)
-	})
-}
-
-func TestInstance_Query(t *testing.T) {
-	docLoader := testutil.DocumentLoader(t)
-	pdQuery := &presexch.PresentationDefinition{}
-	err := json.Unmarshal(presentationDefinition, pdQuery)
-	require.NoError(t, err)
-
-	contents := [][]byte{
-		universityDegreeVC,
-		permanentResidentCardVC,
-	}
-
-	var credentials []*verifiable.Credential
-
-	for _, credContent := range contents {
-		cred, credErr := verifiable.ParseCredential(credContent, verifiable.WithDisabledProofCheck(),
-			verifiable.WithJSONLDDocumentLoader(docLoader))
-		require.NoError(t, credErr)
-
-		credentials = append(credentials, cred)
-	}
-
-	t.Run("Success with vc array", func(t *testing.T) {
-		instance := credentialquery.NewInstance(docLoader)
-		presentation, err := instance.Query(pdQuery, credentialquery.WithCredentialsArray(
-			credentials,
-		))
-
-		require.NoError(t, err)
-		require.NotNil(t, presentation)
-
-		require.Len(t, presentation.Credentials(), 1)
-	})
-
-	t.Run("Success with reader", func(t *testing.T) {
-		instance := credentialquery.NewInstance(docLoader)
-		presentation, err := instance.Query(pdQuery, credentialquery.WithCredentialReader(
-			&readerMock{
-				credentials: credentials,
-			},
-		))
-
-		require.NoError(t, err)
-		require.NotNil(t, presentation)
-
-		require.Len(t, presentation.Credentials(), 1)
-	})
-
-	t.Run("Reader error", func(t *testing.T) {
-		instance := credentialquery.NewInstance(docLoader)
-		_, err := instance.Query(pdQuery, credentialquery.WithCredentialReader(
-			&readerMock{
-				err: errors.New("get all error"),
-			},
-		))
-
-		require.Error(t, err, "credential reader failed: get all error")
-	})
-
-	t.Run("Credential reader not set.", func(t *testing.T) {
-		instance := credentialquery.NewInstance(docLoader)
-		_, err := instance.Query(pdQuery)
-
-		testutil.RequireErrorContains(t, err, "CREDENTIAL_READER_NOT_SET")
-	})
-
-	t.Run("No Credentials", func(t *testing.T) {
-		instance := credentialquery.NewInstance(docLoader)
-		_, err := instance.Query(pdQuery, credentialquery.WithCredentialsArray(
-			[]*verifiable.Credential{{}},
-		))
-
-		testutil.RequireErrorContains(t, err, "NO_CREDENTIAL_SATISFY_REQUIREMENTS")
-	})
-
-	t.Run("Create vp failed", func(t *testing.T) {
-		instance := credentialquery.NewInstance(docLoader)
-
-		_, err := instance.Query(&presexch.PresentationDefinition{}, credentialquery.WithCredentialsArray(
-			credentials,
-		))
-
-		testutil.RequireErrorContains(t, err, "CREATE_VP_FAILED")
 	})
 }
 

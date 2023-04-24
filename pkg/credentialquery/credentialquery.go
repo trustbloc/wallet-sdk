@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package credentialquery
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
@@ -88,48 +87,6 @@ func (c *Instance) GetSubmissionRequirements(
 	}
 
 	return results, nil
-}
-
-// Query returns credentials that match PresentationDefinition.
-func (c *Instance) Query(
-	query *presexch.PresentationDefinition,
-	opts ...QueryOpt,
-) (*verifiable.Presentation, error) {
-	qOpts := &queryOpts{}
-	for _, opt := range opts {
-		opt(qOpts)
-	}
-
-	credentials, err := getCredentials(qOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: https://github.com/trustbloc/wallet-sdk/issues/165 remove this code after to re enable Schema check.
-	for i := range query.InputDescriptors {
-		query.InputDescriptors[i].Schema = nil
-	}
-
-	vp, err := query.CreateVP(credentials, c.documentLoader, verifiable.WithDisabledProofCheck(),
-		verifiable.WithJSONLDDocumentLoader(c.documentLoader))
-	if err != nil {
-		if errors.Is(err, presexch.ErrNoCredentials) {
-			return nil, walleterror.NewValidationError(
-				module,
-				NoCredentialSatisfyRequirementsCode,
-				NoCredentialSatisfyRequirementsError,
-				err)
-		}
-
-		return nil,
-			walleterror.NewValidationError(
-				module,
-				CreateVPFailedCode,
-				CreateVPFailedError,
-				fmt.Errorf("create vp failed: %w", err))
-	}
-
-	return vp, nil
 }
 
 func getCredentials(qOpts *queryOpts) ([]*verifiable.Credential, error) {
