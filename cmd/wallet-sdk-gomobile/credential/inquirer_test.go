@@ -24,9 +24,6 @@ import (
 )
 
 var (
-	//go:embed test_data/presentation_definition.json
-	presentationDefinition []byte
-
 	//go:embed test_data/multi_inputs_pd.json
 	multiInputPD []byte
 
@@ -53,65 +50,10 @@ func TestNewInquirer(t *testing.T) {
 		inquirer := credential.NewInquirer(opts)
 		require.NotNil(t, inquirer)
 	})
-}
 
-func TestInstance_Query(t *testing.T) {
-	opts := credential.NewInquirerOpts()
-
-	documentLoader := &documentLoaderReverseWrapper{
-		DocumentLoader: testutil.DocumentLoader(t),
-	}
-
-	opts.SetDocumentLoader(documentLoader)
-
-	t.Run("Success", func(t *testing.T) {
-		query := credential.NewInquirer(opts)
-
-		presentation, err := query.Query(presentationDefinition,
-			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
-		)
-		require.NoError(t, err)
-		require.NotNil(t, presentation)
-
-		checkPresentationFromQuery(t, presentation)
-	})
-
-	t.Run("No matched credential", func(t *testing.T) {
-		query := credential.NewInquirer(opts)
-
-		_, err := query.Query(presentationDefinition,
-			createCredJSONArray(t, [][]byte{permanentResidentCardVC}),
-		)
-		require.Contains(t, err.Error(), "credentials do not satisfy requirements")
-	})
-
-	t.Run("PD parse failed", func(t *testing.T) {
-		query := credential.NewInquirer(opts)
-
-		_, err := query.Query(nil,
-			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
-		)
-
-		require.Contains(t, err.Error(), "unmarshal of presentation definition failed:")
-	})
-
-	t.Run("PD validation failed", func(t *testing.T) {
-		query := credential.NewInquirer(opts)
-
-		_, err := query.Query([]byte("{}"),
-			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
-		)
-
-		require.Contains(t, err.Error(), "validation of presentation definition failed:")
-	})
-
-	t.Run("Nil credentials", func(t *testing.T) {
-		query := credential.NewInquirer(opts)
-
-		presentation, err := query.Query(presentationDefinition, nil)
-
-		require.EqualError(t, err, "credentials must be provided")
-		require.Nil(t, presentation)
+	t.Run("Default opts", func(t *testing.T) {
+		inquirer := credential.NewInquirer(nil)
+		require.NotNil(t, inquirer)
 	})
 }
 
@@ -195,6 +137,16 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 		require.Contains(t, err.Error(), "unmarshal of presentation definition failed:")
 	})
 
+	t.Run("PD validation failed", func(t *testing.T) {
+		query := credential.NewInquirer(opts)
+
+		_, err := query.GetSubmissionRequirements([]byte("{}"),
+			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
+		)
+
+		require.Contains(t, err.Error(), "validation of presentation definition failed:")
+	})
+
 	t.Run("Nil credentials", func(t *testing.T) {
 		query := credential.NewInquirer(opts)
 
@@ -221,18 +173,6 @@ func createCredJSONArray(t *testing.T, creds [][]byte) *verifiable.CredentialsAr
 	}
 
 	return credsArray
-}
-
-func checkPresentationFromQuery(t *testing.T, presentation *credential.VerifiablePresentation) {
-	t.Helper()
-
-	content, err := presentation.Content()
-	require.NoError(t, err)
-	require.NotNil(t, content)
-
-	credentials, err := presentation.Credentials()
-	require.NoError(t, err)
-	require.Equal(t, 1, credentials.Length())
 }
 
 type documentLoaderReverseWrapper struct {

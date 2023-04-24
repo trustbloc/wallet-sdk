@@ -30,26 +30,6 @@ type Inquirer struct {
 	goAPICredentialQuery *credentialquery.Instance
 }
 
-// Credentials returns marshaled representation of credentials from this verifiable presentation.
-func (vp *VerifiablePresentation) Credentials() (*verifiable.CredentialsArray, error) {
-	result := verifiable.NewCredentialsArray()
-
-	vp.wrapped.Credentials()
-
-	credentialsRaw := vp.wrapped.Credentials()
-
-	for i := range credentialsRaw {
-		cred, ok := credentialsRaw[i].(*afgoverifiable.Credential)
-		if !ok {
-			return nil, fmt.Errorf("credential at index %d could not be asserted as a *verifiable.Credential", i)
-		}
-
-		result.Add(verifiable.NewCredential(cred))
-	}
-
-	return result, nil
-}
-
 // NewInquirer returns a new Inquirer.
 func NewInquirer(opts *InquirerOpts) *Inquirer {
 	if opts == nil {
@@ -77,26 +57,6 @@ func NewInquirer(opts *InquirerOpts) *Inquirer {
 	return &Inquirer{
 		goAPICredentialQuery: credentialquery.NewInstance(goAPIDocumentLoader),
 	}
-}
-
-// Query returns credentials that match PresentationDefinition.
-func (c *Inquirer) Query(query []byte, credentials *verifiable.CredentialsArray) (*VerifiablePresentation, error) {
-	if credentials == nil {
-		return nil, errors.New("credentials must be provided")
-	}
-
-	pdQuery, err := unwrapQuery(query)
-	if err != nil {
-		return nil, err
-	}
-
-	presentation, err := c.goAPICredentialQuery.Query(pdQuery,
-		credentialquery.WithCredentialsArray(unwrapVCs(credentials)))
-	if err != nil {
-		return nil, wrapper.ToMobileError(err)
-	}
-
-	return wrapVerifiablePresentation(presentation), err
 }
 
 // GetSubmissionRequirements returns information about VCs matching requirements.
