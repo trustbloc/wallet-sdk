@@ -3,6 +3,7 @@ import 'dart:core';
 
 import 'package:app/models/activity_data_object.dart';
 import 'package:app/models/credential_data_object.dart';
+import 'package:app/models/activity_logger.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -43,7 +44,8 @@ class StorageService {
     var allData = await _secureStorage.readAll(aOptions: _getAndroidOptions());
     List list = allData.entries
         .where((e) => e.key.contains(credID))
-        .map((e) => jsonDecode(e.value)).toList();
+        .map((e) => jsonDecode(e.value))
+        .toList();
     return list.first;
   }
 

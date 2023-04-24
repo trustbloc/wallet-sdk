@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:app/widgets/credential_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app/models/activity_logger.dart';
+import 'package:app/services/storage_service.dart';
+import 'package:app/main.dart';
 
 class CredentialDetails extends  StatefulWidget {
   CredentialData credentialData;
@@ -27,28 +29,25 @@ class CredentialDetailsState extends State<CredentialDetails> {
   final ScrollController rawDataController = ScrollController();
   final ScrollController activityController = ScrollController();
   final ScrollController credentialDIDController = ScrollController();
-
+  final StorageService _storageService = StorageService();
+  Iterable<Object?> activityLoggerResp = [];
   bool isSwitched = false;
   String didDoc = '';
+
+
+  @override
+  void initState() {
+    checkDevMode();
+    getDidDocument();
+    activityLogDetails();
+    super.initState();
+  }
 
   checkDevMode() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     setState(() {
       isSwitched = preferences.getBool('devmode') ?? false;
     });
-  }
-  @override
-  void initState() {
-    checkDevMode();
-    getDidDocument();
-    super.initState();
-  }
-
-  getCurrentDate() {
-    final now = DateTime.now();
-    // Todo instead of today's date always it will have to persist the date in the storage in the shared preference.
-    String formatter = DateFormat('yMMMMd').format(now);// 28/03/2020
-    return  formatter;
   }
 
   prettifyRawJson(){
@@ -57,14 +56,14 @@ class CredentialDetailsState extends State<CredentialDetails> {
     return Text(prettyString);
   }
 
-  activityLogDetails() {
-    if (widget.activityLogger != null){
-      var activities = widget.activityLogger!;
-      var activityLoggerEncodeData = json.encode(activities);
-      List<dynamic> activityLoggerResp = json.decode(activityLoggerEncodeData);
-      log("activityLogger $activityLoggerResp");
-      return listViewWidget(activityLoggerResp);
-    }
+ activityLogDetails() async {
+      var credID =  await WalletSDKPlugin.getCredID([widget.credentialData.rawCredential]);
+      var activities =  await _storageService.retrieveActivities(credID!);
+      var activityLogger =  await  WalletSDKPlugin.parseActivities(activities);
+      var activityLoggerEncodeData = json.encode(activityLogger);
+       setState(() {
+            activityLoggerResp = json.decode(activityLoggerEncodeData);
+       });
   }
 
   getCredentialDID(){
@@ -77,59 +76,6 @@ class CredentialDetailsState extends State<CredentialDetails> {
     var userDIDDoc = pref.getString("userDIDDoc");
     final parsedJson = json.decode(userDIDDoc!);
     didDoc = const JsonEncoder.withIndent('  ').convert(parsedJson);
-  }
-
-  Widget listViewWidget(Iterable<Object?> activitiesValue) {
-    return ListView.builder(
-        itemCount: activitiesValue.length,
-        scrollDirection: Axis.vertical,
-        controller: credDataController,
-        shrinkWrap: true,
-        itemBuilder: (context, index)
-    {
-      var value = const JsonEncoder.withIndent('  ').convert(activitiesValue.toList().elementAt(index));
-      log(value);
-      var resp =  ActivityLogger.fromJson(activitiesValue.toList().elementAt(index) as  Map<String, dynamic>);
-      return Row(
-        children: [
-          const Divider(
-            thickness: 2,
-            color: Color(0xffDBD7DC),
-          ),
-          Expanded(
-            child: ListTile(
-              title: Text(
-                resp.date,
-                textAlign: TextAlign.start,
-                style: TextStyle(fontSize: 14.0),
-              ),
-              subtitle: resp.operation == 'oidc-issuance' ? Text(
-                "Issued by: ${resp.issuedBy}",
-                textAlign: TextAlign.start,
-                style: TextStyle(fontSize: 13.0, color: Colors.blue),
-              ) : Text(
-                "Presented to: ${resp.issuedBy!}",
-                textAlign: TextAlign.start,
-                style: TextStyle(fontSize: 13.0, color: Colors.purple),
-              ),
-              leading: resp.status == 'success' ? IconButton(
-                icon: const Icon(Icons.check_circle, size: 32, color: Color(0xff66BB6A)),
-                onPressed: () async {
-                  setState(() {
-                  });
-                },
-              ): IconButton(
-                icon: const Icon(Icons.error, size: 32, color: Colors.red),
-                onPressed: () async {
-                  setState(() {
-                  });
-                },
-              ),
-            ),
-          ),
-        ]
-      );
-    });
   }
 
   @override
@@ -241,11 +187,40 @@ class CredentialDetailsState extends State<CredentialDetails> {
                             controller: activityController,
                             child: ListView.builder(
                                 controller: activityController,
-                                itemCount: 1,
+                                itemCount: activityLoggerResp.length,
                                 itemBuilder: (BuildContext context, int index) {
+                                 var resp =  ActivityLogger.fromJson(activityLoggerResp.toList().elementAt(index) as  Map<String, dynamic>);
                                   return Padding(
                                     padding: const EdgeInsets.all(8.0),
-                                    child: activityLogDetails()
+                                    child: ListTile(
+                                      title: Text(
+                                        resp.date,
+                                        textAlign: TextAlign.start,
+                                        style: TextStyle(fontSize: 14.0),
+                                      ),
+                                      subtitle: resp.operation == 'oidc-issuance' ? Text(
+                                        "Issued by: ${resp.issuedBy}",
+                                        textAlign: TextAlign.start,
+                                        style: TextStyle(fontSize: 13.0, color: Colors.blue),
+                                      ) : Text(
+                                        "Presented to: ${resp.issuedBy!}",
+                                        textAlign: TextAlign.start,
+                                        style: TextStyle(fontSize: 13.0, color: Colors.purple),
+                                      ),
+                                      leading: resp.status == 'success' ? IconButton(
+                                        icon: const Icon(Icons.check_circle, size: 32, color: Color(0xff66BB6A)),
+                                        onPressed: () async {
+                                          setState(() {
+                                          });
+                                        },
+                                      ): IconButton(
+                                        icon: const Icon(Icons.error, size: 32, color: Colors.red),
+                                        onPressed: () async {
+                                          setState(() {
+                                          });
+                                        },
+                                      ),
+                                    ),
                                   );
                                 }),
                           )),

@@ -19,7 +19,6 @@ class CredentialList extends StatefulWidget {
 class _CredentialListState extends State<CredentialList> {
   final StorageService _storageService = StorageService();
   late List<CredentialDataObject> _credentialList;
-  late List<Object?> activityLogger;
   late List<Object?> resolveCredDisplay;
   String? credentialDisplayData;
   bool _loading = true;
@@ -36,14 +35,7 @@ class _CredentialListState extends State<CredentialList> {
     username =  p.getString("userLoggedIn");
     log("list - $username");
       _credentialList = await _storageService.retrieveCredentials(username!);
-      if (_credentialList.isNotEmpty) {
-        for (var cred in _credentialList) {
-          var credID = await WalletSDKPlugin.getCredID([cred.value.rawCredential]);
-          var activities = await _storageService.retrieveActivities(credID!);
-          activityLogger = await WalletSDKPlugin.parseActivities(activities);
-        }
-      }
-    if (_credentialList.isEmpty) {
+      if (_credentialList.isEmpty) {
       _loading = true;
       _credentialList.clear();
     }
@@ -118,7 +110,7 @@ class _CredentialListState extends State<CredentialList> {
                         log('Deletion confirmed: $confirmed');
                         return confirmed;
                       },
-                      child: CredentialCard(credentialData: _credentialList[index].value, activityLogger: activityLogger, isDashboardWidget: true, isDetailArrowRequired: false,),
+                      child: CredentialCard(credentialData: _credentialList[index].value, isDashboardWidget: true, isDetailArrowRequired: false,),
                     );
                   }),
             ),
