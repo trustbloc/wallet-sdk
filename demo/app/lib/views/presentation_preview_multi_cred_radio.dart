@@ -15,24 +15,21 @@ import 'package:app/main.dart';
 import 'dart:developer';
 import 'dart:convert';
 
-class PresentationPreviewMultiCredCheck extends StatefulWidget {
+class PresentationPreviewMultiCred extends StatefulWidget {
   final List<CredentialData> credentialData;
-  final String? infoData;
-  const PresentationPreviewMultiCredCheck({super.key, required this.credentialData, this.infoData});
+  const PresentationPreviewMultiCred({super.key, required this.credentialData});
 
   @override
-  State<PresentationPreviewMultiCredCheck> createState() => PresentationPreviewMultiCredCheckState();
+  State<PresentationPreviewMultiCred> createState() => PresentationPreviewMultiCredState();
 }
 
-class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMultiCredCheck> {
+class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCred> {
   final StorageService _storageService = StorageService();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   var uuid = const Uuid();
   bool checked = false;
-  List multipleSelected = [];
-  late var checkListItems = widget.credentialData;
   late CredentialData selectedCredentialData = widget.credentialData[0];
-  var selectedIndexes = [];
+  int selectedRadio = 0;
   late Map<Object?, Object?>? verifiedDisplayData;
   late String verifierName = '';
   late String serviceURL = '';
@@ -56,108 +53,86 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
     });
   }
 
+  setSelectedRadio(int val) {
+    setState(() {
+      selectedRadio = val;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     return Scaffold(
-      appBar:  const CustomTitleAppBar(pageTitle: 'Share Multi Credential', addCloseIcon: true, height: 60,),
+      appBar:  const CustomTitleAppBar(pageTitle: 'Share Credential', addCloseIcon: true, height: 60,),
       body: SingleChildScrollView(
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            ListTile(
-              leading: Image.asset('lib/assets/images/credLogo.png'),
-              title: Text(verifierName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              subtitle: Text(serviceURL != "" ? serviceURL: 'verifier.com', style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
-              trailing: FittedBox(
-                  child: verifiedDomain ? Row(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              ListTile(
+                leading: Image.asset('lib/assets/images/credLogo.png'),
+                title: Text(verifierName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                subtitle: Text(serviceURL != "" ? serviceURL: 'verifier.com', style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+                trailing: FittedBox(
+                    child: verifiedDomain ? Row(
+                        children: [
+                          Text.rich(
+                            textAlign: TextAlign.center,
+                            TextSpan(
+                              children: [
+                                WidgetSpan(child: Icon(Icons.verified_user_outlined,color: Colors.lightGreen, size: 18,)),
+                                TextSpan(
+                                  text: 'Verified',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.lightGreen,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ]):  Row(
                       children: [
                         Text.rich(
                           textAlign: TextAlign.center,
                           TextSpan(
                             children: [
-                              WidgetSpan(child: Icon(Icons.verified_user_outlined,color: Colors.lightGreen, size: 18,)),
+                              WidgetSpan(child: Icon(Icons.dangerous_outlined, color: Colors.redAccent, size: 18,)),
                               TextSpan(
-                                text: 'Verified',
+                                text: 'Unverified',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.lightGreen,
+                                  color: Colors.redAccent,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ]):  Row(
-                    children: [
-                      Text.rich(
-                        textAlign: TextAlign.center,
-                        TextSpan(
-                          children: [
-                            WidgetSpan(child: Icon(Icons.dangerous_outlined, color: Colors.redAccent, size: 18,)),
-                            TextSpan(
-                              text: 'Unverified',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.redAccent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    ],
-                  )
-              ),
-            ),
-            Text.rich(
-              textAlign: TextAlign.center,
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: widget.infoData,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.normal,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              children: List.generate(
-                checkListItems.length,
-                    (index) => CheckboxListTile(
-                  controlAffinity: ListTileControlAffinity.leading,
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                  title: CredentialCard(credentialData: checkListItems[index], isDashboardWidget: false, isDetailArrowRequired: true),
-                  value: selectedIndexes.contains(index),
-                  onChanged: (value) {
-                    setState(() {
-                      log("selected item ${selectedIndexes.contains(index)}");
-                      if (selectedIndexes.contains(index)) {
-                        log("multiple selected ${multipleSelected}");
-                        selectedIndexes.remove(index);
-                        multipleSelected.remove(checkListItems[index].rawCredential);
-                        log("multiple selected  removing ${multipleSelected}");
-                      } else {
-                        selectedIndexes.add(index);
-                        multipleSelected.add(checkListItems[index].rawCredential);
-                        log("multiple selected  adding ${multipleSelected}");
-                      }
-                    });
-                  },
+                        )
+                      ],
+                    )
                 ),
               ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: width*0.8),
-            ),
-            Align(
+              for (var i = 0; i < widget.credentialData.length; i++)
+                RadioListTile(
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: CredentialCard(credentialData:  widget.credentialData[i], isDashboardWidget: false, isDetailArrowRequired: true),
+                  activeColor: Colors.deepPurple,
+                  autofocus: false,
+                  value:  i,
+                  groupValue: selectedRadio,
+                  onChanged: (val) {
+                    print("Radio $val");
+                    selectedCredentialData = widget.credentialData[i];
+                    setSelectedRadio(val!);
+                  },
+                ),
+              Padding(
+                padding: EdgeInsets.only(top: width*0.8),
+              ),
+              Align(
                 alignment: Alignment.bottomCenter,
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(8),
@@ -169,7 +144,7 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                       PrimaryButton(
                           onPressed: () async {
                             final SharedPreferences pref = await prefs;
-                            await WalletSDKPlugin.presentCredential(selectedCredentials: multipleSelected.cast<String>());
+                            await WalletSDKPlugin.presentCredential(selectedCredentials: [selectedCredentialData.rawCredential]);
                             var activities = await WalletSDKPlugin.storeActivityLogger();
                             var credID = pref.getString('credID');
                             _storageService.addActivities(ActivityDataObj(credID!, activities));
@@ -196,9 +171,9 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                   ),
                 ), //last one
               ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -206,6 +181,6 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
     Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }
   _navigateToCredentialShareSuccess(String verifierName) async {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialShared(verifierName: verifierName, credentialData: selectedCredentialData)));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialShared(verifierName: verifierName, credentialData: selectedCredentialData)));
   }
 }
