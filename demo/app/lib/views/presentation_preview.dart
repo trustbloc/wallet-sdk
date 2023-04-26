@@ -18,9 +18,8 @@ import 'dart:developer';
 import 'dart:convert';
 
 class PresentationPreview extends StatefulWidget {
-  final String matchedCredential;
   final CredentialData credentialData;
-  const PresentationPreview({super.key, required this.credentialData, required this.matchedCredential});
+  const PresentationPreview({super.key, required this.credentialData});
 
   @override
   State<PresentationPreview> createState() => PresentationPreviewState();

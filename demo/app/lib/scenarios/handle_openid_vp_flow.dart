@@ -8,6 +8,7 @@ import 'package:app/models/store_credential_data.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:app/views/presentation_preview.dart';
 import 'package:app/views/presentation_preview_multi_cred.dart';
+import 'package:app/views/presentation_preview_multi_cred_radio.dart';
 
 void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
   var WalletSDKPlugin = MethodChannelWallet();
@@ -48,57 +49,58 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
   // Get the matched VCIDs from the submission request.
   var getSubmissionRequest = await WalletSDKPlugin.getSubmissionRequirements(storedCredentials: credentials);
 
-  var matchedVCIds = handleSubmissionRequirement(getSubmissionRequest);
-
-  if (matchedVCIds.length > 1) {
+  var submission =  getSubmissionRequest.first;
+  if (submission.count > 1) {
     // multiple matched vc ids are found therefore, invoking multiple credential Presentation Preview.
-    log("multi cred flow");
+    log("multi cred flow $submission");
     var credentialDisplayData = storedCredentials
-        .where((element) => matchedCred.contains(element.value.rawCredential))
+        .where((element) => credentials.contains(element.value.rawCredential))
         .map((e) =>
         CredentialData(rawCredential: e.value.rawCredential, issuerURL: e.value.issuerURL, credentialDisplayData: e.value.credentialDisplayData))
         .toList();
-    navigateToPresentMultiCred(context, credentialDisplayData);
+    navigateToPresentMultiCred(context, credentialDisplayData, "Choose ${submission.count} credentials to present");
     return;
-  }
-
-  for (var cred in credentials) {
-    for (var matchCred in matchedCred){
-      log("choose flow ${credentials.first != matchedCred.first}");
-      if (cred != matchCred){
-        log("selective disclosure flow - credentialDisplayData as credential doesnt match matched credentials");
-        var issuerURI = storedCredentials.map((e) => e.value.issuerURL).toList();
-
-        var credentialDisplayData =  await WalletSDKPlugin.serializeDisplayData(matchedCred, issuerURI.first);
-        navigateToPresentationPreviewScreen(context, matchedCred.first,
-            CredentialData(rawCredential: credentials.first, credentialDisplayData: credentialDisplayData!, issuerURL: ''));
-        return;
-      } else {
+  } else if (submission.count==1){
+    var matchedVCsID = submission.inputDescriptors.first.matchedVCsID;
+    if (matchedVCsID.length > 1) {
+      log("matched length , more than matched vc ids are found ${matchedVCsID.length}");
+      var credentialDisplayData = storedCredentials
+          .where((element) => credentials.contains(element.value.rawCredential))
+          .map((e) =>
+          CredentialData(rawCredential: e.value.rawCredential, issuerURL: e.value.issuerURL, credentialDisplayData: e.value.credentialDisplayData))
+          .toList();
+      navigateToPresentMultiCredChooseOne(context, credentialDisplayData);
+      return;
+    } else {
+      for (var cred in credentials) {
         log("single matched vc id flow");
         var credentialDisplayData = storedCredentials
-            .where((element) => matchedCred.contains(element.value.rawCredential))
+            .where((element) => credentials.contains(element.value.rawCredential))
             .map((e) => e.value.credentialDisplayData);
-        log(matchedCred.length.toString());
-
-        if (matchedCred.isNotEmpty) {
-          //TODO: in future we can show all the credential
-          navigateToPresentationPreviewScreen(context, matchedCred.first,
-              CredentialData(rawCredential: credentials.first, credentialDisplayData: credentialDisplayData.first, issuerURL: ''));
-          return;
-        }
+        navigateToPresentationPreviewScreen(context,
+            CredentialData(rawCredential: credentials.first, credentialDisplayData: credentialDisplayData.first, issuerURL: ''));
+        return;
+       }
       }
     }
 
-  }
-
 }
 
-List<String> handleSubmissionRequirement(List<SubmissionRequirement> submissionRequirement){
+ handleSubmissionRequirement(List<SubmissionRequirement> submissionRequirement){
   var submission =  submissionRequirement.first;
   return submission.inputDescriptors.first.matchedVCsID;
 }
 
 void navigateToPresentMultiCred(
+    BuildContext context, List<CredentialData> credentialData, String infoData) async {
+  Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) =>
+              PresentationPreviewMultiCredCheck(credentialData: credentialData, infoData: infoData )));
+}
+
+void navigateToPresentMultiCredChooseOne(
     BuildContext context, List<CredentialData> credentialData) async {
   Navigator.push(
       context,
@@ -108,10 +110,10 @@ void navigateToPresentMultiCred(
 }
 
 void navigateToPresentationPreviewScreen(
-    BuildContext context, String matchedCredential, CredentialData credentialData) async {
+    BuildContext context, CredentialData credentialData) async {
   Navigator.push(
       context,
       MaterialPageRoute(
           builder: (context) =>
-              PresentationPreview(matchedCredential: matchedCredential, credentialData: credentialData)));
+              PresentationPreview(credentialData: credentialData)));
 }
