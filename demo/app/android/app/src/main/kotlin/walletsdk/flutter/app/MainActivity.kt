@@ -1,9 +1,9 @@
 package dev.trustbloc.wallet
 
-import dev.trustbloc.wallet.sdk.api.*
-import dev.trustbloc.wallet.sdk.credential.Credential.newStatusVerifier
+import dev.trustbloc.wallet.sdk.api.Api
+import dev.trustbloc.wallet.sdk.api.DIDDocResolution
 import dev.trustbloc.wallet.sdk.credential.StatusVerifier
-import dev.trustbloc.wallet.sdk.did.*
+import dev.trustbloc.wallet.sdk.did.Did
 import dev.trustbloc.wallet.sdk.display.Display
 import dev.trustbloc.wallet.sdk.verifiable.Credential
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
@@ -22,7 +22,7 @@ import walletsdk.flutter.converters.convertVerifiableCredentialsArray
 import walletsdk.kmsStorage.KmsStore
 import walletsdk.openid4ci.OpenID4CI
 import walletsdk.openid4vp.OpenID4VP
-import kotlin.collections.ArrayList
+import java.text.SimpleDateFormat
 
 
 class MainActivity : FlutterActivity() {
@@ -534,8 +534,8 @@ class MainActivity : FlutterActivity() {
     /**
     ParseActivity is invoked to parse the list of activities which are stored in the app when we issue and present credential,
      */
-    private fun parseActivities(call: MethodCall): MutableList<Any> {
-        val arrayList = mutableListOf<Any>()
+    private fun parseActivities(call: MethodCall): ArrayList<HashMap<String, String>> {
+        val parseActivityList = HashMap<String, String>()
 
         val activities = call.argument<ArrayList<String>>("activities")
                 ?: throw java.lang.Exception("parameter activities is missing")
@@ -545,25 +545,23 @@ class MainActivity : FlutterActivity() {
             val status = activityObj.status()
             val client = activityObj.client()
             val activityType = activityObj.type()
+            val operation = activityObj.operation()
             val timestampDate = activityObj.unixTimestamp()
 
-            val activityDicResp = mutableListOf<Any>()
-            if (status != null) {
-                activityDicResp.add(status)
-            }
-            if (client != null) {
-                activityDicResp.add(client)
-            }
-            if (activityType != null) {
-                activityDicResp.add(activityType)
-            }
-            if (timestampDate != null) {
-                activityDicResp.add(timestampDate)
-            }
-            arrayList.addAll(activityDicResp)
-        }
+            val simpleDate = SimpleDateFormat("MMM-dd-yyyy hh:mm:ss")
+            val date = simpleDate.format(timestampDate)
 
-        return arrayList
+            val activityDicResp = HashMap<String, String>()
+            activityDicResp.put("Status",status)
+            activityDicResp.put("Issued By", client)
+            activityDicResp.put("Operation",operation);
+            activityDicResp.put("Activity Type",activityType);
+            activityDicResp.put("Date",date);
+
+            parseActivityList.putAll(activityDicResp)
+          }
+
+        return arrayListOf(parseActivityList)
     }
 
 
