@@ -48,8 +48,8 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
 
   // Get the matched VCIDs from the submission request.
   var getSubmissionRequest = await WalletSDKPlugin.getSubmissionRequirements(storedCredentials: credentials);
-
   var submission =  getSubmissionRequest.first;
+
   if (submission.count > 1) {
     // multiple matched vc ids are found therefore, invoking multiple credential Presentation Preview.
     log("multi cred flow $submission");
@@ -84,11 +84,6 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
       }
     }
 
-}
-
- handleSubmissionRequirement(List<SubmissionRequirement> submissionRequirement){
-  var submission =  submissionRequirement.first;
-  return submission.inputDescriptors.first.matchedVCsID;
 }
 
 void navigateToPresentMultiCred(
