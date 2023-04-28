@@ -18,7 +18,7 @@ class CredentialAddedPage extends State<CredentialAdded> {
             appBar: const CustomTitleAppBar(pageTitle: 'Credential Added', addCloseIcon: true, height: 60,),
             backgroundColor: const Color(0xffF4F1F5),
             body: Center(
-              child: SuccessCard(credentialData: widget.credentialData, verifierName: '', subTitle: 'Credential has been added to your wallet',),
+              child: SuccessCard(credentialData: [widget.credentialData], verifierName: '', subTitle: 'Credential has been added to your wallet',),
             ));
   }
 }

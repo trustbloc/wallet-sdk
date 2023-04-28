@@ -11,6 +11,7 @@ import 'package:app/main.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:app/models/activity_data_object.dart';
 import 'package:app/widgets/credential_card.dart';
+import 'package:app/widgets/success_card.dart';
 import 'package:app/main.dart';
 import 'dart:developer';
 import 'dart:convert';
@@ -181,6 +182,6 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
     Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }
   _navigateToCredentialShareSuccess(String verifierName) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialShared(verifierName: verifierName, credentialData: selectedCredentialData)));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialShared(verifierName: verifierName, credentialData: [selectedCredentialData])));
   }
 }
