@@ -67,7 +67,7 @@ class CredentialDetailsState extends State<CredentialDetails> {
   }
 
   getCredentialDID(){
-    return Text(widget.credentialData.credentialDID!);
+    return SelectableText(widget.credentialData.credentialDID!);
   }
 
   getDidDocument() async {
@@ -261,7 +261,7 @@ class CredentialDetailsState extends State<CredentialDetails> {
                                       ),
                                       Padding(
                                           padding:const EdgeInsets.all(8.0),
-                                          child: Text(didDoc, style: const TextStyle(
+                                          child: SelectableText(didDoc, style: const TextStyle(
                                               fontSize: 12,
                                               color: Color(0xff190C21),
                                               fontFamily: 'SF Pro',
