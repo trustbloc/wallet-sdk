@@ -14,6 +14,7 @@ import 'package:app/services/storage_service.dart';
 import 'package:app/models/activity_data_object.dart';
 import 'package:app/widgets/credential_card.dart';
 import 'package:app/widgets/success_card.dart';
+import 'package:app/views/custom_error.dart';
 import 'package:app/main.dart';
 import 'dart:developer';
 import 'dart:convert';
@@ -124,7 +125,16 @@ class PresentationPreviewState extends State<PresentationPreview> {
                       PrimaryButton(
                           onPressed: () async {
                             final SharedPreferences pref = await prefs;
-                            await WalletSDKPlugin.presentCredential();
+                            try {
+                              await WalletSDKPlugin.presentCredential();
+                            } on Exception catch (error) {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            CustomError(requestErrorTitleMsg: "error while presenting credential",requestErrorSubTitleMsg: "${error}")));
+                                return;
+                            }
                             var activities = await WalletSDKPlugin.storeActivityLogger();
                             var credID = pref.getString('credID');
                             _storageService.addActivities(ActivityDataObj(credID!, activities));

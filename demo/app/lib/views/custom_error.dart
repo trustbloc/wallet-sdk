@@ -28,7 +28,7 @@ class CustomErrorPage extends State<CustomError> {
             borderRadius: BorderRadius.circular(12),
           ),
           tileColor:  const Color(0xffFBF8FC),
-          title: Text(
+          title: SelectableText(
             widget.requestErrorTitleMsg ?? '',
             style: const TextStyle(
               fontSize: 16,
@@ -37,7 +37,7 @@ class CustomErrorPage extends State<CustomError> {
             ),
             textAlign: TextAlign.start,
           ),
-          subtitle:  Text(
+          subtitle:  SelectableText(
             widget.requestErrorSubTitleMsg ?? '',
             style: const TextStyle(
               fontSize: 12,
