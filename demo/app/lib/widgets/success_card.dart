@@ -5,7 +5,7 @@ import 'package:app/widgets/credential_card.dart';
 class SuccessCard extends StatelessWidget {
   String? verifierName;
   String? subTitle;
-  CredentialData credentialData;
+  List<CredentialData>  credentialData;
 
   SuccessCard({required this.credentialData, this.verifierName, this.subTitle,  Key? key}) : super(key: key);
 
@@ -22,7 +22,6 @@ class SuccessCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 tileColor: const Color(0xffFBF8FC),
-                //todo Issue-174 read the meta data from the backend on page load
                 leading: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -33,7 +32,7 @@ class SuccessCard extends StatelessWidget {
                 title: const Text('Success', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 subtitle: Text(subTitle! + verifierName!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
               ),
-              CredentialCard(credentialData: credentialData, isDashboardWidget: true, isDetailArrowRequired: false,),
+              CredentialCard(credentialData: credentialData[0], isDashboardWidget: true, isDetailArrowRequired: false,),
             ],
           ),
         ));

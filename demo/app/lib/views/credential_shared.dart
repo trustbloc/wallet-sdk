@@ -1,11 +1,12 @@
 import 'package:app/widgets/success_card.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/credential_data.dart';
-import 'dashboard.dart';
+import 'package:app/widgets/credential_card.dart';
+import 'package:app/views/dashboard.dart';
 
 class CredentialShared extends StatefulWidget {
   final String? verifierName;
-  CredentialData credentialData;
+  final List<CredentialData> credentialData;
   CredentialShared({super.key, this.verifierName, required this.credentialData,});
 
   @override
@@ -39,8 +40,36 @@ class CredentialSharedState extends State<CredentialShared> {
           ),
         ),
       ),
-      body: Center(
-        child: SuccessCard(credentialData: widget.credentialData, verifierName: widget.verifierName, subTitle: 'Credential has been shared with ',),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 24),
+          ListTile(
+            horizontalTitleGap: 0.5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            tileColor: const Color(0xffFBF8FC),
+            leading: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Image.asset('lib/assets/images/success.png')
+              ],
+            ),
+            title:  Text('Success',textAlign: TextAlign.left, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            subtitle: Text("Credentials have been shared with ${widget.verifierName}", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal)),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.only(left: 24, right:24, top: 24, bottom: 8),
+              itemCount: widget.credentialData.length,
+              itemBuilder: (BuildContext context, int index) {
+                return CredentialCard(credentialData: widget.credentialData[index], isDashboardWidget: true, isDetailArrowRequired: false,);
+              },
+            ),
+          )
+        ],
       ),
     );
   }

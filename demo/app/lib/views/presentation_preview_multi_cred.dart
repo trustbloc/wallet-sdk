@@ -31,7 +31,7 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
   bool checked = false;
   List multipleSelected = [];
   late var checkListItems = widget.credentialData;
-  late CredentialData selectedCredentialData = widget.credentialData[0];
+  List<CredentialData> selectedCredentialData =[];
   var selectedIndexes = [];
   late Map<Object?, Object?>? verifiedDisplayData;
   late String verifierName = '';
@@ -140,14 +140,16 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                     setState(() {
                       log("selected item ${selectedIndexes.contains(index)}");
                       if (selectedIndexes.contains(index)) {
-                        log("multiple selected ${multipleSelected}");
                         selectedIndexes.remove(index);
                         multipleSelected.remove(checkListItems[index].rawCredential);
-                        log("multiple selected  removing ${multipleSelected}");
+                        log("multiple selected removing ${multipleSelected}");
+                        selectedCredentialData.removeAt(index);
                       } else {
                         selectedIndexes.add(index);
                         multipleSelected.add(checkListItems[index].rawCredential);
                         log("multiple selected  adding ${multipleSelected}");
+                        selectedCredentialData.add(CredentialData(rawCredential:checkListItems[index].rawCredential,
+                          credentialDisplayData:checkListItems[index].credentialDisplayData,issuerURL: '', ));
                       }
                     });
                   },
