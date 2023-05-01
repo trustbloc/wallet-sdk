@@ -72,6 +72,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		walletDIDMethod   string
 		verifierProfileID string
 		signingKeyType    string
+		applySD           bool
 	}
 
 	tests := []test{
@@ -80,6 +81,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			claimData:         []claimData{universityDegreeClaims},
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_ldp_university_degree_sd_bbs",
+			applySD:           true,
 		},
 		{
 			issuerProfileIDs:  []string{"university_degree_issuer"},
@@ -111,6 +113,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			walletDIDMethod:   "jwk",
 			verifierProfileID: "v_myprofile_sdjwt",
 			signingKeyType:    localkms.KeyTypeP384,
+			applySD:           true,
 		},
 		{
 			issuerProfileIDs:  []string{"drivers_license_issuer"},
@@ -196,7 +199,9 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		require.Equal(t, "", displayData.LogoURI())
 
 		inquirerOpts := credential.NewInquirerOpts().
-			SetDocumentLoader(docLoader)
+			SetDocumentLoader(docLoader).SetDIDResolver(didResolver)
+
+
 
 		inquirer := credential.NewInquirer(inquirerOpts)
 		require.NoError(t, err)
@@ -209,8 +214,18 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		requirementDescriptor := requirements.AtIndex(0).DescriptorAtIndex(0)
 		require.GreaterOrEqual(t, requirementDescriptor.MatchedVCs.Length(), 1)
 
+		matchedVCs := requirementDescriptor.MatchedVCs
 		selectedCreds := verifiable.NewCredentialsArray()
-		selectedCreds.Add(requirementDescriptor.MatchedVCs.AtIndex(0))
+
+		for ind := 0; ind < matchedVCs.Length(); ind++ {
+			vcID := matchedVCs.AtIndex(ind).ID()
+
+			for j := 0; j < issuedCredentials.Length(); j++ {
+				if issuedCredentials.AtIndex(j).ID() == vcID {
+					selectedCreds.Add(issuedCredentials.AtIndex(ind))
+				}
+			}
+		}
 
 		serializedIssuedVC, err := issuedCredentials.AtIndex(0).Serialize()
 		require.NoError(t, err)

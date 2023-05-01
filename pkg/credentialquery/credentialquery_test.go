@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/stretchr/testify/require"
@@ -73,6 +74,18 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 		require.Len(t, requirements[0].Descriptors, 3)
 	})
 
+	t.Run("Enable selective disclosure", func(t *testing.T) {
+		instance := credentialquery.NewInstance(docLoader)
+		requirements, err := instance.GetSubmissionRequirements(pdQuery, credentialquery.WithCredentialsArray(
+			credentials,
+		), credentialquery.WithSelectiveDisclosure(&didResolverMock{}))
+
+		require.NoError(t, err)
+		require.Len(t, requirements, 1)
+
+		require.Len(t, requirements[0].Descriptors, 3)
+	})
+
 	t.Run("Reader error", func(t *testing.T) {
 		instance := credentialquery.NewInstance(docLoader)
 		_, err := instance.GetSubmissionRequirements(pdQuery, credentialquery.WithCredentialReader(
@@ -115,4 +128,13 @@ func (r *readerMock) Get(id string) (*verifiable.Credential, error) {
 
 func (r *readerMock) GetAll() ([]*verifiable.Credential, error) {
 	return r.credentials, r.err
+}
+
+type didResolverMock struct {
+	ResolveValue *did.DocResolution
+	ResolveErr   error
+}
+
+func (d *didResolverMock) Resolve(string) (*did.DocResolution, error) {
+	return d.ResolveValue, d.ResolveErr
 }

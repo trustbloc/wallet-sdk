@@ -259,7 +259,7 @@ func verifyAuthorizationRequestAndDecodeClaims(
 }
 
 func verifyTokenSignature(rawJwt string, claims interface{}, verifier jose.SignatureVerifier) error {
-	jsonWebToken, err := jwt.Parse(rawJwt, jwt.WithSignatureVerifier(verifier))
+	jsonWebToken, _, err := jwt.Parse(rawJwt, jwt.WithSignatureVerifier(verifier))
 	if err != nil {
 		return fmt.Errorf("parse JWT: %w", err)
 	}

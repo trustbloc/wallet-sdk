@@ -15,6 +15,7 @@ import (
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
@@ -28,6 +29,9 @@ type queryOpts struct {
 	credentials []*verifiable.Credential
 	// CredentialReader allows for access to a VC storage mechanism.
 	credentialReader api.CredentialReader
+
+	didResolver              api.DIDResolver
+	applySelectiveDisclosure bool
 }
 
 // QueryOpt is the query credential option.
@@ -45,6 +49,14 @@ func WithCredentialsArray(vcs []*verifiable.Credential) QueryOpt {
 func WithCredentialReader(credentialReader api.CredentialReader) QueryOpt {
 	return func(opts *queryOpts) {
 		opts.credentialReader = credentialReader
+	}
+}
+
+// WithSelectiveDisclosure enables selective disclosure apply.
+func WithSelectiveDisclosure(didResolver api.DIDResolver) QueryOpt {
+	return func(opts *queryOpts) {
+		opts.didResolver = didResolver
+		opts.applySelectiveDisclosure = true
 	}
 }
 
@@ -73,9 +85,22 @@ func (c *Instance) GetSubmissionRequirements(
 		query.InputDescriptors[i].Schema = nil
 	}
 
+	var matchOpts []presexch.MatchRequirementsOpt
+	if qOpts.applySelectiveDisclosure {
+		matchOpts = append(matchOpts,
+			presexch.WithSelectiveDisclosureApply(),
+			presexch.WithSDCredentialOptions(
+				verifiable.WithDisabledProofCheck(),
+				verifiable.WithJSONLDDocumentLoader(c.documentLoader),
+				verifiable.WithPublicKeyFetcher(common.NewVDRKeyResolver(qOpts.didResolver).PublicKeyFetcher()),
+			),
+		)
+	}
+
 	results, err := query.MatchSubmissionRequirement(
 		credentials,
 		c.documentLoader,
+		matchOpts...,
 	)
 	if err != nil {
 		return nil,

@@ -72,6 +72,7 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 	}
 
 	opts.SetDocumentLoader(documentLoader)
+	opts.SetDIDResolver(&mocksDIDResolver{})
 
 	t.Run("Success", func(t *testing.T) {
 		query := credential.NewInquirer(opts)
@@ -197,4 +198,13 @@ func (l *documentLoaderReverseWrapper) LoadDocument(u string) (*api.LDDocument, 
 	}
 
 	return wrappedDoc, nil
+}
+
+type mocksDIDResolver struct {
+	ResolveDocBytes []byte
+	ResolveErr      error
+}
+
+func (m *mocksDIDResolver) Resolve(string) ([]byte, error) {
+	return m.ResolveDocBytes, m.ResolveErr
 }

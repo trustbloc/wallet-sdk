@@ -9,7 +9,7 @@ go 1.19
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/hyperledger/aries-framework-go v0.2.1-0.20230420181140-7798567c6ed1
+	github.com/hyperledger/aries-framework-go v0.2.1-0.20230502132040-97864d50314d
 	github.com/piprate/json-gold v0.4.2
 	github.com/stretchr/testify v1.8.1
 	github.com/trustbloc/cmdutil-go v0.0.0-20221125151303-09d42adcc811
@@ -37,10 +37,11 @@ require (
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk v0.0.0-20221209153644-5a3273a805c1 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/longform v0.0.0-20221209153644-5a3273a805c1 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v1.0.0-rc3.0.20221104150937-07bfbe450122 // indirect
-	github.com/hyperledger/aries-framework-go/component/kmscrypto v0.0.0-20230420151605-a45b1b02336f // indirect
-	github.com/hyperledger/aries-framework-go/component/log v0.0.0-20230417184158-344a7f82c4c2 // indirect
-	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220610133818-119077b0ec85 // indirect
-	github.com/hyperledger/aries-framework-go/spi v0.0.0-20230417184158-344a7f82c4c2 // indirect
+	github.com/hyperledger/aries-framework-go/component/kmscrypto v0.0.0-20230427134832-0c9969493bd3 // indirect
+	github.com/hyperledger/aries-framework-go/component/log v0.0.0-20230427134832-0c9969493bd3 // indirect
+	github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230501135648-a9a7ad029347 // indirect
+	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20230427134832-0c9969493bd3 // indirect
+	github.com/hyperledger/aries-framework-go/spi v0.0.0-20230427134832-0c9969493bd3 // indirect
 	github.com/hyperledger/ursa-wrapper-go v0.3.1 // indirect
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a // indirect
 	github.com/kawamuray/jsonpath v0.0.0-20201211160320-7483bafabd7e // indirect
@@ -74,7 +75,7 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/net v0.7.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/sys v0.7.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect

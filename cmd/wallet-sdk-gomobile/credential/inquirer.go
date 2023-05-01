@@ -28,6 +28,7 @@ import (
 // Inquirer implements querying credentials using presentation definition.
 type Inquirer struct {
 	goAPICredentialQuery *credentialquery.Instance
+	goDIDResolver        goapi.DIDResolver
 }
 
 // NewInquirer returns a new Inquirer.
@@ -54,8 +55,14 @@ func NewInquirer(opts *InquirerOpts) *Inquirer {
 		goAPIDocumentLoader = ld.NewDefaultDocumentLoader(httpClient)
 	}
 
+	var goDIDResolver goapi.DIDResolver
+	if opts.didResolver != nil {
+		goDIDResolver = &wrapper.VDRResolverWrapper{DIDResolver: opts.didResolver}
+	}
+
 	return &Inquirer{
 		goAPICredentialQuery: credentialquery.NewInstance(goAPIDocumentLoader),
+		goDIDResolver:        goDIDResolver,
 	}
 }
 
@@ -72,7 +79,8 @@ func (c *Inquirer) GetSubmissionRequirements(query []byte, credentials *verifiab
 	}
 
 	requirements, err := c.goAPICredentialQuery.GetSubmissionRequirements(pdQuery,
-		credentialquery.WithCredentialsArray(unwrapVCs(credentials)))
+		credentialquery.WithCredentialsArray(unwrapVCs(credentials)),
+		credentialquery.WithSelectiveDisclosure(c.goDIDResolver))
 	if err != nil {
 		return nil, wrapper.ToMobileError(err)
 	}
