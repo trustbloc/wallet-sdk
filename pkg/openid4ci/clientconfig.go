@@ -29,20 +29,28 @@ func (d *didResolverWrapper) Resolve(did string, _ ...vdr.DIDMethodOption) (*did
 	return d.didResolver.Resolve(did)
 }
 
-type httpClient interface {
-	Do(req *http.Request) (*http.Response, error)
+// Header represents an HTTP header.
+type Header struct {
+	Name  string
+	Value string
+}
+
+// HTTPClientOpts represents various HTTP client opts that can be configured for an OpenID4CI interaction.
+type HTTPClientOpts struct {
+	Timeout                *time.Duration
+	AdditionalHeaders      []Header
+	DisableTLSVerification bool
 }
 
 // ClientConfig contains the various parameters for an OpenID4CI Interaction.
 type ClientConfig struct {
-	ClientID                         string
 	DIDResolver                      api.DIDResolver
 	ActivityLogger                   api.ActivityLogger // If not specified, then activities won't be logged.
 	MetricsLogger                    api.MetricsLogger  // If not specified, then metrics events won't be logged.
 	DisableVCProofChecks             bool
-	HTTPClient                       httpClient
 	DocumentLoader                   ld.DocumentLoader // If not specified, then a network-based loader will be used.
 	NetworkDocumentLoaderHTTPTimeout *time.Duration    // Only used if the default network-based loader is used.
+	HTTPClient                       *http.Client
 }
 
 func validateRequiredParameters(config *ClientConfig) error {
@@ -52,14 +60,6 @@ func validateRequiredParameters(config *ClientConfig) error {
 			NoClientConfigProvidedCode,
 			NoClientConfigProvidedError,
 			errors.New("no client config provided"))
-	}
-
-	if config.ClientID == "" {
-		return walleterror.NewValidationError(
-			module,
-			ClientConfigNoClientIDProvidedCode,
-			ClientConfigNoClientIDProvidedError,
-			errors.New("no client ID provided"))
 	}
 
 	if config.DIDResolver == nil {
@@ -74,10 +74,6 @@ func validateRequiredParameters(config *ClientConfig) error {
 }
 
 func setDefaults(config *ClientConfig) {
-	if config.HTTPClient == nil {
-		config.HTTPClient = &http.Client{Timeout: api.DefaultHTTPTimeout}
-	}
-
 	if config.ActivityLogger == nil {
 		config.ActivityLogger = noopactivitylogger.NewActivityLogger()
 	}
@@ -96,5 +92,9 @@ func setDefaults(config *ClientConfig) {
 		}
 
 		config.DocumentLoader = ld.NewDefaultDocumentLoader(httpClient)
+	}
+
+	if config.HTTPClient == nil {
+		config.HTTPClient = &http.Client{Timeout: api.DefaultHTTPTimeout}
 	}
 }

@@ -62,7 +62,7 @@ func TestNewInteraction(t *testing.T) {
 		opts := openid4ci.NewOpts()
 		opts.DisableOpenTelemetry()
 
-		requiredArgs := openid4ci.NewArgs(createTestRequestURI("example.com"), "ClientID", kms.GetCrypto(), resolver)
+		requiredArgs := openid4ci.NewArgs(createTestRequestURI("example.com"), kms.GetCrypto(), resolver)
 
 		interaction, err := openid4ci.NewInteraction(requiredArgs, opts)
 		require.NoError(t, err)
@@ -77,7 +77,7 @@ func TestNewInteraction(t *testing.T) {
 
 		resolver := &mockResolver{keyWriter: kms}
 
-		requiredArgs := openid4ci.NewArgs(createTestRequestURI("example.com"), "ClientID", kms.GetCrypto(), resolver)
+		requiredArgs := openid4ci.NewArgs(createTestRequestURI("example.com"), kms.GetCrypto(), resolver)
 
 		interaction, err := openid4ci.NewInteraction(requiredArgs, nil)
 		require.NoError(t, err)
@@ -151,6 +151,21 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 	}
 
 	require.NoError(m.t, err)
+}
+
+func TestInteraction_CreateAuthorizationURL(t *testing.T) {
+	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+	require.NoError(t, err)
+
+	interaction := createInteraction(t, kms, nil, createTestRequestURI("example.com"), nil, false)
+
+	authorizationLink, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
+	require.EqualError(t, err, "issuer does not support the authorization code grant type")
+	require.Empty(t, authorizationLink)
+
+	authorizationLink, err = interaction.CreateAuthorizationURLWithScopes("clientID", "redirectURI", nil)
+	require.EqualError(t, err, "issuer does not support the authorization code grant type")
+	require.Empty(t, authorizationLink)
 }
 
 func TestInteraction_RequestCredential(t *testing.T) {
@@ -278,10 +293,52 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		}
 
 		credentials, err := interaction.RequestCredential(verificationMethod)
-		requireErrorContains(t, err, "the credential offer requires a user PIN, but it was not provided. "+
+		requireErrorContains(t, err, "the credential offer requires a user PIN, but none was provided. "+
 			"Use the requestCredentialWithPIN method instead")
 		require.Nil(t, credentials)
 	})
+	t.Run("Authorization code flow - authorization URL must be created first", func(t *testing.T) {
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		interaction := createInteraction(t, kms, nil, createTestRequestURI("example.com"), nil, false)
+
+		keyHandle, err := kms.Create(arieskms.ED25519)
+		require.NoError(t, err)
+
+		pkBytes, err := keyHandle.JWK.PublicKeyBytes()
+		require.NoError(t, err)
+
+		verificationMethod := &api.VerificationMethod{
+			ID:   "did:example:12345#testId",
+			Type: "Ed25519VerificationKey2018",
+			Key:  models.VerificationKey{Raw: pkBytes},
+		}
+
+		credentials, err := interaction.RequestCredentialWithAuth(verificationMethod, "redirectURIWithAuthCode")
+		requireErrorContains(t, err, "authorization URL must be created first")
+		require.Nil(t, credentials)
+	})
+}
+
+func TestInteraction_IssuerCapabilities(t *testing.T) {
+	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+	require.NoError(t, err)
+
+	interaction := createInteraction(t, kms, nil, createTestRequestURI("example.com"), nil, false)
+
+	issuerCapabilities := interaction.IssuerCapabilities()
+	require.NotNil(t, issuerCapabilities)
+
+	require.True(t, issuerCapabilities.PreAuthorizedCodeGrantTypeSupported())
+
+	preAuthorizedCodeGrantParams, err := issuerCapabilities.PreAuthorizedCodeGrantParams()
+	require.NoError(t, err)
+	require.NotNil(t, preAuthorizedCodeGrantParams)
+
+	require.True(t, preAuthorizedCodeGrantParams.PINRequired())
+
+	require.False(t, issuerCapabilities.AuthorizationCodeGrantTypeSupported())
 }
 
 //nolint:thelper // Not a test helper function
@@ -405,7 +462,7 @@ func getTestArgs(t *testing.T, initiateIssuanceURI string, kms *localkms.KMS,
 		opts.DisableHTTPClientTLSVerify()
 	}
 
-	requiredArgs := openid4ci.NewArgs(initiateIssuanceURI, "ClientID", kms.GetCrypto(), resolver)
+	requiredArgs := openid4ci.NewArgs(initiateIssuanceURI, kms.GetCrypto(), resolver)
 
 	return requiredArgs, opts
 }

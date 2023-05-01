@@ -11,16 +11,14 @@ import "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 // Args contains the required parameters for an Interaction.
 type Args struct {
 	initiateIssuanceURI string
-	clientID            string
 	crypto              api.Crypto
 	didResolver         api.DIDResolver
 }
 
 // NewArgs creates a new Args object. All parameters are mandatory.
-func NewArgs(initiateIssuanceURI, clientID string, crypto api.Crypto, didResolver api.DIDResolver) *Args {
+func NewArgs(initiateIssuanceURI string, crypto api.Crypto, didResolver api.DIDResolver) *Args {
 	return &Args{
 		initiateIssuanceURI: initiateIssuanceURI,
-		clientID:            clientID,
 		crypto:              crypto,
 		didResolver:         didResolver,
 	}

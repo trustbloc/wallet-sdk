@@ -74,8 +74,7 @@ func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, is
 		didResolver, err := did.NewResolver(opts)
 		require.NoError(t, err)
 
-		requiredArgs := openid4ci.NewArgs(offerCredentialURL, "ClientID", h.KMS.GetCrypto(),
-			didResolver)
+		requiredArgs := openid4ci.NewArgs(offerCredentialURL, h.KMS.GetCrypto(), didResolver)
 
 		interactionOptionalArgs := openid4ci.NewOpts()
 		interactionOptionalArgs.SetMetricsLogger(stderr.NewMetricsLogger())
@@ -84,9 +83,12 @@ func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, is
 		interaction, err := openid4ci.NewInteraction(requiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)
 
-		authorizeResult, err := interaction.Authorize()
+		require.True(t, interaction.IssuerCapabilities().PreAuthorizedCodeGrantTypeSupported())
+
+		preAuthorizedCodeGrantParams, err := interaction.IssuerCapabilities().PreAuthorizedCodeGrantParams()
 		require.NoError(t, err)
-		require.False(t, authorizeResult.UserPINRequired)
+
+		require.False(t, preAuthorizedCodeGrantParams.PINRequired())
 
 		vm, err := h.DIDDoc.AssertionMethod()
 		require.NoError(t, err)

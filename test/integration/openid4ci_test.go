@@ -181,8 +181,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		didID, err := testHelper.DIDDoc.ID()
 		require.NoError(t, err)
 
-		interactionRequiredArgs := openid4ci.NewArgs(offerCredentialURL, "ClientID",
-			testHelper.KMS.GetCrypto(), didResolver)
+		interactionRequiredArgs := openid4ci.NewArgs(offerCredentialURL, testHelper.KMS.GetCrypto(), didResolver)
 
 		interactionOptionalArgs := openid4ci.NewOpts()
 		interactionOptionalArgs.SetDocumentLoader(&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)})
@@ -194,9 +193,12 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 
 		traceIDs = append(traceIDs, interaction.OTelTraceID())
 
-		authorizeResult, err := interaction.Authorize()
+		require.True(t, interaction.IssuerCapabilities().PreAuthorizedCodeGrantTypeSupported())
+
+		preAuthorizedCodeGrantParams, err := interaction.IssuerCapabilities().PreAuthorizedCodeGrantParams()
 		require.NoError(t, err)
-		require.False(t, authorizeResult.UserPINRequired)
+
+		require.False(t, preAuthorizedCodeGrantParams.PINRequired())
 
 		vm, err := testHelper.DIDDoc.AssertionMethod()
 		require.NoError(t, err)

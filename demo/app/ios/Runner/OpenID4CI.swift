@@ -22,7 +22,7 @@ public class OpenID4CI {
 
         let trace = OtelNewTrace(nil)
 
-        let args = Openid4ciNewArgs(requestURI, "ClientID", self.crypto, self.didResolver)
+        let args = Openid4ciNewArgs(requestURI, self.crypto, self.didResolver)
         
         let opts = Openid4ciNewOpts()
         opts!.setActivityLogger(activityLogger)
@@ -31,8 +31,8 @@ public class OpenID4CI {
         self.initiatedInteraction = Openid4ciNewInteraction(args, opts, nil)!
     }
     
-    func authorize() throws -> Openid4ciAuthorizeResult {
-        return try initiatedInteraction.authorize()
+    func pinRequired() throws -> Bool {
+        return try initiatedInteraction.issuerCapabilities()!.preAuthorizedCodeGrantParams().pinRequired()
     }
 
     func issuerURI()-> String {

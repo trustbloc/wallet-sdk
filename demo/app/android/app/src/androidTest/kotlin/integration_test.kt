@@ -50,15 +50,15 @@ class IntegrationTest {
         // Issue VCs
         val requestURI = BuildConfig.INITIATE_ISSUANCE_URL
 
-        val requiredOpenID4CIArgs = Args(requestURI, "ClientID", crypto, didResolver)
+        val requiredOpenID4CIArgs = Args(requestURI, crypto, didResolver)
 
         val ciOpts = Opts()
         ciOpts.addHeader(trace.traceHeader())
 
         val ciInteraction = Interaction(requiredOpenID4CIArgs, ciOpts)
 
-        val authorizeResult = ciInteraction.authorize()
-        assertThat(authorizeResult.userPINRequired).isFalse()
+        val pinRequired = ciInteraction.issuerCapabilities().preAuthorizedCodeGrantParams().pinRequired()
+        assertThat(pinRequired).isFalse()
 
         val issuedCreds = ciInteraction.requestCredential(userDID.assertionMethod())
         assertThat(issuedCreds.length()).isGreaterThan(0)

@@ -41,16 +41,8 @@ func TestHTTPClient_Do(t *testing.T) {
 	request, err := http.NewRequest(http.MethodGet, testServer.URL, http.NoBody)
 	require.NoError(t, err)
 
-	httpClient := wrapper.NewHTTPClient()
-
-	t.Run("Default client settings", func(t *testing.T) {
-		response, err := httpClient.Do(request)
-		require.NoError(t, err)
-		require.NotNil(t, response)
-		require.NoError(t, response.Body.Close())
-	})
 	t.Run("TLS verification disabled", func(t *testing.T) {
-		httpClient.DisableTLSVerification = true
+		httpClient := wrapper.NewHTTPClient(nil, api.Headers{}, true)
 
 		response, err := httpClient.Do(request)
 		require.NoError(t, err)
@@ -63,7 +55,7 @@ func TestHTTPClient_Do(t *testing.T) {
 		additionalHeaders.Add(api.NewHeader("header-name-1", "header-value-1"))
 		additionalHeaders.Add(api.NewHeader("header-name-2", "header-value-2"))
 
-		httpClient.AddHeaders(additionalHeaders)
+		httpClient := wrapper.NewHTTPClient(nil, *additionalHeaders, true)
 
 		response, err := httpClient.Do(request)
 		require.NoError(t, err)
@@ -72,14 +64,13 @@ func TestHTTPClient_Do(t *testing.T) {
 	})
 	t.Run("With custom timeout", func(t *testing.T) {
 		timeout := time.Second * 10
-		httpClient.Timeout = &timeout
 
 		additionalHeaders := api.NewHeaders()
 
 		additionalHeaders.Add(api.NewHeader("header-name-1", "header-value-1"))
 		additionalHeaders.Add(api.NewHeader("header-name-2", "header-value-2"))
 
-		httpClient.AddHeaders(additionalHeaders)
+		httpClient := wrapper.NewHTTPClient(&timeout, *additionalHeaders, true)
 
 		response, err := httpClient.Do(request)
 		require.NoError(t, err)

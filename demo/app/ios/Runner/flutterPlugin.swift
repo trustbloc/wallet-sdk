@@ -296,11 +296,11 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         do {
             let openID4CI = try walletSDK.createOpenID4CIInteraction(requestURI:requestURI)
             
-            let authRes = try openID4CI.authorize()
+            let pinRequired = try openID4CI.pinRequired()
             
             self.openID4CI = openID4CI
                         
-            result(Bool(authRes.userPINRequired))
+            result(Bool(pinRequired))
           } catch {
               result(FlutterError.init(code: "NATIVE_ERR",
                                        message: "error while creating new OIDC interaction",
