@@ -127,12 +127,16 @@ class PresentationPreviewState extends State<PresentationPreview> {
                             final SharedPreferences pref = await prefs;
                             try {
                               await WalletSDKPlugin.presentCredential();
-                            } on Exception catch (error) {
-                                Navigator.push(
+                            }   catch (error) {
+                             var errString = error.toString().replaceAll(r'\', '');
+                              Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                         builder: (context) =>
-                                            CustomError(requestErrorTitleMsg: "error while presenting credential",requestErrorSubTitleMsg: "${error}")));
+                                            CustomError(
+                                                requestErrorTitleMsg: "error while presenting credential",
+                                                requestErrorSubTitleMsg: "${errString}"
+                                            )));
                                 return;
                             }
                             var activities = await WalletSDKPlugin.storeActivityLogger();
