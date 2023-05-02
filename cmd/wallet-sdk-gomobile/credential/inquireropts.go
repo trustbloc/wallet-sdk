@@ -16,6 +16,7 @@ import (
 type InquirerOpts struct {
 	documentLoader api.LDDocumentLoader
 	httpTimeout    *time.Duration
+	didResolver    api.DIDResolver
 }
 
 // NewInquirerOpts returns a new InquirerOpts object.
@@ -37,6 +38,13 @@ func (o *InquirerOpts) SetDocumentLoader(documentLoader api.LDDocumentLoader) *I
 func (o *InquirerOpts) SetHTTPTimeoutNanoseconds(timeout int64) *InquirerOpts {
 	timeoutDuration := time.Duration(timeout)
 	o.httpTimeout = &timeoutDuration
+
+	return o
+}
+
+// SetDIDResolver sets the did resolver that required of some implementations of selective disclosure.
+func (o *InquirerOpts) SetDIDResolver(didResolver api.DIDResolver) *InquirerOpts {
+	o.didResolver = didResolver
 
 	return o
 }
