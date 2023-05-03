@@ -229,14 +229,14 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 selectedCredentials: selectedCredentialsArray!)
             result(true);
             
-        } catch OpenID4VPError.runtimeError(let errorMsg){
+        } catch OpenID4VPError.runtimeError(let errorMsg as NSError){
             result(FlutterError.init(code: "NATIVE_ERR",
-                                     message: "error while process present credential",
-                                     details: errorMsg))
+                                     message: "error while processing present credential",
+                                     details: errorMsg.localizedDescription))
         } catch let error as NSError{
             result(FlutterError.init(code: "NATIVE_ERR",
-                                     message: "error while process present credential",
-                                     details: error.description))
+                                     message: "error while processing present credential",
+                                     details: error.localizedDescription))
         }
     }
     
@@ -360,7 +360,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
           } catch let error as NSError{
               result(FlutterError.init(code: "Exception",
                                        message: "error while requesting credential",
-                                       details: error.description))
+                                       details: error.localizedDescription
+                                      ))
           }
         
     }
@@ -397,7 +398,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
           } catch let error as NSError {
                 result(FlutterError.init(code: "Exception",
                                          message: "error while resolving credential",
-                                         details: error.description))
+                                         details: error.localizedDescription))
             }
     }
     

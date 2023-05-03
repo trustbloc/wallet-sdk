@@ -23,7 +23,6 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
   log("stored credentials -> $storedCredentials");
 
   credentials = storedCredentials.map((e) => e.value.rawCredential).toList();
-
   if (credentials.isEmpty) {
       log("credentials is empty now $credentials");
       Navigator.push(
@@ -63,7 +62,7 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
   } else if (submission.count==1){
     var matchedVCsID = submission.inputDescriptors.first.matchedVCsID;
     if (matchedVCsID.length > 1) {
-      log("matched length , more than matched vc ids are found ${matchedVCsID.length}");
+      log("matched length, more than matched vc ids are found ${matchedVCsID.length}");
       var credentialDisplayData = storedCredentials
           .where((element) => credentials.contains(element.value.rawCredential))
           .map((e) =>
@@ -72,15 +71,13 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
       navigateToPresentMultiCredChooseOne(context, credentialDisplayData);
       return;
     } else {
-      for (var cred in credentials) {
         log("single matched vc id flow");
         var credentialDisplayData = storedCredentials
-            .where((element) => credentials.contains(element.value.rawCredential))
+            .where((element) => matchedCred.contains(element.value.rawCredential))
             .map((e) => e.value.credentialDisplayData);
         navigateToPresentationPreviewScreen(context,
             CredentialData(rawCredential: credentials.first, credentialDisplayData: credentialDisplayData.first, issuerURL: ''));
         return;
-       }
       }
     }
 

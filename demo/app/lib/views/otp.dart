@@ -90,7 +90,7 @@ class _OTPPage extends State<OTP> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           tileColor:  const Color(0xffFBF8FC),
-                          title: Text(
+                          title: SelectableText(
                             _requestErrorTitleMsg ?? '',
                             style: const TextStyle(
                               fontSize: 16,
@@ -99,7 +99,7 @@ class _OTPPage extends State<OTP> {
                             ),
                             textAlign: TextAlign.start,
                           ),
-                          subtitle:  Text(
+                          subtitle:  SelectableText(
                             _requestErrorSubTitleMsg ?? '',
                             style: const TextStyle(
                               fontSize: 12,
@@ -155,7 +155,7 @@ class _OTPPage extends State<OTP> {
                           if (err is PlatformException &&
                               err.message != null &&
                               err.message!.isNotEmpty) {
-                            errorMessage = err.message!;
+                            errorMessage = err.details!;
                           }
                             setState(() {
                               _requestErrorSubTitleMsg = errorMessage;
