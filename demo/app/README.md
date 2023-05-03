@@ -43,6 +43,13 @@ samples, guidance on mobile development, and a full API reference.
   - Open the app in XCode
   - Install app to Simulator or Device from the XCode Build tab
 
+### Build with WalletSDK from Maven
+- Android
+  - Create GitHub personal access token (classic).
+  - Run `WALLET_SDK_USR=GIT_USR WALLET_SDK_TKN=TKN flutter run`. Alternatively, add `wallet-sdk-pkg.usr` and `wallet-sdk-pkg.tkn` variables to `android/local.properties` and then run `flutter run`.
+
+Note: If you are switching between the Maven version and a local version, the Gradle cache may need to be cleared. To do this, run `rm -r $HOME/.gradle/`.
+
 ### Frequent Issues and Troubleshooting
 - Deprecation error in Android Studio
 ```

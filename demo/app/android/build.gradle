@@ -1,24 +1,68 @@
 buildscript {
+    def localProperties = new Properties()
+    def localPropertiesFile = rootProject.file('local.properties')
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.withReader('UTF-8') { reader ->
+            localProperties.load(reader)
+        }
+    }
+
+    def walletSdkPkgUsr = localProperties.getProperty('wallet-sdk-pkg.usr') ?: System.getenv('WALLET_SDK_USR')
+    def walletSdkPkgTkn = localProperties.getProperty('wallet-sdk-pkg.tkn') ?: System.getenv('WALLET_SDK_TKN')
+
     ext.kotlin_version = '1.8.0'
     repositories {
         google()
         mavenCentral()
+        if (walletSdkPkgUsr != null) {
+            maven {
+                url = 'https://maven.pkg.github.com/trustbloc/wallet-sdk'
+                credentials {
+                    username = walletSdkPkgUsr
+                    password = walletSdkPkgTkn
+                }
+            }
+        }
     }
 
     dependencies {
         classpath 'com.android.tools.build:gradle:7.1.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        if (walletSdkPkgUsr != null) {
+            classpath "dev.trustbloc:vc-wallet-sdk:1.0.0"
+        }
     }
 }
 
 allprojects {
+    def localProperties = new Properties()
+    def localPropertiesFile = rootProject.file('local.properties')
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.withReader('UTF-8') { reader ->
+            localProperties.load(reader)
+        }
+    }
+
+    def walletSdkPkgUsr = localProperties.getProperty('wallet-sdk-pkg.usr') ?: System.getenv('WALLET_SDK_USR')
+    def walletSdkPkgTkn = localProperties.getProperty('wallet-sdk-pkg.tkn') ?: System.getenv('WALLET_SDK_TKN')
+
     repositories {
         google()
         mavenCentral()
         jcenter()
-        flatDir {
-            dirs 'libs'
-         }
+        if (walletSdkPkgUsr != null) {
+            maven {
+                url = 'https://maven.pkg.github.com/trustbloc/wallet-sdk'
+                credentials {
+                    username = walletSdkPkgUsr
+                    password = walletSdkPkgTkn
+                }
+            }
+        } else {
+            flatDir {
+                dirs 'libs'
+            }
+        }
     }
 }
 
