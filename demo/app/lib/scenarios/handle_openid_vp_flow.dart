@@ -9,6 +9,8 @@ import 'package:app/services/storage_service.dart';
 import 'package:app/views/presentation_preview.dart';
 import 'package:app/views/presentation_preview_multi_cred.dart';
 import 'package:app/views/presentation_preview_multi_cred_radio.dart';
+import 'dart:convert';
+import 'package:jwt_decode/jwt_decode.dart';
 
 void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
   var WalletSDKPlugin = MethodChannelWallet();
@@ -35,7 +37,7 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
 
   List<String> matchedCred = [];
   try {
-    matchedCred =  await WalletSDKPlugin.processAuthorizationRequest(
+    matchedCred = await WalletSDKPlugin.processAuthorizationRequest(
         authorizationRequest: qrCodeURL, storedCredentials: credentials);
   } catch (error) {
     Navigator.push(
@@ -51,13 +53,22 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
 
   if (submission.count > 1) {
     // multiple matched vc ids are found therefore, invoking multiple credential Presentation Preview.
-    log("multi cred flow $submission");
-    var credentialDisplayData = storedCredentials
-        .where((element) => credentials.contains(element.value.rawCredential))
-        .map((e) =>
-        CredentialData(rawCredential: e.value.rawCredential, issuerURL: e.value.issuerURL, credentialDisplayData: e.value.credentialDisplayData))
-        .toList();
-    navigateToPresentMultiCred(context, credentialDisplayData, "Choose ${submission.count} credentials to present");
+    List<CredentialData> credentialDisplayDataList = [];
+    for (var cred in credentials){
+      log("multi cred flow $submission and ${credentials.length}");
+      for (var inputDescriptor in submission.inputDescriptors) {
+        Map<String, dynamic> payload = Jwt.parseJwt(cred);
+        if (inputDescriptor.matchedVCsID.contains(payload["jti"])){
+          var credentialDisplayData = storedCredentials
+              .where((element) => cred.contains(element.value.rawCredential))
+              .map((e) =>
+              CredentialData(rawCredential: e.value.rawCredential, issuerURL: e.value.issuerURL, credentialDisplayData: e.value.credentialDisplayData))
+              .toList();
+             credentialDisplayDataList.add(credentialDisplayData.first);
+        }
+      }
+    }
+    navigateToPresentMultiCred(context, credentialDisplayDataList, "Choose ${submission.count} credentials to present");
     return;
   } else if (submission.count==1){
     var matchedVCsID = submission.inputDescriptors.first.matchedVCsID;
