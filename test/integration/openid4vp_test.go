@@ -8,11 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package integration
 
 import (
+	_ "embed"
 	"fmt"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 
 	"github.com/stretchr/testify/require"
@@ -30,6 +32,11 @@ import (
 )
 
 type claimData = map[string]interface{}
+
+var (
+	//go:embed expecteddisplaydata/university_degree_sd.json
+	expectedUniversityDegreeSD string
+)
 
 func TestOpenID4VPFullFlow(t *testing.T) {
 	driverLicenseClaims := claimData{
@@ -67,21 +74,21 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 	}
 
 	type test struct {
-		issuerProfileIDs  []string
-		claimData         []claimData
-		walletDIDMethod   string
-		verifierProfileID string
-		signingKeyType    string
-		applySD           bool
+		issuerProfileIDs   []string
+		claimData          []claimData
+		walletDIDMethod    string
+		verifierProfileID  string
+		signingKeyType     string
+		matchedDisplayData *display.Data
 	}
 
 	tests := []test{
 		{
-			issuerProfileIDs:  []string{"university_degree_issuer_bbs"},
-			claimData:         []claimData{universityDegreeClaims},
-			walletDIDMethod:   "ion",
-			verifierProfileID: "v_ldp_university_degree_sd_bbs",
-			applySD:           true,
+			issuerProfileIDs:   []string{"university_degree_issuer_bbs"},
+			claimData:          []claimData{universityDegreeClaims},
+			walletDIDMethod:    "ion",
+			verifierProfileID:  "v_ldp_university_degree_sd_bbs",
+			matchedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeSD),
 		},
 		{
 			issuerProfileIDs:  []string{"university_degree_issuer"},
@@ -113,7 +120,6 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			walletDIDMethod:   "jwk",
 			verifierProfileID: "v_myprofile_sdjwt",
 			signingKeyType:    localkms.KeyTypeP384,
-			applySD:           true,
 		},
 		{
 			issuerProfileIDs:  []string{"drivers_license_issuer"},
@@ -144,7 +150,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		testHelper := helpers.NewVPTestHelper(t, tc.walletDIDMethod, tc.signingKeyType)
 
-		issuedCredentials := testHelper.IssueCredentials(t,
+		issuedCredentials, issuersInfo := testHelper.IssueCredentials(t,
 			vcsAPIDirectURL,
 			tc.issuerProfileIDs,
 			tc.claimData,
@@ -201,8 +207,6 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		inquirerOpts := credential.NewInquirerOpts().
 			SetDocumentLoader(docLoader).SetDIDResolver(didResolver)
 
-
-
 		inquirer := credential.NewInquirer(inquirerOpts)
 		require.NoError(t, err)
 
@@ -215,6 +219,13 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		require.GreaterOrEqual(t, requirementDescriptor.MatchedVCs.Length(), 1)
 
 		matchedVCs := requirementDescriptor.MatchedVCs
+
+		if tc.matchedDisplayData != nil {
+			vc := matchedVCs.AtIndex(0)
+			issuer := issuersInfo[vc.ID()]
+			helpers.ResolveDisplayData(t, toCredArray(vc), tc.matchedDisplayData, issuer.IssuerURI, issuer.ProfileID)
+		}
+
 		selectedCreds := verifiable.NewCredentialsArray()
 
 		for ind := 0; ind < matchedVCs.Length(); ind++ {
@@ -258,4 +269,10 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		)
 		require.NoError(t, err)
 	}
+}
+
+func toCredArray(cred *verifiable.Credential) *verifiable.CredentialsArray {
+	credsArr := verifiable.NewCredentialsArray()
+	credsArr.Add(cred)
+	return credsArr
 }
