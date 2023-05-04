@@ -11,6 +11,7 @@ import 'package:app/main.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:app/models/activity_data_object.dart';
 import 'package:app/widgets/credential_card.dart';
+import 'package:app/views/custom_error.dart';
 import 'package:app/main.dart';
 import 'dart:developer';
 import 'dart:convert';
@@ -37,6 +38,8 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
   late String verifierName = '';
   late String serviceURL = '';
   bool verifiedDomain = true;
+  bool rememberMe = false;
+  bool showErrorMessage = false;
 
   @override
   void initState() {
@@ -144,12 +147,15 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                         multipleSelected.remove(checkListItems[index].rawCredential);
                         log("multiple selected removing ${multipleSelected}");
                         selectedCredentialData.removeAt(index);
+                        setState(() => rememberMe = value!);
                       } else {
                         selectedIndexes.add(index);
                         multipleSelected.add(checkListItems[index].rawCredential);
-                        log("multiple selected  adding ${multipleSelected}");
+                        log("multiple selected adding ${multipleSelected}");
                         selectedCredentialData.add(CredentialData(rawCredential:checkListItems[index].rawCredential,
                           credentialDisplayData:checkListItems[index].credentialDisplayData,issuerURL: '', ));
+                        setState(() => rememberMe = value!);
+                        setState(() => showErrorMessage = false);
                       }
                     });
                   },
@@ -157,8 +163,19 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
               ),
             ),
             Padding(
-              padding: EdgeInsets.only(top: width*0.8),
+              padding: EdgeInsets.only(top: width*0.7),
             ),
+            showErrorMessage ?
+            Container(
+                decoration: BoxDecoration(
+                    color: Colors.redAccent,
+                    borderRadius: BorderRadius.circular(8.0)
+                ),
+                child: Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SelectableText(widget.infoData!, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.8)),)
+                )
+            ) : Container(),
             Align(
                 alignment: Alignment.bottomCenter,
                 child: SingleChildScrollView(
@@ -170,8 +187,30 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                       ),
                       PrimaryButton(
                           onPressed: () async {
+                              if(rememberMe != true)
+                                setState(() => showErrorMessage = true);
+                              else
+                                setState(() => showErrorMessage = false);
                             final SharedPreferences pref = await prefs;
-                            await WalletSDKPlugin.presentCredential(selectedCredentials: multipleSelected.cast<String>());
+                              try {
+                                await WalletSDKPlugin.presentCredential(selectedCredentials: multipleSelected.cast<String>());
+                              }  catch (error) {
+                                log(error.toString());
+                                if (!error.toString().contains("OVP1-0002")){
+                                  var errString = error.toString().replaceAll(r'\', '');
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              CustomError(
+                                                  requestErrorTitleMsg: "error while presenting credential",
+                                                  requestErrorSubTitleMsg: "${errString}"
+                                              )));
+                                  return;
+                                } else {
+                                  await WalletSDKPlugin.presentCredential(selectedCredentials: multipleSelected.cast<String>());
+                                }
+                              }
                             var activities = await WalletSDKPlugin.storeActivityLogger();
                             var credID = pref.getString('credID');
                             _storageService.addActivities(ActivityDataObj(credID!, activities));
