@@ -30,6 +30,11 @@ type VPTestHelper struct {
 	DIDDoc *api.DIDDocResolution
 }
 
+type IssuerInfo struct {
+	ProfileID string
+	IssuerURI string
+}
+
 func NewVPTestHelper(t *testing.T, didMethod string, keyType string) *VPTestHelper {
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
@@ -55,7 +60,7 @@ func NewVPTestHelper(t *testing.T, didMethod string, keyType string) *VPTestHelp
 
 func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, issuerProfileIDs []string,
 	claimData []map[string]interface{}, documentLoader api.LDDocumentLoader,
-) *verifiable.CredentialsArray {
+) (*verifiable.CredentialsArray, map[string]IssuerInfo) {
 	oidc4ciSetup, err := oidc4ci.NewSetup(testenv.NewHttpRequest())
 	require.NoError(t, err)
 
@@ -63,6 +68,8 @@ func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, is
 	require.NoError(t, err)
 
 	credentials := verifiable.NewCredentialsArray()
+
+	issuerInfo := map[string]IssuerInfo{}
 
 	for i := 0; i < len(issuerProfileIDs); i++ {
 		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i], claimData[i])
@@ -102,12 +109,17 @@ func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, is
 			require.NoError(t, err)
 
 			println(serializedVC)
-			credentials.Add(result.AtIndex(i))
+			credentials.Add(vc)
+
+			issuerInfo[vc.ID()] = IssuerInfo{
+				ProfileID: issuerProfileIDs[i],
+				IssuerURI: interaction.IssuerURI(),
+			}
 		}
 
 	}
 
-	return credentials
+	return credentials, issuerInfo
 }
 
 func (h *VPTestHelper) CheckActivityLogAfterOpenID4VPFlow(t *testing.T, activityLogger *mem.ActivityLogger, verifierProfileID string) {
