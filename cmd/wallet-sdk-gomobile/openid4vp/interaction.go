@@ -69,10 +69,7 @@ func NewInteraction(args *Args, opts *Opts) (*Interaction, error) { //nolint:fun
 			DIDResolver: args.didRes,
 		}).PublicKeyFetcher()))
 
-	httpClient := wrapper.NewHTTPClient()
-	httpClient.AddHeaders(&opts.additionalHeaders)
-	httpClient.DisableTLSVerification = opts.disableHTTPClientTLSVerification
-	httpClient.Timeout = opts.httpTimeout
+	httpClient := wrapper.NewHTTPClient(opts.httpTimeout, opts.additionalHeaders, opts.disableHTTPClientTLSVerification)
 
 	goAPIOpts := []openid4vp.Opt{openid4vp.WithHTTPClient(httpClient)}
 

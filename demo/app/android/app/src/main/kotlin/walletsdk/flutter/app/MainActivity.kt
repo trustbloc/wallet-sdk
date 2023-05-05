@@ -280,11 +280,9 @@ class MainActivity : FlutterActivity() {
 
         val openID4CI = walletSDK.createOpenID4CIInteraction(requestURI)
 
-        val authRes = openID4CI.authorize()
-
         this.openID4CI = openID4CI
 
-        return authRes.userPINRequired
+        return openID4CI.pinRequired()
     }
 
     private fun issuerURI(): String {

@@ -11,6 +11,7 @@ package openid4ci
 import (
 	"errors"
 
+	afgoverifiable "github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 
@@ -23,28 +24,17 @@ import (
 	goapiwalleterror "github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
-// Interaction represents a single OpenID4CI interaction between a wallet and an issuer. The methods defined on this
-// object are used to help guide the calling code through the OpenID4CI flow.
+// Interaction represents a single OpenID4CI interaction between a wallet and an issuer.
+// The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
+// An Interaction is a stateful object, and is intended for going through the full flow only once
+// after which it should be discarded. Any new interactions should use a fresh Interaction instance.
 type Interaction struct {
 	goAPIInteraction *openid4cigoapi.Interaction
 	crypto           api.Crypto
 	oTel             *otel.Trace
 }
 
-// AuthorizeResult is the object returned from the Client.Authorize method.
-// An empty/missing AuthorizationRedirectEndpoint indicates that the wallet is pre-authorized.
-type AuthorizeResult struct {
-	AuthorizationRedirectEndpoint string
-	UserPINRequired               bool
-}
-
 // NewInteraction creates a new OpenID4CI Interaction.
-// The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
-// Calling this function represents taking the first step in the flow.
-// This function takes in an Initiate Issuance Request object from an issuer (as defined in
-// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-5.1), encoded using URL query
-// parameters. This object is intended for going through the full flow only once (i.e. one interaction), after which
-// it should be discarded. Any new interactions should use a fresh Interaction instance.
 func NewInteraction(args *Args, opts *Opts) (*Interaction, error) {
 	if args == nil {
 		return nil, errors.New("args object must be provided")
@@ -81,31 +71,66 @@ func NewInteraction(args *Args, opts *Opts) (*Interaction, error) {
 	}, nil
 }
 
-// Authorize is used by a wallet to authorize an issuer's OIDC Verifiable Credential Issuance Request.
-// After initializing the Interaction object with an Issuance Request, this should be the first method you call in
-// order to continue with the flow.
-// It only supports the pre-authorized flow in its current implementation.
-// Once the authorization flow is implemented, the following section of the spec will be relevant:
-// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#name-authorization-endpoint
-func (i *Interaction) Authorize() (*AuthorizeResult, error) {
-	authorizationResultGoAPI, err := i.goAPIInteraction.Authorize()
+// CreateAuthorizationURL creates an authorization URL that can be opened in a browser to proceed to the login page.
+// It is the first step in the authorization code flow.
+// It creates the authorization URL that can be opened in a browser to proceed to the login page.
+// This method can only be used if the issuer supports authorization code grants.
+// Check the issuer's capabilities first using the IssuerCapabilities method.
+func (i *Interaction) CreateAuthorizationURL(clientID, redirectURI string) (string, error) {
+	return i.goAPIInteraction.CreateAuthorizationURL(clientID, redirectURI)
+}
+
+// CreateAuthorizationURLWithScopes is like CreateAuthorizationURL but allows OAuth2 scopes to be passed in.
+func (i *Interaction) CreateAuthorizationURLWithScopes(clientID, redirectURI string,
+	scopes *api.StringArray,
+) (string, error) {
+	if scopes == nil {
+		scopes = api.NewStringArray()
+	}
+
+	return i.goAPIInteraction.CreateAuthorizationURLWithScopes(clientID, redirectURI, scopes.Strings)
+}
+
+// RequestCredentialWithAuth requests credential(s) from the issuer. This method can only be used for the
+// authorization code flow, where it acts as the final step in the interaction with the issuer.
+// For the equivalent methods for the pre-authorized code flow, see RequestCredential and RequestCredentialWithPIN
+// instead.
+//
+// RequestCredentialWithAuth should be called only once all authorization pre-requisite steps have been completed.
+// The redirect URI that you pass in here should look like the redirect URI that you passed in to the
+// CreateAuthorizationURL, except that now it has some URL query parameters appended to it.
+func (i *Interaction) RequestCredentialWithAuth(vm *api.VerificationMethod,
+	redirectURIWithAuthCode string,
+) (*verifiable.CredentialsArray, error) {
+	signer, err := i.createSigner(vm)
+	if err != nil {
+		return nil, err
+	}
+
+	credentials, err := i.goAPIInteraction.RequestCredentialWithAuth(signer, redirectURIWithAuthCode)
 	if err != nil {
 		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
 
-	authorizationResult := &AuthorizeResult{
-		AuthorizationRedirectEndpoint: authorizationResultGoAPI.AuthorizationRedirectEndpoint,
-		UserPINRequired:               authorizationResultGoAPI.UserPINRequired,
-	}
-
-	return authorizationResult, nil
+	return toGomobileCredentials(credentials), nil
 }
 
-// RequestCredential is the final step in the interaction. It requests credential(s) from the issuer.
-// If a PIN is needed, then use RequestCredentialWithPIN instead.
-// This is called after the wallet is authorized and is ready to receive credential(s).
-// Relevant section of the spec:
-// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#name-credential-endpoint
+// RequestCredential requests credential(s) from the issuer. It is the final step in the interaction.
+// This should be called only once any applicable authorization pre-requisite steps have been completed.
+//
+// For the pre-authorized code grant flow, this method can be called right after you've instantiated the Interaction
+// object. If a user PIN is required (which can be checked via the IssuerCapabilities method), then
+// RequestCredentialWithPIN must be called instead.
+//
+// For the authorization code grant flow, the CreateAuthorizationURL (or CreateAuthorizationURLWithScopes) and
+// RequestAccessToken methods must be called first and any associated steps with those methods completed.
+// See the docs on those methods for more details.
+
+// RequestCredential requests credential(s) from the issuer. This method can only be used for the pre-authorized code
+// flow, where it acts as the final step in the interaction with the issuer.
+// For the equivalent method for the authorization code flow, see RequestCredentialWithAuth instead.
+//
+// If a PIN is required (which can be checked via the IssuerCapabilities method), then use instead.
 func (i *Interaction) RequestCredential(vm *api.VerificationMethod) (*verifiable.CredentialsArray, error) {
 	credentials, err := i.requestCredential(vm, "")
 	if err != nil {
@@ -127,15 +152,18 @@ func (i *Interaction) RequestCredential(vm *api.VerificationMethod) (*verifiable
 	return credentials, nil
 }
 
-// RequestCredentialWithPIN is the final step in the interaction. It requests credential(s) from the issuer with the
-// given PIN. If no PIN is need, then RequestCredential can be used instead.
-// This is called after the wallet is authorized and is ready to receive credential(s).
-// Relevant section of the spec:
-// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#name-credential-endpoint
+// RequestCredentialWithPIN is like RequestCredential, but takes in a PIN for use with the
+// pre-authorized code grant flow. If the issuer does not require a PIN, then use RequestCredential instead. If you are
+// using the authorization code grant flow, then use RequestCredentialWithAuth instead.
 func (i *Interaction) RequestCredentialWithPIN(
 	vm *api.VerificationMethod, pin string,
 ) (*verifiable.CredentialsArray, error) {
 	return i.requestCredential(vm, pin)
+}
+
+// IssuerCapabilities returns an object which can be used to learn about an issuer's self-reported capabilities.
+func (i *Interaction) IssuerCapabilities() *IssuerCapabilities {
+	return &IssuerCapabilities{goAPIIssuerCapabilities: i.goAPIInteraction.IssuerCapabilities()}
 }
 
 // OTelTraceID returns open telemetry trace id.
@@ -151,13 +179,9 @@ func (i *Interaction) OTelTraceID() string {
 func (i *Interaction) requestCredential(
 	vm *api.VerificationMethod, pin string,
 ) (*verifiable.CredentialsArray, error) {
-	if vm == nil {
-		return nil, errors.New("verification method must be provided")
-	}
-
-	signer, err := common.NewJWSSigner(vm.ToSDKVerificationMethod(), i.crypto)
+	signer, err := i.createSigner(vm)
 	if err != nil {
-		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
+		return nil, err
 	}
 
 	goAPICredentialRequest := &openid4cigoapi.CredentialRequestOpts{UserPIN: pin}
@@ -167,13 +191,20 @@ func (i *Interaction) requestCredential(
 		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
 
-	gomobileCredentials := verifiable.NewCredentialsArray()
+	return toGomobileCredentials(credentials), nil
+}
 
-	for i := range credentials {
-		gomobileCredentials.Add(verifiable.NewCredential(credentials[i]))
+func (i *Interaction) createSigner(vm *api.VerificationMethod) (*common.JWSSigner, error) {
+	if vm == nil {
+		return nil, errors.New("verification method must be provided")
 	}
 
-	return gomobileCredentials, nil
+	signer, err := common.NewJWSSigner(vm.ToSDKVerificationMethod(), i.crypto)
+	if err != nil {
+		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
+	}
+
+	return signer, nil
 }
 
 // IssuerURI returns the issuer's URI from the initiation request. It's useful to store this somewhere in case
@@ -187,19 +218,15 @@ func createGoAPIClientConfig(config *Args,
 ) *openid4cigoapi.ClientConfig {
 	activityLogger := createGoAPIActivityLogger(opts.activityLogger)
 
-	httpClient := wrapper.NewHTTPClient()
-	httpClient.AddHeaders(&opts.additionalHeaders)
-	httpClient.DisableTLSVerification = opts.disableHTTPClientTLSVerification
-	httpClient.Timeout = opts.httpTimeout
+	httpClient := wrapper.NewHTTPClient(opts.httpTimeout, opts.additionalHeaders, opts.disableHTTPClientTLSVerification)
 
 	goAPIClientConfig := &openid4cigoapi.ClientConfig{
-		ClientID:                         config.clientID,
 		DIDResolver:                      &wrapper.VDRResolverWrapper{DIDResolver: config.didResolver},
 		ActivityLogger:                   activityLogger,
 		MetricsLogger:                    &wrapper.MobileMetricsLoggerWrapper{MobileAPIMetricsLogger: opts.metricsLogger},
 		DisableVCProofChecks:             opts.disableVCProofChecks,
-		HTTPClient:                       httpClient,
 		NetworkDocumentLoaderHTTPTimeout: opts.httpTimeout,
+		HTTPClient:                       httpClient,
 	}
 
 	if opts.documentLoader != nil {
@@ -219,4 +246,14 @@ func createGoAPIActivityLogger(mobileAPIActivityLogger api.ActivityLogger) goapi
 	}
 
 	return &wrapper.MobileActivityLoggerWrapper{MobileAPIActivityLogger: mobileAPIActivityLogger}
+}
+
+func toGomobileCredentials(credentials []*afgoverifiable.Credential) *verifiable.CredentialsArray {
+	gomobileCredentials := verifiable.NewCredentialsArray()
+
+	for i := range credentials {
+		gomobileCredentials.Add(verifiable.NewCredential(credentials[i]))
+	}
+
+	return gomobileCredentials
 }

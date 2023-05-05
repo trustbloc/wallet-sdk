@@ -19,7 +19,7 @@ class OpenID4CI constructor(
     init {
         val trace = Otel.newTrace()
 
-        val args = Args(requestURI, "ClientID", crypto, didResolver)
+        val args = Args(requestURI, crypto, didResolver)
 
         val opts = Opts()
         opts.addHeader(trace.traceHeader())
@@ -28,8 +28,8 @@ class OpenID4CI constructor(
         newInteraction = Interaction(args, opts)
     }
 
-    fun authorize(): AuthorizeResult {
-        return newInteraction.authorize()
+    fun pinRequired(): Boolean {
+        return newInteraction.issuerCapabilities().preAuthorizedCodeGrantParams().pinRequired()
     }
 
     fun issuerURI(): String {

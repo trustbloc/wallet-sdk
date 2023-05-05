@@ -176,9 +176,9 @@ If no custom LD document loader is specified (or is nil/null), then network-base
 For performance and/or security reasons, you may wish to implement a custom LD document loader that uses
 preloaded local contexts.
 
-## HTTP Timeout
+## Network Call Timeout
 
-By default, HTTP calls in Wallet-SDK have a timeout of 30 seconds. This can be overridden by passing in a
+By default, REST calls in Wallet-SDK have a timeout of 30 seconds. This can be overridden by passing in a
 custom timeout via the `setHTTPTimeoutNanoseconds` method, which, if available, will be on the API's `Opts` object.
 Passing in 0 will disable timeouts.
 
@@ -460,44 +460,110 @@ let validationResult = ValidateLinkedDomains("YourDIDHere", didResolver)
 The OpenID4CI package contains an API that can be used by a [holder](https://www.w3.org/TR/vc-data-model/#dfn-holders)
 to go through the [OpenID4CI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html) flow.
 
-Note that the implementation currently only supports the pre-authorized flow.
+### Creating the `Interaction` Object
 
-The general pattern is as follows:
+The first step in any OpenID4CI flow is to create an `Interaction` object. An `Interaction` object is instantiated
+using an `Args` object and, optionally, an `Opts` object. The `Interaction` object is stateful. Use it for only one
+single instance of an OpenID4CI flow and then discard it. Create a new `Interaction` object _every time_ you go through
+the OpenID4CI flow.
 
-1. Create an `Args` object. An `Args` object contains the following mandatory parameters:
-   * An initiate issuance URI obtained from an issuer (e.g. via a QR code).
-   * A client ID to use.
-   * A crypto implementation.
-   * A DID resolver.
-2. (Optional) Create an `Opts` object. To set optional arguments, use the supplied methods available
-on the `Opts` object. For example:
-   * `setActivityLogger`: Used to log credential activities.
-   * `setDocumentLoader`: Used when parsing JSON-LD VCs. If this option isn't used, then a network-based loader will be
-   used.
-   * `addHeaders`: Allows you to set additional headers to be sent to the issuer.
+An `Args` object contains the following mandatory parameters:
+* An initiate issuance URI obtained from an issuer (e.g. via a QR code).
+* A crypto implementation.
+* A DID resolver.
 
-   Options can be chained together if you wish (e.g. `newOpts().setActivityLogger(...).setHeaders(...)`).
-   Check the generated bindings headers files to see all the available options.
-3. Create a new `Interaction` object using your `Args` and`Opts` objects.
-If none of the optional arguments are needed, then a nil `Opts` can be passed in instead.
-The `Interaction` object is a stateful object and is meant to be used for a single instance of an OpenID4CI flow and
-then discarded.
-4. Call the `authorize` method on the `Interaction`. the returned `AuthorizeResult` object indicates whether a user PIN
-is required.
-5. Call the `requestCredential` method on the `Interaction`.
-If a user PIN is required, then use the `requestCredentialWithPIN` method instead.
-If this call is successful, this method will return the issued credentials.
-6. (Optional, can be called at any point after step 3) - Call the `IssuerURI` method on the `Interaction` object to
-get the issuer URI. The issuer URI should be stored somewhere for later use, since it can be used to get the
-display data. See [Credential Display Data](#credential-display-data) for more information.
+To set optional arguments, create an `Opts` object and use the supplied methods available on that object.
+The following methods (options) are available:
+* `setActivityLogger`: If set, then credential activity logs will be passed to the given `ActivityLogger`
+  implementation. Otherwise, no activities will be logged.
+* `setDocumentLoader`: Used when parsing JSON-LD VCs. If unspecified, then a network-based loader will be used, which
+  can impact performance.
+* `setMetricsLogger`: If set, then performance metrics events will be passed to the given `MetricsLogger`
+  implementation. Otherwise, no metrics events will be logged.
+* `setHTTPTimeoutNanoseconds`: Specifies a timeout for REST calls. Defaults to 30 seconds if not set.
+* `disableOpenTelemetry`: Disables the sending of OpenTelemetry headers. By default, they are sent during REST calls
+  to the issuer and during OAuth2-related calls (if applicable).
+* `addHeader`: Allows you to set an additional header to be sent during REST calls to the issuer and during
+OAuth2-related calls (if applicable).
+* `addHeaders`: Like `addHeader`, but allows you to specify multiple headers at once.
+* `disableHTTPClientTLSVerify`: Disables TLS verification for HTTPS calls. **This should
+  be used for testing purposes only**.
+* `disableVCProofChecks`: Disables proof checks for Verifiable Credentials received from the issuer. **This should
+be used for testing purposes only**.
 
+If you're okay with all defaults being used, you can simply pass in `null`/`nil` in as the `Opts` argument.
+
+Options can be set by chaining the methods together on a single line.
+For example: `newOpts().setActivityLogger(...).setHeaders(...)`
+
+### Authorization
+
+In this part, the actions you have to take vary greatly depending on whether you're using the Pre-Authorized Code flow
+or the Authorization Code Flow.
+
+First, you should check and see what grant types the issuer says they support. You can do this by using the methods
+available on the`IssuerCapabilities` object, which you can get by calling the `issuerCapabilities` method on your instantiated
+`Interaction` object:
+* `preAuthorizedCodeGrantTypeSupported`: Indicates whether the issuer supports the pre-authorized code grant type. If it
+ does, then you can proceed with the [pre-authorized code flow](#pre-authorized-code-flow).
+* `authorizationCodeGrantTypeSupported`: Indicates whether the issuer supports the authorization code grant type. If it
+  does, then you can proceed with the [authorization code flow](#authorization-code-flow).
+
+#### Pre-Authorized Code Flow
+
+For the pre-authorized code flow, you need to determine whether the issuer requires a PIN or not. To do this, first get
+the `PreAuthorizedCodeGrantParams` object by calling the `preAuthorizedCodeGrantParams` method on your
+`IssuerCapabilities` object. Then, use the `pinRequired` method to determine whether a PIN is needed or not. Once you
+know this, you're ready to [request credentials](#request-credential).
+
+#### Authorization Code Flow
+
+First, you need to create an authorization URL. To do this, call the `createAuthorizationURL` method on the
+`Interaction` object. You need to provide the following parameters:
+* Client ID: This is a value that's specific to your application and/or issuer. The Client ID is a part of 
+the OAuth2 specification, and has to be obtained by out-of-band means.
+* Redirect URI: The URI that you want the service to redirect to after authorization is complete.
+You will likely want this to be some sort of deep link to your app. More information on this can be found further below.
+
+Additionally, some issuers' authorization servers may require scopes to be passed in. In this case, use the
+`createAuthorizationURLWithScopes` method instead, which takes in both of the arguments listed above and a
+third `scopes` argument. The `scopes` value is also part of the OAuth2 specification and needs to be obtained by
+out-of-band means.
+
+Once you have your authorization URL, load it in a web browser. The user will then need to log in to the service
+(if they are not already) and give permission to share their data with the issuer. The web page will then
+redirect the user to the redirect URI that you passed in previously. However, this redirect URI will now have
+additional query parameters appended to it. You will need this full URI for the next step, and so you will probably
+want the redirect URI (passed in earlier) to be some sort of deep link to your app so that you can easily retrieve this
+URI.
+
+You're now ready to [request credentials](#request-credential).
+
+### Request Credential
+
+There are three methods available on the `Interaction` object to request credentials. Which one you use will depend
+on your flow and parameters:
+* `requestCredential`: Use this if you're using the pre-authorized code flow and no PIN is required or if you're using
+the authorization code flow.
+* `requestCredentialWithPIN`: Use this only if you're using the pre-authorized code flow and a PIN is required.
+* `requestCredentialWithAuth`: Use this only if you're using the authorization code flow. This version of the method
+  will require the redirect URI (that has additional query parameters) that you got before.
+
+Regardless of which of the three methods you use, if the call succeeds, it will return your issued credentials.
+These can then be used in other Wallet-SDK APIs or [serialized for storage](#verifiable-credentials).
+
+### Issuer URI (Optional)
+
+Call the `IssuerURI` method on the `Interaction` object to get the issuer URI. The issuer URI can be used
+to get the display data for your credentials. See [Credential Display Data](#credential-display-data) for more
+information. You may want to save the issuer URI somewhere so that you can get/refresh display data at a later time.
 
 ### Examples
 
 The following examples show how to use the APIs to go through the OpenID4CI flow using the iOS and Android bindings.
 They use in-memory key storage and the Tink crypto library.
 
-#### Kotlin (Android)
+#### Kotlin (Android) - Pre-Authorized Code Flow
 
 ```kotlin
 import dev.trustbloc.wallet.sdk.localkms.Localkms
@@ -518,15 +584,21 @@ val didDocResolution = didCreator.create("key", null) // Create a did:key doc
 val activityLogger = mem.ActivityLogger()
 
 // Going through the flow
-val args = Args("YourRequestURIHere", "ClientID", kms.getCrypto(), didResolver)
+val args = Args("YourRequestURIHere", kms.getCrypto(), didResolver)
 val opts = Opts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
-val interaction = Interaction(args, opts)
+val interaction = Interaction(args, opts) // This is a stateful object - we will use this to go through the flow.
 
-val result = interaction.authorize()
+// It's a good idea to check the issuer's capabilities first
+val issuerCapabilities = interaction.issuerCapabilities()
+if (!issuerCapabilities.PreAuthorizedCodeGrantTypeSupported()) {
+    // This code example isn't applicable. See the authorization code flow example instead.
+    
+    return
+}
 
 val credentials: CredentialsArray
 
-if (result.UserPINRequired) {
+if (issuerCapabilities.preAuthorizedCodeGrantParams().pinRequired()) {
     credentials = interaction.requestCredentialWithPIN(didDocResolution.assertionMethod(), "1234")
 } else {
     credentials = interaction.requestCredential(didDocResolution.assertionMethod())
@@ -537,7 +609,7 @@ val issuerURI = interaction.issuerURI() // Optional (but useful)
 // Consider checking the activity log at some point after the interaction
 ```
 
-#### Swift (iOS)
+#### Swift (iOS) - Pre-Authorized Code Flow
 
 ```swift
 import Walletsdk
@@ -558,16 +630,24 @@ let didDocResolution = didCreator.create("key", nil) // Create a did:key doc wit
 let activityLogger = MemNewActivityLogger()
 
 // Going through the flow
-let args = Openid4ciNewArgs("YourRequestURIHere", "ClientID", kms.getCrypto(), didResolver)
+let args = Openid4ciNewArgs("YourRequestURIHere", kms.getCrypto(), didResolver)
 let opts = Openid4ciNewOpts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
 var newInteractionError: NSError?
+
+// This is a stateful object - we will use this to go through the flow.
 let interaction = Openid4ciNewInteraction(args, opts, &newInteractionError)
 
-let result = interaction.authorize()
+// It's a good idea to check the issuer's capabilities first
+let issuerCapabilities = interaction.issuerCapabilities()
+if !issuerCapabilities.PreAuthorizedCodeGrantTypeSupported() {
+    // This code example isn't applicable. See the authorization code flow example instead.
+    
+    return
+}
 
 var credentials: VerifiableCredentialsArray
 
-if result.UserPINRequired {
+if issuerCapabilities.preAuthorizedCodeGrantParams().pinRequired() {
     credentials = interaction.requestCredential(withPIN: didDocResolution.assertionMethod(), pin:"1234")
 } else {
     credentials = interaction.requestCredential(didDocResolution.assertionMethod())
@@ -578,31 +658,139 @@ let issuerURI = interaction.issuerURI() // Optional (but useful)
 // Consider checking the activity log at some point after the interaction
 ```
 
+#### Kotlin (Android) - Authorization Code Flow
+
+```kotlin
+import dev.trustbloc.wallet.sdk.api.*
+import dev.trustbloc.wallet.sdk.localkms.Localkms
+import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
+import dev.trustbloc.wallet.sdk.did.Resolver
+import dev.trustbloc.wallet.sdk.did.Creator
+import dev.trustbloc.wallet.sdk.openid4ci.*
+import dev.trustbloc.wallet.sdk.openid4ci.Opts
+import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
+
+// Setup
+val memKMSStore = MemKMSStore.MemKMSStore()
+val kms = Localkms.newKMS(memKMSStore)
+val didResolver = Resolver(null)
+val didCreator = Creator(kms as KeyWriter)
+val didDocResolution = didCreator.create("key", null) // Create a did:key doc
+
+val activityLogger = mem.ActivityLogger()
+
+// Going through the flow
+val args = Args("YourRequestURIHere", kms.getCrypto(), didResolver)
+val opts = Opts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
+val interaction = Interaction(args, opts) // This is a stateful object - we will use this to go through the flow.
+
+// It's a good idea to check the issuer's capabilities first
+val issuerCapabilities = interaction.issuerCapabilities()
+if (!issuerCapabilities.AuthorizationCodeGrantTypeSupported()) {
+    // This code example isn't applicable. See the pre-authorized code flow example instead.
+    
+    return
+}
+
+val scopes = StringArray()
+scopes.append("scope1").append("scope2")
+
+// If scopes aren't needed, call interaction.createAuthorizationURL() instead.
+val authorizationLink := interaction.createAuthorizationURLWithScopes("clientID", "redirect URI", scopes)
+
+// Open authorizationLink in a browser. Once the user has finished logging in, call requestCredentialWithAuth()
+// with the full redirect URI (including query parameters) that the login service sent the user to.
+// The code below assumes this has already been done somehow and that the URI is in the redirectURIWithParams variable.
+// In actual code, the call to requestCredentialWithAuth() couldn't be immediately after the
+// createAuthorizationURLWithScopes() call like in this example since control has to flow back to the user first.
+val redirectURIWithParams = "Put the redirect URI with params here"
+
+val credentials = interaction.requestCredentialWithAuth(didDocResolution.assertionMethod(), redirectURIWithParams)
+
+val issuerURI = interaction.issuerURI() // Optional (but useful)
+
+// Consider checking the activity log at some point after the interaction
+```
+
+#### Swift (iOS) - Authorization Code Flow
+
+```swift
+import Walletsdk
+
+// Setup
+let memKMSStore = LocalkmsNewMemKMSStore()
+
+var newKMSError: NSError?
+let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
+
+let didResolver = DidNewResolver(nil)
+
+var newDIDCreatorError: NSError?
+let didCreator = DidNewCreatorWithKeyWriter(kms, &newDIDCreatorError)
+
+let didDocResolution = didCreator.create("key", nil) // Create a did:key doc with default options
+
+let activityLogger = MemNewActivityLogger()
+
+// Going through the flow
+let args = Openid4ciNewArgs("YourRequestURIHere", kms.getCrypto(), didResolver)
+let opts = Openid4ciNewOpts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
+var newInteractionError: NSError?
+
+// This is a stateful object - we will use this to go through the flow.
+let interaction = Openid4ciNewInteraction(args, opts, &newInteractionError)
+
+// It's a good idea to check the issuer's capabilities first
+let issuerCapabilities = interaction.issuerCapabilities()
+if !issuerCapabilities.AuthorizationCodeGrantTypeSupported() {
+    // This code example isn't applicable. See the authorization code flow example instead.
+    
+    return
+}
+
+let scopes = ApiStringArray()
+scopes.append("scope1").append("scope2")
+
+// If scopes aren't needed, call interaction.createAuthorizationURL() instead.
+let authorizationLink := interaction.createAuthorizationURLWithScopes("clientID", "redirect URI", scopes)
+
+// Open authorizationLink in a browser. Once the user has finished logging in, call requestCredentialWithAuth()
+// with the full redirect URI (including query parameters) that the login service sent the user to.
+// The code below assumes this has already been done somehow and that the URI is in the redirectURIWithParams variable.
+// In actual code, the call to requestCredentialWithAuth() couldn't be immediately after the
+// createAuthorizationURLWithScopes() call like in this example since control has to flow back to the user first.
+let redirectURIWithParams = "Put the redirect URI with params here"
+
+let credentials = interaction.requestCredentialWithAuth(didDocResolution.assertionMethod(), redirectURIWithParams)
+
+let issuerURI = interaction.issuerURI() // Optional (but useful)
+
+// Consider checking the activity log at some point after the interaction
+```
+
 ### Error Codes & Troubleshooting Tips
 
 #### Creating New Interaction Object
 
-| Error                                             | Possible Reasons                                                                                                                                                                                                                      |
-|---------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| NO_CLIENT_CONFIG_PROVIDED(OCI0-0000)              | A nil/null client configuration object was passed in.                                                                                                                                                                                 |
-| CLIENT_CONFIG_NO_CLIENT_ID_PROVIDED(OCI0-0001)    | The client configuration doesn't specify a client ID).                                                                                                                                                                                |
-| CLIENT_CONFIG_NO_DID_RESOLVER_PROVIDED(OCI0-0002) | The client configuration doesn't specify a DID resolver (or it's nil).                                                                                                                                                                |
-| INVALID_ISSUANCE_URI(OCI0-0004)                   | The issuance URI used to initiate the OpenID4CI flow isn't a valid URL.<br/><br/>The issuance URI doesn't specify a credential offer.                                                                                                 |
-| INVALID_CREDENTIAL_OFFER(OCI0-0005)               | The credential offer object is malformed.<br/><br/>The issuance URI specified an endpoint for retrieving the credential offer, but there was an error during the HTTP GET call. The server may be down or have a configuration issue. |
-| PRE_AUTHORIZED_GRANT_TYPE_REQUIRED(OCI0-0003)     | The credential offer doesn't specify the pre-authorized grant type (which is the only grant type this SDK currently supports).                                                                                                        |
+| Error                                             | Possible Reasons                                                                                                                                                                                                                 |
+|---------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| NO_CLIENT_CONFIG_PROVIDED(OCI0-0000)              | A nil/null client configuration object was passed in.                                                                                                                                                                            |
+| CLIENT_CONFIG_NO_DID_RESOLVER_PROVIDED(OCI0-0001) | The client configuration doesn't specify a DID resolver (or it's nil).                                                                                                                                                           |
+| INVALID_ISSUANCE_URI(OCI0-0002)                   | The issuance URI used to initiate the OpenID4CI flow isn't a valid URL.<br/><br/>The issuance URI doesn't specify a credential offer.                                                                                            |
+| INVALID_CREDENTIAL_OFFER(OCI0-0003)               | The credential offer object is malformed.<br/><br/>The issuance URI specified an endpoint for retrieving the credential offer, but there was an error during the GET call. The server may be down or have a configuration issue. |
 
 ##### Requesting Credential
 
 | Error                                  | Possible Reasons                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 |----------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| PIN_REQUIRED(OCI0-0007)                | The credential offer requires a user PIN but none was provided. Make sure to use the `requestCredentialWithPIN` method with a non-empty PIN.                                                                                                                                                                                                                                                                                                        |
-| ISSUER_OPENID_FETCH_FAILED(OCI1-0008)  | An error occurred while doing an HTTP GET call on the issuer's OpenID configuration endpoint. The server may be down or have a configuration issue.<br/><br/>The issuer's OpenID configuration object is malformed.                                                                                                                                                                                                                                 |
-| TOKEN_FETCH_FAILED(OCI1-0010)          | The user PIN is incorrect.<br/><br/>An error occurred while doing an HTTP POST call on the issuer's token endpoint. The server may be down or have a configuration issue.<br/><br/>The token response object from the server is malformed.                                                                                                                                                                                                          |
-| JWT_SIGNING_FAILED(OCI1-0011)          | The KMS is missing the key that was used to create the DID that you're using. This could happen if your KMS storage is not storing and retrieving keys as expected, or if there is a mismatch between the KMS you used to create the DID (whose verification method you pass into the `requestCredential` function) and the `crypto` object (which should be obtained via the `getCrypto()` method on the KMS) passed in to the interaction object. |
-| KEY_ID_NOT_CONTAIN_DID_PART(OCI1-0013) | The DID is incompatible with Wallet-SDK.                                                                                                                                                                                                                                                                                                                                                                                                            |
-| METADATA_FETCH_FAILED(OCI1-0009)       | An error occurred while doing an HTTP GET call on the issuer's OpenID credential issuer endpoint. The server may be down or have a configuration issue.<br/><br/>The issuer metadata object from the server is malformed.                                                                                                                                                                                                                           |
-| CREDENTIAL_FETCH_FAILED(OCI1-0012)     | An error occurred while doing an HTTP GET call on the issuer's credential endpoint. The server may be down or have a configuration issue.<br/><br/>The credential response object from the server is malformed.                                                                                                                                                                                                                                     |
-| CREDENTIAL_PARSE_FAILED(OCI1-0014)     | The issued credential is invalid, signed incorrectly, or could not be verified.                                                                                                                                                                                                                                                                                                                                                                     |
+| PIN_REQUIRED(OCI0-0005)                | The credential offer requires a PIN but none was provided. Make sure to use the `requestCredentialWithPIN` method with a non-empty PIN.                                                                                                                                                                                                                                                                                                             |
+| ISSUER_OPENID_FETCH_FAILED(OCI1-0006)  | An error occurred while doing an GET call on the issuer's OpenID configuration endpoint. The server may be down or have a configuration issue.<br/><br/>The issuer's OpenID configuration object is malformed.                                                                                                                                                                                                                                      |
+| TOKEN_FETCH_FAILED(OCI1-0008)          | The user PIN is incorrect.<br/><br/>An error occurred while doing an POST call on the issuer's token endpoint. The server may be down or have a configuration issue.<br/><br/>The token response object from the server is malformed.                                                                                                                                                                                                               |
+| JWT_SIGNING_FAILED(OCI1-0009)          | The KMS is missing the key that was used to create the DID that you're using. This could happen if your KMS storage is not storing and retrieving keys as expected, or if there is a mismatch between the KMS you used to create the DID (whose verification method you pass into the `requestCredential` function) and the `crypto` object (which should be obtained via the `getCrypto()` method on the KMS) passed in to the interaction object. |
+| KEY_ID_NOT_CONTAIN_DID_PART(OCI1-0011) | The DID is incompatible with Wallet-SDK.                                                                                                                                                                                                                                                                                                                                                                                                            |
+| METADATA_FETCH_FAILED(OCI1-0007)       | An error occurred while doing an GET call on the issuer's OpenID credential issuer endpoint. The server may be down or have a configuration issue.<br/><br/>The issuer metadata object from the server is malformed.                                                                                                                                                                                                                                |
+| CREDENTIAL_FETCH_FAILED(OCI1-0010)     | An error occurred while doing an GET call on the issuer's credential endpoint. The server may be down or have a configuration issue.<br/><br/>The credential response object from the server is malformed.                                                                                                                                                                                                                                          |
+| CREDENTIAL_PARSE_FAILED(OCI1-0012)     | The issued credential is invalid, signed incorrectly, or could not be verified.                                                                                                                                                                                                                                                                                                                                                                     |
 
 ## Credential Display Data
 
@@ -761,7 +949,7 @@ using the `verify` API. This will return an error if:
 - The status verification process fails, e.g. due to the issuer server being unavailable to report status.
 - The credential has been revoked.
 
-By default, `StatusVerifier` only supports status APIs that fetch status metadata via an http URL to the issuer's
+By default, `StatusVerifier` only supports status APIs that fetch status metadata via a URL to the issuer's
 status endpoint. If you need to also support status APIs that use DID-URL resolution, create a `StatusVerifier`
 using the `NewStatusVerifierWithDIDResolver` constructor.
 

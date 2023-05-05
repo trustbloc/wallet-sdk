@@ -15,49 +15,47 @@ import (
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 )
 
-// HTTPClient is the HTTP client implementation that gets injected in from the gomobile layer.
-// It makes use of the optional HTTP client parameters that are exposed from the various APIs.
-type HTTPClient struct {
-	additionalHeaders      []api.Header
-	DisableTLSVerification bool // Should only be set to true for testing purposes.
-	Timeout                *time.Duration
-}
+// NewHTTPClient returns a new HTTP client using the given parameters.
+func NewHTTPClient(timeout *time.Duration, additionalHeaders api.Headers,
+	disableTLSVerification bool,
+) *http.Client {
+	if timeout == nil {
+		defaultTimeout := goapi.DefaultHTTPTimeout
 
-// NewHTTPClient returns a new HTTPClient.
-func NewHTTPClient() *HTTPClient {
-	return &HTTPClient{}
-}
-
-// AddHeaders adds the given headers to the list of headers that will get added to all HTTP calls made by this
-// client implementation.
-func (m *HTTPClient) AddHeaders(headers *api.Headers) {
-	m.additionalHeaders = append(m.additionalHeaders, headers.GetAll()...)
-}
-
-// Do sends the given HTTP request and returns an HTTP response. If this HTTP client has any additional headers to be
-// injected (from previous calls to AddHeaders), then those headers are added to the request before being executed
-// by the default Go HTTP client.
-func (m *HTTPClient) Do(req *http.Request) (*http.Response, error) {
-	for _, additionalHeader := range m.additionalHeaders {
-		req.Header.Add(additionalHeader.Name, additionalHeader.Value)
+		timeout = &defaultTimeout
 	}
 
-	httpClient := http.Client{}
-
-	if m.DisableTLSVerification {
-		//nolint:gosec // The ability to disable TLS is an option we provide that has to be explicitly set by the user.
-		// By default, we don't disable TLS. We have documentation specifying that this option is only intended for
-		// testing purposes - it's up to the user to use this option appropriately.
-		tlsConfig := &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true}
-
-		httpClient.Transport = &http.Transport{TLSClientConfig: tlsConfig}
+	httpClient := &http.Client{
+		Timeout: *timeout,
 	}
 
-	if m.Timeout != nil {
-		httpClient.Timeout = *m.Timeout
-	} else {
-		httpClient.Timeout = goapi.DefaultHTTPTimeout
+	roundTripper := &headerInjectionRoundTripper{additionalHeaders: additionalHeaders.GetAll()}
+
+	//nolint:gosec // The ability to disable TLS is an option we provide that has to be explicitly set by the user.
+	// By default, we don't disable TLS. We have documentation specifying that this option is only intended for
+	// testing purposes - it's up to the user to use this option appropriately.
+	roundTripper.tlsConfig = &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: disableTLSVerification}
+
+	httpClient.Transport = roundTripper
+
+	return httpClient
+}
+
+type headerInjectionRoundTripper struct {
+	tlsConfig         *tls.Config
+	additionalHeaders []api.Header
+}
+
+func (h *headerInjectionRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Per the docs for the http.RoundTripper RoundTrip method, a RoundTripper should not modify the request, so we
+	// clone the request first and then inject the headers into the cloned request.
+	clonedReq := req.Clone(req.Context())
+
+	for _, additionalHeader := range h.additionalHeaders {
+		clonedReq.Header.Add(additionalHeader.Name, additionalHeader.Value)
 	}
 
-	return httpClient.Do(req)
+	defaultTransport := &http.Transport{TLSClientConfig: h.tlsConfig}
+
+	return defaultTransport.RoundTrip(clonedReq)
 }

@@ -1,5 +1,6 @@
 /*
 Copyright Avast Software. All Rights Reserved.
+Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -9,6 +10,10 @@ package openid4ci
 
 import (
 	"bytes"
+	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,10 +27,12 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/piprate/json-gold/ld"
+	"golang.org/x/oauth2"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
+	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
@@ -47,31 +54,36 @@ const (
 	//nolint:gosec //false positive
 	fetchCredentialViaGETReqEventText  = "Fetch credential %d of %d via an HTTP POST request to %s"
 	parseAndCheckProofCheckVCEventText = "Parsing and checking proof for received credential %d of %d"
+
+	preAuthorizedGrantType     = "urn:ietf:params:oauth:grant-type:pre-authorized_code"
+	authorizationCodeGrantType = "authorization_code"
 )
 
-// Interaction represents a single OpenID4CI interaction between a wallet and an issuer. The methods defined on this
-// object are used to help guide the calling code through the OpenID4CI flow.
+// Interaction represents a single OpenID4CI interaction between a wallet and an issuer.
+// The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
+// An Interaction is a stateful object, and is intended for going through the full flow only once
+// after which it should be discarded. Any new interactions should use a fresh Interaction instance.
 type Interaction struct {
-	issuerURI              string
-	credentialTypes        [][]string
-	credentialFormats      []string
-	preAuthorizedCodeGrant *Grant
-	clientID               string
-	didResolver            *didResolverWrapper
-	activityLogger         api.ActivityLogger
-	metricsLogger          api.MetricsLogger
-	disableVCProofChecks   bool
-	httpClient             httpClient
-	documentLoader         ld.DocumentLoader
+	issuerURI            string
+	credentialTypes      [][]string
+	credentialFormats    []string
+	clientID             string
+	didResolver          *didResolverWrapper
+	activityLogger       api.ActivityLogger
+	metricsLogger        api.MetricsLogger
+	disableVCProofChecks bool
+	documentLoader       ld.DocumentLoader
+	issuerMetadata       *issuer.Metadata
+	issuerCapabilities   *IssuerCapabilities
+	openIDConfig         *OpenIDConfig
+	oAuth2Config         *oauth2.Config
+	authTokenResponse    *oauth2.Token
+	httpClient           *http.Client
+	authCodeURLState     string
+	codeVerifier         string
 }
 
 // NewInteraction creates a new OpenID4CI Interaction.
-// The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
-// Calling this function represents taking the first step in the flow.
-// This function takes in an Initiate Issuance Request object from an issuer (as defined in
-// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-5.1), encoded using URL query
-// parameters. This object is intended for going through the full flow only once (i.e. one interaction), after which
-// it should be discarded. Any new interactions should use a fresh Interaction instance.
 // If no ActivityLogger is provided (via the ClientConfig object), then no activity logging will take place.
 func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interaction, error) {
 	timeStartNewInteraction := time.Now()
@@ -90,14 +102,9 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 
 	// TODO Add support for determining grant types when no grants are specified.
 	// See https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#section-4.1.1 for more info.
-	preAuthorizedCodeGrant, exists := credentialOffer.Grants["urn:ietf:params:oauth:grant-type:pre-authorized_code"]
-	if !exists {
-		return nil, walleterror.NewValidationError(
-			module,
-			PreAuthorizedGrantTypeRequiredCode,
-			PreAuthorizedGrantTypeRequiredError,
-			errors.New("pre-authorized grant type is required in the credential offer "+
-				"(support for other grant types not implemented)"))
+	issuerCapabilities, err := determineIssuerCapabilities(credentialOffer)
+	if err != nil {
+		return nil, err
 	}
 
 	credentialTypes, credentialFormats, err := determineCredentialTypesAndFormats(credentialOffer)
@@ -106,135 +113,134 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 	}
 
 	return &Interaction{
-			issuerURI:              credentialOffer.CredentialIssuer,
-			credentialTypes:        credentialTypes,
-			credentialFormats:      credentialFormats,
-			preAuthorizedCodeGrant: &preAuthorizedCodeGrant,
-			clientID:               config.ClientID,
-			didResolver:            &didResolverWrapper{didResolver: config.DIDResolver},
-			activityLogger:         config.ActivityLogger,
-			metricsLogger:          config.MetricsLogger,
-			disableVCProofChecks:   config.DisableVCProofChecks,
-			httpClient:             config.HTTPClient,
-			documentLoader:         config.DocumentLoader,
+			issuerCapabilities:   issuerCapabilities,
+			issuerURI:            credentialOffer.CredentialIssuer,
+			credentialTypes:      credentialTypes,
+			credentialFormats:    credentialFormats,
+			didResolver:          &didResolverWrapper{didResolver: config.DIDResolver},
+			activityLogger:       config.ActivityLogger,
+			metricsLogger:        config.MetricsLogger,
+			disableVCProofChecks: config.DisableVCProofChecks,
+			documentLoader:       config.DocumentLoader,
+			httpClient:           config.HTTPClient,
 		}, config.MetricsLogger.Log(&api.MetricsEvent{
 			Event:    newInteractionEventText,
 			Duration: time.Since(timeStartNewInteraction),
 		})
 }
 
-// Authorize is used by a wallet to authorize an issuer's OIDC Verifiable Credential Issuance Request.
-// After initializing the Interaction object with an Issuance Request, this should be the first method you call in
-// order to continue with the flow.
-// It only supports the pre-authorized flow in its current implementation.
-// Once the authorization flow is implemented, the following section of the spec will be relevant:
-// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#name-authorization-endpoint
-func (i *Interaction) Authorize() (*AuthorizeResult, error) {
-	if i.preAuthorizedCodeGrant == nil {
-		return nil, errors.New("interaction not instantiated")
-	}
-
-	authorizeResult := &AuthorizeResult{
-		UserPINRequired: i.preAuthorizedCodeGrant.UserPINRequired,
-	}
-
-	return authorizeResult, nil
+// CreateAuthorizationURL creates an authorization URL that can be opened in a browser to proceed to the login page.
+// It is the first step in the authorization code flow.
+// It creates the authorization URL that can be opened in a browser to proceed to the login page.
+// This method can only be used if the issuer supports authorization code grants.
+// Check the issuer's capabilities first using the IssuerCapabilities method.
+func (i *Interaction) CreateAuthorizationURL(clientID, redirectURI string) (string, error) {
+	return i.CreateAuthorizationURLWithScopes(clientID, redirectURI, nil)
 }
 
-// RequestCredential is the final step in the interaction.
-// This is called after the wallet is authorized and is ready to receive credential(s).
-// Relevant sections of the spec:
-// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#name-credential-endpoint
-func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequestOpts, jwtSigner api.JWTSigner) ([]*verifiable.Credential, error) { //nolint:funlen,gocyclo,lll
-	timeStartRequestCredential := time.Now()
-
-	if credentialRequestOpts == nil {
-		credentialRequestOpts = &CredentialRequestOpts{}
+// CreateAuthorizationURLWithScopes is like CreateAuthorizationURL but allows scopes to be passed in.
+func (i *Interaction) CreateAuthorizationURLWithScopes(clientID, redirectURI string, scopes []string) (string, error) {
+	if !i.IssuerCapabilities().AuthorizationCodeGrantTypeSupported() {
+		return "", errors.New("issuer does not support the authorization code grant type")
 	}
 
-	if i.preAuthorizedCodeGrant.UserPINRequired && credentialRequestOpts.UserPIN == "" {
-		return nil, walleterror.NewValidationError(
-			module,
-			PINRequiredCode,
-			PINRequiredError,
-			errors.New("the credential offer requires a user PIN, but it was not provided"))
-	}
+	var err error
 
-	config, err := i.fetchIssuerOpenIDConfig()
+	i.issuerMetadata, err = metadatafetcher.Get(i.issuerURI, i.httpClient, i.metricsLogger,
+		"Authorization")
 	if err != nil {
-		return nil, walleterror.NewExecutionError(
-			module,
-			IssuerOpenIDConfigFetchFailedCode,
-			IssuerOpenIDConfigFetchFailedError,
-			fmt.Errorf("failed to fetch issuer's OpenID configuration: %w", err))
-	}
-
-	params := url.Values{}
-	params.Add("grant_type", "urn:ietf:params:oauth:grant-type:pre-authorized_code")
-	params.Add("pre-authorized_code", i.preAuthorizedCodeGrant.PreAuthorizedCode)
-	params.Add("user_pin", credentialRequestOpts.UserPIN)
-
-	tokenResp, err := i.getTokenResponse(config.TokenEndpoint, params)
-	if err != nil {
-		return nil, walleterror.NewExecutionError(
-			module,
-			TokenFetchFailedCode,
-			TokenFetchFailedError,
-			fmt.Errorf("failed to get token response: %w", err))
-	}
-
-	claims := map[string]interface{}{
-		"iss":   i.clientID,
-		"aud":   i.issuerURI,
-		"iat":   time.Now().Unix(),
-		"nonce": tokenResp.CNonce,
-	}
-
-	token, err := signToken(claims, jwtSigner)
-	if err != nil {
-		return nil, walleterror.NewExecutionError(
-			module,
-			JWTSigningFailedCode,
-			JWTSigningFailedError,
-			fmt.Errorf("failed to create JWT: %w", err))
-	}
-
-	credentialResponses := make([]CredentialResponse, len(i.credentialTypes))
-
-	kidParts := strings.Split(jwtSigner.GetKeyID(), "#")
-	if len(kidParts) < 2 { //nolint: gomnd
-		return nil, walleterror.NewExecutionError(
-			module,
-			KeyIDNotContainDIDPartCode,
-			KeyIDNotContainDIDPartError,
-			fmt.Errorf("kid not containing did part %s", jwtSigner.GetKeyID()))
-	}
-
-	metadata, err := metadatafetcher.Get(i.issuerURI, i.httpClient, i.metricsLogger, requestCredentialEventText)
-	if err != nil {
-		return nil, walleterror.NewExecutionError(
+		return "", walleterror.NewExecutionError(
 			module,
 			MetadataFetchFailedCode,
 			MetadataFetchFailedError,
 			fmt.Errorf("failed to get issuer metadata: %w", err))
 	}
 
-	for index := range i.credentialTypes {
-		credentialResponse, errGetCredResp := i.getCredentialResponse(metadata.CredentialEndpoint,
-			tokenResp.AccessToken, token, i.credentialFormats[index], i.credentialTypes[index], index+1, len(i.credentialTypes))
-		if errGetCredResp != nil {
-			return nil,
-				walleterror.NewExecutionError(
-					module,
-					CredentialFetchFailedCode,
-					CredentialFetchFailedError,
-					fmt.Errorf("failed to get credential response: %w", errGetCredResp))
-		}
+	i.instantiateOAuth2Config(clientID, redirectURI, scopes)
 
-		credentialResponses[index] = *credentialResponse
+	err = i.instantiateCodeVerifier()
+	if err != nil {
+		return "", err
 	}
 
-	vcs, err := i.getCredentialsFromResponses(credentialResponses)
+	authorizationDetails, err := i.generateAuthorizationDetails()
+	if err != nil {
+		return "", err
+	}
+
+	authCodeOptions := i.generateAuthCodeOptions(authorizationDetails)
+
+	i.authCodeURLState = uuid.New().String()
+
+	return i.oAuth2Config.AuthCodeURL(i.authCodeURLState, authCodeOptions...), nil
+}
+
+// RequestAccessToken requests an access token from the token endpoint. After the user has logged in via a web browser,
+// call this method with the full redirect URI that you receive after logging in. The redirect URI that you pass in
+// here should look like the redirect URI that you passed in to the CreateAuthorizationURL, except that now it has
+// some URL query parameters appended to it. If this method returns no error,
+// then you are ready to request a credential. See the RequestCredential method for next steps.
+
+// RequestCredentialWithAuth requests credential(s) from the issuer. This method can only be used for the
+// authorization code flow, where it acts as the final step in the interaction with the issuer.
+// For the equivalent method for the pre-authorized code flow, see RequestCredential instead.
+//
+// RequestCredentialWithAuth should be called only once all authorization pre-requisite steps have been completed.
+// The redirect URI that you pass in here should look like the redirect URI that you passed in to the
+// CreateAuthorizationURL, except that now it has some URL query parameters appended to it.
+func (i *Interaction) RequestCredentialWithAuth(jwtSigner api.JWTSigner, redirectURIWithParams string,
+) ([]*verifiable.Credential, error) {
+	err := i.requestAccessToken(redirectURIWithParams)
+	if err != nil {
+		return nil, err
+	}
+
+	return i.RequestCredential(nil, jwtSigner)
+}
+
+// RequestCredential requests credential(s) from the issuer. This method can only be used for the pre-authorized code
+// flow, where it acts as the final step in the interaction with the issuer.
+// For the equivalent method for the authorization code flow, see RequestCredentialWithAuth instead.
+//
+// If a PIN is required (which can be checked via the IssuerCapabilities method), then it must be passed
+// into this method via the CredentialRequestOpts object.
+func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequestOpts, //nolint:funlen
+	jwtSigner api.JWTSigner,
+) ([]*verifiable.Credential, error) {
+	timeStartRequestCredential := time.Now()
+
+	err := validateSignerKeyID(jwtSigner)
+	if err != nil {
+		return nil, err
+	}
+
+	if credentialRequestOpts == nil {
+		credentialRequestOpts = &CredentialRequestOpts{}
+	}
+
+	grantType, err := i.determineGrantTypeToUse(credentialRequestOpts.UserPIN)
+	if err != nil {
+		return nil, err
+	}
+
+	var credentialResponses []CredentialResponse
+
+	if grantType == preAuthorizedGrantType {
+		credentialResponses, err = i.getCredentialResponsesUsingPreAuth(credentialRequestOpts.UserPIN, jwtSigner)
+	} else {
+		credentialResponses, err = i.getCredentialResponsesUsingAuth(jwtSigner)
+	}
+
+	if err != nil {
+		return nil,
+			walleterror.NewExecutionError(
+				module,
+				CredentialFetchFailedCode,
+				CredentialFetchFailedError,
+				fmt.Errorf("failed to get credential response: %w", err))
+	}
+
+	vcs, err := i.getVCsFromCredentialResponses(credentialResponses)
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
 			module,
@@ -260,12 +266,17 @@ func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequest
 		Type: api.LogTypeCredentialActivity,
 		Time: time.Now(),
 		Data: api.Data{
-			Client:    metadata.CredentialIssuer,
+			Client:    i.issuerMetadata.CredentialIssuer,
 			Operation: activityLogOperation,
 			Status:    api.ActivityLogStatusSuccess,
 			Params:    map[string]interface{}{"subjectIDs": subjectIDs},
 		},
 	})
+}
+
+// IssuerCapabilities returns an object which can be used to learn about an issuer's self-reported capabilities.
+func (i *Interaction) IssuerCapabilities() *IssuerCapabilities {
+	return i.issuerCapabilities
 }
 
 // IssuerURI returns the issuer's URI from the initiation request. It's useful to store this somewhere in case
@@ -274,7 +285,307 @@ func (i *Interaction) IssuerURI() string {
 	return i.issuerURI
 }
 
-func (i *Interaction) fetchIssuerOpenIDConfig() (*OpenIDConfig, error) {
+func (i *Interaction) requestAccessToken(redirectURIWithAuthCode string) error {
+	if i.oAuth2Config == nil {
+		return errors.New("authorization URL must be created first")
+	}
+
+	parsedURI, err := url.Parse(redirectURIWithAuthCode)
+	if err != nil {
+		return err
+	}
+
+	exists := parsedURI.Query().Has("code")
+	if !exists {
+		return errors.New("redirect URI is missing an authorization code")
+	}
+
+	exists = parsedURI.Query().Has("state")
+	if !exists {
+		return errors.New("redirect URI is missing a state value")
+	}
+
+	// TODO: Enable state checking
+	// state := parsedURI.Query().Get("state")
+	// if state != i.authCodeURLState {
+	//	return errors.New("state in redirect URI does not match the state from the authorization URL")
+	// }
+
+	i.openIDConfig, err = i.fetchOpenIDConfig()
+	if err != nil {
+		return walleterror.NewExecutionError(
+			module,
+			IssuerOpenIDConfigFetchFailedCode,
+			IssuerOpenIDConfigFetchFailedError,
+			fmt.Errorf("failed to fetch issuer's OpenID configuration: %w", err))
+	}
+
+	i.oAuth2Config.Endpoint.TokenURL = i.openIDConfig.TokenEndpoint
+
+	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, i.httpClient)
+
+	i.authTokenResponse, err = i.oAuth2Config.Exchange(ctx, parsedURI.Query().Get("code"),
+		oauth2.SetAuthURLParam("code_verifier", i.codeVerifier))
+
+	return err
+}
+
+func (i *Interaction) instantiateOAuth2Config(clientID, redirectURI string, scopes []string) {
+	i.oAuth2Config = &oauth2.Config{
+		ClientID: clientID,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:   i.issuerMetadata.AuthorizationServer,
+			AuthStyle: oauth2.AuthStyleInHeader,
+		},
+		RedirectURL: redirectURI,
+	}
+
+	if len(scopes) != 0 {
+		i.oAuth2Config.Scopes = scopes
+	}
+}
+
+func (i *Interaction) instantiateCodeVerifier() error {
+	const randomBytesToGenerate = 32
+	randomBytes := make([]byte, randomBytesToGenerate)
+
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return err
+	}
+
+	i.codeVerifier = base64.RawURLEncoding.EncodeToString(randomBytes)
+
+	return nil
+}
+
+func (i *Interaction) generateCodeChallenge() string {
+	codeVerifierHash := sha256.Sum256([]byte(i.codeVerifier))
+
+	codeChallenge := base64.RawURLEncoding.EncodeToString(codeVerifierHash[:])
+
+	return codeChallenge
+}
+
+func (i *Interaction) generateAuthorizationDetails() ([]byte, error) {
+	// TODO: Add support for requesting multiple credentials at once (by sending an array).
+	// Currently we always use the first credential type specified in the offer.
+	authorizationDetails := &authorizationDetails{
+		Type:   "openid_credential",
+		Types:  i.credentialTypes[0],
+		Format: i.credentialFormats[0],
+	}
+
+	if i.issuerMetadata.AuthorizationServer != "" {
+		authorizationDetails.Locations = []string{i.issuerMetadata.CredentialIssuer}
+	}
+
+	authorizationDetailsBytes, err := json.Marshal(authorizationDetails)
+	if err != nil {
+		return nil, err
+	}
+
+	return authorizationDetailsBytes, nil
+}
+
+func (i *Interaction) generateAuthCodeOptions(authorizationDetails []byte) []oauth2.AuthCodeOption {
+	authCodeOptions := []oauth2.AuthCodeOption{
+		oauth2.SetAuthURLParam("code_challenge", i.generateCodeChallenge()),
+		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
+		oauth2.SetAuthURLParam("authorization_details", string(authorizationDetails)),
+	}
+
+	if i.issuerCapabilities.authorizationCodeGrantParams.issuerState != nil {
+		authCodeOptions = append(authCodeOptions, oauth2.SetAuthURLParam("issuer_state",
+			*i.issuerCapabilities.authorizationCodeGrantParams.issuerState))
+	}
+
+	return authCodeOptions
+}
+
+// Based on the current state of this Interaction so far, as well as the PIN passed in by the caller,
+// this method determines which grant type flow we're "in" and should use for the RequestCredential method.
+// This method returns an error if it detects that the Interaction object is in an invalid state for
+// requesting a credential.
+func (i *Interaction) determineGrantTypeToUse(pin string) (string, error) {
+	if i.issuerCapabilities == nil {
+		return "", errors.New("interaction not instantiated")
+	}
+
+	if i.issuerCapabilities.onlyPreAuthorizedCodeGrantSupported() {
+		if i.IssuerCapabilities().preAuthorizedCodeGrantParams.PINRequired() && pin == "" {
+			return "", walleterror.NewValidationError(
+				module,
+				PINRequiredCode,
+				PINRequiredError,
+				errors.New("the credential offer requires a user PIN, but none was provided"))
+		}
+
+		return preAuthorizedGrantType, nil
+	}
+
+	if i.issuerCapabilities.onlyAuthorizationCodeGrantSupported() {
+		if i.authTokenResponse == nil {
+			return "", errors.New("issuer requires authorization before credential issuance. " +
+				"Complete authorization steps first")
+		}
+
+		return authorizationCodeGrantType, nil
+	}
+
+	// Reaching this point means that the issuer supports both authorization grant types.
+	// In this case, the caller needs to have met at least one of the two grant type's parameter requirements.
+	// Whichever one is met determines the grant type we'll use.
+	// If, for some reason, the caller has met both grant type requirements simultaneously, then we just use the
+	// pre-authorized code grant type.
+
+	preAuthCodeRequirementsMet := !i.IssuerCapabilities().preAuthorizedCodeGrantParams.PINRequired() || pin != ""
+	if preAuthCodeRequirementsMet {
+		return preAuthorizedGrantType, nil
+	}
+
+	authCodeRequirementsMet := i.authTokenResponse != nil
+	if !authCodeRequirementsMet {
+		return "", errors.New("authorization requirements not met. " +
+			"Either a PIN must be provided or the authorization code grant steps must be completed first")
+	}
+
+	return authorizationCodeGrantType, nil
+}
+
+func (i *Interaction) getCredentialResponsesUsingPreAuth(pin string, //nolint:funlen // Difficult to decompose
+	signer api.JWTSigner,
+) ([]CredentialResponse, error) {
+	var err error
+
+	i.openIDConfig, err = i.fetchOpenIDConfig()
+	if err != nil {
+		return nil, walleterror.NewExecutionError(
+			module,
+			IssuerOpenIDConfigFetchFailedCode,
+			IssuerOpenIDConfigFetchFailedError,
+			fmt.Errorf("failed to fetch issuer's OpenID configuration: %w", err))
+	}
+
+	tokenResponse, err := i.getPreAuthTokenResponse(pin)
+	if err != nil {
+		return nil, walleterror.NewExecutionError(
+			module,
+			TokenFetchFailedCode,
+			TokenFetchFailedError,
+			fmt.Errorf("failed to get token response: %w", err))
+	}
+
+	proofJWT, err := i.createClaimsProof(tokenResponse.CNonce, signer)
+	if err != nil {
+		return nil, err
+	}
+
+	i.issuerMetadata, err = metadatafetcher.Get(i.issuerURI, i.httpClient, i.metricsLogger,
+		requestCredentialEventText)
+	if err != nil {
+		return nil, walleterror.NewExecutionError(
+			module,
+			MetadataFetchFailedCode,
+			MetadataFetchFailedError,
+			fmt.Errorf("failed to get issuer metadata: %w", err))
+	}
+
+	credentialResponses := make([]CredentialResponse, len(i.credentialTypes))
+
+	for index := range i.credentialTypes {
+		request, err := i.createCredentialRequestWithoutAccessToken(proofJWT, index)
+		if err != nil {
+			return nil, err
+		}
+
+		request.Header.Add("Authorization", "Bearer "+tokenResponse.AccessToken)
+
+		fetchCredentialResponseEventText := fmt.Sprintf(fetchCredentialViaGETReqEventText, index+1,
+			len(i.credentialTypes), i.issuerMetadata.CredentialEndpoint)
+
+		responseBytes, err := i.getRawCredentialResponse(request, fetchCredentialResponseEventText, i.httpClient)
+		if err != nil {
+			return nil, err
+		}
+
+		var credentialResponse CredentialResponse
+
+		err = json.Unmarshal(responseBytes, &credentialResponse)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal response from the issuer's credential endpoint: %w", err)
+		}
+
+		credentialResponses[index] = credentialResponse
+	}
+
+	return credentialResponses, nil
+}
+
+func (i *Interaction) createClaimsProof(nonce interface{}, signer api.JWTSigner) (string, error) {
+	claims := map[string]interface{}{
+		"aud":   i.issuerURI,
+		"iat":   time.Now().Unix(),
+		"nonce": nonce,
+	}
+
+	if i.clientID != "" {
+		claims["iss"] = i.clientID // Only used in the authorization code flow.
+	}
+
+	proofJWT, err := signToken(claims, signer)
+	if err != nil {
+		return "", walleterror.NewExecutionError(
+			module,
+			JWTSigningFailedCode,
+			JWTSigningFailedError,
+			fmt.Errorf("failed to create JWT: %w", err))
+	}
+
+	return proofJWT, nil
+}
+
+func (i *Interaction) getCredentialResponsesUsingAuth(signer api.JWTSigner) ([]CredentialResponse, error) {
+	proofJWT, err := i.createClaimsProof(i.authTokenResponse.Extra("c_nonce"), signer)
+	if err != nil {
+		return nil, err
+	}
+
+	credentialResponses := make([]CredentialResponse, len(i.credentialTypes))
+
+	oAuthHTTPClient := i.createOAuthHTTPClient()
+
+	for index := range i.credentialTypes {
+		request, err := i.createCredentialRequestWithoutAccessToken(proofJWT, index)
+		if err != nil {
+			return nil, err
+		}
+
+		// The access token header will be injected automatically by the OAuth HTTP client, so there's no need to
+		// explicitly set it on the request object generated by the method call above.
+
+		fetchCredentialResponseEventText := fmt.Sprintf(fetchCredentialViaGETReqEventText, index+1,
+			len(i.credentialTypes), i.issuerMetadata.CredentialEndpoint)
+
+		responseBytes, err := i.getRawCredentialResponse(request, fetchCredentialResponseEventText, oAuthHTTPClient)
+		if err != nil {
+			return nil, err
+		}
+
+		var credentialResponse CredentialResponse
+
+		err = json.Unmarshal(responseBytes, &credentialResponse)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal response from the issuer's credential endpoint: %w", err)
+		}
+
+		credentialResponses[index] = credentialResponse
+	}
+
+	return credentialResponses, nil
+}
+
+func (i *Interaction) fetchOpenIDConfig() (*OpenIDConfig, error) {
 	openIDConfigEndpoint := i.issuerURI + "/.well-known/openid-configuration"
 
 	responseBytes, err := httprequest.New(i.httpClient, i.metricsLogger).Do(
@@ -295,62 +606,17 @@ func (i *Interaction) fetchIssuerOpenIDConfig() (*OpenIDConfig, error) {
 	return &config, nil
 }
 
-func (i *Interaction) getTokenResponse(tokenEndpointURL string, params url.Values) (*tokenResponse, error) {
-	paramsReader := strings.NewReader(params.Encode())
-
-	responseBytes, err := httprequest.New(i.httpClient, i.metricsLogger).Do(
-		http.MethodPost, tokenEndpointURL, "application/x-www-form-urlencoded", paramsReader,
-		fmt.Sprintf(fetchTokenViaPOSTReqEventText, tokenEndpointURL), requestCredentialEventText)
-	if err != nil {
-		return nil, fmt.Errorf("issuer's token endpoint: %w", err)
-	}
-
-	var tokenResp tokenResponse
-
-	err = json.Unmarshal(responseBytes, &tokenResp)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response from the issuer's token endpoint: %w", err)
-	}
-
-	return &tokenResp, nil
-}
-
-func (i *Interaction) getCredentialResponse(credentialEndpoint, accessToken, tkn, credentialFormat string,
-	credentialTypes []string, credNum, maxCredNum int,
-) (*CredentialResponse, error) {
-	responseBytes, err := i.getRawCredentialResponse(credentialEndpoint, accessToken, tkn, credentialFormat,
-		credentialTypes, credNum, maxCredNum)
-	if err != nil {
-		return nil, err
-	}
-
-	var credentialResponse CredentialResponse
-
-	err = json.Unmarshal(responseBytes, &credentialResponse)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response from the issuer's credential endpoint: %w", err)
-	}
-
-	return &credentialResponse, nil
-}
-
-func (i *Interaction) getRawCredentialResponse(credentialEndpoint, accessToken, tkn, credentialFormat string,
-	credentialTypes []string, credNum, maxCredNum int,
+func (i *Interaction) getRawCredentialResponse(credentialReq *http.Request, eventText string, httpClient *http.Client,
 ) ([]byte, error) {
-	request, err := i.createCredentialRequest(credentialEndpoint, accessToken, tkn, credentialFormat, credentialTypes)
-	if err != nil {
-		return nil, err
-	}
-
 	timeStartHTTPRequest := time.Now()
 
-	response, err := i.httpClient.Do(request)
+	response, err := httpClient.Do(credentialReq)
 	if err != nil {
 		return nil, err
 	}
 
 	err = i.metricsLogger.Log(&api.MetricsEvent{
-		Event:       fmt.Sprintf(fetchCredentialViaGETReqEventText, credNum, maxCredNum, credentialEndpoint),
+		Event:       eventText,
 		ParentEvent: requestCredentialEventText,
 		Duration:    time.Since(timeStartHTTPRequest),
 	})
@@ -378,15 +644,16 @@ func (i *Interaction) getRawCredentialResponse(credentialEndpoint, accessToken, 
 	return responseBytes, nil
 }
 
-func (i *Interaction) createCredentialRequest(credentialEndpoint, accessToken, tkn, credentialFormat string,
-	credentialTypes []string,
+// The returned *http.Request will not have the access token set on it. The caller must ensure that it's set
+// before sending the request to the server.
+func (i *Interaction) createCredentialRequestWithoutAccessToken(proofJWT string, credentialFormatAndTypesIndex int,
 ) (*http.Request, error) {
 	credentialReq := &credentialRequest{
-		Types:  credentialTypes,
-		Format: credentialFormat,
+		Types:  i.credentialTypes[credentialFormatAndTypesIndex],
+		Format: i.credentialFormats[credentialFormatAndTypesIndex],
 		Proof: proof{
 			ProofType: "jwt", // TODO: https://github.com/trustbloc/wallet-sdk/issues/159 support other proof types
-			JWT:       tkn,
+			JWT:       proofJWT,
 		},
 	}
 
@@ -396,18 +663,17 @@ func (i *Interaction) createCredentialRequest(credentialEndpoint, accessToken, t
 	}
 
 	request, err := http.NewRequest(http.MethodPost, //nolint: noctx
-		credentialEndpoint, bytes.NewReader(credentialReqBytes))
+		i.issuerMetadata.CredentialEndpoint, bytes.NewReader(credentialReqBytes))
 	if err != nil {
 		return nil, err
 	}
 
 	request.Header.Add("Content-Type", "application/json")
-	request.Header.Add("Authorization", "BEARER "+accessToken)
 
 	return request, nil
 }
 
-func (i *Interaction) getCredentialsFromResponses(
+func (i *Interaction) getVCsFromCredentialResponses(
 	credentialResponses []CredentialResponse,
 ) ([]*verifiable.Credential, error) {
 	var vcs []*verifiable.Credential
@@ -451,7 +717,54 @@ func (i *Interaction) getCredentialsFromResponses(
 	return vcs, nil
 }
 
-func getCredentialOffer(initiateIssuanceURI string, httpClient httpClient, metricsLogger api.MetricsLogger,
+func (i *Interaction) getPreAuthTokenResponse(pin string) (*preAuthTokenResponse, error) {
+	params := url.Values{}
+	params.Add("grant_type", preAuthorizedGrantType)
+	params.Add("pre-authorized_code", i.issuerCapabilities.preAuthorizedCodeGrantParams.preAuthorizedCode)
+
+	if pin != "" {
+		params.Add("user_pin", pin)
+	}
+
+	paramsReader := strings.NewReader(params.Encode())
+
+	responseBytes, err := httprequest.New(i.httpClient, i.metricsLogger).Do(
+		http.MethodPost, i.openIDConfig.TokenEndpoint, "application/x-www-form-urlencoded", paramsReader,
+		fmt.Sprintf(fetchTokenViaPOSTReqEventText, i.openIDConfig.TokenEndpoint), requestCredentialEventText)
+	if err != nil {
+		return nil, fmt.Errorf("issuer's token endpoint: %w", err)
+	}
+
+	var tokenResp preAuthTokenResponse
+
+	err = json.Unmarshal(responseBytes, &tokenResp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response from the issuer's token endpoint: %w", err)
+	}
+
+	return &tokenResp, nil
+}
+
+// createOAuthHTTPClient creates the OAuth2 client wrapper using the OAuth2 library.
+// Due to some peculiarities with the OAuth2 library, we need to do some things here to ensure our custom HTTP client
+// settings get preserved. Check the comments in the method below for more details.
+func (i *Interaction) createOAuthHTTPClient() *http.Client {
+	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, i.httpClient)
+
+	// The HTTP client below only retains the Transport, so we have to set the timeout again.
+	// The docs say that the returned client shouldn't be modified, but there doesn't seem to be a clear reason
+	// why not - at least for the timeout setting. See https://github.com/golang/oauth2/issues/368 for more info.
+	// Also, the docs on NewClient in the OAuth2 library state that the transport from the client in the context above
+	// won't be used for non-token-fetching requests, but this seems to be inaccurate (as of writing).
+	// Any additional headers injected in by the headerInjectionRoundTripper should be set as expected.
+	// See https://github.com/golang/oauth2/issues/324 for more info.
+	oAuthHTTPClient := i.oAuth2Config.Client(ctx, i.authTokenResponse)
+	oAuthHTTPClient.Timeout = i.httpClient.Timeout
+
+	return oAuthHTTPClient
+}
+
+func getCredentialOffer(initiateIssuanceURI string, httpClient *http.Client, metricsLogger api.MetricsLogger,
 ) (*CredentialOffer, error) {
 	requestURIParsed, err := url.Parse(initiateIssuanceURI)
 	if err != nil {
@@ -499,7 +812,7 @@ func getCredentialOffer(initiateIssuanceURI string, httpClient httpClient, metri
 }
 
 func getCredentialOfferJSONFromCredentialOfferURI(credentialOfferURI string,
-	httpClient httpClient, metricsLogger api.MetricsLogger,
+	httpClient *http.Client, metricsLogger api.MetricsLogger,
 ) ([]byte, error) {
 	responseBytes, err := httprequest.New(httpClient, metricsLogger).Do(
 		http.MethodGet, credentialOfferURI, "", nil,
@@ -540,6 +853,19 @@ func determineCredentialTypesAndFormats(credentialOffer *CredentialOffer) ([][]s
 	}
 
 	return credentialTypes, credentialFormats, nil
+}
+
+func validateSignerKeyID(jwtSigner api.JWTSigner) error {
+	kidParts := strings.Split(jwtSigner.GetKeyID(), "#")
+	if len(kidParts) < 2 { //nolint: gomnd
+		return walleterror.NewExecutionError(
+			module,
+			KeyIDNotContainDIDPartCode,
+			KeyIDNotContainDIDPartError,
+			fmt.Errorf("key ID (%s) is missing the DID part", jwtSigner.GetKeyID()))
+	}
+
+	return nil
 }
 
 func getSubjectIDs(vcs []*verifiable.Credential) ([]string, error) {
