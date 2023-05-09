@@ -83,11 +83,18 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
       return;
     } else {
         log("single matched vc id flow");
-        var credentialDisplayData = storedCredentials
-            .where((element) => matchedCred.contains(element.value.rawCredential))
-            .map((e) => e.value.credentialDisplayData);
-        navigateToPresentationPreviewScreen(context,
-            CredentialData(rawCredential: credentials.first, credentialDisplayData: credentialDisplayData.first, issuerURL: ''));
+        Map<String, dynamic> matchedCredID = Jwt.parseJwt(matchedCred.first);
+        var credentialDisplayData;
+        for(var cred in credentials ){
+          // TODO #Issue-421 Revisit the matched cred logic in handle vp request
+          Map<String, dynamic> credID = Jwt.parseJwt(cred);
+          if (credID["jti"] == matchedCredID["jti"]){
+            credentialDisplayData = storedCredentials
+                .where((element) => cred.contains(element.value.rawCredential))
+                .map((e) => CredentialData(rawCredential: e.value.rawCredential, issuerURL: e.value.issuerURL, credentialDisplayData: e.value.credentialDisplayData)).toList();
+          }
+        }
+        navigateToPresentationPreviewScreen(context, credentialDisplayData.first);
         return;
       }
     }
