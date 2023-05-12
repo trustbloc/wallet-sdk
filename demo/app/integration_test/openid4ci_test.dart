@@ -37,7 +37,10 @@ void main() async {
       String issuanceURL = issuanceURLsList[i];
       print("issuanceURL : $issuanceURL");
 
-      bool? requirePIN = await walletSDKPlugin.authorize(issuanceURL);
+      var initializeResp = await walletSDKPlugin.initialize(issuanceURL);
+      var initializeRespEncoded = json.encode(initializeResp!);
+      Map<String, dynamic> initializeRespJson = json.decode(initializeRespEncoded);
+      var requirePIN = responseJson["pinRequired"];
       print("requirePIN: $requirePIN");
 
       final credential = await walletSDKPlugin.requestCredential("");
@@ -91,8 +94,11 @@ void main() async {
     for (int i = 0; i < issuanceURLsList.length; i++) {
       String issuanceURL = issuanceURLsList[i];
       print("issuanceURL : $issuanceURL");
-      bool? requirePIN = await walletSDKPlugin.authorize(issuanceURL);
 
+      var initializeResp = await walletSDKPlugin.initialize(issuanceURL);
+      var initializeRespEncoded = json.encode(initializeResp!);
+      Map<String, dynamic> initializeRespJson = json.decode(initializeRespEncoded);
+      var requirePIN = responseJson["pinRequired"];
       print("requirePIN: $requirePIN");
 
       final credential = await walletSDKPlugin.requestCredential("");

@@ -31,12 +31,49 @@ public class OpenID4CI {
         self.initiatedInteraction = Openid4ciNewInteraction(args, opts, nil)!
     }
     
+    func checkFlow() throws -> String {
+        let issuerCapabilities = initiatedInteraction.issuerCapabilities()
+        if ((issuerCapabilities!.authorizationCodeGrantTypeSupported())){
+            return "auth-code-flow"
+        }
+        if ((issuerCapabilities!.preAuthorizedCodeGrantTypeSupported())){
+           return "preauth-code-flow"
+        }
+        return ""
+    }
+    
+    func getAuthorizationLink() throws -> String {
+        let issuerCapabilities = initiatedInteraction.issuerCapabilities()
+        if !(issuerCapabilities?.authorizationCodeGrantTypeSupported())! {
+            return "Not implemented"
+        }
+        
+        let scopes = ApiStringArray()
+        scopes!.append("")!.append("")
+        // TODO #423 Read withScopes and redirect uri from flutter enviornment. Replace these with approriate values as of now.
+        // TODO #426 error handling
+        let authorizationLink = initiatedInteraction.createAuthorizationURL(withScopes: "clientID", redirectURI: "redirect URI", scopes: scopes, error: nil)
+        
+        return authorizationLink
+    }
+
+    
+    
     func pinRequired() throws -> Bool {
+        let issuerCapabilities = initiatedInteraction.issuerCapabilities()
+        if  !issuerCapabilities!.preAuthorizedCodeGrantTypeSupported() {
+            return false
+        }
         return try initiatedInteraction.issuerCapabilities()!.preAuthorizedCodeGrantParams().pinRequired()
     }
 
     func issuerURI()-> String {
         return initiatedInteraction.issuerURI()
+    }
+    
+    func requestCredentialWithAuth(didVerificationMethod: ApiVerificationMethod, redirectURIWithParams: String) throws -> VerifiableCredential {
+        let credentials = try initiatedInteraction.requestCredential(withAuth: didVerificationMethod, redirectURIWithAuthCode: redirectURIWithParams)
+        return credentials.atIndex(0)!;
     }
     
     func requestCredential(didVerificationMethod: ApiVerificationMethod, otp: String) throws -> VerifiableCredential{

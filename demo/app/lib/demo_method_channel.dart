@@ -99,16 +99,27 @@ class MethodChannelWallet extends WalletPlatform {
     return fetchDIDMsg;
   }
 
-  Future<bool?> authorize(String qrCode) async {
-    final authorizeResult =
-        await methodChannel.invokeMethod<bool>('authorize', <String, dynamic>{'requestURI': qrCode});
-    return authorizeResult;
+  Future<Map<Object?, Object?>?> initialize(String qrCode) async {
+    final flowTypeData =
+        await methodChannel.invokeMethod('initialize', <String, dynamic>{'requestURI': qrCode});
+    return flowTypeData;
   }
 
   Future<String> requestCredential(String userPinEntered) async {
     try {
       var credentialResponse =
           await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{'otp': userPinEntered});
+      return credentialResponse!;
+    } on PlatformException catch (error) {
+      debugPrint(error.toString());
+      rethrow;
+    }
+  }
+
+  Future<String> requestCredentialWithAuth(String redirectURIWithParams) async {
+    try {
+      var credentialResponse =
+      await methodChannel.invokeMethod<String>('requestCredentialWithAuth', <String, dynamic>{'redirectURIWithParams': redirectURIWithParams});
       return credentialResponse!;
     } on PlatformException catch (error) {
       debugPrint(error.toString());
