@@ -1,0 +1,94 @@
+#
+# Copyright Gen Digital Inc. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+name: "Wallet-SDK Daily Build"
+
+env:
+  GO_VERSION: 1.19
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  AndroidFlutterDailyTest:
+    runs-on: macOS-12
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: AVD cache
+        uses: actions/cache@v3
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-29
+
+      - name: Generate SDK version
+        run: |
+          TAG=$(git describe --tags --always `git rev-list --tags --max-count=1`)          
+          NEW_VER=${TAG}-SNAPSHOT-$(git rev-parse --short=7 HEAD)
+          
+          echo $NEW_VER
+          echo "WALLET_SDK_VER=$NEW_VER" >> $GITHUB_ENV
+
+      - name: Create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Generated AVD snapshot for caching."
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Setup env for integration test
+        run: |
+          echo '127.0.0.1 testnet.orb.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 file-server.trustbloc.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 did-resolver.trustbloc.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 oidc-provider.example.com' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
+          brew install docker docker-compose
+          colima start
+          export PATH=$PATH:$GOPATH/bin
+          echo $PATH
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+          make prepare-integration-test-flutter
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Setup Flutter SDK
+        uses: flutter-actions/setup-flutter@v2
+        with:
+          channel: stable
+          version: 3.3.7
+      - name: Install flutter app dependencies
+        run: make install-flutter-dependencies
+      - name: Build APK in Debug mode
+        run: |
+          cd demo/app
+          WALLET_SDK_USR=GIT_USR WALLET_SDK_TKN=${GITHUB_TOKEN} WALLET_SDK_VER=${WALLET_SDK_VER} flutter build apk --debug
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WALLET_SDK_VER: '${{ env.WALLET_SDK_VER }}'
+      - name: Run tests on Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: adb reverse tcp:8075 tcp:8075 && adb reverse tcp:8072 tcp:8072 && WALLET_SDK_USR=GIT_USR WALLET_SDK_TKN=${GITHUB_TOKEN} WALLET_SDK_VER=${WALLET_SDK_VER} ./scripts/flutter_test.sh
+        env:
+          WALLET_SDK_VER: '${{ env.WALLET_SDK_VER }}'

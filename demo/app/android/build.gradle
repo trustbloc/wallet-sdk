@@ -9,6 +9,7 @@ buildscript {
 
     def walletSdkPkgUsr = localProperties.getProperty('wallet-sdk-pkg.usr') ?: System.getenv('WALLET_SDK_USR')
     def walletSdkPkgTkn = localProperties.getProperty('wallet-sdk-pkg.tkn') ?: System.getenv('WALLET_SDK_TKN')
+    def walletSdkPkgVer = localProperties.getProperty('wallet-sdk-pkg.ver') ?: System.getenv('WALLET_SDK_VER')
 
     ext.kotlin_version = '1.8.0'
     repositories {
@@ -16,7 +17,7 @@ buildscript {
         mavenCentral()
         if (walletSdkPkgUsr != null) {
             maven {
-                url = 'https://maven.pkg.github.com/trustbloc/wallet-sdk'
+                url = 'https://maven.pkg.github.com/trustbloc-cicd/snapshot'
                 credentials {
                     username = walletSdkPkgUsr
                     password = walletSdkPkgTkn
@@ -29,7 +30,7 @@ buildscript {
         classpath 'com.android.tools.build:gradle:7.1.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         if (walletSdkPkgUsr != null) {
-            classpath "dev.trustbloc:vc-wallet-sdk:1.0.0"
+            classpath "dev.trustbloc:vc-wallet-sdk:$walletSdkPkgVer"
         }
     }
 }
@@ -52,7 +53,7 @@ allprojects {
         jcenter()
         if (walletSdkPkgUsr != null) {
             maven {
-                url = 'https://maven.pkg.github.com/trustbloc/wallet-sdk'
+                url = 'https://maven.pkg.github.com/trustbloc-cicd/snapshot'
                 credentials {
                     username = walletSdkPkgUsr
                     password = walletSdkPkgTkn
