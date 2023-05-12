@@ -33,13 +33,17 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "createDID":
             createDid(arguments: arguments!, result: result)
             
-        case "authorize":
+        case "initialize":
             let requestURI = fetchArgsKeyValue(call, key: "requestURI")
-            authorize(requestURI: requestURI!, result: result)
+            initialize(requestURI: requestURI!, result: result)
             
         case "requestCredential":
             let otp = fetchArgsKeyValue(call, key: "otp")
             requestCredential(otp: otp!, result: result)
+            
+        case "requestCredentialWithAuth":
+            let redirectURIWithParams = fetchArgsKeyValue(call, key: "redirectURIWithParams")
+            requestCredentialWithAuth(redirectURIWithParams: redirectURIWithParams!, result: result)
 
         case "fetchDID":
             let didID = fetchArgsKeyValue(call, key: "didID")
@@ -279,14 +283,11 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     /**
-     *Authorize method of Openid4ciNewInteraction is used by a wallet to authorize an issuer's OIDC Verifiable Credential Issuance Request.
+     *Initialize method of Openid4ciNewInteraction is used by a wallet to authorize an issuer's OIDC Verifiable Credential Issuance Request.
      After initializing the Interaction object with an Issuance Request, this should be the first method you call in
      order to continue with the flow.
-     
-     AuthorizeResult is the object returned from the Client.Authorize method.
-     The userPinRequired method available on authorize result returns boolean value to differentiate pin is required or not.
      */
-    public func authorize(requestURI: String, result: @escaping FlutterResult){
+    public func initialize(requestURI: String, result: @escaping FlutterResult){
         guard let walletSDK = self.walletSDK else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
                                              message: "error while creating new OIDC interaction",
@@ -295,15 +296,31 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
 
         do {
             let openID4CI = try walletSDK.createOpenID4CIInteraction(requestURI:requestURI)
+            var pinRequired = false
+            var authorizationLink = ""
             
-            let pinRequired = try openID4CI.pinRequired()
+            let flowType = try openID4CI.checkFlow()
+            if (flowType == "preauth-code-flow") {
+                pinRequired = try openID4CI.pinRequired()
+            }
+            
+            if (flowType == "auth-code-flow"){
+               authorizationLink = try openID4CI.getAuthorizationLink()
+            }
+            
+            var flowTypeData :[String:Any] = [
+                "pinRequired": pinRequired,
+                "authorizationURLLink":  authorizationLink
+                
+            ]
             
             self.openID4CI = openID4CI
-                        
-            result(Bool(pinRequired))
+            
+            result(flowTypeData)
+            
           } catch {
               result(FlutterError.init(code: "NATIVE_ERR",
-                                       message: "error while creating new OIDC interaction",
+                                       message: "error while initializing issuance flow",
                                        details: error))
           }
     }
@@ -360,6 +377,32 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
           } catch let error as NSError{
               result(FlutterError.init(code: "Exception",
                                        message: "error while requesting credential",
+                                       details: error.localizedDescription
+                                      ))
+          }
+        
+    }
+    
+    
+    public func requestCredentialWithAuth(redirectURIWithParams: String, result: @escaping FlutterResult){
+        guard let openID4CI = self.openID4CI else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while process requestCredential auth",
+                                             details: "openID4CI not initiated. Call authorize before this."))
+        }
+        
+        guard let didDocResolution = self.didDocResolution else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while process requestCredential credential",
+                                             details: "Did document not initialized"))
+        }
+                
+         do {
+             let credentialCreated = try openID4CI.requestCredentialWithAuth(didVerificationMethod: didDocResolution.assertionMethod(), redirectURIWithParams: redirectURIWithParams)
+            result(credentialCreated.serialize(nil))
+          } catch let error as NSError{
+              result(FlutterError.init(code: "Exception",
+                                       message: "error while requesting credential with auth",
                                        details: error.localizedDescription
                                       ))
           }

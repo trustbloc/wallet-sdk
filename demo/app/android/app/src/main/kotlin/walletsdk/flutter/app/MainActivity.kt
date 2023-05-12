@@ -65,9 +65,9 @@ class MainActivity : FlutterActivity() {
                                 result.error("Exception", "Error while creating did creator", e)
                             }
                         }
-                        "authorize" -> {
+                        "initialize" -> {
                             try {
-                                val userPinRequired = authorize(call)
+                                val userPinRequired = initialize(call)
                                 result.success(userPinRequired)
 
                             } catch (e: Exception) {
@@ -264,14 +264,11 @@ class MainActivity : FlutterActivity() {
     }
 
     /**
-     *Authorize method of Interaction(dev.trustbloc.wallet.sdk.openid4ci.Interaction) is used by a wallet to authorize an issuer's OIDC Verifiable Credential Issuance Request.
+     *Initialize method of Interaction(dev.trustbloc.wallet.sdk.openid4ci.Interaction) is used by a wallet to authorize an issuer's OIDC Verifiable Credential Issuance Request.
     After initializing the Interaction object with an Issuance Request, this should be the first method you call in
     order to continue with the flow.
-
-    AuthorizeResult is the object returned from the OpenID4CI.authorize method.
-    userPINRequired method available on authorize result returns boolean value to differentiate pin is required or not.
      */
-    private fun authorize(call: MethodCall): Boolean {
+    private fun initialize(call: MethodCall): MutableMap<String, Any> {
         val walletSDK = this.walletSDK
                 ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
 
@@ -282,7 +279,10 @@ class MainActivity : FlutterActivity() {
 
         this.openID4CI = openID4CI
 
-        return openID4CI.pinRequired()
+        val flowTypeData: MutableMap<String, Any> = mutableMapOf()
+        flowTypeData["pinRequired"] = openID4CI.pinRequired()
+
+        return flowTypeData
     }
 
     private fun issuerURI(): String {
