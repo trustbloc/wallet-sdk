@@ -14,7 +14,39 @@ on:
     - cron: "0 0 * * *"
 
 jobs:
+
+  GenerateVersion:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.store.outputs.version }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
+      - name: Get current published version
+        run: |
+          TAG=$(git describe --tags --always `git rev-list --tags --max-count=1`)
+          VERSION=$(git rev-parse --short=7 HEAD)
+          echo "repoTag=${TAG} repoVersion=${VERSION}"
+          if [[ $TAG == $VERSION ]]; then
+              TAG=v0.0.0
+          fi
+          echo "CURRENT_SEMVER=${TAG:0:5}" >> $GITHUB_ENV
+          echo "repoTag=${TAG} repoVersion=${VERSION} currentSemVer=${TAG:0:5}"
+      - name: Bump published version
+        id: bump_version
+        uses: christian-draeger/increment-semantic-version@1.0.2
+        with:
+          current-version: '${{ env.CURRENT_SEMVER }}'
+          # TODO: needs to be configurable https://github.com/christian-draeger/increment-semantic-version#input--output-examples
+          version-fragment: 'bug'
+      - id: store
+        run: echo "version=${{ steps.bump_version.outputs.next-version }}" >> $GITHUB_OUTPUT
+
   AndroidFlutterDailyTest:
+    needs: GenerateVersion
     runs-on: macOS-12
     steps:
       - name: checkout
@@ -30,8 +62,8 @@ jobs:
 
       - name: Generate SDK version
         run: |
-          TAG=$(git describe --tags --always `git rev-list --tags --max-count=1`)          
-          NEW_VER=${TAG}-SNAPSHOT-$(git rev-parse --short=7 HEAD)
+          echo "new version"
+          NEW_VER=${{ needs.GenerateVersion.outputs.version }}-SNAPSHOT-$(git rev-parse --short=7 HEAD)
           
           echo $NEW_VER
           echo "WALLET_SDK_VER=$NEW_VER" >> $GITHUB_ENV
