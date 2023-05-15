@@ -350,7 +350,7 @@ var newKMSError: NSError?
 let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
 
 var newDIDCreatorError: NSError?
-let didCreator = DidNewCreatorWithKeyWriter(kms, &newDIDCreatorError)
+let didCreator = DidNewCreator(kms, &newDIDCreatorError)
 
 let opts = DidNewCreateOpts().setKeyType("ED25519").setVerificationType("JsonWebKey2020")
 let didDocResolution = didCreator.create("key", opts)
@@ -623,7 +623,7 @@ let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
 let didResolver = DidNewResolver(nil)
 
 var newDIDCreatorError: NSError?
-let didCreator = DidNewCreatorWithKeyWriter(kms, &newDIDCreatorError)
+let didCreator = DidNewCreator(kms, &newDIDCreatorError)
 
 let didDocResolution = didCreator.create("key", nil) // Create a did:key doc with default options
 
@@ -726,7 +726,7 @@ let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
 let didResolver = DidNewResolver(nil)
 
 var newDIDCreatorError: NSError?
-let didCreator = DidNewCreatorWithKeyWriter(kms, &newDIDCreatorError)
+let didCreator = DidNewCreator(kms, &newDIDCreatorError)
 
 let didDocResolution = didCreator.create("key", nil) // Create a did:key doc with default options
 
@@ -751,17 +751,17 @@ if !issuerCapabilities.AuthorizationCodeGrantTypeSupported() {
 let scopes = ApiStringArray()
 scopes.append("scope1").append("scope2")
 
-// If scopes aren't needed, call interaction.createAuthorizationURL() instead.
-let authorizationLink := interaction.createAuthorizationURLWithScopes("clientID", "redirect URI", scopes)
+// If scopes aren't needed, omit "withScopes:" and the scopes argument below.
+let authorizationLink = interaction.createAuthorizationURL(withScopes: "clientID", redirectURI: "redirect URI", scopes: scopes)
 
 // Open authorizationLink in a browser. Once the user has finished logging in, call requestCredentialWithAuth()
 // with the full redirect URI (including query parameters) that the login service sent the user to.
 // The code below assumes this has already been done somehow and that the URI is in the redirectURIWithParams variable.
 // In actual code, the call to requestCredentialWithAuth() couldn't be immediately after the
-// createAuthorizationURLWithScopes() call like in this example since control has to flow back to the user first.
+// createAuthorizationURL() call like in this example since control has to flow back to the user first.
 let redirectURIWithParams = "Put the redirect URI with params here"
 
-let credentials = interaction.requestCredentialWithAuth(didDocResolution.assertionMethod(), redirectURIWithParams)
+let credentials = interaction.requestCredential(withAuth: didVerificationMethod: didDocResolution.assertionMethod(), redirectURIWithParams: redirectURIWithParams)
 
 let issuerURI = interaction.issuerURI() // Optional (but useful)
 
