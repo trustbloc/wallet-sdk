@@ -3,6 +3,7 @@
     {
       "issuer": {
         "id": "bank_issuer_jwtsd",
+        "version": "v1.0",
         "groupID": "group_bank_issuer_jwtsd",
         "name": "Bank Issuer",
         "organizationID": "test_org",
@@ -167,6 +168,7 @@
     {
       "issuer": {
         "id": "drivers_license_issuer",
+        "version": "v1.0",
         "groupID": "group_drivers_license_issuer",
         "name": "Driver's License Issuer",
         "organizationID": "test_org",
@@ -357,6 +359,7 @@
     {
       "issuer": {
         "id": "bank_issuer",
+        "version": "v1.0",
         "groupID": "group_bank_issuer",
         "name": "Bank Issuer",
         "organizationID": "test_org",
@@ -518,6 +521,7 @@
     {
       "issuer": {
         "id": "university_degree_issuer",
+        "version": "v1.0",
         "groupID": "group_university_degree_issuer",
         "name": "University Degree Issuer",
         "organizationID": "test_org",
@@ -553,7 +557,7 @@
             "id": "templateID",
             "issuer": "did:ion:university_degree_issuer",
             "checks": {
-              "strict": true
+              "strict": false
             }
           }
         ],
@@ -640,6 +644,7 @@
     {
       "issuer": {
         "id": "university_degree_issuer_bbs",
+        "version": "v1.0",
         "groupID": "group_university_degree_issuer_bbs",
         "name": "University Degree Issuer",
         "organizationID": "test_org",
@@ -675,7 +680,7 @@
             "id": "templateID",
             "issuer": "did:jwk:university_degree_issuer",
             "checks": {
-              "strict": true
+              "strict": false
             }
           }
         ],
@@ -761,6 +766,7 @@
     {
       "issuer": {
         "id": "did_ion_issuer",
+        "version": "v1.0",
         "groupID": "group_did_ion_issuer",
         "name": "DID Ion Issuer",
         "organizationID": "test_org",
@@ -898,6 +904,7 @@
     {
       "verifier": {
         "id": "v_ldp_university_degree",
+        "version": "v1.0",
         "name": "v_ldp_university_degree",
         "organizationID": "test_org",
         "url": "https://test-verifier.com",
@@ -988,6 +995,7 @@
     {
       "verifier": {
         "id": "v_ldp_university_degree_sd_bbs",
+        "version": "v1.0",
         "name": "v_ldp_university_degree_sd_bbs",
         "organizationID": "test_org",
         "url": "https://test-verifier.com",
@@ -1073,6 +1081,7 @@
     {
       "verifier": {
         "id": "v_myprofile_ldp",
+        "version": "v1.0",
         "name": "v_myprofile_ldp",
         "organizationID": "test_org",
         "url": "https://test-verifier.com",
@@ -1166,6 +1175,7 @@
     {
       "verifier": {
         "id": "v_myprofile_jwt_verified_employee",
+        "version": "v1.0",
         "name": "v_myprofile_jwt_verified_employee",
         "organizationID": "test_org",
         "url": "https://test-verifier.com",
@@ -1225,6 +1235,7 @@
     {
       "verifier": {
         "id": "v_myprofile_jwt_drivers_license",
+        "version": "v1.0",
         "name": "v_myprofile_jwt_drivers_license",
         "organizationID": "test_org",
         "url": "https://test-verifier.com",
@@ -1284,6 +1295,7 @@
     {
       "verifier": {
         "id": "v_myprofile_sdjwt",
+        "version": "v1.0",
         "name": "v_myprofile_sdjwt",
         "organizationID": "test_org",
         "url": "https://test-verifier.com",

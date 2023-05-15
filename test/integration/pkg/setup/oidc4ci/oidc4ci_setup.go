@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	offerCredentialURLFormat = "%s" + "/issuer/profiles/%s/interactions/initiate-oidc"
+	offerCredentialURLFormat = "%s" + "/issuer/profiles/%s/v1.0/interactions/initiate-oidc"
 	vcsAuthorizeEndpoint     = "%s" + "/oidc/authorize"
 	vcsTokenEndpoint         = "%s" + "/oidc/token"
 	claimDataURL             = "https://mock-login-consent.example.com:8099/claim-data"
