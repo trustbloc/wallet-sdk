@@ -92,3 +92,47 @@ jobs:
           script: adb reverse tcp:8075 tcp:8075 && adb reverse tcp:8072 tcp:8072 && WALLET_SDK_USR=GIT_USR WALLET_SDK_TKN=${GITHUB_TOKEN} WALLET_SDK_VER=${WALLET_SDK_VER} ./scripts/flutter_test.sh
         env:
           WALLET_SDK_VER: '${{ env.WALLET_SDK_VER }}'
+
+  iOSFlutterDailyTest:
+    runs-on: macos-12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOPATH: /Users/runner/work/wallet-sdk/go
+
+      - name: Setup env for integration test
+        run: |
+          echo '127.0.0.1 testnet.orb.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 file-server.trustbloc.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 did-resolver.trustbloc.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 oidc-provider.example.com' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
+          brew install docker docker-compose
+          colima start
+          export PATH=$PATH:$GOPATH/bin
+          echo $PATH
+          make prepare-integration-test-flutter
+      - name: Setup Flutter SDK
+        uses: flutter-actions/setup-flutter@v2
+        with:
+          channel: stable
+          version: 3.3.7
+      - name: Install flutter app dependencies
+        run: make install-flutter-dependencies
+      - name: Run iOS Simulator
+        uses: futureware-tech/simulator-action@v2
+        with:
+          model: 'iPhone 14'
+      - name: Remove AppIcon contents file (Simulator build fails with this file)
+        run: |
+          rm -rf demo/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json
+          rm -rf demo/app/ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json
+      - name: Run tests on Simulator
+        run: ./scripts/flutter_test.sh --flavor=PkgManager
