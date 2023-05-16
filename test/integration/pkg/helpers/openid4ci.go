@@ -70,7 +70,7 @@ func (h *CITestHelper) CheckActivityLogAfterOpenID4CIFlow(t *testing.T, vcsAPIDi
 	require.NotEmpty(t, activity.ID())
 	require.Equal(t, goapi.LogTypeCredentialActivity, activity.Type())
 	require.NotEmpty(t, activity.UnixTimestamp())
-	require.Equal(t, vcsAPIDirectURL+"/issuer/"+issuerProfileID, activity.Client())
+	require.Equal(t, vcsAPIDirectURL+"/issuer/"+issuerProfileID+"/v1.0", activity.Client())
 	require.Equal(t, "oidc-issuance", activity.Operation())
 	require.Equal(t, goapi.ActivityLogStatusSuccess, activity.Status())
 
@@ -257,7 +257,7 @@ func checkInteractionInstantiationMetricsEvent(t *testing.T, metricsEvent *api.M
 }
 
 func checkFetchOpenIDConfigMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent, issuerProfileID string) {
-	expectedEndpoint := fmt.Sprintf("http://localhost:8075/issuer/%s/.well-known/openid-configuration",
+	expectedEndpoint := fmt.Sprintf("http://localhost:8075/issuer/%s/v1.0/.well-known/openid-configuration",
 		issuerProfileID)
 
 	require.Equal(t,
@@ -279,7 +279,7 @@ func checkFetchTokenMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
 func checkFetchIssuerMetadataMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent, expectedParentEvent,
 	issuerProfileID string,
 ) {
-	expectedEndpoint := fmt.Sprintf("http://localhost:8075/issuer/%s/.well-known/openid-credential-issuer",
+	expectedEndpoint := fmt.Sprintf("http://localhost:8075/issuer/%s/v1.0/.well-known/openid-credential-issuer",
 		issuerProfileID)
 
 	require.Equal(t, fmt.Sprintf("Fetch issuer metadata via an HTTP GET request to %s", expectedEndpoint),

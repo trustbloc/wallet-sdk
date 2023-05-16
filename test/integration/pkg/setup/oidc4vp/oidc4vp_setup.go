@@ -20,7 +20,7 @@ import (
 const (
 	verifierProfileURL                 = "%s" + "/verifier/profiles"
 	verifierProfileURLFormat           = verifierProfileURL + "/%s"
-	initiateOidcInteractionURLFormat   = verifierProfileURLFormat + "/interactions/initiate-oidc"
+	initiateOidcInteractionURLFormat   = verifierProfileURLFormat + "/v1.0/interactions/initiate-oidc"
 	retrieveInteractionsClaimURLFormat = "%s" + "/verifier/interactions/%s/claim"
 	xAPIKey                            = "rw_token"
 )

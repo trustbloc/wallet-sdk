@@ -11,7 +11,7 @@ require (
 	github.com/go-jose/go-jose/v3 v3.0.1-0.20221117193127-916db76e8214
 	github.com/google/tink/go v1.7.0
 	github.com/google/uuid v1.3.0
-	github.com/hyperledger/aries-framework-go v0.2.1-0.20230502132040-97864d50314d
+	github.com/hyperledger/aries-framework-go v0.3.0
 	github.com/hyperledger/aries-framework-go-ext/component/vc/status v0.0.0-20230328135254-c39a101bd279
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk v0.0.0-20221209153644-5a3273a805c1
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/longform v0.0.0-20221209153644-5a3273a805c1

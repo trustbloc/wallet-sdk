@@ -105,13 +105,13 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 			walletDIDMethod:     "ion",
 			claimData:           universityDegreeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeIssuer),
-			expectedIssuerURI:   "http://localhost:8075/issuer/university_degree_issuer_bbs",
+			expectedIssuerURI:   "http://localhost:8075/issuer/university_degree_issuer_bbs/v1.0",
 		},
 		{
 			issuerProfileID:     "bank_issuer_jwtsd",
 			issuerDIDMethod:     "orb",
 			walletDIDMethod:     "ion",
-			expectedIssuerURI:   "http://localhost:8075/issuer/bank_issuer_jwtsd",
+			expectedIssuerURI:   "http://localhost:8075/issuer/bank_issuer_jwtsd/v1.0",
 			claimData:           verifiableEmployeeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataBankIssuer),
 			walletKeyType:       localkms.KeyTypeP384,
@@ -122,7 +122,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 			walletDIDMethod:     "ion",
 			claimData:           verifiableEmployeeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataBankIssuer),
-			expectedIssuerURI:   "http://localhost:8075/issuer/bank_issuer",
+			expectedIssuerURI:   "http://localhost:8075/issuer/bank_issuer/v1.0",
 		},
 		{
 			issuerProfileID:     "did_ion_issuer",
@@ -130,7 +130,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 			walletDIDMethod:     "key",
 			claimData:           verifiableEmployeeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataDIDION),
-			expectedIssuerURI:   "http://localhost:8075/issuer/did_ion_issuer",
+			expectedIssuerURI:   "http://localhost:8075/issuer/did_ion_issuer/v1.0",
 		},
 		{
 			issuerProfileID:     "drivers_license_issuer",
@@ -138,7 +138,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 			walletDIDMethod:     "ion",
 			claimData:           driverLicenseClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataDriversLicenseIssuer),
-			expectedIssuerURI:   "http://localhost:8075/issuer/drivers_license_issuer",
+			expectedIssuerURI:   "http://localhost:8075/issuer/drivers_license_issuer/v1.0",
 		},
 		{
 			issuerProfileID:     "university_degree_issuer",
@@ -146,7 +146,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 			walletDIDMethod:     "ion",
 			claimData:           universityDegreeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeIssuer),
-			expectedIssuerURI:   "http://localhost:8075/issuer/university_degree_issuer",
+			expectedIssuerURI:   "http://localhost:8075/issuer/university_degree_issuer/v1.0",
 		},
 	}
 
