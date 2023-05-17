@@ -28,8 +28,40 @@ class OpenID4CI constructor(
         newInteraction = Interaction(args, opts)
     }
 
+    fun checkFlow(): String {
+        var issuerCapabilities = newInteraction.issuerCapabilities()
+        if (issuerCapabilities.authorizationCodeGrantTypeSupported()) {
+            return "auth-code-flow"
+        }
+        if (issuerCapabilities.preAuthorizedCodeGrantTypeSupported()){
+            return "preauth-code-flow"
+        }
+        return ""
+    }
+
+    fun getAuthorizationLink(): String {
+        var issuerCapabilities = newInteraction.issuerCapabilities()
+        if (!issuerCapabilities.authorizationCodeGrantTypeSupported()) {
+            return "Not implemented"
+        }
+
+        val scopes = StringArray()
+        scopes.append("").append("");
+        // TODO #423 Read withScopes and redirect uri from flutter environment. Replace these with appropriate values as of now.
+        // TODO #426 error handling
+        return newInteraction.createAuthorizationURLWithScopes(
+            "client_id",
+            "redirect_uri",
+            scopes
+        )
+    }
+
     fun pinRequired(): Boolean {
-        return newInteraction.issuerCapabilities().preAuthorizedCodeGrantParams().pinRequired()
+        var issuerCapabilities = newInteraction.issuerCapabilities()
+        if (!issuerCapabilities.preAuthorizedCodeGrantTypeSupported()) {
+            return false
+        }
+        return  newInteraction.issuerCapabilities().preAuthorizedCodeGrantParams().pinRequired()
     }
 
     fun issuerURI(): String {
@@ -44,6 +76,11 @@ class OpenID4CI constructor(
         }
 
         return null
+    }
+
+    fun requestCredentialWithAuth(didVerificationMethod: VerificationMethod, redirectURIWithParams: String) : Credential? {
+        var credentials = newInteraction.requestCredentialWithAuth(didVerificationMethod, redirectURIWithParams)
+            return credentials.atIndex(0);
     }
 
     fun serializeDisplayData(issuerURI: String?, vcCredentials: CredentialsArray): String? {
