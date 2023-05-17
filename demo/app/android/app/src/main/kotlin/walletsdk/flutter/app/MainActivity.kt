@@ -104,6 +104,17 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
+                        "requestCredentialWithAuth" -> {
+                            try {
+                                val credentialCreated =  requestCredentialAuth(call)
+                                val serializedCredential = credentialCreated!!.serialize()
+
+                                result.success(serializedCredential)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while requesting credential auth", e)
+                            }
+                        }
+
                         "fetchDID" -> {
                             try {
                                 val didID = call.argument<String>("didID")
@@ -279,8 +290,20 @@ class MainActivity : FlutterActivity() {
 
         this.openID4CI = openID4CI
 
+        var pinRequired = false
+        var authorizationLink = ""
+
+        var flowType = openID4CI.checkFlow()
+            if (flowType == "preauth-code-flow") {
+                pinRequired = openID4CI.pinRequired()
+            }
+            if (flowType == "auth-code-flow"){
+                authorizationLink = openID4CI.getAuthorizationLink()
+            }
+
         val flowTypeData: MutableMap<String, Any> = mutableMapOf()
-        flowTypeData["pinRequired"] = openID4CI.pinRequired()
+        flowTypeData["pinRequired"] = pinRequired
+        flowTypeData["authorizationURLLink"] = authorizationLink
 
         return flowTypeData
     }
@@ -309,6 +332,22 @@ class MainActivity : FlutterActivity() {
 
         return openID4CI.requestCredential(didDocResolution.assertionMethod(), otp)
     }
+
+
+    private fun requestCredentialAuth(call: MethodCall): Credential? {
+        val redirectURI = call.argument<String>("redirectURIWithParams") ?: throw java.lang.Exception("redirectURIWithParams is missed")
+
+        val didDocResolution = this.didDocResolution
+            ?: throw java.lang.Exception("DID should be created first")
+
+        val openID4CI = this.openID4CI
+            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+
+        return openID4CI.requestCredentialWithAuth(didDocResolution.assertionMethod(), redirectURI)
+    }
+
+
+
     /**
      * ResolveDisplay resolves display information for issued credentials based on an issuer's metadata, which is fetched
     using the issuer's (base) URI. The CredentialDisplays returns DisplayData object correspond to the VCs passed in and are in the
