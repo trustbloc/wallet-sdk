@@ -9,7 +9,7 @@ import 'package:app/services/storage_service.dart';
 import 'package:app/views/credential_preview.dart';
 import 'package:app/views/otp.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:app/scenarios/launched_external_url.dart';
+import 'package:app/views/handle_redirect_uri.dart';
 
 void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
   var WalletSDKPlugin = MethodChannelWallet();
@@ -27,10 +27,7 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
     // initiate authCode Flow
     log("initiating authCode Flow- ${responseJson["authorizationURLLink"]}");
     Uri uri = Uri.parse(responseJson["authorizationURLLink"]);
-    Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => LaunchExternalURL(uri)
-    ));
+    navigateToAuthFlow(context, uri);
     return;
   } else {
     navigateToWithoutPinFlow(context);
@@ -85,4 +82,12 @@ navigateToCredPreviewScreen(
       MaterialPageRoute(
         builder: (context) =>
             CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURL, credentialDisplayData: resolvedCredentialDisplay, credentialDID: didID)),));
+}
+
+
+void navigateToAuthFlow(BuildContext context, Uri uri) async {
+  Navigator.of(context).push(
+      MaterialPageRoute(
+          builder: (context) => HandleRedirectUri(uri)
+      ));
 }

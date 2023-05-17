@@ -33,6 +33,7 @@
 			<array>
 				<string>openid-initiate-issuance</string>
 				<string>openid-vc</string>
+				<string>trustbloc-wallet</string>
 			</array>
 		</dict>
 	</array>

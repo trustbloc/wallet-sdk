@@ -25,7 +25,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
   final StorageService _storageService = StorageService();
   var uuid = const Uuid();
   late final String userLoggedIn;
-  late String issuerDisplayData;
+  String issuerDisplayData = "";
   bool verifiedDomain = true;
   late String serviceURL = '';
   String? issuerID;
