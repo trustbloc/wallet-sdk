@@ -298,7 +298,12 @@ class MainActivity : FlutterActivity() {
                 pinRequired = openID4CI.pinRequired()
             }
             if (flowType == "auth-code-flow"){
-                authorizationLink = openID4CI.getAuthorizationLink()
+                val authCodeArgs = call.argument<MutableMap<String, String>>("authCodeArgs")
+                    ?: throw java.lang.Exception("authCodeArgs params is missed, Pass scopes, clientID and redirectURI as the arguments")
+                authorizationLink = openID4CI.getAuthorizationLink(authCodeArgs["scope1"].toString(),
+                    authCodeArgs["scope2"].toString(),
+                    authCodeArgs["clientID"].toString(),
+                    authCodeArgs["redirectURI"].toString() )
             }
 
         val flowTypeData: MutableMap<String, Any> = mutableMapOf()

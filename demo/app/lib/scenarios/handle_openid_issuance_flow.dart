@@ -15,7 +15,9 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
   var WalletSDKPlugin = MethodChannelWallet();
   final StorageService storageService = StorageService();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
-  var flowTypeData = await WalletSDKPlugin.initialize(qrCodeURL);
+  var authCodeArgs = readArgs();
+  log("auth code supplied arguments  ${authCodeArgs}");
+  var flowTypeData = await WalletSDKPlugin.initialize(qrCodeURL, authCodeArgs);
   var flowTypeDataEncoded = json.encode(flowTypeData);
   Map<String, dynamic> responseJson = json.decode(flowTypeDataEncoded);
   var authorizeResultPinRequired = responseJson["pinRequired"];
@@ -33,6 +35,21 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
     navigateToWithoutPinFlow(context);
     return;
   }
+}
+
+Map<String, String> readArgs() {
+  const scope1 = String.fromEnvironment("scope1");
+  const scope2 = String.fromEnvironment("scope2");
+  const clientID = String.fromEnvironment("clientID");
+  const redirectURI = String.fromEnvironment("redirectURI");
+  Map<String, String> authCodeArgsMap = {
+    'scope1': scope1,
+    'scope2': scope2,
+    'clientID': clientID,
+    'redirectURI': redirectURI
+  };
+
+  return authCodeArgsMap;
 }
 
 void navigateToWithoutPinFlow(BuildContext context) async{

@@ -48,8 +48,7 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
 
   _launchUrl(Uri uri) async {
     final initialUri = await getInitialUri();
-    log("initialUri ${initialUri}");
-    if (!await launch(uri.toString())) {
+    if (!await launch(uri.toString(), forceSafariVC: false)) {
       throw 'Could not launch $uri';
     }
   }

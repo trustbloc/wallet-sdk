@@ -39,19 +39,18 @@ class OpenID4CI constructor(
         return ""
     }
 
-    fun getAuthorizationLink(): String {
+    fun getAuthorizationLink(scope1: String, scope2: String, clientID: String, redirectURI: String): String {
         var issuerCapabilities = newInteraction.issuerCapabilities()
         if (!issuerCapabilities.authorizationCodeGrantTypeSupported()) {
             return "Not implemented"
         }
 
         val scopes = StringArray()
-        scopes.append("").append("");
-        // TODO #423 Read withScopes and redirect uri from flutter environment. Replace these with appropriate values as of now.
+        scopes.append(scope1).append(scope2);
         // TODO #426 error handling
         return newInteraction.createAuthorizationURLWithScopes(
-            "client_id",
-            "redirect_uri",
+            clientID,
+            redirectURI,
             scopes
         )
     }
