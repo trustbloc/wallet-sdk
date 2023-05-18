@@ -37,7 +37,7 @@ void main() async {
       String issuanceURL = issuanceURLsList[i];
       print("issuanceURL : $issuanceURL");
 
-      var initializeResp = await walletSDKPlugin.initialize(issuanceURL);
+      var initializeResp = await walletSDKPlugin.initialize(issuanceURL, null);
       var initializeRespEncoded = json.encode(initializeResp!);
       Map<String, dynamic> initializeRespJson = json.decode(initializeRespEncoded);
       var requirePIN = responseJson["pinRequired"];
@@ -95,7 +95,7 @@ void main() async {
       String issuanceURL = issuanceURLsList[i];
       print("issuanceURL : $issuanceURL");
 
-      var initializeResp = await walletSDKPlugin.initialize(issuanceURL);
+      var initializeResp = await walletSDKPlugin.initialize(issuanceURL, null);
       var initializeRespEncoded = json.encode(initializeResp!);
       Map<String, dynamic> initializeRespJson = json.decode(initializeRespEncoded);
       var requirePIN = responseJson["pinRequired"];

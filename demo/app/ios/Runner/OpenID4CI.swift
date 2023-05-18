@@ -42,17 +42,17 @@ public class OpenID4CI {
         return ""
     }
     
-    func getAuthorizationLink() throws -> String {
+    func getAuthorizationLink(scope1: String, scope2: String, clientID: String, redirectURI: String) throws -> String {
         let issuerCapabilities = initiatedInteraction.issuerCapabilities()
         if !(issuerCapabilities?.authorizationCodeGrantTypeSupported())! {
             return "Not implemented"
         }
         
         let scopes = ApiStringArray()
-        scopes!.append("")!.append("")
+        scopes!.append(scope1)!.append(scope2)
         // TODO #423 Read withScopes and redirect uri from flutter enviornment. Replace these with approriate values as of now.
         // TODO #426 error handling
-        let authorizationLink = initiatedInteraction.createAuthorizationURL(withScopes: "clientID", redirectURI: "redirect URI", scopes: scopes, error: nil)
+        let authorizationLink = initiatedInteraction.createAuthorizationURL(withScopes: clientID, redirectURI: redirectURI, scopes: scopes, error: nil)
         
         return authorizationLink
     }

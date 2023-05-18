@@ -34,8 +34,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             createDid(arguments: arguments!, result: result)
             
         case "initialize":
-            let requestURI = fetchArgsKeyValue(call, key: "requestURI")
-            initialize(requestURI: requestURI!, result: result)
+            initialize(arguments: arguments!, result: result)
             
         case "requestCredential":
             let otp = fetchArgsKeyValue(call, key: "otp")
@@ -287,11 +286,17 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
      After initializing the Interaction object with an Issuance Request, this should be the first method you call in
      order to continue with the flow.
      */
-    public func initialize(requestURI: String, result: @escaping FlutterResult){
+    public func initialize(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
         guard let walletSDK = self.walletSDK else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
                                              message: "error while creating new OIDC interaction",
                                              details: "WalletSDK interaction is not initialized, call initSDK()"))
+        }
+        
+        guard let requestURI = arguments["requestURI"] as? String else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while reading requestURI",
+                                             details: "parameter requestURI is missed"))
         }
 
         do {
@@ -305,7 +310,13 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             }
             
             if (flowType == "auth-code-flow"){
-               authorizationLink = try openID4CI.getAuthorizationLink()
+                guard let authCodeArgs = arguments["authCodeArgs"] as? Dictionary<String, String> else{
+                    return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                     message: "error while reading auth code argments",
+                                                     details: "Pass scopes, clientID and redirectURI as the arguments"))
+                }
+                
+                authorizationLink = try openID4CI.getAuthorizationLink(scope1: authCodeArgs["scope1"]!, scope2: authCodeArgs["scope2"]!, clientID: authCodeArgs["clientID"]!, redirectURI: authCodeArgs["redirectURI"]!)
             }
             
             var flowTypeData :[String:Any] = [
