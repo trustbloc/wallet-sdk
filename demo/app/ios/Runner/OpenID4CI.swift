@@ -42,29 +42,22 @@ public class OpenID4CI {
         return ""
     }
     
-    func getAuthorizationLink(scope1: String, scope2: String, clientID: String, redirectURI: String) throws -> String {
-        let issuerCapabilities = initiatedInteraction.issuerCapabilities()
-        if !(issuerCapabilities?.authorizationCodeGrantTypeSupported())! {
-            return "Not implemented"
-        }
-        
-        let scopes = ApiStringArray()
-        scopes!.append(scope1)!.append(scope2)
-        // TODO #423 Read withScopes and redirect uri from flutter enviornment. Replace these with approriate values as of now.
-        // TODO #426 error handling
-        let authorizationLink = initiatedInteraction.createAuthorizationURL(withScopes: clientID, redirectURI: redirectURI, scopes: scopes, error: nil)
-        
-        return authorizationLink
-    }
-
+    func getAuthorizationLink(scope1: String, scope2: String, clientID: String, redirectURI: String) throws  -> String {
+     let scopes = ApiStringArray()
+      scopes!.append(scope1)!.append(scope2)
+      var error: NSError?
     
+       let authorizationLink =  initiatedInteraction.createAuthorizationURL(withScopes: clientID, redirectURI: redirectURI, scopes: scopes, error: &error)
+        if let actualError = error {
+            print("error in authorizations", error!.localizedDescription)
+            throw actualError
+       }
+        
+      return authorizationLink
+    }
     
     func pinRequired() throws -> Bool {
-        let issuerCapabilities = initiatedInteraction.issuerCapabilities()
-        if  !issuerCapabilities!.preAuthorizedCodeGrantTypeSupported() {
-            return false
-        }
-        return try initiatedInteraction.issuerCapabilities()!.preAuthorizedCodeGrantParams().pinRequired()
+       return try initiatedInteraction.issuerCapabilities()!.preAuthorizedCodeGrantParams().pinRequired()
     }
 
     func issuerURI()-> String {
