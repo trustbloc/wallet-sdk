@@ -10,9 +10,9 @@ import (
 	_ "embed"
 	"testing"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 )
 
 const (

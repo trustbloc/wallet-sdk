@@ -9,7 +9,7 @@ SPDX-License-Identifier: Apache-2.0
 package api
 
 import (
-	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
+	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk"
 )
 
 // JSONWebKey holds a public key with associated metadata, in JWK format.

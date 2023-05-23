@@ -10,12 +10,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
-	"github.com/hyperledger/aries-framework-go/pkg/kms"
+	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk"
+	"github.com/hyperledger/aries-framework-go/component/models/did"
+	"github.com/hyperledger/aries-framework-go/spi/kms"
 	"github.com/stretchr/testify/require"
-	"github.com/trustbloc/wallet-sdk/pkg/common"
 
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 	. "github.com/trustbloc/wallet-sdk/pkg/did/creator/ion"
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 )

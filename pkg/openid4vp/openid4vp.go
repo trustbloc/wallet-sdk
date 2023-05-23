@@ -19,12 +19,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
-	vdrapi "github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
+	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose"
+	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
+	"github.com/hyperledger/aries-framework-go/component/models/jwt"
+	"github.com/hyperledger/aries-framework-go/component/models/presexch"
+	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
+	vdrspi "github.com/hyperledger/aries-framework-go/spi/vdr"
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -545,7 +545,7 @@ type resolverAdapter struct {
 	didResolver api.DIDResolver
 }
 
-func (r *resolverAdapter) Resolve(did string, opts ...vdrapi.DIDMethodOption) (*diddoc.DocResolution, error) {
+func (r *resolverAdapter) Resolve(did string, opts ...vdrspi.DIDMethodOption) (*diddoc.DocResolution, error) {
 	return r.didResolver.Resolve(did)
 }
 

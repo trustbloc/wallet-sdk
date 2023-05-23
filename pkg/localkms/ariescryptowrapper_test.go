@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/google/tink/go/keyset"
-	"github.com/hyperledger/aries-framework-go/pkg/mock/crypto"
-	"github.com/hyperledger/aries-framework-go/pkg/mock/kms"
+	"github.com/hyperledger/aries-framework-go/component/kmscrypto/mock/crypto"
+	"github.com/hyperledger/aries-framework-go/component/kmscrypto/mock/kms"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"

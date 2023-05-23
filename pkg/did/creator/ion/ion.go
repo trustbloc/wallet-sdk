@@ -11,9 +11,9 @@ import (
 	"fmt"
 
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/longform"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
-	"github.com/hyperledger/aries-framework-go/pkg/kms"
+	"github.com/hyperledger/aries-framework-go/component/models/did"
+	"github.com/hyperledger/aries-framework-go/spi/kms"
+	vdrspi "github.com/hyperledger/aries-framework-go/spi/vdr"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 )
@@ -64,8 +64,8 @@ func (d *Creator) Create(vm *did.VerificationMethod) (*did.DocResolution, error)
 
 	return d.vdr.Create(
 		didDocArgument,
-		vdr.WithOption(longform.UpdatePublicKeyOpt, updatePK),
-		vdr.WithOption(longform.RecoveryPublicKeyOpt, recoveryPK),
+		vdrspi.WithOption(longform.UpdatePublicKeyOpt, updatePK),
+		vdrspi.WithOption(longform.RecoveryPublicKeyOpt, recoveryPK),
 	)
 }
 

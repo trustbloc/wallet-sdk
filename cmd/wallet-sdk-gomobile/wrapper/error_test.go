@@ -10,9 +10,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	goapiwalleterror "github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )

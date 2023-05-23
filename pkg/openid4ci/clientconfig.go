@@ -11,8 +11,8 @@ import (
 	"net/http"
 	"time"
 
-	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
+	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
+	"github.com/hyperledger/aries-framework-go/spi/vdr"
 	"github.com/piprate/json-gold/ld"
 
 	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"

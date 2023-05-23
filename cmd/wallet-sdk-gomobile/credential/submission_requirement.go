@@ -7,7 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package credential
 
 import (
-	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
+	"github.com/hyperledger/aries-framework-go/component/models/presexch"
+
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 )
 

@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	vdrapi "github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
-	mockvdr "github.com/hyperledger/aries-framework-go/pkg/mock/vdr"
+	"github.com/hyperledger/aries-framework-go/component/models/did"
+	vdrapi "github.com/hyperledger/aries-framework-go/component/vdr/api"
+	mockvdr "github.com/hyperledger/aries-framework-go/component/vdr/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/pkg/common"
@@ -27,7 +27,7 @@ func TestDIDKeyResolver_Resolve(t *testing.T) {
 	authentication := didDoc.Authentication[0]
 	assertionMethod := didDoc.AssertionMethod[0]
 
-	vdrRegistry := &mockvdr.MockVDRegistry{
+	vdrRegistry := &mockvdr.VDRegistry{
 		ResolveValue: didDoc,
 	}
 

@@ -15,11 +15,11 @@ import (
 
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/longform"
-	didDoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/vdr"
-	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
-	"github.com/hyperledger/aries-framework-go/pkg/vdr/key"
-	"github.com/hyperledger/aries-framework-go/pkg/vdr/web"
+	didDoc "github.com/hyperledger/aries-framework-go/component/models/did"
+	"github.com/hyperledger/aries-framework-go/component/vdr"
+	"github.com/hyperledger/aries-framework-go/component/vdr/httpbinding"
+	"github.com/hyperledger/aries-framework-go/component/vdr/key"
+	"github.com/hyperledger/aries-framework-go/component/vdr/web"
 
 	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"

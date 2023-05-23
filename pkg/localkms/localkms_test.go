@@ -9,7 +9,8 @@ package localkms_test
 import (
 	"testing"
 
-	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
+	arieskms "github.com/hyperledger/aries-framework-go/component/kmscrypto/kms"
+	kmsapi "github.com/hyperledger/aries-framework-go/spi/kms"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
@@ -25,12 +26,12 @@ func TestLocalKMS_Create(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		localKMS := createTestKMS(t)
 
-		keyID, pkJWK, err := localKMS.Create(arieskms.ED25519Type)
+		keyID, pkJWK, err := localKMS.Create(kmsapi.ED25519Type)
 		require.NoError(t, err)
 		require.NotEmpty(t, keyID)
 		require.NotNil(t, pkJWK)
 
-		keyID, pkJWK, err = localKMS.Create(arieskms.ECDSAP384IEEEP1363)
+		keyID, pkJWK, err = localKMS.Create(kmsapi.ECDSAP384IEEEP1363)
 		require.NoError(t, err)
 		require.NotEmpty(t, keyID)
 		require.NotNil(t, pkJWK)
@@ -46,7 +47,7 @@ func TestLocalKMS_Create(t *testing.T) {
 	t.Run("key type not supported", func(t *testing.T) {
 		localKMS := createTestKMS(t)
 
-		_, _, err := localKMS.Create(arieskms.BLS12381G2Type)
+		_, _, err := localKMS.Create(kmsapi.BLS12381G2Type)
 		require.Error(t, err)
 	})
 }

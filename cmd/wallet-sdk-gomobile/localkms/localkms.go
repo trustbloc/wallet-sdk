@@ -12,7 +12,8 @@ package localkms
 import (
 	"errors"
 
-	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
+	arieskms "github.com/hyperledger/aries-framework-go/component/kmscrypto/kms"
+	kmsspi "github.com/hyperledger/aries-framework-go/spi/kms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	goapilocalkms "github.com/trustbloc/wallet-sdk/pkg/localkms"
@@ -20,9 +21,9 @@ import (
 
 const (
 	// KeyTypeED25519 is the name recognized by the Create method for creating an ED25519 keyset.
-	KeyTypeED25519 = arieskms.ED25519
+	KeyTypeED25519 = kmsspi.ED25519
 	// KeyTypeP384 is the name recognized by the Create method for creating a P-384 keyset.
-	KeyTypeP384 = arieskms.ECDSAP384IEEEP1363
+	KeyTypeP384 = kmsspi.ECDSAP384IEEEP1363
 )
 
 // Result indicates the result of a key retrieval operation (see Store.Get for more info).
@@ -70,7 +71,7 @@ func NewKMS(kmsStore Store) (*KMS, error) {
 // Create creates a keyset of the given keyType and then writes it to storage.
 // The public key JWK for the newly generated keyset is returned.
 func (k *KMS) Create(keyType string) (*api.JSONWebKey, error) {
-	_, pkJWK, err := k.goAPILocalKMS.Create(arieskms.KeyType(keyType))
+	_, pkJWK, err := k.goAPILocalKMS.Create(kmsspi.KeyType(keyType))
 	if err != nil {
 		return nil, err
 	}

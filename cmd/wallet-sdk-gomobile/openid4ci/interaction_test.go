@@ -17,8 +17,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
+	"github.com/hyperledger/aries-framework-go/component/models/did"
+	arieskms "github.com/hyperledger/aries-framework-go/spi/kms"
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
 

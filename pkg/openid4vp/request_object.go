@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 package openid4vp
 
-import "github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
+import "github.com/hyperledger/aries-framework-go/component/models/presexch"
 
 type requestObject struct {
 	JTI          string                    `json:"jti"`
