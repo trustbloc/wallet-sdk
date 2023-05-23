@@ -100,9 +100,14 @@ class MethodChannelWallet extends WalletPlatform {
   }
 
   Future<Map<Object?, Object?>?> initialize(String qrCode, Map<String, String>? authCodeArgs) async {
-    final flowTypeData =
-        await methodChannel.invokeMethod('initialize', <String, dynamic>{'requestURI': qrCode, 'authCodeArgs': authCodeArgs});
-    return flowTypeData;
+    try {
+      final flowTypeData =
+      await methodChannel.invokeMethod('initialize', <String, dynamic>{'requestURI': qrCode, 'authCodeArgs': authCodeArgs});
+      return flowTypeData;
+    } on PlatformException catch (error) {
+      debugPrint(error.toString());
+      rethrow;
+    }
   }
 
   Future<String> requestCredential(String userPinEntered) async {
@@ -119,7 +124,7 @@ class MethodChannelWallet extends WalletPlatform {
   Future<String> requestCredentialWithAuth(String redirectURIWithParams) async {
     try {
       var credentialResponse =
-      await methodChannel.invokeMethod<String>('requestCredentialWithAuth', <String, dynamic>{'redirectURIWithParams': redirectURIWithParams});
+        await methodChannel.invokeMethod<String>('requestCredentialWithAuth', <String, dynamic>{'redirectURIWithParams': redirectURIWithParams});
       return credentialResponse!;
     } on PlatformException catch (error) {
       debugPrint(error.toString());

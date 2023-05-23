@@ -310,7 +310,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             }
             
             if (flowType == "auth-code-flow"){
-                guard let authCodeArgs = arguments["authCodeArgs"] as? Dictionary<String, String> else{
+                guard let authCodeArgs = arguments["authCodeArgs"] as? Dictionary<String, String> else {
                     return  result(FlutterError.init(code: "NATIVE_ERR",
                                                      message: "error while reading auth code argments",
                                                      details: "Pass scopes, clientID and redirectURI as the arguments"))
@@ -386,7 +386,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             let credentialCreated = try openID4CI.requestCredential(didVerificationMethod: didDocResolution.assertionMethod(), otp: otp)
             result(credentialCreated.serialize(nil))
           } catch let error as NSError{
-              result(FlutterError.init(code: "Exception",
+             return result(FlutterError.init(code: "Exception",
                                        message: "error while requesting credential",
                                        details: error.localizedDescription
                                       ))
@@ -412,7 +412,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
              let credentialCreated = try openID4CI.requestCredentialWithAuth(didVerificationMethod: didDocResolution.assertionMethod(), redirectURIWithParams: redirectURIWithParams)
             result(credentialCreated.serialize(nil))
           } catch let error as NSError{
-              result(FlutterError.init(code: "Exception",
+             return result(FlutterError.init(code: "Exception",
                                        message: "error while requesting credential with auth",
                                        details: error.localizedDescription
                                       ))
@@ -450,7 +450,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                                      vcCredentials: convertToVerifiableCredentialsArray(credentials: vcCredentials))
             result(displayDataResp)
           } catch let error as NSError {
-                result(FlutterError.init(code: "Exception",
+               return result(FlutterError.init(code: "Exception",
                                          message: "error while resolving credential",
                                          details: error.localizedDescription))
             }
