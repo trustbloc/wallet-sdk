@@ -257,7 +257,8 @@ func checkInteractionInstantiationMetricsEvent(t *testing.T, metricsEvent *api.M
 }
 
 func checkFetchOpenIDConfigMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent, issuerProfileID string) {
-	expectedEndpoint := fmt.Sprintf("http://localhost:8075/issuer/%s/v1.0/.well-known/openid-configuration",
+	expectedEndpoint := fmt.Sprintf("http://localhost:8075/issuer/%s/v1.0/.well-known"+
+		"/openid-configuration",
 		issuerProfileID)
 
 	require.Equal(t,
@@ -279,7 +280,8 @@ func checkFetchTokenMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
 func checkFetchIssuerMetadataMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent, expectedParentEvent,
 	issuerProfileID string,
 ) {
-	expectedEndpoint := fmt.Sprintf("http://localhost:8075/issuer/%s/v1.0/.well-known/openid-credential-issuer",
+	expectedEndpoint := fmt.Sprintf("http://localhost:8075/issuer/%s/v1.0/.well-known"+
+		"/openid-credential-issuer",
 		issuerProfileID)
 
 	require.Equal(t, fmt.Sprintf("Fetch issuer metadata via an HTTP GET request to %s", expectedEndpoint),

@@ -70,6 +70,7 @@ func TestResolve(t *testing.T) {
 		t.Run("Without additional headers", func(t *testing.T) {
 			t.Run("Without a preferred locale specified", func(t *testing.T) {
 				opts := display.NewOpts().SetHTTPTimeoutNanoseconds(0)
+				opts.DisableHTTPClientTLSVerify()
 
 				resolvedDisplayData, err := display.Resolve(vcs, server.URL, opts)
 				require.NoError(t, err)

@@ -18,7 +18,7 @@ import (
 	"path"
 	"sync"
 
-	tlsutil "github.com/trustbloc/wallet-sdk/test/integration/loginconsent/tls"
+	tlsutil "github.com/trustbloc/vcs/test/bdd/loginconsent/tls"
 )
 
 func main() {

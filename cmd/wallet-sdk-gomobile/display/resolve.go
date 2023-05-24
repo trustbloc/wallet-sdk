@@ -51,7 +51,7 @@ func generateGoAPIOpts(vcs *verifiable.CredentialsArray, issuerURI string,
 		opts = NewOpts()
 	}
 
-	httpClient := wrapper.NewHTTPClient(opts.httpTimeout, opts.additionalHeaders, false)
+	httpClient := wrapper.NewHTTPClient(opts.httpTimeout, opts.additionalHeaders, opts.disableHTTPClientTLSVerification)
 
 	goAPIOpts := []goapicredentialschema.ResolveOpt{
 		goapicredentialschema.WithCredentials(mobileVCsArrayToGoAPIVCsArray(vcs)),

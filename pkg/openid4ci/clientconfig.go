@@ -35,13 +35,6 @@ type Header struct {
 	Value string
 }
 
-// HTTPClientOpts represents various HTTP client opts that can be configured for an OpenID4CI interaction.
-type HTTPClientOpts struct {
-	Timeout                *time.Duration
-	AdditionalHeaders      []Header
-	DisableTLSVerification bool
-}
-
 // ClientConfig contains the various parameters for an OpenID4CI Interaction.
 type ClientConfig struct {
 	DIDResolver                      api.DIDResolver

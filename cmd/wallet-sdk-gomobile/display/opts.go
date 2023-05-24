@@ -14,10 +14,11 @@ import (
 
 // Opts contains all optional arguments that can be passed into the Resolve function.
 type Opts struct {
-	preferredLocale   string
-	metricsLogger     api.MetricsLogger
-	additionalHeaders api.Headers
-	httpTimeout       *time.Duration
+	preferredLocale                  string
+	metricsLogger                    api.MetricsLogger
+	additionalHeaders                api.Headers
+	httpTimeout                      *time.Duration
+	disableHTTPClientTLSVerification bool
 }
 
 // NewOpts returns a new Opts object.
@@ -58,6 +59,13 @@ func (o *Opts) AddHeaders(headers *api.Headers) *Opts {
 	for i := range headersAsArray {
 		o.additionalHeaders.Add(&headersAsArray[i])
 	}
+
+	return o
+}
+
+// DisableHTTPClientTLSVerify disables TLS verification. Should be used for testing purposes only.
+func (o *Opts) DisableHTTPClientTLSVerify() *Opts {
+	o.disableHTTPClientTLSVerification = true
 
 	return o
 }

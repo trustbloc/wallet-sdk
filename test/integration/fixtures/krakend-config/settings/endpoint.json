@@ -1,0 +1,162 @@
+{
+  "profile": [
+    {
+      "endpoint": "/issuer/profiles/{profileID}/{profileVersion}/credentials/issue",
+      "method": "POST",
+      "protected": true,
+      "input_headers": [
+        "X-Tenant-ID",
+        "Content-Type"
+      ]
+    },
+    {
+      "endpoint": "/issuer/credentials/status",
+      "method": "POST",
+      "protected": true,
+      "input_headers": [
+        "X-Tenant-ID",
+        "Content-Type"
+      ]
+    },
+    {
+      "endpoint": "/issuer/profiles/{profileID}/{profileVersion}/interactions/initiate-oidc",
+      "method": "POST",
+      "protected": true,
+      "input_headers": [
+        "X-Tenant-ID",
+        "Content-Type"
+      ]
+    },
+    {
+      "endpoint": "/oidc/authorize",
+      "method": "GET",
+      "input_query_strings": [
+        "*"
+      ],
+      "backend_extra_config": {
+        "plugin/http-client": {
+          "name": "http-client-no-redirect"
+        }
+      }
+    },
+    {
+      "endpoint": "/issuer/{profileID}/{profileVersion}/.well-known/openid-configuration",
+      "method": "GET",
+      "input_query_strings": [
+        "*"
+      ],
+      "backend_extra_config": {
+        "plugin/http-client": {
+          "name": "http-client-no-redirect"
+        }
+      }
+    },
+    {
+      "endpoint": "/issuer/{profileID}/{profileVersion}/.well-known/openid-credential-issuer",
+      "method": "GET",
+      "input_query_strings": [
+        "*"
+      ],
+      "backend_extra_config": {
+        "plugin/http-client": {
+          "name": "http-client-no-redirect"
+        }
+      }
+    },
+    {
+      "endpoint": "/oidc/par",
+      "method": "POST"
+    },
+    {
+      "endpoint": "/oidc/redirect",
+      "method": "GET",
+      "input_query_strings": [
+        "*"
+      ],
+      "backend_extra_config": {
+        "plugin/http-client": {
+          "name": "http-client-no-redirect"
+        }
+      }
+    },
+    {
+      "endpoint": "/oidc/token",
+      "method": "POST",
+      "input_headers": [
+        "Authorization",
+        "Content-Type"
+      ]
+    },
+    {
+      "endpoint": "/oidc/present",
+      "method": "POST",
+      "input_headers": [
+        "Authorization",
+        "Content-Type"
+      ]
+    },
+    {
+      "endpoint": "/oidc/credential",
+      "method": "POST",
+      "input_headers": [
+        "Authorization",
+        "Content-Type"
+      ]
+    },
+    {
+      "endpoint": "/verifier/profiles/{profileID}/{profileVersion}/credentials/verify",
+      "method": "POST",
+      "protected": true,
+      "input_headers": [
+        "X-Tenant-ID",
+        "Content-Type"
+      ]
+    },
+    {
+      "endpoint": "/verifier/profiles/{profileID}/{profileVersion}/presentations/verify",
+      "method": "POST",
+      "protected": true,
+      "input_headers": [
+        "X-Tenant-ID",
+        "Content-Type"
+      ]
+    },
+    {
+      "endpoint": "/verifier/profiles/{profileID}/{profileVersion}/interactions/initiate-oidc",
+      "method": "POST",
+      "protected": true,
+      "input_headers": [
+        "X-Tenant-ID",
+        "Content-Type"
+      ]
+    },
+    {
+      "endpoint": "/verifier/interactions/{txID}/claim",
+      "method": "GET",
+      "protected": true,
+      "input_headers": [
+        "X-Tenant-ID",
+        "Content-Type"
+      ]
+    },
+    {
+      "endpoint": "/verifier/interactions/authorization-response",
+      "method": "POST",
+      "input_headers": [
+        "Content-Type"
+      ]
+    },
+    {
+      "endpoint": "/request-object/{uuid}",
+      "method": "GET"
+    },
+    {
+      "endpoint": "/version",
+      "method": "GET"
+    },
+    {
+      "endpoint": "/version/system",
+      "method": "GET"
+    }
+  ]
+}

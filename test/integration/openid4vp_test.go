@@ -33,10 +33,8 @@ import (
 
 type claimData = map[string]interface{}
 
-var (
-	//go:embed expecteddisplaydata/university_degree_sd.json
-	expectedUniversityDegreeSD string
-)
+//go:embed expecteddisplaydata/university_degree_sd.json
+var expectedUniversityDegreeSD string
 
 func TestOpenID4VPFullFlow(t *testing.T) {
 	driverLicenseClaims := claimData{
@@ -163,7 +161,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		setup := oidc4vp.NewSetup(testenv.NewHttpRequest())
 
-		err := setup.AuthorizeVerifierBypassAuth("test_org", vcsAPIDirectURL)
+		err := setup.AuthorizeVerifierBypassAuth("f13d1va9lp403pb9lyj89vk55", vcsAPIDirectURL)
 		require.NoError(t, err)
 
 		initiateURL, err := setup.InitiateInteraction(tc.verifierProfileID, "test purpose.")
@@ -187,6 +185,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		interactionOptionalArgs.SetDocumentLoader(docLoader)
 		interactionOptionalArgs.SetActivityLogger(activityLogger)
 		interactionOptionalArgs.SetMetricsLogger(metricsLogger)
+		interactionOptionalArgs.DisableHTTPClientTLSVerify()
 
 		interaction, err := openid4vp.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)
