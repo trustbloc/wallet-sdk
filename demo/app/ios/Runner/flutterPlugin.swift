@@ -310,13 +310,18 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             }
             
             if (flowType == "auth-code-flow"){
-                guard let authCodeArgs = arguments["authCodeArgs"] as? Dictionary<String, String> else {
+                guard let authCodeArgs = arguments["authCodeArgs"] as? Dictionary<String, Any> else {
                     return  result(FlutterError.init(code: "NATIVE_ERR",
                                                      message: "error while reading auth code argments",
                                                      details: "Pass scopes, clientID and redirectURI as the arguments"))
                 }
                 
-                authorizationLink = try openID4CI.getAuthorizationLink(scope1: authCodeArgs["scope1"]!, scope2: authCodeArgs["scope2"]!, clientID: authCodeArgs["clientID"]!, redirectURI: authCodeArgs["redirectURI"]!)
+                if (!authCodeArgs.keys.contains("scopes")) {
+                    authorizationLink = try openID4CI.getAuthorizationLinkWithoutScopes(clientID: authCodeArgs["clientID"]! as! String, redirectURI: authCodeArgs["redirectURI"]! as! String)
+                } else {
+                    authorizationLink = try openID4CI.getAuthorizationLink(scopes: authCodeArgs["scopes"]! as! [String], clientID: authCodeArgs["clientID"]! as! String, redirectURI: authCodeArgs["redirectURI"]! as! String)
+                }
+      
             }
             
             var flowTypeData :[String:Any] = [
