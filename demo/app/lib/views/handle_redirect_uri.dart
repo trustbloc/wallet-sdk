@@ -17,6 +17,8 @@ import 'package:flutter/foundation.dart';
 import 'package:uni_links/uni_links.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:app/views/dashboard.dart';
+import 'package:app/views/custom_error.dart';
 
 class HandleRedirectUri extends StatefulWidget {
   Uri uri;
@@ -37,6 +39,7 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
   var userDIDDoc = '';
 
   StreamSubscription? _sub;
+  Future<Widget>? result;
 
   @override
   void initState() {
@@ -46,6 +49,7 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
   }
 
 
+
   _launchUrl(Uri uri) async {
     final initialUri = await getInitialUri();
     if (!await launch(uri.toString(), forceSafariVC: false)) {
@@ -53,14 +57,15 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
     }
   }
 
-  void _handleIncomingLinks() {
+  _handleIncomingLinks() async {
     if (!kIsWeb) {
-      _sub = uriLinkStream.listen((Uri? uri) {
+      _sub = await uriLinkStream.listen((Uri? uri) {
         if (!mounted) return;
         log("received redirect uri $uri");
         setState(() {
           _redirectUri = uri;
           _err = null;
+          result = launchCredPreview();
         });
       }, onError: (Object err) {
         if (!mounted) return;
@@ -95,36 +100,39 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
     return didID;
   }
 
-  launchCredPreview() async {
+  Future<Widget>? launchCredPreview() async {
     final SharedPreferences pref = await prefs;
     await _createDid();
     pref.setString('userDID',userDIDId);
     pref.setString('userDIDDoc',userDIDDoc);
     if (_redirectUri != null) {
-      var credentials = await WalletSDKPlugin.requestCredentialWithAuth(_redirectUri.toString());
-      String? issuerURI = await WalletSDKPlugin.issuerURI();
-      var resolvedCredentialDisplay = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
-      log("resolvedCredentialDisplay -> $resolvedCredentialDisplay");
-      var renderedCredDisplay = await WalletSDKPlugin.resolveCredentialDisplay(resolvedCredentialDisplay!);
-      var activities = await WalletSDKPlugin.storeActivityLogger();
-      var credID = await WalletSDKPlugin.getCredID([credentials]);
-      _storageService.addActivities(ActivityDataObj(credID!, activities));
-      pref.setString("credID", credID);
-      _navigateToCredPreviewScreen(credentials, issuerURI, resolvedCredentialDisplay!, userDIDId);
+      try {
+        var credentials = await WalletSDKPlugin.requestCredentialWithAuth(_redirectUri.toString());
+        String? issuerURI = await WalletSDKPlugin.issuerURI();
+        var resolvedCredentialDisplay = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
+        log("resolvedCredentialDisplay -> $resolvedCredentialDisplay");
+        var renderedCredDisplay = await WalletSDKPlugin.resolveCredentialDisplay(resolvedCredentialDisplay!);
+        var activities = await WalletSDKPlugin.storeActivityLogger();
+        var credID = await WalletSDKPlugin.getCredID([credentials]);
+        _storageService.addActivities(ActivityDataObj(credID!, activities));
+        pref.setString("credID", credID);
+        return _navigateToCredPreviewScreen(credentials, issuerURI, resolvedCredentialDisplay!, userDIDId);
+      } catch (error) {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    CustomError(requestErrorTitleMsg: "Redirect uri error", requestErrorSubTitleMsg: error.toString())));
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-      body: new Column(
-        children: <Widget>[
-          FutureBuilder(
-            future: launchCredPreview(),
+      body: FutureBuilder(
+            future: result,
             builder: (BuildContext context, AsyncSnapshot snapshot){
-              if(snapshot.hasData) {
-                return launchCredPreview();
-              }
               return SizedBox(
                 height: MediaQuery.of(context).size.height / 1.3,
                 child: Center(
@@ -132,9 +140,7 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
                 ),
               );
             },
-          )
-        ],
-     )
+       )
     );
   }
 
@@ -143,4 +149,7 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
     Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURI, credentialDisplayData: credentialDisplayData, credentialDID: didID),)));
   });
 }
+  _navigateToDashboard() async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
+  }
 }

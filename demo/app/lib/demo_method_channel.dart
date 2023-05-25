@@ -99,7 +99,7 @@ class MethodChannelWallet extends WalletPlatform {
     return fetchDIDMsg;
   }
 
-  Future<Map<Object?, Object?>?> initialize(String qrCode, Map<String, String>? authCodeArgs) async {
+  Future<Map<Object?, Object?>?> initialize(String qrCode, Map<String, dynamic>? authCodeArgs) async {
     try {
       final flowTypeData =
       await methodChannel.invokeMethod('initialize', <String, dynamic>{'requestURI': qrCode, 'authCodeArgs': authCodeArgs});

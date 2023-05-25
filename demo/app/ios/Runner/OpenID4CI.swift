@@ -42,12 +42,27 @@ public class OpenID4CI {
         return ""
     }
     
-    func getAuthorizationLink(scope1: String, scope2: String, clientID: String, redirectURI: String) throws  -> String {
-     let scopes = ApiStringArray()
-      scopes!.append(scope1)!.append(scope2)
+    func getAuthorizationLink(scopes: [String], clientID: String, redirectURI: String) throws  -> String {
+     let scopesArr = ApiStringArray()
+        for scope in scopes {
+            scopesArr!.append(scope)!
+        }
+
       var error: NSError?
     
-       let authorizationLink =  initiatedInteraction.createAuthorizationURL(withScopes: clientID, redirectURI: redirectURI, scopes: scopes, error: &error)
+       let authorizationLink =  initiatedInteraction.createAuthorizationURL(withScopes: clientID, redirectURI: redirectURI, scopes: scopesArr, error: &error)
+        if let actualError = error {
+            print("error in authorizations", error!.localizedDescription)
+            throw actualError
+       }
+        
+      return authorizationLink
+    }
+    
+    func getAuthorizationLinkWithoutScopes(clientID: String, redirectURI: String) throws  -> String {
+      var error: NSError?
+    
+        let authorizationLink =  initiatedInteraction.createAuthorizationURL(clientID, redirectURI: redirectURI, error: &error)
         if let actualError = error {
             print("error in authorizations", error!.localizedDescription)
             throw actualError

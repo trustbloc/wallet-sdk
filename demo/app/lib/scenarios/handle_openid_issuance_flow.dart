@@ -10,13 +10,20 @@ import 'package:app/views/credential_preview.dart';
 import 'package:app/views/otp.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:app/views/handle_redirect_uri.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
+import 'dart:convert';
+import 'dart:async';
 
 void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
   var WalletSDKPlugin = MethodChannelWallet();
   final StorageService storageService = StorageService();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
-  var authCodeArgs = readArgs();
-  log("auth code supplied arguments  ${authCodeArgs}");
+  var authCodeArgs;
+  if (qrCodeURL.contains("authorization_code")){
+    authCodeArgs = await readIssuerAuthFlowConfig(qrCodeURL);
+    log("auth code arguments fetched from config file ${authCodeArgs}");
+  }
   var flowTypeData = await WalletSDKPlugin.initialize(qrCodeURL, authCodeArgs);
   var flowTypeDataEncoded = json.encode(flowTypeData);
   Map<String, dynamic> responseJson = json.decode(flowTypeDataEncoded);
@@ -37,19 +44,13 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
   }
 }
 
-Map<String, String> readArgs() {
-  const scope1 = String.fromEnvironment("scope1");
-  const scope2 = String.fromEnvironment("scope2");
-  const clientID = String.fromEnvironment("clientID");
-  const redirectURI = String.fromEnvironment("redirectURI");
-  Map<String, String> authCodeArgsMap = {
-    'scope1': scope1,
-    'scope2': scope2,
-    'clientID': clientID,
-    'redirectURI': redirectURI
-  };
-
-  return authCodeArgsMap;
+ readIssuerAuthFlowConfig(String qrCodeURL) async {
+  var decodedUri = Uri.decodeComponent(qrCodeURL);
+  final uri = Uri.parse(decodedUri);
+  var credentialIssuerKey = json.decode(uri.queryParameters["credential_offer"]!);
+  final String response = await rootBundle.loadString('lib/assets/issuerAuthFlowConfig.json');
+  final configData = await json.decode(response);
+  return configData[credentialIssuerKey["credential_issuer"]];
 }
 
 void navigateToWithoutPinFlow(BuildContext context) async{
