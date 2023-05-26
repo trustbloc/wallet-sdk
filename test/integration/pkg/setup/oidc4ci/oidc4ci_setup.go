@@ -9,12 +9,18 @@ package oidc4ci
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/cookiejar"
+	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2/clientcredentials"
+
 	"golang.org/x/oauth2"
 
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/httprequest"
@@ -27,6 +33,11 @@ const (
 	vcsTokenEndpoint         = "%s" + "/oidc/token"
 	claimDataURL             = "https://mock-login-consent.example.com:8099/claim-data"
 	xAPIKey                  = "rw_token"
+
+	oidcProviderURL = "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB"
+	organizationID  = "f13d1va9lp403pb9lyj89vk55"
+
+	vcsAPIGateway = "https://api-gateway.trustbloc.local:5566"
 )
 
 type initiateOIDC4CIRequest struct {
@@ -105,38 +116,6 @@ func (s *Setup) registerPublicClient() error {
 	return nil
 }
 
-func (s *Setup) InitiateCredentialIssuance(issuerProfileID string) (string, error) {
-	endpointURL := fmt.Sprintf(offerCredentialURLFormat, s.apiURL, issuerProfileID)
-
-	reqBody, err := json.Marshal(&initiateOIDC4CIRequest{
-		CredentialTemplateId: "templateID",
-		GrantType:            "authorization_code",
-		OpState:              uuid.New().String(),
-		ResponseType:         "code",
-		Scope:                []string{"openid", "profile"},
-		ClaimEndpoint:        claimDataURL,
-	})
-	if err != nil {
-		return "", fmt.Errorf("marshal initiate oidc4ci req: %w", err)
-	}
-
-	var oidc44CIResponse initiateOIDC4CIResponse
-
-	_, err = s.httpRequest.Send(http.MethodPost,
-		endpointURL, "application/json", s.getAuthHeaders(), bytes.NewReader(reqBody), &oidc44CIResponse)
-	if err != nil {
-		return "", fmt.Errorf("https do: %w", err)
-	}
-
-	s.offerCredentialURL = oidc44CIResponse.OfferCredentialURL
-
-	if s.offerCredentialURL == "" {
-		return "", fmt.Errorf("initiate issuance URL is empty")
-	}
-
-	return s.offerCredentialURL, nil
-}
-
 func (s *Setup) InitiatePreAuthorizedIssuance(issuerProfileID string, claimData map[string]interface{}) (string, error) {
 	issuanceURL := fmt.Sprintf(offerCredentialURLFormat, s.apiURL, issuerProfileID)
 
@@ -177,4 +156,77 @@ func (s *Setup) getAuthHeaders() map[string]string {
 		headers["X-API-Key"] = xAPIKey
 	}
 	return headers
+}
+
+func InitiateAuthCodeIssuance(t *testing.T) string {
+	accessToken, err := issueAccessToken(context.Background(), oidcProviderURL,
+		organizationID, "ejqxi9jb1vew2jbdnogpjcgrz", []string{"org_admin"})
+	require.NoError(t, err)
+
+	println(accessToken)
+
+	endpointURL := fmt.Sprintf("%s/issuer/profiles/%s/v1.0/interactions/initiate-oidc", vcsAPIGateway,
+		"bank_issuer")
+
+	reqBody, err := json.Marshal(&initiateOIDC4CIRequest{
+		CredentialTemplateId: "templateID",
+		GrantType:            "authorization_code",
+		OpState:              uuid.New().String(),
+		ResponseType:         "code",
+		Scope:                []string{"openid", "profile"},
+		ClaimEndpoint:        claimDataURL,
+	})
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, endpointURL, bytes.NewReader(reqBody))
+	require.NoError(t, err)
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+accessToken)
+
+	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{
+		InsecureSkipVerify: true,
+	}}}
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var r initiateOIDC4CIResponse
+
+	err = json.Unmarshal(b, &r)
+	require.NoError(t, err)
+
+	println(r.OfferCredentialURL)
+
+	return r.OfferCredentialURL
+}
+
+func issueAccessToken(ctx context.Context, oidcProviderURL, clientID, secret string, scopes []string) (string, error) {
+	conf := clientcredentials.Config{
+		TokenURL:     oidcProviderURL + "/oauth2/token",
+		ClientID:     clientID,
+		ClientSecret: secret,
+		Scopes:       scopes,
+		AuthStyle:    oauth2.AuthStyleInHeader,
+	}
+
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	})
+
+	token, err := conf.Token(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get token: %w", err)
+	}
+
+	return token.AccessToken, nil
 }

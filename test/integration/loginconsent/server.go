@@ -329,6 +329,7 @@ func (s *server) completeConsent(w http.ResponseWriter, r *http.Request, request
 		GrantScope:               consentReq.GetRequestedScope(),
 		HandledAt:                &now,
 		Session: &client.ConsentRequestSession{
+			// AccessToken: nil,
 			IdToken: request.UserClaims,
 		},
 	}).ConsentChallenge(consentChallenge).Execute()

@@ -32,6 +32,7 @@ func ResolveDisplayData(t *testing.T, credentials *verifiable.CredentialsArray, 
 
 	opts := display.NewOpts()
 	opts.SetMetricsLogger(metricsLogger)
+	opts.DisableHTTPClientTLSVerify()
 
 	displayData, err := display.Resolve(credentials, issuerURI, opts)
 	require.NoError(t, err)

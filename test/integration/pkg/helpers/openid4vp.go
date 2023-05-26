@@ -64,7 +64,7 @@ func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, is
 	oidc4ciSetup, err := oidc4ci.NewSetup(testenv.NewHttpRequest())
 	require.NoError(t, err)
 
-	err = oidc4ciSetup.AuthorizeIssuerBypassAuth("test_org", vcsAPIDirectURL)
+	err = oidc4ciSetup.AuthorizeIssuerBypassAuth("f13d1va9lp403pb9lyj89vk55", vcsAPIDirectURL)
 	require.NoError(t, err)
 
 	credentials := verifiable.NewCredentialsArray()
@@ -86,6 +86,7 @@ func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, is
 		interactionOptionalArgs := openid4ci.NewOpts()
 		interactionOptionalArgs.SetMetricsLogger(stderr.NewMetricsLogger())
 		interactionOptionalArgs.SetDocumentLoader(documentLoader)
+		interactionOptionalArgs.DisableHTTPClientTLSVerify()
 
 		interaction, err := openid4ci.NewInteraction(requiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)
@@ -162,7 +163,8 @@ func (h *VPTestHelper) checkGetQueryMetricsEvent(t *testing.T, metricsEvent *api
 }
 
 func (h *VPTestHelper) checkSendAuthorizedResponseMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
-	require.Equal(t, "Send authorized response via an HTTP POST request to http://localhost:8075/oidc/present",
+	require.Equal(t, "Send authorized response via an HTTP POST request to "+
+		"http://localhost:8075/oidc/present",
 		metricsEvent.Event())
 	require.Equal(t, "Present credential", metricsEvent.ParentEvent())
 	require.Positive(t, metricsEvent.DurationNanoseconds())

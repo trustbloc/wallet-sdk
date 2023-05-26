@@ -78,7 +78,7 @@ func initiatePreAuthorizedIssuance(issuerProfileIDs []string) {
 		panic(err)
 	}
 
-	err = oidc4ciSetup.AuthorizeIssuerBypassAuth("test_org", vcsAPIDirectURL)
+	err = oidc4ciSetup.AuthorizeIssuerBypassAuth("f13d1va9lp403pb9lyj89vk55", vcsAPIDirectURL)
 	if err != nil {
 		panic(err)
 	}
@@ -113,7 +113,7 @@ func initiatePreAuthorizedIssuance(issuerProfileIDs []string) {
 func initiatePreAuthorizedVerification(verifierProfileIDs []string) {
 	oidc4vpSetup := oidc4vp.NewSetup(testenv.NewHttpRequest())
 
-	err := oidc4vpSetup.AuthorizeVerifierBypassAuth("test_org", vcsAPIDirectURL)
+	err := oidc4vpSetup.AuthorizeVerifierBypassAuth("f13d1va9lp403pb9lyj89vk55", vcsAPIDirectURL)
 	if err != nil {
 		panic(err)
 	}

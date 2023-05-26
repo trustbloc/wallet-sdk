@@ -80,8 +80,9 @@ jobs:
           echo '127.0.0.1 testnet.orb.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 file-server.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 did-resolver.trustbloc.local' | sudo tee -a /etc/hosts
-          echo '127.0.0.1 oidc-provider.example.com' | sudo tee -a /etc/hosts
           echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
           make integration-test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -114,8 +115,9 @@ jobs:
           echo '127.0.0.1 testnet.orb.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 file-server.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 did-resolver.trustbloc.local' | sudo tee -a /etc/hosts
-          echo '127.0.0.1 oidc-provider.example.com' | sudo tee -a /etc/hosts
           echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
           brew install docker docker-compose
           colima start
           export PATH=$PATH:$GOPATH/bin
@@ -193,8 +195,9 @@ jobs:
           echo '127.0.0.1 testnet.orb.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 file-server.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 did-resolver.trustbloc.local' | sudo tee -a /etc/hosts
-          echo '127.0.0.1 oidc-provider.example.com' | sudo tee -a /etc/hosts
           echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
           brew install docker docker-compose
           colima start
           export PATH=$PATH:$GOPATH/bin

@@ -8,15 +8,18 @@ SPDX-License-Identifier: Apache-2.0
 package integration
 
 import (
+	"crypto/tls"
 	_ "embed"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/stretchr/testify/require"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
@@ -28,12 +31,13 @@ import (
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/testenv"
 )
 
-// Run this lines to make test work locally
+// Run these lines to make tests work locally
 // echo '127.0.0.1 testnet.orb.local' | sudo tee -a /etc/hosts
 // echo '127.0.0.1 file-server.trustbloc.local' | sudo tee -a /etc/hosts
 // echo '127.0.0.1 did-resolver.trustbloc.local' | sudo tee -a /etc/hosts
-// echo '127.0.0.1 oidc-provider.example.com' | sudo tee -a /etc/hosts
 // echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
+// echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
+// echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
 
 var (
 	//go:embed expecteddisplaydata/bank_issuer.json
@@ -49,9 +53,41 @@ var (
 	expectedUniversityDegreeIssuer string
 )
 
-const queryTraceURL = "http://localhost:16686/api/traces/"
+const (
+	queryTraceURL = "http://localhost:16686/api/traces/"
+
+	organizationID = "f13d1va9lp403pb9lyj89vk55"
+)
+
+type test struct {
+	issuerProfileID     string
+	issuerDIDMethod     string
+	walletDIDMethod     string
+	walletKeyType       string
+	expectedIssuerURI   string
+	expectedDisplayData *display.Data
+	claimData           map[string]interface{}
+}
 
 func TestOpenID4CIFullFlow(t *testing.T) {
+	println("!!! Ensure the test certificate is imported into your keychain, and make sure the following" +
+		"entries are in your hosts file:")
+	println(`127.0.0.1 testnet.orb.local
+          127.0.0.1 file-server.trustbloc.local
+          127.0.0.1 did-resolver.trustbloc.local
+          127.0.0.1 vc-rest-echo.trustbloc.local
+          127.0.0.1 api-gateway.trustbloc.local
+          127.0.0.1 cognito-mock.trustbloc.local`)
+
+	println("Beginning pre-auth code flow tests.")
+	doPreAuthCodeFlowTest(t)
+	println("Completed pre-auth code flow tests.")
+	println("Beginning auth code flow test.")
+	doAuthCodeFlowTest(t)
+	println("Completed auth code flow test.")
+}
+
+func doPreAuthCodeFlowTest(t *testing.T) {
 	driverLicenseClaims := map[string]interface{}{
 		"birthdate":            "1990-01-01",
 		"document_number":      "123-456-789",
@@ -88,17 +124,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		"photo":        "binary data",
 	}
 
-	type test struct {
-		issuerProfileID     string
-		issuerDIDMethod     string
-		walletDIDMethod     string
-		walletKeyType       string
-		expectedIssuerURI   string
-		expectedDisplayData *display.Data
-		claimData           map[string]interface{}
-	}
-
-	tests := []test{
+	preAuthTests := []test{
 		{
 			issuerProfileID:     "university_degree_issuer_bbs",
 			issuerDIDMethod:     "key",
@@ -153,7 +179,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 	oidc4ciSetup, err := oidc4ci.NewSetup(testenv.NewHttpRequest())
 	require.NoError(t, err)
 
-	err = oidc4ciSetup.AuthorizeIssuerBypassAuth("test_org", vcsAPIDirectURL)
+	err = oidc4ciSetup.AuthorizeIssuerBypassAuth(organizationID, vcsAPIDirectURL)
 	require.NoError(t, err)
 
 	vcStatusVerifier, err := credential.NewStatusVerifier(credential.NewStatusVerifierOpts())
@@ -161,7 +187,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 
 	var traceIDs []string
 
-	for _, tc := range tests {
+	for _, tc := range preAuthTests {
 		fmt.Println(fmt.Sprintf("running tests with issuerProfileID=%s issuerDIDMethod=%s walletDIDMethod=%s",
 			tc.issuerProfileID, tc.issuerDIDMethod, tc.walletDIDMethod))
 
@@ -187,6 +213,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		interactionOptionalArgs.SetDocumentLoader(&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)})
 		interactionOptionalArgs.SetActivityLogger(testHelper.ActivityLogger)
 		interactionOptionalArgs.SetMetricsLogger(testHelper.MetricsLogger)
+		interactionOptionalArgs.DisableHTTPClientTLSVerify()
 
 		interaction, err := openid4ci.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)
@@ -227,11 +254,12 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 
 		require.NoError(t, vcStatusVerifier.Verify(vc))
 
-		testHelper.CheckActivityLogAfterOpenID4CIFlow(t, vcsAPIDirectURL, tc.issuerProfileID, subID)
+		testHelper.CheckActivityLogAfterOpenID4CIFlow(t, vcsAPIDirectURL,
+			tc.issuerProfileID, subID)
 		testHelper.CheckMetricsLoggerAfterOpenID4CIFlow(t, tc.issuerProfileID)
 	}
 
-	require.Len(t, traceIDs, len(tests))
+	require.Len(t, traceIDs, len(preAuthTests))
 
 	time.Sleep(5 * time.Second)
 	for _, traceID := range traceIDs {
@@ -244,4 +272,66 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 		)
 		require.NoError(t, err)
 	}
+}
+
+func doAuthCodeFlowTest(t *testing.T) {
+	credentialOfferURL := oidc4ci.InitiateAuthCodeIssuance(t)
+
+	testHelper := helpers.NewCITestHelper(t, "ion", "")
+
+	opts := did.NewResolverOpts()
+	opts.SetResolverServerURI(didResolverURL)
+
+	didResolver, err := did.NewResolver(opts)
+	require.NoError(t, err)
+
+	interactionRequiredArgs := openid4ci.NewArgs(credentialOfferURL, testHelper.KMS.GetCrypto(), didResolver)
+	interactionOptionalArgs := openid4ci.NewOpts().DisableHTTPClientTLSVerify()
+
+	interaction, err := openid4ci.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
+	require.NoError(t, err)
+
+	redirectURIWithAuthCode := getRedirectURIWithAuthCode(t, interaction)
+
+	vm, err := testHelper.DIDDoc.AssertionMethod()
+	require.NoError(t, err)
+
+	credentials, err := interaction.RequestCredentialWithAuth(vm, redirectURIWithAuthCode)
+	require.NoError(t, err)
+	require.NotNil(t, credentials)
+	require.Equal(t, 1, credentials.Length())
+}
+
+func getRedirectURIWithAuthCode(t *testing.T, interaction *openid4ci.Interaction) string {
+	scopes := api.NewStringArray()
+	scopes.Append("openid")
+	scopes.Append("profile")
+
+	authURL, err := interaction.CreateAuthorizationURLWithScopes("oidc4vc_client",
+		"http://127.0.0.1/callback", scopes)
+	require.NoError(t, err)
+
+	var redirectURIWithAuthCode string
+
+	httpClient := &http.Client{
+		Transport: &http.Transport{TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		}},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			// intercept auth code
+			if strings.HasPrefix(req.URL.String(), "http://127.0.0.1/callback") {
+				redirectURIWithAuthCode = req.URL.String()
+
+				return http.ErrUseLastResponse
+			}
+
+			return nil
+		},
+	}
+
+	resp, err := httpClient.Get(authURL)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSeeOther, resp.StatusCode)
+
+	return redirectURIWithAuthCode
 }

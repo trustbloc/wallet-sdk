@@ -6,7 +6,7 @@
         "version": "v1.0",
         "groupID": "group_bank_issuer_jwtsd",
         "name": "Bank Issuer",
-        "organizationID": "test_org",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
         "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
@@ -30,8 +30,7 @@
             "openid",
             "profile"
           ],
-          "redirect_uri": "https://localhost:4455/oidc/redirect",
-          "issuer_well_known": "https://oidc-provider.example.com:4444/.well-known/openid-configuration"
+          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration"
         },
         "credentialTemplates": [
           {
@@ -171,7 +170,7 @@
         "version": "v1.0",
         "groupID": "group_drivers_license_issuer",
         "name": "Driver's License Issuer",
-        "organizationID": "test_org",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
         "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
@@ -191,8 +190,7 @@
             "openid",
             "profile"
           ],
-          "redirect_uri": "https://localhost:4455/oidc/redirect",
-          "issuer_well_known": "https://oidc-provider.example.com:4444/.well-known/openid-configuration"
+          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration"
         },
         "credentialTemplates": [
           {
@@ -362,8 +360,8 @@
         "version": "v1.0",
         "groupID": "group_bank_issuer",
         "name": "Bank Issuer",
-        "organizationID": "test_org",
-        "url": "http://localhost:8075",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
+        "url": "http://vc-rest-echo.trustbloc.local:8075",
         "active": true,
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",
@@ -376,14 +374,13 @@
           }
         },
         "oidcConfig": {
-          "client_id": "bank_issuer",
-          "client_secret_handle": "bank-issuer-secret",
+          "client_id": "7d4u50e7w6nfq8tfayhzplgjf",
+          "client_secret_handle": "282ks4fkuqfosus5k0x30abnv",
           "scope": [
             "openid",
             "profile"
           ],
-          "redirect_uri": "https://localhost:4455/oidc/redirect",
-          "issuer_well_known": "https://oidc-provider.example.com:4444/.well-known/openid-configuration"
+          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration"
         },
         "credentialTemplates": [
           {
@@ -524,7 +521,7 @@
         "version": "v1.0",
         "groupID": "group_university_degree_issuer",
         "name": "University Degree Issuer",
-        "organizationID": "test_org",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
         "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
@@ -544,8 +541,7 @@
             "openid",
             "profile"
           ],
-          "redirect_uri": "https://localhost:4455/oidc/redirect",
-          "issuer_well_known": "https://oidc-provider.example.com:4444/.well-known/openid-configuration"
+          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration"
         },
         "credentialTemplates": [
           {
@@ -647,7 +643,7 @@
         "version": "v1.0",
         "groupID": "group_university_degree_issuer_bbs",
         "name": "University Degree Issuer",
-        "organizationID": "test_org",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
         "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
@@ -667,8 +663,7 @@
             "openid",
             "profile"
           ],
-          "redirect_uri": "https://localhost:4455/oidc/redirect",
-          "issuer_well_known": "https://oidc-provider.example.com:4444/.well-known/openid-configuration"
+          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration"
         },
         "credentialTemplates": [
           {
@@ -769,7 +764,7 @@
         "version": "v1.0",
         "groupID": "group_did_ion_issuer",
         "name": "DID Ion Issuer",
-        "organizationID": "test_org",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
         "url": "http://localhost:8075",
         "active": true,
         "vcConfig": {
@@ -789,8 +784,7 @@
             "openid",
             "profile"
           ],
-          "redirect_uri": "https://localhost:4455/oidc/redirect",
-          "issuer_well_known": "https://oidc-provider.example.com:4444/.well-known/openid-configuration"
+          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration"
         },
         "credentialTemplates": [
           {
@@ -906,7 +900,7 @@
         "id": "v_ldp_university_degree",
         "version": "v1.0",
         "name": "v_ldp_university_degree",
-        "organizationID": "test_org",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
         "url": "https://test-verifier.com",
         "active": true,
         "webHook": "http://vcs.webhook.example.com:8180",
@@ -997,7 +991,7 @@
         "id": "v_ldp_university_degree_sd_bbs",
         "version": "v1.0",
         "name": "v_ldp_university_degree_sd_bbs",
-        "organizationID": "test_org",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
         "url": "https://test-verifier.com",
         "active": true,
         "webHook": "http://vcs.webhook.example.com:8180",
@@ -1083,7 +1077,7 @@
         "id": "v_myprofile_ldp",
         "version": "v1.0",
         "name": "v_myprofile_ldp",
-        "organizationID": "test_org",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
         "url": "https://test-verifier.com",
         "active": true,
         "webHook": "",
@@ -1177,7 +1171,7 @@
         "id": "v_myprofile_jwt_verified_employee",
         "version": "v1.0",
         "name": "v_myprofile_jwt_verified_employee",
-        "organizationID": "test_org",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
         "url": "https://test-verifier.com",
         "active": true,
         "webHook": "",
@@ -1237,7 +1231,7 @@
         "id": "v_myprofile_jwt_drivers_license",
         "version": "v1.0",
         "name": "v_myprofile_jwt_drivers_license",
-        "organizationID": "test_org",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
         "url": "https://test-verifier.com",
         "active": true,
         "webHook": "",
@@ -1297,7 +1291,7 @@
         "id": "v_myprofile_sdjwt",
         "version": "v1.0",
         "name": "v_myprofile_sdjwt",
-        "organizationID": "test_org",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
         "url": "https://test-verifier.com",
         "active": true,
         "webHook": "",
