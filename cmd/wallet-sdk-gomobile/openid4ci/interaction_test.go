@@ -333,7 +333,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 	})
 }
 
-func TestInteraction_IssuerCapabilities(t *testing.T) {
+func TestInteraction_GrantTypes(t *testing.T) {
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
@@ -348,6 +348,25 @@ func TestInteraction_IssuerCapabilities(t *testing.T) {
 	require.True(t, preAuthorizedCodeGrantParams.PINRequired())
 
 	require.False(t, interaction.AuthorizationCodeGrantTypeSupported())
+}
+
+func TestInteraction_DynamicClientRegistration(t *testing.T) {
+	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+	require.NoError(t, err)
+
+	interaction := createInteraction(t, kms, nil, createTestRequestURI("example.com"), nil, false)
+
+	supported, err := interaction.DynamicClientRegistrationSupported()
+	require.EqualError(t, err, "ISSUER_OPENID_FETCH_FAILED(OCI1-0006):failed to fetch issuer's "+
+		"OpenID configuration: "+`openid configuration endpoint: Get "example.com/.well-known/openid-configuration"`+
+		`: unsupported protocol scheme ""`)
+	require.False(t, supported)
+
+	endpoint, err := interaction.DynamicClientRegistrationEndpoint()
+	require.EqualError(t, err, "ISSUER_OPENID_FETCH_FAILED(OCI1-0006):failed to fetch issuer's "+
+		"OpenID configuration: "+`openid configuration endpoint: Get "example.com/.well-known/openid-configuration"`+
+		`: unsupported protocol scheme ""`)
+	require.Empty(t, endpoint)
 }
 
 //nolint:thelper // Not a test helper function

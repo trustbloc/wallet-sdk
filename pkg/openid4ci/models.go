@@ -48,6 +48,7 @@ type OpenIDConfig struct {
 	AuthorizationEndpoint  string   `json:"authorization_endpoint,omitempty"`
 	ResponseTypesSupported []string `json:"response_types_supported,omitempty"`
 	TokenEndpoint          string   `json:"token_endpoint,omitempty"`
+	RegistrationEndpoint   *string  `json:"registration_endpoint,omitempty"`
 }
 
 // CredentialResponse is the object returned from the Client.Callback method.

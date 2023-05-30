@@ -212,12 +212,12 @@ func (i *Interaction) IssuerURI() string {
 	return i.issuerURI
 }
 
-// PreAuthorizedCodeGrantTypeSupported indicates whether an issuer supports the pre-authorized code grant type.
+// PreAuthorizedCodeGrantTypeSupported indicates whether the issuer supports the pre-authorized code grant type.
 func (i *Interaction) PreAuthorizedCodeGrantTypeSupported() bool {
 	return i.preAuthorizedCodeGrantParams != nil
 }
 
-// PreAuthorizedCodeGrantParams returns an object that can be used to determine an issuer's pre-authorized code grant
+// PreAuthorizedCodeGrantParams returns an object that can be used to determine the issuer's pre-authorized code grant
 // parameters. The caller should call the PreAuthorizedCodeGrantTypeSupported method first and only call this method to
 // get the params if PreAuthorizedCodeGrantTypeSupported returns true.
 // This method only returns an error if (and only if) PreAuthorizedCodeGrantTypeSupported returns false.
@@ -229,9 +229,48 @@ func (i *Interaction) PreAuthorizedCodeGrantParams() (*PreAuthorizedCodeGrantPar
 	return i.preAuthorizedCodeGrantParams, nil
 }
 
-// AuthorizationCodeGrantTypeSupported indicates whether an issuer supports the authorization code grant type.
+// AuthorizationCodeGrantTypeSupported indicates whether the issuer supports the authorization code grant type.
 func (i *Interaction) AuthorizationCodeGrantTypeSupported() bool {
 	return i.authorizationCodeGrantParams != nil
+}
+
+// DynamicClientRegistrationSupported indicates whether the issuer supports dynamic client registration.
+func (i *Interaction) DynamicClientRegistrationSupported() (bool, error) {
+	var err error
+
+	i.openIDConfig, err = i.getOpenIDConfig()
+	if err != nil {
+		return false, walleterror.NewExecutionError(
+			module,
+			IssuerOpenIDConfigFetchFailedCode,
+			IssuerOpenIDConfigFetchFailedError,
+			fmt.Errorf("failed to fetch issuer's OpenID configuration: %w", err))
+	}
+
+	return i.openIDConfig.RegistrationEndpoint != nil, nil
+}
+
+// DynamicClientRegistrationEndpoint returns the issuer's dynamic client registration endpoint.
+// The caller should call the DynamicClientRegistrationSupported method first and only call this method
+// if DynamicClientRegistrationSupported returns true.
+// This method will return an error if the issuer does not support dynamic client registration.
+func (i *Interaction) DynamicClientRegistrationEndpoint() (string, error) {
+	var err error
+
+	i.openIDConfig, err = i.getOpenIDConfig()
+	if err != nil {
+		return "", walleterror.NewExecutionError(
+			module,
+			IssuerOpenIDConfigFetchFailedCode,
+			IssuerOpenIDConfigFetchFailedError,
+			fmt.Errorf("failed to fetch issuer's OpenID configuration: %w", err))
+	}
+
+	if i.openIDConfig.RegistrationEndpoint == nil {
+		return "", errors.New("issuer does not support dynamic client registration")
+	}
+
+	return *i.openIDConfig.RegistrationEndpoint, nil
 }
 
 func (i *Interaction) requestAccessToken(redirectURIWithAuthCode string) error {
@@ -260,7 +299,7 @@ func (i *Interaction) requestAccessToken(redirectURIWithAuthCode string) error {
 	//	return errors.New("state in redirect URI does not match the state from the authorization URL")
 	// }
 
-	i.openIDConfig, err = i.fetchOpenIDConfig()
+	i.openIDConfig, err = i.getOpenIDConfig()
 	if err != nil {
 		return walleterror.NewExecutionError(
 			module,
@@ -483,7 +522,7 @@ func (i *Interaction) getCredentialResponsesUsingPreAuth(pin string, //nolint:fu
 ) ([]CredentialResponse, error) {
 	var err error
 
-	i.openIDConfig, err = i.fetchOpenIDConfig()
+	i.openIDConfig, err = i.getOpenIDConfig()
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
 			module,
@@ -610,7 +649,13 @@ func (i *Interaction) getCredentialResponsesUsingAuth(signer api.JWTSigner) ([]C
 	return credentialResponses, nil
 }
 
-func (i *Interaction) fetchOpenIDConfig() (*OpenIDConfig, error) {
+// getOpenIDConfig fetches the OpenID configuration from the issuer. If the OpenID configuration has already been
+// fetched before, then it's returned without making an additional call.
+func (i *Interaction) getOpenIDConfig() (*OpenIDConfig, error) {
+	if i.openIDConfig != nil {
+		return i.openIDConfig, nil
+	}
+
 	openIDConfigEndpoint := i.issuerURI + "/.well-known/openid-configuration"
 
 	responseBytes, err := httprequest.New(i.httpClient, i.metricsLogger).Do(
