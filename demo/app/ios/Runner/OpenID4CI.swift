@@ -42,7 +42,7 @@ public class OpenID4CI {
         return ""
     }
     
-    func getAuthorizationLink(scopes: [String], clientID: String, redirectURI: String) throws  -> String {
+    func createAuthorizationURLWithScopes(scopes: [String], clientID: String, redirectURI: String) throws  -> String {
      let scopesArr = ApiStringArray()
         for scope in scopes {
             scopesArr!.append(scope)!
@@ -59,7 +59,7 @@ public class OpenID4CI {
       return authorizationLink
     }
     
-    func getAuthorizationLinkWithoutScopes(clientID: String, redirectURI: String) throws  -> String {
+    func createAuthorizationURL(clientID: String, redirectURI: String) throws  -> String {
       var error: NSError?
     
         let authorizationLink =  initiatedInteraction.createAuthorizationURL(clientID, redirectURI: redirectURI, error: &error)

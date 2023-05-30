@@ -39,20 +39,27 @@ class OpenID4CI constructor(
         return ""
     }
 
-    fun getAuthorizationLink(scope1: String, scope2: String, clientID: String, redirectURI: String): String {
+    fun createAuthorizationURLWithScopes(scopes:ArrayList<String>, clientID: String, redirectURI: String): String {
         var issuerCapabilities = newInteraction.issuerCapabilities()
         if (!issuerCapabilities.authorizationCodeGrantTypeSupported()) {
             return "Not implemented"
         }
-
-        val scopes = StringArray()
-        scopes.append(scope1).append(scope2);
-        // TODO #426 error handling
+        val scopesArr = StringArray();
+        for (scope in scopes) {
+            scopesArr.append(scope);
+        }
         return newInteraction.createAuthorizationURLWithScopes(
             clientID,
             redirectURI,
-            scopes
+            scopesArr
         )
+    }
+
+    fun createAuthorizationURL(clientID: String, redirectURI: String): String {
+      return  newInteraction.createAuthorizationURL(
+          clientID,
+          redirectURI
+      )
     }
 
     fun pinRequired(): Boolean {

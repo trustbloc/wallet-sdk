@@ -317,9 +317,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 }
                 
                 if (!authCodeArgs.keys.contains("scopes")) {
-                    authorizationLink = try openID4CI.getAuthorizationLinkWithoutScopes(clientID: authCodeArgs["clientID"]! as! String, redirectURI: authCodeArgs["redirectURI"]! as! String)
+                    authorizationLink = try openID4CI.createAuthorizationURL(clientID: authCodeArgs["clientID"]! as! String, redirectURI: authCodeArgs["redirectURI"]! as! String)
                 } else {
-                    authorizationLink = try openID4CI.getAuthorizationLink(scopes: authCodeArgs["scopes"]! as! [String], clientID: authCodeArgs["clientID"]! as! String, redirectURI: authCodeArgs["redirectURI"]! as! String)
+                    authorizationLink = try openID4CI.createAuthorizationURLWithScopes(scopes: authCodeArgs["scopes"]! as! [String], clientID: authCodeArgs["clientID"]! as! String, redirectURI: authCodeArgs["redirectURI"]! as! String)
                 }
       
             }

@@ -5,13 +5,31 @@
       "clientID": "oidc4vc_client",
       "redirectURI": "trustbloc-wallet://openid4vci/authcodeflow/callback"
     },
+  "https://api-gateway.stg.trustbloc.dev/issuer/bank_issuer/v1.0":
+  {
+    "scopes": ["openid","profile"],
+    "clientID": "oidc4vc_client",
+    "redirectURI": "trustbloc-wallet://openid4vci/authcodeflow/callback"
+  },
   "https://api-gateway.dev.trustbloc.dev/issuer/pr_card_issuer_jwtsd/v1.0":
   {
     "scopes": ["openid","profile"],
     "clientID": "oidc4vc_client",
     "redirectURI": "trustbloc-wallet://openid4vci/authcodeflow/callback"
   },
+  "https://api-gateway.stg.trustbloc.dev/issuer/pr_card_issuer_jwtsd/v1.0":
+  {
+    "scopes": ["openid","profile"],
+    "clientID": "oidc4vc_client",
+    "redirectURI": "trustbloc-wallet://openid4vci/authcodeflow/callback"
+  },
   "https://api-gateway.dev.trustbloc.dev/issuer/vaccination_certificate_issuer/v1.0":
+  {
+    "scopes": ["openid","profile"],
+    "clientID": "oidc4vc_client",
+    "redirectURI": "trustbloc-wallet://openid4vci/authcodeflow/callback"
+  },
+  "https://api-gateway.stg.trustbloc.dev/issuer/vaccination_certificate_issuer/v1.0":
   {
     "scopes": ["openid","profile"],
     "clientID": "oidc4vc_client",
