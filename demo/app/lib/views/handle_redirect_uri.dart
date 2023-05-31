@@ -75,14 +75,13 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
       try {
         var credentials = await WalletSDKPlugin.requestCredentialWithAuth(_redirectUri.toString());
         String? issuerURI = await WalletSDKPlugin.issuerURI();
-        var resolvedCredentialDisplay = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
-        log("resolvedCredentialDisplay -> $resolvedCredentialDisplay");
-        var renderedCredDisplay = await WalletSDKPlugin.resolveCredentialDisplay(resolvedCredentialDisplay!);
+        var serializedDisplayData = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
+        log("serializedDisplayData -> $serializedDisplayData");
         var activities = await WalletSDKPlugin.storeActivityLogger();
         var credID = await WalletSDKPlugin.getCredID([credentials]);
         _storageService.addActivities(ActivityDataObj(credID!, activities));
         pref.setString("credID", credID);
-        return _navigateToCredPreviewScreen(credentials, issuerURI, resolvedCredentialDisplay!, userDIDId);
+        return _navigateToCredPreviewScreen(credentials, issuerURI, serializedDisplayData!, userDIDId);
       } catch (error) {
         Navigator.push(
             context,

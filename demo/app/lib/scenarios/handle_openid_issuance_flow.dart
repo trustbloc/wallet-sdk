@@ -86,7 +86,7 @@ void navigateToWithoutPinFlow(BuildContext context) async{
   log("activities and credID handle open id  -$activities and $credID");
   storageService.addActivities(ActivityDataObj(credID!, activities));
 
-  navigateToCredPreviewScreen(context, credentials, issuerURL, resolvedCredentialDisplay!, didID);
+  navigateToCredPreviewScreen(context, credentials, issuerURL, resolvedCredentialDisplay!, didID, credID);
 }
 
 void navigateToOTPScreen(BuildContext context) async {
@@ -94,12 +94,12 @@ void navigateToOTPScreen(BuildContext context) async {
 }
 
 navigateToCredPreviewScreen(
-    BuildContext context, String credentialResp, String issuerURL, String resolvedCredentialDisplay, String didID) async {
+    BuildContext context, String credentialResp, String issuerURL, String resolvedCredentialDisplay, String didID, String credID) async {
   Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) =>
-            CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURL, credentialDisplayData: resolvedCredentialDisplay, credentialDID: didID)),));
+            CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURL, credentialDisplayData: resolvedCredentialDisplay, credentialDID: didID, credID: credID)),));
 }
 
 

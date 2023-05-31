@@ -132,7 +132,7 @@ class _OTPPage extends State<OTP> {
                         });
 
                         String? credentials;
-                        String? resolvedCredentialDisplay;
+                        String? serializeDisplayData;
                         try {
                           final SharedPreferences pref = await prefs;
                              await _createDid();
@@ -140,16 +140,14 @@ class _OTPPage extends State<OTP> {
                              pref.setString('userDIDDoc',userDIDDoc);
                           credentials =  await WalletSDKPlugin.requestCredential(_otp!);
                           String? issuerURI = await WalletSDKPlugin.issuerURI();
-                          resolvedCredentialDisplay = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
-                          log("resolvedCredentialDisplay -> $resolvedCredentialDisplay");
-                          var renderedCredDisplay =  await WalletSDKPlugin.resolveCredentialDisplay(resolvedCredentialDisplay!);
-                          log("rendered cred display otp -${renderedCredDisplay}");
+                          serializeDisplayData = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
+                          log("serializeDisplayData -> $serializeDisplayData");
                           var activities = await WalletSDKPlugin.storeActivityLogger();
                           var credID = await WalletSDKPlugin.getCredID([credentials]);
                           log("activities and credID -$activities and $credID");
                           _storageService.addActivities(ActivityDataObj(credID!, activities));
                            pref.setString("credID", credID);
-                          _navigateToCredPreviewScreen(credentials, issuerURI, resolvedCredentialDisplay!, userDIDId);
+                          _navigateToCredPreviewScreen(credentials, issuerURI, serializeDisplayData!, userDIDId, credID);
                         } catch (err) {
                           String errorMessage = err.toString();
                           if (err is PlatformException &&
@@ -190,8 +188,8 @@ class _OTPPage extends State<OTP> {
     ),
  )));
   }
-  _navigateToCredPreviewScreen(String credentialResp, String issuerURI, String credentialDisplayData, String didID) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURI, credentialDisplayData: credentialDisplayData, credentialDID: didID),)));
+  _navigateToCredPreviewScreen(String credentialResp, String issuerURI, String credentialDisplayData, String didID, String credID) async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURI, credentialDisplayData: credentialDisplayData, credentialDID: didID, credID: credID),)));
   }
 
   _clearOTPInput(){

@@ -4,9 +4,10 @@ class CredentialData {
   final String credentialDisplayData;
   final String issuerURL;
   final String? credentialDID;
+  final String? credID;
 
 
-  CredentialData({ required this.rawCredential, required this.issuerURL, required this.credentialDisplayData, this.credentialDID});
+  CredentialData({ required this.rawCredential, required this.issuerURL, required this.credentialDisplayData, this.credentialDID, this.credID});
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
@@ -14,6 +15,7 @@ class CredentialData {
     data['credentialDisplayData'] = credentialDisplayData;
     data['issuerURL'] = issuerURL;
     data['credentialDID'] = credentialDID;
+    data['credID'] = credID;
     return data;
   }
 
@@ -23,6 +25,7 @@ class CredentialData {
       credentialDisplayData: json['credentialDisplayData'],
       issuerURL: json['issuerURL'],
       credentialDID: json['credentialDID'],
+      credID: json['credID'],
     );
   }
 }

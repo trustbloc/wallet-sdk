@@ -35,9 +35,8 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
       return;
   }
 
-  List<String> matchedCred = [];
   try {
-    matchedCred = await WalletSDKPlugin.processAuthorizationRequest(
+    await WalletSDKPlugin.processAuthorizationRequest(
         authorizationRequest: qrCodeURL, storedCredentials: credentials);
   } catch (error) {
     Navigator.push(
@@ -50,7 +49,6 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
   // Get the matched VCIDs from the submission request.
   var getSubmissionRequest = await WalletSDKPlugin.getSubmissionRequirements(storedCredentials: credentials);
   var submission =  getSubmissionRequest.first;
-
   if (submission.count > 1) {
     // multiple matched vc ids are found therefore, invoking multiple credential Presentation Preview.
     List<CredentialData> credentialDisplayDataList = [];
@@ -70,7 +68,7 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
     }
     navigateToPresentMultiCred(context, credentialDisplayDataList, "Choose ${submission.count} credentials to present");
     return;
-  } else if (submission.count==1){
+  } else if (submission.count == 1) {
     var matchedVCsID = submission.inputDescriptors.first.matchedVCsID;
     if (matchedVCsID.length > 1) {
       log("matched length, more than matched vc ids are found ${matchedVCsID.length}");
@@ -83,23 +81,27 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
       return;
     } else {
         log("single matched vc id flow");
-        Map<String, dynamic> matchedCredID = Jwt.parseJwt(matchedCred.first);
         var credentialDisplayData;
-        for(var cred in credentials ){
-          // TODO #Issue-421 Revisit the matched cred logic in handle vp request
-          Map<String, dynamic> credID = Jwt.parseJwt(cred);
-          if (credID["jti"] == matchedCredID["jti"]){
-            credentialDisplayData = storedCredentials
-                .where((element) => cred.contains(element.value.rawCredential))
-                .map((e) => CredentialData(rawCredential: e.value.rawCredential, issuerURL: e.value.issuerURL, credentialDisplayData: e.value.credentialDisplayData)).toList();
-          }
-        }
-        navigateToPresentationPreviewScreen(context, credentialDisplayData.first);
-        return;
+            for (var inputDes in submission.inputDescriptors) {
+                for (var matchVC in inputDes.matchedVCs) {
+                  var credID = await WalletSDKPlugin.getCredID([matchVC]);
+                  var issuerURI = storedCredentials
+                      .where((element) => credID!.contains(element.value.credID!))
+                      .map((e) => e.value.issuerURL).toList();
+                  log("matched issuerURI found: ${issuerURI}");
+                  credentialDisplayData = await WalletSDKPlugin.serializeDisplayData([matchVC], issuerURI.first);
+                  log("credentialDisplayData -> $credentialDisplayData");
+                  navigateToPresentationPreviewScreen(context, CredentialData(
+                      rawCredential: matchVC,
+                      issuerURL: issuerURI.first,
+                      credentialDisplayData: credentialDisplayData)!);
+                  return;
+                }
+            }
+
       }
     }
-
-}
+ }
 
 void navigateToPresentMultiCred(
     BuildContext context, List<CredentialData> credentialData, String infoData) async {
