@@ -300,10 +300,16 @@ class MainActivity : FlutterActivity() {
             if (flowType == "auth-code-flow"){
                 val authCodeArgs = call.argument<MutableMap<String, String>>("authCodeArgs")
                     ?: throw java.lang.Exception("authCodeArgs params is missed, Pass scopes, clientID and redirectURI as the arguments")
-                authorizationLink = openID4CI.getAuthorizationLink(authCodeArgs["scope1"].toString(),
-                    authCodeArgs["scope2"].toString(),
-                    authCodeArgs["clientID"].toString(),
-                    authCodeArgs["redirectURI"].toString() )
+
+                if (!authCodeArgs.keys.contains("scopes")) {
+                    authorizationLink = openID4CI.createAuthorizationURL(
+                        authCodeArgs["clientID"].toString(),
+                        authCodeArgs["redirectURI"].toString() )
+                } else {
+                    authorizationLink = openID4CI.createAuthorizationURLWithScopes(authCodeArgs["scopes"] as ArrayList<String>,
+                        authCodeArgs["clientID"].toString(),
+                        authCodeArgs["redirectURI"].toString() )
+                }
             }
 
         val flowTypeData: MutableMap<String, Any> = mutableMapOf()

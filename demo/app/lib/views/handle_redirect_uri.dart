@@ -48,40 +48,6 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
     _handleIncomingLinks();
   }
 
-
-
-  _launchUrl(Uri uri) async {
-    final initialUri = await getInitialUri();
-    if (!await launch(uri.toString(), forceSafariVC: false)) {
-      throw 'Could not launch $uri';
-    }
-  }
-
-  _handleIncomingLinks() async {
-    if (!kIsWeb) {
-      _sub = await uriLinkStream.listen((Uri? uri) {
-        if (!mounted) return;
-        log("received redirect uri $uri");
-        setState(() {
-          _redirectUri = uri;
-          _err = null;
-          result = launchCredPreview();
-        });
-      }, onError: (Object err) {
-        if (!mounted) return;
-        setState(() {
-          _redirectUri = null;
-          if (err is FormatException) {
-            _err = err;
-          } else {
-            _err = null;
-          }
-        });
-      });
-    }
-  }
-
-
   Future<String?> _createDid() async {
     final SharedPreferences pref = await prefs;
     var didType = pref.getString('didType');
@@ -142,6 +108,37 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
             },
        )
     );
+  }
+
+  _launchUrl(Uri uri) async {
+    final initialUri = await getInitialUri();
+    if (!await launch(uri.toString(), forceSafariVC: false)) {
+      throw 'Failed to launch $uri';
+    }
+  }
+
+  _handleIncomingLinks() async {
+    if (!kIsWeb) {
+      _sub = await uriLinkStream.listen((Uri? uri) {
+        if (!mounted) return;
+        log("received redirect uri $uri");
+        setState(() {
+          _redirectUri = uri;
+          _err = null;
+          result = launchCredPreview();
+        });
+      }, onError: (Object err) {
+        if (!mounted) return;
+        setState(() {
+          _redirectUri = null;
+          if (err is FormatException) {
+            _err = err;
+          } else {
+            _err = null;
+          }
+        });
+      });
+    }
   }
 
  _navigateToCredPreviewScreen(String credentialResp, String issuerURI, String credentialDisplayData, String didID) async {
