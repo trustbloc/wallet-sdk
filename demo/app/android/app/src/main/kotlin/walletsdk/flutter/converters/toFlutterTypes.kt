@@ -36,11 +36,16 @@ private fun convertInputDescriptor(desc: InputDescriptor): HashMap<String, Any> 
         desc.matchedVCs.atIndex(i.toLong()).id()
     }
 
+    val matchedVCs = List<String>(desc.matchedVCs.length().toInt()) { i: Int ->
+        desc.matchedVCs.atIndex(i.toLong()).serialize()
+    }
+
     return HashMap(mapOf(
             "id" to desc.id,
             "name" to desc.name,
             "purpose" to desc.purpose,
             "matchedVCsID" to matchedVCsID,
+            "matchedVCs" to matchedVCs,
     ))
 }
 

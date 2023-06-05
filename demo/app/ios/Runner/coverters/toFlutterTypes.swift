@@ -41,17 +41,23 @@ private func convertSubmissionRequirement(req: CredentialSubmissionRequirement) 
 }
 
 func convertInputDescriptor(desc: CredentialInputDescriptor) -> Dictionary<String, Any> {
+    var matchedVCs: [String] = []
     var matchedVCsID: [String] = []
     
     for i in 0..<desc.matchedVCs!.length() {
-        matchedVCsID.append(desc.matchedVCs!.atIndex(i)!.id_())
+        matchedVCs.append(desc.matchedVCs!.atIndex(i)!.serialize(nil))
     }
 
+    for i in 0..<desc.matchedVCs!.length() {
+        matchedVCsID.append(desc.matchedVCs!.atIndex(i)!.id_())
+    }
+    
     return [
         "id" : desc.id_,
         "name" : desc.name,
         "purpose" : desc.purpose,
         "matchedVCsID" : matchedVCsID,
+        "matchedVCs" : matchedVCs,
     ]
 }
 

@@ -56,17 +56,19 @@ class InputDescriptor {
   final String name;
   final String purpose;
   final List<String> matchedVCsID;
+  final List<String> matchedVCs;
 
   const InputDescriptor({
     required this.id,
     required this.name,
     required this.purpose,
     required this.matchedVCsID,
+    required this.matchedVCs,
   });
 
   @override
   String toString() {
-    return 'InputDescriptor{ id: $id, name: $name, purpose: $purpose, matchedVCsID: $matchedVCsID,}';
+    return 'InputDescriptor{ id: $id, name: $name, purpose: $purpose, matchedVCs: $matchedVCs, matchedVCsID: $matchedVCsID }';
   }
 
   factory InputDescriptor.fromMap(Map<String, dynamic> map) {
@@ -75,6 +77,7 @@ class InputDescriptor {
       name: map['name'] as String,
       purpose: map['purpose'] as String,
       matchedVCsID: map['matchedVCsID'].cast<String>(),
+      matchedVCs: map['matchedVCs'].cast<String>(),
     );
   }
 }
@@ -153,16 +156,9 @@ class MethodChannelWallet extends WalletPlatform {
   }
 
   Future<String?> serializeDisplayData(List<String> credentials, String issuerURI) async {
-    try {
       final credentialResponse = await methodChannel.invokeMethod<String>(
           'serializeDisplayData', <String, dynamic>{'vcCredentials': credentials, 'uri': issuerURI});
       return credentialResponse;
-    } on PlatformException catch (error) {
-      if (error.code == errorCode) {
-        return error.details.toString();
-      }
-    }
-    return null;
   }
 
   Future<List<Object?>> resolveCredentialDisplay(String resolvedCredentialDisplayData) async {
