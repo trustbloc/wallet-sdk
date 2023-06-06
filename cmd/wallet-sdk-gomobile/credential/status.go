@@ -12,13 +12,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
+	"github.com/hyperledger/aries-framework-go/component/models/did"
 
-	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
-
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialstatus"
 )
 

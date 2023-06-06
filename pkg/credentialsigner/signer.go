@@ -11,10 +11,10 @@ import (
 	"errors"
 	"fmt"
 
-	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
+	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
-	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
+	vdrspi "github.com/hyperledger/aries-framework-go/spi/vdr"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
@@ -150,6 +150,6 @@ type didResolverWrapper struct {
 	didResolver api.DIDResolver
 }
 
-func (d *didResolverWrapper) Resolve(did string, _ ...vdr.DIDMethodOption) (*diddoc.DocResolution, error) {
+func (d *didResolverWrapper) Resolve(did string, _ ...vdrspi.DIDMethodOption) (*diddoc.DocResolution, error) {
 	return d.didResolver.Resolve(did)
 }

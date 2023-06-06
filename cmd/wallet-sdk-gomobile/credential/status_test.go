@@ -9,9 +9,9 @@ package credential_test
 import (
 	"testing"
 
-	afgoverifiable "github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
-
+	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/stretchr/testify/require"
+
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 )

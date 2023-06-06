@@ -11,7 +11,7 @@ import (
 	"fmt"
 
 	jwkvdr "github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	"github.com/hyperledger/aries-framework-go/component/models/did"
 )
 
 // Creator creates did:jwk DID Documents.

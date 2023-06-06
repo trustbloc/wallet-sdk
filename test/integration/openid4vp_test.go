@@ -14,16 +14,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4vp"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/helpers"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/metricslogger"

@@ -10,14 +10,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/google/uuid"
-
-	"github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
+	"github.com/trustbloc/wallet-sdk/pkg/api"
 )
 
 func TestMobileActivityLoggerWrapper_Log(t *testing.T) {

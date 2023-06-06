@@ -15,9 +15,9 @@ import (
 	"github.com/hyperledger/aries-framework-go-ext/component/vc/status"
 	"github.com/hyperledger/aries-framework-go-ext/component/vc/status/resolver"
 	"github.com/hyperledger/aries-framework-go-ext/component/vc/status/validator"
-	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
-	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
+	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
+	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
+	vdrspi "github.com/hyperledger/aries-framework-go/spi/vdr"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 )
@@ -68,19 +68,19 @@ type wrapResolver struct {
 	resolver api.DIDResolver
 }
 
-func (w *wrapResolver) Resolve(did string, _ ...vdr.DIDMethodOption) (*diddoc.DocResolution, error) {
+func (w *wrapResolver) Resolve(did string, _ ...vdrspi.DIDMethodOption) (*diddoc.DocResolution, error) {
 	return w.resolver.Resolve(did)
 }
 
-func (w *wrapResolver) Create(string, *diddoc.Doc, ...vdr.DIDMethodOption) (*diddoc.DocResolution, error) {
+func (w *wrapResolver) Create(string, *diddoc.Doc, ...vdrspi.DIDMethodOption) (*diddoc.DocResolution, error) {
 	return nil, fmt.Errorf("create operation is not supported")
 }
 
-func (w *wrapResolver) Update(*diddoc.Doc, ...vdr.DIDMethodOption) error {
+func (w *wrapResolver) Update(*diddoc.Doc, ...vdrspi.DIDMethodOption) error {
 	return fmt.Errorf("update operation is not supported")
 }
 
-func (w *wrapResolver) Deactivate(string, ...vdr.DIDMethodOption) error {
+func (w *wrapResolver) Deactivate(string, ...vdrspi.DIDMethodOption) error {
 	return fmt.Errorf("deactivate operation is not supported")
 }
 

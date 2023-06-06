@@ -14,13 +14,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
-
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/util"
-	afgoverifiable "github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	"github.com/hyperledger/aries-framework-go/component/models/did"
+	afgotime "github.com/hyperledger/aries-framework-go/component/models/util/time"
+	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/stretchr/testify/require"
+
 	. "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 )
 
 const (
@@ -43,7 +43,7 @@ func TestSigner_Issue(t *testing.T) {
 		Issuer: afgoverifiable.Issuer{
 			ID: mockDID,
 		},
-		Issued: util.NewTime(time.Now()),
+		Issued: afgotime.NewTime(time.Now()),
 	}
 
 	t.Run("success", func(t *testing.T) {

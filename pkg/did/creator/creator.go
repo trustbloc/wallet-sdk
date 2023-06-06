@@ -12,17 +12,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
-
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
-	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
-	jwkdidcreator "github.com/trustbloc/wallet-sdk/pkg/did/creator/jwk"
+	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk"
+	"github.com/hyperledger/aries-framework-go/component/models/did"
+	arieskms "github.com/hyperledger/aries-framework-go/spi/kms"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
 	didioncreator "github.com/trustbloc/wallet-sdk/pkg/did/creator/ion"
+	jwkdidcreator "github.com/trustbloc/wallet-sdk/pkg/did/creator/jwk"
 	didkeycreator "github.com/trustbloc/wallet-sdk/pkg/did/creator/key"
+	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 

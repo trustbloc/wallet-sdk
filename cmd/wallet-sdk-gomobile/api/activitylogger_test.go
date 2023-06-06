@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
 	"github.com/stretchr/testify/require"
+
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 )

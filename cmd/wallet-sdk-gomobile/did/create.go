@@ -9,7 +9,7 @@ package did
 import (
 	"errors"
 
-	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
+	arieskms "github.com/hyperledger/aries-framework-go/spi/kms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"

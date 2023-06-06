@@ -7,9 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package metricslogger
 
 import (
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
 )
 
 // MetricsLogger is a simple api.MetricsLogger implementation that saves all metrics Events in memory and writes them to

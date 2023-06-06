@@ -10,11 +10,11 @@ package api
 import (
 	"time"
 
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
-	"github.com/hyperledger/aries-framework-go/pkg/kms"
+	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose"
+	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk"
+	"github.com/hyperledger/aries-framework-go/component/models/did"
+	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
+	"github.com/hyperledger/aries-framework-go/spi/kms"
 )
 
 // DefaultHTTPTimeout is the default timeout used across Wallet-SDK for HTTP calls.

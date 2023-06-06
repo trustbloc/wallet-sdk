@@ -9,7 +9,7 @@ package wrapper
 import (
 	"fmt"
 
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	"github.com/hyperledger/aries-framework-go/component/models/did"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )

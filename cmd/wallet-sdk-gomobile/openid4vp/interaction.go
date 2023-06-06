@@ -12,16 +12,15 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
-
-	"github.com/hyperledger/aries-framework-go/pkg/doc/jwt"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
-	afgoverifiable "github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	"github.com/hyperledger/aries-framework-go/component/models/jwt"
+	"github.com/hyperledger/aries-framework-go/component/models/presexch"
+	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/openid4vp"

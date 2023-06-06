@@ -10,12 +10,11 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
-
 	"github.com/stretchr/testify/require"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 )
 
 func TestActivityLogger(t *testing.T) {

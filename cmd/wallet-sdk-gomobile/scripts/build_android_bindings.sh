@@ -15,3 +15,4 @@ x_flags="-X '$version_package.version=$NEW_VERSION' -X '$version_package.gitRev=
 echo "x_flags: $x_flags"
 
 gomobile bind -ldflags "-w -s $x_flags" -androidapi 22 -o bindings/android/walletsdk.aar -javapkg=${android_java_pkg-pkg} -target=android ${packages_for_bindings}
+#gomobile bind -ldflags "-w -s $x_flags" -androidapi 22 -o bindings/android/walletsdk.aar -javapkg=${android_java_pkg-pkg} -target=android/amd64,android/arm64 -tags generic ${packages_for_bindings}

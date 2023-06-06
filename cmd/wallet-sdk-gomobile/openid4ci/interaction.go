@@ -11,11 +11,11 @@ package openid4ci
 import (
 	"errors"
 
-	afgoverifiable "github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
+	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/walleterror"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"

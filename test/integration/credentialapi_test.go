@@ -13,10 +13,10 @@ import (
 	"testing"
 	"time"
 
-	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/util"
-	afgoverifiable "github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
-	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
+	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
+	afgotime "github.com/hyperledger/aries-framework-go/component/models/util/time"
+	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
+	vdrapi "github.com/hyperledger/aries-framework-go/spi/vdr"
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
 
@@ -98,7 +98,7 @@ func TestCredentialAPI(t *testing.T) {
 				Issuer: afgoverifiable.Issuer{
 					ID: docID,
 				},
-				Issued: util.NewTime(time.Now()),
+				Issued: afgotime.NewTime(time.Now()),
 			}
 
 			err = credStore.Add(verifiable.NewCredential(templateCredential))
@@ -136,7 +136,7 @@ type didResolverWrapper struct {
 	didResolver sdkapi.DIDResolver
 }
 
-func (d *didResolverWrapper) Resolve(did string, _ ...vdr.DIDMethodOption) (*diddoc.DocResolution, error) {
+func (d *didResolverWrapper) Resolve(did string, _ ...vdrapi.DIDMethodOption) (*diddoc.DocResolution, error) {
 	return d.didResolver.Resolve(did)
 }
 

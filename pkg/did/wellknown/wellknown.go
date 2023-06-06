@@ -14,9 +14,9 @@ import (
 	"net/http"
 	"strings"
 
+	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
 	"github.com/hyperledger/aries-framework-go/pkg/client/didconfig"
-	diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
+	vdrspi "github.com/hyperledger/aries-framework-go/spi/vdr"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
@@ -114,6 +114,6 @@ type didResolverWrapper struct {
 	didResolver api.DIDResolver
 }
 
-func (d *didResolverWrapper) Resolve(did string, _ ...vdr.DIDMethodOption) (*diddoc.DocResolution, error) {
+func (d *didResolverWrapper) Resolve(did string, _ ...vdrspi.DIDMethodOption) (*diddoc.DocResolution, error) {
 	return d.didResolver.Resolve(did)
 }

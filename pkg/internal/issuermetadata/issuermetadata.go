@@ -12,11 +12,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
 	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
-
-	"github.com/trustbloc/wallet-sdk/pkg/api"
-
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 

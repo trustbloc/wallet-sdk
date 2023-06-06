@@ -7,9 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package localkms
 
 import (
-	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
-	"github.com/hyperledger/aries-framework-go/pkg/secretlock"
-	"github.com/hyperledger/aries-framework-go/pkg/secretlock/noop"
+	arieskms "github.com/hyperledger/aries-framework-go/component/kmscrypto/kms"
+	"github.com/hyperledger/aries-framework-go/component/kmscrypto/secretlock/noop"
+	kmsapi "github.com/hyperledger/aries-framework-go/spi/kms"
+	"github.com/hyperledger/aries-framework-go/spi/secretlock"
 )
 
 // MemKMSStore represents an in-memory database of keysets.
@@ -50,10 +51,10 @@ func (k *MemKMSStore) Delete(keysetID string) error {
 }
 
 type storageProvider struct {
-	Storage arieskms.Store
+	Storage kmsapi.Store
 }
 
-func (p *storageProvider) StorageProvider() arieskms.Store {
+func (p *storageProvider) StorageProvider() kmsapi.Store {
 	return p.Storage
 }
 

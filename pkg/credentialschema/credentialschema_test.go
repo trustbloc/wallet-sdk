@@ -15,7 +15,7 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/pkg/memstorage"
 
-	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/pkg/credentialschema"

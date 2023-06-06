@@ -13,10 +13,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/util"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	"github.com/hyperledger/aries-framework-go/component/models/did"
+	afgotime "github.com/hyperledger/aries-framework-go/component/models/util/time"
+	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/stretchr/testify/require"
+
 	. "github.com/trustbloc/wallet-sdk/pkg/credentialsigner"
 )
 
@@ -39,7 +40,7 @@ func TestSigner_Issue(t *testing.T) {
 		Issuer: verifiable.Issuer{
 			ID: "did:foo:bar",
 		},
-		Issued: util.NewTime(time.Now()),
+		Issued: afgotime.NewTime(time.Now()),
 	}
 
 	t.Run("success", func(t *testing.T) {
@@ -138,7 +139,7 @@ func TestSigner_Issue(t *testing.T) {
 			Issuer: verifiable.Issuer{
 				ID: "did:foo:bar",
 			},
-			Issued: util.NewTime(time.Now()),
+			Issued: afgotime.NewTime(time.Now()),
 		}
 
 		signer := New(&mockResolver{

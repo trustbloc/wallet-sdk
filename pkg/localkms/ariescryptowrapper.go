@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hyperledger/aries-framework-go/pkg/crypto"
-	"github.com/hyperledger/aries-framework-go/pkg/kms"
+	"github.com/hyperledger/aries-framework-go/spi/crypto"
+	"github.com/hyperledger/aries-framework-go/spi/kms"
 )
 
 // AriesCryptoWrapper wraps aries crypto implementations to conform api.Crypto interface.

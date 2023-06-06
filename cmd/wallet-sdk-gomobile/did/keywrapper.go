@@ -7,8 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package did
 
 import (
-	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
-	arieskms "github.com/hyperledger/aries-framework-go/pkg/kms"
+	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk"
+	arieskms "github.com/hyperledger/aries-framework-go/spi/kms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )

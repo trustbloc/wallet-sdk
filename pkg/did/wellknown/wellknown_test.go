@@ -15,8 +15,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
+	"github.com/hyperledger/aries-framework-go/component/models/did"
+	"github.com/hyperledger/aries-framework-go/component/vdr/httpbinding"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
