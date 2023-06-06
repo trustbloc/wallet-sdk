@@ -14,16 +14,24 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'dart:async';
+import 'package:app/models/credential_offer.dart';
+import 'package:http/http.dart' as http;
 
 void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
   var WalletSDKPlugin = MethodChannelWallet();
   final StorageService storageService = StorageService();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   var authCodeArgs;
-  if (qrCodeURL.contains("authorization_code")){
-    authCodeArgs = await readIssuerAuthFlowConfig(qrCodeURL);
-    log("auth code arguments fetched from config file ${authCodeArgs}");
+  if (qrCodeURL.contains("credential_offer_uri")){
+    authCodeArgs = await parseCredentialOfferUri(qrCodeURL);
+    log("credential offer uri auth code  ${authCodeArgs}");
+  } else {
+    if (qrCodeURL.contains("authorization_code")){
+      authCodeArgs = await readIssuerAuthFlowConfig(qrCodeURL);
+      log("auth code arguments fetched from config file ${authCodeArgs}");
+    }
   }
+
   var flowTypeData = await WalletSDKPlugin.initialize(qrCodeURL, authCodeArgs);
   var flowTypeDataEncoded = json.encode(flowTypeData);
   Map<String, dynamic> responseJson = json.decode(flowTypeDataEncoded);
@@ -51,6 +59,21 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
   final String response = await rootBundle.loadString('lib/assets/issuerAuthFlowConfig.json');
   final configData = await json.decode(response);
   return configData[credentialIssuerKey["credential_issuer"]];
+}
+
+parseCredentialOfferUri(String qrCodeURL) async {
+  var decodedUri = Uri.decodeComponent(qrCodeURL);
+  final uri = Uri.parse(decodedUri);
+  final response = await http
+      .get(Uri.parse(uri.queryParameters['credential_offer_uri']!));
+  if (response.statusCode == 200) {
+    final String configResp = await rootBundle.loadString('lib/assets/issuerAuthFlowConfig.json');
+    final configData = await json.decode(configResp);
+    var resp = CredentialOfferObject.fromJson(jsonDecode(response.body));
+    return configData[resp.credentialIssuer];
+  } else {
+    throw Exception('Failed to load credential offer uri');
+  }
 }
 
 void navigateToWithoutPinFlow(BuildContext context) async{
