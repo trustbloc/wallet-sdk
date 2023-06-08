@@ -81,7 +81,7 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
         var credID = await WalletSDKPlugin.getCredID([credentials]);
         _storageService.addActivities(ActivityDataObj(credID!, activities));
         pref.setString("credID", credID);
-        return _navigateToCredPreviewScreen(credentials, issuerURI, serializedDisplayData!, userDIDId);
+        return _navigateToCredPreviewScreen(credentials, issuerURI, serializedDisplayData!, userDIDId, credID);
       } catch (error) {
         Navigator.push(
             context,
@@ -140,9 +140,9 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
     }
   }
 
- _navigateToCredPreviewScreen(String credentialResp, String issuerURI, String credentialDisplayData, String didID) async {
+ _navigateToCredPreviewScreen(String credentialResp, String issuerURI, String credentialDisplayData, String didID, String credID) async {
   WidgetsBinding.instance.addPostFrameCallback((_) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURI, credentialDisplayData: credentialDisplayData, credentialDID: didID),)));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURI, credentialDisplayData: credentialDisplayData, credentialDID: didID, credID: credID),)));
   });
 }
   _navigateToDashboard() async {

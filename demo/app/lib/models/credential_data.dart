@@ -1,13 +1,16 @@
-
 class CredentialData {
   final String rawCredential;
   final String credentialDisplayData;
   final String issuerURL;
-  final String? credentialDID;
-  final String? credID;
+  final String credentialDID;
+  final String credID;
 
-
-  CredentialData({ required this.rawCredential, required this.issuerURL, required this.credentialDisplayData, this.credentialDID, this.credID});
+  CredentialData(
+      {required this.rawCredential,
+      required this.issuerURL,
+      required this.credentialDisplayData,
+      required this.credentialDID,
+      required this.credID});
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
@@ -19,7 +22,7 @@ class CredentialData {
     return data;
   }
 
-  factory CredentialData.fromJson( Map<String, dynamic> json) {
+  factory CredentialData.fromJson(Map<String, dynamic> json) {
     return CredentialData(
       rawCredential: json['rawCredential'],
       credentialDisplayData: json['credentialDisplayData'],
@@ -29,4 +32,3 @@ class CredentialData {
     );
   }
 }
-
