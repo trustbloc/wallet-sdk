@@ -40,6 +40,12 @@ var (
 
 	//go:embed test_data/verified_employee.jwt
 	verifiedEmployeeVC []byte
+
+	//go:embed test_data/citizenship_pd.json
+	citizenshipPD []byte
+
+	//go:embed test_data/citizenship_vc.json
+	citizenshipVC []byte
 )
 
 func TestNewInquirer(t *testing.T) {
@@ -154,6 +160,41 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 
 		require.EqualError(t, err, "credentials must be provided")
 		require.Nil(t, submissionRequirements)
+	})
+}
+
+func TestInstance_GetSubmissionRequirementsCitizenship(t *testing.T) {
+	contents := [][]byte{
+		citizenshipVC,
+	}
+
+	opts := credential.NewInquirerOpts()
+
+	documentLoader := &documentLoaderReverseWrapper{
+		DocumentLoader: testutil.DocumentLoader(t),
+	}
+
+	opts.SetDocumentLoader(documentLoader)
+	opts.SetDIDResolver(&mocksDIDResolver{})
+
+	t.Run("Success", func(t *testing.T) {
+		query := credential.NewInquirer(opts)
+
+		requirements, err := query.GetSubmissionRequirements(citizenshipPD, createCredJSONArray(t, contents))
+
+		require.NoError(t, err)
+		require.Equal(t, requirements.Len(), 1)
+		req1 := requirements.AtIndex(0)
+		require.Equal(t, req1.DescriptorLen(), 1)
+
+		require.Equal(t, req1.Count(), 1)
+		require.Equal(t, req1.Min(), 0)
+		require.Equal(t, req1.Max(), 0)
+		require.Equal(t, req1.NestedRequirementLength(), 0)
+
+		desc1 := req1.DescriptorAtIndex(0)
+
+		require.Equal(t, desc1.MatchedVCs.Length(), 1)
 	})
 }
 
