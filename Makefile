@@ -88,7 +88,7 @@ build-krakend-plugin: clean
 
 .PHONY: integration-test
 integration-test: mock-login-consent-docker build-krakend-plugin generate-test-keys
-	@cd test/integration $$ go mod tidy && ENABLE_COMPOSITION=true go test -count=1 -v -cover . -p 1 -timeout=10m -race
+	@cd test/integration && go mod tidy && ENABLE_COMPOSITION=true go test -count=1 -v -cover . -p 1 -timeout=10m -race
 
 .PHONY: build-integration-cli
 build-integration-cli:
