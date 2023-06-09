@@ -51,7 +51,7 @@ class OpenID4VP constructor(
                 ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
 
 
-        return Inquirer(null)
+        return Inquirer(InquirerOpts().setDIDResolver(didResolver))
                 .getSubmissionRequirements(vpQueryContent, storedCredentials)
     }
     /**
