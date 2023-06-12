@@ -14,5 +14,5 @@ echo "INITIATE_VERIFICATION_URL:${INITIATE_VERIFICATION_URL}"
 
 
 cd ../../demo/app/android
-adb reverse tcp:8075 tcp:8075 && adb reverse tcp:8072 tcp:8072 && \
+adb reverse tcp:8075 tcp:8075 && adb reverse tcp:8072 tcp:8072 &&  adb reverse tcp:9229 tcp:9229 && \
   ./gradlew app:connectedAndroidTest -PINITIATE_ISSUANCE_URL="${INITIATE_ISSUANCE_URL}" -PINITIATE_VERIFICATION_URL="${INITIATE_VERIFICATION_URL}"

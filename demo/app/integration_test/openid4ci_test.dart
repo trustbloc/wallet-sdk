@@ -5,6 +5,7 @@ import 'package:app/demo_method_channel.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:http/http.dart' as http;
 
 void main() async {
   print("Init Wallet SDK Plugin");
@@ -13,7 +14,6 @@ void main() async {
 
   await walletSDKPlugin.initSDK();
   var didKeyType = "";
-
   testWidgets('Testing openid4vc with a single credential', (tester) async {
     const didMethodTypes = String.fromEnvironment("WALLET_DID_METHODS");
     var didMethodTypesList = didMethodTypes.split(' ');
@@ -120,10 +120,77 @@ void main() async {
     print("matchedCreds : $matchedCreds");
 
     expect(matchedCreds, hasLength(equals(3)));
+
     expect(matchedCreds[0], equals(credentials[0]));
     expect(matchedCreds[1], equals(credentials[1]));
     expect(matchedCreds[2], equals(credentials[2]));
 
     await walletSDKPlugin.presentCredential();
+  });
+
+  testWidgets('Testing openid4vc with the auth code flow', (tester) async {
+    const didMethodTypes = String.fromEnvironment("WALLET_DID_METHODS");
+    var didMethodTypesList = didMethodTypes.split(' ');
+    String didMethodType = didMethodTypesList[0];
+    print("wallet DID type : $didMethodType");
+    print("wallet DID Key type : $didKeyType");
+    var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[0], didKeyType);
+    print("wallet didDocData : $didDocData");
+    var didDocEncoded = json.encode(didDocData!);
+    Map<String, dynamic> responseJson = json.decode(didDocEncoded);
+    var didContent= responseJson["did"];
+    print("wallet DID : $didContent");
+
+    const issuanceURL = String.fromEnvironment("INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW");
+    debugPrint("issuanceURLs: $issuanceURL");
+
+      var authCodeArgs =   {
+        "scopes": ["openid","profile"],
+        "clientID": "oidc4vc_client",
+        "redirectURI": "http://127.0.0.1/callback"
+      };
+
+      var initializeResp = await walletSDKPlugin.initialize(issuanceURL, authCodeArgs);
+      var initializeRespEncoded = json.encode(initializeResp!);
+      Map<String, dynamic> initializeRespJson = json.decode(initializeRespEncoded);
+      var authorizationURLLink= initializeRespJson["authorizationURLLink"];
+    debugPrint("authorizationURLLink: $authorizationURLLink");
+    // fetching redirect uri
+    var redirectURI;
+    final client = HttpClient();
+    var redirectUrl = Uri.parse(authorizationURLLink);
+    var request = await client.getUrl(redirectUrl);
+    request.followRedirects = false;
+    var response = await request.close();
+    while (response.isRedirect) {
+      response.drain();
+      final location = response.headers.value(HttpHeaders.locationHeader);
+      if (location != null) {
+        redirectUrl = redirectUrl.resolve(location);
+        if (location.contains("http://127.0.0.1/callback"))
+        {
+          redirectURI = location;
+          break;
+        }
+        if (redirectUrl.host.contains("cognito-mock.trustbloc.local")){
+          redirectUrl = Uri.parse(redirectUrl.toString().replaceAll("cognito-mock.trustbloc.local", "localhost"));
+          print("uri updated $redirectUrl");
+        }
+        request = await client.getUrl(redirectUrl);
+        request.followRedirects = false;
+        response = await request.close();
+      }
+    }
+
+    debugPrint("redirectURI $redirectURI");
+
+      final credential = await walletSDKPlugin.requestCredentialWithAuth(redirectURI);
+      debugPrint("content: $credential");
+      for (final p in credential.split('.')) {
+        print("----");
+        print(p);
+      }
+
+      expect(credential, hasLength(greaterThan(0)));
   });
 }

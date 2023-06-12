@@ -177,6 +177,8 @@ services:
       - ./cognito-config:/app/.cognito
     networks:
       - bdd_net
+    dns:
+      - 127.0.0.1
 
   mock-login-consent.example.com: # login/consent mock server for OIDC4CI issuance flow
     container_name: mock-login-consent.example.com

@@ -122,7 +122,7 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: adb reverse tcp:8075 tcp:8075 && adb reverse tcp:8072 tcp:8072 && WALLET_SDK_USR=GIT_USR WALLET_SDK_TKN=${GITHUB_TOKEN} WALLET_SDK_VER=${WALLET_SDK_VER} ./scripts/flutter_test.sh
+          script: adb reverse tcp:8075 tcp:8075 && adb reverse tcp:8072 tcp:8072 && adb reverse tcp:9229 tcp:9229 && WALLET_SDK_USR=GIT_USR WALLET_SDK_TKN=${GITHUB_TOKEN} WALLET_SDK_VER=${WALLET_SDK_VER} ./scripts/flutter_test.sh
         env:
           WALLET_SDK_VER: '${{ env.WALLET_SDK_VER }}'
 
