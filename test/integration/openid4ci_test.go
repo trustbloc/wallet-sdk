@@ -207,9 +207,9 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		didID, err := testHelper.DIDDoc.ID()
 		require.NoError(t, err)
 
-		interactionRequiredArgs := openid4ci.NewArgs(offerCredentialURL, testHelper.KMS.GetCrypto(), didResolver)
+		interactionRequiredArgs := openid4ci.NewInteractionArgs(offerCredentialURL, testHelper.KMS.GetCrypto(), didResolver)
 
-		interactionOptionalArgs := openid4ci.NewOpts()
+		interactionOptionalArgs := openid4ci.NewInteractionOpts()
 		interactionOptionalArgs.SetDocumentLoader(&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)})
 		interactionOptionalArgs.SetActivityLogger(testHelper.ActivityLogger)
 		interactionOptionalArgs.SetMetricsLogger(testHelper.MetricsLogger)
@@ -220,9 +220,9 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 
 		traceIDs = append(traceIDs, interaction.OTelTraceID())
 
-		require.True(t, interaction.IssuerCapabilities().PreAuthorizedCodeGrantTypeSupported())
+		require.True(t, interaction.PreAuthorizedCodeGrantTypeSupported())
 
-		preAuthorizedCodeGrantParams, err := interaction.IssuerCapabilities().PreAuthorizedCodeGrantParams()
+		preAuthorizedCodeGrantParams, err := interaction.PreAuthorizedCodeGrantParams()
 		require.NoError(t, err)
 
 		require.False(t, preAuthorizedCodeGrantParams.PINRequired())
@@ -230,7 +230,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		vm, err := testHelper.DIDDoc.AssertionMethod()
 		require.NoError(t, err)
 
-		credentials, err := interaction.RequestCredential(vm)
+		credentials, err := interaction.RequestCredentialWithPreAuth(vm, nil)
 		require.NoError(t, err)
 		require.NotNil(t, credentials)
 
@@ -285,8 +285,8 @@ func doAuthCodeFlowTest(t *testing.T) {
 	didResolver, err := did.NewResolver(opts)
 	require.NoError(t, err)
 
-	interactionRequiredArgs := openid4ci.NewArgs(credentialOfferURL, testHelper.KMS.GetCrypto(), didResolver)
-	interactionOptionalArgs := openid4ci.NewOpts().DisableHTTPClientTLSVerify()
+	interactionRequiredArgs := openid4ci.NewInteractionArgs(credentialOfferURL, testHelper.KMS.GetCrypto(), didResolver)
+	interactionOptionalArgs := openid4ci.NewInteractionOpts().DisableHTTPClientTLSVerify()
 
 	interaction, err := openid4ci.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
 	require.NoError(t, err)
@@ -296,7 +296,7 @@ func doAuthCodeFlowTest(t *testing.T) {
 	vm, err := testHelper.DIDDoc.AssertionMethod()
 	require.NoError(t, err)
 
-	credentials, err := interaction.RequestCredentialWithAuth(vm, redirectURIWithAuthCode)
+	credentials, err := interaction.RequestCredentialWithAuth(vm, redirectURIWithAuthCode, nil)
 	require.NoError(t, err)
 	require.NotNil(t, credentials)
 	require.Equal(t, 1, credentials.Length())
@@ -307,8 +307,8 @@ func getRedirectURIWithAuthCode(t *testing.T, interaction *openid4ci.Interaction
 	scopes.Append("openid")
 	scopes.Append("profile")
 
-	authURL, err := interaction.CreateAuthorizationURLWithScopes("oidc4vc_client",
-		"http://127.0.0.1/callback", scopes)
+	authURL, err := interaction.CreateAuthorizationURL("oidc4vc_client",
+		"http://127.0.0.1/callback", openid4ci.NewCreateAuthorizationURLOpts().SetScopes(scopes))
 	require.NoError(t, err)
 
 	var redirectURIWithAuthCode string

@@ -59,10 +59,10 @@ func TestNewInteraction(t *testing.T) {
 
 		resolver := &mockResolver{keyWriter: kms}
 
-		opts := openid4ci.NewOpts()
+		opts := openid4ci.NewInteractionOpts()
 		opts.DisableOpenTelemetry()
 
-		requiredArgs := openid4ci.NewArgs(createTestRequestURI("example.com"), kms.GetCrypto(), resolver)
+		requiredArgs := openid4ci.NewInteractionArgs(createTestRequestURI("example.com"), kms.GetCrypto(), resolver)
 
 		interaction, err := openid4ci.NewInteraction(requiredArgs, opts)
 		require.NoError(t, err)
@@ -77,7 +77,7 @@ func TestNewInteraction(t *testing.T) {
 
 		resolver := &mockResolver{keyWriter: kms}
 
-		requiredArgs := openid4ci.NewArgs(createTestRequestURI("example.com"), kms.GetCrypto(), resolver)
+		requiredArgs := openid4ci.NewInteractionArgs(createTestRequestURI("example.com"), kms.GetCrypto(), resolver)
 
 		interaction, err := openid4ci.NewInteraction(requiredArgs, nil)
 		require.NoError(t, err)
@@ -159,11 +159,7 @@ func TestInteraction_CreateAuthorizationURL(t *testing.T) {
 
 	interaction := createInteraction(t, kms, nil, createTestRequestURI("example.com"), nil, false)
 
-	authorizationLink, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
-	require.EqualError(t, err, "issuer does not support the authorization code grant type")
-	require.Empty(t, authorizationLink)
-
-	authorizationLink, err = interaction.CreateAuthorizationURLWithScopes("clientID", "redirectURI", nil)
+	authorizationLink, err := interaction.CreateAuthorizationURL("clientID", "redirectURI", nil)
 	require.EqualError(t, err, "issuer does not support the authorization code grant type")
 	require.Empty(t, authorizationLink)
 }
@@ -224,7 +220,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			Key:  models.VerificationKey{JSONWebKey: keyHandle.JWK},
 		}
 
-		result, err := interaction.RequestCredentialWithPIN(verificationMethod, "1234")
+		result, err := interaction.RequestCredentialWithPreAuth(verificationMethod,
+			openid4ci.NewRequestCredentialWithPreAuthOpts().SetPIN("1234"))
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -293,8 +290,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		}
 
 		credentials, err := interaction.RequestCredential(verificationMethod)
-		requireErrorContains(t, err, "the credential offer requires a user PIN, but none was provided. "+
-			"Use the requestCredentialWithPIN method instead")
+		requireErrorContains(t, err, "PIN_REQUIRED")
+
 		require.Nil(t, credentials)
 	})
 	t.Run("Authorization code flow - authorization URL must be created first", func(t *testing.T) {
@@ -315,7 +312,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			Key:  models.VerificationKey{Raw: pkBytes},
 		}
 
-		credentials, err := interaction.RequestCredentialWithAuth(verificationMethod, "redirectURIWithAuthCode")
+		credentials, err := interaction.RequestCredentialWithAuth(verificationMethod, "redirectURIWithAuthCode", nil)
 		requireErrorContains(t, err, "authorization URL must be created first")
 		require.Nil(t, credentials)
 	})
@@ -327,18 +324,15 @@ func TestInteraction_IssuerCapabilities(t *testing.T) {
 
 	interaction := createInteraction(t, kms, nil, createTestRequestURI("example.com"), nil, false)
 
-	issuerCapabilities := interaction.IssuerCapabilities()
-	require.NotNil(t, issuerCapabilities)
+	require.True(t, interaction.PreAuthorizedCodeGrantTypeSupported())
 
-	require.True(t, issuerCapabilities.PreAuthorizedCodeGrantTypeSupported())
-
-	preAuthorizedCodeGrantParams, err := issuerCapabilities.PreAuthorizedCodeGrantParams()
+	preAuthorizedCodeGrantParams, err := interaction.PreAuthorizedCodeGrantParams()
 	require.NoError(t, err)
 	require.NotNil(t, preAuthorizedCodeGrantParams)
 
 	require.True(t, preAuthorizedCodeGrantParams.PINRequired())
 
-	require.False(t, issuerCapabilities.AuthorizationCodeGrantTypeSupported())
+	require.False(t, interaction.AuthorizationCodeGrantTypeSupported())
 }
 
 //nolint:thelper // Not a test helper function
@@ -438,12 +432,12 @@ func createInteraction(t *testing.T, kms *localkms.KMS, activityLogger api.Activ
 func getTestArgs(t *testing.T, initiateIssuanceURI string, kms *localkms.KMS,
 	activityLogger api.ActivityLogger, additionalHeaders *api.Headers,
 	disableTLSVerification bool,
-) (*openid4ci.Args, *openid4ci.Opts) {
+) (*openid4ci.InteractionArgs, *openid4ci.InteractionOpts) {
 	t.Helper()
 
 	resolver := &mockResolver{keyWriter: kms}
 
-	opts := openid4ci.NewOpts()
+	opts := openid4ci.NewInteractionOpts()
 	opts.DisableVCProofChecks()
 	opts.SetDocumentLoader(&documentLoaderWrapper{DocumentLoader: testutil.DocumentLoader(t)})
 
@@ -462,7 +456,7 @@ func getTestArgs(t *testing.T, initiateIssuanceURI string, kms *localkms.KMS,
 		opts.DisableHTTPClientTLSVerify()
 	}
 
-	requiredArgs := openid4ci.NewArgs(initiateIssuanceURI, kms.GetCrypto(), resolver)
+	requiredArgs := openid4ci.NewInteractionArgs(initiateIssuanceURI, kms.GetCrypto(), resolver)
 
 	return requiredArgs, opts
 }

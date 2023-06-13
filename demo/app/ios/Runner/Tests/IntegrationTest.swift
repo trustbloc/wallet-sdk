@@ -43,15 +43,15 @@ class IntegrationTest: XCTestCase {
         
         XCTAssertTrue(requestURI != "", "requestURI:" + requestURI!)
         
-        let openID4CIInteractionArgs = Openid4ciNewArgs(requestURI, crypto, didResolver)
+        let openID4CIInteractionArgs = Openid4ciNewInteractionArgs(requestURI, crypto, didResolver)
 
-        let ciOpts = Openid4ciNewOpts()
+        let ciOpts = Openid4ciNewInteractionOpts()
         ciOpts!.add(trace!.traceHeader())
 
         let ciInteraction = Openid4ciNewInteraction(openID4CIInteractionArgs, ciOpts, nil)
         XCTAssertNotNil(ciInteraction)
 
-        let pinRequired = try ciInteraction!.issuerCapabilities()!.preAuthorizedCodeGrantParams().pinRequired()
+        let pinRequired = try ciInteraction!.preAuthorizedCodeGrantParams().pinRequired()
         XCTAssertFalse(pinRequired)
         
         let issuedCreds = try ciInteraction!.requestCredential(userDID.assertionMethod())

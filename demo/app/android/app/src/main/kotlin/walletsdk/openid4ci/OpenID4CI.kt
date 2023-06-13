@@ -3,7 +3,6 @@ package walletsdk.openid4ci
 import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.display.*
 import dev.trustbloc.wallet.sdk.openid4ci.*
-import dev.trustbloc.wallet.sdk.openid4ci.Opts
 import dev.trustbloc.wallet.sdk.otel.Otel
 import dev.trustbloc.wallet.sdk.verifiable.Credential
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
@@ -19,9 +18,9 @@ class OpenID4CI constructor(
     init {
         val trace = Otel.newTrace()
 
-        val args = Args(requestURI, crypto, didResolver)
+        val args = InteractionArgs(requestURI, crypto, didResolver)
 
-        val opts = Opts()
+        val opts = InteractionOpts()
         opts.addHeader(trace.traceHeader())
         opts.setActivityLogger(activityLogger)
 
@@ -29,45 +28,46 @@ class OpenID4CI constructor(
     }
 
     fun checkFlow(): String {
-        var issuerCapabilities = newInteraction.issuerCapabilities()
-        if (issuerCapabilities.authorizationCodeGrantTypeSupported()) {
+        if (newInteraction.authorizationCodeGrantTypeSupported()) {
             return "auth-code-flow"
         }
-        if (issuerCapabilities.preAuthorizedCodeGrantTypeSupported()){
+        if (newInteraction.preAuthorizedCodeGrantTypeSupported()){
             return "preauth-code-flow"
         }
         return ""
     }
 
     fun createAuthorizationURLWithScopes(scopes:ArrayList<String>, clientID: String, redirectURI: String): String {
-        var issuerCapabilities = newInteraction.issuerCapabilities()
-        if (!issuerCapabilities.authorizationCodeGrantTypeSupported()) {
+        if (!newInteraction.authorizationCodeGrantTypeSupported()) {
             return "Not implemented"
         }
         val scopesArr = StringArray();
         for (scope in scopes) {
             scopesArr.append(scope);
         }
-        return newInteraction.createAuthorizationURLWithScopes(
+
+        val opts = CreateAuthorizationURLOpts().setScopes(scopesArr)
+
+        return newInteraction.createAuthorizationURL(
             clientID,
             redirectURI,
-            scopesArr
+            opts
         )
     }
 
     fun createAuthorizationURL(clientID: String, redirectURI: String): String {
       return  newInteraction.createAuthorizationURL(
           clientID,
-          redirectURI
+          redirectURI,
+          null,
       )
     }
 
     fun pinRequired(): Boolean {
-        var issuerCapabilities = newInteraction.issuerCapabilities()
-        if (!issuerCapabilities.preAuthorizedCodeGrantTypeSupported()) {
+        if (!newInteraction.preAuthorizedCodeGrantTypeSupported()) {
             return false
         }
-        return  newInteraction.issuerCapabilities().preAuthorizedCodeGrantParams().pinRequired()
+        return  newInteraction.preAuthorizedCodeGrantParams().pinRequired()
     }
 
     fun issuerURI(): String {
@@ -75,7 +75,8 @@ class OpenID4CI constructor(
     }
 
     fun requestCredential(didVerificationMethod: VerificationMethod, otp: String?): Credential? {
-        val credsArr = newInteraction.requestCredentialWithPIN(didVerificationMethod, otp)
+        val opts = RequestCredentialWithPreAuthOpts().setPIN(otp)
+        val credsArr = newInteraction.requestCredentialWithPreAuth(didVerificationMethod, opts)
 
         if (credsArr.length() != 0L) {
             return credsArr.atIndex(0)
@@ -85,7 +86,7 @@ class OpenID4CI constructor(
     }
 
     fun requestCredentialWithAuth(didVerificationMethod: VerificationMethod, redirectURIWithParams: String) : Credential? {
-        var credentials = newInteraction.requestCredentialWithAuth(didVerificationMethod, redirectURIWithParams)
+        var credentials = newInteraction.requestCredentialWithAuth(didVerificationMethod, redirectURIWithParams, null)
             return credentials.atIndex(0);
     }
 
