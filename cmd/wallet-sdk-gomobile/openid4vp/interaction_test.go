@@ -94,6 +94,23 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 			require.NotNil(t, instance)
 			require.Empty(t, instance.OTelTraceID())
 		})
+
+		t.Run("With Document loader", func(t *testing.T) {
+			requiredArgs := NewArgs(
+				requestObjectJWT,
+				&mockCrypto{},
+				&mocksDIDResolver{},
+			)
+
+			// Note: in-depth testing of opts functionality is done in the integration tests.
+			opts := NewOpts()
+			opts.SetDocumentLoader(&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)})
+
+			instance, err := NewInteraction(requiredArgs, opts)
+			require.NoError(t, err)
+			require.NotNil(t, instance)
+			require.NotEmpty(t, instance.OTelTraceID())
+		})
 	})
 
 	t.Run("GetQuery success", func(t *testing.T) {

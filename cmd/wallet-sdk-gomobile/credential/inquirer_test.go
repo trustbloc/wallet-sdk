@@ -52,12 +52,14 @@ func TestNewInquirer(t *testing.T) {
 	t.Run("Using the default network-based document loader", func(t *testing.T) {
 		opts := credential.NewInquirerOpts().SetHTTPTimeoutNanoseconds(0)
 
-		inquirer := credential.NewInquirer(opts)
+		inquirer, err := credential.NewInquirer(opts)
+		require.NoError(t, err)
 		require.NotNil(t, inquirer)
 	})
 
 	t.Run("Default opts", func(t *testing.T) {
-		inquirer := credential.NewInquirer(nil)
+		inquirer, err := credential.NewInquirer(nil)
+		require.NoError(t, err)
 		require.NotNil(t, inquirer)
 	})
 }
@@ -80,7 +82,8 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 	opts.SetDIDResolver(&mocksDIDResolver{})
 
 	t.Run("Success", func(t *testing.T) {
-		query := credential.NewInquirer(opts)
+		query, err := credential.NewInquirer(opts)
+		require.NoError(t, err)
 
 		requirements, err := query.GetSubmissionRequirements(multiInputPD, createCredJSONArray(t, contents))
 
@@ -106,7 +109,8 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 	})
 
 	t.Run("Success nested requirements", func(t *testing.T) {
-		query := credential.NewInquirer(opts)
+		query, err := credential.NewInquirer(opts)
+		require.NoError(t, err)
 
 		requirements, err := query.GetSubmissionRequirements(nestedRequirementsPD, createCredJSONArray(t, contents))
 
@@ -134,9 +138,10 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 	})
 
 	t.Run("PD parse failed", func(t *testing.T) {
-		query := credential.NewInquirer(opts)
+		query, err := credential.NewInquirer(opts)
+		require.NoError(t, err)
 
-		_, err := query.GetSubmissionRequirements(nil,
+		_, err = query.GetSubmissionRequirements(nil,
 			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
 		)
 
@@ -144,9 +149,10 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 	})
 
 	t.Run("PD validation failed", func(t *testing.T) {
-		query := credential.NewInquirer(opts)
+		query, err := credential.NewInquirer(opts)
+		require.NoError(t, err)
 
-		_, err := query.GetSubmissionRequirements([]byte("{}"),
+		_, err = query.GetSubmissionRequirements([]byte("{}"),
 			createCredJSONArray(t, [][]byte{universityDegreeVCJWT, permanentResidentCardVC}),
 		)
 
@@ -154,7 +160,8 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 	})
 
 	t.Run("Nil credentials", func(t *testing.T) {
-		query := credential.NewInquirer(opts)
+		query, err := credential.NewInquirer(opts)
+		require.NoError(t, err)
 
 		submissionRequirements, err := query.GetSubmissionRequirements(nil, nil)
 
@@ -178,7 +185,8 @@ func TestInstance_GetSubmissionRequirementsCitizenship(t *testing.T) {
 	opts.SetDIDResolver(&mocksDIDResolver{})
 
 	t.Run("Success", func(t *testing.T) {
-		query := credential.NewInquirer(opts)
+		query, err := credential.NewInquirer(opts)
+		require.NoError(t, err)
 
 		requirements, err := query.GetSubmissionRequirements(citizenshipPD, createCredJSONArray(t, contents))
 

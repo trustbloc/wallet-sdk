@@ -17,11 +17,13 @@ import (
 
 	"github.com/hyperledger/aries-framework-go/component/models/presexch"
 	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
+	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialquery"
 )
 
@@ -32,7 +34,7 @@ type Inquirer struct {
 }
 
 // NewInquirer returns a new Inquirer.
-func NewInquirer(opts *InquirerOpts) *Inquirer {
+func NewInquirer(opts *InquirerOpts) (*Inquirer, error) {
 	if opts == nil {
 		opts = &InquirerOpts{}
 	}
@@ -52,7 +54,11 @@ func NewInquirer(opts *InquirerOpts) *Inquirer {
 			httpClient.Timeout = goapi.DefaultHTTPTimeout
 		}
 
-		goAPIDocumentLoader = ld.NewDefaultDocumentLoader(httpClient)
+		var err error
+		goAPIDocumentLoader, err = common.CreateJSONLDDocumentLoader(httpClient, mem.NewProvider())
+		if err != nil {
+			return nil, wrapper.ToMobileError(err)
+		}
 	}
 
 	var goDIDResolver goapi.DIDResolver
@@ -63,7 +69,7 @@ func NewInquirer(opts *InquirerOpts) *Inquirer {
 	return &Inquirer{
 		goAPICredentialQuery: credentialquery.NewInstance(goAPIDocumentLoader),
 		goDIDResolver:        goDIDResolver,
-	}
+	}, nil
 }
 
 // GetSubmissionRequirements returns information about VCs matching requirements.

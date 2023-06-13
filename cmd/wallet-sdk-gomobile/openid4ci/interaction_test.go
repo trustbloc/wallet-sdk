@@ -84,6 +84,21 @@ func TestNewInteraction(t *testing.T) {
 		require.NotNil(t, interaction)
 	})
 
+	t.Run("Success HTTP timeout", func(t *testing.T) {
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		resolver := &mockResolver{keyWriter: kms}
+
+		requiredArgs := openid4ci.NewInteractionArgs(createTestRequestURI("example.com"), kms.GetCrypto(), resolver)
+		opts := openid4ci.NewInteractionOpts()
+		opts.SetHTTPTimeoutNanoseconds((10 * time.Second).Nanoseconds())
+
+		interaction, err := openid4ci.NewInteraction(requiredArgs, opts)
+		require.NoError(t, err)
+		require.NotNil(t, interaction)
+	})
+
 	t.Run("Failed, args is nil", func(t *testing.T) {
 		interaction, err := openid4ci.NewInteraction(nil, nil)
 		require.Error(t, err)

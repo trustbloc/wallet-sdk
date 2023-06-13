@@ -12,6 +12,7 @@ import (
 	"errors"
 
 	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
+	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
@@ -55,7 +56,10 @@ func NewInteraction(args *InteractionArgs, opts *InteractionOpts) (*Interaction,
 		opts.AddHeader(oTel.TraceHeader())
 	}
 
-	goAPIClientConfig := createGoAPIClientConfig(args, opts)
+	goAPIClientConfig, err := createGoAPIClientConfig(args, opts)
+	if err != nil {
+		return nil, wrapper.ToMobileErrorWithTrace(err, oTel)
+	}
 
 	goAPIInteraction, err := openid4cigoapi.NewInteraction(args.initiateIssuanceURI, goAPIClientConfig)
 	if err != nil {
@@ -213,7 +217,7 @@ func (i *Interaction) createSigner(vm *api.VerificationMethod) (*common.JWSSigne
 
 func createGoAPIClientConfig(config *InteractionArgs,
 	opts *InteractionOpts,
-) *openid4cigoapi.ClientConfig {
+) (*openid4cigoapi.ClientConfig, error) {
 	activityLogger := createGoAPIActivityLogger(opts.activityLogger)
 
 	httpClient := wrapper.NewHTTPClient(opts.httpTimeout, opts.additionalHeaders, opts.disableHTTPClientTLSVerification)
@@ -233,9 +237,17 @@ func createGoAPIClientConfig(config *InteractionArgs,
 		}
 
 		goAPIClientConfig.DocumentLoader = documentLoaderWrapper
+	} else {
+		dlHTTPClient := wrapper.NewHTTPClient(opts.httpTimeout, api.Headers{}, opts.disableHTTPClientTLSVerification)
+
+		var err error
+		goAPIClientConfig.DocumentLoader, err = common.CreateJSONLDDocumentLoader(dlHTTPClient, mem.NewProvider())
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return goAPIClientConfig
+	return goAPIClientConfig, nil
 }
 
 func createGoAPIActivityLogger(mobileAPIActivityLogger api.ActivityLogger) goapi.ActivityLogger {

@@ -53,7 +53,7 @@ public class OpenID4VP {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         }
         
-            return try CredentialNewInquirer(CredentialInquirerOpts()?.setDIDResolver(didResolver))!.getSubmissionRequirements(vpQueryContent, credentials: storedCredentials)
+            return try CredentialNewInquirer(CredentialInquirerOpts()?.setDIDResolver(didResolver), nil)!.getSubmissionRequirements(vpQueryContent, credentials: storedCredentials)
     }
     
     /**

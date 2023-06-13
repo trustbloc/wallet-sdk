@@ -13,6 +13,7 @@ require (
 	github.com/hyperledger/aries-framework-go v0.3.3-0.20230615141038-5d444d6c36de
 	github.com/hyperledger/aries-framework-go/component/kmscrypto v0.0.0-20230615141038-5d444d6c36de
 	github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230615141038-5d444d6c36de
+	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20230427134832-0c9969493bd3
 	github.com/hyperledger/aries-framework-go/component/vdr v0.0.0-20230615141038-5d444d6c36de
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20230615141038-5d444d6c36de
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
@@ -41,7 +42,6 @@ require (
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/longform v0.0.0-20221209153644-5a3273a805c1 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v1.0.0-rc3.0.20221104150937-07bfbe450122 // indirect
 	github.com/hyperledger/aries-framework-go/component/log v0.0.0-20230427134832-0c9969493bd3 // indirect
-	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20230427134832-0c9969493bd3 // indirect
 	github.com/hyperledger/fabric-amcl v0.0.0-20230602173724-9e02669dceb2 // indirect
 	github.com/hyperledger/ursa-wrapper-go v0.3.1 // indirect
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a // indirect
