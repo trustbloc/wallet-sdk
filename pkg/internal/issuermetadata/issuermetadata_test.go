@@ -62,7 +62,7 @@ func TestGet(t *testing.T) {
 	t.Run("Fail to reach issuer OpenID config endpoint", func(t *testing.T) {
 		issuerMetadata, err := issuermetadata.Get("http://BadURL", http.DefaultClient, nil, "")
 		require.Contains(t, err.Error(), `Get "http://BadURL/.well-known/openid-credential-issuer":`+
-			` dial tcp: lookup BadURL:`)
+			` dial tcp: lookup BadURL`)
 		require.Nil(t, issuerMetadata)
 	})
 	t.Run("Fail to get issuer metadata: server error", func(t *testing.T) {

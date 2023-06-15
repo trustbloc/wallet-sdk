@@ -5,12 +5,12 @@
 
 module github.com/trustbloc/wallet-sdk/test/integration
 
-go 1.19
+go 1.20
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230605134811-1970e7e22384
-	github.com/hyperledger/aries-framework-go/spi v0.0.0-20230605134811-1970e7e22384
+	github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230615141038-5d444d6c36de
+	github.com/hyperledger/aries-framework-go/spi v0.0.0-20230615141038-5d444d6c36de
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.1
 	github.com/trustbloc/cmdutil-go v0.0.0-20221125151303-09d42adcc811
@@ -28,6 +28,7 @@ require (
 	github.com/VictoriaMetrics/fastcache v1.5.7 // indirect
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
+	github.com/cenkalti/backoff/v4 v4.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/consensys/bavard v0.1.13 // indirect
 	github.com/consensys/gnark-crypto v0.9.1 // indirect
@@ -37,15 +38,15 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/tink/go v1.7.0 // indirect
-	github.com/hyperledger/aries-framework-go v0.3.3-0.20230605134811-1970e7e22384 // indirect
+	github.com/hyperledger/aries-framework-go v0.3.3-0.20230615141038-5d444d6c36de // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vc/status v0.0.0-20230328135254-c39a101bd279 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk v0.0.0-20221209153644-5a3273a805c1 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/longform v0.0.0-20221209153644-5a3273a805c1 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v1.0.0-rc3.0.20221104150937-07bfbe450122 // indirect
-	github.com/hyperledger/aries-framework-go/component/kmscrypto v0.0.0-20230605134811-1970e7e22384 // indirect
+	github.com/hyperledger/aries-framework-go/component/kmscrypto v0.0.0-20230615141038-5d444d6c36de // indirect
 	github.com/hyperledger/aries-framework-go/component/log v0.0.0-20230427134832-0c9969493bd3 // indirect
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20230427134832-0c9969493bd3 // indirect
-	github.com/hyperledger/aries-framework-go/component/vdr v0.0.0-20230605134811-1970e7e22384 // indirect
+	github.com/hyperledger/aries-framework-go/component/vdr v0.0.0-20230615141038-5d444d6c36de // indirect
 	github.com/hyperledger/fabric-amcl v0.0.0-20230602173724-9e02669dceb2 // indirect
 	github.com/hyperledger/ursa-wrapper-go v0.3.1 // indirect
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a // indirect

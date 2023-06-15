@@ -5,16 +5,16 @@
 
 module github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile
 
-go 1.19
+go 1.20
 
 require (
 	github.com/go-jose/go-jose/v3 v3.0.1-0.20221117193127-916db76e8214
 	github.com/google/uuid v1.3.0
-	github.com/hyperledger/aries-framework-go v0.3.3-0.20230605134811-1970e7e22384
-	github.com/hyperledger/aries-framework-go/component/kmscrypto v0.0.0-20230605134811-1970e7e22384
-	github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230605134811-1970e7e22384
-	github.com/hyperledger/aries-framework-go/component/vdr v0.0.0-20230605134811-1970e7e22384
-	github.com/hyperledger/aries-framework-go/spi v0.0.0-20230605134811-1970e7e22384
+	github.com/hyperledger/aries-framework-go v0.3.3-0.20230615141038-5d444d6c36de
+	github.com/hyperledger/aries-framework-go/component/kmscrypto v0.0.0-20230615141038-5d444d6c36de
+	github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230615141038-5d444d6c36de
+	github.com/hyperledger/aries-framework-go/component/vdr v0.0.0-20230615141038-5d444d6c36de
+	github.com/hyperledger/aries-framework-go/spi v0.0.0-20230615141038-5d444d6c36de
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.1
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
@@ -27,6 +27,7 @@ require (
 	github.com/VictoriaMetrics/fastcache v1.5.7 // indirect
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
+	github.com/cenkalti/backoff/v4 v4.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/consensys/bavard v0.1.13 // indirect
 	github.com/consensys/gnark-crypto v0.9.1 // indirect

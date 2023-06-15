@@ -11,8 +11,8 @@ else
 	PATH:=$(PATH);$(subst /,\\,$(GOBIN_PATH))
 endif
 
-ALPINE_VER ?= 3.16
-GO_VER ?= 1.19
+ALPINE_VER ?= 3.18
+GO_VER ?= 1.20
 
 NEW_VERSION ?= $(shell git describe --tags --always `git rev-list --tags --max-count=1`)-SNAPSHOT-$(shell git rev-parse --short=7 HEAD)
 GIT_REV ?= $(shell git rev-parse HEAD)

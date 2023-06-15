@@ -487,7 +487,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 				keyID: mockKeyID,
 			})
 			require.Contains(t, err.Error(), `failed to get token response: issuer's token endpoint: Post `+
-				`"http://BadURL": dial tcp: lookup BadURL:`)
+				`"http://BadURL": dial tcp: lookup BadURL`)
 			require.Nil(t, credentialResponses)
 		})
 		t.Run("Fail to get token response: server failure", func(t *testing.T) {
@@ -602,7 +602,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			credentialResponses, err := interaction.RequestCredential(credentialRequest, &jwtSignerMock{
 				keyID: mockKeyID,
 			})
-			require.Contains(t, err.Error(), `Post "http://BadURL": dial tcp: lookup BadURL:`)
+			require.Contains(t, err.Error(), `Post "http://BadURL": dial tcp: lookup BadURL`)
 			require.Nil(t, credentialResponses)
 		})
 		t.Run("Fail to get credential response: kid not containing did part", func(t *testing.T) {
