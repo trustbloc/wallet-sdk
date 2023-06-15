@@ -23,6 +23,40 @@ type authorizationCodeGrantParams struct {
 	issuerState *string
 }
 
+func determineIssuerGrantCapabilities(
+	credentialOffer *CredentialOffer,
+) (*PreAuthorizedCodeGrantParams, *authorizationCodeGrantParams, error) {
+	rawPreAuthorizedCodeGrantParams, preAuthorizedCodeGrantExists := credentialOffer.Grants[preAuthorizedGrantType]
+	rawAuthorizationCodeGrantParams, authorizationCodeGrantExists := credentialOffer.Grants[authorizationCodeGrantType]
+
+	if !preAuthorizedCodeGrantExists && !authorizationCodeGrantExists {
+		return nil, nil, errors.New("no supported grant types found")
+	}
+
+	var preAuthorizedCodeGrantParams *PreAuthorizedCodeGrantParams
+
+	var authorizationCodeGrantParams *authorizationCodeGrantParams
+
+	var err error
+	if preAuthorizedCodeGrantExists {
+		preAuthorizedCodeGrantParams, err = processPreAuthorizedCodeGrantParams(
+			rawPreAuthorizedCodeGrantParams)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	if authorizationCodeGrantExists {
+		authorizationCodeGrantParams, err = processAuthorizationCodeGrantParams(
+			rawAuthorizationCodeGrantParams)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return preAuthorizedCodeGrantParams, authorizationCodeGrantParams, nil
+}
+
 func processPreAuthorizedCodeGrantParams(rawParams map[string]interface{}) (*PreAuthorizedCodeGrantParams, error) {
 	preAuthorizedCodeUntyped, exists := rawParams["pre-authorized_code"]
 	if !exists {

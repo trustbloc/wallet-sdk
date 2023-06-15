@@ -22,9 +22,9 @@ public class OpenID4CI {
 
         let trace = OtelNewTrace(nil)
 
-        let args = Openid4ciNewArgs(requestURI, self.crypto, self.didResolver)
+        let args = Openid4ciNewInteractionArgs(requestURI, self.crypto, self.didResolver)
         
-        let opts = Openid4ciNewOpts()
+        let opts = Openid4ciNewInteractionOpts()
         opts!.setActivityLogger(activityLogger)
         opts!.add(trace!.traceHeader())
         
@@ -32,11 +32,10 @@ public class OpenID4CI {
     }
     
     func checkFlow() throws -> String {
-        let issuerCapabilities = initiatedInteraction.issuerCapabilities()
-        if ((issuerCapabilities!.authorizationCodeGrantTypeSupported())){
+        if ((initiatedInteraction.authorizationCodeGrantTypeSupported())){
             return "auth-code-flow"
         }
-        if ((issuerCapabilities!.preAuthorizedCodeGrantTypeSupported())){
+        if ((initiatedInteraction.preAuthorizedCodeGrantTypeSupported())){
            return "preauth-code-flow"
         }
         return ""
@@ -49,8 +48,10 @@ public class OpenID4CI {
         }
 
       var error: NSError?
+        
+      let opts = Openid4ciNewCreateAuthorizationURLOpts()!.setScopes(scopesArr)
     
-       let authorizationLink =  initiatedInteraction.createAuthorizationURL(withScopes: clientID, redirectURI: redirectURI, scopes: scopesArr, error: &error)
+       let authorizationLink =  initiatedInteraction.createAuthorizationURL(clientID, redirectURI: redirectURI, opts: opts, error: &error)
         if let actualError = error {
             print("error in authorizations", error!.localizedDescription)
             throw actualError
@@ -62,7 +63,7 @@ public class OpenID4CI {
     func createAuthorizationURL(clientID: String, redirectURI: String) throws  -> String {
       var error: NSError?
     
-        let authorizationLink =  initiatedInteraction.createAuthorizationURL(clientID, redirectURI: redirectURI, error: &error)
+        let authorizationLink =  initiatedInteraction.createAuthorizationURL(clientID, redirectURI: redirectURI, opts: nil, error: &error)
         if let actualError = error {
             print("error in authorizations", error!.localizedDescription)
             throw actualError
@@ -72,7 +73,7 @@ public class OpenID4CI {
     }
     
     func pinRequired() throws -> Bool {
-       return try initiatedInteraction.issuerCapabilities()!.preAuthorizedCodeGrantParams().pinRequired()
+       return try initiatedInteraction.preAuthorizedCodeGrantParams().pinRequired()
     }
 
     func issuerURI()-> String {
@@ -80,12 +81,13 @@ public class OpenID4CI {
     }
     
     func requestCredentialWithAuth(didVerificationMethod: ApiVerificationMethod, redirectURIWithParams: String) throws -> VerifiableCredential {
-        let credentials = try initiatedInteraction.requestCredential(withAuth: didVerificationMethod, redirectURIWithAuthCode: redirectURIWithParams)
+        let credentials = try initiatedInteraction.requestCredential(withAuth: didVerificationMethod, redirectURIWithAuthCode: redirectURIWithParams, opts: nil)
         return credentials.atIndex(0)!;
     }
     
     func requestCredential(didVerificationMethod: ApiVerificationMethod, otp: String) throws -> VerifiableCredential{
-        let credentials  = try initiatedInteraction.requestCredential(withPIN: didVerificationMethod, pin:otp)
+        let opts = Openid4ciRequestCredentialWithPreAuthOpts()!.setPIN(otp)
+        let credentials  = try initiatedInteraction.requestCredential(withPreAuth: didVerificationMethod, opts: opts)
         return credentials.atIndex(0)!;
     }
     

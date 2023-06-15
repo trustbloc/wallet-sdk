@@ -50,12 +50,6 @@ type OpenIDConfig struct {
 	TokenEndpoint          string   `json:"token_endpoint,omitempty"`
 }
 
-// CredentialRequestOpts represents the data (required and optional) that is used in the
-// final step of the OpenID4CI flow, where the wallet requests the credential from the issuer.
-type CredentialRequestOpts struct {
-	UserPIN string
-}
-
 // CredentialResponse is the object returned from the Client.Callback method.
 // It contains the issued credential and the credential's format.
 type CredentialResponse struct {

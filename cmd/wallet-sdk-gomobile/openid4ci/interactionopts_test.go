@@ -15,7 +15,7 @@ import (
 )
 
 func TestClientConfig_AddHeader(t *testing.T) {
-	opts := &Opts{}
+	opts := &InteractionOpts{}
 	opts.AddHeader(&api.Header{
 		Name:  "testName",
 		Value: "testValue",

@@ -64,23 +64,24 @@ const (
 // An Interaction is a stateful object, and is intended for going through the full flow only once
 // after which it should be discarded. Any new interactions should use a fresh Interaction instance.
 type Interaction struct {
-	issuerURI            string
-	credentialTypes      [][]string
-	credentialFormats    []string
-	clientID             string
-	didResolver          *didResolverWrapper
-	activityLogger       api.ActivityLogger
-	metricsLogger        api.MetricsLogger
-	disableVCProofChecks bool
-	documentLoader       ld.DocumentLoader
-	issuerMetadata       *issuer.Metadata
-	issuerCapabilities   *IssuerCapabilities
-	openIDConfig         *OpenIDConfig
-	oAuth2Config         *oauth2.Config
-	authTokenResponse    *oauth2.Token
-	httpClient           *http.Client
-	authCodeURLState     string
-	codeVerifier         string
+	issuerURI                    string
+	credentialTypes              [][]string
+	credentialFormats            []string
+	clientID                     string
+	didResolver                  *didResolverWrapper
+	activityLogger               api.ActivityLogger
+	metricsLogger                api.MetricsLogger
+	disableVCProofChecks         bool
+	documentLoader               ld.DocumentLoader
+	issuerMetadata               *issuer.Metadata
+	preAuthorizedCodeGrantParams *PreAuthorizedCodeGrantParams
+	authorizationCodeGrantParams *authorizationCodeGrantParams
+	openIDConfig                 *OpenIDConfig
+	oAuth2Config                 *oauth2.Config
+	authTokenResponse            *oauth2.Token
+	httpClient                   *http.Client
+	authCodeURLState             string
+	codeVerifier                 string
 }
 
 // NewInteraction creates a new OpenID4CI Interaction.
@@ -102,7 +103,7 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 
 	// TODO Add support for determining grant types when no grants are specified.
 	// See https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#section-4.1.1 for more info.
-	issuerCapabilities, err := determineIssuerCapabilities(credentialOffer)
+	preAuthorizedCodeGrantParams, authorizationCodeGrantParams, err := determineIssuerGrantCapabilities(credentialOffer)
 	if err != nil {
 		return nil, err
 	}
@@ -113,16 +114,17 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 	}
 
 	return &Interaction{
-			issuerCapabilities:   issuerCapabilities,
-			issuerURI:            credentialOffer.CredentialIssuer,
-			credentialTypes:      credentialTypes,
-			credentialFormats:    credentialFormats,
-			didResolver:          &didResolverWrapper{didResolver: config.DIDResolver},
-			activityLogger:       config.ActivityLogger,
-			metricsLogger:        config.MetricsLogger,
-			disableVCProofChecks: config.DisableVCProofChecks,
-			documentLoader:       config.DocumentLoader,
-			httpClient:           config.HTTPClient,
+			preAuthorizedCodeGrantParams: preAuthorizedCodeGrantParams,
+			authorizationCodeGrantParams: authorizationCodeGrantParams,
+			issuerURI:                    credentialOffer.CredentialIssuer,
+			credentialTypes:              credentialTypes,
+			credentialFormats:            credentialFormats,
+			didResolver:                  &didResolverWrapper{didResolver: config.DIDResolver},
+			activityLogger:               config.ActivityLogger,
+			metricsLogger:                config.MetricsLogger,
+			disableVCProofChecks:         config.DisableVCProofChecks,
+			documentLoader:               config.DocumentLoader,
+			httpClient:                   config.HTTPClient,
 		}, config.MetricsLogger.Log(&api.MetricsEvent{
 			Event:    newInteractionEventText,
 			Duration: time.Since(timeStartNewInteraction),
@@ -133,16 +135,16 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 // It is the first step in the authorization code flow.
 // It creates the authorization URL that can be opened in a browser to proceed to the login page.
 // This method can only be used if the issuer supports authorization code grants.
-// Check the issuer's capabilities first using the IssuerCapabilities method.
-func (i *Interaction) CreateAuthorizationURL(clientID, redirectURI string) (string, error) {
-	return i.CreateAuthorizationURLWithScopes(clientID, redirectURI, nil)
-}
-
-// CreateAuthorizationURLWithScopes is like CreateAuthorizationURL but allows scopes to be passed in.
-func (i *Interaction) CreateAuthorizationURLWithScopes(clientID, redirectURI string, scopes []string) (string, error) {
-	if !i.IssuerCapabilities().AuthorizationCodeGrantTypeSupported() {
+// Check the issuer's capabilities first using the Capabilities method.
+// If scopes are needed, pass them in using the WithScopes option.
+func (i *Interaction) CreateAuthorizationURL(clientID, redirectURI string,
+	opts ...CreateAuthorizationURLOpt,
+) (string, error) {
+	if !i.AuthorizationCodeGrantTypeSupported() {
 		return "", errors.New("issuer does not support the authorization code grant type")
 	}
+
+	processedOpts := processCreateAuthorizationURLOpts(opts)
 
 	var err error
 
@@ -156,7 +158,7 @@ func (i *Interaction) CreateAuthorizationURLWithScopes(clientID, redirectURI str
 			fmt.Errorf("failed to get issuer metadata: %w", err))
 	}
 
-	i.instantiateOAuth2Config(clientID, redirectURI, scopes)
+	i.instantiateOAuth2Config(clientID, redirectURI, processedOpts.scopes)
 
 	err = i.instantiateCodeVerifier()
 	if err != nil {
@@ -175,15 +177,21 @@ func (i *Interaction) CreateAuthorizationURLWithScopes(clientID, redirectURI str
 	return i.oAuth2Config.AuthCodeURL(i.authCodeURLState, authCodeOptions...), nil
 }
 
-// RequestAccessToken requests an access token from the token endpoint. After the user has logged in via a web browser,
-// call this method with the full redirect URI that you receive after logging in. The redirect URI that you pass in
-// here should look like the redirect URI that you passed in to the CreateAuthorizationURL, except that now it has
-// some URL query parameters appended to it. If this method returns no error,
-// then you are ready to request a credential. See the RequestCredential method for next steps.
+// RequestCredentialWithPreAuth requests credential(s) from the issuer. This method can only be used for the
+// pre-authorized code flow, where it acts as the final step in the interaction with the issuer.
+// For the equivalent method for the authorization code flow, see RequestCredentialWithAuth instead.
+// If a PIN is required (which can be checked via the Capabilities method), then it must be passed
+// into this method via the WithPIN option.
+func (i *Interaction) RequestCredentialWithPreAuth(jwtSigner api.JWTSigner, opts ...RequestCredentialWithPreAuthOpt,
+) ([]*verifiable.Credential, error) {
+	processedOpts := processRequestCredentialWithPreAuthOpts(opts)
+
+	return i.requestCredential(jwtSigner, processedOpts.pin)
+}
 
 // RequestCredentialWithAuth requests credential(s) from the issuer. This method can only be used for the
 // authorization code flow, where it acts as the final step in the interaction with the issuer.
-// For the equivalent method for the pre-authorized code flow, see RequestCredential instead.
+// For the equivalent method for the pre-authorized code flow, see RequestCredentialWithPreAuth instead.
 //
 // RequestCredentialWithAuth should be called only once all authorization pre-requisite steps have been completed.
 // The redirect URI that you pass in here should look like the redirect URI that you passed in to the
@@ -195,94 +203,35 @@ func (i *Interaction) RequestCredentialWithAuth(jwtSigner api.JWTSigner, redirec
 		return nil, err
 	}
 
-	return i.RequestCredential(nil, jwtSigner)
-}
-
-// RequestCredential requests credential(s) from the issuer. This method can only be used for the pre-authorized code
-// flow, where it acts as the final step in the interaction with the issuer.
-// For the equivalent method for the authorization code flow, see RequestCredentialWithAuth instead.
-//
-// If a PIN is required (which can be checked via the IssuerCapabilities method), then it must be passed
-// into this method via the CredentialRequestOpts object.
-func (i *Interaction) RequestCredential(credentialRequestOpts *CredentialRequestOpts, //nolint:funlen
-	jwtSigner api.JWTSigner,
-) ([]*verifiable.Credential, error) {
-	timeStartRequestCredential := time.Now()
-
-	err := validateSignerKeyID(jwtSigner)
-	if err != nil {
-		return nil, err
-	}
-
-	if credentialRequestOpts == nil {
-		credentialRequestOpts = &CredentialRequestOpts{}
-	}
-
-	grantType, err := i.determineGrantTypeToUse(credentialRequestOpts.UserPIN)
-	if err != nil {
-		return nil, err
-	}
-
-	var credentialResponses []CredentialResponse
-
-	if grantType == preAuthorizedGrantType {
-		credentialResponses, err = i.getCredentialResponsesUsingPreAuth(credentialRequestOpts.UserPIN, jwtSigner)
-	} else {
-		credentialResponses, err = i.getCredentialResponsesUsingAuth(jwtSigner)
-	}
-
-	if err != nil {
-		return nil,
-			walleterror.NewExecutionError(
-				module,
-				CredentialFetchFailedCode,
-				CredentialFetchFailedError,
-				fmt.Errorf("failed to get credential response: %w", err))
-	}
-
-	vcs, err := i.getVCsFromCredentialResponses(credentialResponses)
-	if err != nil {
-		return nil, walleterror.NewExecutionError(
-			module,
-			CredentialParseFailedCode,
-			CredentialParseError, err)
-	}
-
-	subjectIDs, err := getSubjectIDs(vcs)
-	if err != nil {
-		return nil, err
-	}
-
-	err = i.metricsLogger.Log(&api.MetricsEvent{
-		Event:    requestCredentialEventText,
-		Duration: time.Since(timeStartRequestCredential),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return vcs, i.activityLogger.Log(&api.Activity{
-		ID:   uuid.New(),
-		Type: api.LogTypeCredentialActivity,
-		Time: time.Now(),
-		Data: api.Data{
-			Client:    i.issuerMetadata.CredentialIssuer,
-			Operation: activityLogOperation,
-			Status:    api.ActivityLogStatusSuccess,
-			Params:    map[string]interface{}{"subjectIDs": subjectIDs},
-		},
-	})
-}
-
-// IssuerCapabilities returns an object which can be used to learn about an issuer's self-reported capabilities.
-func (i *Interaction) IssuerCapabilities() *IssuerCapabilities {
-	return i.issuerCapabilities
+	return i.requestCredential(jwtSigner, "")
 }
 
 // IssuerURI returns the issuer's URI from the initiation request. It's useful to store this somewhere in case
 // there's a later need to refresh credential display data using the latest display information from the issuer.
 func (i *Interaction) IssuerURI() string {
 	return i.issuerURI
+}
+
+// PreAuthorizedCodeGrantTypeSupported indicates whether an issuer supports the pre-authorized code grant type.
+func (i *Interaction) PreAuthorizedCodeGrantTypeSupported() bool {
+	return i.preAuthorizedCodeGrantParams != nil
+}
+
+// PreAuthorizedCodeGrantParams returns an object that can be used to determine an issuer's pre-authorized code grant
+// parameters. The caller should call the PreAuthorizedCodeGrantTypeSupported method first and only call this method to
+// get the params if PreAuthorizedCodeGrantTypeSupported returns true.
+// This method only returns an error if (and only if) PreAuthorizedCodeGrantTypeSupported returns false.
+func (i *Interaction) PreAuthorizedCodeGrantParams() (*PreAuthorizedCodeGrantParams, error) {
+	if i.preAuthorizedCodeGrantParams == nil {
+		return nil, errors.New("issuer does not support the pre-authorized code grant")
+	}
+
+	return i.preAuthorizedCodeGrantParams, nil
+}
+
+// AuthorizationCodeGrantTypeSupported indicates whether an issuer supports the authorization code grant type.
+func (i *Interaction) AuthorizationCodeGrantTypeSupported() bool {
+	return i.authorizationCodeGrantParams != nil
 }
 
 func (i *Interaction) requestAccessToken(redirectURIWithAuthCode string) error {
@@ -395,25 +344,93 @@ func (i *Interaction) generateAuthCodeOptions(authorizationDetails []byte) []oau
 		oauth2.SetAuthURLParam("authorization_details", string(authorizationDetails)),
 	}
 
-	if i.issuerCapabilities.authorizationCodeGrantParams.issuerState != nil {
+	if i.authorizationCodeGrantParams.issuerState != nil {
 		authCodeOptions = append(authCodeOptions, oauth2.SetAuthURLParam("issuer_state",
-			*i.issuerCapabilities.authorizationCodeGrantParams.issuerState))
+			*i.authorizationCodeGrantParams.issuerState))
 	}
 
 	return authCodeOptions
+}
+
+func (i *Interaction) requestCredential(jwtSigner api.JWTSigner, //nolint:funlen
+	pin string,
+) ([]*verifiable.Credential, error) {
+	timeStartRequestCredential := time.Now()
+
+	err := validateSignerKeyID(jwtSigner)
+	if err != nil {
+		return nil, err
+	}
+
+	grantType, err := i.determineGrantTypeToUse(pin)
+	if err != nil {
+		return nil, err
+	}
+
+	var credentialResponses []CredentialResponse
+
+	if grantType == preAuthorizedGrantType {
+		credentialResponses, err = i.getCredentialResponsesUsingPreAuth(pin, jwtSigner)
+	} else {
+		credentialResponses, err = i.getCredentialResponsesUsingAuth(jwtSigner)
+	}
+
+	if err != nil {
+		return nil,
+			walleterror.NewExecutionError(
+				module,
+				CredentialFetchFailedCode,
+				CredentialFetchFailedError,
+				fmt.Errorf("failed to get credential response: %w", err))
+	}
+
+	vcs, err := i.getVCsFromCredentialResponses(credentialResponses)
+	if err != nil {
+		return nil, walleterror.NewExecutionError(
+			module,
+			CredentialParseFailedCode,
+			CredentialParseError, err)
+	}
+
+	subjectIDs, err := getSubjectIDs(vcs)
+	if err != nil {
+		return nil, err
+	}
+
+	err = i.metricsLogger.Log(&api.MetricsEvent{
+		Event:    requestCredentialEventText,
+		Duration: time.Since(timeStartRequestCredential),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return vcs, i.activityLogger.Log(&api.Activity{
+		ID:   uuid.New(),
+		Type: api.LogTypeCredentialActivity,
+		Time: time.Now(),
+		Data: api.Data{
+			Client:    i.issuerMetadata.CredentialIssuer,
+			Operation: activityLogOperation,
+			Status:    api.ActivityLogStatusSuccess,
+			Params:    map[string]interface{}{"subjectIDs": subjectIDs},
+		},
+	})
 }
 
 // Based on the current state of this Interaction so far, as well as the PIN passed in by the caller,
 // this method determines which grant type flow we're "in" and should use for the RequestCredential method.
 // This method returns an error if it detects that the Interaction object is in an invalid state for
 // requesting a credential.
-func (i *Interaction) determineGrantTypeToUse(pin string) (string, error) {
-	if i.issuerCapabilities == nil {
+func (i *Interaction) determineGrantTypeToUse( //nolint: gocyclo // Difficult to decompose nicely
+	pin string,
+) (string, error) {
+	if i.preAuthorizedCodeGrantParams == nil && i.authorizationCodeGrantParams == nil {
 		return "", errors.New("interaction not instantiated")
 	}
 
-	if i.issuerCapabilities.onlyPreAuthorizedCodeGrantSupported() {
-		if i.IssuerCapabilities().preAuthorizedCodeGrantParams.PINRequired() && pin == "" {
+	if i.onlyPreAuthorizedCodeGrantSupported() {
+		if i.preAuthorizedCodeGrantParams.PINRequired() && pin == "" {
 			return "", walleterror.NewValidationError(
 				module,
 				PINRequiredCode,
@@ -424,7 +441,7 @@ func (i *Interaction) determineGrantTypeToUse(pin string) (string, error) {
 		return preAuthorizedGrantType, nil
 	}
 
-	if i.issuerCapabilities.onlyAuthorizationCodeGrantSupported() {
+	if i.onlyAuthorizationCodeGrantSupported() {
 		if i.authTokenResponse == nil {
 			return "", errors.New("issuer requires authorization before credential issuance. " +
 				"Complete authorization steps first")
@@ -439,7 +456,7 @@ func (i *Interaction) determineGrantTypeToUse(pin string) (string, error) {
 	// If, for some reason, the caller has met both grant type requirements simultaneously, then we just use the
 	// pre-authorized code grant type.
 
-	preAuthCodeRequirementsMet := !i.IssuerCapabilities().preAuthorizedCodeGrantParams.PINRequired() || pin != ""
+	preAuthCodeRequirementsMet := !i.preAuthorizedCodeGrantParams.PINRequired() || pin != ""
 	if preAuthCodeRequirementsMet {
 		return preAuthorizedGrantType, nil
 	}
@@ -451,6 +468,14 @@ func (i *Interaction) determineGrantTypeToUse(pin string) (string, error) {
 	}
 
 	return authorizationCodeGrantType, nil
+}
+
+func (i *Interaction) onlyPreAuthorizedCodeGrantSupported() bool {
+	return i.PreAuthorizedCodeGrantTypeSupported() && !i.AuthorizationCodeGrantTypeSupported()
+}
+
+func (i *Interaction) onlyAuthorizationCodeGrantSupported() bool {
+	return i.AuthorizationCodeGrantTypeSupported() && !i.PreAuthorizedCodeGrantTypeSupported()
 }
 
 func (i *Interaction) getCredentialResponsesUsingPreAuth(pin string, //nolint:funlen // Difficult to decompose
@@ -720,7 +745,7 @@ func (i *Interaction) getVCsFromCredentialResponses(
 func (i *Interaction) getPreAuthTokenResponse(pin string) (*preAuthTokenResponse, error) {
 	params := url.Values{}
 	params.Add("grant_type", preAuthorizedGrantType)
-	params.Add("pre-authorized_code", i.issuerCapabilities.preAuthorizedCodeGrantParams.preAuthorizedCode)
+	params.Add("pre-authorized_code", i.preAuthorizedCodeGrantParams.preAuthorizedCode)
 
 	if pin != "" {
 		params.Add("user_pin", pin)
