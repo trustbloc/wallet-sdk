@@ -333,7 +333,7 @@ func TestResolve(t *testing.T) {
 				credentialschema.WithHTTPClient(http.DefaultClient),
 				credentialschema.WithIssuerURI("http://BadURL"))
 			require.Contains(t, err.Error(), `Get "http://BadURL/.well-known/openid-credential-issuer":`+
-				` dial tcp: lookup BadURL:`)
+				` dial tcp: lookup BadURL`)
 			require.Nil(t, resolvedDisplayData)
 		})
 	})
