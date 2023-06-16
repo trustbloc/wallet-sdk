@@ -4,6 +4,7 @@ import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.display.*
 import dev.trustbloc.wallet.sdk.openid4ci.*
 import dev.trustbloc.wallet.sdk.otel.Otel
+import dev.trustbloc.wallet.sdk.stderr.MetricsLogger
 import dev.trustbloc.wallet.sdk.verifiable.Credential
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
@@ -23,6 +24,7 @@ class OpenID4CI constructor(
         val opts = InteractionOpts()
         opts.addHeader(trace.traceHeader())
         opts.setActivityLogger(activityLogger)
+        opts.setMetricsLogger(MetricsLogger())
 
         newInteraction = Interaction(args, opts)
     }

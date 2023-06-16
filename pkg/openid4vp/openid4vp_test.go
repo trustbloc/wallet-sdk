@@ -17,7 +17,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose"
@@ -68,9 +67,7 @@ func (f *failingMetricsLogger) Log(metricsEvent *api.MetricsEvent) error {
 
 func TestOpenID4VP_GetQuery(t *testing.T) {
 	t.Run("Inline Request Object", func(t *testing.T) {
-		opt := WithNetworkDocumentLoaderHTTPTimeout(time.Second * 10)
-
-		instance := New(requestObjectJWT, &jwtSignatureVerifierMock{}, nil, nil, nil, opt)
+		instance := New(requestObjectJWT, &jwtSignatureVerifierMock{}, nil, nil, nil)
 
 		query, err := instance.GetQuery()
 		require.NoError(t, err)

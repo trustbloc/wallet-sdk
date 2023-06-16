@@ -14,6 +14,7 @@ import dev.trustbloc.wallet.sdk.openid4vp.Args
 import dev.trustbloc.wallet.sdk.openid4vp.VerifierDisplayData
 import dev.trustbloc.wallet.sdk.otel.Otel
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
+import dev.trustbloc.wallet.sdk.stderr.MetricsLogger
 import java.lang.Exception
 
 class OpenID4VP constructor(
@@ -39,6 +40,7 @@ class OpenID4VP constructor(
         val opts = Opts()
         opts.setActivityLogger(activityLogger)
         opts.addHeader(trace.traceHeader())
+        opts.setMetricsLogger(MetricsLogger())
 
         val interaction = Interaction(args, opts)
 

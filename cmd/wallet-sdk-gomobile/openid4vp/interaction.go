@@ -15,6 +15,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/component/models/jwt"
 	"github.com/hyperledger/aries-framework-go/component/models/presexch"
 	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
+	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -92,11 +93,23 @@ func NewInteraction(args *Args, opts *Opts) (*Interaction, error) { //nolint:fun
 		goAPIDocumentLoader = &wrapper.DocumentLoaderWrapper{
 			DocumentLoader: opts.documentLoader,
 		}
+	} else {
+		dlHTTPClient := wrapper.NewHTTPClient(opts.httpTimeout, api.Headers{}, opts.disableHTTPClientTLSVerification)
+
+		var err error
+		goAPIDocumentLoader, err = common.CreateJSONLDDocumentLoader(dlHTTPClient, mem.NewProvider())
+		if err != nil {
+			return nil, wrapper.ToMobileErrorWithTrace(err, oTel)
+		}
 	}
 
 	inquirerOpts := credential.NewInquirerOpts()
 	inquirerOpts.SetDocumentLoader(opts.documentLoader)
-	inquirer := credential.NewInquirer(inquirerOpts)
+
+	inquirer, err := credential.NewInquirer(inquirerOpts)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Interaction{
 		ldDocumentLoader: opts.documentLoader,

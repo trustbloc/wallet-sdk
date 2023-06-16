@@ -1145,7 +1145,8 @@ let opts = Openid4vpNewOpts().setActivityLogger(activityLogger) // Optional, but
 var newInteractionError: NSError?
 let interaction = Openid4vpNewInteraction(args, opts, &newInteractionError)
 let query = interaction.getQuery()
-let inquirer = CredentialNewInquirer(nil)
+var newInquirerError: NSError?
+let inquirer = CredentialNewInquirer(nil, &newInquirerError)
 let savedCredentials = VerifiableCredentialsArray() // Would need some actual credentials for this to work
 
 // Use this code to display information about the verifier.

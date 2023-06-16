@@ -23,7 +23,6 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4vp"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
-	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/helpers"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/metricslogger"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4vp"
@@ -150,8 +149,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		issuedCredentials, issuersInfo := testHelper.IssueCredentials(t,
 			vcsAPIDirectURL,
 			tc.issuerProfileIDs,
-			tc.claimData,
-			&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)})
+			tc.claimData, nil)
 		println("Issued", issuedCredentials.Length(), "credentials")
 		for k := 0; k < issuedCredentials.Length(); k++ {
 			cred, _ := issuedCredentials.AtIndex(k).Serialize()
@@ -174,14 +172,12 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		activityLogger := mem.NewActivityLogger()
 
-		docLoader := &documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)}
-
 		metricsLogger := metricslogger.NewMetricsLogger()
 
 		interactionRequiredArgs := openid4vp.NewArgs(initiateURL, testHelper.KMS.GetCrypto(), didResolver)
 
 		interactionOptionalArgs := openid4vp.NewOpts()
-		interactionOptionalArgs.SetDocumentLoader(docLoader)
+
 		interactionOptionalArgs.SetActivityLogger(activityLogger)
 		interactionOptionalArgs.SetMetricsLogger(metricsLogger)
 		interactionOptionalArgs.DisableHTTPClientTLSVerify()
@@ -202,10 +198,9 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		require.Equal(t, "test purpose.", displayData.Purpose())
 		require.Equal(t, "", displayData.LogoURI())
 
-		inquirerOpts := credential.NewInquirerOpts().
-			SetDocumentLoader(docLoader).SetDIDResolver(didResolver)
+		inquirerOpts := credential.NewInquirerOpts().SetDIDResolver(didResolver)
 
-		inquirer := credential.NewInquirer(inquirerOpts)
+		inquirer, err := credential.NewInquirer(inquirerOpts)
 		require.NoError(t, err)
 
 		requirements, err := inquirer.GetSubmissionRequirements(query, issuedCredentials)

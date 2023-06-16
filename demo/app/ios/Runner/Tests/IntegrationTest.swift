@@ -69,7 +69,10 @@ class IntegrationTest: XCTestCase {
         let vpInteraction = Openid4vpNewInteraction(openID4VPArgs, opts, nil)!
 
         let credentialsQuery = try vpInteraction.getQuery()
-        let inquirer = CredentialNewInquirer(nil)!
+
+        var newInquirerError: NSError?
+        let inquirer = CredentialNewInquirer(nil, &newInquirerError)!
+        XCTAssertNil(newInquirerError)
 
         let submissionRequirements = try inquirer.getSubmissionRequirements(
                     credentialsQuery, credentials: issuedCreds)
