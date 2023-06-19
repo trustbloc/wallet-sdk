@@ -48,6 +48,12 @@ func TestKeyHandle(t *testing.T) {
 		require.NoError(t, e)
 
 		require.Equal(t, kh, newKH)
+
+		jwks := api.NewJSONWebKeySet()
+		jwks.Append(kh)
+
+		require.Equal(t, 1, jwks.Length())
+		require.Equal(t, kh, jwks.AtIndex(0))
 	})
 
 	t.Run("fail to serialize", func(t *testing.T) {

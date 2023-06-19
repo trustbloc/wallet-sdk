@@ -12,6 +12,11 @@ import (
 	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk"
 )
 
+// JSONWebKey holds a public key with associated metadata, in JWK format.
+type JSONWebKey struct {
+	JWK *jwk.JWK `json:"jwk,omitempty"`
+}
+
 // Serialize returns a JSON representation of this JSONWebKey.
 func (k *JSONWebKey) Serialize() (string, error) {
 	if k.JWK == nil {
@@ -47,4 +52,39 @@ func ParseJSONWebKey(data string) (*JSONWebKey, error) {
 	return &JSONWebKey{
 		JWK: key,
 	}, nil
+}
+
+// JSONWebKeySet represents a JWK Set object.
+type JSONWebKeySet struct {
+	JWKs []JSONWebKey
+}
+
+// NewJSONWebKeySet returns a new JSON Web Key Set.
+// It acts as a gomobile-compatible wrapper around a Go array of JSONWebKey objects.
+func NewJSONWebKeySet() *JSONWebKeySet {
+	return &JSONWebKeySet{}
+}
+
+// Append appends the given JSONWebKey to the array.
+// It returns a reference to the JSONWebKey in order to allow a caller to chain together Append calls.
+func (j *JSONWebKeySet) Append(jsonWebKey *JSONWebKey) *JSONWebKeySet {
+	j.JWKs = append(j.JWKs, *jsonWebKey)
+
+	return j
+}
+
+// Length returns the number of JSONWebKeys contained within this JSONWebKeySet object.
+func (j *JSONWebKeySet) Length() int {
+	return len(j.JWKs)
+}
+
+// AtIndex returns the JSONWebKey at the given index.
+// If the index passed in is out of bounds, then nil is returned.
+func (j *JSONWebKeySet) AtIndex(index int) *JSONWebKey {
+	maxIndex := len(j.JWKs) - 1
+	if index > maxIndex || index < 0 {
+		return nil
+	}
+
+	return &j.JWKs[index]
 }

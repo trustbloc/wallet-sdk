@@ -192,6 +192,19 @@ func (i *Interaction) AuthorizationCodeGrantTypeSupported() bool {
 	return i.goAPIInteraction.AuthorizationCodeGrantTypeSupported()
 }
 
+// DynamicClientRegistrationSupported indicates whether the issuer supports dynamic client registration.
+func (i *Interaction) DynamicClientRegistrationSupported() (bool, error) {
+	return i.goAPIInteraction.DynamicClientRegistrationSupported()
+}
+
+// DynamicClientRegistrationEndpoint returns the issuer's dynamic client registration endpoint.
+// The caller should call the DynamicClientRegistrationSupported method first and only call this method
+// if DynamicClientRegistrationSupported returns true.
+// This method will return an error if the issuer does not support dynamic client registration.
+func (i *Interaction) DynamicClientRegistrationEndpoint() (string, error) {
+	return i.goAPIInteraction.DynamicClientRegistrationEndpoint()
+}
+
 // OTelTraceID returns open telemetry trace id.
 func (i *Interaction) OTelTraceID() string {
 	traceID := ""

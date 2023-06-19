@@ -84,3 +84,9 @@ type JWTSigner interface {
 	Sign(data []byte) ([]byte, error)
 	Headers() jose.Headers
 }
+
+// JSONWebKeySet represents a JWK Set object.
+// It uses the JWK type from aries-framework-go.
+type JSONWebKeySet struct {
+	JWKs []jwk.JWK `json:"keys"`
+}

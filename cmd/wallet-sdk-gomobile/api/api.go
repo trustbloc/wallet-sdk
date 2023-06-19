@@ -8,15 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 // Package api defines gomobile-compatible wallet-sdk interfaces.
 package api
 
-import (
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk"
-)
-
-// JSONWebKey holds a public key with associated metadata, in JWK format.
-type JSONWebKey struct {
-	JWK *jwk.JWK `json:"jwk,omitempty"`
-}
-
 // KeyWriter represents a type that is capable of performing operations related to key creation and storage within
 // an underlying KMS.
 type KeyWriter interface {

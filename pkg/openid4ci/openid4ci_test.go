@@ -1012,7 +1012,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 	})
 }
 
-func TestInteraction_IssuerCapabilities(t *testing.T) {
+func TestInteraction_GrantTypes(t *testing.T) {
 	interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", false))
 
 	require.True(t, interaction.PreAuthorizedCodeGrantTypeSupported())
@@ -1024,6 +1024,66 @@ func TestInteraction_IssuerCapabilities(t *testing.T) {
 	require.True(t, preAuthorizedCodeGrantParams.PINRequired())
 
 	require.False(t, interaction.AuthorizationCodeGrantTypeSupported())
+}
+
+func TestInteraction_DynamicClientRegistration(t *testing.T) {
+	t.Run("Fail to get OpenID configuration", func(t *testing.T) {
+		interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", false))
+
+		supported, err := interaction.DynamicClientRegistrationSupported()
+		require.EqualError(t, err, "ISSUER_OPENID_FETCH_FAILED(OCI1-0006):failed to fetch issuer's "+
+			"OpenID configuration: "+`openid configuration endpoint: Get "example.com/.well-known/openid-configuration"`+
+			`: unsupported protocol scheme ""`)
+		require.False(t, supported)
+
+		endpoint, err := interaction.DynamicClientRegistrationEndpoint()
+		require.EqualError(t, err, "ISSUER_OPENID_FETCH_FAILED(OCI1-0006):failed to fetch issuer's "+
+			"OpenID configuration: "+`openid configuration endpoint: Get "example.com/.well-known/openid-configuration"`+
+			`: unsupported protocol scheme ""`)
+		require.Empty(t, endpoint)
+	})
+	t.Run("Dynamic client registration is not supported", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t: t,
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{}
+
+		interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
+
+		supported, err := interaction.DynamicClientRegistrationSupported()
+		require.NoError(t, err)
+		require.False(t, supported)
+
+		endpoint, err := interaction.DynamicClientRegistrationEndpoint()
+		require.EqualError(t, err, "issuer does not support dynamic client registration")
+		require.Empty(t, endpoint)
+	})
+	t.Run("Dynamic client registration is supported", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t: t,
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		testEndpoint := "SomeEndpoint"
+
+		issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{RegistrationEndpoint: &testEndpoint}
+
+		interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
+
+		supported, err := interaction.DynamicClientRegistrationSupported()
+		require.NoError(t, err)
+		require.True(t, supported)
+
+		endpoint, err := interaction.DynamicClientRegistrationEndpoint()
+		require.NoError(t, err)
+		require.Equal(t, testEndpoint, endpoint)
+	})
 }
 
 func TestInteraction_Issuer_URI(t *testing.T) {
