@@ -613,6 +613,7 @@ val issuerURI = interaction.issuerURI() // Optional (but useful)
 
 ```swift
 import Walletsdk
+import WalletSDKSupport
 
 // Setup
 let memKMSStore = LocalkmsNewMemKMSStore()
@@ -635,7 +636,7 @@ let interactionOpts = Openid4ciNewInteractionOpts().setActivityLogger(activityLo
 var newInteractionError: NSError?
 
 // This is a stateful object - we will use this to go through the flow.
-let interaction = Openid4ciNewInteraction(interactionArgs, interactionOpts, &newInteractionError)
+let interaction = await runAsync() { Openid4ciNewInteraction(interactionArgs, interactionOpts, &newInteractionError) }
 
 // It's a good idea to check the issuer's capabilities first
 if !interaction.preAuthorizedCodeGrantTypeSupported() {
@@ -650,7 +651,7 @@ if (issuerCapabilities.preAuthorizedCodeGrantParams().pinRequired()) {
     requestCredentialWithPreAuthOpts!.setPIN("1234")
 }
 
-let credentials = interaction.requestCredential(withPreAuth: didDocResolution.assertionMethod(), opts: requestCredentialWithPreAuthOpts)
+let credentials = await runAsync() { interaction.requestCredential(withPreAuth: didDocResolution.assertionMethod(), opts: requestCredentialWithPreAuthOpts) }
 
 let issuerURI = interaction.issuer().uri() // Optional (but useful)
 
@@ -715,6 +716,7 @@ val issuerURI = interaction.issuer().uri() // Optional (but useful)
 
 ```swift
 import Walletsdk
+import WalletSDKSupport
 
 // Setup
 let memKMSStore = LocalkmsNewMemKMSStore()
@@ -737,7 +739,7 @@ let interactionOpts = Openid4ciNewInteractionOpts().setActivityLogger(activityLo
 var newInteractionError: NSError?
 
 // This is a stateful object - we will use this to go through the flow.
-let interaction = Openid4ciNewInteraction(interactionArgs, interactionOpts, &newInteractionError)
+let interaction = await runAsync() { Openid4ciNewInteraction(interactionArgs, interactionOpts, &newInteractionError) }
 
 // It's a good idea to check the issuer's capabilities first
 if !interaction.authorizationCodeGrantTypeSupported() {
@@ -754,7 +756,7 @@ let opts = Openid4ciNewCreateAuthorizationURLOpts()!.setScopes(scopes)
 var createAuthURLError: NSError?
 
 // If scopes aren't needed, you can pass in nil in place of the opts argument.
-let authorizationLink = interaction.createAuthorizationURL("clientID", redirectURI: "redirect URI", opts: opts, error: &createAuthURLError)
+let authorizationLink = await runAsync() { interaction.createAuthorizationURL("clientID", redirectURI: "redirect URI", opts: opts, error: &createAuthURLError) }
 
 // Open authorizationLink in a browser. Once the user has finished logging in, call requestCredential()
 // with the full redirect URI (including query parameters) that the login service sent the user to.
@@ -763,7 +765,7 @@ let authorizationLink = interaction.createAuthorizationURL("clientID", redirectU
 // createAuthorizationURL() call like in this example since control has to flow back to the user first.
 let redirectURIWithParams = "Put the redirect URI with params here"
 
-let credentials = interaction.requestCredential(withAuth: didVerificationMethod: didDocResolution.assertionMethod(), redirectURIWithParams: redirectURIWithParams, opts: nil)
+let credentials = await runAsync() { interaction.requestCredential(withAuth: didVerificationMethod: didDocResolution.assertionMethod(), redirectURIWithParams: redirectURIWithParams, opts: nil) }
 
 let issuerURI = interaction.issuer().uri() // Optional (but useful)
 
@@ -1127,6 +1129,7 @@ interaction.presentCredential(selectedVCs)
 
 ```swift
 import Walletsdk
+import WalletSDKSupport
 
 // Setup
 let memKMSStore = LocalkmsNewMemKMSStore()
@@ -1143,7 +1146,7 @@ let opts = Openid4vpNewOpts().setActivityLogger(activityLogger) // Optional, but
 
 // Going through the flow
 var newInteractionError: NSError?
-let interaction = Openid4vpNewInteraction(args, opts, &newInteractionError)
+let interaction = await runAsync() { Openid4vpNewInteraction(args, opts, &newInteractionError) }
 let query = interaction.getQuery()
 var newInquirerError: NSError?
 let inquirer = CredentialNewInquirer(nil, &newInquirerError)
@@ -1163,7 +1166,7 @@ let requirementDesc = matchedRequirement.descriptorAtIndex(0) // Usually require
 let selectedVCs = VerifiableCredentialsArray()
 selectedVCs.add(requirementDesc.matchedVCs.atIndex(0)) // Users should select one VC for each descriptor from the matched list and confirm that they want to share it
 
-let credentials = interaction.presentCredential(selectedVCs)
+let credentials = await runAsync() { interaction.presentCredential(selectedVCs) }
 // Consider checking the activity log at some point after the interaction
 ```
 
