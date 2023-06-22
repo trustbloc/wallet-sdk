@@ -312,7 +312,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             if (flowType == "auth-code-flow"){
                 guard let authCodeArgs = arguments["authCodeArgs"] as? Dictionary<String, Any> else {
                     return  result(FlutterError.init(code: "NATIVE_ERR",
-                                                     message: "error while reading auth code argments",
+                                                     message: "error while reading auth code arguments",
                                                      details: "Pass scopes, clientID and redirectURI as the arguments"))
                 }
                 

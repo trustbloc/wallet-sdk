@@ -12,14 +12,11 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
+	"golang.org/x/oauth2/clientcredentials"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
-	"testing"
-
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
-	"golang.org/x/oauth2/clientcredentials"
 
 	"golang.org/x/oauth2"
 
@@ -34,7 +31,7 @@ const (
 	claimDataURL             = "https://mock-login-consent.example.com:8099/claim-data"
 	xAPIKey                  = "rw_token"
 
-	oidcProviderURL = "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB"
+	oidcProviderURL = "http://localhost:9229/local_5a9GzRvB"
 	organizationID  = "f13d1va9lp403pb9lyj89vk55"
 
 	vcsAPIGateway = "https://api-gateway.trustbloc.local:5566"
@@ -158,10 +155,12 @@ func (s *Setup) getAuthHeaders() map[string]string {
 	return headers
 }
 
-func InitiateAuthCodeIssuance(t *testing.T) string {
+func InitiateAuthCodeIssuance() (string, error) {
 	accessToken, err := issueAccessToken(context.Background(), oidcProviderURL,
 		organizationID, "ejqxi9jb1vew2jbdnogpjcgrz", []string{"org_admin"})
-	require.NoError(t, err)
+	if err != nil {
+		return "", err
+	}
 
 	println(accessToken)
 
@@ -176,10 +175,15 @@ func InitiateAuthCodeIssuance(t *testing.T) string {
 		Scope:                []string{"openid", "profile"},
 		ClaimEndpoint:        claimDataURL,
 	})
-	require.NoError(t, err)
+
+	if err != nil {
+		return "", err
+	}
 
 	req, err := http.NewRequest(http.MethodPost, endpointURL, bytes.NewReader(reqBody))
-	require.NoError(t, err)
+	if err != nil {
+		return "", err
+	}
 
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+accessToken)
@@ -189,21 +193,27 @@ func InitiateAuthCodeIssuance(t *testing.T) string {
 	}}}
 
 	resp, err := client.Do(req)
-	require.NoError(t, err)
+	if err != nil {
+		return "", err
+	}
 
 	b, err := io.ReadAll(resp.Body)
-	require.NoError(t, err)
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("expected resp status OK but got %d", resp.StatusCode)
+	}
 
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-
+	println("response %s", string(b))
 	var r initiateOIDC4CIResponse
 
 	err = json.Unmarshal(b, &r)
-	require.NoError(t, err)
+	if err != nil {
+		return "", err
+	}
 
-	println(r.OfferCredentialURL)
-
-	return r.OfferCredentialURL
+	return r.OfferCredentialURL, nil
 }
 
 func issueAccessToken(ctx context.Context, oidcProviderURL, clientID, secret string, scopes []string) (string, error) {

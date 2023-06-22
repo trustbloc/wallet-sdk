@@ -275,7 +275,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 }
 
 func doAuthCodeFlowTest(t *testing.T) {
-	credentialOfferURL := oidc4ci.InitiateAuthCodeIssuance(t)
+	credentialOfferURL, err := oidc4ci.InitiateAuthCodeIssuance()
 
 	testHelper := helpers.NewCITestHelper(t, "ion", "")
 

@@ -37,6 +37,19 @@ func main() {
 	if len(args) >= 2 && args[0] == "verification" && args[1] != "" {
 		initiatePreAuthorizedVerification(args[1:])
 	}
+
+	if len(args) >= 2 && args[0] == "auth-code-flow" && args[1] != "" {
+		initiateAuthCodeIssuance()
+	}
+}
+
+func initiateAuthCodeIssuance() {
+	credentialOfferURL, err := oidc4ci.InitiateAuthCodeIssuance()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Print(credentialOfferURL)
 }
 
 func initiatePreAuthorizedIssuance(issuerProfileIDs []string) {
