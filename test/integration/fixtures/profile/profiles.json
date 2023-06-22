@@ -24,13 +24,23 @@
           }
         },
         "oidcConfig": {
-          "client_id": "bank_issuer",
-          "client_secret_handle": "bank-issuer-secret",
-          "scope": [
+          "client_id": "7d4u50e7w6nfq8tfayhzplgjf",
+          "client_secret_handle": "282ks4fkuqfosus5k0x30abnv",
+          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration",
+          "scopes_supported": [
             "openid",
             "profile"
           ],
-          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration"
+          "grant_types_supported": [
+            "authorization_code"
+          ],
+          "response_types_supported": [
+            "code"
+          ],
+          "token_endpoint_auth_methods_supported": [
+            "none"
+          ],
+          "pre-authorized_grant_anonymous_access_supported": true
         },
         "credentialTemplates": [
           {
@@ -184,13 +194,23 @@
           }
         },
         "oidcConfig": {
-          "client_id": "drivers_license_issuer",
-          "client_secret_handle": "drivers-license-issuer-secret",
-          "scope": [
+          "client_id": "7d4u50e7w6nfq8tfayhzplgjf",
+          "client_secret_handle": "282ks4fkuqfosus5k0x30abnv",
+          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration",
+          "scopes_supported": [
             "openid",
             "profile"
           ],
-          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration"
+          "grant_types_supported": [
+            "authorization_code"
+          ],
+          "response_types_supported": [
+            "code"
+          ],
+          "token_endpoint_auth_methods_supported": [
+            "none"
+          ],
+          "pre-authorized_grant_anonymous_access_supported": true
         },
         "credentialTemplates": [
           {
@@ -376,11 +396,22 @@
         "oidcConfig": {
           "client_id": "7d4u50e7w6nfq8tfayhzplgjf",
           "client_secret_handle": "282ks4fkuqfosus5k0x30abnv",
-          "scope": [
+          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration",
+          "scopes_supported": [
             "openid",
             "profile"
           ],
-          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration"
+          "grant_types_supported": [
+            "authorization_code"
+          ],
+          "response_types_supported": [
+            "code"
+          ],
+          "token_endpoint_auth_methods_supported": [
+            "none"
+          ],
+          "enable_dynamic_client_registration": true,
+          "pre-authorized_grant_anonymous_access_supported": true
         },
         "credentialTemplates": [
           {
@@ -535,13 +566,23 @@
           }
         },
         "oidcConfig": {
-          "client_id": "university_degree_issuer",
-          "client_secret_handle": "university_degree_issuer-secret",
-          "scope": [
+          "client_id": "7d4u50e7w6nfq8tfayhzplgjf",
+          "client_secret_handle": "282ks4fkuqfosus5k0x30abnv",
+          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration",
+          "scopes_supported": [
             "openid",
             "profile"
           ],
-          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration"
+          "grant_types_supported": [
+            "authorization_code"
+          ],
+          "response_types_supported": [
+            "code"
+          ],
+          "token_endpoint_auth_methods_supported": [
+            "none"
+          ],
+          "pre-authorized_grant_anonymous_access_supported": true
         },
         "credentialTemplates": [
           {
@@ -636,7 +677,6 @@
       },
       "createDID": true
     },
-
     {
       "issuer": {
         "id": "university_degree_issuer_bbs",
@@ -657,13 +697,23 @@
           }
         },
         "oidcConfig": {
-          "client_id": "university_degree_issuer_bbs",
-          "client_secret_handle": "university_degree_issuer_bbs-secret",
-          "scope": [
+          "client_id": "7d4u50e7w6nfq8tfayhzplgjf",
+          "client_secret_handle": "282ks4fkuqfosus5k0x30abnv",
+          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration",
+          "scopes_supported": [
             "openid",
             "profile"
           ],
-          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration"
+          "grant_types_supported": [
+            "authorization_code"
+          ],
+          "response_types_supported": [
+            "code"
+          ],
+          "token_endpoint_auth_methods_supported": [
+            "none"
+          ],
+          "pre-authorized_grant_anonymous_access_supported": true
         },
         "credentialTemplates": [
           {
@@ -778,13 +828,23 @@
           }
         },
         "oidcConfig": {
-          "client_id": "bank_issuer",
-          "client_secret_handle": "bank-issuer-secret",
-          "scope": [
+          "client_id": "7d4u50e7w6nfq8tfayhzplgjf",
+          "client_secret_handle": "282ks4fkuqfosus5k0x30abnv",
+          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration",
+          "scopes_supported": [
             "openid",
             "profile"
           ],
-          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration"
+          "grant_types_supported": [
+            "authorization_code"
+          ],
+          "response_types_supported": [
+            "code"
+          ],
+          "token_endpoint_auth_methods_supported": [
+            "none"
+          ],
+          "pre-authorized_grant_anonymous_access_supported": true
         },
         "credentialTemplates": [
           {

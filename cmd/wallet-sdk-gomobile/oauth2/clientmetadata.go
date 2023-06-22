@@ -204,3 +204,13 @@ func (c *ClientMetadata) SoftwareVersion() string {
 func (c *ClientMetadata) SetSoftwareVersion(softwareVersion string) {
 	c.goAPIClientMetadata.SoftwareVersion = softwareVersion
 }
+
+// IssuerState returns the issuer state.
+func (c *ClientMetadata) IssuerState() string {
+	return c.goAPIClientMetadata.IssuerState
+}
+
+// SetIssuerState sets the issuer state.
+func (c *ClientMetadata) SetIssuerState(issuerState string) {
+	c.goAPIClientMetadata.IssuerState = issuerState
+}

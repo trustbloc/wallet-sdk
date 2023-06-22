@@ -33,8 +33,13 @@ import (
 	goapiopenid4ci "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
 
-//go:embed testdata/sample_credential_response.json
-var sampleCredentialResponse []byte
+var (
+	//go:embed testdata/sample_credential_response.json
+	sampleCredentialResponse []byte
+
+	//go:embed testdata/sample_credential_offer.json
+	sampleCredentialOffer []byte
+)
 
 const (
 	sampleTokenResponse = `{"access_token":"eyJhbGciOiJSUzI1NiIsInR5cCI6Ikp..sHQ",` +
@@ -49,7 +54,9 @@ func TestNewInteraction(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		i := createInteraction(t, kms, nil, createTestRequestURI("example.com"), nil, false)
+		i := createInteraction(t, kms, nil,
+			createCredentialOfferIssuanceURI(t, "example.com", false),
+			nil, false)
 		require.NotEmpty(t, i.OTelTraceID())
 	})
 
@@ -62,7 +69,8 @@ func TestNewInteraction(t *testing.T) {
 		opts := openid4ci.NewInteractionOpts()
 		opts.DisableOpenTelemetry()
 
-		requiredArgs := openid4ci.NewInteractionArgs(createTestRequestURI("example.com"), kms.GetCrypto(), resolver)
+		requiredArgs := openid4ci.NewInteractionArgs(createCredentialOfferIssuanceURI(t, "example.com", false),
+			kms.GetCrypto(), resolver)
 
 		interaction, err := openid4ci.NewInteraction(requiredArgs, opts)
 		require.NoError(t, err)
@@ -77,7 +85,8 @@ func TestNewInteraction(t *testing.T) {
 
 		resolver := &mockResolver{keyWriter: kms}
 
-		requiredArgs := openid4ci.NewInteractionArgs(createTestRequestURI("example.com"), kms.GetCrypto(), resolver)
+		requiredArgs := openid4ci.NewInteractionArgs(createCredentialOfferIssuanceURI(t, "example.com", false),
+			kms.GetCrypto(), resolver)
 
 		interaction, err := openid4ci.NewInteraction(requiredArgs, nil)
 		require.NoError(t, err)
@@ -90,7 +99,8 @@ func TestNewInteraction(t *testing.T) {
 
 		resolver := &mockResolver{keyWriter: kms}
 
-		requiredArgs := openid4ci.NewInteractionArgs(createTestRequestURI("example.com"), kms.GetCrypto(), resolver)
+		requiredArgs := openid4ci.NewInteractionArgs(createCredentialOfferIssuanceURI(t, "example.com", false),
+			kms.GetCrypto(), resolver)
 		opts := openid4ci.NewInteractionOpts()
 		opts.SetHTTPTimeoutNanoseconds((10 * time.Second).Nanoseconds())
 
@@ -172,7 +182,8 @@ func TestInteraction_CreateAuthorizationURL(t *testing.T) {
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
-	interaction := createInteraction(t, kms, nil, createTestRequestURI("example.com"), nil, false)
+	interaction := createInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", false),
+		nil, false)
 
 	authorizationLink, err := interaction.CreateAuthorizationURL("clientID", "redirectURI", nil)
 	require.EqualError(t, err, "issuer does not support the authorization code grant type")
@@ -216,7 +227,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		defer server.Close()
 
-		requestURI := createTestRequestURI(server.URL)
+		requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
 
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
@@ -250,7 +261,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		requestURI := createTestRequestURI(server.URL)
+		requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
 
 		interactionRequiredArgs, interactionOptionalArgs := getTestArgs(t, requestURI, kms, nil, nil, false)
 
@@ -290,7 +301,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		interaction := createInteraction(t, kms, activityLogger, createTestRequestURI(server.URL), nil, false)
+		interaction := createInteraction(t, kms, activityLogger, createCredentialOfferIssuanceURI(t, server.URL, false),
+			nil, false)
 
 		keyHandle, err := kms.Create(arieskms.ED25519)
 		require.NoError(t, err)
@@ -313,7 +325,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		interaction := createInteraction(t, kms, nil, createTestRequestURI("example.com"), nil, false)
+		interaction := createInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", false),
+			nil, false)
 
 		keyHandle, err := kms.Create(arieskms.ED25519)
 		require.NoError(t, err)
@@ -337,7 +350,8 @@ func TestInteraction_GrantTypes(t *testing.T) {
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
-	interaction := createInteraction(t, kms, nil, createTestRequestURI("example.com"), nil, false)
+	interaction := createInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", false),
+		nil, false)
 
 	require.True(t, interaction.PreAuthorizedCodeGrantTypeSupported())
 
@@ -348,13 +362,33 @@ func TestInteraction_GrantTypes(t *testing.T) {
 	require.True(t, preAuthorizedCodeGrantParams.PINRequired())
 
 	require.False(t, interaction.AuthorizationCodeGrantTypeSupported())
+
+	authorizationCodeGrantParams, err := interaction.AuthorizationCodeGrantParams()
+	require.EqualError(t, err, "issuer does not support the authorization code grant")
+	require.Nil(t, authorizationCodeGrantParams)
+
+	interaction = createInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", true),
+		nil, false)
+
+	require.True(t, interaction.AuthorizationCodeGrantTypeSupported())
+
+	authorizationCodeGrantParams, err = interaction.AuthorizationCodeGrantParams()
+	require.NoError(t, err)
+	require.NotNil(t, authorizationCodeGrantParams)
+
+	require.True(t, authorizationCodeGrantParams.HasIssuerState())
+
+	issuerState, err := authorizationCodeGrantParams.IssuerState()
+	require.NoError(t, err)
+	require.Equal(t, "1234", issuerState)
 }
 
 func TestInteraction_DynamicClientRegistration(t *testing.T) {
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
-	interaction := createInteraction(t, kms, nil, createTestRequestURI("example.com"), nil, false)
+	interaction := createInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", false),
+		nil, false)
 
 	supported, err := interaction.DynamicClientRegistrationSupported()
 	require.EqualError(t, err, "ISSUER_OPENID_FETCH_FAILED(OCI1-0006):failed to fetch issuer's "+
@@ -394,7 +428,8 @@ func doRequestCredentialTest(t *testing.T, additionalHeaders *api.Headers,
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
-	interaction := createInteraction(t, kms, activityLogger, createTestRequestURI(server.URL), additionalHeaders,
+	interaction := createInteraction(t, kms, activityLogger, createCredentialOfferIssuanceURI(t, server.URL, false),
+		additionalHeaders,
 		disableTLSVerification)
 
 	keyHandle, err := kms.Create(arieskms.ED25519)
@@ -591,12 +626,40 @@ func requireErrorContains(t *testing.T, err error, errString string) { //nolint:
 	require.Contains(t, err.Error(), errString)
 }
 
-func createTestRequestURI(issuerURL string) string {
-	issuerURLEscaped := url.QueryEscape(issuerURL)
+func createCredentialOfferIssuanceURI(t *testing.T, issuerURL string, includeAuthCodeGrant bool) string {
+	t.Helper()
 
-	return "openid-vc://?credential_offer=%7B%22credential_issuer%22%3A%22" + issuerURLEscaped +
-		"%22%2C%22credentials%22%3A%5B%7B%22format%22%3A%22jwt_vc_json%22%2C%22types%22%3A%5B%22Verifiable" +
-		"Credential%22%2C%22VerifiedEmployee%22%5D%7D%5D%2C%22grants%22%3A%7B%22urn%3Aietf%3Aparams%3Aoaut" +
-		"h%3Agrant-type%3Apre-authorized_code%22%3A%7B%22pre-authorized_code%22%3A%228e557518-bbb1-4483-94" +
-		"90-d80f4f54f3361677012959367644351%22%2C%22user_pin_required%22%3Atrue%7D%7D%7D"
+	credentialOffer := createCredentialOffer(t, issuerURL, includeAuthCodeGrant)
+
+	credentialOfferBytes, err := json.Marshal(credentialOffer)
+	require.NoError(t, err)
+
+	credentialOfferEscaped := url.QueryEscape(string(credentialOfferBytes))
+
+	return "openid-vc://?credential_offer=" + credentialOfferEscaped
+}
+
+func createCredentialOffer(t *testing.T, issuerURL string, includeAuthCodeGrant bool) *goapiopenid4ci.CredentialOffer {
+	t.Helper()
+
+	credentialOffer := createSampleCredentialOffer(t, includeAuthCodeGrant)
+
+	credentialOffer.CredentialIssuer = issuerURL
+
+	return credentialOffer
+}
+
+func createSampleCredentialOffer(t *testing.T, includeAuthCodeGrant bool) *goapiopenid4ci.CredentialOffer {
+	t.Helper()
+
+	var credentialOffer goapiopenid4ci.CredentialOffer
+
+	err := json.Unmarshal(sampleCredentialOffer, &credentialOffer)
+	require.NoError(t, err)
+
+	if includeAuthCodeGrant {
+		credentialOffer.Grants["authorization_code"] = map[string]interface{}{"issuer_state": "1234"}
+	}
+
+	return &credentialOffer
 }

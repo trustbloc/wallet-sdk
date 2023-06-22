@@ -27,13 +27,14 @@ type ClientMetadata struct {
 	JWKSet                  *api.JSONWebKeySet `json:"jwks,omitempty"`
 	SoftwareID              string             `json:"software_id,omitempty"`
 	SoftwareVersion         string             `json:"software_version,omitempty"`
+	IssuerState             string             `json:"issuer_state,omitempty"`
 }
 
 // RegisterClientResponse represents a response to a new client registration request.
 type RegisterClientResponse struct {
 	ClientID              string `json:"client_id"`
 	ClientSecret          string `json:"client_secret,omitempty"`
-	ClientIDIssuedAt      int    `json:"client_id_issued_at,omitempty"`
-	ClientSecretExpiresAt int    `json:"client_secret_expires_at,omitempty"`
+	ClientIDIssuedAt      *int   `json:"client_id_issued_at,omitempty"`
+	ClientSecretExpiresAt *int   `json:"client_secret_expires_at,omitempty"`
 	*ClientMetadata
 }

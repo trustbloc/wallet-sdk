@@ -84,4 +84,7 @@ func TestClientMetadata(t *testing.T) {
 
 	clientMetadata.SetSoftwareVersion("SoftwareVersion")
 	require.Equal(t, "SoftwareVersion", clientMetadata.SoftwareVersion())
+
+	clientMetadata.SetIssuerState("IssuerState")
+	require.Equal(t, "IssuerState", clientMetadata.IssuerState())
 }
