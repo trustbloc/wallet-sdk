@@ -10,8 +10,6 @@ package did
 import (
 	"errors"
 
-	"github.com/hyperledger/aries-framework-go/pkg/client/didconfig"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	goapiwellknown "github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
@@ -42,7 +40,7 @@ func ValidateLinkedDomains(did string, resolver api.DIDResolver,
 }
 
 func validateLinkedDomains(did string, resolver api.DIDResolver,
-	client didconfig.HTTPClient,
+	client goapiwellknown.HTTPClient,
 ) (*ValidationResult, error) {
 	if resolver == nil {
 		return nil, errors.New("no resolver provided")

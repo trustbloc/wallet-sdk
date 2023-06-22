@@ -12,8 +12,8 @@ import (
 	"fmt"
 
 	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
+	"github.com/hyperledger/aries-framework-go/component/models/jwt/didsignjwt"
 	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/util/didsignjwt"
 	vdrspi "github.com/hyperledger/aries-framework-go/spi/vdr"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
