@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:app/scenarios/handle_openid_url.dart';
 import 'package:app/widgets/common_logo_appbar.dart';
 import 'package:app/widgets/primary_input_field.dart';
@@ -15,8 +13,8 @@ final WalletSDKPlugin = MethodChannelWallet();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  await WalletSDKPlugin.initSDK();
+  const didResolverURI = String.fromEnvironment("didResolverURI");
+  await WalletSDKPlugin.initSDK(didResolverURI);
 
   runApp(const MyApp());
 }

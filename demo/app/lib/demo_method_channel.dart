@@ -87,8 +87,8 @@ class MethodChannelWallet extends WalletPlatform {
   final methodChannel = const MethodChannel('WalletSDKPlugin');
   final errorCode = 'Exception';
 
-  Future<void> initSDK() async {
-    await methodChannel.invokeMethod<bool>('initSDK');
+  Future<void> initSDK(String didResolverURI) async {
+    await methodChannel.invokeMethod<bool>('initSDK', <String, dynamic>{'didResolverURI': didResolverURI});
   }
 
   Future<Map<Object?, Object?>?> createDID(String didMethodType, String didKeyType) async {
