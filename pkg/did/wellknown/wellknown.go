@@ -14,8 +14,8 @@ import (
 	"net/http"
 	"strings"
 
+	didconfig "github.com/hyperledger/aries-framework-go/component/didconfig/client"
 	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
-	"github.com/hyperledger/aries-framework-go/pkg/client/didconfig"
 	vdrspi "github.com/hyperledger/aries-framework-go/spi/vdr"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -25,13 +25,18 @@ import (
 
 const linkedDomainsServiceType = "LinkedDomains"
 
+// HTTPClient represents an HTTP client.
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // ValidateLinkedDomains validates the given DID's Linked Domains service against its well-known DID configuration.
 // It returns a bool indicating whether it's valid and the service's URL.
 // The DID document associated with the given DID must specify only a single service.
 // If there are multiple URLs for a given service, only the first will be checked.
 // The HTTP client parameter is optional. If not provided, then a default client will be used.
 func ValidateLinkedDomains(did string, resolver api.DIDResolver,
-	httpClient didconfig.HTTPClient,
+	httpClient HTTPClient,
 ) (bool, string, error) {
 	if resolver == nil {
 		return false, "",

@@ -1,3 +1,9 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package common
 
 import (
@@ -7,11 +13,9 @@ import (
 
 	ldcontext "github.com/hyperledger/aries-framework-go/component/models/ld/context"
 	lddocloader "github.com/hyperledger/aries-framework-go/component/models/ld/documentloader"
+	ldstore "github.com/hyperledger/aries-framework-go/component/models/ld/store"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
 	jsonld "github.com/piprate/json-gold/ld"
-
-	ldstore "github.com/hyperledger/aries-framework-go/component/models/ld/store"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/ld"
 )
 
 var (
@@ -69,8 +73,8 @@ func CreateJSONLDDocumentLoader(httpClient *http.Client, storageProvider storage
 		},
 	}
 
-	documentLoader, err := ld.NewDocumentLoader(ldStore,
-		ld.WithRemoteDocumentLoader(jsonld.NewDefaultDocumentLoader(httpClient)),
+	documentLoader, err := lddocloader.NewDocumentLoader(ldStore,
+		lddocloader.WithRemoteDocumentLoader(jsonld.NewDefaultDocumentLoader(httpClient)),
 		lddocloader.WithExtraContexts(additionalContexts...))
 	if err != nil {
 		return nil, fmt.Errorf("new document loader: %w", err)
