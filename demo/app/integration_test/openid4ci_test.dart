@@ -4,15 +4,13 @@ import 'dart:io';
 import 'package:app/demo_method_channel.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:integration_test/integration_test.dart';
-import 'package:http/http.dart' as http;
 
 void main() async {
   print("Init Wallet SDK Plugin");
   final walletSDKPlugin = MethodChannelWallet();
   print("Init SDK");
-
-  await walletSDKPlugin.initSDK();
+  const didResolverURI = String.fromEnvironment("DID_RESOLVER_URI");
+  await walletSDKPlugin.initSDK(didResolverURI);
   var didKeyType = "";
   testWidgets('Testing openid4vc with a single credential', (tester) async {
     const didMethodTypes = String.fromEnvironment("WALLET_DID_METHODS");

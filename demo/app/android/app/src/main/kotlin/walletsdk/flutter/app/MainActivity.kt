@@ -43,7 +43,7 @@ class MainActivity : FlutterActivity() {
                     when (call.method) {
                         "initSDK" -> {
                             try {
-                                initSDK()
+                                initSDK(call)
                                 result.success(null)
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while creating basic sdk services", e)
@@ -236,10 +236,11 @@ class MainActivity : FlutterActivity() {
                 }
     }
 
-    private fun initSDK() {
+    private fun initSDK(call: MethodCall) {
         val walletSDK = WalletSDK()
-
-        walletSDK.InitSDK(KmsStore(context))
+        val didResolverURI = call.argument<String>("didResolverURI")
+            ?: throw java.lang.Exception("didResolverURI params is missed")
+        walletSDK.InitSDK(KmsStore(context), didResolverURI)
         this.walletSDK = walletSDK;
     }
 

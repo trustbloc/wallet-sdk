@@ -16,11 +16,13 @@ class WalletSDK {
     var activityLogger: ActivityLogger? = null
 
 
-    fun InitSDK(kmsStore: Store) {
+    fun InitSDK(kmsStore: Store, didResolverURI: String) {
         val kms = Localkms.newKMS(kmsStore)
 
         val opts = ResolverOpts()
-        opts.setResolverServerURI("http://localhost:8072/1.0/identifiers")
+        if (didResolverURI != "") {
+            opts.setResolverServerURI(didResolverURI)
+        }
         didResolver = Resolver(opts)
 
         crypto = kms.crypto

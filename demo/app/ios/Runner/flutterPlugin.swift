@@ -67,7 +67,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             parseActivities(arguments: arguments!,  result: result)
 
         case "initSDK":
-            initSDK(result:result)
+            initSDK(arguments: arguments!, result:result)
 
         case "issuerURI":
             issuerURI(result:result)
@@ -98,14 +98,20 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
     }
 
-    private func initSDK(result: @escaping FlutterResult) {
+    private func initSDK(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
+        guard let didResolverURI = arguments["didResolverURI"] as? String else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while initiating SDK",
+                                             details: "parameter didResolverURI is missed"))
+        }
+        
         let walletSDK = WalletSDK();
-        walletSDK.InitSDK(kmsStore: kmsStore())
+        walletSDK.InitSDK(kmsStore: kmsStore(), didResolverURI: didResolverURI)
 
         self.walletSDK = walletSDK
         result(true)
     }
-  /**
+   /**
     This method gets the version detail if we build sdk using the env variable
     For Example: NEW_VERSION=testVer GIT_REV=testRev BUILD_TIME=testTime make generate-ios-bindings copy-ios-bindings
     */

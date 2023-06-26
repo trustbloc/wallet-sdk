@@ -20,11 +20,11 @@ class WalletSDK {
 
 
 
-    func InitSDK(kmsStore: LocalkmsStoreProtocol) {
+    func InitSDK(kmsStore: LocalkmsStoreProtocol, didResolverURI: String) {
         kms = LocalkmsNewKMS(kmsStore, nil)
         
         let opts = DidNewResolverOpts()
-        opts!.setResolverServerURI("http://did-resolver.trustbloc.local:8072/1.0/identifiers")
+        opts!.setResolverServerURI(didResolverURI)
         
         didResolver = DidNewResolver(opts, nil)
         crypto = kms!.getCrypto()
