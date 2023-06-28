@@ -22,13 +22,6 @@ type Credentials struct {
 	Types  []string `json:"types,omitempty"`
 }
 
-// RawGrant represents the grant types that the credential issuer is prepared to process for the given credential offer.
-type RawGrant struct {
-	PreAuthorizedCode string `json:"pre-authorized_code,omitempty"`
-	UserPINRequired   bool   `json:"user_pin_required,omitempty"`
-	IssuerState       string `json:"issuer_state,omitempty"`
-}
-
 // AuthorizeResult is the object returned from the Client.Authorize method.
 // An empty/missing AuthorizationRedirectEndpoint indicates that the wallet is pre-authorized.
 type AuthorizeResult struct {

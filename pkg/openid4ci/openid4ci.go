@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose"
 	"github.com/hyperledger/aries-framework-go/component/models/jwt"
 	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/piprate/json-gold/ld"
@@ -75,7 +76,7 @@ type Interaction struct {
 	documentLoader               ld.DocumentLoader
 	issuerMetadata               *issuer.Metadata
 	preAuthorizedCodeGrantParams *PreAuthorizedCodeGrantParams
-	authorizationCodeGrantParams *authorizationCodeGrantParams
+	authorizationCodeGrantParams *AuthorizationCodeGrantParams
 	openIDConfig                 *OpenIDConfig
 	oAuth2Config                 *oauth2.Config
 	authTokenResponse            *oauth2.Token
@@ -174,6 +175,8 @@ func (i *Interaction) CreateAuthorizationURL(clientID, redirectURI string,
 
 	i.authCodeURLState = uuid.New().String()
 
+	i.clientID = clientID
+
 	return i.oAuth2Config.AuthCodeURL(i.authCodeURLState, authCodeOptions...), nil
 }
 
@@ -220,7 +223,7 @@ func (i *Interaction) PreAuthorizedCodeGrantTypeSupported() bool {
 // PreAuthorizedCodeGrantParams returns an object that can be used to determine the issuer's pre-authorized code grant
 // parameters. The caller should call the PreAuthorizedCodeGrantTypeSupported method first and only call this method to
 // get the params if PreAuthorizedCodeGrantTypeSupported returns true.
-// This method only returns an error if (and only if) PreAuthorizedCodeGrantTypeSupported returns false.
+// This method returns an error if (and only if) PreAuthorizedCodeGrantTypeSupported returns false.
 func (i *Interaction) PreAuthorizedCodeGrantParams() (*PreAuthorizedCodeGrantParams, error) {
 	if i.preAuthorizedCodeGrantParams == nil {
 		return nil, errors.New("issuer does not support the pre-authorized code grant")
@@ -232,6 +235,18 @@ func (i *Interaction) PreAuthorizedCodeGrantParams() (*PreAuthorizedCodeGrantPar
 // AuthorizationCodeGrantTypeSupported indicates whether the issuer supports the authorization code grant type.
 func (i *Interaction) AuthorizationCodeGrantTypeSupported() bool {
 	return i.authorizationCodeGrantParams != nil
+}
+
+// AuthorizationCodeGrantParams returns an object that can be used to determine the issuer's authorization code grant
+// parameters. The caller should call the AuthorizationCodeGrantTypeSupported method first and only call this method to
+// get the params if AuthorizationCodeGrantTypeSupported returns true.
+// This method returns an error if (and only if) AuthorizationCodeGrantTypeSupported returns false.
+func (i *Interaction) AuthorizationCodeGrantParams() (*AuthorizationCodeGrantParams, error) {
+	if i.authorizationCodeGrantParams == nil {
+		return nil, errors.New("issuer does not support the authorization code grant")
+	}
+
+	return i.authorizationCodeGrantParams, nil
 }
 
 // DynamicClientRegistrationSupported indicates whether the issuer supports dynamic client registration.
@@ -383,9 +398,9 @@ func (i *Interaction) generateAuthCodeOptions(authorizationDetails []byte) []oau
 		oauth2.SetAuthURLParam("authorization_details", string(authorizationDetails)),
 	}
 
-	if i.authorizationCodeGrantParams.issuerState != nil {
+	if i.authorizationCodeGrantParams.IssuerState != nil {
 		authCodeOptions = append(authCodeOptions, oauth2.SetAuthURLParam("issuer_state",
-			*i.authorizationCodeGrantParams.issuerState))
+			*i.authorizationCodeGrantParams.IssuerState))
 	}
 
 	return authCodeOptions
@@ -956,7 +971,10 @@ func getSubjectIDs(vcs []*verifiable.Credential) ([]string, error) {
 }
 
 func signToken(claims interface{}, signer api.JWTSigner) (string, error) {
-	token, err := jwt.NewSigned(claims, nil, signer)
+	headers := jose.Headers{}
+	headers["typ"] = "openid4vci-proof+jwt"
+
+	token, err := jwt.NewSigned(claims, headers, signer)
 	if err != nil {
 		return "", fmt.Errorf("sign token failed: %w", err)
 	}

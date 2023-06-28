@@ -1024,6 +1024,21 @@ func TestInteraction_GrantTypes(t *testing.T) {
 	require.True(t, preAuthorizedCodeGrantParams.PINRequired())
 
 	require.False(t, interaction.AuthorizationCodeGrantTypeSupported())
+
+	authorizationCodeGrantParams, err := interaction.AuthorizationCodeGrantParams()
+	require.EqualError(t, err, "issuer does not support the authorization code grant")
+	require.Nil(t, authorizationCodeGrantParams)
+
+	interaction = newInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", true))
+
+	require.True(t, interaction.AuthorizationCodeGrantTypeSupported())
+
+	authorizationCodeGrantParams, err = interaction.AuthorizationCodeGrantParams()
+	require.NoError(t, err)
+	require.NotNil(t, authorizationCodeGrantParams)
+
+	require.NotNil(t, authorizationCodeGrantParams.IssuerState)
+	require.Equal(t, "1234", *authorizationCodeGrantParams.IssuerState)
 }
 
 func TestInteraction_DynamicClientRegistration(t *testing.T) {

@@ -19,13 +19,14 @@ func (p *PreAuthorizedCodeGrantParams) PINRequired() bool {
 	return p.userPINRequired
 }
 
-type authorizationCodeGrantParams struct {
-	issuerState *string
+// AuthorizationCodeGrantParams represents an issuer's authorization code grant parameters.
+type AuthorizationCodeGrantParams struct {
+	IssuerState *string
 }
 
 func determineIssuerGrantCapabilities(
 	credentialOffer *CredentialOffer,
-) (*PreAuthorizedCodeGrantParams, *authorizationCodeGrantParams, error) {
+) (*PreAuthorizedCodeGrantParams, *AuthorizationCodeGrantParams, error) {
 	rawPreAuthorizedCodeGrantParams, preAuthorizedCodeGrantExists := credentialOffer.Grants[preAuthorizedGrantType]
 	rawAuthorizationCodeGrantParams, authorizationCodeGrantExists := credentialOffer.Grants[authorizationCodeGrantType]
 
@@ -35,7 +36,7 @@ func determineIssuerGrantCapabilities(
 
 	var preAuthorizedCodeGrantParams *PreAuthorizedCodeGrantParams
 
-	var authorizationCodeGrantParams *authorizationCodeGrantParams
+	var authorizationCodeGrantParams *AuthorizationCodeGrantParams
 
 	var err error
 	if preAuthorizedCodeGrantExists {
@@ -83,7 +84,7 @@ func processPreAuthorizedCodeGrantParams(rawParams map[string]interface{}) (*Pre
 	return &PreAuthorizedCodeGrantParams{preAuthorizedCode: preAuthorizedCode, userPINRequired: userPINRequired}, nil
 }
 
-func processAuthorizationCodeGrantParams(rawParams map[string]interface{}) (*authorizationCodeGrantParams, error) {
+func processAuthorizationCodeGrantParams(rawParams map[string]interface{}) (*AuthorizationCodeGrantParams, error) {
 	var issuerState *string
 
 	issuerStateUntyped, exists := rawParams["issuer_state"]
@@ -96,5 +97,5 @@ func processAuthorizationCodeGrantParams(rawParams map[string]interface{}) (*aut
 		issuerState = &issuerStateAsString
 	}
 
-	return &authorizationCodeGrantParams{issuerState: issuerState}, nil
+	return &AuthorizationCodeGrantParams{IssuerState: issuerState}, nil
 }

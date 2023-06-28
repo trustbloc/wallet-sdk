@@ -16,6 +16,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/oauth2"
+
 	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/stretchr/testify/require"
 
@@ -71,7 +73,7 @@ type test struct {
 
 func TestOpenID4CIFullFlow(t *testing.T) {
 	println("!!! Ensure the test certificate is imported into your keychain, and make sure the following" +
-		"entries are in your hosts file:")
+		" entries are in your hosts file:")
 	println(`127.0.0.1 testnet.orb.local
           127.0.0.1 file-server.trustbloc.local
           127.0.0.1 did-resolver.trustbloc.local
@@ -83,8 +85,11 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 	doPreAuthCodeFlowTest(t)
 	println("Completed pre-auth code flow tests.")
 	println("Beginning auth code flow test.")
-	doAuthCodeFlowTest(t)
+	doAuthCodeFlowTest(t, false)
 	println("Completed auth code flow test.")
+	println("Beginning auth code flow with dynamic client registration test.")
+	doAuthCodeFlowTest(t, true)
+	println("Completed auth code flow with dynamic client registration test.")
 }
 
 func doPreAuthCodeFlowTest(t *testing.T) {
@@ -274,8 +279,9 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 	}
 }
 
-func doAuthCodeFlowTest(t *testing.T) {
+func doAuthCodeFlowTest(t *testing.T, useDynamicClientRegistration bool) {
 	credentialOfferURL, err := oidc4ci.InitiateAuthCodeIssuance()
+	require.NoError(t, err)
 
 	testHelper := helpers.NewCITestHelper(t, "ion", "")
 
@@ -291,7 +297,46 @@ func doAuthCodeFlowTest(t *testing.T) {
 	interaction, err := openid4ci.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
 	require.NoError(t, err)
 
-	redirectURIWithAuthCode := getRedirectURIWithAuthCode(t, interaction)
+	clientID := "oidc4vc_client"
+
+	if useDynamicClientRegistration {
+		supported, err := interaction.DynamicClientRegistrationSupported()
+		require.NoError(t, err)
+		require.True(t, supported)
+
+		registrationEndpoint, err := interaction.DynamicClientRegistrationEndpoint()
+		require.NoError(t, err)
+		require.NotEmpty(t, registrationEndpoint)
+
+		clientMetadata := oauth2.NewClientMetadata()
+
+		grantTypes := api.NewStringArray().Append("authorization_code")
+		clientMetadata.SetGrantTypes(grantTypes)
+
+		redirectURIs := api.NewStringArray().Append("http://127.0.0.1/callback")
+		clientMetadata.SetRedirectURIs(redirectURIs)
+
+		clientMetadata.SetScope("openid profile")
+
+		clientMetadata.SetTokenEndpointAuthMethod("none")
+
+		authorizationCodeGrantParams, err := interaction.AuthorizationCodeGrantParams()
+		require.NoError(t, err)
+
+		if authorizationCodeGrantParams.HasIssuerState() {
+			issuerState, err := authorizationCodeGrantParams.IssuerState()
+			require.NoError(t, err)
+
+			clientMetadata.SetIssuerState(issuerState)
+		}
+
+		registerClientResponse, err := oauth2.RegisterClient(registrationEndpoint, clientMetadata, nil)
+		require.NoError(t, err)
+
+		clientID = registerClientResponse.ClientID()
+	}
+
+	redirectURIWithAuthCode := getRedirectURIWithAuthCode(t, clientID, interaction)
 
 	vm, err := testHelper.DIDDoc.AssertionMethod()
 	require.NoError(t, err)
@@ -302,12 +347,12 @@ func doAuthCodeFlowTest(t *testing.T) {
 	require.Equal(t, 1, credentials.Length())
 }
 
-func getRedirectURIWithAuthCode(t *testing.T, interaction *openid4ci.Interaction) string {
+func getRedirectURIWithAuthCode(t *testing.T, clientID string, interaction *openid4ci.Interaction) string {
 	scopes := api.NewStringArray()
 	scopes.Append("openid")
 	scopes.Append("profile")
 
-	authURL, err := interaction.CreateAuthorizationURL("oidc4vc_client",
+	authURL, err := interaction.CreateAuthorizationURL(clientID,
 		"http://127.0.0.1/callback", openid4ci.NewCreateAuthorizationURLOpts().SetScopes(scopes))
 	require.NoError(t, err)
 

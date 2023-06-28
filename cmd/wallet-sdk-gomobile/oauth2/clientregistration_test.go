@@ -23,32 +23,41 @@ import (
 )
 
 type mockIssuerServerHandler struct {
-	t *testing.T
+	t                   *testing.T
+	emptyResponseObject bool
 }
 
 func (m *mockIssuerServerHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
-	response := goapioauth2.RegisterClientResponse{
-		ClientID:              "ClientID",
-		ClientSecret:          "ClientSecret",
-		ClientIDIssuedAt:      10,
-		ClientSecretExpiresAt: 10,
-		ClientMetadata: &goapioauth2.ClientMetadata{
-			RedirectURIs:            []string{"RedirectURI1"},
-			TokenEndpointAuthMethod: "TokenEndpointAuthMethod",
-			GrantTypes:              []string{"GrantType1"},
-			ResponseTypes:           []string{"ResponseType1"},
-			ClientName:              "ClientName",
-			ClientURI:               "ClientURI",
-			LogoURI:                 "LogoURI",
-			Scope:                   "Scope",
-			Contacts:                []string{"Contact1"},
-			TOSURI:                  "TOSURI",
-			PolicyURI:               "PolicyURI",
-			JWKSetURI:               "JWKSetURI",
-			JWKSet:                  &goapi.JSONWebKeySet{},
-			SoftwareID:              "SoftwareID",
-			SoftwareVersion:         "SoftwareVersion",
-		},
+	testIssuedAtAndExpiresAtValue := 10
+
+	var response goapioauth2.RegisterClientResponse
+
+	if m.emptyResponseObject {
+		response = goapioauth2.RegisterClientResponse{}
+	} else {
+		response = goapioauth2.RegisterClientResponse{
+			ClientID:              "ClientID",
+			ClientSecret:          "ClientSecret",
+			ClientIDIssuedAt:      &testIssuedAtAndExpiresAtValue,
+			ClientSecretExpiresAt: &testIssuedAtAndExpiresAtValue,
+			ClientMetadata: &goapioauth2.ClientMetadata{
+				RedirectURIs:            []string{"RedirectURI1"},
+				TokenEndpointAuthMethod: "TokenEndpointAuthMethod",
+				GrantTypes:              []string{"GrantType1"},
+				ResponseTypes:           []string{"ResponseType1"},
+				ClientName:              "ClientName",
+				ClientURI:               "ClientURI",
+				LogoURI:                 "LogoURI",
+				Scope:                   "Scope",
+				Contacts:                []string{"Contact1"},
+				TOSURI:                  "TOSURI",
+				PolicyURI:               "PolicyURI",
+				JWKSetURI:               "JWKSetURI",
+				JWKSet:                  &goapi.JSONWebKeySet{},
+				SoftwareID:              "SoftwareID",
+				SoftwareVersion:         "SoftwareVersion",
+			},
+		}
 	}
 
 	responseBytes, err := json.Marshal(response)
@@ -85,8 +94,16 @@ func TestRegisterClient(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, "ClientID", response.ClientID())
 			require.Equal(t, "ClientSecret", response.ClientSecret())
-			require.Equal(t, 10, response.ClientIDIssuedAt())
-			require.Equal(t, 10, response.ClientSecretExpiresAt())
+
+			require.True(t, response.HasClientIDIssuedAt())
+			clientIDIssuedAt, err := response.ClientIDIssuedAt()
+			require.NoError(t, err)
+			require.Equal(t, 10, clientIDIssuedAt)
+
+			require.True(t, response.HasClientSecretExpiresAt())
+			clientSecretExpiresAt, err := response.ClientSecretExpiresAt()
+			require.NoError(t, err)
+			require.Equal(t, 10, clientSecretExpiresAt)
 
 			require.True(t, response.HasClientMetadata())
 			clientMetadata, err := response.ClientMetadata()
@@ -123,5 +140,29 @@ func TestRegisterClient(t *testing.T) {
 		response, err := oauth2.RegisterClient("", nil, nil)
 		require.EqualError(t, err, "registration endpoint cannot be blank")
 		require.Nil(t, response)
+	})
+	t.Run("Empty response object", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t:                   t,
+			emptyResponseObject: true,
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		response, err := oauth2.RegisterClient(server.URL, nil, nil)
+		require.NoError(t, err, "registration endpoint cannot be blank")
+
+		require.False(t, response.HasClientIDIssuedAt())
+
+		clientIDIssuedAt, err := response.ClientIDIssuedAt()
+		require.EqualError(t, err, "the register client response object does not "+
+			"specify when the client ID was issued")
+		require.Equal(t, -1, clientIDIssuedAt)
+
+		clientSecretExpiresAt, err := response.ClientSecretExpiresAt()
+		require.EqualError(t, err, "the register client response object does not "+
+			"specify when the client secret expires")
+		require.Equal(t, -1, clientSecretExpiresAt)
 	})
 }

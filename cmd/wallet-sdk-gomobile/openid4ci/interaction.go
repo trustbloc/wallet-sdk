@@ -173,9 +173,8 @@ func (i *Interaction) PreAuthorizedCodeGrantTypeSupported() bool {
 
 // PreAuthorizedCodeGrantParams returns an object that can be used to determine an issuer's pre-authorized code grant
 // parameters. The caller should call the PreAuthorizedCodeGrantTypeSupported method first and only call this method to
-// get the params if PreAuthorizedCodeGrantTypeSupported returns true. This method only returns an error if
-// PreAuthorizedCodeGrantTypeSupported returns false, so the error return here can be safely ignored if
-// PreAuthorizedCodeGrantTypeSupported returns true.
+// get the params if PreAuthorizedCodeGrantTypeSupported returns true.
+// This method returns an error if (and only if) PreAuthorizedCodeGrantTypeSupported returns false.
 func (i *Interaction) PreAuthorizedCodeGrantParams() (*PreAuthorizedCodeGrantParams, error) {
 	goAPIPreAuthorizedCodeGrantParams, err := i.goAPIInteraction.PreAuthorizedCodeGrantParams()
 	if err != nil {
@@ -190,6 +189,21 @@ func (i *Interaction) PreAuthorizedCodeGrantParams() (*PreAuthorizedCodeGrantPar
 // AuthorizationCodeGrantTypeSupported indicates whether an issuer supports the authorization code grant type.
 func (i *Interaction) AuthorizationCodeGrantTypeSupported() bool {
 	return i.goAPIInteraction.AuthorizationCodeGrantTypeSupported()
+}
+
+// AuthorizationCodeGrantParams returns an object that can be used to determine the issuer's authorization code grant
+// parameters. The caller should call the AuthorizationCodeGrantTypeSupported method first and only call this method to
+// get the params if AuthorizationCodeGrantTypeSupported returns true.
+// This method returns an error if (and only if) AuthorizationCodeGrantTypeSupported returns false.
+func (i *Interaction) AuthorizationCodeGrantParams() (*AuthorizationCodeGrantParams, error) {
+	goAPIAuthorizationCodeGrantParams, err := i.goAPIInteraction.AuthorizationCodeGrantParams()
+	if err != nil {
+		return nil, err
+	}
+
+	return &AuthorizationCodeGrantParams{
+		goAPIAuthorizationCodeGrantParams: goAPIAuthorizationCodeGrantParams,
+	}, nil
 }
 
 // DynamicClientRegistrationSupported indicates whether the issuer supports dynamic client registration.
