@@ -821,12 +821,14 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
 
 			// Needed to create the OAuth2 config object.
-			_, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
+			authURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
 			require.NoError(t, err)
+
+			redirectURIWithParams := "redirectURI?code=1234&state=" + getStateFromAuthURL(t, authURL)
 
 			credentials, err := interaction.RequestCredentialWithAuth(&jwtSignerMock{
 				keyID: mockKeyID,
-			}, "redirectURI?code=1234&state=1234")
+			}, redirectURIWithParams)
 			require.NoError(t, err)
 			require.Len(t, credentials, 1)
 			require.NotEmpty(t, credentials[0])
@@ -942,12 +944,14 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
 
 			// Needed to create the OAuth2 config object.
-			_, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
+			authURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
 			require.NoError(t, err)
+
+			redirectURIWithParams := "redirectURI?code=1234&state=" + getStateFromAuthURL(t, authURL)
 
 			credentials, err := interaction.RequestCredentialWithAuth(&jwtSignerMock{
 				keyID: mockKeyID,
-			}, "redirectURI?code=1234&state=1234")
+			}, redirectURIWithParams)
 			require.EqualError(t, err, "ISSUER_OPENID_FETCH_FAILED(OCI1-0006):failed to fetch issuer's "+
 				"OpenID configuration: openid configuration endpoint: expected status code 200 but got status "+
 				"code 500 with response body test failure instead")
@@ -972,23 +976,55 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
 
 			// Needed to create the OAuth2 config object.
-			_, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
+			authURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
 			require.NoError(t, err)
+
+			redirectURIWithParams := "redirectURI?code=1234&state=" + getStateFromAuthURL(t, authURL)
 
 			credentials, err := interaction.RequestCredentialWithAuth(&jwtSignerMock{
 				keyID: mockKeyID,
 				Err:   errors.New("test failure"),
-			}, "redirectURI?code=1234&state=1234")
+			}, redirectURIWithParams)
 			require.EqualError(t, err, "CREDENTIAL_FETCH_FAILED(OCI1-0010):failed to get credential "+
 				"response: JWT_SIGNING_FAILED(OCI1-0009):failed to create JWT: sign token failed: create "+
 				"JWS: sign JWS: sign JWS verification data: test failure")
 			require.Nil(t, credentials)
 		})
+		t.Run("Success", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t:                  t,
+				credentialResponse: sampleCredentialResponse,
+			}
+
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+				TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+			}
+
+			issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`,
+				server.URL)
+
+			interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
+
+			// Needed to create the OAuth2 config object.
+			authURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
+			require.NoError(t, err)
+
+			redirectURIWithParams := "redirectURI?code=1234&state=" + getStateFromAuthURL(t, authURL)
+
+			credentials, err := interaction.RequestCredentialWithAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, redirectURIWithParams)
+			require.NoError(t, err)
+			require.Len(t, credentials, 1)
+			require.NotEmpty(t, credentials[0])
+		})
 	})
-	t.Run("Authorization requirements not met", func(t *testing.T) {
+	t.Run("State in redirect URI does not match the state from the auth URL", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{
-			t:                  t,
-			credentialResponse: sampleCredentialResponse,
+			t: t,
 		}
 
 		server := httptest.NewServer(issuerServerHandler)
@@ -1003,11 +1039,17 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 		interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
 
-		credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+		// Needed to create the OAuth2 config object.
+		_, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
+		require.NoError(t, err)
+
+		redirectURIWithParams := "redirectURI?code=1234&state=DoesNotMatch"
+
+		credentials, err := interaction.RequestCredentialWithAuth(&jwtSignerMock{
 			keyID: mockKeyID,
-		})
-		require.EqualError(t, err, "authorization requirements not met. "+
-			"Either a PIN must be provided or the authorization code grant steps must be completed first")
+		}, redirectURIWithParams)
+		require.EqualError(t, err, "STATE_IN_REDIRECT_URI_NOT_MATCHING_AUTH_URL(OCI1-0013):state in "+
+			"redirect URI does not match the state from the authorization URL")
 		require.Nil(t, credentials)
 	})
 }
@@ -1230,4 +1272,13 @@ func createSampleCredentialOffer(t *testing.T, includeAuthCodeGrant bool) *openi
 	}
 
 	return &credentialOffer
+}
+
+func getStateFromAuthURL(t *testing.T, authURL string) string {
+	t.Helper()
+
+	parsedURI, err := url.Parse(authURL)
+	require.NoError(t, err)
+
+	return parsedURI.Query().Get("state")
 }
