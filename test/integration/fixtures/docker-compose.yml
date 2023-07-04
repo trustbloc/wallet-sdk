@@ -41,7 +41,6 @@ services:
       - VC_TRANSIENT_DATA_STORE_TYPE=redis
       - VC_REDIS_URL=redis.example.com:6379
       - VC_REDIS_DISABLE_TLS=true
-      - TEMP_DISABLE_ISS_AUD_TYP_IAT_CHECK=true
     ports:
       - "8075:8075"
       - "48127:48127"
@@ -155,7 +154,6 @@ services:
   api-gateway.trustbloc.local:
     container_name: api-gateway.trustbloc.local
     image: devopsfaith/krakend:${KRAKEND_IMAGE_TAG}
-    platform: linux/amd64
     ports:
       - "5566:8080"
     command: run -d -c /etc/krakend/krakend.tmpl

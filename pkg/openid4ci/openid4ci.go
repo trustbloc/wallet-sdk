@@ -308,11 +308,14 @@ func (i *Interaction) requestAccessToken(redirectURIWithAuthCode string) error {
 		return errors.New("redirect URI is missing a state value")
 	}
 
-	// TODO: Enable state checking
-	// state := parsedURI.Query().Get("state")
-	// if state != i.authCodeURLState {
-	//	return errors.New("state in redirect URI does not match the state from the authorization URL")
-	// }
+	state := parsedURI.Query().Get("state")
+	if state != i.authCodeURLState {
+		return walleterror.NewExecutionError(
+			module,
+			StateInRedirectURINotMatchingAuthURLCode,
+			StateInRedirectURINotMatchingAuthURLError,
+			errors.New("state in redirect URI does not match the state from the authorization URL"))
+	}
 
 	i.openIDConfig, err = i.getOpenIDConfig()
 	if err != nil {
