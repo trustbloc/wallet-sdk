@@ -141,7 +141,7 @@ func (f *failingMetricsLogger) Log(metricsEvent *api.MetricsEvent) error {
 func TestNewInteraction(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Run("Credential format is jwt_vc_json", func(t *testing.T) {
-			newInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", false))
+			newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", false))
 		})
 		t.Run("Credential format is jwt_vc_json-ld", func(t *testing.T) {
 			credentialOffer := createSampleCredentialOffer(t, true)
@@ -155,18 +155,18 @@ func TestNewInteraction(t *testing.T) {
 
 			credentialOfferIssuanceURI := "openid-vc://?credential_offer=" + credentialOfferEscaped
 
-			newInteraction(t, credentialOfferIssuanceURI)
+			newIssuerInitiatedInteraction(t, credentialOfferIssuanceURI)
 		})
 	})
 	t.Run("Fail to parse URI", func(t *testing.T) {
 		config := getTestClientConfig(t)
 
-		interaction, err := openid4ci.NewInteraction("%", config)
+		interaction, err := openid4ci.NewIssuerInitiatedInteraction("%", config)
 		testutil.RequireErrorContains(t, err, `parse "%": invalid URL escape "%"`)
 		require.Nil(t, interaction)
 	})
 	t.Run("Missing client config", func(t *testing.T) {
-		interaction, err := openid4ci.NewInteraction("", nil)
+		interaction, err := openid4ci.NewIssuerInitiatedInteraction("", nil)
 		testutil.RequireErrorContains(t, err, "no client config provided")
 		require.Nil(t, interaction)
 	})
@@ -175,13 +175,13 @@ func TestNewInteraction(t *testing.T) {
 
 		testConfig.DIDResolver = nil
 
-		interaction, err := openid4ci.NewInteraction("", testConfig)
+		interaction, err := openid4ci.NewIssuerInitiatedInteraction("", testConfig)
 		testutil.RequireErrorContains(t, err, "no DID resolver provided")
 		require.Nil(t, interaction)
 	})
 	t.Run("Fail to get credential offer", func(t *testing.T) {
 		t.Run("Credential offer query parameter missing", func(t *testing.T) {
-			interaction, err := openid4ci.NewInteraction("", getTestClientConfig(t))
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction("", getTestClientConfig(t))
 			require.EqualError(t, err, "INVALID_ISSUANCE_URI(OCI0-0002):credential offer query "+
 				"parameter missing from initiate issuance URI")
 			require.Nil(t, interaction)
@@ -191,7 +191,7 @@ func TestNewInteraction(t *testing.T) {
 
 			credentialOfferIssuanceURI := "openid-credential-offer://?credential_offer_uri=" + escapedCredentialOfferURI
 
-			interaction, err := openid4ci.NewInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
 			require.EqualError(t, err, "INVALID_CREDENTIAL_OFFER(OCI0-0003):failed to get credential "+
 				"offer from the endpoint specified in the credential_offer_uri URL query parameter: "+
 				`Get "BadURL": unsupported protocol scheme ""`)
@@ -210,7 +210,7 @@ func TestNewInteraction(t *testing.T) {
 
 			credentialOfferIssuanceURI := "openid-credential-offer://?credential_offer_uri=" + escapedCredentialOfferURI
 
-			interaction, err := openid4ci.NewInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
 
 			require.EqualError(t, err, "INVALID_CREDENTIAL_OFFER(OCI0-0003):failed to get credential offer "+
 				"from the endpoint specified in the credential_offer_uri URL query parameter: "+
@@ -222,7 +222,7 @@ func TestNewInteraction(t *testing.T) {
 			//nolint:gosec // false positive
 			credentialOfferIssuanceURI := "openid-credential-offer://?credential_offer="
 
-			interaction, err := openid4ci.NewInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
 			require.EqualError(t, err, "INVALID_CREDENTIAL_OFFER(OCI0-0003):failed to unmarshal "+
 				"credential offer JSON into a credential offer object: unexpected end of JSON input")
 			require.Nil(t, interaction)
@@ -238,7 +238,7 @@ func TestNewInteraction(t *testing.T) {
 
 		credentialOfferIssuanceURI := "openid-vc://?credential_offer=" + credentialOfferEscaped
 
-		interaction, err := openid4ci.NewInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
+		interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
 		require.EqualError(t, err, "no supported grant types found")
 		require.Nil(t, interaction)
 	})
@@ -254,7 +254,7 @@ func TestNewInteraction(t *testing.T) {
 
 		credentialOfferIssuanceURI := "openid-vc://?credential_offer=" + credentialOfferEscaped
 
-		interaction, err := openid4ci.NewInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
+		interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
 		require.EqualError(t, err, "UNSUPPORTED_CREDENTIAL_TYPE_IN_OFFER(OCI0-0004):unsupported "+
 			"credential type (UnsupportedType) in credential offer at index 0 of credentials object "+
 			"(must be jwt_vc_json or jwt_vc_json-ld)")
@@ -282,7 +282,7 @@ func TestNewInteraction(t *testing.T) {
 
 		config.MetricsLogger = &failingMetricsLogger{}
 
-		interaction, err := openid4ci.NewInteraction(credentialOfferIssuanceURI, config)
+		interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, config)
 		require.Contains(t, err.Error(),
 			"failed to log event (Event=Fetch credential offer via an HTTP GET request to "+
 				"http://127.0.0.1:")
@@ -322,7 +322,7 @@ func (m *inMemoryMetricsLogger) Log(metricsEvent *api.MetricsEvent) error {
 	return nil
 }
 
-func TestInteraction_CreateAuthorizationURL(t *testing.T) {
+func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{
 			t:                  t,
@@ -342,7 +342,7 @@ func TestInteraction_CreateAuthorizationURL(t *testing.T) {
 			`"authorization_server":"%s"}`,
 			server.URL, authorizationServerURL)
 
-		interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
+		interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
 
 		authorizationURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
 		require.NoError(t, err)
@@ -352,7 +352,7 @@ func TestInteraction_CreateAuthorizationURL(t *testing.T) {
 			"format%22%3A%22jwt_vc_json%22%7D&client_id=clientID")
 	})
 	t.Run("Fail to get issuer metadata", func(t *testing.T) {
-		interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", true))
+		interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", true))
 
 		authorizationURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
 		require.EqualError(t, err, "METADATA_FETCH_FAILED(OCI1-0007):failed to get issuer metadata: openid "+
@@ -361,7 +361,7 @@ func TestInteraction_CreateAuthorizationURL(t *testing.T) {
 	})
 }
 
-func TestInteraction_RequestCredential(t *testing.T) {
+func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 	t.Run("Pre-auth flow", func(t *testing.T) {
 		t.Run("Success", func(t *testing.T) {
 			t.Run("Using credential_offer", func(t *testing.T) {
@@ -380,7 +380,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 				issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`,
 					server.URL)
 
-				interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false))
+				interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false))
 
 				credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 					keyID: mockKeyID,
@@ -417,7 +417,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 				config.MetricsLogger = metricsLogger
 
-				interaction, err := openid4ci.NewInteraction(credentialOfferIssuanceURI, config)
+				interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, config)
 				require.NoError(t, err)
 				require.NotNil(t, interaction)
 
@@ -441,7 +441,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		t.Run("Missing PIN", func(t *testing.T) {
 			config := getTestClientConfig(t)
 
-			interaction, err := openid4ci.NewInteraction(createCredentialOfferIssuanceURI(t, "example.com", false), config)
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(
+				createCredentialOfferIssuanceURI(t, "example.com", false), config)
 			require.NoError(t, err)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
@@ -454,7 +455,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		t.Run("Fail to fetch issuer's OpenID configuration", func(t *testing.T) {
 			requestURI := createCredentialOfferIssuanceURI(t, "BadURL", false)
 
-			interaction := newInteraction(t, requestURI)
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
@@ -473,7 +474,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
 
-			interaction := newInteraction(t, requestURI)
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
@@ -493,7 +494,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
 
-			interaction := newInteraction(t, requestURI)
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
@@ -513,7 +514,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
 
-			interaction := newInteraction(t, requestURI)
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
@@ -535,7 +536,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
 
-			interaction := newInteraction(t, requestURI)
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
@@ -557,7 +558,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
 
-			interaction := newInteraction(t, requestURI)
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
@@ -579,7 +580,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
 
-			interaction := newInteraction(t, requestURI)
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
@@ -598,7 +599,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
 
-			interaction := newInteraction(t, requestURI)
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: "did:example:12345",
@@ -619,7 +620,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
 
-			interaction := newInteraction(t, requestURI)
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
@@ -648,7 +649,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 
 			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
 
-			interaction := newInteraction(t, requestURI)
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
@@ -679,7 +680,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 				DIDResolver: didResolver,
 			}
 
-			interaction, err := openid4ci.NewInteraction(requestURI, config)
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(requestURI, config)
 			require.NoError(t, err)
 			require.NotNil(t, interaction)
 
@@ -708,7 +709,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			config := getTestClientConfig(t)
 			config.MetricsLogger = &failingMetricsLogger{attemptFailNumber: 1}
 
-			interaction, err := openid4ci.NewInteraction(createCredentialOfferIssuanceURI(t, server.URL, false), config)
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(
+				createCredentialOfferIssuanceURI(t, server.URL, false), config)
 			require.NoError(t, err)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
@@ -734,7 +736,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			config := getTestClientConfig(t)
 			config.MetricsLogger = &failingMetricsLogger{attemptFailNumber: 2}
 
-			interaction, err := openid4ci.NewInteraction(createCredentialOfferIssuanceURI(t, server.URL, false), config)
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(
+				createCredentialOfferIssuanceURI(t, server.URL, false), config)
 			require.NoError(t, err)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
@@ -759,7 +762,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			config := getTestClientConfig(t)
 			config.MetricsLogger = &failingMetricsLogger{attemptFailNumber: 3}
 
-			interaction, err := openid4ci.NewInteraction(createCredentialOfferIssuanceURI(t, server.URL, false), config)
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(
+				createCredentialOfferIssuanceURI(t, server.URL, false), config)
 			require.NoError(t, err)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
@@ -789,7 +793,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			config := getTestClientConfig(t)
 			config.MetricsLogger = &failingMetricsLogger{attemptFailNumber: 4}
 
-			interaction, err := openid4ci.NewInteraction(createCredentialOfferIssuanceURI(t, server.URL, false), config)
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(
+				createCredentialOfferIssuanceURI(t, server.URL, false), config)
 			require.NoError(t, err)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
@@ -818,7 +823,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`,
 				server.URL)
 
-			interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
+			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
 
 			// Needed to create the OAuth2 config object.
 			authURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
@@ -834,9 +839,11 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			require.NotEmpty(t, credentials[0])
 		})
 		t.Run("Authorization URL not created first", func(t *testing.T) {
-			interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", false))
+			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", true))
 
-			credentials, err := interaction.RequestCredentialWithAuth(nil, "")
+			credentials, err := interaction.RequestCredentialWithAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, "")
 			require.EqualError(t, err, "authorization URL must be created first")
 			require.Nil(t, credentials)
 		})
@@ -859,12 +866,14 @@ func TestInteraction_RequestCredential(t *testing.T) {
 				`"authorization_server":"%s"}`,
 				server.URL, authorizationServerURL)
 
-			interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
+			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
 
 			_, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
 			require.NoError(t, err)
 
-			credentials, err := interaction.RequestCredentialWithAuth(nil, "redirectURI?state=1234")
+			credentials, err := interaction.RequestCredentialWithAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, "redirectURI?state=1234")
 			require.EqualError(t, err, "redirect URI is missing an authorization code")
 			require.Nil(t, credentials)
 		})
@@ -887,12 +896,14 @@ func TestInteraction_RequestCredential(t *testing.T) {
 				`"authorization_server":"%s"}`,
 				server.URL, authorizationServerURL)
 
-			interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
+			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
 
 			_, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
 			require.NoError(t, err)
 
-			credentials, err := interaction.RequestCredentialWithAuth(nil, "redirectURI?code=1234")
+			credentials, err := interaction.RequestCredentialWithAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, "redirectURI?code=1234")
 			require.EqualError(t, err, "redirect URI is missing a state value")
 			require.Nil(t, credentials)
 		})
@@ -915,12 +926,14 @@ func TestInteraction_RequestCredential(t *testing.T) {
 				`"authorization_server":"%s"}`,
 				server.URL, authorizationServerURL)
 
-			interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
+			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
 
 			_, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
 			require.NoError(t, err)
 
-			credentials, err := interaction.RequestCredentialWithAuth(nil, "%")
+			credentials, err := interaction.RequestCredentialWithAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, "%")
 			require.EqualError(t, err, `parse "%": invalid URL escape "%"`)
 			require.Nil(t, credentials)
 		})
@@ -941,7 +954,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`,
 				server.URL)
 
-			interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
+			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
 
 			// Needed to create the OAuth2 config object.
 			authURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
@@ -973,7 +986,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`,
 				server.URL)
 
-			interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
+			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
 
 			// Needed to create the OAuth2 config object.
 			authURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
@@ -1006,7 +1019,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 			issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`,
 				server.URL)
 
-			interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
+			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
 
 			// Needed to create the OAuth2 config object.
 			authURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
@@ -1037,7 +1050,7 @@ func TestInteraction_RequestCredential(t *testing.T) {
 		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`,
 			server.URL)
 
-		interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
+		interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
 
 		// Needed to create the OAuth2 config object.
 		_, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
@@ -1054,8 +1067,8 @@ func TestInteraction_RequestCredential(t *testing.T) {
 	})
 }
 
-func TestInteraction_GrantTypes(t *testing.T) {
-	interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", false))
+func TestIssuerInitiatedInteraction_GrantTypes(t *testing.T) {
+	interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", false))
 
 	require.True(t, interaction.PreAuthorizedCodeGrantTypeSupported())
 
@@ -1071,7 +1084,7 @@ func TestInteraction_GrantTypes(t *testing.T) {
 	require.EqualError(t, err, "issuer does not support the authorization code grant")
 	require.Nil(t, authorizationCodeGrantParams)
 
-	interaction = newInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", true))
+	interaction = newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", true))
 
 	require.True(t, interaction.AuthorizationCodeGrantTypeSupported())
 
@@ -1083,9 +1096,9 @@ func TestInteraction_GrantTypes(t *testing.T) {
 	require.Equal(t, "1234", *authorizationCodeGrantParams.IssuerState)
 }
 
-func TestInteraction_DynamicClientRegistration(t *testing.T) {
+func TestIssuerInitiatedInteraction_DynamicClientRegistration(t *testing.T) {
 	t.Run("Fail to get OpenID configuration", func(t *testing.T) {
-		interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", false))
+		interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", false))
 
 		supported, err := interaction.DynamicClientRegistrationSupported()
 		require.EqualError(t, err, "ISSUER_OPENID_FETCH_FAILED(OCI1-0006):failed to fetch issuer's "+
@@ -1109,7 +1122,7 @@ func TestInteraction_DynamicClientRegistration(t *testing.T) {
 
 		issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{}
 
-		interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
+		interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
 
 		supported, err := interaction.DynamicClientRegistrationSupported()
 		require.NoError(t, err)
@@ -1131,7 +1144,7 @@ func TestInteraction_DynamicClientRegistration(t *testing.T) {
 
 		issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{RegistrationEndpoint: &testEndpoint}
 
-		interaction := newInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
+		interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true))
 
 		supported, err := interaction.DynamicClientRegistrationSupported()
 		require.NoError(t, err)
@@ -1143,21 +1156,21 @@ func TestInteraction_DynamicClientRegistration(t *testing.T) {
 	})
 }
 
-func TestInteraction_Issuer_URI(t *testing.T) {
+func TestIssuerInitiatedInteraction_Issuer_URI(t *testing.T) {
 	testIssuerURI := "https://example.com"
 	requestURI := createCredentialOfferIssuanceURI(t, testIssuerURI, false)
 
-	interaction := newInteraction(t, requestURI)
+	interaction := newIssuerInitiatedInteraction(t, requestURI)
 
 	require.Equal(t, testIssuerURI, interaction.IssuerURI())
 }
 
-func newInteraction(t *testing.T, requestURI string) *openid4ci.Interaction {
+func newIssuerInitiatedInteraction(t *testing.T, requestURI string) *openid4ci.IssuerInitiatedInteraction {
 	t.Helper()
 
 	config := getTestClientConfig(t)
 
-	interaction, err := openid4ci.NewInteraction(requestURI, config)
+	interaction, err := openid4ci.NewIssuerInitiatedInteraction(requestURI, config)
 	require.NoError(t, err)
 	require.NotNil(t, interaction)
 

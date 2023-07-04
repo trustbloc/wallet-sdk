@@ -463,15 +463,29 @@ let validationResult = ValidateLinkedDomains("YourDIDHere", didResolver)
 The OpenID4CI package contains an API that can be used by a [holder](https://www.w3.org/TR/vc-data-model/#dfn-holders)
 to go through the [OpenID4CI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html) flow.
 
+The way you use the API differs somewhat depending on whether you're doing an issuer-initiated or wallet-initiated
+issuance flow. In an issuer-initiated flow, the issuer has already provided a credential offer, while in a wallet-initiated
+flow, the wallet only knows the issuer URI. The sections below will elaborate on the API differences where applicable.
+
 ### Creating the `Interaction` Object
 
-The first step in any OpenID4CI flow is to create an `Interaction` object. An `Interaction` object is instantiated
-using an `InteractionArgs` object and, optionally, an `InteractionOpts` object. The `Interaction` object is stateful.
+The first step in any OpenID4CI flow is to create an `Interaction` object. There are two types of `Interaction` objects
+in the SDK: `IssuerInitiatedInteraction` and `WalletInitiatedInteraction`. These two types have similar methods on them
+and act similarly. From this point on, this documentation will simply refer to both of these types as `Interaction`
+objects unless there's a need to differentiate between them.
+
+An `Interaction` object is instantiated using an `IssuerInitiatedInteractionArgs`/`WalletInitiatedInteractionArgs`
+object and, optionally, an `InteractionOpts` object. The `Interaction` object is stateful.
 Use it for only one single instance of an OpenID4CI flow and then discard it.
 Create a new `Interaction` object _every time_ you go through the OpenID4CI flow.
 
-An `InteractionArgs` object contains the following mandatory parameters:
-* An initiate issuance URI obtained from an issuer (e.g. via a QR code).
+An `IssuerInitiatedInteractionArgs` object contains the following mandatory parameters:
+* An initiate issuance URI obtained from an issuer (e.g. via a QR code) which contains a credential offer.
+* A crypto implementation.
+* A DID resolver.
+
+A `WalletInitiatedInteractionArgs` object contains the following mandatory parameters:
+* An issuer URI.
 * A crypto implementation.
 * A DID resolver.
 
@@ -502,11 +516,14 @@ For example: `newInteractionOpts().setActivityLogger(...).setHeaders(...)`
 ### Authorization
 
 In this part, the actions you have to take vary greatly depending on whether you're using the Pre-Authorized Code flow
-or the Authorization Code Flow.
+or the Authorization Code flow.
 
-First, you should check and see what grant types the issuer says they support. You can do this by checking the issuer's
-capabilities, which you can do by calling the `issuer` method on the `Interaction`, and then calling the `capabilities`
-method on that `Issuer`. Then, use the available methods on the `Capabilities` object:
+If you are using a `WalletInitiatedInteraction`, then only the Authorization Code flow is available. Skip directly to
+the [Authorization Code flow](#authorization-code-flow) section.
+
+If you are using an `IssuerInitiatedInteraction`, then you should first check and see what grant types the issuer says
+they support before proceeding. You can do this by checking the issuer's capabilities, which you can do by using the
+relevant methods on the `Interaction` object::
 * `preAuthorizedCodeGrantTypeSupported`: Indicates whether the issuer supports the pre-authorized code grant type. If it
  does, then you can proceed with the [pre-authorized code flow](#pre-authorized-code-flow).
 * `authorizationCodeGrantTypeSupported`: Indicates whether the issuer supports the authorization code grant type. If it
@@ -516,17 +533,27 @@ method on that `Issuer`. Then, use the available methods on the `Capabilities` o
 
 For the pre-authorized code flow, you need to determine whether the issuer requires a PIN or not. To do this, first get
 the `PreAuthorizedCodeGrantParams` object by calling the `preAuthorizedCodeGrantParams` method on your
-`Capabilities` object. Then, use the `pinRequired` method to determine whether a PIN is needed or not. Once you
+`Interaction` object. Then, use the `pinRequired` method to determine whether a PIN is needed or not. Once you
 know this, you're ready to [request credentials](#request-credential).
 
 #### Authorization Code Flow
 
-First, you need to create an authorization URL. To do this, call the `createAuthorizationURL` method on the
+If you are using a `WalletInitiatedInteraction`, then you have the option of checking what credentials the issuer
+supports. To do this call the `SupportedCredentials` method and use the methods on the returned object to see what
+credential formats and types are supported. If you already know what credential format+types you want, then you can
+skip this step.
+
+To begin the Authorization Code flow, you need to create an authorization URL. To do this, call the `createAuthorizationURL` method on the
 `Interaction` object. You need to provide the following parameters:
 * Client ID: This is a value that's specific to your application and/or issuer. The Client ID is a part of 
 the OAuth2 specification, and has to be obtained by out-of-band means.
 * Redirect URI: The URI that you want the service to redirect to after authorization is complete.
 You will likely want this to be some sort of deep link to your app. More information on this can be found further below.
+
+Additionally, if you're using a `WalletInitiatedInteraction` object, then there are two additional required
+parameters:
+* Credential Format: The format of the credential you want to receive from the issuer by the end of the flow.
+* Credential Types: The types of the credential you want to receive from the issuer by the end of the flow.
 
 Additionally, some issuers' authorization servers may require scopes to be passed in. In this case, use the `setScopes`
 method on the `CreateAuthorizationURLOpts` object to pass in scopes. The `scopes` value is also part of the
@@ -543,8 +570,12 @@ You're now ready to [request credentials](#request-credential).
 
 ### Request Credential
 
-There are two methods available on the `Interaction` object to request credentials. Which one you use will depend
-on your flow:
+If you're using a `WalletInitiatedInteraction` object, then there is only one `requestCredential` method, and it has
+the same arguments and behaviour as the `requestCredentialWithAuth` method on the `IssuerInitiatedInteraction` object,
+which is described below.
+
+If you're using an `IssuerInitiatedInteraction` object, then there are two methods available to request credentials.
+Which one you use will depend on your flow:
 * `requestCredentialWithPreAuth`: Use this only if you're using the pre-authorized code flow. If a PIN is required,
 pass it in using the `setPIN` method on the `RequestCredentialWithPreAuthOpts` object.
 * `requestCredentialWithAuth`: Use this only if you're using the authorization code flow. This version of the method
@@ -553,19 +584,22 @@ pass it in using the `setPIN` method on the `RequestCredentialWithPreAuthOpts` o
 Regardless of which of the two methods you use, if the call succeeds, it will return your issued credentials.
 These can then be used in other Wallet-SDK APIs or [serialized for storage](#verifiable-credentials).
 
-### Issuer URI (Optional)
+### Issuer URI Method (Optional, issuer-initiated interactions only)
 
-You can get the issuer's URI by first calling the `issuer` method on the `Interaction` object, and then the `uri` method
-on the `Issuer` object. The issuer URI can be used to get the display data for your credentials.
+If you're using an `IssuerInitiatedInteraction` object, then there is an additional optional `issuerURI()` method you
+may wish to use. The issuer URI can be used to get the display data for your credentials.
 See [Credential Display Data](#credential-display-data) for more information.
 You may want to save the issuer URI somewhere so that you can get/refresh display data at a later time.
+
+This method isn't required on the `WalletInitiatedInteraction` since the caller already has the issuer URI to
+begin with.
 
 ### Examples
 
 The following examples show how to use the APIs to go through the OpenID4CI flow using the iOS and Android bindings.
 They use in-memory key storage and the Tink crypto library.
 
-#### Kotlin (Android) - Pre-Authorized Code Flow
+#### Kotlin (Android) - Issuer-Initiated - Pre-Authorized Code Flow
 
 ```kotlin
 import dev.trustbloc.wallet.sdk.localkms.Localkms
@@ -585,9 +619,9 @@ val didDocResolution = didCreator.create("key", null) // Create a did:key doc
 val activityLogger = mem.ActivityLogger()
 
 // Going through the flow
-val interactionArgs = InteractionArgs("YourRequestURIHere", kms.getCrypto(), didResolver)
+val interactionArgs = IssuerInitiatedInteractionArgs("YourInitiateIssuanceURIHere", kms.getCrypto(), didResolver)
 val interactionOpts = InteractionOpts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
-val interaction = Interaction(interactionArgs, interactionOpts) // This is a stateful object - we will use this to go through the flow.
+val interaction = IssuerInitiatedInteraction(interactionArgs, interactionOpts) // This is a stateful object - we will use this to go through the flow.
 
 // It's a good idea to check the issuer's capabilities first
 if (!interaction.preAuthorizedCodeGrantTypeSupported()) {
@@ -609,7 +643,7 @@ val issuerURI = interaction.issuerURI() // Optional (but useful)
 // Consider checking the activity log at some point after the interaction
 ```
 
-#### Swift (iOS) - Pre-Authorized Code Flow
+#### Swift (iOS) - Issuer-Initiated - Pre-Authorized Code Flow
 
 ```swift
 import Walletsdk
@@ -630,12 +664,12 @@ let didDocResolution = didCreator.create("key", nil) // Create a did:key doc wit
 let activityLogger = MemNewActivityLogger()
 
 // Going through the flow
-let interactionArgs = Openid4ciNewInteractionArgs("YourRequestURIHere", kms.getCrypto(), didResolver)
+let interactionArgs = Openid4ciNewIssuerInitiatedInteractionArgs("YourInitiateIssuanceURIHere", kms.getCrypto(), didResolver)
 let interactionOpts = Openid4ciNewInteractionOpts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
 var newInteractionError: NSError?
 
 // This is a stateful object - we will use this to go through the flow.
-let interaction = Openid4ciNewInteraction(interactionArgs, interactionOpts, &newInteractionError)
+let interaction = Openid4ciNewIssuerInitiatedInteraction(interactionArgs, interactionOpts, &newInteractionError)
 
 // It's a good idea to check the issuer's capabilities first
 if !interaction.preAuthorizedCodeGrantTypeSupported() {
@@ -657,7 +691,7 @@ let issuerURI = interaction.issuer().uri() // Optional (but useful)
 // Consider checking the activity log at some point after the interaction
 ```
 
-#### Kotlin (Android) - Authorization Code Flow
+#### Kotlin (Android) - Issuer-Initiated - Authorization Code Flow
 
 ```kotlin
 import dev.trustbloc.wallet.sdk.api.*
@@ -678,9 +712,9 @@ val didDocResolution = didCreator.create("key", null) // Create a did:key doc
 val activityLogger = mem.ActivityLogger()
 
 // Going through the flow
-val interactionArgs = InteractionArgs("YourRequestURIHere", kms.getCrypto(), didResolver)
+val interactionArgs = IssuerInitiatedInteractionArgs("YourInitiateIssuanceURIHere", kms.getCrypto(), didResolver)
 val interactionOpts = InteractionOpts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
-val interaction = Interaction(interactionArgs, interactionOpts) // This is a stateful object - we will use this to go through the flow.
+val interaction = IssuerInitiatedInteraction(interactionArgs, interactionOpts) // This is a stateful object - we will use this to go through the flow.
 
 // It's a good idea to check the issuer's capabilities first
 if (!interaction.authorizationCodeGrantTypeSupported()) {
@@ -711,7 +745,7 @@ val issuerURI = interaction.issuer().uri() // Optional (but useful)
 // Consider checking the activity log at some point after the interaction
 ```
 
-#### Swift (iOS) - Authorization Code Flow
+#### Swift (iOS) - Issuer-Initiated - Authorization Code Flow
 
 ```swift
 import Walletsdk
@@ -732,12 +766,12 @@ let didDocResolution = didCreator.create("key", nil) // Create a did:key doc wit
 let activityLogger = MemNewActivityLogger()
 
 // Going through the flow
-let interactionArgs = Openid4ciNewInteractionArgs("YourRequestURIHere", kms.getCrypto(), didResolver)
+let interactionArgs = Openid4ciNewIssuerInitiatedInteractionArgs("YourInitiateIssuanceURIHere", kms.getCrypto(), didResolver)
 let interactionOpts = Openid4ciNewInteractionOpts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
 var newInteractionError: NSError?
 
 // This is a stateful object - we will use this to go through the flow.
-let interaction = Openid4ciNewInteraction(interactionArgs, interactionOpts, &newInteractionError)
+let interaction = Openid4ciNewIssuerInitiatedInteraction(interactionArgs, interactionOpts, &newInteractionError)
 
 // It's a good idea to check the issuer's capabilities first
 if !interaction.authorizationCodeGrantTypeSupported() {
@@ -763,7 +797,110 @@ let authorizationLink = interaction.createAuthorizationURL("clientID", redirectU
 // createAuthorizationURL() call like in this example since control has to flow back to the user first.
 let redirectURIWithParams = "Put the redirect URI with params here"
 
-let credentials = interaction.requestCredential(withAuth: didVerificationMethod: didDocResolution.assertionMethod(), redirectURIWithParams: redirectURIWithParams, opts: nil)
+let credentials = interaction.requestCredential(withAuth: didDocResolution.assertionMethod(), redirectURIWithParams: redirectURIWithParams, opts: nil)
+
+let issuerURI = interaction.issuer().uri() // Optional (but useful)
+
+// Consider checking the activity log at some point after the interaction
+```
+
+#### Kotlin (Android) - Wallet-Initiated
+
+```kotlin
+import dev.trustbloc.wallet.sdk.api.*
+import dev.trustbloc.wallet.sdk.localkms.Localkms
+import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
+import dev.trustbloc.wallet.sdk.did.Resolver
+import dev.trustbloc.wallet.sdk.did.Creator
+import dev.trustbloc.wallet.sdk.openid4ci.*
+import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
+
+// Setup
+val memKMSStore = MemKMSStore.MemKMSStore()
+val kms = Localkms.newKMS(memKMSStore)
+val didResolver = Resolver(null)
+val didCreator = Creator(kms as KeyWriter)
+val didDocResolution = didCreator.create("key", null) // Create a did:key doc
+
+val activityLogger = mem.ActivityLogger()
+
+// Going through the flow
+val interactionArgs = WalletInitiatedInteractionArgs("IssuerURIHere", kms.getCrypto(), didResolver)
+val interactionOpts = InteractionOpts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
+val interaction = WalletInitiatedInteraction(interactionArgs, interactionOpts) // This is a stateful object - we will use this to go through the flow.
+
+val scopes = StringArray()
+scopes.append("scope1").append("scope2")
+
+val createAuthorizationURLOpts = CreateAuthorizationURLOpts().setScopes(scopesArr)
+
+val credentialTypes = StringArray()
+credentialTypes.append("VerifiableCredential").append("UniversityDegree")
+
+// If scopes aren't needed, you can pass in null in place of the opts argument.
+val authorizationLink := interaction.createAuthorizationURL("clientID", "redirect URI", "jwt_vc_json",credentialTypes, createAuthorizationURLOpts)
+
+// Open authorizationLink in a browser. Once the user has finished logging in, call requestCredential()
+// with the full redirect URI (including query parameters) that the login service sent the user to.
+// The code below assumes this has already been done somehow and that the URI is in the redirectURIWithParams variable.
+// In actual code, the call to requestCredential() couldn't be immediately after the
+// createAuthorizationURL() call like in this example since control has to flow back to the user first.
+val redirectURIWithParams = "Put the redirect URI with params here"
+
+val credentials = interaction.requestCredential(didDocResolution.assertionMethod(), redirectURIWithParams, null)
+
+// Consider checking the activity log at some point after the interaction
+```
+
+#### Swift (iOS) - Wallet-Initiated
+
+```kotlin
+import Walletsdk
+
+// Setup
+let memKMSStore = LocalkmsNewMemKMSStore()
+
+var newKMSError: NSError?
+let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
+
+let didResolver = DidNewResolver(nil)
+
+var newDIDCreatorError: NSError?
+let didCreator = DidNewCreator(kms, &newDIDCreatorError)
+
+let didDocResolution = didCreator.create("key", nil) // Create a did:key doc with default options
+
+let activityLogger = MemNewActivityLogger()
+
+// Going through the flow
+let interactionArgs = Openid4ciNewWalletInitiatedInteractionArgs("IssuerURIHere", kms.getCrypto(), didResolver)
+let interactionOpts = Openid4ciNewInteractionOpts().setActivityLogger(activityLogger) // Optional, but useful for tracking credential activity
+var newInteractionError: NSError?
+
+// This is a stateful object - we will use this to go through the flow.
+let interaction = Openid4ciNewWalletInitiatedInteraction(interactionArgs, interactionOpts, &newInteractionError)
+
+let scopes = ApiStringArray()
+scopes.append("scope1").append("scope2")
+
+let opts = Openid4ciNewCreateAuthorizationURLOpts()!.setScopes(scopes)
+
+val credentialTypes = ApiStringArray()
+credentialTypes.append("VerifiableCredential").append("UniversityDegree")
+
+var createAuthURLError: NSError?
+
+// If scopes aren't needed, you can pass in nil in place of the opts argument.
+let authorizationLink = interaction.createAuthorizationURL("clientID", redirectURI: "redirect URI", credentialFormat: "jwt_vc_json", credentialTypes: credentialTypes, opts: opts, error: &createAuthURLError)
+
+// Open authorizationLink in a browser. Once the user has finished logging in, call requestCredential()
+// with the full redirect URI (including query parameters) that the login service sent the user to.
+// The code below assumes this has already been done somehow and that the URI is in the redirectURIWithParams variable.
+// In actual code, the call to requestCredential() couldn't be immediately after the
+// createAuthorizationURL() call like in this example since control has to flow back to the user first.
+let redirectURIWithParams = "Put the redirect URI with params here"
+
+let credentials = interaction.requestCredential(vm: didDocResolution.assertionMethod(), redirectURIWithParams: redirectURIWithParams, opts: nil)
 
 let issuerURI = interaction.issuer().uri() // Optional (but useful)
 

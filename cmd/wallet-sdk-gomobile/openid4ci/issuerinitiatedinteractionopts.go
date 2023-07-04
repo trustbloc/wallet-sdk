@@ -12,7 +12,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )
 
-// InteractionOpts contains all optional arguments that can be passed into the NewInteraction function.
+// InteractionOpts contains all optional arguments that can be passed into the NewIssuerInitiatedInteraction function.
 type InteractionOpts struct {
 	activityLogger                   api.ActivityLogger
 	metricsLogger                    api.MetricsLogger

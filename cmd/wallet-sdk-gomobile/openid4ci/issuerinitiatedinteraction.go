@@ -23,18 +23,22 @@ import (
 	openid4cigoapi "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
 
-// Interaction represents a single OpenID4CI interaction between a wallet and an issuer.
+// IssuerInitiatedInteraction represents a single issuer-instantiated OpenID4CI interaction between a wallet and an
+// issuer. This type can be used if you have received a credential offer from an issuer in some form.
 // The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
-// An Interaction is a stateful object, and is intended for going through the full flow only once
-// after which it should be discarded. Any new interactions should use a fresh Interaction instance.
-type Interaction struct {
-	goAPIInteraction *openid4cigoapi.Interaction
+// An IssuerInitiatedInteraction is a stateful object, and is intended for going through the full flow only once
+// after which it should be discarded. Any new interactions should use a fresh IssuerInitiatedInteraction instance.
+type IssuerInitiatedInteraction struct {
+	goAPIInteraction *openid4cigoapi.IssuerInitiatedInteraction
 	crypto           api.Crypto
 	oTel             *otel.Trace
 }
 
-// NewInteraction creates a new OpenID4CI Interaction.
-func NewInteraction(args *InteractionArgs, opts *InteractionOpts) (*Interaction, error) {
+// NewIssuerInitiatedInteraction creates a new OpenID4CI IssuerInitiatedInteraction.
+func NewIssuerInitiatedInteraction( //nolint: dupl // Similar looking but for different objects with different uses
+	args *IssuerInitiatedInteractionArgs,
+	opts *InteractionOpts,
+) (*IssuerInitiatedInteraction, error) {
 	if args == nil {
 		return nil, errors.New("args object must be provided")
 	}
@@ -56,17 +60,17 @@ func NewInteraction(args *InteractionArgs, opts *InteractionOpts) (*Interaction,
 		opts.AddHeader(oTel.TraceHeader())
 	}
 
-	goAPIClientConfig, err := createGoAPIClientConfig(args, opts)
+	goAPIClientConfig, err := createGoAPIClientConfig(args.didResolver, opts)
 	if err != nil {
 		return nil, wrapper.ToMobileErrorWithTrace(err, oTel)
 	}
 
-	goAPIInteraction, err := openid4cigoapi.NewInteraction(args.initiateIssuanceURI, goAPIClientConfig)
+	goAPIInteraction, err := openid4cigoapi.NewIssuerInitiatedInteraction(args.initiateIssuanceURI, goAPIClientConfig)
 	if err != nil {
 		return nil, wrapper.ToMobileErrorWithTrace(err, oTel)
 	}
 
-	return &Interaction{
+	return &IssuerInitiatedInteraction{
 		crypto:           args.crypto,
 		goAPIInteraction: goAPIInteraction,
 		oTel:             oTel,
@@ -77,8 +81,9 @@ func NewInteraction(args *InteractionArgs, opts *InteractionOpts) (*Interaction,
 // It is the first step in the authorization code flow.
 // It creates the authorization URL that can be opened in a browser to proceed to the login page.
 // This method can only be used if the issuer supports authorization code grants.
-// Check the issuer's capabilities first using the Capabilities method.
-func (i *Interaction) CreateAuthorizationURL(clientID, redirectURI string,
+// Check the issuer's capabilities first using the methods available on this IssuerInitiatedInteraction object.
+// If scopes are needed, pass them in using the CreateAuthorizationURLOpts object.
+func (i *IssuerInitiatedInteraction) CreateAuthorizationURL(clientID, redirectURI string,
 	opts *CreateAuthorizationURLOpts,
 ) (string, error) {
 	if opts == nil {
@@ -98,7 +103,7 @@ func (i *Interaction) CreateAuthorizationURL(clientID, redirectURI string,
 // For the equivalent method for the authorization code flow, see RequestCredentialWithAuth instead.
 // If a PIN is required (which can be checked via the Capabilities method), then it must be passed
 // into this method via the SetPIN method on the RequestCredentialWithPreAuthOpts object.
-func (i *Interaction) RequestCredentialWithPreAuth(
+func (i *IssuerInitiatedInteraction) RequestCredentialWithPreAuth(
 	vm *api.VerificationMethod, opts *RequestCredentialWithPreAuthOpts,
 ) (*verifiable.CredentialsArray, error) {
 	if opts == nil {
@@ -125,7 +130,7 @@ func (i *Interaction) RequestCredentialWithPreAuth(
 // RequestCredentialWithAuth should be called only once all authorization pre-requisite steps have been completed.
 // The redirect URI that you pass in here should look like the redirect URI that you passed in to the
 // CreateAuthorizationURL, except that now it has some URL query parameters appended to it.
-func (i *Interaction) RequestCredentialWithAuth(vm *api.VerificationMethod,
+func (i *IssuerInitiatedInteraction) RequestCredentialWithAuth(vm *api.VerificationMethod,
 	redirectURIWithAuthCode string, opts *RequestCredentialWithAuthOpts,
 ) (*verifiable.CredentialsArray, error) {
 	signer, err := i.createSigner(vm)
@@ -145,7 +150,9 @@ func (i *Interaction) RequestCredentialWithAuth(vm *api.VerificationMethod,
 //
 // Deprecated: This method exists only to prevent existing code from breaking. It will be removed in a future version
 // as the method name can be confusing.
-func (i *Interaction) RequestCredential(vm *api.VerificationMethod) (*verifiable.CredentialsArray, error) {
+func (i *IssuerInitiatedInteraction) RequestCredential(
+	vm *api.VerificationMethod,
+) (*verifiable.CredentialsArray, error) {
 	return i.RequestCredentialWithPreAuth(vm, nil)
 }
 
@@ -154,7 +161,7 @@ func (i *Interaction) RequestCredential(vm *api.VerificationMethod) (*verifiable
 // Deprecated: This method exists only to prevent existing code from breaking. It will be removed in a future version
 // as the method name can be confusing and the lack of an options object means it's not possible to easily add new
 // options in the future without breaking existing code.
-func (i *Interaction) RequestCredentialWithPIN(
+func (i *IssuerInitiatedInteraction) RequestCredentialWithPIN(
 	vm *api.VerificationMethod, pin string,
 ) (*verifiable.CredentialsArray, error) {
 	return i.RequestCredentialWithPreAuth(vm, NewRequestCredentialWithPreAuthOpts().SetPIN(pin))
@@ -162,12 +169,12 @@ func (i *Interaction) RequestCredentialWithPIN(
 
 // IssuerURI returns the issuer's URI from the initiation request. It's useful to store this somewhere in case
 // there's a later need to refresh credential display data using the latest display information from the issuer.
-func (i *Interaction) IssuerURI() string {
+func (i *IssuerInitiatedInteraction) IssuerURI() string {
 	return i.goAPIInteraction.IssuerURI()
 }
 
 // PreAuthorizedCodeGrantTypeSupported indicates whether an issuer supports the pre-authorized code grant type.
-func (i *Interaction) PreAuthorizedCodeGrantTypeSupported() bool {
+func (i *IssuerInitiatedInteraction) PreAuthorizedCodeGrantTypeSupported() bool {
 	return i.goAPIInteraction.PreAuthorizedCodeGrantTypeSupported()
 }
 
@@ -175,7 +182,7 @@ func (i *Interaction) PreAuthorizedCodeGrantTypeSupported() bool {
 // parameters. The caller should call the PreAuthorizedCodeGrantTypeSupported method first and only call this method to
 // get the params if PreAuthorizedCodeGrantTypeSupported returns true.
 // This method returns an error if (and only if) PreAuthorizedCodeGrantTypeSupported returns false.
-func (i *Interaction) PreAuthorizedCodeGrantParams() (*PreAuthorizedCodeGrantParams, error) {
+func (i *IssuerInitiatedInteraction) PreAuthorizedCodeGrantParams() (*PreAuthorizedCodeGrantParams, error) {
 	goAPIPreAuthorizedCodeGrantParams, err := i.goAPIInteraction.PreAuthorizedCodeGrantParams()
 	if err != nil {
 		return nil, err
@@ -187,7 +194,7 @@ func (i *Interaction) PreAuthorizedCodeGrantParams() (*PreAuthorizedCodeGrantPar
 }
 
 // AuthorizationCodeGrantTypeSupported indicates whether an issuer supports the authorization code grant type.
-func (i *Interaction) AuthorizationCodeGrantTypeSupported() bool {
+func (i *IssuerInitiatedInteraction) AuthorizationCodeGrantTypeSupported() bool {
 	return i.goAPIInteraction.AuthorizationCodeGrantTypeSupported()
 }
 
@@ -195,7 +202,7 @@ func (i *Interaction) AuthorizationCodeGrantTypeSupported() bool {
 // parameters. The caller should call the AuthorizationCodeGrantTypeSupported method first and only call this method to
 // get the params if AuthorizationCodeGrantTypeSupported returns true.
 // This method returns an error if (and only if) AuthorizationCodeGrantTypeSupported returns false.
-func (i *Interaction) AuthorizationCodeGrantParams() (*AuthorizationCodeGrantParams, error) {
+func (i *IssuerInitiatedInteraction) AuthorizationCodeGrantParams() (*AuthorizationCodeGrantParams, error) {
 	goAPIAuthorizationCodeGrantParams, err := i.goAPIInteraction.AuthorizationCodeGrantParams()
 	if err != nil {
 		return nil, err
@@ -207,7 +214,7 @@ func (i *Interaction) AuthorizationCodeGrantParams() (*AuthorizationCodeGrantPar
 }
 
 // DynamicClientRegistrationSupported indicates whether the issuer supports dynamic client registration.
-func (i *Interaction) DynamicClientRegistrationSupported() (bool, error) {
+func (i *IssuerInitiatedInteraction) DynamicClientRegistrationSupported() (bool, error) {
 	return i.goAPIInteraction.DynamicClientRegistrationSupported()
 }
 
@@ -215,12 +222,13 @@ func (i *Interaction) DynamicClientRegistrationSupported() (bool, error) {
 // The caller should call the DynamicClientRegistrationSupported method first and only call this method
 // if DynamicClientRegistrationSupported returns true.
 // This method will return an error if the issuer does not support dynamic client registration.
-func (i *Interaction) DynamicClientRegistrationEndpoint() (string, error) {
+func (i *IssuerInitiatedInteraction) DynamicClientRegistrationEndpoint() (string, error) {
 	return i.goAPIInteraction.DynamicClientRegistrationEndpoint()
 }
 
-// OTelTraceID returns open telemetry trace id.
-func (i *Interaction) OTelTraceID() string {
+// OTelTraceID returns the OpenTelemetry trace ID.
+// If OpenTelemetry has been disabled, then an empty string is returned.
+func (i *IssuerInitiatedInteraction) OTelTraceID() string {
 	traceID := ""
 	if i.oTel != nil {
 		traceID = i.oTel.TraceID()
@@ -229,7 +237,7 @@ func (i *Interaction) OTelTraceID() string {
 	return traceID
 }
 
-func (i *Interaction) createSigner(vm *api.VerificationMethod) (*common.JWSSigner, error) {
+func (i *IssuerInitiatedInteraction) createSigner(vm *api.VerificationMethod) (*common.JWSSigner, error) {
 	if vm == nil {
 		return nil, errors.New("verification method must be provided")
 	}
@@ -242,15 +250,13 @@ func (i *Interaction) createSigner(vm *api.VerificationMethod) (*common.JWSSigne
 	return signer, nil
 }
 
-func createGoAPIClientConfig(config *InteractionArgs,
-	opts *InteractionOpts,
-) (*openid4cigoapi.ClientConfig, error) {
+func createGoAPIClientConfig(didResolver api.DIDResolver, opts *InteractionOpts) (*openid4cigoapi.ClientConfig, error) {
 	activityLogger := createGoAPIActivityLogger(opts.activityLogger)
 
 	httpClient := wrapper.NewHTTPClient(opts.httpTimeout, opts.additionalHeaders, opts.disableHTTPClientTLSVerification)
 
 	goAPIClientConfig := &openid4cigoapi.ClientConfig{
-		DIDResolver:                      &wrapper.VDRResolverWrapper{DIDResolver: config.didResolver},
+		DIDResolver:                      &wrapper.VDRResolverWrapper{DIDResolver: didResolver},
 		ActivityLogger:                   activityLogger,
 		MetricsLogger:                    &wrapper.MobileMetricsLoggerWrapper{MobileAPIMetricsLogger: opts.metricsLogger},
 		DisableVCProofChecks:             opts.disableVCProofChecks,
@@ -279,7 +285,7 @@ func createGoAPIClientConfig(config *InteractionArgs,
 
 func createGoAPIActivityLogger(mobileAPIActivityLogger api.ActivityLogger) goapi.ActivityLogger {
 	if mobileAPIActivityLogger == nil {
-		return nil // Will result in activity logging being disabled in the OpenID4CI Interaction object.
+		return nil // Will result in activity logging being disabled in the OpenID4CI IssuerInitiatedInteraction object.
 	}
 
 	return &wrapper.MobileActivityLoggerWrapper{MobileAPIActivityLogger: mobileAPIActivityLogger}

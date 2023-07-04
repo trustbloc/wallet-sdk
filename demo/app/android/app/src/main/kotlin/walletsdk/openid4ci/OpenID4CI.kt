@@ -14,19 +14,19 @@ class OpenID4CI constructor(
         private val didResolver: DIDResolver,
         private val activityLogger: ActivityLogger,
 ) {
-    private var newInteraction: Interaction
+    private var newInteraction: IssuerInitiatedInteraction
 
     init {
         val trace = Otel.newTrace()
 
-        val args = InteractionArgs(requestURI, crypto, didResolver)
+        val args = IssuerInitiatedInteractionArgs(requestURI, crypto, didResolver)
 
         val opts = InteractionOpts()
         opts.addHeader(trace.traceHeader())
         opts.setActivityLogger(activityLogger)
         opts.setMetricsLogger(MetricsLogger())
 
-        newInteraction = Interaction(args, opts)
+        newInteraction = IssuerInitiatedInteraction(args, opts)
     }
 
     fun checkFlow(): String {

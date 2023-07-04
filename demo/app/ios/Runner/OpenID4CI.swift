@@ -13,7 +13,7 @@ public class OpenID4CI {
     private var crypto: ApiCryptoProtocol
     private var activityLogger: ApiActivityLoggerProtocol
     
-    private var initiatedInteraction: Openid4ciInteraction
+    private var initiatedInteraction: Openid4ciIssuerInitiatedInteraction
     
     init (requestURI: String, didResolver: ApiDIDResolverProtocol, crypto: ApiCryptoProtocol, activityLogger: ApiActivityLoggerProtocol) {
         self.didResolver = didResolver
@@ -22,13 +22,13 @@ public class OpenID4CI {
 
         let trace = OtelNewTrace(nil)
 
-        let args = Openid4ciNewInteractionArgs(requestURI, self.crypto, self.didResolver)
+        let args = Openid4ciNewIssuerInitiatedInteractionArgs(requestURI, self.crypto, self.didResolver)
         
         let opts = Openid4ciNewInteractionOpts()
         opts!.setActivityLogger(activityLogger)
         opts!.add(trace!.traceHeader())
         
-        self.initiatedInteraction = Openid4ciNewInteraction(args, opts, nil)!
+        self.initiatedInteraction = Openid4ciNewIssuerInitiatedInteraction(args, opts, nil)!
     }
     
     func checkFlow() throws -> String {
