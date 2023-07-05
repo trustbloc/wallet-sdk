@@ -8,10 +8,9 @@ This package contains the `gomobile`-compatible version of the SDK. It acts as a
 * The gomobile tools:
   ```
   go install golang.org/x/mobile/cmd/gomobile@latest
+  export PATH="$PATH:$HOME/go/bin"
   gomobile init
   ```
-* `$GOPATH/bin` added to your path
-
 ### Android Bindings
 
 * Android SDK (installable via the SDK Manager in [Android Studio](https://developer.android.com/studio/install))
