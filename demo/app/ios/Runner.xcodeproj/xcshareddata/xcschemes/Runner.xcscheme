@@ -47,6 +47,11 @@
             value = "${INITIATE_ISSUANCE_URL}"
             isEnabled = "YES">
          </EnvironmentVariable>
+         <EnvironmentVariable
+             key = "INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW"
+             value = "${INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW}"
+             isEnabled = "YES">
+         </EnvironmentVariable>
       </EnvironmentVariables>
       <Testables>
          <TestableReference

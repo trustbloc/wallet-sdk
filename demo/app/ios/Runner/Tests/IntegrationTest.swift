@@ -7,6 +7,7 @@
 
 import XCTest
 import Walletsdk
+import UIKit
 
 @testable import Runner
 
@@ -28,11 +29,11 @@ class IntegrationTest: XCTestCase {
         let trace = OtelNewTrace(nil)
 
         let kms = LocalkmsNewKMS(kmsStore(), nil)!
-        
+
         let resolverOpts = DidNewResolverOpts()
         resolverOpts!.setResolverServerURI("http://localhost:8072/1.0/identifiers")
         let didResolver = DidNewResolver(resolverOpts, nil)!
-        
+
         let crypto = kms.getCrypto()
 
         let didCreator = DidNewCreator(kms, nil)!
@@ -40,9 +41,9 @@ class IntegrationTest: XCTestCase {
 
         // Issue VCs
         let requestURI = ProcessInfo.processInfo.environment["INITIATE_ISSUANCE_URL"]
-        
+
         XCTAssertTrue(requestURI != "", "requestURI:" + requestURI!)
-        
+
         let openID4CIInteractionArgs = Openid4ciNewInteractionArgs(requestURI, crypto, didResolver)
 
         let ciOpts = Openid4ciNewInteractionOpts()
@@ -53,14 +54,14 @@ class IntegrationTest: XCTestCase {
 
         let pinRequired = try ciInteraction!.preAuthorizedCodeGrantParams().pinRequired()
         XCTAssertFalse(pinRequired)
-        
+
         let issuedCreds = try ciInteraction!.requestCredential(userDID.assertionMethod())
         XCTAssertTrue(issuedCreds.length() > 0)
 
         //Presenting VCs
         let authorizationRequestURI = ProcessInfo.processInfo.environment["INITIATE_VERIFICATION_URL"]
         XCTAssertTrue(authorizationRequestURI != "", "authorizationRequestURI:" + authorizationRequestURI!)
-        
+
         let openID4VPArgs = Openid4vpNewArgs(authorizationRequestURI, crypto, didResolver)
 
         let opts = Openid4vpNewOpts()
@@ -99,4 +100,95 @@ class IntegrationTest: XCTestCase {
         try vpInteraction.presentCredential(selectedCreds)
     }
 
+        func testAuthFlow() throws {
+          let trace = OtelNewTrace(nil)
+          let kms = LocalkmsNewKMS(kmsStore(), nil)!
+
+         let resolverOpts = DidNewResolverOpts()
+         resolverOpts!.setResolverServerURI("http://localhost:8072/1.0/identifiers")
+         let didResolver = DidNewResolver(resolverOpts, nil)!
+
+          let crypto = kms.getCrypto()
+
+          let didCreator = DidNewCreator(kms, nil)!
+          let userDID = try didCreator.create("ion", opts: nil)
+
+          // Issue VCs in auth flow
+          let requestAuthURI = ProcessInfo.processInfo.environment["INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW"]
+          print(requestAuthURI)
+          XCTAssertTrue(requestAuthURI != "", "requestAuthURI:" + requestAuthURI!)
+
+          let openID4CIInteractionArgs = Openid4ciNewInteractionArgs(requestAuthURI, crypto, didResolver)
+
+          let ciOpts = Openid4ciNewInteractionOpts()
+          ciOpts!.add(trace!.traceHeader())
+
+          let ciInteraction = Openid4ciNewInteraction(openID4CIInteractionArgs, ciOpts, nil)
+          XCTAssertNotNil(ciInteraction)
+
+          let authCodeGrant = ciInteraction!.authorizationCodeGrantTypeSupported()
+          XCTAssertTrue(authCodeGrant)
+
+          let scopes = ApiStringArray()
+          scopes!.append("openid")!.append("profile")!
+
+          let opts = Openid4ciNewCreateAuthorizationURLOpts()!.setScopes(scopes!)
+          let authorizationLink = ciInteraction!.createAuthorizationURL("oidc4vc_client", redirectURI: "http://127.0.0.1/callback", opts: opts!, error: nil)
+          XCTAssertTrue(authorizationLink  != "", "authorizationLink:" + authorizationLink)
+
+           var redirectURL = ""
+           let r = Redirect()
+           let url = URL(string: authorizationLink)!
+           r.makeRequest(url: url, callback: { (location) in
+               guard let locationURL = location else {return}
+                var updatedLoc = locationURL.absoluteString
+                redirectURL = updatedLoc.replacingOccurrences(of: "cognito-mock.trustbloc.local",with: "localhost")
+                  r.makeRequest(url: URL(string: redirectURL)!, callback: { (location) in
+                      guard let locationURL = location else {return}
+                          r.makeRequest(url: locationURL, callback: { (location) in
+                            guard let locationURL = location else {return}
+                            redirectURL = locationURL.absoluteString
+                            do {
+                              let issuedCreds = try ciInteraction!.requestCredential(withAuth:userDID.assertionMethod(), redirectURIWithAuthCode: redirectURL, opts: nil)
+                              XCTAssertTrue(issuedCreds.length() > 0)
+                            } catch {
+                               print("Error: \(error)")
+                            }
+                            return
+                          })
+                        })
+                       })
+        }
+}
+
+
+// More efficient click-tracking with HTTP GET to obtain the "302" response, but not follow the redirect through to the Location.
+// The callback is used to return the Location header back from the async task
+class Redirect : NSObject {
+    var session: URLSession?
+
+    override init() {
+        super.init()
+        session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+    }
+
+    func makeRequest(url: URL, callback: @escaping (URL?) -> ()) {
+        let task = self.session?.dataTask(with: url) {(data, response, error) in
+            guard response != nil else {
+                return
+            }
+            if let response = response as? HTTPURLResponse {
+                if let l = response.value(forHTTPHeaderField: "Location") {
+                    callback(URL(string: l))
+                }
+            }
+        }
+        task?.resume()
+    }
+}
+
+extension Redirect: URLSessionDelegate, URLSessionTaskDelegate {
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        completionHandler(nil)
+    }
 }
