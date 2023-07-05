@@ -68,6 +68,7 @@ android {
         buildTypes.each {
             it.buildConfigField 'String', 'INITIATE_ISSUANCE_URL', '"' + INITIATE_ISSUANCE_URL + '"'
             it.buildConfigField 'String', 'INITIATE_VERIFICATION_URL', '"' + INITIATE_VERIFICATION_URL + '"'
+            it.buildConfigField 'String', 'INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW', '"' + INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW + '"'
         }
     }
 }
@@ -92,4 +93,5 @@ dependencies {
     androidTestImplementation "androidx.test.ext:truth:1.5.0"
     androidTestImplementation "androidx.test:runner:1.2.0"
     androidTestUtil "androidx.test:orchestrator:1.4.2"
+    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
 }
