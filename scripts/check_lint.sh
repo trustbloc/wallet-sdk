@@ -18,5 +18,7 @@ fi
 
 echo "Linting top-level module..."
 ${DOCKER_CMD} run --rm -e GOPROXY=${GOPROXY} -v $(pwd):/opt/workspace -w /opt/workspace/ ${GOLANGCI_LINT_IMAGE} golangci-lint run --timeout 5m
+echo "Linting wallet-sdk-js..."
+${DOCKER_CMD} run --rm -e GOPROXY=${GOPROXY} -v $(pwd):/opt/workspace -w /opt/workspace/cmd/wallet-sdk-js ${GOLANGCI_LINT_IMAGE} golangci-lint run --timeout 5m
 echo "Linting wallet-sdk-gomobile..."
 ${DOCKER_CMD} run --rm -e GOPROXY=${GOPROXY} -v $(pwd):/opt/workspace -w /opt/workspace/cmd/wallet-sdk-gomobile ${GOLANGCI_LINT_IMAGE} golangci-lint run --timeout 5m
