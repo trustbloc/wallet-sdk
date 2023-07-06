@@ -975,7 +975,8 @@ func getSubjectIDs(vcs []*verifiable.Credential) ([]string, error) {
 
 func signToken(claims interface{}, signer api.JWTSigner) (string, error) {
 	headers := jose.Headers{}
-	headers["typ"] = "openid4vci-proof+jwt"
+	// TODO: Send "typ" header.
+	// headers["typ"] = "openid4vci-proof+jwt"
 
 	token, err := jwt.NewSigned(claims, headers, signer)
 	if err != nil {
