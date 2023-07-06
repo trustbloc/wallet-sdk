@@ -228,7 +228,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.Contains(t, string(httpClient.SentBody), expectedState)
 		require.Contains(t, string(httpClient.SentBody), expectedSig)
 
-		// TODO: refactor this into validation helper functions
+		// TODO: https://github.com/trustbloc/wallet-sdk/issues/459 refactor this into validation helper functions
 		data, err := url.ParseQuery(string(httpClient.SentBody))
 		require.NoError(t, err)
 

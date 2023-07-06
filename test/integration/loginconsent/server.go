@@ -348,7 +348,7 @@ func (s *server) completeConsent(w http.ResponseWriter, r *http.Request, request
 func (s *server) claimDataHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("handling request: %s", r.URL.String())
 
-	// TODO: Perform token introspection
+	// TODO: https://github.com/trustbloc/wallet-sdk/issues/460 Perform token introspection
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")

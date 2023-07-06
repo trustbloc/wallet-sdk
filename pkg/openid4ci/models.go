@@ -54,7 +54,8 @@ type CredentialResponse struct {
 // SerializeToCredentialsBytes serializes underlying credential to proper bytes representation depending on
 // credential format.
 func (r *CredentialResponse) SerializeToCredentialsBytes() ([]byte, error) {
-	// TODO: check response.Format after VCS starts return valid value.
+	// TODO: https://github.com/trustbloc/wallet-sdk/issues/456 check response.Format after
+	// VCS starts return valid value.
 	switch cred := r.Credential.(type) {
 	case string:
 		return []byte(cred), nil
