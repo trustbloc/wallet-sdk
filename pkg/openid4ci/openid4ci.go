@@ -102,7 +102,8 @@ func NewInteraction(initiateIssuanceURI string, config *ClientConfig) (*Interact
 		return nil, err
 	}
 
-	// TODO Add support for determining grant types when no grants are specified.
+	// TODO https://github.com/trustbloc/wallet-sdk/issues/457 Add support for determining
+	// grant types when no grants are specified.
 	// See https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#section-4.1.1 for more info.
 	preAuthorizedCodeGrantParams, authorizationCodeGrantParams, err := determineIssuerGrantCapabilities(credentialOffer)
 	if err != nil {
