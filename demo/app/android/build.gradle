@@ -78,3 +78,9 @@ subprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+tasks.withType(Test) {
+     testLogging {
+           showStandardStreams = true
+           events = ["passed", "failed", "skipped"]
+       }
+}
