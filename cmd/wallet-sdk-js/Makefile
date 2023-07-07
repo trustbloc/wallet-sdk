@@ -15,4 +15,4 @@ unit-test-wasm: wasm-test-deps
 
 .PHONY: build-wasm
 build-wasm:
-	@GOOS=js GOARCH=wasm go build -o src/wallet-sdk.wasm main.go && gzip -f src/wallet-sdk.wasm
+	@GOOS=js GOARCH=wasm go build -o assets/wallet-sdk.wasm main.go && gzip -f assets/wallet-sdk.wasm

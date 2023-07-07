@@ -1,0 +1,27 @@
+{
+  "name": "wallet-sdk",
+  "version": "0.0.1",
+  "description": "Implements a simplified interface to interop with JS for wallet-sdk.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "karma start --single-run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trustbloc/wallet-sdk.git"
+  },
+  "keywords": [
+    "wallet",
+    "trustbloc wallet",
+    "wasm",
+    "decentralized identity",
+    "verifiable",
+    "credentials"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/trustbloc/wallet-sdk/issues"
+  },
+  "homepage": "https://github.com/trustbloc/wallet-sdk#readme"
+}
