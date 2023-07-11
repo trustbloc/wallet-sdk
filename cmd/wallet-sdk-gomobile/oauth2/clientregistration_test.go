@@ -40,7 +40,7 @@ func (m *mockIssuerServerHandler) ServeHTTP(w http.ResponseWriter, _ *http.Reque
 			ClientSecret:          "ClientSecret",
 			ClientIDIssuedAt:      &testIssuedAtAndExpiresAtValue,
 			ClientSecretExpiresAt: &testIssuedAtAndExpiresAtValue,
-			ClientMetadata: &goapioauth2.ClientMetadata{
+			RegisteredMetadata: goapioauth2.RegisteredMetadata{
 				RedirectURIs:            []string{"RedirectURI1"},
 				TokenEndpointAuthMethod: "TokenEndpointAuthMethod",
 				GrantTypes:              []string{"GrantType1"},
@@ -48,7 +48,7 @@ func (m *mockIssuerServerHandler) ServeHTTP(w http.ResponseWriter, _ *http.Reque
 				ClientName:              "ClientName",
 				ClientURI:               "ClientURI",
 				LogoURI:                 "LogoURI",
-				Scope:                   "Scope",
+				Scope:                   "scope1 scope2",
 				Contacts:                []string{"Contact1"},
 				TOSURI:                  "TOSURI",
 				PolicyURI:               "PolicyURI",
@@ -105,9 +105,7 @@ func TestRegisterClient(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, 10, clientSecretExpiresAt)
 
-			require.True(t, response.HasClientMetadata())
-			clientMetadata, err := response.ClientMetadata()
-			require.NoError(t, err)
+			clientMetadata := response.RegisteredMetadata()
 
 			require.Equal(t, 1, clientMetadata.RedirectURIs().Length())
 			require.Equal(t, "RedirectURI1", clientMetadata.RedirectURIs().AtIndex(0))
@@ -119,7 +117,9 @@ func TestRegisterClient(t *testing.T) {
 			require.Equal(t, "ClientName", clientMetadata.ClientName())
 			require.Equal(t, "ClientURI", clientMetadata.ClientURI())
 			require.Equal(t, "LogoURI", clientMetadata.LogoURI())
-			require.Equal(t, "Scope", clientMetadata.Scope())
+			require.Equal(t, 2, clientMetadata.Scopes().Length())
+			require.Equal(t, "scope1", clientMetadata.Scopes().AtIndex(0))
+			require.Equal(t, "scope2", clientMetadata.Scopes().AtIndex(1))
 			require.Equal(t, 1, clientMetadata.Contacts().Length())
 			require.Equal(t, "Contact1", clientMetadata.Contacts().AtIndex(0))
 			require.Equal(t, "TOSURI", clientMetadata.TOSURI())

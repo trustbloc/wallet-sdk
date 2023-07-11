@@ -19,7 +19,7 @@ type ClientMetadata struct {
 	ClientName              string             `json:"client_name,omitempty"`
 	ClientURI               string             `json:"client_uri,omitempty"`
 	LogoURI                 string             `json:"logo_uri,omitempty"`
-	Scope                   string             `json:"scope,omitempty"`
+	Scope                   string             `json:"scope,omitempty"` // Space-separated strings
 	Contacts                []string           `json:"contacts,omitempty"`
 	TOSURI                  string             `json:"tos_uri,omitempty"`
 	PolicyURI               string             `json:"policy_uri,omitempty"`
@@ -27,8 +27,13 @@ type ClientMetadata struct {
 	JWKSet                  *api.JSONWebKeySet `json:"jwks,omitempty"`
 	SoftwareID              string             `json:"software_id,omitempty"`
 	SoftwareVersion         string             `json:"software_version,omitempty"`
-	IssuerState             string             `json:"issuer_state,omitempty"`
+	// TODO: This is a temporary workaround for VCS. To be removed.
+	IssuerState string `json:"issuer_state,omitempty"`
 }
+
+// RegisteredMetadata specifies what metadata was actually registered by the authorization server (which may differ
+// from the client metadata in the request).
+type RegisteredMetadata ClientMetadata
 
 // RegisterClientResponse represents a response to a new client registration request.
 type RegisterClientResponse struct {
@@ -36,5 +41,5 @@ type RegisterClientResponse struct {
 	ClientSecret          string `json:"client_secret,omitempty"`
 	ClientIDIssuedAt      *int   `json:"client_id_issued_at,omitempty"`
 	ClientSecretExpiresAt *int   `json:"client_secret_expires_at,omitempty"`
-	*ClientMetadata
+	RegisteredMetadata
 }

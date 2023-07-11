@@ -55,8 +55,24 @@ func TestClientMetadata(t *testing.T) {
 	clientMetadata.SetLogoURI("LogoURI")
 	require.Equal(t, "LogoURI", clientMetadata.LogoURI())
 
-	clientMetadata.SetScope("Scope")
-	require.Equal(t, "Scope", clientMetadata.Scope())
+	scopes := &api.StringArray{Strings: []string{"scope1", "scope2"}}
+	clientMetadata.SetScopes(scopes)
+	require.Equal(t, 2, clientMetadata.Scopes().Length())
+	require.Equal(t, "scope1", clientMetadata.Scopes().AtIndex(0))
+	require.Equal(t, "scope2", clientMetadata.Scopes().AtIndex(1))
+
+	scopes = &api.StringArray{Strings: []string{"onlyOneScope"}}
+	clientMetadata.SetScopes(scopes)
+	require.Equal(t, 1, clientMetadata.Scopes().Length())
+	require.Equal(t, "onlyOneScope", clientMetadata.Scopes().AtIndex(0))
+
+	// Try setting with an empty array
+	clientMetadata.SetScopes(api.NewStringArray())
+	require.Nil(t, clientMetadata.Scopes())
+
+	// Try setting with a nil array
+	clientMetadata.SetScopes(nil)
+	require.Nil(t, clientMetadata.Scopes())
 
 	clientMetadata.SetContacts(nil)
 	require.Equal(t, 0, clientMetadata.Contacts().Length())

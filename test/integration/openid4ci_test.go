@@ -297,7 +297,13 @@ func doAuthCodeFlowTest(t *testing.T, useDynamicClientRegistration bool) {
 	interaction, err := openid4ci.NewIssuerInitiatedInteraction(interactionRequiredArgs, interactionOptionalArgs)
 	require.NoError(t, err)
 
+	// If dynamic client registration is used, then the client ID and scopes below will be overwritten by the
+	// values from the registration response.
 	clientID := "oidc4vc_client"
+
+	scopes := api.NewStringArray()
+	scopes.Append("openid")
+	scopes.Append("profile")
 
 	if useDynamicClientRegistration {
 		supported, err := interaction.DynamicClientRegistrationSupported()
@@ -316,7 +322,7 @@ func doAuthCodeFlowTest(t *testing.T, useDynamicClientRegistration bool) {
 		redirectURIs := api.NewStringArray().Append("http://127.0.0.1/callback")
 		clientMetadata.SetRedirectURIs(redirectURIs)
 
-		clientMetadata.SetScope("openid profile")
+		clientMetadata.SetScopes(scopes)
 
 		clientMetadata.SetTokenEndpointAuthMethod("none")
 
@@ -334,9 +340,15 @@ func doAuthCodeFlowTest(t *testing.T, useDynamicClientRegistration bool) {
 		require.NoError(t, err)
 
 		clientID = registerClientResponse.ClientID()
+
+		registeredMetadata := registerClientResponse.RegisteredMetadata()
+
+		// Use the actual scopes registered by the authorization server, which may differ from the scopes
+		// we specified in the metadata in our request.
+		scopes = registeredMetadata.Scopes()
 	}
 
-	redirectURIWithAuthCode := getRedirectURIWithAuthCode(t, clientID, interaction)
+	redirectURIWithAuthCode := getRedirectURIWithAuthCode(t, clientID, interaction, scopes)
 
 	vm, err := testHelper.DIDDoc.AssertionMethod()
 	require.NoError(t, err)
@@ -347,11 +359,9 @@ func doAuthCodeFlowTest(t *testing.T, useDynamicClientRegistration bool) {
 	require.Equal(t, 1, credentials.Length())
 }
 
-func getRedirectURIWithAuthCode(t *testing.T, clientID string, interaction *openid4ci.IssuerInitiatedInteraction) string {
-	scopes := api.NewStringArray()
-	scopes.Append("openid")
-	scopes.Append("profile")
-
+func getRedirectURIWithAuthCode(t *testing.T, clientID string, interaction *openid4ci.IssuerInitiatedInteraction,
+	scopes *api.StringArray,
+) string {
 	authURL, err := interaction.CreateAuthorizationURL(clientID,
 		"http://127.0.0.1/callback", openid4ci.NewCreateAuthorizationURLOpts().SetScopes(scopes))
 	require.NoError(t, err)
