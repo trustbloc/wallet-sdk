@@ -1,3 +1,9 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 import 'package:app/scenarios/handle_openid_url.dart';
 import 'package:app/widgets/common_logo_appbar.dart';
 import 'package:app/widgets/primary_input_field.dart';
@@ -5,11 +11,11 @@ import 'package:app/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'demo_method_channel.dart';
+import 'wallet_sdk.dart';
 import 'views/dashboard.dart';
 import 'package:uni_links/uni_links.dart';
 
-final WalletSDKPlugin = MethodChannelWallet();
+final WalletSDKPlugin = WalletSDK();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,7 +59,6 @@ class _MainWidgetState extends State<MainWidget> {
   final TextEditingController _usernameController = TextEditingController();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   String? initialLink;
-
 
   @override
   void initState() {

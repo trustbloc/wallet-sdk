@@ -1,8 +1,14 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:app/demo_method_channel.dart';
+import 'package:app/wallet_sdk.dart';
 import 'package:app/models/activity_data_object.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/services/storage_service.dart';
@@ -15,7 +21,7 @@ import 'package:app/models/credential_offer.dart';
 import 'package:http/http.dart' as http;
 
 void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
-  var WalletSDKPlugin = MethodChannelWallet();
+  var WalletSDKPlugin = WalletSDK();
   final StorageService storageService = StorageService();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   var authCodeArgs;
@@ -75,7 +81,7 @@ parseCredentialOfferUri(String qrCodeURL) async {
 
 void navigateToWithoutPinFlow(BuildContext context) async{
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
-  var WalletSDKPlugin = MethodChannelWallet();
+  var WalletSDKPlugin = WalletSDK();
   final StorageService storageService = StorageService();
   final SharedPreferences pref = await prefs;
 

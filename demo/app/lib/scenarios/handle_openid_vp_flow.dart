@@ -1,5 +1,11 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 import 'dart:developer';
-import 'package:app/demo_method_channel.dart';
+import 'package:app/wallet_sdk.dart';
 import 'package:app/views/custom_error.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/credential_data.dart';
@@ -9,11 +15,10 @@ import 'package:app/services/storage_service.dart';
 import 'package:app/views/presentation_preview.dart';
 import 'package:app/views/presentation_preview_multi_cred.dart';
 import 'package:app/views/presentation_preview_multi_cred_radio.dart';
-import 'dart:convert';
 import 'package:jwt_decode/jwt_decode.dart';
 
 void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
-  var WalletSDKPlugin = MethodChannelWallet();
+  var WalletSDKPlugin = WalletSDK();
   final StorageService storageService = StorageService();
   late List<CredentialDataObject> storedCredentials;
   late List<String> credentials;

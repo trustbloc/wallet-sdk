@@ -1,5 +1,11 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 import 'dart:developer';
-import 'package:app/demo_method_channel.dart';
+import 'package:app/wallet_sdk.dart';
 import 'package:app/scenarios/handle_openid_issuance_flow.dart';
 import 'package:app/scenarios/handle_openid_vp_flow.dart';
 import 'package:flutter/material.dart';

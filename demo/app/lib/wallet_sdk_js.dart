@@ -1,11 +1,18 @@
-import 'dart:convert';
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
+import 'package:js/js_util.dart';
+
 import 'dart:developer';
-import 'dart:ffi';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import 'demo_platform_interface.dart';
+import 'wallet_sdk_interface.dart';
+import 'js/js_library.dart';
 
 class SubmissionRequirement {
   final String rule;
@@ -82,18 +89,18 @@ class InputDescriptor {
   }
 }
 
-class MethodChannelWallet extends WalletPlatform {
+class WalletSDK extends WalletPlatform {
   @visibleForTesting
   final methodChannel = const MethodChannel('WalletSDKPlugin');
   final errorCode = 'Exception';
 
   Future<void> initSDK(String didResolverURI) async {
-    await methodChannel.invokeMethod<bool>('initSDK', <String, dynamic>{'didResolverURI': didResolverURI});
+    await promiseToFuture(jsInitSDK(didResolverURI));
   }
 
   Future<Map<Object?, Object?>?> createDID(String didMethodType, String didKeyType) async {
     final createDIDMsg =
-        await methodChannel.invokeMethod<Map<Object?, Object?>?>('createDID', <String, dynamic>{'didMethodType': didMethodType, 'didKeyType': didKeyType});
+    await methodChannel.invokeMethod<Map<Object?, Object?>?>('createDID', <String, dynamic>{'didMethodType': didMethodType, 'didKeyType': didKeyType});
     return createDIDMsg;
   }
 
@@ -116,7 +123,7 @@ class MethodChannelWallet extends WalletPlatform {
   Future<String> requestCredential(String userPinEntered) async {
     try {
       var credentialResponse =
-          await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{'otp': userPinEntered});
+      await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{'otp': userPinEntered});
       return credentialResponse!;
     } on PlatformException catch (error) {
       debugPrint(error.toString());
@@ -127,7 +134,7 @@ class MethodChannelWallet extends WalletPlatform {
   Future<String> requestCredentialWithAuth(String redirectURIWithParams) async {
     try {
       var credentialResponse =
-        await methodChannel.invokeMethod<String>('requestCredentialWithAuth', <String, dynamic>{'redirectURIWithParams': redirectURIWithParams});
+      await methodChannel.invokeMethod<String>('requestCredentialWithAuth', <String, dynamic>{'redirectURIWithParams': redirectURIWithParams});
       return credentialResponse!;
     } on PlatformException catch (error) {
       debugPrint(error.toString());
@@ -156,9 +163,9 @@ class MethodChannelWallet extends WalletPlatform {
   }
 
   Future<String?> serializeDisplayData(List<String> credentials, String issuerURI) async {
-      final credentialResponse = await methodChannel.invokeMethod<String>(
-          'serializeDisplayData', <String, dynamic>{'vcCredentials': credentials, 'uri': issuerURI});
-      return credentialResponse;
+    final credentialResponse = await methodChannel.invokeMethod<String>(
+        'serializeDisplayData', <String, dynamic>{'vcCredentials': credentials, 'uri': issuerURI});
+    return credentialResponse;
   }
 
   Future<List<Object?>> resolveCredentialDisplay(String resolvedCredentialDisplayData) async {
@@ -169,23 +176,23 @@ class MethodChannelWallet extends WalletPlatform {
   Future<List<String>> processAuthorizationRequest(
       {required String authorizationRequest, List<String>? storedCredentials}) async {
     return (await methodChannel.invokeMethod<List>('processAuthorizationRequest',
-            <String, dynamic>{'authorizationRequest': authorizationRequest, 'storedCredentials': storedCredentials}))!
+        <String, dynamic>{'authorizationRequest': authorizationRequest, 'storedCredentials': storedCredentials}))!
         .map((e) => e!.toString())
         .toList();
   }
 
   Future<List<SubmissionRequirement>> getSubmissionRequirements({required List<String>? storedCredentials}) async {
     return (await methodChannel.invokeMethod<List<dynamic>>(
-            'getMatchedSubmissionRequirements', <String, dynamic>{'storedCredentials': storedCredentials}))!
+        'getMatchedSubmissionRequirements', <String, dynamic>{'storedCredentials': storedCredentials}))!
         .map((obj) => SubmissionRequirement.fromMap(obj.cast<String, dynamic>()))
         .toList();
   }
 
   Future<Map<Object?, Object?>?> getVersionDetails() async {
-   var versionDetailResp = await methodChannel
+    var versionDetailResp = await methodChannel
         .invokeMethod('getVersionDetails');
-   log("getVersionDetails in the app, $versionDetailResp");
-   return versionDetailResp;
+    log("getVersionDetails in the app, $versionDetailResp");
+    return versionDetailResp;
   }
 
   Future<Map<Object?, Object?>?> wellKnownDidConfig(String issuerID) async {
@@ -232,7 +239,7 @@ class MethodChannelWallet extends WalletPlatform {
   Future<String?> getCredID(List<String> credentials) async {
     try {
       final credentialID =
-          await methodChannel.invokeMethod<String>('getCredID', <String, dynamic>{'vcCredentials': credentials});
+      await methodChannel.invokeMethod<String>('getCredID', <String, dynamic>{'vcCredentials': credentials});
       return credentialID;
     } on PlatformException catch (error) {
       if (error.code == errorCode) {

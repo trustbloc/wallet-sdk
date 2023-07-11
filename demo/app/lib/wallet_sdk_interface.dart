@@ -1,6 +1,12 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
-import 'demo_method_channel.dart';
+import 'wallet_sdk.dart';
 
 abstract class WalletPlatform extends PlatformInterface {
   /// Constructs a HelloPlatform.
@@ -8,7 +14,7 @@ abstract class WalletPlatform extends PlatformInterface {
 
   static final Object _token = Object();
 
-  static WalletPlatform _instance = MethodChannelWallet();
+  static WalletPlatform _instance = WalletSDK();
   static WalletPlatform get instance => _instance;
 
   /// Platform-specific implementations should set this with their own
