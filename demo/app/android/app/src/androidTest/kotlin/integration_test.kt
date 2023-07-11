@@ -137,13 +137,13 @@ class IntegrationTest {
         println("requestURI ->")
         println( requestURI)
 
-        val requiredOpenID4CIArgs = InteractionArgs(requestURI, crypto, didResolver)
+        val requiredOpenID4CIArgs = IssuerInitiatedInteractionArgs(requestURI, crypto, didResolver)
         println("requiredOpenID4CIArgs")
         println(requiredOpenID4CIArgs)
         val ciOpts = InteractionOpts()
         ciOpts.addHeader(trace.traceHeader())
 
-        val ciInteraction = Interaction(requiredOpenID4CIArgs, ciOpts)
+        val ciInteraction = IssuerInitiatedInteraction(requiredOpenID4CIArgs, ciOpts)
 
         val authCodeGrant = ciInteraction.authorizationCodeGrantTypeSupported()
         assertThat(authCodeGrant).isTrue()

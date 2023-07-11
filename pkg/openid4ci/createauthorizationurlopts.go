@@ -10,10 +10,10 @@ type createAuthorizationURLOpts struct {
 	scopes []string
 }
 
-// CreateAuthorizationURLOpt is an option for the CreateAuthorizationURL method.
+// CreateAuthorizationURLOpt is an option for the createAuthorizationURL method.
 type CreateAuthorizationURLOpt func(opts *createAuthorizationURLOpts)
 
-// WithScopes is an option for the CreateAuthorizationURL method that allows scopes to be passed in.
+// WithScopes is an option for the createAuthorizationURL method that allows scopes to be passed in.
 func WithScopes(scopes []string) CreateAuthorizationURLOpt {
 	return func(opts *createAuthorizationURLOpts) {
 		opts.scopes = scopes

@@ -53,10 +53,10 @@
         }
       },
       "cryptographic_binding_methods_supported":[
-        "ion"
+        "did"
       ],
       "cryptographic_suites_supported":[
-        "ECDSASecp256k1DER"
+        "ES256K"
       ],
       "display":[
         {
@@ -70,20 +70,11 @@
           "text_color":"#FFFFFF"
         }
       ],
-      "formats":{
-        "jwt_vc_json":{
-          "cryptographic_binding_methods_supported":[
-            "did"
-          ],
-          "cryptographic_suites_supported":[
-            "EcdsaSecp256k1Signature2019"
-          ],
-          "types":[
-            "VerifiableCredential",
-            "UniversityDegreeCredential"
-          ]
-        }
-      }
+      "format":"jwt_vc_json",
+      "types":[
+        "VerifiableCredential",
+        "UniversityDegreeCredential"
+      ]
     }
   ]
 }

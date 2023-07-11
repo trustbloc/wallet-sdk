@@ -11,6 +11,7 @@ require (
 	github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230622171716-43af8054a539
 	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20230704180706-7159d2ef444a
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20230615141038-5d444d6c36de
+	github.com/stretchr/testify v1.8.1
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 )
 
@@ -57,7 +58,6 @@ require (
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/square/go-jose/v3 v3.0.0-20200630053402-0a67ce9b0693 // indirect
-	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8 // indirect
 	github.com/trustbloc/logutil-go v1.0.0-rc1 // indirect
 	github.com/trustbloc/sidetree-core-go v1.0.0-rc5.0.20230609191801-793cbea60692 // indirect

@@ -212,7 +212,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		didID, err := testHelper.DIDDoc.ID()
 		require.NoError(t, err)
 
-		interactionRequiredArgs := openid4ci.NewInteractionArgs(offerCredentialURL, testHelper.KMS.GetCrypto(), didResolver)
+		interactionRequiredArgs := openid4ci.NewIssuerInitiatedInteractionArgs(offerCredentialURL, testHelper.KMS.GetCrypto(), didResolver)
 
 		interactionOptionalArgs := openid4ci.NewInteractionOpts()
 		interactionOptionalArgs.SetDocumentLoader(&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)})
@@ -220,7 +220,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		interactionOptionalArgs.SetMetricsLogger(testHelper.MetricsLogger)
 		interactionOptionalArgs.DisableHTTPClientTLSVerify()
 
-		interaction, err := openid4ci.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
+		interaction, err := openid4ci.NewIssuerInitiatedInteraction(interactionRequiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)
 
 		traceIDs = append(traceIDs, interaction.OTelTraceID())
@@ -291,10 +291,10 @@ func doAuthCodeFlowTest(t *testing.T, useDynamicClientRegistration bool) {
 	didResolver, err := did.NewResolver(opts)
 	require.NoError(t, err)
 
-	interactionRequiredArgs := openid4ci.NewInteractionArgs(credentialOfferURL, testHelper.KMS.GetCrypto(), didResolver)
+	interactionRequiredArgs := openid4ci.NewIssuerInitiatedInteractionArgs(credentialOfferURL, testHelper.KMS.GetCrypto(), didResolver)
 	interactionOptionalArgs := openid4ci.NewInteractionOpts().DisableHTTPClientTLSVerify()
 
-	interaction, err := openid4ci.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
+	interaction, err := openid4ci.NewIssuerInitiatedInteraction(interactionRequiredArgs, interactionOptionalArgs)
 	require.NoError(t, err)
 
 	clientID := "oidc4vc_client"
@@ -347,7 +347,7 @@ func doAuthCodeFlowTest(t *testing.T, useDynamicClientRegistration bool) {
 	require.Equal(t, 1, credentials.Length())
 }
 
-func getRedirectURIWithAuthCode(t *testing.T, clientID string, interaction *openid4ci.Interaction) string {
+func getRedirectURIWithAuthCode(t *testing.T, clientID string, interaction *openid4ci.IssuerInitiatedInteraction) string {
 	scopes := api.NewStringArray()
 	scopes.Append("openid")
 	scopes.Append("profile")

@@ -9,7 +9,7 @@ package openid4ci
 import "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 
 // CreateAuthorizationURLOpts contains all optional arguments that can be passed into the
-// CreateAuthorizationURL method.
+// createAuthorizationURL method.
 type CreateAuthorizationURLOpts struct {
 	scopes *api.StringArray
 }
@@ -19,7 +19,7 @@ func NewCreateAuthorizationURLOpts() *CreateAuthorizationURLOpts {
 	return &CreateAuthorizationURLOpts{}
 }
 
-// SetScopes sets scopes to use in the URL created by the CreateAuthorizationURL method. If the authorization URL
+// SetScopes sets scopes to use in the URL created by the createAuthorizationURL method. If the authorization URL
 // requires scopes to be set, then this option must be used.
 func (c *CreateAuthorizationURLOpts) SetScopes(scopes *api.StringArray) *CreateAuthorizationURLOpts {
 	c.scopes = scopes

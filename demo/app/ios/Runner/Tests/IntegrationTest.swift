@@ -44,12 +44,12 @@ class IntegrationTest: XCTestCase {
 
         XCTAssertTrue(requestURI != "", "requestURI:" + requestURI!)
 
-        let openID4CIInteractionArgs = Openid4ciNewInteractionArgs(requestURI, crypto, didResolver)
+        let openID4CIInteractionArgs = Openid4ciNewIssuerInitiatedInteractionArgs(requestURI, crypto, didResolver)
 
         let ciOpts = Openid4ciNewInteractionOpts()
         ciOpts!.add(trace!.traceHeader())
 
-        let ciInteraction = Openid4ciNewInteraction(openID4CIInteractionArgs, ciOpts, nil)
+        let ciInteraction = Openid4ciNewIssuerInitiatedInteraction(openID4CIInteractionArgs, ciOpts, nil)
         XCTAssertNotNil(ciInteraction)
 
         let pinRequired = try ciInteraction!.preAuthorizedCodeGrantParams().pinRequired()
@@ -118,12 +118,12 @@ class IntegrationTest: XCTestCase {
           print(requestAuthURI)
           XCTAssertTrue(requestAuthURI != "", "requestAuthURI:" + requestAuthURI!)
 
-          let openID4CIInteractionArgs = Openid4ciNewInteractionArgs(requestAuthURI, crypto, didResolver)
+          let openID4CIInteractionArgs = Openid4ciNewIssuerInitiatedInteractionArgs(requestAuthURI, crypto, didResolver)
 
           let ciOpts = Openid4ciNewInteractionOpts()
           ciOpts!.add(trace!.traceHeader())
 
-          let ciInteraction = Openid4ciNewInteraction(openID4CIInteractionArgs, ciOpts, nil)
+          let ciInteraction = Openid4ciNewIssuerInitiatedInteraction(openID4CIInteractionArgs, ciOpts, nil)
           XCTAssertNotNil(ciInteraction)
 
           let authCodeGrant = ciInteraction!.authorizationCodeGrantTypeSupported()
