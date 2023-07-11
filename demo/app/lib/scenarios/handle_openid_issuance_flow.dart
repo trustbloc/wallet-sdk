@@ -25,7 +25,16 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
   } else {
     if (qrCodeURL.contains("authorization_code")){
       authCodeArgs = await readIssuerAuthFlowConfig(qrCodeURL);
-      log("auth code arguments fetched from config file ${authCodeArgs}");
+      log("auth code arguments fetched from config file $authCodeArgs");
+      // While fetching auth code args based on issuer key from file, if no key-value pair is found then set the
+      // arguments to default scope and redirect url.
+      authCodeArgs ??= {
+          "scopes": [
+            "openid",
+            "profile"
+          ],
+          "redirectURI": "trustbloc-wallet://openid4vci/authcodeflow/callback"
+        };
     }
   }
 

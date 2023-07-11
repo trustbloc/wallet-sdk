@@ -322,15 +322,48 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                      details: "Pass scopes, clientID and redirectURI as the arguments"))
                 }
                 
+                let dynamicRegistrationSupported = try openID4CI.dynamicRegistrationSupported()
+                var clientID = authCodeArgs["clientID"]
+                let redirectURI = authCodeArgs["redirectURI"]! as? String
+                var scopes = authCodeArgs["scopes"]! as! [String]
+                
+                if (dynamicRegistrationSupported.boolValue == true) {
+                    let dynamicRegistrationEndpoint = try openID4CI.dynamicRegistrationEndpoint()
+                    let clientMetadata = Oauth2ClientMetadata()
+                    let grantTypesArr = ApiStringArray()
+                    grantTypesArr?.append("authorization_code")
+                    clientMetadata?.setGrantTypes(grantTypesArr)
+                
+                    
+                    let redirectURIArr = ApiStringArray()
+                    redirectURIArr?.append(redirectURI)
+                    clientMetadata?.setRedirectURIs(redirectURIArr)
+            
+                
+                    let spaceSeparatedScopes = scopes.joined(separator: " ")
+                    clientMetadata?.setScope(spaceSeparatedScopes)
+                    clientMetadata?.setTokenEndpointAuthMethod("none")
+                    
+                    let authorizationCodeGrantParams = try openID4CI.getAuthorizationCodeGrantParams()
+                    
+                    if authorizationCodeGrantParams.hasIssuerState() {
+                        let issuerState = authorizationCodeGrantParams.issuerState(nil)
+                        clientMetadata?.setIssuerState(issuerState)
+                    }
+                    
+                    let registrationResp = Oauth2RegisterClient(dynamicRegistrationEndpoint, clientMetadata, nil, nil)
+                    clientID = (registrationResp?.clientID())!
+                }
+                
                 if (!authCodeArgs.keys.contains("scopes")) {
-                    authorizationLink = try openID4CI.createAuthorizationURL(clientID: authCodeArgs["clientID"]! as! String, redirectURI: authCodeArgs["redirectURI"]! as! String)
+                    authorizationLink = try openID4CI.createAuthorizationURL(clientID: clientID as! String, redirectURI: redirectURI as! String)
                 } else {
-                    authorizationLink = try openID4CI.createAuthorizationURLWithScopes(scopes: authCodeArgs["scopes"]! as! [String], clientID: authCodeArgs["clientID"]! as! String, redirectURI: authCodeArgs["redirectURI"]! as! String)
+                    authorizationLink = try openID4CI.createAuthorizationURLWithScopes(scopes: scopes as! [String], clientID: clientID as! String, redirectURI: redirectURI as! String)
                 }
       
             }
             
-            var flowTypeData :[String:Any] = [
+            let flowTypeData :[String:Any] = [
                 "pinRequired": pinRequired,
                 "authorizationURLLink":  authorizationLink
                 
@@ -346,6 +379,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                        details: error))
           }
     }
+    
     
     public func getVerifierDisplayData(result: @escaping FlutterResult){
         guard let openID4VP = self.openID4VP else{
