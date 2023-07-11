@@ -17,6 +17,9 @@ import (
 	"github.com/hyperledger/aries-framework-go/component/storage/indexeddb"
 	arieskms "github.com/hyperledger/aries-framework-go/spi/kms"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/errors"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/jssupport"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/types"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/walletsdk"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
@@ -26,46 +29,46 @@ const (
 )
 
 var agentInstance *walletsdk.Agent
-var agentMethodsRunner AsyncRunner
+var agentMethodsRunner jssupport.AsyncRunner
 
 func InitAgent(_ js.Value, args []js.Value) (any, error) {
-	didResolverURI, err := ensureString(getOptionalNamedArgument(args, "didResolverURI"))
+	didResolverURI, err := jssupport.EnsureString(jssupport.GetOptionalNamedArgument(args, "didResolverURI"))
 	if err != nil {
 		return nil, err
 	}
 
 	if agentInstance != nil {
 		return nil, walleterror.NewExecutionError(
-			Module,
-			InitializationFailedCode,
-			InitializationFailedError,
+			errors.Module,
+			errors.InitializationFailedCode,
+			errors.InitializationFailedError,
 			fmt.Errorf("agent instance already initialized"))
 	}
 
 	indexedDBKMSProvider, err := indexeddb.NewProvider(dbNamespace)
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
-			Module,
-			InitializationFailedCode,
-			InitializationFailedError,
+			errors.Module,
+			errors.InitializationFailedCode,
+			errors.InitializationFailedError,
 			fmt.Errorf("failed to create IndexedDB provider: %w", err))
 	}
 
 	kmsStore, err := kms.NewAriesProviderWrapper(indexedDBKMSProvider)
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
-			Module,
-			InitializationFailedCode,
-			InitializationFailedError,
+			errors.Module,
+			errors.InitializationFailedCode,
+			errors.InitializationFailedError,
 			fmt.Errorf("failed to create Aries KMS store wrapper %w", err))
 	}
 
 	agentInstance, err = walletsdk.NewAgent(didResolverURI, kmsStore)
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
-			Module,
-			InitializationFailedCode,
-			InitializationFailedError,
+			errors.Module,
+			errors.InitializationFailedCode,
+			errors.InitializationFailedError,
 			fmt.Errorf("failed to create agant %w", err))
 	}
 
@@ -75,23 +78,23 @@ func InitAgent(_ js.Value, args []js.Value) (any, error) {
 func CreateDID(_ js.Value, args []js.Value) (any, error) {
 	if agentInstance == nil {
 		return nil, walleterror.NewExecutionError(
-			Module,
-			InitializationFailedCode,
-			InitializationFailedError,
+			errors.Module,
+			errors.InitializationFailedCode,
+			errors.InitializationFailedError,
 			fmt.Errorf("agent instance is not initialized"))
 	}
 
-	didMethod, err := ensureString(getNamedArgument(args, "didMethod"))
+	didMethod, err := jssupport.EnsureString(jssupport.GetNamedArgument(args, "didMethod"))
 	if err != nil {
 		return nil, err
 	}
 
-	keyType, err := ensureString(getOptionalNamedArgument(args, "keyType"))
+	keyType, err := jssupport.EnsureString(jssupport.GetOptionalNamedArgument(args, "keyType"))
 	if err != nil {
 		return nil, err
 	}
 
-	verificationType, err := ensureString(getOptionalNamedArgument(args, "verificationType"))
+	verificationType, err := jssupport.EnsureString(jssupport.GetOptionalNamedArgument(args, "verificationType"))
 	if err != nil {
 		return nil, err
 	}
@@ -101,21 +104,36 @@ func CreateDID(_ js.Value, args []js.Value) (any, error) {
 		return nil, err
 	}
 
-	content, err := didDoc.JSONBytes()
-	if err != nil {
-		return nil, fmt.Errorf("failed to serialize did:%w", err)
+	return types.SerializeDIDDoc(didDoc)
+}
+
+func CreateOpenID4CIInteraction(_ js.Value, args []js.Value) (any, error) {
+	if agentInstance == nil {
+		return nil, walleterror.NewExecutionError(
+			errors.Module,
+			errors.InitializationFailedCode,
+			errors.InitializationFailedError,
+			fmt.Errorf("agent instance is not initialized"))
 	}
 
-	return map[string]interface{}{
-		"id":      didDoc.DIDDocument.ID,
-		"content": content,
-	}, nil
+	initiateIssuanceURI, err := jssupport.EnsureString(jssupport.GetNamedArgument(args, "initiateIssuanceURI"))
+	if err != nil {
+		return nil, err
+	}
+
+	interaction, err := agentInstance.CreateOpenID4CIInteraction(initiateIssuanceURI)
+	if err != nil {
+		return nil, err
+	}
+
+	return types.SerializeOpenID4CIInteraction(&agentMethodsRunner, interaction), nil
 }
 
 func ExportAgentFunctions() map[string]js.Func {
 	return map[string]js.Func{
-		"initAgent": agentMethodsRunner.CreateAsyncFunc(InitAgent),
-		"createDID": agentMethodsRunner.CreateAsyncFunc(CreateDID),
+		"initAgent":                  agentMethodsRunner.CreateAsyncFunc(InitAgent),
+		"createDID":                  agentMethodsRunner.CreateAsyncFunc(CreateDID),
+		"createOpenID4CIInteraction": agentMethodsRunner.CreateAsyncFunc(CreateOpenID4CIInteraction),
 	}
 
 }

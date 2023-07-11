@@ -17,6 +17,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
+	"github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
 
 // Agent is a facade around Wallet-SDK functionality. It provides a simplified interface to interop with JS.
@@ -66,4 +67,19 @@ func (a *Agent) CreateDID(didMethodType string, didKeyType arieskms.KeyType, ver
 	}
 
 	return didDoc, nil
+}
+
+// CreateOpenID4CIInteraction creates and starts openid4ci interaction.
+func (a *Agent) CreateOpenID4CIInteraction(initiateIssuanceURI string) (*OpenID4CIInteraction, error) {
+	interaction, err := openid4ci.NewInteraction(initiateIssuanceURI, &openid4ci.ClientConfig{
+		DIDResolver: a.didResolver,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &OpenID4CIInteraction{
+		interaction: interaction,
+		crypto:      a.crypto,
+	}, nil
 }
