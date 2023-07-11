@@ -1,13 +1,15 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:app/widgets/primary_button.dart';
 import 'dart:developer';
 import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:app/demo_method_channel.dart';
-import 'package:app/widgets/common_title_appbar.dart';
+import 'package:app/wallet_sdk.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app/models/activity_data_object.dart';
@@ -15,7 +17,6 @@ import 'package:app/models/credential_data.dart';
 import 'credential_preview.dart';
 import 'package:flutter/foundation.dart';
 import 'package:uni_links/uni_links.dart';
-import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:app/views/dashboard.dart';
 import 'package:app/views/custom_error.dart';
@@ -32,7 +33,7 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
   Uri? _redirectUri;
   Object? _err;
 
-  var WalletSDKPlugin = MethodChannelWallet();
+  var WalletSDKPlugin = WalletSDK();
   final StorageService _storageService = StorageService();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   var userDIDId = '';

@@ -1,3 +1,9 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 import 'dart:convert';
 import 'dart:developer';
 
@@ -8,7 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:app/widgets/primary_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:app/demo_method_channel.dart';
+import 'package:app/wallet_sdk.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -222,7 +228,7 @@ class SettingsState extends State<Settings> {
   }
 
   getVersionDetails() async {
-    var walletSDKPlugin = MethodChannelWallet();
+    var walletSDKPlugin = WalletSDK();
     var versionDetailResp = await walletSDKPlugin.getVersionDetails();
     var didDocEncoded = json.encode(versionDetailResp!);
     Map<String, dynamic> responseJson = json.decode(didDocEncoded);

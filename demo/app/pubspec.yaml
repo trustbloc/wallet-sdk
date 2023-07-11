@@ -45,6 +45,7 @@ dependencies:
   jwt_decode: ^0.3.1
   url_launcher: ^6.1.11
   http: ^0.13.4
+  js: ^0.6.4
 
 dev_dependencies:
   integration_test:

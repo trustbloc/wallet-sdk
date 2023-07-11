@@ -1,13 +1,19 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:app/demo_method_channel.dart';
+import 'package:app/wallet_sdk.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() async {
   print("Init Wallet SDK Plugin");
-  final walletSDKPlugin = MethodChannelWallet();
+  final walletSDKPlugin = WalletSDK();
   print("Init SDK");
   const didResolverURI = String.fromEnvironment("DID_RESOLVER_URI");
   await walletSDKPlugin.initSDK(didResolverURI);
