@@ -23,9 +23,9 @@ const (
 	openid4ciRequestCredentialWithPreAuth = "requestCredentialWithPreAuth"
 )
 
-func SerializeOpenID4CIInteraction(agentMethodsRunner *jssupport.AsyncRunner,
-	interaction *walletsdk.OpenID4CIInteraction) map[string]interface{} {
-
+func SerializeOpenID4CIIssuerInitiatedInteraction(agentMethodsRunner *jssupport.AsyncRunner,
+	interaction *walletsdk.OpenID4CIIssuerInitiatedInteraction,
+) map[string]interface{} {
 	return map[string]interface{}{
 		openid4ciRequestCredentialWithPreAuth: agentMethodsRunner.CreateAsyncFunc(
 			func(this js.Value, args []js.Value) (any, error) {

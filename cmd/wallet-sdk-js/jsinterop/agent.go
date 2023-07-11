@@ -14,7 +14,6 @@ import (
 	"syscall/js"
 
 	"github.com/hyperledger/aries-framework-go/component/kmscrypto/kms"
-	"github.com/hyperledger/aries-framework-go/component/storage/indexeddb"
 	arieskms "github.com/hyperledger/aries-framework-go/spi/kms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/errors"
@@ -28,8 +27,10 @@ const (
 	dbNamespace = "wallet-sdk"
 )
 
-var agentInstance *walletsdk.Agent
-var agentMethodsRunner jssupport.AsyncRunner
+var (
+	agentInstance      *walletsdk.Agent
+	agentMethodsRunner jssupport.AsyncRunner
+)
 
 func InitAgent(_ js.Value, args []js.Value) (any, error) {
 	didResolverURI, err := jssupport.EnsureString(jssupport.GetOptionalNamedArgument(args, "didResolverURI"))
@@ -107,7 +108,7 @@ func CreateDID(_ js.Value, args []js.Value) (any, error) {
 	return types.SerializeDIDDoc(didDoc)
 }
 
-func CreateOpenID4CIInteraction(_ js.Value, args []js.Value) (any, error) {
+func CreateOpenID4CIIssuerInitiatedInteraction(_ js.Value, args []js.Value) (any, error) {
 	if agentInstance == nil {
 		return nil, walleterror.NewExecutionError(
 			errors.Module,
@@ -121,19 +122,18 @@ func CreateOpenID4CIInteraction(_ js.Value, args []js.Value) (any, error) {
 		return nil, err
 	}
 
-	interaction, err := agentInstance.CreateOpenID4CIInteraction(initiateIssuanceURI)
+	interaction, err := agentInstance.CreateOpenID4CIIssuerInitiatedInteraction(initiateIssuanceURI)
 	if err != nil {
 		return nil, err
 	}
 
-	return types.SerializeOpenID4CIInteraction(&agentMethodsRunner, interaction), nil
+	return types.SerializeOpenID4CIIssuerInitiatedInteraction(&agentMethodsRunner, interaction), nil
 }
 
 func ExportAgentFunctions() map[string]js.Func {
 	return map[string]js.Func{
-		"initAgent":                  agentMethodsRunner.CreateAsyncFunc(InitAgent),
-		"createDID":                  agentMethodsRunner.CreateAsyncFunc(CreateDID),
-		"createOpenID4CIInteraction": agentMethodsRunner.CreateAsyncFunc(CreateOpenID4CIInteraction),
+		"initAgent": agentMethodsRunner.CreateAsyncFunc(InitAgent),
+		"createDID": agentMethodsRunner.CreateAsyncFunc(CreateDID),
+		"createOpenID4CIIssuerInitiatedInteraction": agentMethodsRunner.CreateAsyncFunc(CreateOpenID4CIIssuerInitiatedInteraction),
 	}
-
 }
