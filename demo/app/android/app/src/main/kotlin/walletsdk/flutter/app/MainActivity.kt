@@ -1,10 +1,13 @@
 package dev.trustbloc.wallet
 
+import android.annotation.SuppressLint
 import dev.trustbloc.wallet.sdk.api.Api
 import dev.trustbloc.wallet.sdk.api.DIDDocResolution
+import dev.trustbloc.wallet.sdk.api.StringArray
 import dev.trustbloc.wallet.sdk.credential.StatusVerifier
 import dev.trustbloc.wallet.sdk.did.Did
 import dev.trustbloc.wallet.sdk.display.Display
+import dev.trustbloc.wallet.sdk.oauth2.Oauth2
 import dev.trustbloc.wallet.sdk.verifiable.Credential
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import dev.trustbloc.wallet.sdk.verifiable.Opts
@@ -302,14 +305,46 @@ class MainActivity : FlutterActivity() {
                 val authCodeArgs = call.argument<MutableMap<String, String>>("authCodeArgs")
                     ?: throw java.lang.Exception("authCodeArgs params is missed, Pass scopes, clientID and redirectURI as the arguments")
 
+                var dynamicRegistrationSupported =  openID4CI.dynamicRegistrationSupported()
+                var clientID = authCodeArgs["clientID"].toString()
+                val redirectURI = authCodeArgs["redirectURI"].toString()
+                var scopes = authCodeArgs["scopes"] as ArrayList<String>
+
+                if (dynamicRegistrationSupported)  {
+                    var dynamicRegistrationEndpoint = openID4CI.dynamicRegistrationEndpoint()
+
+                    var clientMetadata = Oauth2.newClientMetadata()
+                    var grantTypesArr = StringArray()
+                    grantTypesArr.append("authorization_code")
+                    clientMetadata.setGrantTypes(grantTypesArr)
+
+                    var redirectUri = StringArray()
+                    redirectUri.append(redirectURI)
+                    clientMetadata.setRedirectURIs(redirectUri)
+
+                    var spaceSeparatedScopes = scopes.joinToString(" ")
+                    clientMetadata.setScope(spaceSeparatedScopes)
+
+                    clientMetadata.setTokenEndpointAuthMethod("none")
+
+                    var authorizationCodeGrantParams = openID4CI.getAuthorizationCodeGrantParams()
+                    if (authorizationCodeGrantParams.hasIssuerState()){
+                         var issuerState = authorizationCodeGrantParams.issuerState()
+                         clientMetadata.setIssuerState(issuerState)
+                    }
+
+                    var registrationResp = Oauth2.registerClient(dynamicRegistrationEndpoint, clientMetadata, null)
+                    clientID = registrationResp.clientID()
+                }
+
                 if (!authCodeArgs.keys.contains("scopes")) {
                     authorizationLink = openID4CI.createAuthorizationURL(
-                        authCodeArgs["clientID"].toString(),
-                        authCodeArgs["redirectURI"].toString() )
+                        clientID,
+                        redirectURI)
                 } else {
-                    authorizationLink = openID4CI.createAuthorizationURLWithScopes(authCodeArgs["scopes"] as ArrayList<String>,
-                        authCodeArgs["clientID"].toString(),
-                        authCodeArgs["redirectURI"].toString() )
+                    authorizationLink = openID4CI.createAuthorizationURLWithScopes(scopes,
+                        clientID,
+                        redirectURI)
                 }
             }
 

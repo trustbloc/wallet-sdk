@@ -53,7 +53,7 @@ class CredentialDetailsState extends State<CredentialDetails> {
   prettifyRawJson(){
     final parsedJson = json.decode(widget.credentialData.credentialDisplayData);
     final prettyString = const JsonEncoder.withIndent('  ').convert(parsedJson);
-    return Text(prettyString);
+    return SelectableText(prettyString);
   }
 
  activityLogDetails() async {

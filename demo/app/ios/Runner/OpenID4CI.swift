@@ -68,7 +68,7 @@ public class OpenID4CI {
             print("error in authorizations", error!.localizedDescription)
             throw actualError
        }
-        
+    
       return authorizationLink
     }
     
@@ -94,5 +94,25 @@ public class OpenID4CI {
     public func serializeDisplayData(issuerURI: String, vcCredentials: VerifiableCredentialsArray) -> String{
        let resolvedDisplayData = DisplayResolve(vcCredentials, issuerURI, nil, nil)
         return resolvedDisplayData!.serialize(nil)
+    }
+    
+    func dynamicRegistrationSupported() throws -> ObjCBool {
+        var dynamicRegistrationSupported: ObjCBool = false
+        try initiatedInteraction.dynamicClientRegistrationSupported(&dynamicRegistrationSupported)
+        return dynamicRegistrationSupported
+    }
+    
+    func dynamicRegistrationEndpoint() throws -> String {
+        var error: NSError?
+        let endpoint = initiatedInteraction.dynamicClientRegistrationEndpoint(&error)
+        if let actualError = error {
+            print("error from dynamic registration endpoint",  actualError.localizedDescription)
+            throw actualError
+       }
+        return endpoint
+    }
+    
+    func getAuthorizationCodeGrantParams() throws -> Openid4ciAuthorizationCodeGrantParams {
+        return  try initiatedInteraction.authorizationCodeGrantParams()
     }
 }

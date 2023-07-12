@@ -1,5 +1,6 @@
 package walletsdk.openid4ci
 
+import android.annotation.SuppressLint
 import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.display.*
 import dev.trustbloc.wallet.sdk.openid4ci.*
@@ -87,6 +88,7 @@ class OpenID4CI constructor(
         return null
     }
 
+    @SuppressLint("SuspiciousIndentation")
     fun requestCredentialWithAuth(didVerificationMethod: VerificationMethod, redirectURIWithParams: String) : Credential? {
         var credentials = newInteraction.requestCredentialWithAuth(didVerificationMethod, redirectURIWithParams, null)
             return credentials.atIndex(0);
@@ -95,4 +97,17 @@ class OpenID4CI constructor(
     fun serializeDisplayData(issuerURI: String?, vcCredentials: CredentialsArray): String? {
         return Display.resolve(vcCredentials, issuerURI, null).serialize()
     }
+
+    fun dynamicRegistrationSupported(): Boolean {
+        return newInteraction.dynamicClientRegistrationSupported()
+    }
+
+    fun dynamicRegistrationEndpoint(): String {
+        return newInteraction.dynamicClientRegistrationEndpoint()
+    }
+
+    fun getAuthorizationCodeGrantParams(): AuthorizationCodeGrantParams {
+        return newInteraction.authorizationCodeGrantParams()
+    }
+
 }
