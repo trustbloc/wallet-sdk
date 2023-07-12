@@ -25,8 +25,8 @@ const Agent = async function (opts) {
                 verificationType: opts.verificationType
             });
         },
-        createOpenID4CIInteraction: async function (opts) {
-            return await goAgent.createOpenID4CIInteraction({
+        createOpenID4CIIssuerInitiatedInteraction: async function (opts) {
+            return await goAgent.createOpenID4CIIssuerInitiatedInteraction({
                 initiateIssuanceURI: opts.initiateIssuanceURI,
             })
         },

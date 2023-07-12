@@ -17,9 +17,9 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
 
-// OpenID4CIInteraction wraps openid4ci.Interaction and necessary dependencies.
-type OpenID4CIInteraction struct {
-	interaction *openid4ci.Interaction
+// OpenID4CIIssuerInitiatedInteraction wraps openid4ci.IssuerInitiatedInteraction and necessary dependencies.
+type OpenID4CIIssuerInitiatedInteraction struct {
+	interaction *openid4ci.IssuerInitiatedInteraction
 	crypto      api.Crypto
 }
 
@@ -28,7 +28,7 @@ type OpenID4CIInteraction struct {
 // For the equivalent method for the authorization code flow, see RequestCredentialWithAuth instead.
 // If a PIN is required (which can be checked via the Capabilities method), then it must be passed
 // into this method via the WithPIN option.
-func (i *OpenID4CIInteraction) RequestCredentialWithPreAuth(vm *models.VerificationMethod, pin string,
+func (i *OpenID4CIIssuerInitiatedInteraction) RequestCredentialWithPreAuth(vm *models.VerificationMethod, pin string,
 ) ([]*verifiable.Credential, error) {
 	signer, err := i.createSigner(vm)
 	if err != nil {
@@ -38,7 +38,7 @@ func (i *OpenID4CIInteraction) RequestCredentialWithPreAuth(vm *models.Verificat
 	return i.interaction.RequestCredentialWithPreAuth(signer, openid4ci.WithPIN(pin))
 }
 
-func (i *OpenID4CIInteraction) createSigner(vm *models.VerificationMethod) (*common.JWSSigner, error) {
+func (i *OpenID4CIIssuerInitiatedInteraction) createSigner(vm *models.VerificationMethod) (*common.JWSSigner, error) {
 	if vm == nil {
 		return nil, errors.New("verification method must be provided")
 	}

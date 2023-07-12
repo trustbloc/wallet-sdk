@@ -69,16 +69,18 @@ func (a *Agent) CreateDID(didMethodType string, didKeyType arieskms.KeyType, ver
 	return didDoc, nil
 }
 
-// CreateOpenID4CIInteraction creates and starts openid4ci interaction.
-func (a *Agent) CreateOpenID4CIInteraction(initiateIssuanceURI string) (*OpenID4CIInteraction, error) {
-	interaction, err := openid4ci.NewInteraction(initiateIssuanceURI, &openid4ci.ClientConfig{
+// CreateOpenID4CIIssuerInitiatedInteraction creates and starts openid4ci issuer-initiated interaction.
+func (a *Agent) CreateOpenID4CIIssuerInitiatedInteraction(
+	initiateIssuanceURI string,
+) (*OpenID4CIIssuerInitiatedInteraction, error) {
+	interaction, err := openid4ci.NewIssuerInitiatedInteraction(initiateIssuanceURI, &openid4ci.ClientConfig{
 		DIDResolver: a.didResolver,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &OpenID4CIInteraction{
+	return &OpenID4CIIssuerInitiatedInteraction{
 		interaction: interaction,
 		crypto:      a.crypto,
 	}, nil
