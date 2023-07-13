@@ -6,47 +6,47 @@ SPDX-License-Identifier: Apache-2.0
 
 'use strict'
 
+export default class WalletSDKAgent {
+    constructor(opts) {
+        this.go = new Go();
+        this.opts = opts;
+    }
 
-const Agent = async function (opts) {
-    const go = new Go();
-    const assembly = await WebAssembly.instantiateStreaming(fetch(opts.assetsPath + "/wallet-sdk.wasm"), go.importObject);
-    go.run(assembly.instance);
+    async initialize() {
+        const assembly = await WebAssembly.instantiateStreaming(fetch(this.opts.assetsPath + "/wallet-sdk.wasm"), this.go.importObject);
+        this.go.run(assembly.instance);
+        this.goAgent = window.__agentInteropObject;
+        await this.goAgent.initAgent({didResolverURI: this.opts.didResolverURI})
+    }
 
-    const goAgent = window.__agentInteropObject;
+    async createDID(opts) {
+        return await this.goAgent.createDID({
+            didMethod: opts.didMethod,
+            keyType: opts.keyType,
+            verificationType: opts.verificationType
+        });
+    };
 
-    await goAgent.initAgent({didResolverURI: opts.didResolverURI})
+    async createOpenID4CIIssuerInitiatedInteraction(opts) {
+        return await this.goAgent.createOpenID4CIIssuerInitiatedInteraction({
+            initiateIssuanceURI: opts.initiateIssuanceURI,
+        })
+    };
 
-    return {
-        createDID: async function (opts) {
-            return await goAgent.createDID({
-                didMethod: opts.didMethod,
-                keyType: opts.keyType,
-                verificationType: opts.verificationType
-            });
-        },
-        createOpenID4CIIssuerInitiatedInteraction: async function (opts) {
-            return await goAgent.createOpenID4CIIssuerInitiatedInteraction({
-                initiateIssuanceURI: opts.initiateIssuanceURI,
-            })
-        },
-        resolveDisplayData: async function (opts) {
-            return await goAgent.resolveDisplayData({
-                issuerURI: opts.issuerURI,
-                credentials: opts.credentials
-            })
-        },
-        parseResolvedDisplayData: async function(opts) {
-            return await  goAgent.parseResolvedDisplayData({
-                resolvedCredentialDisplayData: opts.resolvedCredentialDisplayData,
-            })
-        },
-        getCredentialID: async function (opts) {
-            return await goAgent.getCredentialID({
-                credential: opts.credential
-            })
-        },
-        stop: function () {
-            goAgent.stopAssembly()
-        }
+    async resolveDisplayData(opts) {
+        return await this.goAgent.resolveDisplayData({
+            issuerURI: opts.issuerURI,
+            credentials: opts.credentials
+        })
+    };
+
+    async getCredentialID(opts) {
+        return await this.goAgent.getCredentialID({
+            credential: opts.credential
+        })
+    }
+
+    stop() {
+        this.goAgent.stopAssembly()
     }
 }

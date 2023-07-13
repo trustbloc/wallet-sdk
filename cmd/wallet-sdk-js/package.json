@@ -2,12 +2,18 @@
   "name": "wallet-sdk",
   "version": "0.0.1",
   "description": "Implements a simplified interface to interop with JS for wallet-sdk.",
-  "main": "src/index.js",
+  "main": "dist/agent.js",
+  "browser": "dist/agent.js",
   "scripts": {
     "build:assets": "bash scripts/build_assets.sh",
-    "build": "rm -rf dist/* && npm run build:assets && webpack --config ./webpack.config.js --mode=production",
+    "build": "rm -rf dist/* && npm run build:assets && npx webpack --config ./webpack.config.js --mode=production",
     "prepare": "npm run build",
     "test": "karma start --single-run"
+  },
+  "config": {
+    "exportAliases": {
+      "rest": "./dist/rest/agent.js"
+    }
   },
   "repository": {
     "type": "git",
@@ -21,12 +27,20 @@
     "verifiable",
     "credentials"
   ],
-  "author": "",
+  "files": [
+    "dist",
+    "umd"
+  ],
+  "author": "trustbloc/wallet-sdk",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/trustbloc/wallet-sdk/issues"
   },
   "homepage": "https://github.com/trustbloc/wallet-sdk#readme",
+  "engines": {
+    "node": ">=12.13",
+    "npm": ">=6.13"
+  },
   "devDependencies": {
     "webpack": "^5.88.1",
     "webpack-cli": "^5.1.4"

@@ -34,6 +34,7 @@ coverage.txt
 node_modules
 dist
 build
+umd
 
 deployments/keys
 deployments/demo/openapi/specs
