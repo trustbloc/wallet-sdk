@@ -7,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package oauth2
 
 import (
+	"strings"
+
 	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
@@ -105,14 +107,41 @@ func (c *ClientMetadata) SetLogoURI(logoURI string) {
 	c.goAPIClientMetadata.LogoURI = logoURI
 }
 
-// Scope returns the scope.
-func (c *ClientMetadata) Scope() string {
-	return c.goAPIClientMetadata.Scope
+// Scopes returns the scopes.
+func (c *ClientMetadata) Scopes() *api.StringArray {
+	scopesStrings := strings.Split(c.goAPIClientMetadata.Scope, " ")
+
+	if len(scopesStrings) == 1 && scopesStrings[0] == "" {
+		return nil
+	}
+
+	scopes := &api.StringArray{Strings: scopesStrings}
+
+	return scopes
 }
 
-// SetScope sets the scope types.
-func (c *ClientMetadata) SetScope(scope string) {
-	c.goAPIClientMetadata.Scope = scope
+// SetScopes sets the scope values.
+func (c *ClientMetadata) SetScopes(scopes *api.StringArray) {
+	if scopes == nil || scopes.Length() == 0 {
+		c.goAPIClientMetadata.Scope = ""
+
+		return
+	}
+
+	var sb strings.Builder
+
+	numOfScopes := scopes.Length()
+
+	indexOfLastScope := numOfScopes - 1
+
+	for i := 0; i < indexOfLastScope; i++ {
+		sb.WriteString(scopes.AtIndex(i))
+		sb.WriteString(" ")
+	}
+
+	sb.WriteString(scopes.AtIndex(indexOfLastScope))
+
+	c.goAPIClientMetadata.Scope = sb.String()
 }
 
 // Contacts returns the contacts.

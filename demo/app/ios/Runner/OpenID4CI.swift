@@ -41,15 +41,10 @@ public class OpenID4CI {
         return ""
     }
     
-    func createAuthorizationURLWithScopes(scopes: [String], clientID: String, redirectURI: String) throws  -> String {
-     let scopesArr = ApiStringArray()
-        for scope in scopes {
-            scopesArr!.append(scope)!
-        }
-
-      var error: NSError?
+    func createAuthorizationURLWithScopes(scopes: ApiStringArray, clientID: String, redirectURI: String) throws  -> String {
+     var error: NSError?
         
-      let opts = Openid4ciNewCreateAuthorizationURLOpts()!.setScopes(scopesArr)
+      let opts = Openid4ciNewCreateAuthorizationURLOpts()!.setScopes(scopes)
     
        let authorizationLink =  initiatedInteraction.createAuthorizationURL(clientID, redirectURI: redirectURI, opts: opts, error: &error)
         if let actualError = error {

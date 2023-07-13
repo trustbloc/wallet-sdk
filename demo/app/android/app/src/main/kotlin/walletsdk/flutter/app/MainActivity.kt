@@ -308,7 +308,10 @@ class MainActivity : FlutterActivity() {
                 var dynamicRegistrationSupported =  openID4CI.dynamicRegistrationSupported()
                 var clientID = authCodeArgs["clientID"].toString()
                 val redirectURI = authCodeArgs["redirectURI"].toString()
-                var scopes = authCodeArgs["scopes"] as ArrayList<String>
+                var scopesFromArgs = authCodeArgs["scopes"] as ArrayList<String>
+
+                var scopes = StringArray()
+                for (scope in scopesFromArgs) scopes.append(scope)
 
                 if (dynamicRegistrationSupported)  {
                     var dynamicRegistrationEndpoint = openID4CI.dynamicRegistrationEndpoint()
@@ -322,8 +325,7 @@ class MainActivity : FlutterActivity() {
                     redirectUri.append(redirectURI)
                     clientMetadata.setRedirectURIs(redirectUri)
 
-                    var spaceSeparatedScopes = scopes.joinToString(" ")
-                    clientMetadata.setScope(spaceSeparatedScopes)
+                    clientMetadata.setScopes(scopes)
 
                     clientMetadata.setTokenEndpointAuthMethod("none")
 
@@ -335,9 +337,13 @@ class MainActivity : FlutterActivity() {
 
                     var registrationResp = Oauth2.registerClient(dynamicRegistrationEndpoint, clientMetadata, null)
                     clientID = registrationResp.clientID()
+
+                    // Use the actual scopes registered by the authorization server,
+                    // which may differ from the scopes we specified in the metadata in our request.
+                    scopes = registrationResp.registeredMetadata().scopes()
                 }
 
-                if (!authCodeArgs.keys.contains("scopes")) {
+                if (scopes.length() == 0.toLong()) {
                     authorizationLink = openID4CI.createAuthorizationURL(
                         clientID,
                         redirectURI)

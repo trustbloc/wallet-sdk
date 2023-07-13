@@ -325,7 +325,13 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 let dynamicRegistrationSupported = try openID4CI.dynamicRegistrationSupported()
                 var clientID = authCodeArgs["clientID"]
                 let redirectURI = authCodeArgs["redirectURI"]! as? String
-                var scopes = authCodeArgs["scopes"]! as! [String]
+                var scopesFromArgs = authCodeArgs["scopes"]! as! [String]
+                
+                var scopes = ApiNewStringArray()!
+                
+                for scope in scopesFromArgs {
+                    scopes.append(scope)
+                }
                 
                 if (dynamicRegistrationSupported.boolValue == true) {
                     let dynamicRegistrationEndpoint = try openID4CI.dynamicRegistrationEndpoint()
@@ -339,9 +345,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                     redirectURIArr?.append(redirectURI)
                     clientMetadata?.setRedirectURIs(redirectURIArr)
             
-                
-                    let spaceSeparatedScopes = scopes.joined(separator: " ")
-                    clientMetadata?.setScope(spaceSeparatedScopes)
+                    clientMetadata?.setScopes(scopes)
                     clientMetadata?.setTokenEndpointAuthMethod("none")
                     
                     let authorizationCodeGrantParams = try openID4CI.getAuthorizationCodeGrantParams()
@@ -351,14 +355,18 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                         clientMetadata?.setIssuerState(issuerState)
                     }
                     
-                    let registrationResp = Oauth2RegisterClient(dynamicRegistrationEndpoint, clientMetadata, nil, nil)
-                    clientID = (registrationResp?.clientID())!
+                    let registrationResp = Oauth2RegisterClient(dynamicRegistrationEndpoint, clientMetadata, nil, nil)!
+                    clientID = (registrationResp.clientID())
+                    
+                    // Use the actual scopes registered by the authorization server,
+                    // which may differ from the scopes we specified in the metadata in our request.
+                    scopes = registrationResp.registeredMetadata()!.scopes()!
                 }
                 
-                if (!authCodeArgs.keys.contains("scopes")) {
+                if (scopes.length() == 0) {
                     authorizationLink = try openID4CI.createAuthorizationURL(clientID: clientID as! String, redirectURI: redirectURI as! String)
                 } else {
-                    authorizationLink = try openID4CI.createAuthorizationURLWithScopes(scopes: scopes as! [String], clientID: clientID as! String, redirectURI: redirectURI as! String)
+                    authorizationLink = try openID4CI.createAuthorizationURLWithScopes(scopes: scopes, clientID: clientID as! String, redirectURI: redirectURI as! String)
                 }
       
             }

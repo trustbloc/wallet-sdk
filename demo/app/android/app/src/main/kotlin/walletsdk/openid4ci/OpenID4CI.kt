@@ -40,16 +40,12 @@ class OpenID4CI constructor(
         return ""
     }
 
-    fun createAuthorizationURLWithScopes(scopes:ArrayList<String>, clientID: String, redirectURI: String): String {
+    fun createAuthorizationURLWithScopes(scopes: StringArray, clientID: String, redirectURI: String): String {
         if (!newInteraction.authorizationCodeGrantTypeSupported()) {
             return "Not implemented"
         }
-        val scopesArr = StringArray();
-        for (scope in scopes) {
-            scopesArr.append(scope);
-        }
 
-        val opts = CreateAuthorizationURLOpts().setScopes(scopesArr)
+        val opts = CreateAuthorizationURLOpts().setScopes(scopes)
 
         return newInteraction.createAuthorizationURL(
             clientID,

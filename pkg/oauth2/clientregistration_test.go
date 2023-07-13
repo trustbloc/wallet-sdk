@@ -37,8 +37,8 @@ func (m *mockIssuerServerHandler) ServeHTTP(w http.ResponseWriter, _ *http.Reque
 	}
 
 	response := oauth2.RegisterClientResponse{
-		ClientID:       "Test",
-		ClientMetadata: &oauth2.ClientMetadata{ClientName: "ClientName"},
+		ClientID:           "Test",
+		RegisteredMetadata: oauth2.RegisteredMetadata{ClientName: "ClientName"},
 	}
 
 	responseBytes, err := json.Marshal(response)
