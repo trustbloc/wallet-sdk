@@ -13,6 +13,7 @@ import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.did.ResolverOpts
 import dev.trustbloc.wallet.sdk.localkms.Localkms
+import dev.trustbloc.wallet.sdk.oauth2.Oauth2
 import dev.trustbloc.wallet.sdk.openid4ci.*
 import dev.trustbloc.wallet.sdk.openid4vp.Interaction as VPInteraction
 import dev.trustbloc.wallet.sdk.version.Version
@@ -137,13 +138,48 @@ class IntegrationTest {
         println("requestURI ->")
         println( requestURI)
 
-        val requiredOpenID4CIArgs = IssuerInitiatedInteractionArgs(requestURI, crypto, didResolver)
+        val requiredOpenID4CIArgs = InteractionArgs(requestURI, crypto, didResolver)
         println("requiredOpenID4CIArgs")
         println(requiredOpenID4CIArgs)
         val ciOpts = InteractionOpts()
         ciOpts.addHeader(trace.traceHeader())
 
-        val ciInteraction = IssuerInitiatedInteraction(requiredOpenID4CIArgs, ciOpts)
+        val ciInteraction = Interaction(requiredOpenID4CIArgs, ciOpts)
+        var clientID = "oidc4vc_client"
+        val redirectURI = "http://127.0.0.1/callback"
+
+        assertThat(ciInteraction.dynamicClientRegistrationSupported()).isTrue()
+
+        if (ciInteraction.dynamicClientRegistrationSupported()){
+            var dynamicRegistrationEndpoint = ciInteraction.dynamicClientRegistrationEndpoint()
+            assertThat(dynamicRegistrationEndpoint).isNotEmpty()
+
+            var clientMetadata = Oauth2.newClientMetadata()
+            var grantTypesArr = StringArray()
+            grantTypesArr.append("authorization_code")
+            clientMetadata.setGrantTypes(grantTypesArr)
+            assertThat(clientMetadata.grantTypes()).isNotNull()
+
+            var redirectUri = StringArray()
+            redirectUri.append(redirectURI)
+            clientMetadata.setRedirectURIs(redirectUri)
+            assertThat(clientMetadata.redirectURIs()).isNotNull()
+
+
+            clientMetadata.setScope("openid profile")
+            clientMetadata.setTokenEndpointAuthMethod("none")
+
+            var authorizationCodeGrantParams = ciInteraction.authorizationCodeGrantParams()
+            if (authorizationCodeGrantParams.hasIssuerState()){
+                var issuerState = authorizationCodeGrantParams.issuerState()
+                clientMetadata.setIssuerState(issuerState)
+                assertThat(clientMetadata.issuerState()).isNotEmpty()
+            }
+
+            var registrationResp = Oauth2.registerClient(dynamicRegistrationEndpoint, clientMetadata, null)
+            clientID = registrationResp.clientID()
+            assertThat(clientID).isNotEmpty()
+        }
 
         val authCodeGrant = ciInteraction.authorizationCodeGrantTypeSupported()
         assertThat(authCodeGrant).isTrue()
@@ -153,7 +189,7 @@ class IntegrationTest {
 
         val createAuthorizationURLOpts = CreateAuthorizationURLOpts().setScopes(scopes)
 
-        val authorizationLink = ciInteraction.createAuthorizationURL("oidc4vc_client", "http://127.0.0.1/callback", createAuthorizationURLOpts)
+        val authorizationLink = ciInteraction.createAuthorizationURL(clientID, redirectURI, createAuthorizationURLOpts)
         assertThat(authorizationLink).isNotEmpty()
 
         var redirectUrl = URI(authorizationLink)

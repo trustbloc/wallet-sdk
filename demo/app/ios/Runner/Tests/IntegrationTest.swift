@@ -125,6 +125,41 @@ class IntegrationTest: XCTestCase {
 
           let ciInteraction = Openid4ciNewIssuerInitiatedInteraction(openID4CIInteractionArgs, ciOpts, nil)
           XCTAssertNotNil(ciInteraction)
+            let redirectURI = "http://127.0.0.1/callback"
+            var clientID = "oidc4vc_client"
+            
+            
+            if (ciInteraction?.dynamicClientRegistrationSupported != nil) {
+                let dynamicRegistrationEndpoint =  ciInteraction?.dynamicClientRegistrationEndpoint(nil)
+                XCTAssertNotNil(dynamicRegistrationEndpoint)
+                
+                let clientMetadata = Oauth2ClientMetadata()
+                let grantTypesArr = ApiStringArray()
+                grantTypesArr?.append("authorization_code")
+                clientMetadata?.setGrantTypes(grantTypesArr)
+                XCTAssertNotNil(grantTypesArr)
+                
+                let redirectURIArr = ApiStringArray()
+                redirectURIArr?.append(redirectURI)
+                clientMetadata?.setRedirectURIs(redirectURIArr)
+                XCTAssertNotNil(redirectURIArr)
+            
+                clientMetadata?.setScope("openid profile")
+                clientMetadata?.setTokenEndpointAuthMethod("none")
+                
+                let authorizationCodeGrantParams = try ciInteraction?.authorizationCodeGrantParams()
+                
+                if ((authorizationCodeGrantParams?.hasIssuerState()) != nil) {
+                    let issuerState = authorizationCodeGrantParams!.issuerState(nil)
+                    clientMetadata?.setIssuerState(issuerState)
+                    XCTAssertNotNil(clientMetadata?.issuerState())
+
+                }
+                
+                let registrationResp = Oauth2RegisterClient(dynamicRegistrationEndpoint, clientMetadata, nil, nil)
+                clientID = (registrationResp?.clientID())!
+                
+            }
 
           let authCodeGrant = ciInteraction!.authorizationCodeGrantTypeSupported()
           XCTAssertTrue(authCodeGrant)
@@ -133,7 +168,7 @@ class IntegrationTest: XCTestCase {
           scopes!.append("openid")!.append("profile")!
 
           let opts = Openid4ciNewCreateAuthorizationURLOpts()!.setScopes(scopes!)
-          let authorizationLink = ciInteraction!.createAuthorizationURL("oidc4vc_client", redirectURI: "http://127.0.0.1/callback", opts: opts!, error: nil)
+          let authorizationLink = ciInteraction!.createAuthorizationURL(clientID, redirectURI: redirectURI, opts: opts!, error: nil)
           XCTAssertTrue(authorizationLink  != "", "authorizationLink:" + authorizationLink)
 
            var redirectURL = ""
