@@ -80,15 +80,24 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
         log("serializedDisplayData -> $serializedDisplayData");
         var activities = await WalletSDKPlugin.storeActivityLogger();
         var credID = await WalletSDKPlugin.getCredID([credentials]);
-        _storageService.addActivities(ActivityDataObj(credID!, activities));
+        await _storageService.addActivities(ActivityDataObj(credID!, activities));
         pref.setString("credID", credID);
-        return _navigateToCredPreviewScreen(credentials, issuerURI, serializedDisplayData!, userDIDId, credID);
+         _navigateToCredPreviewScreen(credentials, issuerURI, serializedDisplayData!, userDIDId, credID);
       } catch (error) {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) =>
-                    CustomError(requestErrorTitleMsg: "Redirect uri error", requestErrorSubTitleMsg: error.toString())));
+        if (!error.toString().contains("UKN2-000")){
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      CustomError(requestErrorTitleMsg: "Redirect uri error", requestErrorSubTitleMsg: error.toString())));
+        } else {
+          SizedBox(
+            height: MediaQuery.of(context).size.height / 1.9,
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
       }
     }
   }
