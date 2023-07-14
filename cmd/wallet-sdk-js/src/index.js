@@ -6,12 +6,11 @@ SPDX-License-Identifier: Apache-2.0
 
 'use strict'
 
-import "wasm_exec.js"
 
 const Agent = async function (opts) {
     const go = new Go();
     const assembly = await WebAssembly.instantiateStreaming(fetch(opts.assetsPath + "/wallet-sdk.wasm"), go.importObject);
-    await go.run(assembly.instance);
+    go.run(assembly.instance);
 
     const goAgent = window.__agentInteropObject;
 
@@ -28,6 +27,17 @@ const Agent = async function (opts) {
         createOpenID4CIIssuerInitiatedInteraction: async function (opts) {
             return await goAgent.createOpenID4CIIssuerInitiatedInteraction({
                 initiateIssuanceURI: opts.initiateIssuanceURI,
+            })
+        },
+        resolveDisplayData: async function (opts) {
+            return await goAgent.resolveDisplayData({
+                issuerURI: opts.issuerURI,
+                credentials: opts.credentials
+            })
+        },
+        getCredentialID: async function (opts) {
+            return await goAgent.getCredentialID({
+                credential: opts.credential
             })
         },
         stop: function () {

@@ -19,8 +19,8 @@ func SerializeCredential(cred *verifiable.Credential) (string, error) {
 	return string(marshalledVC), err
 }
 
-func SerializeCredentialArray(creds []*verifiable.Credential) ([]string, error) {
-	var result []string
+func SerializeCredentialArray(creds []*verifiable.Credential) ([]any, error) {
+	var result []any
 	for _, cred := range creds {
 		marshalledVC, err := SerializeCredential(cred)
 		if err != nil {

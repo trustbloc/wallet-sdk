@@ -9,11 +9,17 @@ package walletsdk
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/hyperledger/aries-framework-go/component/models/did"
+	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
+	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 	arieskms "github.com/hyperledger/aries-framework-go/spi/kms"
+	jsonld "github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
+	"github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
@@ -25,6 +31,7 @@ type Agent struct {
 	keyWriter   api.KeyWriter
 	crypto      api.Crypto
 	didResolver api.DIDResolver
+	docLoader   jsonld.DocumentLoader
 }
 
 // NewAgent creates a new Agent.
@@ -45,6 +52,13 @@ func NewAgent(didResolverURI string, keyStore arieskms.Store) (*Agent, error) {
 	}
 
 	agent.didResolver = didResolver
+
+	docLoader, err := common.CreateJSONLDDocumentLoader(&http.Client{}, mem.NewProvider())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create a did resolver: %w", err)
+	}
+
+	agent.docLoader = docLoader
 
 	return agent, nil
 }
@@ -69,7 +83,7 @@ func (a *Agent) CreateDID(didMethodType string, didKeyType arieskms.KeyType, ver
 	return didDoc, nil
 }
 
-// CreateOpenID4CIIssuerInitiatedInteraction creates and starts openid4ci issuer-initiated interaction.
+// CreateOpenID4CIIssuerInitiatedInteraction creates and starts openid4ci Interaction.
 func (a *Agent) CreateOpenID4CIIssuerInitiatedInteraction(
 	initiateIssuanceURI string,
 ) (*OpenID4CIIssuerInitiatedInteraction, error) {
@@ -81,7 +95,48 @@ func (a *Agent) CreateOpenID4CIIssuerInitiatedInteraction(
 	}
 
 	return &OpenID4CIIssuerInitiatedInteraction{
-		interaction: interaction,
+		Interaction: interaction,
 		crypto:      a.crypto,
 	}, nil
+}
+
+// ResolveDisplayData resolves credential display data in openid4ci Interaction.
+func (a *Agent) ResolveDisplayData(issuerURI string, credentials []string,
+) (*credentialschema.ResolvedDisplayData, error) {
+	var parsedCreds []*verifiable.Credential
+
+	for _, cred := range credentials {
+		verifiableCredential, err := verifiable.ParseCredential(
+			[]byte(cred),
+			verifiable.WithJSONLDDocumentLoader(a.docLoader),
+			verifiable.WithDisabledProofCheck())
+		if err != nil {
+			return nil, fmt.Errorf("parse creds: %w", err)
+		}
+
+		parsedCreds = append(parsedCreds, verifiableCredential)
+	}
+
+	data, err := credentialschema.Resolve(
+		credentialschema.WithIssuerURI(issuerURI),
+		credentialschema.WithCredentials(parsedCreds),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("resolve data: %w", err)
+	}
+
+	return data, nil
+}
+
+// ParseCredential parse credential.
+func (a *Agent) ParseCredential(credential string) (*verifiable.Credential, error) {
+	verifiableCredential, err := verifiable.ParseCredential(
+		[]byte(credential),
+		verifiable.WithJSONLDDocumentLoader(a.docLoader),
+		verifiable.WithDisabledProofCheck())
+	if err != nil {
+		return nil, fmt.Errorf("parse creds: %w", err)
+	}
+
+	return verifiableCredential, nil
 }

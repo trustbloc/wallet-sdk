@@ -4,6 +4,9 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+@JS()
+library script.js;
+
 import 'package:js/js_util.dart';
 
 import 'dart:developer';
@@ -12,82 +15,48 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'wallet_sdk_interface.dart';
-import 'js/js_library.dart';
+import 'wallet_sdk_model.dart';
 
-class SubmissionRequirement {
-  final String rule;
-  final String name;
-  final int min;
-  final int max;
-  final int count;
-  final List<SubmissionRequirement> nested;
-  final List<InputDescriptor> inputDescriptors;
+import 'package:js/js.dart';
 
-//<editor-fold desc="Data Methods">
-  const SubmissionRequirement({
-    required this.rule,
-    required this.name,
-    required this.min,
-    required this.max,
-    required this.count,
-    required this.nested,
-    required this.inputDescriptors,
-  });
+@JS()
+@staticInterop
+class CreateOpenID4CIInteractionResult {}
 
-  @override
-  String toString() {
-    return 'SubmissionRequirement{ rule: $rule, name: $name, min: $min, max: $max, count: $count, nested: $nested, inputDescriptors: $inputDescriptors,}';
-  }
-
-  factory SubmissionRequirement.fromMap(Map<String, dynamic> map) {
-    return SubmissionRequirement(
-      rule: map['rule'] as String,
-      name: map['name'] as String,
-      min: map['min'] as int,
-      max: map['max'] as int,
-      count: map['count'] as int,
-      nested: (map['nested'] as List<dynamic>)
-          .map((obj) => SubmissionRequirement.fromMap(obj.cast<String, dynamic>()))
-          .toList(),
-      inputDescriptors: (map['inputDescriptors'] as List<dynamic>)
-          .map((obj) => InputDescriptor.fromMap(obj.cast<String, dynamic>()))
-          .toList(),
-    );
-  }
-
-//</editor-fold>
+extension CreateOpenID4CIInteractionExt on CreateOpenID4CIInteractionResult {
+  external bool get userPINRequired;
 }
 
-class InputDescriptor {
-  final String id;
-  final String name;
-  final String purpose;
-  final List<String> matchedVCsID;
-  final List<String> matchedVCs;
+@JS()
+@staticInterop
+class DidDocResolution {}
 
-  const InputDescriptor({
-    required this.id,
-    required this.name,
-    required this.purpose,
-    required this.matchedVCsID,
-    required this.matchedVCs,
-  });
+extension DidDocResolutionExt on DidDocResolution {
+  external String get id;
 
-  @override
-  String toString() {
-    return 'InputDescriptor{ id: $id, name: $name, purpose: $purpose, matchedVCs: $matchedVCs, matchedVCsID: $matchedVCsID }';
-  }
-
-  factory InputDescriptor.fromMap(Map<String, dynamic> map) {
-    return InputDescriptor(
-      id: map['id'] as String,
-      name: map['name'] as String,
-      purpose: map['purpose'] as String,
-      matchedVCsID: map['matchedVCsID'].cast<String>(),
-      matchedVCs: map['matchedVCs'].cast<String>(),
-    );
-  }
+  external String get content;
 }
+
+@JS()
+external dynamic jsInitSDK(String didResolverURI);
+
+@JS()
+external dynamic jsCreateDID(String didMethod, String keyType);
+
+@JS()
+external dynamic jsCreateOpenID4CIInteraction(String initiateIssuanceURI);
+
+@JS()
+external dynamic jsRequestCredentialWithPreAuth(String userPinEntered);
+
+@JS()
+external dynamic jsIssuerURI();
+
+@JS()
+external dynamic jsResolveDisplayData(String issuerURI, List<String> credentials);
+
+@JS()
+external dynamic jsGetCredentialID(String credential);
 
 class WalletSDK extends WalletPlatform {
   @visibleForTesting
@@ -98,10 +67,9 @@ class WalletSDK extends WalletPlatform {
     await promiseToFuture(jsInitSDK(didResolverURI));
   }
 
-  Future<Map<Object?, Object?>?> createDID(String didMethodType, String didKeyType) async {
-    final createDIDMsg =
-    await methodChannel.invokeMethod<Map<Object?, Object?>?>('createDID', <String, dynamic>{'didMethodType': didMethodType, 'didKeyType': didKeyType});
-    return createDIDMsg;
+  Future<Map<String, dynamic>> createDID(String didMethodType, String didKeyType) async {
+    DidDocResolution result = await promiseToFuture(jsCreateDID(didMethodType, didKeyType));
+    return {"did": result.id, "didDoc": result.content};
   }
 
   Future<String?> fetchStoredDID(String didID) async {
@@ -109,11 +77,12 @@ class WalletSDK extends WalletPlatform {
     return fetchDIDMsg;
   }
 
-  Future<Map<Object?, Object?>?> initialize(String qrCode, Map<String, dynamic>? authCodeArgs) async {
+  Future<Map<String, dynamic>> initialize(String initiateIssuanceURI, Map<String, dynamic>? authCodeArgs) async {
     try {
-      final flowTypeData =
-      await methodChannel.invokeMethod('initialize', <String, dynamic>{'requestURI': qrCode, 'authCodeArgs': authCodeArgs});
-      return flowTypeData;
+      final result =
+          await promiseToFuture(jsCreateOpenID4CIInteraction(initiateIssuanceURI)) as CreateOpenID4CIInteractionResult;
+
+      return {"pinRequired": result.userPINRequired};
     } on PlatformException catch (error) {
       debugPrint(error.toString());
       rethrow;
@@ -122,10 +91,9 @@ class WalletSDK extends WalletPlatform {
 
   Future<String> requestCredential(String userPinEntered) async {
     try {
-      var credentialResponse =
-      await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{'otp': userPinEntered});
-      return credentialResponse!;
-    } on PlatformException catch (error) {
+      String credentialResponse = await promiseToFuture(jsRequestCredentialWithPreAuth(userPinEntered));
+      return credentialResponse;
+    } catch (error) {
       debugPrint(error.toString());
       rethrow;
     }
@@ -133,8 +101,8 @@ class WalletSDK extends WalletPlatform {
 
   Future<String> requestCredentialWithAuth(String redirectURIWithParams) async {
     try {
-      var credentialResponse =
-      await methodChannel.invokeMethod<String>('requestCredentialWithAuth', <String, dynamic>{'redirectURIWithParams': redirectURIWithParams});
+      var credentialResponse = await methodChannel.invokeMethod<String>(
+          'requestCredentialWithAuth', <String, dynamic>{'redirectURIWithParams': redirectURIWithParams});
       return credentialResponse!;
     } on PlatformException catch (error) {
       debugPrint(error.toString());
@@ -144,11 +112,11 @@ class WalletSDK extends WalletPlatform {
 
   Future<bool?> credentialStatusVerifier(List<String> credentials) async {
     try {
-      var credentialStatusVerifier =
-      await methodChannel.invokeMethod<bool>('credentialStatusVerifier', <String, dynamic>{'credentials': credentials});
+      var credentialStatusVerifier = await methodChannel
+          .invokeMethod<bool>('credentialStatusVerifier', <String, dynamic>{'credentials': credentials});
       return credentialStatusVerifier!;
     } on PlatformException catch (error) {
-      if (error.toString().contains("status verification failed: revoked")){
+      if (error.toString().contains("status verification failed: revoked")) {
         return false;
       } else {
         debugPrint(error.toString());
@@ -157,40 +125,38 @@ class WalletSDK extends WalletPlatform {
     }
   }
 
-  Future<String?> issuerURI() async {
-    final issuerURI = await methodChannel.invokeMethod<String>('issuerURI');
+  Future<String> issuerURI() async {
+    final String issuerURI = jsIssuerURI();
     return issuerURI;
   }
 
-  Future<String?> serializeDisplayData(List<String> credentials, String issuerURI) async {
-    final credentialResponse = await methodChannel.invokeMethod<String>(
-        'serializeDisplayData', <String, dynamic>{'vcCredentials': credentials, 'uri': issuerURI});
-    return credentialResponse;
+  Future<String> serializeDisplayData(List<String> credentials, String issuerURI) async {
+    return await promiseToFuture(jsResolveDisplayData(issuerURI, credentials));
   }
 
   Future<List<Object?>> resolveCredentialDisplay(String resolvedCredentialDisplayData) async {
-    var renderedCredDisplay = await methodChannel.invokeMethod('resolveCredentialDisplay', <String, dynamic>{'resolvedCredentialDisplayData': resolvedCredentialDisplayData});
+    var renderedCredDisplay = await methodChannel.invokeMethod(
+        'resolveCredentialDisplay', <String, dynamic>{'resolvedCredentialDisplayData': resolvedCredentialDisplayData});
     return renderedCredDisplay;
   }
 
   Future<List<String>> processAuthorizationRequest(
       {required String authorizationRequest, List<String>? storedCredentials}) async {
     return (await methodChannel.invokeMethod<List>('processAuthorizationRequest',
-        <String, dynamic>{'authorizationRequest': authorizationRequest, 'storedCredentials': storedCredentials}))!
+            <String, dynamic>{'authorizationRequest': authorizationRequest, 'storedCredentials': storedCredentials}))!
         .map((e) => e!.toString())
         .toList();
   }
 
   Future<List<SubmissionRequirement>> getSubmissionRequirements({required List<String>? storedCredentials}) async {
     return (await methodChannel.invokeMethod<List<dynamic>>(
-        'getMatchedSubmissionRequirements', <String, dynamic>{'storedCredentials': storedCredentials}))!
+            'getMatchedSubmissionRequirements', <String, dynamic>{'storedCredentials': storedCredentials}))!
         .map((obj) => SubmissionRequirement.fromMap(obj.cast<String, dynamic>()))
         .toList();
   }
 
   Future<Map<Object?, Object?>?> getVersionDetails() async {
-    var versionDetailResp = await methodChannel
-        .invokeMethod('getVersionDetails');
+    var versionDetailResp = await methodChannel.invokeMethod('getVersionDetails');
     log("getVersionDetails in the app, $versionDetailResp");
     return versionDetailResp;
   }
@@ -206,26 +172,23 @@ class WalletSDK extends WalletPlatform {
     return verifierDisplayData;
   }
 
-
   Future<void> presentCredential({List<String>? selectedCredentials}) async {
     await methodChannel
         .invokeMethod('presentCredential', <String, dynamic>{'selectedCredentials': selectedCredentials});
   }
 
   Future<List<Object?>> storeActivityLogger() async {
-    var activityObj = await methodChannel.invokeMethod('activityLogger');
-    return activityObj;
+    return [];
   }
 
   Future<List<Object?>> parseActivities(List<dynamic> activities) async {
-    var activityObj = await methodChannel.invokeMethod('parseActivities', <String, dynamic>{'activities': activities});
-    return activityObj;
+    return [];
   }
 
   Future<String?> getIssuerID(List<String> credentials) async {
     try {
       final issuerID =
-      await methodChannel.invokeMethod<String>('getIssuerID', <String, dynamic>{'vcCredentials': credentials});
+          await methodChannel.invokeMethod<String>('getIssuerID', <String, dynamic>{'vcCredentials': credentials});
       log("get issuerID - , $issuerID");
       return issuerID;
     } on PlatformException catch (error) {
@@ -236,16 +199,7 @@ class WalletSDK extends WalletPlatform {
     return null;
   }
 
-  Future<String?> getCredID(List<String> credentials) async {
-    try {
-      final credentialID =
-      await methodChannel.invokeMethod<String>('getCredID', <String, dynamic>{'vcCredentials': credentials});
-      return credentialID;
-    } on PlatformException catch (error) {
-      if (error.code == errorCode) {
-        return error.details.toString();
-      }
-    }
-    return null;
+  Future<String> getCredID(List<String> credentials) async {
+    return promiseToFuture(jsGetCredentialID(credentials[0]));
   }
 }

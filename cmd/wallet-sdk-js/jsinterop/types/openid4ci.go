@@ -21,12 +21,27 @@ import (
 
 const (
 	openid4ciRequestCredentialWithPreAuth = "requestCredentialWithPreAuth"
+	openid4ciPreAuthorizedCodeGrantParams = "preAuthorizedCodeGrantParams"
+	openid4ciIssuerURI                    = "issuerURI"
 )
 
 func SerializeOpenID4CIIssuerInitiatedInteraction(agentMethodsRunner *jssupport.AsyncRunner,
 	interaction *walletsdk.OpenID4CIIssuerInitiatedInteraction,
 ) map[string]interface{} {
 	return map[string]interface{}{
+		openid4ciIssuerURI: js.FuncOf(func(this js.Value, args []js.Value) any {
+			return interaction.Interaction.IssuerURI()
+		}),
+		openid4ciPreAuthorizedCodeGrantParams: agentMethodsRunner.CreateAsyncFunc(func(this js.Value, args []js.Value) (any, error) {
+			params, err := interaction.Interaction.PreAuthorizedCodeGrantParams()
+			if err != nil {
+				return nil, err
+			}
+
+			return map[string]interface{}{
+				"userPINRequired": params.PINRequired(),
+			}, nil
+		}),
 		openid4ciRequestCredentialWithPreAuth: agentMethodsRunner.CreateAsyncFunc(
 			func(this js.Value, args []js.Value) (any, error) {
 				pin, err := jssupport.EnsureString(jssupport.GetNamedArgument(args, "pin"))

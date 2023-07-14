@@ -30,7 +30,7 @@ func SerializeDIDDoc(didDoc *did.DocResolution) (map[string]interface{}, error) 
 
 	return map[string]interface{}{
 		DIDDocIDFld:      didDoc.DIDDocument.ID,
-		DIDDocContentFld: content,
+		DIDDocContentFld: string(content),
 	}, nil
 }
 

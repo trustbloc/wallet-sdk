@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:app/scenarios/handle_openid_url.dart';
 import 'package:app/widgets/common_title_appbar.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:safe_device/safe_device.dart';
@@ -29,7 +30,7 @@ class QRScannerState extends State<QRScanner> {
   }
 
   isDeviceReal ()async{
-    bool isRealDeviceResp = await SafeDevice.isRealDevice;
+    bool isRealDeviceResp = !kIsWeb && await SafeDevice.isRealDevice;
     setState((){
       isRealDevice = isRealDeviceResp;
     });

@@ -15,4 +15,11 @@ unit-test-wasm: wasm-test-deps
 
 .PHONY: build-wasm
 build-wasm:
-	@GOOS=js GOARCH=wasm go build -o assets/wallet-sdk.wasm main.go && gzip -f assets/wallet-sdk.wasm
+	@GOOS=js GOARCH=wasm go build -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn" -o assets/wallet-sdk.wasm main.go
+
+.PHONY: copy-js-to-demo
+copy-js-to-demo:
+	@cp assets/wallet-sdk.wasm ../../demo/app/web \
+	&& mkdir -p ../../demo/app/web/wallet-sdk-js/ \
+	&& cp src/index.js ../../demo/app/web/wallet-sdk-js/ \
+	&& cp src/wasm_exec.js ../../demo/app/web/wallet-sdk-js/

@@ -8,6 +8,7 @@ import 'dart:developer';
 import 'package:app/wallet_sdk.dart';
 import 'package:app/scenarios/handle_openid_issuance_flow.dart';
 import 'package:app/scenarios/handle_openid_vp_flow.dart';
+import 'package:app/wallet_sdk_model.dart';
 import 'package:flutter/material.dart';
 
 void handleOpenIDUrl(BuildContext context, String qrCodeURL) async {
