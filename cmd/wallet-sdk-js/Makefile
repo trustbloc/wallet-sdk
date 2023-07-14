@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+clean:
+	@rm -rf ./dist ./node_modules ./build
+
 wasm-test-deps:
 	@mkdir -p ./build/bin
 	GOBIN=$(GOBIN_PATH) go install github.com/golang/mock/mockgen@v1.5.0
@@ -12,14 +15,10 @@ unit-test-wasm: export GOBIN=$(GOBIN_PATH)
 unit-test-wasm: wasm-test-deps
 	@scripts/check_unit_wasm.sh
 
-
-.PHONY: build-wasm
+.PHONY: clean build-wasm
 build-wasm:
-	@GOOS=js GOARCH=wasm go build -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn" -o assets/wallet-sdk.wasm main.go
+	@GOOS=js GOARCH=wasm go build -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn" -o dist/wallet-sdk.wasm main.go
 
-.PHONY: copy-js-to-demo
-copy-js-to-demo:
-	@cp assets/wallet-sdk.wasm ../../demo/app/web \
-	&& mkdir -p ../../demo/app/web/wallet-sdk-js/ \
-	&& cp src/index.js ../../demo/app/web/wallet-sdk-js/ \
-	&& cp src/wasm_exec.js ../../demo/app/web/wallet-sdk-js/
+.PHONY: clean generate-js-bindings
+generate-js-bindings:
+	@npm install
