@@ -138,15 +138,17 @@ class IntegrationTest {
         println("requestURI ->")
         println( requestURI)
 
-        val requiredOpenID4CIArgs = InteractionArgs(requestURI, crypto, didResolver)
+        val requiredOpenID4CIArgs = IssuerInitiatedInteractionArgs(requestURI, crypto, didResolver)
         println("requiredOpenID4CIArgs")
         println(requiredOpenID4CIArgs)
         val ciOpts = InteractionOpts()
         ciOpts.addHeader(trace.traceHeader())
 
-        val ciInteraction = Interaction(requiredOpenID4CIArgs, ciOpts)
+        val ciInteraction = IssuerInitiatedInteraction(requiredOpenID4CIArgs, ciOpts)
         var clientID = "oidc4vc_client"
         val redirectURI = "http://127.0.0.1/callback"
+        var scopes = StringArray()
+        scopes.append("openid").append("profile")
 
         assertThat(ciInteraction.dynamicClientRegistrationSupported()).isTrue()
 
@@ -165,8 +167,7 @@ class IntegrationTest {
             clientMetadata.setRedirectURIs(redirectUri)
             assertThat(clientMetadata.redirectURIs()).isNotNull()
 
-
-            clientMetadata.setScope("openid profile")
+            clientMetadata.setScopes(scopes)
             clientMetadata.setTokenEndpointAuthMethod("none")
 
             var authorizationCodeGrantParams = ciInteraction.authorizationCodeGrantParams()
@@ -179,13 +180,13 @@ class IntegrationTest {
             var registrationResp = Oauth2.registerClient(dynamicRegistrationEndpoint, clientMetadata, null)
             clientID = registrationResp.clientID()
             assertThat(clientID).isNotEmpty()
+
+            scopes = registrationResp.registeredMetadata().scopes()
+            assertThat(scopes).isNotNull()
         }
 
         val authCodeGrant = ciInteraction.authorizationCodeGrantTypeSupported()
         assertThat(authCodeGrant).isTrue()
-
-        val scopes = StringArray()
-        scopes.append("openid").append("profile")
 
         val createAuthorizationURLOpts = CreateAuthorizationURLOpts().setScopes(scopes)
 
