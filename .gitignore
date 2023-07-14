@@ -32,7 +32,7 @@ coverage.txt
 *.log
 
 node_modules
-/dist
+dist
 build
 
 deployments/keys
@@ -43,3 +43,6 @@ cmd/wallet-sdk-gomobile/bindings
 *.aar
 *.xcframework
 test/integration/fixtures/keys/tls/*
+
+# Flutter demo app JS bindings
+demo/app/web/wallet-sdk-js/

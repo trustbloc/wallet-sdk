@@ -48,6 +48,10 @@ generate-android-bindings:
 generate-ios-bindings:
 	@GIT_REV="${GIT_REV}" NEW_VERSION="${NEW_VERSION}" BUILD_TIME="${BUILD_TIME}" make generate-ios-bindings -C ./cmd/wallet-sdk-gomobile
 
+.PHONY: generate-js-bindings
+generate-js-bindings:
+	@GIT_REV="${GIT_REV}" NEW_VERSION="${NEW_VERSION}" BUILD_TIME="${BUILD_TIME}" make generate-js-bindings -C ./cmd/wallet-sdk-js
+
 .PHONY: copy-android-bindings
 copy-android-bindings:
 	@mkdir -p "demo/app/android/app/libs" && cp -R cmd/wallet-sdk-gomobile/bindings/android/walletsdk.aar demo/app/android/app/libs
@@ -56,6 +60,10 @@ copy-android-bindings:
 copy-ios-bindings:
 	@rm -rf demo/app/ios/Runner/walletsdk.xcframework && cp -R cmd/wallet-sdk-gomobile/bindings/ios/walletsdk.xcframework demo/app/ios/Runner
 
+.PHONY: copy-js-bindings
+copy-js-bindings:
+	@rm -rf demo/app/web/wallet-sdk-js demo/app/web/agent.js && cp cmd/wallet-sdk-js/dist/wallet-sdk.wasm demo/app/web && mkdir demo/app/web/wallet-sdk-js && cp cmd/wallet-sdk-js/dist/wasm_exec.js demo/app/web/wallet-sdk-js && cp cmd/wallet-sdk-js/src/index.js demo/app/web/wallet-sdk-js
+
 .PHONY: demo-app-ios
 demo-app-ios:generate-ios-bindings copy-ios-bindings
 	@cd demo/app && flutter doctor  && flutter clean && npm install -g ios-sim && ios-sim start --devicetypeid "iPhone-14" && flutter devices && flutter run
@@ -63,6 +71,10 @@ demo-app-ios:generate-ios-bindings copy-ios-bindings
 .PHONY: demo-app-android
 demo-app-android: generate-android-bindings copy-android-bindings
 	@cd demo/app && flutter doctor && flutter clean && flutter run && flutter emulators --launch  Pixel_3a_API_33_arm64-v8a  && flutter run -d Pixel_3a_API_33_arm64-v8a
+
+.PHONY: demo-app-web
+demo-app-web: generate-js-bindings copy-js-bindings
+	@cd demo/app && flutter doctor && flutter clean && flutter run -d chrome
 
 .PHONY: sample-webhook
 sample-webhook:
