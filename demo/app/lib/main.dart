@@ -4,10 +4,13 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+import 'dart:io';
+
 import 'package:app/scenarios/handle_openid_url.dart';
 import 'package:app/widgets/common_logo_appbar.dart';
 import 'package:app/widgets/primary_input_field.dart';
 import 'package:app/widgets/primary_button.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -115,7 +118,7 @@ class _MainWidgetState extends State<MainWidget> {
 
   _loginCompleted() async {
     try {
-      if (initialLink != null) {
+      if (initialLink != null && !kIsWeb) {
         handleOpenIDUrl(context, initialLink!);
         return;
       }

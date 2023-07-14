@@ -19,7 +19,12 @@ import (
 
 func TestInitAgent(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		_, err := jsinterop.InitAgent(js.Null(), []js.Value{js.ValueOf("")})
+
+		opts := map[string]any{
+			"didResolverURI": "",
+		}
+
+		_, err := jsinterop.InitAgent(js.Null(), []js.Value{js.ValueOf(opts)})
 		require.NoError(t, err)
 	})
 }

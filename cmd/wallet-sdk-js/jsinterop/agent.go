@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0
 package jsinterop
 
 import (
+	"encoding/json"
 	"fmt"
 	"syscall/js"
 
@@ -17,6 +18,7 @@ import (
 	arieskms "github.com/hyperledger/aries-framework-go/spi/kms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/errors"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/indexeddb"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/jssupport"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/types"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/walletsdk"
@@ -46,7 +48,9 @@ func InitAgent(_ js.Value, args []js.Value) (any, error) {
 			fmt.Errorf("agent instance already initialized"))
 	}
 
-	indexedDBKMSProvider, err := indexeddb.NewProvider(dbNamespace)
+	indexedDBKMSProvider, err := indexeddb.NewProvider(dbNamespace, []string{
+		kms.AriesWrapperStoreName,
+	})
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
 			errors.Module,
@@ -130,10 +134,58 @@ func CreateOpenID4CIIssuerInitiatedInteraction(_ js.Value, args []js.Value) (any
 	return types.SerializeOpenID4CIIssuerInitiatedInteraction(&agentMethodsRunner, interaction), nil
 }
 
-func ExportAgentFunctions() map[string]js.Func {
-	return map[string]js.Func{
+func ResolveDisplayData(_ js.Value, args []js.Value) (any, error) {
+	if agentInstance == nil {
+		return nil, walleterror.NewExecutionError(
+			errors.Module,
+			errors.InitializationFailedCode,
+			errors.InitializationFailedError,
+			fmt.Errorf("agent instance is not initialized"))
+	}
+
+	issuerURI, err := jssupport.EnsureString(jssupport.GetNamedArgument(args, "issuerURI"))
+	if err != nil {
+		return nil, err
+	}
+
+	credentials, err := jssupport.EnsureStringArray(jssupport.GetNamedArgument(args, "credentials"))
+	if err != nil {
+		return nil, err
+	}
+
+	dispData, err := agentInstance.ResolveDisplayData(issuerURI, credentials)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := json.Marshal(dispData)
+	if err != nil {
+		return nil, err
+	}
+
+	return string(data), err
+}
+
+func GetCredentialID(_ js.Value, args []js.Value) (any, error) {
+	credential, err := jssupport.EnsureString(jssupport.GetNamedArgument(args, "credential"))
+	if err != nil {
+		return nil, err
+	}
+
+	parsed, err := agentInstance.ParseCredential(credential)
+	if err != nil {
+		return nil, err
+	}
+
+	return parsed.ID, nil
+}
+
+func ExportAgentFunctions() map[string]any {
+	return map[string]any{
 		"initAgent": agentMethodsRunner.CreateAsyncFunc(InitAgent),
 		"createDID": agentMethodsRunner.CreateAsyncFunc(CreateDID),
 		"createOpenID4CIIssuerInitiatedInteraction": agentMethodsRunner.CreateAsyncFunc(CreateOpenID4CIIssuerInitiatedInteraction),
+		"resolveDisplayData":                        agentMethodsRunner.CreateAsyncFunc(ResolveDisplayData),
+		"getCredentialID":                           agentMethodsRunner.CreateAsyncFunc(GetCredentialID),
 	}
 }
