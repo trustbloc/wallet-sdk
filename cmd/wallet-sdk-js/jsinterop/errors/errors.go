@@ -13,6 +13,7 @@ const (
 	InvalidArgumentsError       = "INVALID_ARGUMENTS"
 	InitializationFailedError   = "INITIALIZATION_FAILED"
 	MissedRequiredPropertyError = "MISSED_REQUIRED_PROPERTY"
+	InvalidDisplayDataError     = "INVALID_DISPLAY_DATA"
 )
 
 // Category codes for creator module.
@@ -20,4 +21,5 @@ const (
 	InvalidArgumentsCode = iota
 	InitializationFailedCode
 	MissedRequiredPropertyCode
+	InvalidDisplayDataCode
 )

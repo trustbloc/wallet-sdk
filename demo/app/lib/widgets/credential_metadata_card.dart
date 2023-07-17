@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:app/wallet_sdk/wallet_sdk_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:app/models/credential_data.dart';
@@ -17,7 +18,7 @@ class CredentialMetaDataCard extends StatefulWidget {
   class CredentialMetaDataCardState extends State<CredentialMetaDataCard> {
     String issueDate = '';
     String expiryDate = '';
-    dynamic credentialClaimsData = [];
+    List<CredentialDisplayClaim> credentialClaimsData = [];
     bool isLoading = false;
     bool verifiedStatus = true;
 
@@ -27,12 +28,10 @@ class CredentialMetaDataCard extends StatefulWidget {
         isLoading = true;
       });
       super.initState();
-      WalletSDKPlugin.resolveCredentialDisplay(widget.credentialData.credentialDisplayData).then(
+      WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then(
               (response) {
             setState(() {
-              var credentialDisplayEncodeData = json.encode(response);
-              List<dynamic> responseJson = json.decode(credentialDisplayEncodeData);
-              credentialClaimsData = responseJson.first['claims'];
+              credentialClaimsData = response.first.claims;
               isLoading = false;
             });
           });
@@ -48,8 +47,8 @@ class CredentialMetaDataCard extends StatefulWidget {
     getIssuanceDate() {
       var claimsList = credentialClaimsData;
       for (var claims in claimsList) {
-        if (claims["label"].toString().contains("Issue Date")) {
-          var issueDate = claims["rawValue"];
+        if (claims.label.contains("Issue Date")) {
+          var issueDate = claims.rawValue;
           return issueDate;
         }
       }
@@ -61,8 +60,8 @@ class CredentialMetaDataCard extends StatefulWidget {
     getExpiryDate() {
       var claimsList = credentialClaimsData;
       for (var claims in claimsList) {
-        if (claims["label"].toString().contains("Expiry Date")) {
-          var expiryDate = claims["rawValue"];
+        if (claims.label.contains("Expiry Date")) {
+          var expiryDate = claims.rawValue;
           return expiryDate;
         }
       }

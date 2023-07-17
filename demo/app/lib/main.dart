@@ -14,7 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'wallet_sdk.dart';
+import 'wallet_sdk/wallet_sdk.dart';
 import 'views/dashboard.dart';
 import 'package:uni_links/uni_links.dart';
 

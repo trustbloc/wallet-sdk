@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:app/wallet_sdk.dart';
+import 'package:app/wallet_sdk/wallet_sdk.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 

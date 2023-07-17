@@ -33,12 +33,10 @@ class CredentialPreviewState extends State<CredentialPreview> {
   @override
   void initState() {
     super.initState();
-    WalletSDKPlugin.resolveCredentialDisplay(widget.credentialData.credentialDisplayData!).then(
+    WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData!).then(
             (response) {
               setState(() {
-                var credentialDisplayEncodeData = json.encode(response);
-                List<dynamic> responseJson = json.decode(credentialDisplayEncodeData);
-                issuerDisplayData = responseJson.first["issuerName"];
+                issuerDisplayData = response.first.issuerName;
                 log("issuerDisplayData state $issuerDisplayData");
               });
         });

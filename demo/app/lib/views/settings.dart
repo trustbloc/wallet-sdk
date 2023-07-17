@@ -14,7 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:app/widgets/primary_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:app/wallet_sdk.dart';
+import 'package:app/wallet_sdk/wallet_sdk.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});

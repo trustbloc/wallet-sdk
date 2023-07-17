@@ -9,7 +9,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:developer';
 import 'dart:convert';
-import 'package:app/wallet_sdk.dart';
+import 'package:app/wallet_sdk/wallet_sdk.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app/models/activity_data_object.dart';

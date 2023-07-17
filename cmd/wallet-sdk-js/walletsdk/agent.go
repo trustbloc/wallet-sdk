@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package walletsdk
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -100,7 +101,10 @@ func (a *Agent) CreateOpenID4CIIssuerInitiatedInteraction(
 	}, nil
 }
 
-// ResolveDisplayData resolves credential display data in openid4ci Interaction.
+// ResolveDisplayData resolves display information for issued credentials based on an issuer's metadata,
+// which is fetched using the issuer's (base) URI.
+// The CredentialDisplays in the returned Data object correspond to the VCs passed in and are in the
+// same order.
 func (a *Agent) ResolveDisplayData(issuerURI string, credentials []string,
 ) (*credentialschema.ResolvedDisplayData, error) {
 	var parsedCreds []*verifiable.Credential
@@ -128,7 +132,20 @@ func (a *Agent) ResolveDisplayData(issuerURI string, credentials []string,
 	return data, nil
 }
 
-// ParseCredential parse credential.
+// ParseResolvedDisplayData parses the given serialized display data into display data object.
+func (a *Agent) ParseResolvedDisplayData(resolvedCredentialDisplayData string,
+) (*credentialschema.ResolvedDisplayData, error) {
+	var parsedDisplayData credentialschema.ResolvedDisplayData
+
+	err := json.Unmarshal([]byte(resolvedCredentialDisplayData), &parsedDisplayData)
+	if err != nil {
+		return nil, err
+	}
+
+	return &parsedDisplayData, nil
+}
+
+// ParseCredential parses the given serialized VC into a VC object.
 func (a *Agent) ParseCredential(credential string) (*verifiable.Credential, error) {
 	verifiableCredential, err := verifiable.ParseCredential(
 		[]byte(credential),

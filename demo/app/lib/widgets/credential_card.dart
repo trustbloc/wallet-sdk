@@ -22,21 +22,19 @@ class CredentialCard extends StatefulWidget {
 class _CredentialCardState extends State<CredentialCard> {
   bool showWidget = false;
   String credentialDisplayName = '';
-  String logoURL = '';
+  String? logoURL;
   String backgroundColor = '';
   String textColor = '';
 
   @override
   void initState() {
-    WalletSDKPlugin.resolveCredentialDisplay(widget.credentialData.credentialDisplayData).then(
+    WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then(
             (response) {
           setState(() {
-            var credentialDisplayEncodeData = json.encode(response);
-            List<dynamic> responseJson = json.decode(credentialDisplayEncodeData);
-            credentialDisplayName = responseJson.first['overviewName'];
-            logoURL = responseJson.first['logo'];
-            backgroundColor ='0xff${responseJson.first['backgroundColor']!.toString().replaceAll('#', '')}';
-            textColor = '0xff${responseJson.first['textColor'].toString().replaceAll('#', '')}';
+            credentialDisplayName = response.first.overviewName;
+            logoURL = response.first.logo;
+            backgroundColor ='0xff${response.first.backgroundColor.toString().replaceAll('#', '')}';
+            textColor = '0xff${response.first.textColor.toString().replaceAll('#', '')}';
           });
         });
 
@@ -71,8 +69,8 @@ class _CredentialCardState extends State<CredentialCard> {
                      ),
                      textAlign: TextAlign.start,
                    ),
-                   leading: CachedNetworkImage(
-                     imageUrl: logoURL,
+                   leading: logoURL == null ? const SizedBox.shrink() :CachedNetworkImage(
+                     imageUrl: logoURL!,
                      placeholder: (context, url) =>
                      const CircularProgressIndicator(),
                      errorWidget: (context, url, error) =>  Image.asset('lib/assets/images/genericCredential.png',

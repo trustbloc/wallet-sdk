@@ -1,8 +1,7 @@
 import 'dart:convert';
-import 'dart:developer';
+import 'package:app/wallet_sdk/wallet_sdk_model.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/credential_data.dart';
-import 'package:app/models/credential_preview.dart';
 
 import 'package:app/main.dart';
 
@@ -20,37 +19,32 @@ class CredentialVerifiedInformation extends StatefulWidget {
     bool showMaskedValue = true;
     Color maskIconColor = Colors.blueGrey;
     final ScrollController credDataController = ScrollController();
-    dynamic credentialClaimsData;
+    List<CredentialDisplayClaim> credentialClaimsData = [];
     bool isLoading = false;
     @override
     void initState() {
       setState(() {
         isLoading = true;
       });
-      WalletSDKPlugin.resolveCredentialDisplay(widget.credentialData.credentialDisplayData).then(
+      WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then(
               (response) {
             setState(() {
-              var credentialDisplayEncodeData = json.encode(response);
-              List<dynamic> responseJson = json.decode(credentialDisplayEncodeData);
-              credentialClaimsData = responseJson.first['claims'];
+              credentialClaimsData = response.first.claims;
+
+              credentialClaimsData.sort((a, b) {
+                final aOrder = a.order ?? -1;
+                final bOrder = b.order ?? -1;
+
+                return aOrder.compareTo(bOrder);
+              });
+
               isLoading = false;
             });
           });
       super.initState();
     }
 
-  Future<Widget> getCredentialDetails() async {
-    var credentialClaimsDataList = credentialClaimsData as List;
-    List<CredentialPreviewData> list = credentialClaimsDataList.map<CredentialPreviewData>((json) => CredentialPreviewData.fromJson(json)).toList();
-      list.sort((a, b) {
-        int compare = a.order.compareTo(b.order);
-        return compare;
-      });
-    return listViewWidget(list);
-  }
-
-
-  Widget listViewWidget(List<CredentialPreviewData> credPrev) {
+  Widget listViewWidget(List<CredentialDisplayClaim> credPrev) {
     return ListView.builder(
         itemCount: credPrev.length,
         scrollDirection: Axis.vertical,
@@ -71,8 +65,8 @@ class CredentialVerifiedInformation extends StatefulWidget {
                           style: const TextStyle(
                               fontSize: 14, fontFamily: 'SF Pro', fontWeight: FontWeight.w400, color: Color(0xff6C6D7C))
                       ),
-                      subtitle: showMaskedValue && credPrev[position].value.isNotEmpty? Text(
-                        credPrev[position].value,
+                      subtitle: showMaskedValue && credPrev[position].value != null? Text(
+                        credPrev[position].value!,
                         style: const TextStyle(
                             fontSize: 16,
                             color: Color(0xff190C21),
@@ -86,7 +80,7 @@ class CredentialVerifiedInformation extends StatefulWidget {
                             fontFamily: 'SF Pro',
                             fontWeight: FontWeight.normal),
                       ),
-                      trailing: credPrev[position].value.isNotEmpty?  Column(
+                      trailing: credPrev[position].value != null?  Column(
                         children: [
                           IconButton(
                             icon: Icon(Icons.remove_red_eye_rounded, size: 32,
@@ -170,12 +164,8 @@ class CredentialVerifiedInformation extends StatefulWidget {
                     child: ListView.builder(
                         itemCount: 1,
                         itemBuilder: (BuildContext context, int index) {
-                          return FutureBuilder<Widget>(
-                              future:  getCredentialDetails(),
-                              builder: (context, AsyncSnapshot<Widget> snapshot) {
-                                return Padding(padding: const EdgeInsets.all(8.0), child: snapshot.data,);
-                              }
-                          );
+                          return Padding(padding: const EdgeInsets.all(8.0), child: listViewWidget(credentialClaimsData));
+
                         }),
                   )),
             ]

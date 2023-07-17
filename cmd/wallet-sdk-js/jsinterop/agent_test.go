@@ -24,7 +24,7 @@ func TestInitAgent(t *testing.T) {
 			"didResolverURI": "",
 		}
 
-		_, err := jsinterop.InitAgent(js.Null(), []js.Value{js.ValueOf(opts)})
+		_, err := jsinterop.initAgent(js.Null(), []js.Value{js.ValueOf(opts)})
 		require.NoError(t, err)
 	})
 }
