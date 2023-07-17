@@ -182,7 +182,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 	credentials := verifiable.NewCredentialsArray()
 
-	credentialData := []json.RawMessage{}
+	var credentialData []json.RawMessage
 
 	e = json.Unmarshal(credentialsJSONLD, &credentialData)
 	require.NoError(t, e)
@@ -195,8 +195,10 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		credentials.Add(verifiable.NewCredential(cred))
 	}
 
-	t.Run("Success", func(t *testing.T) {
-		instance := &Interaction{
+	singleCredential := credentials.AtIndex(0)
+
+	makeInteraction := func() *Interaction {
+		return &Interaction{
 			crypto:           &mockCrypto{},
 			ldDocumentLoader: &documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
 			goAPIOpenID4VP: &mocGoAPIInteraction{
@@ -208,26 +210,41 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 				Key:  models.VerificationKey{Raw: mockKey},
 			})},
 		}
+	}
+
+	t.Run("Success", func(t *testing.T) {
+		instance := makeInteraction()
 
 		err := instance.PresentCredential(credentials)
 		require.NoError(t, err)
 	})
 
+	t.Run("Success Unsafe", func(t *testing.T) {
+		instance := makeInteraction()
+
+		err := instance.PresentCredentialUnsafe(singleCredential)
+		require.NoError(t, err)
+	})
+
 	t.Run("Present credentials failed", func(t *testing.T) {
-		instance := &Interaction{
-			crypto:           &mockCrypto{},
-			ldDocumentLoader: &documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
-			goAPIOpenID4VP: &mocGoAPIInteraction{
-				PresentCredentialErr: errors.New("present credentials failed"),
-			},
-			didResolver: &mocksDIDResolver{ResolveDocBytes: mockResolution(t, &api.VerificationMethod{
-				ID:   "did:example:12345#testId",
-				Type: "Ed25519VerificationKey2018",
-				Key:  models.VerificationKey{Raw: mockKey},
-			})},
+		instance := makeInteraction()
+
+		instance.goAPIOpenID4VP = &mocGoAPIInteraction{
+			PresentCredentialErr: errors.New("present credentials failed"),
 		}
 
 		err := instance.PresentCredential(credentials)
+		require.Contains(t, err.Error(), "present credentials failed")
+	})
+
+	t.Run("Present credentials unsafe failed", func(t *testing.T) {
+		instance := makeInteraction()
+
+		instance.goAPIOpenID4VP = &mocGoAPIInteraction{
+			PresentCredentialUnsafeErr: errors.New("present credentials failed"),
+		}
+
+		err := instance.PresentCredentialUnsafe(singleCredential)
 		require.Contains(t, err.Error(), "present credentials failed")
 	})
 }
@@ -304,19 +321,24 @@ func (c *mockCrypto) Verify(signature, msg []byte, keyID string) error {
 }
 
 type mocGoAPIInteraction struct {
-	GetQueryResult           *presexch.PresentationDefinition
-	GetQueryError            error
-	PresentCredentialErr     error
-	VerifierDisplayDataRes   *openid4vp.VerifierDisplayData
-	VerifierDisplayDataError error
+	GetQueryResult             *presexch.PresentationDefinition
+	GetQueryError              error
+	PresentCredentialErr       error
+	PresentCredentialUnsafeErr error
+	VerifierDisplayDataRes     *openid4vp.VerifierDisplayData
+	VerifierDisplayDataError   error
 }
 
 func (o *mocGoAPIInteraction) GetQuery() (*presexch.PresentationDefinition, error) {
 	return o.GetQueryResult, o.GetQueryError
 }
 
-func (o *mocGoAPIInteraction) PresentCredential(credentials []*afgoverifiable.Credential) error {
+func (o *mocGoAPIInteraction) PresentCredential([]*afgoverifiable.Credential) error {
 	return o.PresentCredentialErr
+}
+
+func (o *mocGoAPIInteraction) PresentCredentialUnsafe(*afgoverifiable.Credential) error {
+	return o.PresentCredentialUnsafeErr
 }
 
 func (o *mocGoAPIInteraction) VerifierDisplayData() (*openid4vp.VerifierDisplayData, error) {

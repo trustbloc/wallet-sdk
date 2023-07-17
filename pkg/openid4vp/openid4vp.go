@@ -148,8 +148,31 @@ func (o *Interaction) VerifierDisplayData() (*VerifierDisplayData, error) {
 	}, nil
 }
 
+type presentOpts struct {
+	ignoreConstraints bool
+}
+
 // PresentCredential presents credentials to redirect uri from request object.
 func (o *Interaction) PresentCredential(credentials []*verifiable.Credential) error {
+	return o.presentCredentials(
+		credentials,
+		&presentOpts{},
+	)
+}
+
+// PresentCredentialUnsafe presents a single credential to redirect uri from request object.
+// This skips presentation definition constraint validation.
+func (o *Interaction) PresentCredentialUnsafe(credential *verifiable.Credential) error {
+	return o.presentCredentials(
+		[]*verifiable.Credential{credential},
+		&presentOpts{
+			ignoreConstraints: true,
+		},
+	)
+}
+
+// PresentCredential presents credentials to redirect uri from request object.
+func (o *Interaction) presentCredentials(credentials []*verifiable.Credential, opts *presentOpts) error {
 	timeStartPresentCredential := time.Now()
 
 	if o.requestObject == nil {
@@ -160,7 +183,14 @@ func (o *Interaction) PresentCredential(credentials []*verifiable.Credential) er
 			fmt.Errorf("call GetQuery first"))
 	}
 
-	response, err := createAuthorizedResponse(credentials, o.requestObject, o.didResolver, o.crypto, o.documentLoader)
+	response, err := createAuthorizedResponse(
+		credentials,
+		o.requestObject,
+		o.didResolver,
+		o.crypto,
+		o.documentLoader,
+		opts,
+	)
 	if err != nil {
 		return walleterror.NewExecutionError(
 			module,
@@ -266,23 +296,25 @@ func createAuthorizedResponse(
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
+	opts *presentOpts,
 ) (*authorizedResponse, error) {
 	switch len(credentials) {
 	case 0:
 		return nil, fmt.Errorf("expected at least one credential to present to verifier")
 	case 1:
-		return createAuthorizedResponseOneCred(credentials[0], requestObject, didResolver, crypto, documentLoader)
+		return createAuthorizedResponseOneCred(credentials[0], requestObject, didResolver, crypto, documentLoader, opts)
 	default:
 		return createAuthorizedResponseMultiCred(credentials, requestObject, didResolver, crypto, documentLoader)
 	}
 }
 
-func createAuthorizedResponseOneCred( //nolint:funlen
+func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo
 	credential *verifiable.Credential,
 	requestObject *requestObject,
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
+	opts *presentOpts,
 ) (*authorizedResponse, error) {
 	var (
 		err        error
@@ -298,6 +330,12 @@ func createAuthorizedResponseOneCred( //nolint:funlen
 	// TODO: https://github.com/trustbloc/wallet-sdk/issues/165 remove this code after to re enable Schema check.
 	for i := range pd.InputDescriptors {
 		pd.InputDescriptors[i].Schema = nil
+	}
+
+	if opts != nil && opts.ignoreConstraints {
+		for i := range pd.InputDescriptors {
+			pd.InputDescriptors[i].Constraints = nil
+		}
 	}
 
 	presentation, err = pd.CreateVP(
