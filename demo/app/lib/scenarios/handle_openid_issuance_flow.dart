@@ -8,7 +8,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:app/wallet_sdk.dart';
+import 'package:app/wallet_sdk/wallet_sdk.dart';
 import 'package:app/models/activity_data_object.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/services/storage_service.dart';

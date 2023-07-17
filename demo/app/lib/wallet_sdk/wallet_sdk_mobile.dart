@@ -4,59 +4,13 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-@JS()
-library script.js;
-
-import 'package:js/js_util.dart';
-
 import 'dart:developer';
 
+import 'package:app/wallet_sdk/wallet_sdk_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'wallet_sdk_interface.dart';
-import 'wallet_sdk_model.dart';
-
-import 'package:js/js.dart';
-
-@JS()
-@staticInterop
-class CreateOpenID4CIInteractionResult {}
-
-extension CreateOpenID4CIInteractionExt on CreateOpenID4CIInteractionResult {
-  external bool get userPINRequired;
-}
-
-@JS()
-@staticInterop
-class DidDocResolution {}
-
-extension DidDocResolutionExt on DidDocResolution {
-  external String get id;
-
-  external String get content;
-}
-
-@JS()
-external dynamic jsInitSDK(String didResolverURI);
-
-@JS()
-external dynamic jsCreateDID(String didMethod, String keyType);
-
-@JS()
-external dynamic jsCreateOpenID4CIInteraction(String initiateIssuanceURI);
-
-@JS()
-external dynamic jsRequestCredentialWithPreAuth(String userPinEntered);
-
-@JS()
-external dynamic jsIssuerURI();
-
-@JS()
-external dynamic jsResolveDisplayData(String issuerURI, List<String> credentials);
-
-@JS()
-external dynamic jsGetCredentialID(String credential);
 
 class WalletSDK extends WalletPlatform {
   @visibleForTesting
@@ -64,12 +18,13 @@ class WalletSDK extends WalletPlatform {
   final errorCode = 'Exception';
 
   Future<void> initSDK(String didResolverURI) async {
-    await promiseToFuture(jsInitSDK(didResolverURI));
+    await methodChannel.invokeMethod<bool>('initSDK', <String, dynamic>{'didResolverURI': didResolverURI});
   }
 
-  Future<Map<String, dynamic>> createDID(String didMethodType, String didKeyType) async {
-    DidDocResolution result = await promiseToFuture(jsCreateDID(didMethodType, didKeyType));
-    return {"did": result.id, "didDoc": result.content};
+  Future<Map<Object?, Object?>?> createDID(String didMethodType, String didKeyType) async {
+    final createDIDMsg = await methodChannel.invokeMethod<Map<Object?, Object?>?>(
+        'createDID', <String, dynamic>{'didMethodType': didMethodType, 'didKeyType': didKeyType});
+    return createDIDMsg;
   }
 
   Future<String?> fetchStoredDID(String didID) async {
@@ -77,12 +32,11 @@ class WalletSDK extends WalletPlatform {
     return fetchDIDMsg;
   }
 
-  Future<Map<String, dynamic>> initialize(String initiateIssuanceURI, Map<String, dynamic>? authCodeArgs) async {
+  Future<Map<Object?, Object?>?> initialize(String qrCode, Map<String, dynamic>? authCodeArgs) async {
     try {
-      final result =
-          await promiseToFuture(jsCreateOpenID4CIInteraction(initiateIssuanceURI)) as CreateOpenID4CIInteractionResult;
-
-      return {"pinRequired": result.userPINRequired};
+      final flowTypeData = await methodChannel
+          .invokeMethod('initialize', <String, dynamic>{'requestURI': qrCode, 'authCodeArgs': authCodeArgs});
+      return flowTypeData;
     } on PlatformException catch (error) {
       debugPrint(error.toString());
       rethrow;
@@ -91,9 +45,10 @@ class WalletSDK extends WalletPlatform {
 
   Future<String> requestCredential(String userPinEntered) async {
     try {
-      String credentialResponse = await promiseToFuture(jsRequestCredentialWithPreAuth(userPinEntered));
-      return credentialResponse;
-    } catch (error) {
+      var credentialResponse =
+          await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{'otp': userPinEntered});
+      return credentialResponse!;
+    } on PlatformException catch (error) {
       debugPrint(error.toString());
       rethrow;
     }
@@ -125,19 +80,21 @@ class WalletSDK extends WalletPlatform {
     }
   }
 
-  Future<String> issuerURI() async {
-    final String issuerURI = jsIssuerURI();
+  Future<String?> issuerURI() async {
+    final issuerURI = await methodChannel.invokeMethod<String>('issuerURI');
     return issuerURI;
   }
 
-  Future<String> serializeDisplayData(List<String> credentials, String issuerURI) async {
-    return await promiseToFuture(jsResolveDisplayData(issuerURI, credentials));
+  Future<String?> serializeDisplayData(List<String> credentials, String issuerURI) async {
+    final credentialResponse = await methodChannel.invokeMethod<String>(
+        'serializeDisplayData', <String, dynamic>{'vcCredentials': credentials, 'uri': issuerURI});
+    return credentialResponse;
   }
 
-  Future<List<Object?>> resolveCredentialDisplay(String resolvedCredentialDisplayData) async {
-    var renderedCredDisplay = await methodChannel.invokeMethod(
+  Future<List<CredentialDisplayData>> parseCredentialDisplayData(String resolvedCredentialDisplayData) async {
+    List<dynamic> renderedCredDisplay = await methodChannel.invokeMethod(
         'resolveCredentialDisplay', <String, dynamic>{'resolvedCredentialDisplayData': resolvedCredentialDisplayData});
-    return renderedCredDisplay;
+    return renderedCredDisplay.map((d) => CredentialDisplayData.fromMap(d.cast<String, dynamic>())).toList();
   }
 
   Future<List<String>> processAuthorizationRequest(
@@ -178,11 +135,13 @@ class WalletSDK extends WalletPlatform {
   }
 
   Future<List<Object?>> storeActivityLogger() async {
-    return [];
+    var activityObj = await methodChannel.invokeMethod('activityLogger');
+    return activityObj;
   }
 
   Future<List<Object?>> parseActivities(List<dynamic> activities) async {
-    return [];
+    var activityObj = await methodChannel.invokeMethod('parseActivities', <String, dynamic>{'activities': activities});
+    return activityObj;
   }
 
   Future<String?> getIssuerID(List<String> credentials) async {
@@ -199,7 +158,16 @@ class WalletSDK extends WalletPlatform {
     return null;
   }
 
-  Future<String> getCredID(List<String> credentials) async {
-    return promiseToFuture(jsGetCredentialID(credentials[0]));
+  Future<String?> getCredID(List<String> credentials) async {
+    try {
+      final credentialID =
+          await methodChannel.invokeMethod<String>('getCredID', <String, dynamic>{'vcCredentials': credentials});
+      return credentialID;
+    } on PlatformException catch (error) {
+      if (error.code == errorCode) {
+        return error.details.toString();
+      }
+    }
+    return null;
   }
 }

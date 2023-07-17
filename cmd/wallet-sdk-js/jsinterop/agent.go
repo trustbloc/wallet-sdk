@@ -34,7 +34,7 @@ var (
 	agentMethodsRunner jssupport.AsyncRunner
 )
 
-func InitAgent(_ js.Value, args []js.Value) (any, error) {
+func initAgent(_ js.Value, args []js.Value) (any, error) {
 	didResolverURI, err := jssupport.EnsureString(jssupport.GetOptionalNamedArgument(args, "didResolverURI"))
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func InitAgent(_ js.Value, args []js.Value) (any, error) {
 	return nil, nil
 }
 
-func CreateDID(_ js.Value, args []js.Value) (any, error) {
+func createDID(_ js.Value, args []js.Value) (any, error) {
 	if agentInstance == nil {
 		return nil, walleterror.NewExecutionError(
 			errors.Module,
@@ -112,7 +112,7 @@ func CreateDID(_ js.Value, args []js.Value) (any, error) {
 	return types.SerializeDIDDoc(didDoc)
 }
 
-func CreateOpenID4CIIssuerInitiatedInteraction(_ js.Value, args []js.Value) (any, error) {
+func createOpenID4CIIssuerInitiatedInteraction(_ js.Value, args []js.Value) (any, error) {
 	if agentInstance == nil {
 		return nil, walleterror.NewExecutionError(
 			errors.Module,
@@ -134,7 +134,7 @@ func CreateOpenID4CIIssuerInitiatedInteraction(_ js.Value, args []js.Value) (any
 	return types.SerializeOpenID4CIIssuerInitiatedInteraction(&agentMethodsRunner, interaction), nil
 }
 
-func ResolveDisplayData(_ js.Value, args []js.Value) (any, error) {
+func resolveDisplayData(_ js.Value, args []js.Value) (any, error) {
 	if agentInstance == nil {
 		return nil, walleterror.NewExecutionError(
 			errors.Module,
@@ -166,7 +166,67 @@ func ResolveDisplayData(_ js.Value, args []js.Value) (any, error) {
 	return string(data), err
 }
 
-func GetCredentialID(_ js.Value, args []js.Value) (any, error) {
+func parseResolvedDisplayData(_ js.Value, args []js.Value) (any, error) {
+	if agentInstance == nil {
+		return nil, walleterror.NewExecutionError(
+			errors.Module,
+			errors.InitializationFailedCode,
+			errors.InitializationFailedError,
+			fmt.Errorf("agent instance is not initialized"))
+	}
+
+	resolvedCredentialDisplayData, err :=
+		jssupport.EnsureString(jssupport.GetNamedArgument(args, "resolvedCredentialDisplayData"))
+	if err != nil {
+		return nil, err
+	}
+
+	displayData, err := agentInstance.ParseResolvedDisplayData(resolvedCredentialDisplayData)
+	if err != nil {
+		walleterror.NewValidationError(
+			errors.Module,
+			errors.InvalidDisplayDataCode,
+			errors.InvalidDisplayDataError,
+			fmt.Errorf("display data parsing failed: %w", err))
+	}
+
+	var credentialDisplays []any
+
+	for _, credDisp := range displayData.CredentialDisplays {
+		var claims []any
+
+		for _, claimDisp := range credDisp.Claims {
+			claim := map[string]any{
+				"rawValue":  claimDisp.RawValue,
+				"valueType": claimDisp.ValueType,
+				"label":     claimDisp.Label,
+				"value":     claimDisp.Value,
+			}
+
+			if claimDisp.Order != nil {
+				claim["order"] = *claimDisp.Order
+			}
+
+			claims = append(claims, claim)
+
+		}
+
+		credentialDisplays = append(credentialDisplays, map[string]any{
+			"name":            credDisp.Overview.Name,
+			"logo":            credDisp.Overview.Logo.URL,
+			"backgroundColor": credDisp.Overview.BackgroundColor,
+			"textColor":       credDisp.Overview.TextColor,
+			"claims":          claims,
+		})
+	}
+
+	return map[string]any{
+		"issuerName":         displayData.IssuerDisplay.Name,
+		"credentialDisplays": credentialDisplays,
+	}, nil
+}
+
+func getCredentialID(_ js.Value, args []js.Value) (any, error) {
 	credential, err := jssupport.EnsureString(jssupport.GetNamedArgument(args, "credential"))
 	if err != nil {
 		return nil, err
@@ -182,10 +242,11 @@ func GetCredentialID(_ js.Value, args []js.Value) (any, error) {
 
 func ExportAgentFunctions() map[string]any {
 	return map[string]any{
-		"initAgent": agentMethodsRunner.CreateAsyncFunc(InitAgent),
-		"createDID": agentMethodsRunner.CreateAsyncFunc(CreateDID),
-		"createOpenID4CIIssuerInitiatedInteraction": agentMethodsRunner.CreateAsyncFunc(CreateOpenID4CIIssuerInitiatedInteraction),
-		"resolveDisplayData":                        agentMethodsRunner.CreateAsyncFunc(ResolveDisplayData),
-		"getCredentialID":                           agentMethodsRunner.CreateAsyncFunc(GetCredentialID),
+		"initAgent": agentMethodsRunner.CreateAsyncFunc(initAgent),
+		"createDID": agentMethodsRunner.CreateAsyncFunc(createDID),
+		"createOpenID4CIIssuerInitiatedInteraction": agentMethodsRunner.CreateAsyncFunc(createOpenID4CIIssuerInitiatedInteraction),
+		"resolveDisplayData":                        agentMethodsRunner.CreateAsyncFunc(resolveDisplayData),
+		"getCredentialID":                           agentMethodsRunner.CreateAsyncFunc(getCredentialID),
+		"parseResolvedDisplayData":                  agentMethodsRunner.CreateAsyncFunc(parseResolvedDisplayData),
 	}
 }

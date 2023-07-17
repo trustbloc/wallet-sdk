@@ -65,3 +65,9 @@ async function jsGetCredentialID(credential) {
         credential: credential
     });
 }
+
+async function jsParseResolvedDisplayData(resolvedCredentialDisplayData) {
+    return await agent.parseResolvedDisplayData({
+        resolvedCredentialDisplayData: resolvedCredentialDisplayData
+    });
+}

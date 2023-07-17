@@ -35,6 +35,11 @@ const Agent = async function (opts) {
                 credentials: opts.credentials
             })
         },
+        parseResolvedDisplayData: async function(opts) {
+            return await  goAgent.parseResolvedDisplayData({
+                resolvedCredentialDisplayData: opts.resolvedCredentialDisplayData,
+            })
+        },
         getCredentialID: async function (opts) {
             return await goAgent.getCredentialID({
                 credential: opts.credential

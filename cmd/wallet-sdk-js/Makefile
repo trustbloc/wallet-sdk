@@ -22,3 +22,4 @@ build-wasm:
 .PHONY: clean generate-js-bindings
 generate-js-bindings:
 	@npm install
+
