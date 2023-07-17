@@ -1209,6 +1209,11 @@ then discarded.
 6. Determine the key ID you want to use for signing (e.g. from one of the user's DID docs).
 7. Call the `PresentCredential` method on the `Interaction` object with the selected credentials.
 
+In certain use cases, you might want the user to be able to provide a credential
+even if no credential matches the requirements. In that case, you can call the
+`PresentCredentialUnsafe` method on the `Interaction` object instead of step 7,
+passing in a single credential instead of a credential array.
+
 ### Examples
 
 The following examples show how to use the APIs to go through the OpenID4VP flow using the iOS and Android bindings.
@@ -1258,6 +1263,11 @@ selectedVCs.add(requirementDesc.matchedVCs.atIndex(0)) // Users should select on
 
 interaction.presentCredential(selectedVCs)
 // Consider checking the activity log at some point after the interaction
+
+// To force a specific credential to be presented, even if it doesn't match all
+// requirements, use this instead of presentCredential:
+val preferredVC = savedCredentials.atIndex(0)
+interaction.presentCredentialUnsafe(preferredVC)
 ```
 
 #### Swift (iOS)
@@ -1302,6 +1312,11 @@ selectedVCs.add(requirementDesc.matchedVCs.atIndex(0)) // Users should select on
 
 let credentials = interaction.presentCredential(selectedVCs)
 // Consider checking the activity log at some point after the interaction
+
+// To force a specific credential to be presented, even if it doesn't match all
+// requirements, use this instead of presentCredential:
+let preferredVC = savedCredentials.atIndex(0)
+interaction.presentCredentialUnsafe(preferredVC)
 ```
 
 ### Error Codes & Troubleshooting Tips
