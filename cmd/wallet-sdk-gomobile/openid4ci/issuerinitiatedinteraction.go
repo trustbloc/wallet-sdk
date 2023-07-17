@@ -11,6 +11,8 @@ package openid4ci
 import (
 	"errors"
 
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
+
 	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 
@@ -40,7 +42,8 @@ func NewIssuerInitiatedInteraction( //nolint: dupl // Similar looking but for di
 	opts *InteractionOpts,
 ) (*IssuerInitiatedInteraction, error) {
 	if args == nil {
-		return nil, errors.New("args object must be provided")
+		return nil, wrapper.ToMobileError(walleterror.NewInvalidSDKUsageError(
+			openid4cigoapi.ErrorModule, errors.New("args object must be provided")))
 	}
 
 	if opts == nil {
@@ -112,7 +115,7 @@ func (i *IssuerInitiatedInteraction) RequestCredentialWithPreAuth(
 
 	signer, err := i.createSigner(vm)
 	if err != nil {
-		return nil, err
+		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
 
 	credentials, err := i.goAPIInteraction.RequestCredentialWithPreAuth(signer, openid4cigoapi.WithPIN(opts.pin))
@@ -135,7 +138,7 @@ func (i *IssuerInitiatedInteraction) RequestCredentialWithAuth(vm *api.Verificat
 ) (*verifiable.CredentialsArray, error) {
 	signer, err := i.createSigner(vm)
 	if err != nil {
-		return nil, err
+		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
 
 	credentials, err := i.goAPIInteraction.RequestCredentialWithAuth(signer, redirectURIWithAuthCode)
@@ -185,7 +188,7 @@ func (i *IssuerInitiatedInteraction) PreAuthorizedCodeGrantTypeSupported() bool 
 func (i *IssuerInitiatedInteraction) PreAuthorizedCodeGrantParams() (*PreAuthorizedCodeGrantParams, error) {
 	goAPIPreAuthorizedCodeGrantParams, err := i.goAPIInteraction.PreAuthorizedCodeGrantParams()
 	if err != nil {
-		return nil, err
+		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
 
 	return &PreAuthorizedCodeGrantParams{
@@ -205,17 +208,23 @@ func (i *IssuerInitiatedInteraction) AuthorizationCodeGrantTypeSupported() bool 
 func (i *IssuerInitiatedInteraction) AuthorizationCodeGrantParams() (*AuthorizationCodeGrantParams, error) {
 	goAPIAuthorizationCodeGrantParams, err := i.goAPIInteraction.AuthorizationCodeGrantParams()
 	if err != nil {
-		return nil, err
+		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
 
 	return &AuthorizationCodeGrantParams{
 		goAPIAuthorizationCodeGrantParams: goAPIAuthorizationCodeGrantParams,
+		oTel:                              i.oTel,
 	}, nil
 }
 
 // DynamicClientRegistrationSupported indicates whether the issuer supports dynamic client registration.
 func (i *IssuerInitiatedInteraction) DynamicClientRegistrationSupported() (bool, error) {
-	return i.goAPIInteraction.DynamicClientRegistrationSupported()
+	supported, err := i.goAPIInteraction.DynamicClientRegistrationSupported()
+	if err != nil {
+		return false, wrapper.ToMobileErrorWithTrace(err, i.oTel)
+	}
+
+	return supported, nil
 }
 
 // DynamicClientRegistrationEndpoint returns the issuer's dynamic client registration endpoint.
@@ -223,7 +232,12 @@ func (i *IssuerInitiatedInteraction) DynamicClientRegistrationSupported() (bool,
 // if DynamicClientRegistrationSupported returns true.
 // This method will return an error if the issuer does not support dynamic client registration.
 func (i *IssuerInitiatedInteraction) DynamicClientRegistrationEndpoint() (string, error) {
-	return i.goAPIInteraction.DynamicClientRegistrationEndpoint()
+	endpoint, err := i.goAPIInteraction.DynamicClientRegistrationEndpoint()
+	if err != nil {
+		return "", wrapper.ToMobileErrorWithTrace(err, i.oTel)
+	}
+
+	return endpoint, nil
 }
 
 // OTelTraceID returns the OpenTelemetry trace ID.
@@ -239,12 +253,13 @@ func (i *IssuerInitiatedInteraction) OTelTraceID() string {
 
 func (i *IssuerInitiatedInteraction) createSigner(vm *api.VerificationMethod) (*common.JWSSigner, error) {
 	if vm == nil {
-		return nil, errors.New("verification method must be provided")
+		return nil, walleterror.NewInvalidSDKUsageError(openid4cigoapi.ErrorModule,
+			errors.New("verification method must be provided"))
 	}
 
 	signer, err := common.NewJWSSigner(vm.ToSDKVerificationMethod(), i.crypto)
 	if err != nil {
-		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
+		return nil, err
 	}
 
 	return signer, nil

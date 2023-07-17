@@ -74,7 +74,7 @@ func NewIssuerInitiatedInteraction(initiateIssuanceURI string,
 
 	err := validateRequiredParameters(config)
 	if err != nil {
-		return nil, err
+		return nil, walleterror.NewInvalidSDKUsageError(ErrorModule, err)
 	}
 
 	setDefaults(config)
@@ -137,7 +137,7 @@ func (i *IssuerInitiatedInteraction) CreateAuthorizationURL(clientID, redirectUR
 // RequestCredentialWithPreAuth requests credential(s) from the issuer. This method can only be used for the
 // pre-authorized code flow, where it acts as the final step in the interaction with the issuer.
 // For the equivalent method for the authorization code flow, see RequestCredentialWithAuth instead.
-// If a PIN is required (which can be checked via the Capabilities method), then it must be passed
+// If a PIN is required (which can be checked via the PreAuthorizedCodeGrantParams method), then it must be passed
 // into this method via the WithPIN option.
 func (i *IssuerInitiatedInteraction) RequestCredentialWithPreAuth(jwtSigner api.JWTSigner,
 	opts ...RequestCredentialWithPreAuthOpt,
@@ -146,19 +146,12 @@ func (i *IssuerInitiatedInteraction) RequestCredentialWithPreAuth(jwtSigner api.
 
 	if i.PreAuthorizedCodeGrantTypeSupported() {
 		if i.preAuthorizedCodeGrantParams.PINRequired() && processedOpts.pin == "" {
-			return nil, walleterror.NewValidationError(
-				module,
-				PINRequiredCode,
-				PINRequiredError,
+			return nil, walleterror.NewInvalidSDKUsageError(ErrorModule,
 				errors.New("the credential offer requires a user PIN, but none was provided"))
 		}
 	} else {
-		return nil, errors.New("issuer does not support the pre-authorized code grant")
-	}
-
-	err := validateSignerKeyID(jwtSigner)
-	if err != nil {
-		return nil, err
+		return nil, walleterror.NewInvalidSDKUsageError(ErrorModule,
+			errors.New("issuer does not support the pre-authorized code grant"))
 	}
 
 	return i.requestCredentialWithPreAuth(jwtSigner, processedOpts.pin)
@@ -174,7 +167,8 @@ func (i *IssuerInitiatedInteraction) RequestCredentialWithPreAuth(jwtSigner api.
 func (i *IssuerInitiatedInteraction) RequestCredentialWithAuth(jwtSigner api.JWTSigner, redirectURIWithParams string,
 ) ([]*verifiable.Credential, error) {
 	if !i.AuthorizationCodeGrantTypeSupported() {
-		return nil, errors.New("issuer does not support the authorization code grant type")
+		return nil, walleterror.NewInvalidSDKUsageError(ErrorModule,
+			errors.New("issuer does not support the authorization code grant type"))
 	}
 
 	err := validateSignerKeyID(jwtSigner)
@@ -207,7 +201,8 @@ func (i *IssuerInitiatedInteraction) PreAuthorizedCodeGrantTypeSupported() bool 
 // This method returns an error if (and only if) PreAuthorizedCodeGrantTypeSupported returns false.
 func (i *IssuerInitiatedInteraction) PreAuthorizedCodeGrantParams() (*PreAuthorizedCodeGrantParams, error) {
 	if i.preAuthorizedCodeGrantParams == nil {
-		return nil, errors.New("issuer does not support the pre-authorized code grant")
+		return nil, walleterror.NewInvalidSDKUsageError(ErrorModule,
+			errors.New("issuer does not support the pre-authorized code grant"))
 	}
 
 	return i.preAuthorizedCodeGrantParams, nil
@@ -224,7 +219,8 @@ func (i *IssuerInitiatedInteraction) AuthorizationCodeGrantTypeSupported() bool 
 // This method returns an error if (and only if) AuthorizationCodeGrantTypeSupported returns false.
 func (i *IssuerInitiatedInteraction) AuthorizationCodeGrantParams() (*AuthorizationCodeGrantParams, error) {
 	if i.authorizationCodeGrantParams == nil {
-		return nil, errors.New("issuer does not support the authorization code grant")
+		return nil, walleterror.NewInvalidSDKUsageError(ErrorModule,
+			errors.New("issuer does not support the authorization code grant"))
 	}
 
 	return i.authorizationCodeGrantParams, nil
@@ -255,18 +251,13 @@ func (i *IssuerInitiatedInteraction) requestCredentialWithPreAuth(jwtSigner api.
 
 	credentialResponses, err := i.getCredentialResponsesWithPreAuth(pin, jwtSigner)
 	if err != nil {
-		return nil,
-			walleterror.NewExecutionError(
-				module,
-				CredentialFetchFailedCode,
-				CredentialFetchFailedError,
-				fmt.Errorf("failed to get credential response: %w", err))
+		return nil, fmt.Errorf("failed to get credential response: %w", err)
 	}
 
 	vcs, err := i.interaction.getVCsFromCredentialResponses(credentialResponses)
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
-			module,
+			ErrorModule,
 			CredentialParseFailedCode,
 			CredentialParseError, err)
 	}
@@ -305,7 +296,7 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth( //nolint
 	i.interaction.openIDConfig, err = i.interaction.getOpenIDConfig()
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
-			module,
+			ErrorModule,
 			IssuerOpenIDConfigFetchFailedCode,
 			IssuerOpenIDConfigFetchFailedError,
 			fmt.Errorf("failed to fetch issuer's OpenID configuration: %w", err))
@@ -313,11 +304,7 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth( //nolint
 
 	tokenResponse, err := i.getPreAuthTokenResponse(pin)
 	if err != nil {
-		return nil, walleterror.NewExecutionError(
-			module,
-			TokenFetchFailedCode,
-			TokenFetchFailedError,
-			fmt.Errorf("failed to get token response: %w", err))
+		return nil, fmt.Errorf("failed to get token response: %w", err)
 	}
 
 	proofJWT, err := i.interaction.createClaimsProof(tokenResponse.CNonce, signer)
@@ -330,7 +317,7 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth( //nolint
 		requestCredentialEventText)
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
-			module,
+			ErrorModule,
 			MetadataFetchFailedCode,
 			MetadataFetchFailedError,
 			fmt.Errorf("failed to get issuer metadata: %w", err))
@@ -382,7 +369,8 @@ func (i *IssuerInitiatedInteraction) getPreAuthTokenResponse(pin string) (*preAu
 
 	responseBytes, err := httprequest.New(i.interaction.httpClient, i.interaction.metricsLogger).Do(
 		http.MethodPost, i.interaction.openIDConfig.TokenEndpoint, "application/x-www-form-urlencoded", paramsReader,
-		fmt.Sprintf(fetchTokenViaPOSTReqEventText, i.interaction.openIDConfig.TokenEndpoint), requestCredentialEventText)
+		fmt.Sprintf(fetchTokenViaPOSTReqEventText, i.interaction.openIDConfig.TokenEndpoint),
+		requestCredentialEventText, tokenErrorResponseHandler)
 	if err != nil {
 		return nil, fmt.Errorf("issuer's token endpoint: %w", err)
 	}
@@ -397,6 +385,44 @@ func (i *IssuerInitiatedInteraction) getPreAuthTokenResponse(pin string) (*preAu
 	return &tokenResp, nil
 }
 
+func tokenErrorResponseHandler(statusCode int, respBody []byte) error {
+	detailedErr := fmt.Errorf(
+		"received status code [%d] with body [%s] from issuer's token endpoint", statusCode, respBody)
+
+	var errResponse errorResponse
+
+	err := json.Unmarshal(respBody, &errResponse)
+	if err != nil {
+		return walleterror.NewExecutionError(ErrorModule,
+			OtherTokenResponseErrorCode,
+			OtherTokenRequestError,
+			detailedErr)
+	}
+
+	switch errResponse.Error {
+	case "invalid_request":
+		return walleterror.NewExecutionError(ErrorModule,
+			InvalidTokenRequestErrorCode,
+			InvalidTokenRequestError,
+			detailedErr)
+	case "invalid_grant":
+		return walleterror.NewExecutionError(ErrorModule,
+			InvalidGrantErrorCode,
+			InvalidGrantError,
+			detailedErr)
+	case "invalid_client":
+		return walleterror.NewExecutionError(ErrorModule,
+			InvalidClientErrorCode,
+			InvalidClientError,
+			detailedErr)
+	default:
+		return walleterror.NewExecutionError(ErrorModule,
+			OtherTokenResponseErrorCode,
+			OtherTokenRequestError,
+			detailedErr)
+	}
+}
+
 // createOAuthHTTPClient creates the OAuth2 client wrapper using the OAuth2 library.
 // Due to some peculiarities with the OAuth2 library, we need to do some things here to ensure our custom HTTP client
 // settings get preserved. Check the comments in the method below for more details.
@@ -406,7 +432,7 @@ func getCredentialOffer(initiateIssuanceURI string, httpClient *http.Client, met
 	requestURIParsed, err := url.Parse(initiateIssuanceURI)
 	if err != nil {
 		return nil, walleterror.NewValidationError(
-			module,
+			ErrorModule,
 			InvalidIssuanceURICode,
 			InvalidIssuanceURIError,
 			err)
@@ -428,7 +454,7 @@ func getCredentialOffer(initiateIssuanceURI string, httpClient *http.Client, met
 	default:
 		return nil,
 			walleterror.NewValidationError(
-				module,
+				ErrorModule,
 				InvalidIssuanceURICode,
 				InvalidIssuanceURIError,
 				errors.New("credential offer query parameter missing from initiate issuance URI"))
@@ -439,7 +465,7 @@ func getCredentialOffer(initiateIssuanceURI string, httpClient *http.Client, met
 	err = json.Unmarshal(credentialOfferJSON, &credentialOffer)
 	if err != nil {
 		return nil, walleterror.NewValidationError(
-			module,
+			ErrorModule,
 			InvalidCredentialOfferCode,
 			InvalidCredentialOfferError,
 			fmt.Errorf("failed to unmarshal credential offer JSON into a credential offer object: %w", err))
@@ -453,10 +479,10 @@ func getCredentialOfferJSONFromCredentialOfferURI(credentialOfferURI string,
 ) ([]byte, error) {
 	responseBytes, err := httprequest.New(httpClient, metricsLogger).Do(
 		http.MethodGet, credentialOfferURI, "", nil,
-		fmt.Sprintf(fetchCredOfferViaGETReqEventText, credentialOfferURI), newInteractionEventText)
+		fmt.Sprintf(fetchCredOfferViaGETReqEventText, credentialOfferURI), newInteractionEventText, nil)
 	if err != nil {
 		return nil, walleterror.NewValidationError(
-			module,
+			ErrorModule,
 			InvalidCredentialOfferCode,
 			InvalidCredentialOfferError,
 			fmt.Errorf("failed to get credential offer from the endpoint specified in the "+
@@ -477,7 +503,7 @@ func determineCredentialTypesAndFormats(credentialOffer *CredentialOffer) ([][]s
 			credentialOffer.Credentials[i].Format != jwtVCJSONLDCredentialFormat &&
 			credentialOffer.Credentials[i].Format != ldpVCCredentialFormat {
 			return nil, nil, walleterror.NewValidationError(
-				module,
+				ErrorModule,
 				UnsupportedCredentialTypeInOfferCode,
 				UnsupportedCredentialTypeInOfferError,
 				fmt.Errorf("unsupported credential type (%s) in credential offer at index %d of "+
@@ -496,9 +522,9 @@ func validateSignerKeyID(jwtSigner api.JWTSigner) error {
 	kidParts := strings.Split(jwtSigner.GetKeyID(), "#")
 	if len(kidParts) < 2 { //nolint: gomnd
 		return walleterror.NewExecutionError(
-			module,
-			KeyIDNotContainDIDPartCode,
-			KeyIDNotContainDIDPartError,
+			ErrorModule,
+			KeyIDMissingDIDPartCode,
+			KeyIDMissingDIDPartError,
 			fmt.Errorf("key ID (%s) is missing the DID part", jwtSigner.GetKeyID()))
 	}
 

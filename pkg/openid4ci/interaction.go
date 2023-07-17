@@ -70,7 +70,7 @@ func (i *interaction) createAuthorizationURL(clientID, redirectURI, format strin
 			"Authorization")
 		if err != nil {
 			return "", walleterror.NewExecutionError(
-				module,
+				ErrorModule,
 				MetadataFetchFailedCode,
 				MetadataFetchFailedError,
 				fmt.Errorf("failed to get issuer metadata: %w", err))
@@ -195,7 +195,7 @@ func (i *interaction) requestAccessToken(redirectURIWithAuthCode string) error {
 	state := parsedURI.Query().Get("state")
 	if state != i.authCodeURLState {
 		return walleterror.NewExecutionError(
-			module,
+			ErrorModule,
 			StateInRedirectURINotMatchingAuthURLCode,
 			StateInRedirectURINotMatchingAuthURLError,
 			errors.New("state in redirect URI does not match the state from the authorization URL"))
@@ -204,7 +204,7 @@ func (i *interaction) requestAccessToken(redirectURIWithAuthCode string) error {
 	i.openIDConfig, err = i.getOpenIDConfig()
 	if err != nil {
 		return walleterror.NewExecutionError(
-			module,
+			ErrorModule,
 			IssuerOpenIDConfigFetchFailedCode,
 			IssuerOpenIDConfigFetchFailedError,
 			fmt.Errorf("failed to fetch issuer's OpenID configuration: %w", err))
@@ -226,7 +226,7 @@ func (i *interaction) dynamicClientRegistrationSupported() (bool, error) {
 	i.openIDConfig, err = i.getOpenIDConfig()
 	if err != nil {
 		return false, walleterror.NewExecutionError(
-			module,
+			ErrorModule,
 			IssuerOpenIDConfigFetchFailedCode,
 			IssuerOpenIDConfigFetchFailedError,
 			fmt.Errorf("failed to fetch issuer's OpenID configuration: %w", err))
@@ -241,14 +241,15 @@ func (i *interaction) dynamicClientRegistrationEndpoint() (string, error) {
 	i.openIDConfig, err = i.getOpenIDConfig()
 	if err != nil {
 		return "", walleterror.NewExecutionError(
-			module,
+			ErrorModule,
 			IssuerOpenIDConfigFetchFailedCode,
 			IssuerOpenIDConfigFetchFailedError,
 			fmt.Errorf("failed to fetch issuer's OpenID configuration: %w", err))
 	}
 
 	if i.openIDConfig.RegistrationEndpoint == nil {
-		return "", errors.New("issuer does not support dynamic client registration")
+		return "", walleterror.NewInvalidSDKUsageError(ErrorModule,
+			errors.New("issuer does not support dynamic client registration"))
 	}
 
 	return *i.openIDConfig.RegistrationEndpoint, nil
@@ -265,7 +266,7 @@ func (i *interaction) getOpenIDConfig() (*OpenIDConfig, error) {
 
 	responseBytes, err := httprequest.New(i.httpClient, i.metricsLogger).Do(
 		http.MethodGet, openIDConfigEndpoint, "", nil,
-		fmt.Sprintf(fetchOpenIDConfigViaGETReqEventText, openIDConfigEndpoint), requestCredentialEventText)
+		fmt.Sprintf(fetchOpenIDConfigViaGETReqEventText, openIDConfigEndpoint), requestCredentialEventText, nil)
 	if err != nil {
 		return nil, fmt.Errorf("openid configuration endpoint: %w", err)
 	}
@@ -288,18 +289,13 @@ func (i *interaction) requestCredentialWithAuth(jwtSigner api.JWTSigner, credent
 
 	credentialResponses, err := i.getCredentialResponsesWithAuth(jwtSigner, credentialFormats, credentialTypes)
 	if err != nil {
-		return nil,
-			walleterror.NewExecutionError(
-				module,
-				CredentialFetchFailedCode,
-				CredentialFetchFailedError,
-				fmt.Errorf("failed to get credential response: %w", err))
+		return nil, fmt.Errorf("failed to get credential response: %w", err)
 	}
 
 	vcs, err := i.getVCsFromCredentialResponses(credentialResponses)
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
-			module,
+			ErrorModule,
 			CredentialParseFailedCode,
 			CredentialParseError, err)
 	}
@@ -388,7 +384,7 @@ func (i *interaction) createClaimsProof(nonce interface{}, signer api.JWTSigner)
 	proofJWT, err := signToken(claims, signer)
 	if err != nil {
 		return "", walleterror.NewExecutionError(
-			module,
+			ErrorModule,
 			JWTSigningFailedCode,
 			JWTSigningFailedError,
 			fmt.Errorf("failed to create JWT: %w", err))
@@ -467,8 +463,7 @@ func (i *interaction) getRawCredentialResponse(credentialReq *http.Request, even
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("received status code [%d] with body [%s] from issuer's credential endpoint",
-			response.StatusCode, string(responseBytes))
+		return nil, processCredentialErrorResponse(response.StatusCode, responseBytes)
 	}
 
 	defer func() {
@@ -523,4 +518,52 @@ func (i *interaction) getVCsFromCredentialResponses(
 	}
 
 	return vcs, nil
+}
+
+func processCredentialErrorResponse(statusCode int, respBytes []byte) error {
+	detailedErr := fmt.Errorf("received status code [%d] with body [%s] from issuer's credential endpoint",
+		statusCode, string(respBytes))
+
+	var errorResponse errorResponse
+
+	err := json.Unmarshal(respBytes, &errorResponse)
+	if err != nil {
+		return walleterror.NewExecutionError(ErrorModule,
+			OtherCredentialRequestErrorCode,
+			OtherCredentialRequestError,
+			detailedErr)
+	}
+
+	switch errorResponse.Error {
+	case "invalid_request":
+		return walleterror.NewExecutionError(ErrorModule,
+			InvalidCredentialRequestErrorCode,
+			InvalidCredentialRequestError,
+			detailedErr)
+	case "invalid_token":
+		return walleterror.NewExecutionError(ErrorModule,
+			InvalidTokenErrorCode,
+			InvalidTokenError,
+			detailedErr)
+	case "unsupported_credential_format":
+		return walleterror.NewExecutionError(ErrorModule,
+			UnsupportedCredentialFormatErrorCode,
+			UnsupportedCredentialFormatError,
+			detailedErr)
+	case "unsupported_credential_type":
+		return walleterror.NewExecutionError(ErrorModule,
+			UnsupportedCredentialTypeErrorCode,
+			UnsupportedCredentialTypeError,
+			detailedErr)
+	case "invalid_or_missing_proof":
+		return walleterror.NewExecutionError(ErrorModule,
+			InvalidOrMissingProofErrorCode,
+			InvalidOrMissingProofError,
+			detailedErr)
+	default:
+		return walleterror.NewExecutionError(ErrorModule,
+			OtherCredentialRequestErrorCode,
+			OtherCredentialRequestError,
+			detailedErr)
+	}
 }

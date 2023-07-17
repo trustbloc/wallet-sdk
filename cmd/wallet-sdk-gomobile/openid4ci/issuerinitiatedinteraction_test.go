@@ -54,7 +54,7 @@ func TestNewInteraction(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		i := createIssuedInitiatedInteraction(t, kms, nil,
+		i := createIssuerInitiatedInteraction(t, kms, nil,
 			createCredentialOfferIssuanceURI(t, "example.com", false),
 			nil, false)
 		require.NotEmpty(t, i.OTelTraceID())
@@ -183,7 +183,7 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
-	interaction := createIssuedInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", false),
+	interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", false),
 		nil, false)
 
 	authorizationLink, err := interaction.CreateAuthorizationURL("clientID", "redirectURI", nil)
@@ -302,7 +302,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		interaction := createIssuedInitiatedInteraction(t, kms, activityLogger,
+		interaction := createIssuerInitiatedInteraction(t, kms, activityLogger,
 			createCredentialOfferIssuanceURI(t, server.URL, false),
 			nil, false)
 
@@ -319,7 +319,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		}
 
 		credentials, err := interaction.RequestCredential(verificationMethod)
-		requireErrorContains(t, err, "PIN_REQUIRED")
+		requireErrorContains(t, err, "the credential offer requires a user PIN, but none was provided")
 
 		require.Nil(t, credentials)
 	})
@@ -327,7 +327,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		interaction := createIssuedInitiatedInteraction(t, kms, nil,
+		interaction := createIssuerInitiatedInteraction(t, kms, nil,
 			createCredentialOfferIssuanceURI(t, "example.com", true),
 			nil, false)
 
@@ -354,7 +354,7 @@ func TestIssuerInitiatedInteraction_GrantTypes(t *testing.T) {
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
-	interaction := createIssuedInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", false),
+	interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", false),
 		nil, false)
 
 	require.True(t, interaction.PreAuthorizedCodeGrantTypeSupported())
@@ -368,10 +368,11 @@ func TestIssuerInitiatedInteraction_GrantTypes(t *testing.T) {
 	require.False(t, interaction.AuthorizationCodeGrantTypeSupported())
 
 	authorizationCodeGrantParams, err := interaction.AuthorizationCodeGrantParams()
-	require.EqualError(t, err, "issuer does not support the authorization code grant")
+	requireErrorContains(t, err,
+		"INVALID_SDK_USAGE(OCI3-0000):issuer does not support the authorization code grant")
 	require.Nil(t, authorizationCodeGrantParams)
 
-	interaction = createIssuedInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", true),
+	interaction = createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", true),
 		nil, false)
 
 	require.True(t, interaction.AuthorizationCodeGrantTypeSupported())
@@ -391,19 +392,17 @@ func TestIssuerInitiatedInteraction_DynamicClientRegistration(t *testing.T) {
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
-	interaction := createIssuedInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", false),
+	interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", false),
 		nil, false)
 
 	supported, err := interaction.DynamicClientRegistrationSupported()
-	require.EqualError(t, err, "ISSUER_OPENID_FETCH_FAILED(OCI1-0006):failed to fetch issuer's "+
-		"OpenID configuration: "+`openid configuration endpoint: Get "example.com/.well-known/openid-configuration"`+
-		`: unsupported protocol scheme ""`)
+	requireErrorContains(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED(OCI1-0003):failed to fetch issuer's "+
+		"OpenID configuration: openid configuration endpoint: Get")
 	require.False(t, supported)
 
 	endpoint, err := interaction.DynamicClientRegistrationEndpoint()
-	require.EqualError(t, err, "ISSUER_OPENID_FETCH_FAILED(OCI1-0006):failed to fetch issuer's "+
-		"OpenID configuration: "+`openid configuration endpoint: Get "example.com/.well-known/openid-configuration"`+
-		`: unsupported protocol scheme ""`)
+	requireErrorContains(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED(OCI1-0003):failed to fetch issuer's "+
+		"OpenID configuration: openid configuration endpoint: Get ")
 	require.Empty(t, endpoint)
 }
 
@@ -458,15 +457,15 @@ func TestIssuerInitiatedInteractionAlias(t *testing.T) {
 	require.Empty(t, authURL)
 
 	credentials, err = interaction.RequestCredentialWithPreAuth(nil, nil)
-	require.EqualError(t, err, "verification method must be provided")
+	requireErrorContains(t, err, "verification method must be provided")
 	require.Nil(t, credentials)
 
 	credentials, err = interaction.RequestCredential(nil)
-	require.EqualError(t, err, "verification method must be provided")
+	requireErrorContains(t, err, "verification method must be provided")
 	require.Nil(t, credentials)
 
 	credentials, err = interaction.RequestCredentialWithAuth(nil, "", nil)
-	require.EqualError(t, err, "verification method must be provided")
+	requireErrorContains(t, err, "verification method must be provided")
 	require.Nil(t, credentials)
 
 	issuerURI := interaction.IssuerURI()
@@ -481,7 +480,8 @@ func TestIssuerInitiatedInteractionAlias(t *testing.T) {
 	require.False(t, interaction.AuthorizationCodeGrantTypeSupported())
 
 	authCodeGrantParams, err := interaction.AuthorizationCodeGrantParams()
-	require.EqualError(t, err, "issuer does not support the authorization code grant")
+	requireErrorContains(t, err,
+		"INVALID_SDK_USAGE(OCI3-0000):issuer does not support the authorization code grant")
 	require.Nil(t, authCodeGrantParams)
 
 	dynamicClientRegistrationSupported, err := interaction.DynamicClientRegistrationSupported()
@@ -489,7 +489,8 @@ func TestIssuerInitiatedInteractionAlias(t *testing.T) {
 	require.False(t, dynamicClientRegistrationSupported)
 
 	dynamicClientRegistrationEndpoint, err := interaction.DynamicClientRegistrationEndpoint()
-	require.EqualError(t, err, "issuer does not support dynamic client registration")
+	requireErrorContains(t, err,
+		"INVALID_SDK_USAGE(OCI3-0000):issuer does not support dynamic client registration")
 	require.Empty(t, dynamicClientRegistrationEndpoint)
 
 	traceID := interaction.OTelTraceID()
@@ -521,7 +522,7 @@ func doRequestCredentialTest(t *testing.T, additionalHeaders *api.Headers,
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
-	interaction := createIssuedInitiatedInteraction(t, kms, activityLogger,
+	interaction := createIssuerInitiatedInteraction(t, kms, activityLogger,
 		createCredentialOfferIssuanceURI(t, server.URL, false),
 		additionalHeaders,
 		disableTLSVerification)
@@ -576,7 +577,7 @@ func doRequestCredentialTest(t *testing.T, additionalHeaders *api.Headers,
 	require.Equal(t, "did:orb:uAAA:EiARTvvCsWFTSCc35447YpI2MJpFAaJZtFlceVz9lcMYVw", subjectID)
 }
 
-func createIssuedInitiatedInteraction(t *testing.T, kms *localkms.KMS, activityLogger api.ActivityLogger,
+func createIssuerInitiatedInteraction(t *testing.T, kms *localkms.KMS, activityLogger api.ActivityLogger,
 	requestURI string, additionalHeaders *api.Headers, disableTLSVerification bool,
 ) *openid4ci.IssuerInitiatedInteraction {
 	t.Helper()

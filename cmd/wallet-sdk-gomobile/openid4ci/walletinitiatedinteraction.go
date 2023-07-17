@@ -9,6 +9,8 @@ package openid4ci
 import (
 	"errors"
 
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
+
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -53,7 +55,8 @@ func NewWalletInitiatedInteraction( //nolint: dupl // Similar looking but for di
 	opts *InteractionOpts,
 ) (*WalletInitiatedInteraction, error) {
 	if args == nil {
-		return nil, errors.New("args object must be provided")
+		return nil, wrapper.ToMobileError(walleterror.NewInvalidSDKUsageError(
+			openid4cigoapi.ErrorModule, errors.New("args object must be provided")))
 	}
 
 	if opts == nil {
@@ -121,8 +124,13 @@ func (i *WalletInitiatedInteraction) CreateAuthorizationURL(clientID, redirectUR
 		credentialTypes = api.NewStringArray()
 	}
 
-	return i.goAPIInteraction.CreateAuthorizationURL(clientID, redirectURI, credentialFormat, credentialTypes.Strings,
-		openid4cigoapi.WithScopes(opts.scopes.Strings))
+	authorizationURL, err := i.goAPIInteraction.CreateAuthorizationURL(clientID, redirectURI, credentialFormat,
+		credentialTypes.Strings, openid4cigoapi.WithScopes(opts.scopes.Strings))
+	if err != nil {
+		return "", wrapper.ToMobileErrorWithTrace(err, i.oTel)
+	}
+
+	return authorizationURL, nil
 }
 
 // RequestCredential requests credential(s) from the issuer. This method is the final step in the
@@ -135,7 +143,7 @@ func (i *WalletInitiatedInteraction) RequestCredential(vm *api.VerificationMetho
 ) (*verifiable.CredentialsArray, error) {
 	signer, err := i.createSigner(vm)
 	if err != nil {
-		return nil, err
+		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
 
 	credentials, err := i.goAPIInteraction.RequestCredential(signer, redirectURIWithAuthCode)
@@ -148,7 +156,12 @@ func (i *WalletInitiatedInteraction) RequestCredential(vm *api.VerificationMetho
 
 // DynamicClientRegistrationSupported indicates whether the issuer supports dynamic client registration.
 func (i *WalletInitiatedInteraction) DynamicClientRegistrationSupported() (bool, error) {
-	return i.goAPIInteraction.DynamicClientRegistrationSupported()
+	supported, err := i.goAPIInteraction.DynamicClientRegistrationSupported()
+	if err != nil {
+		return false, wrapper.ToMobileErrorWithTrace(err, i.oTel)
+	}
+
+	return supported, nil
 }
 
 // DynamicClientRegistrationEndpoint returns the issuer's dynamic client registration endpoint.
@@ -156,17 +169,23 @@ func (i *WalletInitiatedInteraction) DynamicClientRegistrationSupported() (bool,
 // if DynamicClientRegistrationSupported returns true.
 // This method will return an error if the issuer does not support dynamic client registration.
 func (i *WalletInitiatedInteraction) DynamicClientRegistrationEndpoint() (string, error) {
-	return i.goAPIInteraction.DynamicClientRegistrationEndpoint()
+	endpoint, err := i.goAPIInteraction.DynamicClientRegistrationEndpoint()
+	if err != nil {
+		return "", wrapper.ToMobileErrorWithTrace(err, i.oTel)
+	}
+
+	return endpoint, nil
 }
 
 func (i *WalletInitiatedInteraction) createSigner(vm *api.VerificationMethod) (*common.JWSSigner, error) {
 	if vm == nil {
-		return nil, errors.New("verification method must be provided")
+		return nil, walleterror.NewInvalidSDKUsageError(openid4cigoapi.ErrorModule,
+			errors.New("verification method must be provided"))
 	}
 
 	signer, err := common.NewJWSSigner(vm.ToSDKVerificationMethod(), i.crypto)
 	if err != nil {
-		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
+		return nil, err
 	}
 
 	return signer, nil

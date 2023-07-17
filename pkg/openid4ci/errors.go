@@ -6,41 +6,51 @@ SPDX-License-Identifier: Apache-2.0
 
 package openid4ci
 
-// Constants' names and reasons are obvious so they do not require additional comments.
+// Constants' names and reasons are obvious, so they do not require additional comments.
 // nolint:golint,nolintlint
 const (
-	module                                    = "OCI"
-	NoClientConfigProvidedError               = "NO_CLIENT_CONFIG_PROVIDED"
-	ClientConfigNoDIDResolverProvidedError    = "CLIENT_CONFIG_NO_DID_RESOLVER_PROVIDED"
+	ErrorModule                               = "OCI"
 	InvalidIssuanceURIError                   = "INVALID_ISSUANCE_URI"
 	InvalidCredentialOfferError               = "INVALID_CREDENTIAL_OFFER" //nolint:gosec //false positive
 	UnsupportedCredentialTypeInOfferError     = "UNSUPPORTED_CREDENTIAL_TYPE_IN_OFFER"
-	PINRequiredError                          = "PIN_REQUIRED"
-	IssuerOpenIDConfigFetchFailedError        = "ISSUER_OPENID_FETCH_FAILED"
+	IssuerOpenIDConfigFetchFailedError        = "ISSUER_OPENID_CONFIG_FETCH_FAILED"
 	MetadataFetchFailedError                  = "METADATA_FETCH_FAILED"
-	TokenFetchFailedError                     = "TOKEN_FETCH_FAILED" //nolint:gosec //false positive
 	JWTSigningFailedError                     = "JWT_SIGNING_FAILED"
-	CredentialFetchFailedError                = "CREDENTIAL_FETCH_FAILED" //nolint:gosec //false positive
-	KeyIDNotContainDIDPartError               = "KEY_ID_NOT_CONTAIN_DID_PART"
+	KeyIDMissingDIDPartError                  = "KEY_ID_MISSING_DID_PART"
 	CredentialParseError                      = "CREDENTIAL_PARSE_FAILED"                     //nolint:gosec,lll //false positive, can't shorten
 	StateInRedirectURINotMatchingAuthURLError = "STATE_IN_REDIRECT_URI_NOT_MATCHING_AUTH_URL" //nolint:gosec,lll //false positive, can't shorten
+	InvalidTokenRequestError                  = "INVALID_TOKEN_REQUEST"                       //nolint:gosec,lll //false positive, can't shorten
+	InvalidGrantError                         = "INVALID_GRANT"
+	InvalidClientError                        = "INVALID_CLIENT"
+	OtherTokenRequestError                    = "OTHER_TOKEN_REQUEST_ERROR"      //nolint:gosec,lll //false positive, can't shorten
+	OtherCredentialRequestError               = "OTHER_CREDENTIAL_REQUEST_ERROR" //nolint:gosec,lll //false positive, can't shorten
+	InvalidCredentialRequestError             = "INVALID_CREDENTIAL_REQUEST"     //nolint:gosec,lll //false positive, can't shorten
+	InvalidTokenError                         = "INVALID_TOKEN"
+	UnsupportedCredentialFormatError          = "UNSUPPORTED_CREDENTIAL_FORMAT"
+	UnsupportedCredentialTypeError            = "UNSUPPORTED_CREDENTIAL_TYPE"
+	InvalidOrMissingProofError                = "INVALID_OR_MISSING_PROOF"
 )
 
-// Constants' names and reasons are obvious so they do not require additional comments.
+// Constants' names and reasons are obvious, so they do not require additional comments.
 // nolint:golint,nolintlint
 const (
-	NoClientConfigProvidedCode = iota
-	ClientConfigNoDIDResolverProvidedCode
-	InvalidIssuanceURICode
-	InvalidCredentialOfferCode
-	UnsupportedCredentialTypeInOfferCode
-	PINRequiredCode
-	IssuerOpenIDConfigFetchFailedCode
-	MetadataFetchFailedCode
-	TokenFetchFailedCode
-	JWTSigningFailedCode
-	CredentialFetchFailedCode
-	KeyIDNotContainDIDPartCode
-	CredentialParseFailedCode
-	StateInRedirectURINotMatchingAuthURLCode
+	InvalidIssuanceURICode                   = 0
+	InvalidCredentialOfferCode               = 1
+	UnsupportedCredentialTypeInOfferCode     = 2
+	IssuerOpenIDConfigFetchFailedCode        = 3
+	MetadataFetchFailedCode                  = 4
+	JWTSigningFailedCode                     = 5
+	KeyIDMissingDIDPartCode                  = 6
+	CredentialParseFailedCode                = 7
+	StateInRedirectURINotMatchingAuthURLCode = 8
+	InvalidTokenRequestErrorCode             = 9
+	InvalidGrantErrorCode                    = 10
+	InvalidClientErrorCode                   = 11
+	OtherTokenResponseErrorCode              = 12
+	OtherCredentialRequestErrorCode          = 13
+	InvalidCredentialRequestErrorCode        = 14
+	InvalidTokenErrorCode                    = 15
+	UnsupportedCredentialFormatErrorCode     = 16
+	UnsupportedCredentialTypeErrorCode       = 17
+	InvalidOrMissingProofErrorCode           = 18
 )

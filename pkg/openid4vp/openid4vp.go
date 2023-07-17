@@ -237,7 +237,7 @@ func (o *Interaction) fetchRequestObject() (string, error) {
 	endpointURL := strings.TrimPrefix(o.authorizationRequest, requestURIPrefix)
 
 	respBytes, err := httprequest.New(o.httpClient, o.metricsLogger).Do(http.MethodGet, endpointURL, "", nil,
-		fmt.Sprintf(fetchRequestObjectEventText, endpointURL), getQueryEventText)
+		fmt.Sprintf(fetchRequestObjectEventText, endpointURL), getQueryEventText, nil)
 	if err != nil {
 		return "", err
 	}
@@ -250,7 +250,7 @@ func (o *Interaction) sendAuthorizedResponse(responseBody string) error {
 		o.requestObject.RedirectURI, "application/x-www-form-urlencoded",
 		bytes.NewBuffer([]byte(responseBody)),
 		fmt.Sprintf(sendAuthorizedResponseEventText, o.requestObject.RedirectURI),
-		presentCredentialEventText)
+		presentCredentialEventText, nil)
 	if err != nil {
 		return walleterror.NewExecutionError(
 			module,

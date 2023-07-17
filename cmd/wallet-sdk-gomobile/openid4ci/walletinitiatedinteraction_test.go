@@ -21,7 +21,7 @@ import (
 	goapiopenid4ci "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
 
-func TestWalletInitiatedInteraction(t *testing.T) {
+func TestWalletInitiatedInteraction_Flow(t *testing.T) {
 	issuerServerHandler := &mockIssuerServerHandler{
 		t:                  t,
 		credentialResponse: sampleCredentialResponse,
@@ -75,7 +75,8 @@ func TestWalletInitiatedInteraction(t *testing.T) {
 	require.False(t, dynamicClientRegistrationSupported)
 
 	dynamicClientRegistrationEndpoint, err := interaction.DynamicClientRegistrationEndpoint()
-	require.EqualError(t, err, "issuer does not support dynamic client registration")
+	requireErrorContains(t, err,
+		"INVALID_SDK_USAGE(OCI3-0000):issuer does not support dynamic client registration")
 	require.Empty(t, dynamicClientRegistrationEndpoint)
 
 	credentialTypes := api.NewStringArray().Append("type")
@@ -100,6 +101,46 @@ func TestWalletInitiatedInteraction(t *testing.T) {
 	}, redirectURIWithParams, nil)
 	require.NoError(t, err)
 	require.NotNil(t, result)
+}
+
+func TestNewWalletInitiatedInteraction(t *testing.T) {
+	interaction, err := openid4ci.NewWalletInitiatedInteraction(nil, nil)
+	requireErrorContains(t, err, "INVALID_SDK_USAGE(OCI3-0000):args object must be provided")
+	require.Nil(t, interaction)
+}
+
+func TestWalletInitiatedInteraction_DynamicClientRegistrationSupported_Failure(t *testing.T) {
+	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+	require.NoError(t, err)
+
+	resolver := &mockResolver{keyWriter: kms}
+
+	requiredArgs := openid4ci.NewWalletInitiatedInteractionArgs("", kms.GetCrypto(), resolver)
+
+	interaction, err := openid4ci.NewWalletInitiatedInteraction(requiredArgs, nil)
+	require.NoError(t, err)
+	require.NotNil(t, interaction)
+
+	supported, err := interaction.DynamicClientRegistrationSupported()
+	requireErrorContains(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED")
+	require.False(t, supported)
+}
+
+func TestWalletInitiatedInteraction_RequestCredential_Failure(t *testing.T) {
+	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+	require.NoError(t, err)
+
+	resolver := &mockResolver{keyWriter: kms}
+
+	requiredArgs := openid4ci.NewWalletInitiatedInteractionArgs("", kms.GetCrypto(), resolver)
+
+	interaction, err := openid4ci.NewWalletInitiatedInteraction(requiredArgs, nil)
+	require.NoError(t, err)
+	require.NotNil(t, interaction)
+
+	credentials, err := interaction.RequestCredential(nil, "", nil)
+	requireErrorContains(t, err, "INVALID_SDK_USAGE(OCI3-0000):verification method must be provided")
+	require.Nil(t, credentials)
 }
 
 func getStateFromAuthURL(t *testing.T, authURL string) string {
