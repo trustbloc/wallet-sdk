@@ -7,10 +7,14 @@ module github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js
 go 1.20
 
 require (
+	github.com/google/uuid v1.3.0
 	github.com/hyperledger/aries-framework-go/component/kmscrypto v0.0.0-20230622082138-3ffab1691857
-	github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230622171716-43af8054a539
+	github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230718141804-b2fdf798c242
 	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20230704180706-7159d2ef444a
+	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20230427134832-0c9969493bd3
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20230615141038-5d444d6c36de
+	github.com/hyperledger/aries-framework-go/test/component v0.0.0-20220428211718-66cc046674a1
+	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.1
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 )
@@ -18,7 +22,7 @@ require (
 require (
 	github.com/IBM/mathlib v0.0.3-0.20230605104224-932ab92f2ce0 // indirect
 	github.com/VictoriaMetrics/fastcache v1.5.7 // indirect
-	github.com/btcsuite/btcd v0.22.0-beta // indirect
+	github.com/btcsuite/btcd v0.22.3 // indirect
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/cenkalti/backoff/v4 v4.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
@@ -30,13 +34,11 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/tink/go v1.7.0 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/hyperledger/aries-framework-go v0.1.9-0.20221025204933-b807371b6f1e // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk v0.0.0-20230622181036-ef011d8df3d5 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/longform v0.0.0-20230622181036-ef011d8df3d5 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v1.0.0-rc4.0.20230622155445-c7c1db73c62a // indirect
 	github.com/hyperledger/aries-framework-go/component/log v0.0.0-20230615141038-5d444d6c36de // indirect
-	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20230427134832-0c9969493bd3 // indirect
 	github.com/hyperledger/aries-framework-go/component/vdr v0.0.0-20230622171716-43af8054a539 // indirect
 	github.com/hyperledger/fabric-amcl v0.0.0-20230602173724-9e02669dceb2 // indirect
 	github.com/hyperledger/ursa-wrapper-go v0.3.1 // indirect
@@ -52,7 +54,6 @@ require (
 	github.com/multiformats/go-multibase v0.1.1 // indirect
 	github.com/multiformats/go-multihash v0.0.14 // indirect
 	github.com/multiformats/go-varint v0.0.6 // indirect
-	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
