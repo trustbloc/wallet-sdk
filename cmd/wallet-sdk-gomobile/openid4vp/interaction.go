@@ -19,7 +19,7 @@ import (
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
+	credentialInquirer "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
@@ -30,6 +30,7 @@ import (
 type goAPIOpenID4VP interface {
 	GetQuery() (*presexch.PresentationDefinition, error)
 	PresentCredential(credentials []*afgoverifiable.Credential) error
+	PresentCredentialUnsafe(credential *afgoverifiable.Credential) error
 	VerifierDisplayData() (*openid4vp.VerifierDisplayData, error)
 }
 
@@ -40,7 +41,7 @@ type Interaction struct {
 	ldDocumentLoader api.LDDocumentLoader
 	goAPIOpenID4VP   goAPIOpenID4VP
 	didResolver      api.DIDResolver
-	inquirer         *credential.Inquirer
+	inquirer         *credentialInquirer.Inquirer
 	oTel             *otel.Trace
 }
 
@@ -103,10 +104,10 @@ func NewInteraction(args *Args, opts *Opts) (*Interaction, error) { //nolint:fun
 		}
 	}
 
-	inquirerOpts := credential.NewInquirerOpts()
+	inquirerOpts := credentialInquirer.NewInquirerOpts()
 	inquirerOpts.SetDocumentLoader(opts.documentLoader)
 
-	inquirer, err := credential.NewInquirer(inquirerOpts)
+	inquirer, err := credentialInquirer.NewInquirer(inquirerOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +158,17 @@ func (o *Interaction) VerifierDisplayData() (*VerifierDisplayData, error) {
 // PresentCredential presents credentials to redirect uri from request object.
 func (o *Interaction) PresentCredential(credentials *verifiable.CredentialsArray) error {
 	return wrapper.ToMobileErrorWithTrace(o.goAPIOpenID4VP.PresentCredential(unwrapVCs(credentials)), o.oTel)
+}
+
+// PresentCredentialUnsafe presents a single credential to redirect uri from
+// request object.
+//
+// Note: this variant of PresentCredential will skip client-side presentation
+// definition constraint validation. All input descriptors will accept the
+// provided credential, at least in terms of issuer fields, and subject data
+// fields.
+func (o *Interaction) PresentCredentialUnsafe(credential *verifiable.Credential) error {
+	return wrapper.ToMobileErrorWithTrace(o.goAPIOpenID4VP.PresentCredentialUnsafe(credential.VC), o.oTel)
 }
 
 // OTelTraceID returns open telemetry trace id.

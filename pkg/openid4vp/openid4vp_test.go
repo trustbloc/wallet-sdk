@@ -284,6 +284,28 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("Success - Unsafe", func(t *testing.T) {
+		httpClient := &mock.HTTPClientMock{
+			StatusCode: 200,
+		}
+
+		instance := New(
+			requestObjectJWT,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockDoc},
+			&cryptoMock{SignVal: []byte(testSignature)},
+			lddl,
+			WithHTTPClient(httpClient),
+		)
+
+		query, err := instance.GetQuery()
+		require.NoError(t, err)
+		require.NotNil(t, query)
+
+		err = instance.PresentCredentialUnsafe(singleCred[0])
+		require.NoError(t, err)
+	})
+
 	t.Run("GetQuery not called", func(t *testing.T) {
 		httpClient := &mock.HTTPClientMock{
 			StatusCode: 200,
@@ -314,6 +336,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			&didResolverMock{ResolveValue: mockDoc},
 			&cryptoMock{SignVal: []byte(testSignature)},
 			lddl,
+			nil,
 		)
 
 		require.NoError(t, err)
@@ -326,6 +349,69 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		vpToken, err := base64.RawURLEncoding.DecodeString(strings.Split(response.VPTokenJWS, ".")[1])
 		require.NoError(t, err)
 		require.Contains(t, string(vpToken), "test123456")
+	})
+
+	t.Run("unsafe skip constraint validation", func(t *testing.T) {
+		strType := "string"
+		required := presexch.Required
+
+		pd := &presexch.PresentationDefinition{
+			ID: uuid.NewString(),
+			InputDescriptors: []*presexch.InputDescriptor{{
+				ID: uuid.NewString(),
+				Schema: []*presexch.Schema{{
+					URI: fmt.Sprintf("%s#%s", verifiable.ContextID, verifiable.VCType),
+				}},
+				// These constraints aren't satisfied by the provided VC...
+				Constraints: &presexch.Constraints{
+					LimitDisclosure: &required,
+					Fields: []*presexch.Field{{
+						Path: []string{"$.credentialSubject.taxResidency", "$.vc.credentialSubject.taxResidency"},
+						Filter: &presexch.Filter{
+							Type: &strType,
+						},
+					}},
+				},
+			}},
+		}
+
+		req := &requestObject{
+			Nonce: "test123456",
+			State: "test34566",
+			Claims: requestObjectClaims{
+				VPToken: vpToken{
+					PresentationDefinition: pd,
+				},
+			},
+		}
+
+		// ...so creating a VP fails...
+		response, err := createAuthorizedResponse(
+			singleCred,
+			req,
+			&didResolverMock{ResolveValue: mockDoc},
+			&cryptoMock{SignVal: []byte(testSignature)},
+			lddl,
+			nil,
+		)
+
+		require.Nil(t, response)
+		require.ErrorIs(t, err, presexch.ErrNoCredentials)
+
+		// ...but creating a VP without constraint validation succeeds...
+		response, err = createAuthorizedResponse(
+			singleCred,
+			req,
+			&didResolverMock{ResolveValue: mockDoc},
+			&cryptoMock{SignVal: []byte(testSignature)},
+			lddl,
+			&presentOpts{
+				ignoreConstraints: true,
+			},
+		)
+
+		require.NoError(t, err)
+		require.Equal(t, response.State, "test34566")
 	})
 
 	t.Run("no credentials provided", func(t *testing.T) {
@@ -386,6 +472,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 					&didResolverMock{ResolveValue: mockDoc},
 					&cryptoMock{},
 					lddl,
+					nil,
 				)
 
 				require.Error(t, err)
@@ -398,11 +485,11 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		expectErr := errors.New("resolve failed")
 
 		_, err := createAuthorizedResponse(singleCred, mockRequestObject,
-			&didResolverMock{ResolveErr: expectErr}, &cryptoMock{}, lddl)
+			&didResolverMock{ResolveErr: expectErr}, &cryptoMock{}, lddl, nil)
 		require.ErrorIs(t, err, expectErr)
 
 		_, err = createAuthorizedResponse(credentials, mockRequestObject,
-			&didResolverMock{ResolveErr: expectErr}, &cryptoMock{}, lddl)
+			&didResolverMock{ResolveErr: expectErr}, &cryptoMock{}, lddl, nil)
 
 		require.ErrorIs(t, err, expectErr)
 	})
@@ -410,7 +497,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	t.Run("signing DID has no signing key", func(t *testing.T) {
 		_, err := createAuthorizedResponse(singleCred, mockRequestObject, &didResolverMock{ResolveValue: &did.DocResolution{
 			DIDDocument: &did.Doc{},
-		}}, &cryptoMock{}, lddl)
+		}}, &cryptoMock{}, lddl, nil)
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "no assertion method for signing")
@@ -425,6 +512,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			&didResolverMock{ResolveValue: mockDoc},
 			&cryptoMock{SignErr: expectErr},
 			lddl,
+			nil,
 		)
 
 		require.ErrorIs(t, err, expectErr)
