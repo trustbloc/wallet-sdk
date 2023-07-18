@@ -5,6 +5,8 @@ The TrustBloc Demo app demonstrates the wallet-sdk API usage. At a high level, t
 - OpenID4CI Issuance APIs
 - OpenID4VP Presentation APIs 
 
+The Demo app built using Flutter framework currently supports Android, iOS and Web App targets.
+
 ### Installation
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
@@ -31,9 +33,13 @@ samples, guidance on mobile development, and a full API reference.
   - Apple Developer Account
 - Android
   - For android setup - install [Android Studio](https://docs.flutter.dev/get-started/install/macos#android-setup)
+- Web App
+  - For android setup - install [Android Studio](https://docs.flutter.dev/get-started/install/macos#android-setup)
 
 ### Build and Run
-- Build the SDK Bindings by following this [document](https://github.com/trustbloc/wallet-sdk/blob/main/cmd/wallet-sdk-gomobile/README.md)
+- Build the SDK Bindings 
+  - For Android/iOS, [refer here](https://github.com/trustbloc/wallet-sdk/blob/main/cmd/wallet-sdk-gomobile/README.md).
+  - For Web App, [refer here](https://github.com/trustbloc/wallet-sdk/blob/main/cmd/wallet-sdk-js/README.md).
 - Android
   - Open the app in Android Studio
   - Either run the Emulator for Android or attach the usb device, Android studio will detect the device to run the app on your phone/test device.
@@ -42,6 +48,8 @@ samples, guidance on mobile development, and a full API reference.
   - run `pod install` in the `ios` folder
   - Open the app in XCode
   - Install app to Simulator or Device from the XCode Build tab
+- Web App
+  - run `flutter run -d chrome` from the terminal
 
 ### Build with WalletSDK from Maven
 - Android

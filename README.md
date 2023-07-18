@@ -18,11 +18,14 @@ This project contains:
   - To jump straight to usage documentation, see [here](cmd/wallet-sdk-gomobile/docs/usage.md).
 - [Scripts to generate Android and iOS-compatible bindings](cmd/wallet-sdk-gomobile/README.md)
   - Allows the Go SDK to be used in an Android or iOS app.
+- [EXPERIMENTAL - Scripts to generate JavaScript/WebAssembly(WASM) bindings](cmd/wallet-sdk-js/README.md)
+  - Allows the Go SDK to be used in a Web Application. 
 
-The repo also has code to generate a [Reference iOS or Android App](demo/app/) built using the [Flutter](https://flutter.dev/) framework.
+The repo also has code to generate a [Reference iOS, Android or Web App](demo/app/) built using the [Flutter](https://flutter.dev/) framework.
 
 ## Build/Run
 - [GoMobile Bindings (iOS/Android)](cmd/wallet-sdk-gomobile/README.md)
+- [JavaScript/WebAssembly(WASM) Bindings](cmd/wallet-sdk-js/README.md)
 - [Demo/Reference App](demo/app/README.md)
 
 ## Library/Package
