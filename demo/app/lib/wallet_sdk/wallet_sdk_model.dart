@@ -73,6 +73,28 @@ class InputDescriptor {
   }
 }
 
+class SupportedCredentials {
+  final String format;
+  final List<String> types;
+
+  const SupportedCredentials({
+    required this.format,
+    required this.types,
+  });
+
+  @override
+  String toString() {
+    return 'SupportedCredentials{ format: $format, types: $types }';
+  }
+
+  factory SupportedCredentials.fromMap(Map<String, dynamic> map) {
+    return SupportedCredentials(
+      format: map['format'] as String,
+      types: map['types'].cast<String>(),
+    );
+  }
+}
+
 class CredentialDisplayData {
   final String issuerName;
   final String overviewName;

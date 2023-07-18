@@ -1,4 +1,5 @@
 import 'package:app/views/credential_list.dart';
+import 'package:app/views/wallet_initiated_connect.dart';
 import 'package:app/views/settings.dart';
 import 'package:flutter/material.dart';
 import 'scanner.dart';
@@ -16,6 +17,7 @@ class _DashboardState extends State<Dashboard> {
   static final _widgetOptions = <Widget>[
     const CredentialList(),
     const QRScanner(),
+    const ConnectIssuerList(),
     const Settings(),
   ];
 
@@ -32,6 +34,7 @@ class _DashboardState extends State<Dashboard> {
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         items:  const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
               icon: Icon(Icons.home),
@@ -42,12 +45,16 @@ class _DashboardState extends State<Dashboard> {
             label: 'Scan QR',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.list),
+            label: 'Connect',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: 'Settings',
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedLabelStyle: const TextStyle(fontFamily: 'SF Pro', fontSize: 14, fontWeight: FontWeight.bold),
+        selectedLabelStyle: const TextStyle(fontFamily: 'SF Pro', fontSize: 12, fontWeight: FontWeight.bold),
         selectedItemColor: const Color(0xffEC857C),
         onTap: _onItemTapped,
       ),
