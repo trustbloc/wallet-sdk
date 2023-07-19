@@ -308,7 +308,7 @@ func createAuthorizedResponse(
 	}
 }
 
-func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo
+func createAuthorizedResponseOneCred( //nolint:funlen
 	credential *verifiable.Credential,
 	requestObject *requestObject,
 	didResolver api.DIDResolver,
@@ -326,11 +326,6 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo
 	var presentation *verifiable.Presentation
 
 	pd := requestObject.Claims.VPToken.PresentationDefinition
-
-	// TODO: https://github.com/trustbloc/wallet-sdk/issues/165 remove this code after to re enable Schema check.
-	for i := range pd.InputDescriptors {
-		pd.InputDescriptors[i].Schema = nil
-	}
 
 	if opts != nil && opts.ignoreConstraints {
 		for i := range pd.InputDescriptors {
@@ -395,11 +390,6 @@ func createAuthorizedResponseMultiCred( //nolint:funlen
 	documentLoader ld.DocumentLoader,
 ) (*authorizedResponse, error) {
 	pd := requestObject.Claims.VPToken.PresentationDefinition
-
-	// TODO: https://github.com/trustbloc/wallet-sdk/issues/165 remove this code after to re enable Schema check.
-	for i := range pd.InputDescriptors {
-		pd.InputDescriptors[i].Schema = nil
-	}
 
 	presentations, submission, err := pd.CreateVPArray(
 		credentials,
