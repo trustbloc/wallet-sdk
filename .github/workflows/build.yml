@@ -431,7 +431,7 @@ jobs:
           echo $PATH
           
           cd ./cmd/wallet-sdk-js
-          sed -i 's/"version": "0.1.0"/"version": "'${ env.NEW_VERSION }'"/g' package.json
+          sed -i 's/"version": "0.1.0"/"version": "'${{ env.NEW_VERSION }}'"/g' package.json
           sed -i 's#"name": "@trustbloc/wallet-sdk"#"name": "@trustbloc-cicd/wallet-sdk"#g' package.json
           sed -i 's#"url": "git://github.com/trustbloc/wallet-sdk.git"#"url": "git://github.com/trustbloc-cicd/snapshot.git"#g' package.json
           
