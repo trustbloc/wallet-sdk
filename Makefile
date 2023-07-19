@@ -50,7 +50,7 @@ generate-ios-bindings:
 
 .PHONY: generate-js-bindings
 generate-js-bindings:
-	@GIT_REV="${GIT_REV}" NEW_VERSION="${NEW_VERSION}" BUILD_TIME="${BUILD_TIME}" make generate-js-bindings -C ./cmd/wallet-sdk-js
+	@make generate-js-bindings -C ./cmd/wallet-sdk-js
 
 .PHONY: copy-android-bindings
 copy-android-bindings:

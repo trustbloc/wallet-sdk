@@ -1,5 +1,5 @@
 {
-  "name": "wallet-sdk",
+  "name": "@trustbloc/wallet-sdk",
   "version": "0.0.1",
   "description": "Implements a simplified interface to interop with JS for wallet-sdk.",
   "main": "dist/agent.js",
@@ -17,7 +17,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/trustbloc/wallet-sdk.git"
+    "url": "https://github.com/trustbloc/wallet-sdk.git",
+    "directory": "cmd/wallet-sdk-js"
   },
   "keywords": [
     "wallet",
