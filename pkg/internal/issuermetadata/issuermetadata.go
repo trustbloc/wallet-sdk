@@ -40,7 +40,7 @@ func Get(issuerURI string, httpClient httpClient, metricsLogger api.MetricsLogge
 
 	responseBytes, err := httprequest.New(httpClient, metricsLogger).Do(
 		http.MethodGet, metadataEndpoint, "", nil,
-		fmt.Sprintf(fetchIssuerMetadataViaGETReqEventText, metadataEndpoint), parentEvent)
+		fmt.Sprintf(fetchIssuerMetadataViaGETReqEventText, metadataEndpoint), parentEvent, nil)
 	if err != nil {
 		return nil, fmt.Errorf("openid configuration endpoint: %w", err)
 	}

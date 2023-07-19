@@ -85,3 +85,7 @@ type proof struct {
 	CNonce          string `json:"c_nonce,omitempty"`
 	CNonceExpiresIn int    `json:"c_nonce_expires_in,omitempty"`
 }
+
+type errorResponse struct {
+	Error string `json:"error,omitempty"`
+}

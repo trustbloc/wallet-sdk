@@ -35,9 +35,11 @@ func New(httpClient httpClient, metricsLogger api.MetricsLogger) *Request {
 	}
 }
 
-// Do executes request in background context and read response body.
+// Do executes the request in the background context and reads the response body.
+// If a status other than 200 is received from the endpoint, then errorResponseHandler is called to generate the
+// error that gets returned. If errorResponseHandler is nil, then a generic error response handler will be used.
 func (r *Request) Do(method, endpointURL, contentType string, body io.Reader,
-	event, parentEvent string,
+	event, parentEvent string, errorResponseHandler func(statusCode int, responseBody []byte) error,
 ) ([]byte, error) {
 	req, err := http.NewRequestWithContext(context.Background(), method, endpointURL, body)
 	if err != nil {
@@ -77,10 +79,18 @@ func (r *Request) Do(method, endpointURL, contentType string, body io.Reader,
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf(
-			"expected status code %d but got status code %d with response body %s instead",
-			http.StatusOK, resp.StatusCode, respBytes)
+		if errorResponseHandler == nil {
+			errorResponseHandler = genericErrorResponseHandler
+		}
+
+		return nil, errorResponseHandler(resp.StatusCode, respBytes)
 	}
 
 	return respBytes, nil
+}
+
+func genericErrorResponseHandler(statusCode int, respBytes []byte) error {
+	return fmt.Errorf(
+		"expected status code %d but got status code %d with response body %s instead",
+		http.StatusOK, statusCode, respBytes)
 }

@@ -46,7 +46,8 @@ func TestWalletInitiatedInteraction(t *testing.T) {
 	require.False(t, dynamicClientRegistrationSupported)
 
 	dynamicClientRegistrationEndpoint, err := interaction.DynamicClientRegistrationEndpoint()
-	require.EqualError(t, err, "issuer does not support dynamic client registration")
+	require.EqualError(t, err,
+		"INVALID_SDK_USAGE(OCI3-0000):issuer does not support dynamic client registration")
 	require.Empty(t, dynamicClientRegistrationEndpoint)
 
 	types := []string{"VerifiableCredential", "VerifiedEmployee"}

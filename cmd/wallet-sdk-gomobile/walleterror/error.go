@@ -17,6 +17,7 @@ type Error struct {
 	Category string `json:"category"`
 	Details  string `json:"details"`
 	TraceID  string `json:"trace_id"`
+	Full     string `json:"full"`
 }
 
 // Parse used to parse exception message on mobile side.

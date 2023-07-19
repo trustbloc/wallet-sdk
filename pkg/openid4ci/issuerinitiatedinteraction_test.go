@@ -52,8 +52,10 @@ type mockIssuerServerHandler struct {
 	openIDConfigEndpointShouldFail                          bool
 	issuerMetadata                                          string
 	tokenRequestShouldFail                                  bool
+	tokenRequestErrorResponse                               string
 	tokenRequestShouldGiveUnmarshallableResponse            bool
 	credentialRequestShouldFail                             bool
+	credentialRequestErrorResponse                          string
 	credentialRequestShouldGiveUnmarshallableResponse       bool
 	credentialResponse                                      []byte
 }
@@ -101,7 +103,12 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 		switch {
 		case m.tokenRequestShouldFail:
 			writer.WriteHeader(http.StatusInternalServerError)
-			_, err = writer.Write([]byte("test failure"))
+
+			if m.tokenRequestErrorResponse != "" {
+				_, err = writer.Write([]byte(m.tokenRequestErrorResponse))
+			} else {
+				_, err = writer.Write([]byte("test failure"))
+			}
 		case m.tokenRequestShouldGiveUnmarshallableResponse:
 			_, err = writer.Write([]byte("invalid"))
 		default:
@@ -112,7 +119,12 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 		switch {
 		case m.credentialRequestShouldFail:
 			writer.WriteHeader(http.StatusInternalServerError)
-			_, err = writer.Write([]byte("test failure"))
+
+			if m.credentialRequestErrorResponse != "" {
+				_, err = writer.Write([]byte(m.credentialRequestErrorResponse))
+			} else {
+				_, err = writer.Write([]byte("test failure"))
+			}
 		case m.credentialRequestShouldGiveUnmarshallableResponse:
 			_, err = writer.Write([]byte("invalid"))
 		default:
@@ -182,7 +194,7 @@ func TestNewInteraction(t *testing.T) {
 	t.Run("Fail to get credential offer", func(t *testing.T) {
 		t.Run("Credential offer query parameter missing", func(t *testing.T) {
 			interaction, err := openid4ci.NewIssuerInitiatedInteraction("", getTestClientConfig(t))
-			require.EqualError(t, err, "INVALID_ISSUANCE_URI(OCI0-0002):credential offer query "+
+			require.EqualError(t, err, "INVALID_ISSUANCE_URI(OCI0-0000):credential offer query "+
 				"parameter missing from initiate issuance URI")
 			require.Nil(t, interaction)
 		})
@@ -192,7 +204,7 @@ func TestNewInteraction(t *testing.T) {
 			credentialOfferIssuanceURI := "openid-credential-offer://?credential_offer_uri=" + escapedCredentialOfferURI
 
 			interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
-			require.EqualError(t, err, "INVALID_CREDENTIAL_OFFER(OCI0-0003):failed to get credential "+
+			require.EqualError(t, err, "INVALID_CREDENTIAL_OFFER(OCI0-0001):failed to get credential "+
 				"offer from the endpoint specified in the credential_offer_uri URL query parameter: "+
 				`Get "BadURL": unsupported protocol scheme ""`)
 			require.Nil(t, interaction)
@@ -212,7 +224,7 @@ func TestNewInteraction(t *testing.T) {
 
 			interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
 
-			require.EqualError(t, err, "INVALID_CREDENTIAL_OFFER(OCI0-0003):failed to get credential offer "+
+			require.EqualError(t, err, "INVALID_CREDENTIAL_OFFER(OCI0-0001):failed to get credential offer "+
 				"from the endpoint specified in the credential_offer_uri URL query parameter: "+
 				"expected status code 200 but got status code 500 "+
 				"with response body test failure instead")
@@ -223,7 +235,7 @@ func TestNewInteraction(t *testing.T) {
 			credentialOfferIssuanceURI := "openid-credential-offer://?credential_offer="
 
 			interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
-			require.EqualError(t, err, "INVALID_CREDENTIAL_OFFER(OCI0-0003):failed to unmarshal "+
+			require.EqualError(t, err, "INVALID_CREDENTIAL_OFFER(OCI0-0001):failed to unmarshal "+
 				"credential offer JSON into a credential offer object: unexpected end of JSON input")
 			require.Nil(t, interaction)
 		})
@@ -255,7 +267,7 @@ func TestNewInteraction(t *testing.T) {
 		credentialOfferIssuanceURI := "openid-vc://?credential_offer=" + credentialOfferEscaped
 
 		interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
-		require.EqualError(t, err, "UNSUPPORTED_CREDENTIAL_TYPE_IN_OFFER(OCI0-0004):unsupported "+
+		require.EqualError(t, err, "UNSUPPORTED_CREDENTIAL_TYPE_IN_OFFER(OCI0-0002):unsupported "+
 			"credential type (UnsupportedType) in credential offer at index 0 of credentials object "+
 			"(must be jwt_vc_json or jwt_vc_json-ld)")
 		require.Nil(t, interaction)
@@ -355,7 +367,7 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 		interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", true))
 
 		authorizationURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
-		require.EqualError(t, err, "METADATA_FETCH_FAILED(OCI1-0007):failed to get issuer metadata: openid "+
+		require.EqualError(t, err, "METADATA_FETCH_FAILED(OCI1-0004):failed to get issuer metadata: openid "+
 			`configuration endpoint: Get "example.com/.well-known/openid-credential-issuer": unsupported protocol scheme ""`)
 		require.Empty(t, authorizationURL)
 	})
@@ -460,7 +472,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
 			}, openid4ci.WithPIN("1234"))
-			require.Contains(t, err.Error(), "ISSUER_OPENID_FETCH_FAILED(OCI1-0006):failed to fetch issuer's "+
+			require.Contains(t, err.Error(), "ISSUER_OPENID_CONFIG_FETCH_FAILED(OCI1-0003):failed to fetch issuer's "+
 				`OpenID configuration: openid configuration endpoint: `+
 				`Get "BadURL/.well-known/openid-configuration": unsupported protocol scheme ""`)
 			require.Nil(t, credentials)
@@ -483,7 +495,8 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				`"http://BadURL": dial tcp: lookup BadURL`)
 			require.Nil(t, credentials)
 		})
-		t.Run("Fail to get token response: server failure", func(t *testing.T) {
+		t.Run("Fail to get token response: server response body is not an errorResponse "+
+			"object", func(t *testing.T) {
 			issuerServerHandler := &mockIssuerServerHandler{t: t, tokenRequestShouldFail: true}
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
@@ -499,8 +512,105 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
 			}, openid4ci.WithPIN("1234"))
-			testutil.RequireErrorContains(t, err, "expected status code 200 but got status code 500"+
-				" with response body test failure instead")
+			testutil.RequireErrorContains(t, err, "OTHER_TOKEN_REQUEST_ERROR")
+			testutil.RequireErrorContains(t, err, "received status code [500]"+
+				" with body [test failure] from issuer's token endpoint")
+			require.Nil(t, credentials)
+		})
+		t.Run("Fail to get token response: invalid token request", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t: t, tokenRequestShouldFail: true,
+				tokenRequestErrorResponse: `{"error":"invalid_request"}`,
+			}
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+				TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+			}
+
+			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
+
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			testutil.RequireErrorContains(t, err, "INVALID_TOKEN_REQUEST")
+			testutil.RequireErrorContains(t, err, "received status code [500]"+
+				` with body [{"error":"invalid_request"}] from issuer's token endpoint`)
+			require.Nil(t, credentials)
+		})
+		t.Run("Fail to get token response: invalid grant", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t: t, tokenRequestShouldFail: true,
+				tokenRequestErrorResponse: `{"error":"invalid_grant"}`,
+			}
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+				TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+			}
+
+			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
+
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			testutil.RequireErrorContains(t, err, "INVALID_GRANT")
+			testutil.RequireErrorContains(t, err, "received status code [500]"+
+				` with body [{"error":"invalid_grant"}] from issuer's token endpoint`)
+			require.Nil(t, credentials)
+		})
+		t.Run("Fail to get token response: invalid client", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t: t, tokenRequestShouldFail: true,
+				tokenRequestErrorResponse: `{"error":"invalid_client"}`,
+			}
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+				TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+			}
+
+			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
+
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			testutil.RequireErrorContains(t, err, "INVALID_CLIENT")
+			testutil.RequireErrorContains(t, err, "received status code [500]"+
+				` with body [{"error":"invalid_client"}] from issuer's token endpoint`)
+			require.Nil(t, credentials)
+		})
+		t.Run("Fail to get token response: other error code", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t: t, tokenRequestShouldFail: true,
+				tokenRequestErrorResponse: `{"error":"someOtherErrorCode"}`,
+			}
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+				TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+			}
+
+			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
+
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			testutil.RequireErrorContains(t, err, "OTHER_TOKEN_REQUEST_ERROR")
+			testutil.RequireErrorContains(t, err, "received status code [500]"+
+				` with body [{"error":"someOtherErrorCode"}] from issuer's token endpoint`)
 			require.Nil(t, credentials)
 		})
 		t.Run("Fail to unmarshal response from issuer token endpoint", func(t *testing.T) {
@@ -523,7 +633,8 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				"issuer's token endpoint: invalid character 'i' looking for beginning of value")
 			require.Nil(t, credentials)
 		})
-		t.Run("Fail to get credential response: server failure", func(t *testing.T) {
+		t.Run("Fail to get credential response: server response body is not an errorResponse "+
+			"object", func(t *testing.T) {
 			issuerServerHandler := &mockIssuerServerHandler{t: t, credentialRequestShouldFail: true}
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
@@ -543,6 +654,162 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			}, openid4ci.WithPIN("1234"))
 			testutil.RequireErrorContains(t, err, "received status code [500] "+
 				"with body [test failure] from issuer's credential endpoint")
+			require.Nil(t, credentials)
+		})
+		t.Run("Fail to get credential response: invalid request", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t: t, credentialRequestShouldFail: true,
+				credentialRequestErrorResponse: `{"error":"invalid_request"}`,
+			}
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+				TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+			}
+
+			issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`, server.URL)
+
+			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
+
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			testutil.RequireErrorContains(t, err, "INVALID_CREDENTIAL_REQUEST")
+			testutil.RequireErrorContains(t, err, "received status code [500] "+
+				`with body [{"error":"invalid_request"}] from issuer's credential endpoint`)
+			require.Nil(t, credentials)
+		})
+		t.Run("Fail to get credential response: invalid token", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t: t, credentialRequestShouldFail: true,
+				credentialRequestErrorResponse: `{"error":"invalid_token"}`,
+			}
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+				TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+			}
+
+			issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`, server.URL)
+
+			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
+
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			testutil.RequireErrorContains(t, err, "INVALID_TOKEN")
+			testutil.RequireErrorContains(t, err, "received status code [500] "+
+				`with body [{"error":"invalid_token"}] from issuer's credential endpoint`)
+			require.Nil(t, credentials)
+		})
+		t.Run("Fail to get credential response: unsupported credential format", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t: t, credentialRequestShouldFail: true,
+				credentialRequestErrorResponse: `{"error":"unsupported_credential_format"}`,
+			}
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+				TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+			}
+
+			issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`, server.URL)
+
+			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
+
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			testutil.RequireErrorContains(t, err, "UNSUPPORTED_CREDENTIAL_FORMAT")
+			testutil.RequireErrorContains(t, err, "received status code [500] "+
+				`with body [{"error":"unsupported_credential_format"}] from issuer's credential endpoint`)
+			require.Nil(t, credentials)
+		})
+		t.Run("Fail to get credential response: unsupported credential type", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t: t, credentialRequestShouldFail: true,
+				credentialRequestErrorResponse: `{"error":"unsupported_credential_type"}`,
+			}
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+				TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+			}
+
+			issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`, server.URL)
+
+			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
+
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			testutil.RequireErrorContains(t, err, "UNSUPPORTED_CREDENTIAL_TYPE")
+			testutil.RequireErrorContains(t, err, "received status code [500] "+
+				`with body [{"error":"unsupported_credential_type"}] from issuer's credential endpoint`)
+			require.Nil(t, credentials)
+		})
+		t.Run("Fail to get credential response: invalid or missing proof", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t: t, credentialRequestShouldFail: true,
+				credentialRequestErrorResponse: `{"error":"invalid_or_missing_proof"}`,
+			}
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+				TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+			}
+
+			issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`, server.URL)
+
+			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
+
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			testutil.RequireErrorContains(t, err, "INVALID_OR_MISSING_PROOF")
+			testutil.RequireErrorContains(t, err, "received status code [500] "+
+				`with body [{"error":"invalid_or_missing_proof"}] from issuer's credential endpoint`)
+			require.Nil(t, credentials)
+		})
+		t.Run("Fail to get credential response: other error code", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t: t, credentialRequestShouldFail: true,
+				credentialRequestErrorResponse: `{"error":"someOtherErrorCode"}`,
+			}
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+				TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+			}
+
+			issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`, server.URL)
+
+			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
+
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			testutil.RequireErrorContains(t, err, "OTHER_CREDENTIAL_REQUEST_ERROR")
+			testutil.RequireErrorContains(t, err, "received status code [500] "+
+				`with body [{"error":"someOtherErrorCode"}] from issuer's credential endpoint`)
 			require.Nil(t, credentials)
 		})
 		t.Run("Fail to get credential response: signature error", func(t *testing.T) {
@@ -604,7 +871,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: "did:example:12345",
 			}, openid4ci.WithPIN("1234"))
-			testutil.RequireErrorContains(t, err, "KEY_ID_NOT_CONTAIN_DID_PART")
+			testutil.RequireErrorContains(t, err, "KEY_ID_MISSING_DID_PART")
 			require.Nil(t, credentials)
 		})
 		t.Run("Fail to unmarshal response from issuer credential endpoint", func(t *testing.T) {
@@ -654,7 +921,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
 			}, openid4ci.WithPIN("1234"))
-			require.EqualError(t, err, "CREDENTIAL_PARSE_FAILED(OCI1-0012):failed to parse credential from "+
+			require.EqualError(t, err, "CREDENTIAL_PARSE_FAILED(OCI1-0007):failed to parse credential from "+
 				"credential response at index 0: unmarshal new credential: unexpected end of JSON input")
 			require.Nil(t, credentials)
 		})
@@ -687,7 +954,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
 			}, openid4ci.WithPIN("1234"))
-			require.EqualError(t, err, "CREDENTIAL_PARSE_FAILED(OCI1-0012):failed to parse credential from "+
+			require.EqualError(t, err, "CREDENTIAL_PARSE_FAILED(OCI1-0007):failed to parse credential from "+
 				"credential response at index 0: "+
 				"decode new JWT credential: JWS decoding: unmarshal VC JWT claims: parse JWT: "+
 				"parse JWT from compact JWS: public key with KID d3cfd36b-4f75-4041-b416-f0a7a3c6b9f6 is not "+
@@ -769,7 +1036,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
 			}, openid4ci.WithPIN("1234"))
-			require.Contains(t, err.Error(), "METADATA_FETCH_FAILED(OCI1-0007):failed to get issuer metadata: "+
+			require.Contains(t, err.Error(), "METADATA_FETCH_FAILED(OCI1-0004):failed to get issuer metadata: "+
 				"openid configuration endpoint: "+
 				"failed to log event (Event=Fetch issuer metadata via an HTTP GET request to http://127.0.0.1:")
 			require.Nil(t, credentials)
@@ -800,7 +1067,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
 			}, openid4ci.WithPIN("1234"))
-			require.Contains(t, err.Error(), "CREDENTIAL_FETCH_FAILED(OCI1-0010):failed to get credential "+
+			require.Contains(t, err.Error(), "failed to get credential "+
 				"response: failed to log event (Event=Fetch credential 1 of 1 via an HTTP POST request to "+
 				"http://127.0.0.1:")
 			require.Nil(t, credentials)
@@ -965,7 +1232,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithAuth(&jwtSignerMock{
 				keyID: mockKeyID,
 			}, redirectURIWithParams)
-			require.EqualError(t, err, "ISSUER_OPENID_FETCH_FAILED(OCI1-0006):failed to fetch issuer's "+
+			require.EqualError(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED(OCI1-0003):failed to fetch issuer's "+
 				"OpenID configuration: openid configuration endpoint: expected status code 200 but got status "+
 				"code 500 with response body test failure instead")
 			require.Nil(t, credentials)
@@ -998,8 +1265,8 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				keyID: mockKeyID,
 				Err:   errors.New("test failure"),
 			}, redirectURIWithParams)
-			require.EqualError(t, err, "CREDENTIAL_FETCH_FAILED(OCI1-0010):failed to get credential "+
-				"response: JWT_SIGNING_FAILED(OCI1-0009):failed to create JWT: sign token failed: create "+
+			require.EqualError(t, err, "failed to get credential "+
+				"response: JWT_SIGNING_FAILED(OCI1-0005):failed to create JWT: sign token failed: create "+
 				"JWS: sign JWS: sign JWS verification data: test failure")
 			require.Nil(t, credentials)
 		})
@@ -1061,7 +1328,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		credentials, err := interaction.RequestCredentialWithAuth(&jwtSignerMock{
 			keyID: mockKeyID,
 		}, redirectURIWithParams)
-		require.EqualError(t, err, "STATE_IN_REDIRECT_URI_NOT_MATCHING_AUTH_URL(OCI1-0013):state in "+
+		require.EqualError(t, err, "STATE_IN_REDIRECT_URI_NOT_MATCHING_AUTH_URL(OCI1-0008):state in "+
 			"redirect URI does not match the state from the authorization URL")
 		require.Nil(t, credentials)
 	})
@@ -1081,7 +1348,8 @@ func TestIssuerInitiatedInteraction_GrantTypes(t *testing.T) {
 	require.False(t, interaction.AuthorizationCodeGrantTypeSupported())
 
 	authorizationCodeGrantParams, err := interaction.AuthorizationCodeGrantParams()
-	require.EqualError(t, err, "issuer does not support the authorization code grant")
+	require.EqualError(t, err,
+		"INVALID_SDK_USAGE(OCI3-0000):issuer does not support the authorization code grant")
 	require.Nil(t, authorizationCodeGrantParams)
 
 	interaction = newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", true))
@@ -1101,13 +1369,13 @@ func TestIssuerInitiatedInteraction_DynamicClientRegistration(t *testing.T) {
 		interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", false))
 
 		supported, err := interaction.DynamicClientRegistrationSupported()
-		require.EqualError(t, err, "ISSUER_OPENID_FETCH_FAILED(OCI1-0006):failed to fetch issuer's "+
+		require.EqualError(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED(OCI1-0003):failed to fetch issuer's "+
 			"OpenID configuration: "+`openid configuration endpoint: Get "example.com/.well-known/openid-configuration"`+
 			`: unsupported protocol scheme ""`)
 		require.False(t, supported)
 
 		endpoint, err := interaction.DynamicClientRegistrationEndpoint()
-		require.EqualError(t, err, "ISSUER_OPENID_FETCH_FAILED(OCI1-0006):failed to fetch issuer's "+
+		require.EqualError(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED(OCI1-0003):failed to fetch issuer's "+
 			"OpenID configuration: "+`openid configuration endpoint: Get "example.com/.well-known/openid-configuration"`+
 			`: unsupported protocol scheme ""`)
 		require.Empty(t, endpoint)
@@ -1129,7 +1397,8 @@ func TestIssuerInitiatedInteraction_DynamicClientRegistration(t *testing.T) {
 		require.False(t, supported)
 
 		endpoint, err := interaction.DynamicClientRegistrationEndpoint()
-		require.EqualError(t, err, "issuer does not support dynamic client registration")
+		require.EqualError(t, err,
+			"INVALID_SDK_USAGE(OCI3-0000):issuer does not support dynamic client registration")
 		require.Empty(t, endpoint)
 	})
 	t.Run("Dynamic client registration is supported", func(t *testing.T) {

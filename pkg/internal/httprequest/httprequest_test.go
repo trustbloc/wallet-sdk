@@ -24,21 +24,21 @@ func Test_doHTTPRequest(t *testing.T) {
 	t.Run("Invalid http method", func(t *testing.T) {
 		r := httprequest.New(&mock.HTTPClientMock{StatusCode: 200}, noop.NewMetricsLogger())
 		_, err := r.Do(http.MethodGet, "url", "test", nil,
-			"", "")
+			"", "", nil)
 		require.NoError(t, err)
 	})
 
 	t.Run("Invalid http method", func(t *testing.T) {
 		r := httprequest.New(&mock.HTTPClientMock{}, noop.NewMetricsLogger())
 		_, err := r.Do("\n\n", "url", "", nil,
-			"", "")
+			"", "", nil)
 		require.Contains(t, err.Error(), "invalid method")
 	})
 
 	t.Run("Failing metric logger", func(t *testing.T) {
 		r := httprequest.New(&mock.HTTPClientMock{}, &failingMetricsLogger{})
 		_, err := r.Do(http.MethodGet, "url", "test", nil,
-			"", "")
+			"", "", nil)
 		require.Contains(t, err.Error(), "failed to log event (Event=)")
 	})
 
@@ -46,7 +46,7 @@ func Test_doHTTPRequest(t *testing.T) {
 		r := httprequest.New(&mock.HTTPClientMock{}, noop.NewMetricsLogger())
 
 		_, err := r.Do(http.MethodGet, "url", "", nil,
-			"", "")
+			"", "", nil)
 		require.Contains(t, err.Error(), "expected status code 200")
 	})
 
@@ -56,7 +56,7 @@ func Test_doHTTPRequest(t *testing.T) {
 		}, noop.NewMetricsLogger())
 
 		_, err := r.Do(http.MethodGet, "url", "", nil,
-			"", "")
+			"", "", nil)
 		require.Contains(t, err.Error(), "request err")
 	})
 }

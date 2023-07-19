@@ -8,6 +8,7 @@ package wrapper_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -65,5 +66,27 @@ func TestToMobileError(t *testing.T) {
 		require.Equal(t, "UKN2-000", parsedErr.Code)
 		require.Equal(t, "UNEXPECTED_ERROR", parsedErr.Category)
 		require.Equal(t, "regular Go error", parsedErr.Details)
+	})
+	t.Run("goapiwalleterror.Error wrapped by a higher-level error is passed in", func(t *testing.T) {
+		walletError := &goapiwalleterror.Error{
+			Code:        "Code",
+			Scenario:    "Category",
+			ParentError: "Details",
+		}
+
+		wrappedWalletError := fmt.Errorf("higher-level error: %w", walletError)
+
+		// ToMobileError parses the first goapiwalleterror.Error it finds in the error chain into the
+		// Code, Category, and Details fields. If there was a higher-level error above the first goapiwalleterror.Error,
+		// then it'll be captured in the "Full" field.
+		err := wrapper.ToMobileError(wrappedWalletError)
+		require.Error(t, err)
+
+		parsedErr := walleterror.Parse(err.Error())
+
+		require.Equal(t, "Code", parsedErr.Code)
+		require.Equal(t, "Category", parsedErr.Category)
+		require.Equal(t, "Details", parsedErr.Details)
+		require.Equal(t, "higher-level error: Category(Code):Details", parsedErr.Full)
 	})
 }

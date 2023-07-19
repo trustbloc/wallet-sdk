@@ -18,7 +18,6 @@ import (
 	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	noopmetricslogger "github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
-	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 type didResolverWrapper struct {
@@ -48,19 +47,11 @@ type ClientConfig struct {
 
 func validateRequiredParameters(config *ClientConfig) error {
 	if config == nil {
-		return walleterror.NewValidationError(
-			module,
-			NoClientConfigProvidedCode,
-			NoClientConfigProvidedError,
-			errors.New("no client config provided"))
+		return errors.New("no client config provided")
 	}
 
 	if config.DIDResolver == nil {
-		return walleterror.NewValidationError(
-			module,
-			ClientConfigNoDIDResolverProvidedCode,
-			ClientConfigNoDIDResolverProvidedError,
-			errors.New("no DID resolver provided"))
+		return errors.New("no DID resolver provided")
 	}
 
 	return nil

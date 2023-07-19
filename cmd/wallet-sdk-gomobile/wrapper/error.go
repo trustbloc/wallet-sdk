@@ -42,6 +42,7 @@ func ToMobileErrorWithTrace(err error, trace *otel.Trace) error {
 			Category: walletError.Scenario,
 			Details:  walletError.ParentError,
 			TraceID:  traceID,
+			Full:     err.Error(),
 		}
 	} else {
 		result = &walleterror.Error{

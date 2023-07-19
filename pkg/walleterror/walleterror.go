@@ -10,9 +10,10 @@ package walleterror
 import "fmt"
 
 const (
-	validationError = 0
-	executionError  = 1
-	systemError     = 2
+	validationError     = 0
+	executionError      = 1
+	systemError         = 2
+	incorrectUsageError = 3
 )
 
 // Error represents an error returned by the Go API.
@@ -45,6 +46,16 @@ func NewSystemError(module string, code int, errorName string, parentError error
 	return &Error{
 		Code:        getErrorCode(module, systemError, code),
 		Scenario:    errorName,
+		ParentError: parentError.Error(),
+	}
+}
+
+// NewInvalidSDKUsageError creates a new invalid SDK usage error, used to indicate when a Wallet-SDK API is used
+// incorrectly.
+func NewInvalidSDKUsageError(module string, parentError error) *Error {
+	return &Error{
+		Code:        getErrorCode(module, incorrectUsageError, 0),
+		Scenario:    "INVALID_SDK_USAGE",
 		ParentError: parentError.Error(),
 	}
 }

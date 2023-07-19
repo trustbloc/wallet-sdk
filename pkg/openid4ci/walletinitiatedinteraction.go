@@ -37,7 +37,7 @@ func NewWalletInitiatedInteraction(issuerURI string, config *ClientConfig) (*Wal
 
 	err := validateRequiredParameters(config)
 	if err != nil {
-		return nil, err
+		return nil, walleterror.NewInvalidSDKUsageError(ErrorModule, err)
 	}
 
 	setDefaults(config)
@@ -74,7 +74,7 @@ func (i *WalletInitiatedInteraction) SupportedCredentials() ([]SupportedCredenti
 			"Authorization")
 		if err != nil {
 			return nil, walleterror.NewExecutionError(
-				module,
+				ErrorModule,
 				MetadataFetchFailedCode,
 				MetadataFetchFailedError,
 				fmt.Errorf("failed to get issuer metadata: %w", err))
