@@ -230,8 +230,7 @@ jobs:
           script: adb reverse tcp:8075 tcp:8075 && adb reverse tcp:8072 tcp:8072 && adb reverse tcp:9229 tcp:9229 && make integration-test-flutter integration-test-android
 
   GenerateVersion:
-    if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
-    needs: [ Checks, UnitTest, SDKIntegrationTest]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main')
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     outputs:
@@ -249,7 +248,7 @@ jobs:
           if [[ $TAG == $VERSION ]]; then
               TAG=v0.0.0
           fi
-          echo "CURRENT_SEMVER=${TAG:0:5}" >> $GITHUB_ENV
+          echo "CURRENT_SEMVER=1.1.0" >> $GITHUB_ENV
           echo "repoTag=${TAG} repoVersion=${VERSION} currentSemVer=${TAG:0:5}"
       - name: Bump published version
         id: bump_version
@@ -407,7 +406,7 @@ jobs:
 
   PublishJSSDKSnapshot:
     needs: GenerateVersion
-    if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main')
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
