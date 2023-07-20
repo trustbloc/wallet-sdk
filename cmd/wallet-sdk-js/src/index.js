@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 'use strict'
 
-export default class WalletSDKAgent {
+export default class Agent {
     constructor(opts) {
         this.go = new Go();
         this.opts = opts;
@@ -37,6 +37,12 @@ export default class WalletSDKAgent {
         return await this.goAgent.resolveDisplayData({
             issuerURI: opts.issuerURI,
             credentials: opts.credentials
+        })
+    };
+
+    async parseResolvedDisplayData(opts) {
+        return await this.goAgent.parseResolvedDisplayData({
+            resolvedCredentialDisplayData: opts.resolvedCredentialDisplayData,
         })
     };
 
