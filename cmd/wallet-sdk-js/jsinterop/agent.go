@@ -14,12 +14,11 @@ import (
 	"fmt"
 	"syscall/js"
 
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/kms"
 	arieskms "github.com/hyperledger/aries-framework-go/spi/kms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/errors"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/indexeddb"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/jssupport"
+	jskms "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/kms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/types"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/walletsdk"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
@@ -40,6 +39,11 @@ func initAgent(_ js.Value, args []js.Value) (any, error) {
 		return nil, err
 	}
 
+	kmsDB, err := jssupport.GetOptionalNamedArgument(args, "kmsDatabase")
+	if err != nil {
+		return nil, err
+	}
+
 	if agentInstance != nil {
 		return nil, walleterror.NewExecutionError(
 			errors.Module,
@@ -48,24 +52,13 @@ func initAgent(_ js.Value, args []js.Value) (any, error) {
 			fmt.Errorf("agent instance already initialized"))
 	}
 
-	indexedDBKMSProvider, err := indexeddb.NewProvider(dbNamespace, []string{
-		kms.AriesWrapperStoreName,
-	})
+	kmsStore, err := jskms.WrapJSDB(kmsDB.Value)
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
 			errors.Module,
 			errors.InitializationFailedCode,
 			errors.InitializationFailedError,
-			fmt.Errorf("failed to create IndexedDB provider: %w", err))
-	}
-
-	kmsStore, err := kms.NewAriesProviderWrapper(indexedDBKMSProvider)
-	if err != nil {
-		return nil, walleterror.NewExecutionError(
-			errors.Module,
-			errors.InitializationFailedCode,
-			errors.InitializationFailedError,
-			fmt.Errorf("failed to create Aries KMS store wrapper %w", err))
+			fmt.Errorf("failed to wrap kms data base: %w", err))
 	}
 
 	agentInstance, err = walletsdk.NewAgent(didResolverURI, kmsStore)

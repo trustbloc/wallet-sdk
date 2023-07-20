@@ -98,6 +98,20 @@ func GetNamedProperty(object js.Value, name string) (NamedValue, error) {
 			fmt.Errorf("property %q is required", name))
 }
 
+func EnsureMemberFunction(object js.Value, name string) error {
+	val := object.Get(name)
+
+	if !val.IsNull() && !val.IsUndefined() {
+		return nil
+	}
+
+	return walleterror.NewValidationError(
+		interoperror.Module,
+		interoperror.MissedRequiredPropertyCode,
+		interoperror.MissedRequiredPropertyError,
+		fmt.Errorf("member function %q is required", name))
+}
+
 func EnsureString(arg NamedValue, err error) (string, error) {
 	if err != nil {
 		return "", err

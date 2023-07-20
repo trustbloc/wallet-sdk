@@ -23,3 +23,9 @@ build-wasm:
 generate-js-bindings:
 	@npm install
 
+.PHONY: copy-js-to-demo
+copy-js-to-demo:
+	@cp dist/wallet-sdk.wasm ../../demo/app/web \
+	&& mkdir -p ../../demo/app/web/wallet-sdk-js/ \
+	&& cp src/index.js ../../demo/app/web/wallet-sdk-js/ \
+	&& cp src/wasm_exec.js ../../demo/app/web/wallet-sdk-js/
