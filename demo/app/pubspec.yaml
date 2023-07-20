@@ -90,6 +90,7 @@ flutter:
    - lib/assets/images/errorVector.png
    - lib/assets/images/success.png
    - lib/assets/issuerAuthFlowConfig.json
+   - lib/assets/walletConnectIssuerConfig.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

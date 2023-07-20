@@ -43,6 +43,17 @@ class WalletSDK extends WalletPlatform {
     }
   }
 
+  Future<List<SupportedCredentials>> initializeWalletInitiatedFlow(String issuerURI) async {
+    try {
+      List<dynamic> supportedCredentialResp =
+      await methodChannel.invokeMethod('initializeWalletInitiatedFlow', <String, dynamic>{'issuerURI': issuerURI});
+      return supportedCredentialResp.map((d) => SupportedCredentials.fromMap(d.cast<String, dynamic>())).toList();
+    } on PlatformException catch (error) {
+      debugPrint(error.toString());
+      rethrow;
+    }
+  }
+
   Future<String> requestCredential(String userPinEntered) async {
     try {
       var credentialResponse =

@@ -36,6 +36,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "initialize":
             initialize(arguments: arguments!, result: result)
             
+        case "initializeWalletInitiatedFlow":
+            initializeWalletInitiatedFlow(arguments: arguments!, result: result)
+            
         case "requestCredential":
             let otp = fetchArgsKeyValue(call, key: "otp")
             requestCredential(otp: otp!, result: result)
@@ -306,6 +309,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
 
         do {
+            
             let openID4CI = try walletSDK.createOpenID4CIInteraction(requestURI:requestURI)
             var pinRequired = false
             var authorizationLink = ""
@@ -386,6 +390,27 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                        message: "error while initializing issuance flow",
                                        details: error))
           }
+    }
+    
+    public func initializeWalletInitiatedFlow(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
+        guard let issuerURI = arguments["issuerURI"] as? String else {
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while reading initializeWalletInitiatedFlow issuer URI",
+                                             details: "Pass issuerURI as the arguments"))
+        }
+                
+    
+        do {
+            let walletInitiatedOpenID4CI = try walletSDK?.createOpenID4CIWalletIntiatedInteraction(issuerURI: issuerURI)
+            //TODO- VCS part is not implemented yet, this logic needs to be updated to get the create authorization URL
+            try walletInitiatedOpenID4CI?.getSupportedCredentials()
+
+        } catch {
+            result(FlutterError.init(code: "NATIVE_ERR",
+                                     message: "error while initializing wallet initiated issuance flow",
+                                     details: error))
+        }
+        
     }
     
     

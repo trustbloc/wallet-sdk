@@ -1,0 +1,9 @@
+{
+  "TrustBloc Staging Issuer" : {
+   "issuerURI": "https://demo-issuer.stg.trustbloc.dev",
+   "scopes": ["openid","profile"],
+   "clientID": "oidc4vc_client",
+   "showIssuer": true,
+   "description": "Demo Issuer to issue demo credentials (e.g. PR card, etc)"
+  }
+}

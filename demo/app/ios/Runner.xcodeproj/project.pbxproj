@@ -40,6 +40,7 @@
 		F7047AA02907097B00947F71 /* flutterPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7047A9F2907097B00947F71 /* flutterPlugin.swift */; };
 		F78289312988E193002DB5A2 /* kmsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78289302988E193002DB5A2 /* kmsStore.swift */; };
 		F7C1776C29919FA8001FBBB9 /* LocalActivityLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7C1776B29919FA8001FBBB9 /* LocalActivityLogger.swift */; };
+		F7D78A102A65DE2C00632539 /* WalletInitiatedOpenID4CI.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D78A0F2A65DE2C00632539 /* WalletInitiatedOpenID4CI.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -91,6 +92,7 @@
 		F7047A9F2907097B00947F71 /* flutterPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = flutterPlugin.swift; sourceTree = "<group>"; };
 		F78289302988E193002DB5A2 /* kmsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = kmsStore.swift; sourceTree = "<group>"; };
 		F7C1776B29919FA8001FBBB9 /* LocalActivityLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalActivityLogger.swift; sourceTree = "<group>"; };
+		F7D78A0F2A65DE2C00632539 /* WalletInitiatedOpenID4CI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletInitiatedOpenID4CI.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -218,6 +220,7 @@
 				F7C1776B29919FA8001FBBB9 /* LocalActivityLogger.swift */,
 				8CA8C11329AE0B0500832F9B /* WalletSDK.swift */,
 				8CA8C11529AE0E8800832F9B /* OpenID4CI.swift */,
+				F7D78A0F2A65DE2C00632539 /* WalletInitiatedOpenID4CI.swift */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -544,6 +547,7 @@
 				F7047AA02907097B00947F71 /* flutterPlugin.swift in Sources */,
 				8CA8C11929AE165500832F9B /* fromFlutterTypes.swift in Sources */,
 				F7C1776C29919FA8001FBBB9 /* LocalActivityLogger.swift in Sources */,
+				F7D78A102A65DE2C00632539 /* WalletInitiatedOpenID4CI.swift in Sources */,
 				8CA8C11429AE0B0500832F9B /* WalletSDK.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				8CA8C11B29AE177700832F9B /* toFlutterTypes.swift in Sources */,
