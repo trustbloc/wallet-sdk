@@ -247,7 +247,7 @@ jobs:
           VERSION=$(git rev-parse --short=7 HEAD)
           echo "repoTag=${TAG} repoVersion=${VERSION}"
           if [[ $TAG == $VERSION ]]; then
-              TAG=v0.0.0
+              TAG=0.0.0
           fi
           echo "CURRENT_SEMVER=${TAG:0:5}" >> $GITHUB_ENV
           echo "repoTag=${TAG} repoVersion=${VERSION} currentSemVer=${TAG:0:5}"
@@ -422,27 +422,29 @@ jobs:
       - name: Derive the new version
         run: |
           echo "new version"
-          NEW_VER=${{ needs.GenerateVersion.outputs.version }}-SNAPSHOT-$(git rev-parse --short=7 HEAD)
+          NEW_VER=${{ needs.GenerateVersion.outputs.version }}-snapshot-$(git rev-parse --short=7 HEAD)
           echo "NEW_VERSION=$NEW_VER" >> $GITHUB_ENV
           echo $NEW_VER
-      - name: Generate Binding
+      - name: Set npm authentication tokens
+        run: |
+          echo $PATH
+          echo ${{ github.workspace }}
+          echo '//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}' > ~/.npmrc
+          echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
+      - name: Generate bindings and publish to npm
         run: |
           export PATH=$PATH:$GOPATH/bin
           echo $PATH
           
           cd ./cmd/wallet-sdk-js
-          sed -i 's/"version": "0.1.0"/"version": "'${ env.NEW_VERSION }'"/g' package.json
-          sed -i 's#"name": "@trustbloc/wallet-sdk"#"name": "@trustbloc-cicd/wallet-sdk"#g' package.json
-          sed -i 's#"url": "git://github.com/trustbloc/wallet-sdk.git"#"url": "git://github.com/trustbloc-cicd/snapshot.git"#g' package.json
+          sed -i 's/"version": "[0-9]\+\.[0-9]\+\.[0-9]\+"/"version": "${{ env.NEW_VERSION }}"/g' package.json
+          sed -i 's#"name": "@trustbloc/wallet-sdk"#"name": "@trustbloc-cicd/wallet-sdk-js"#g' package.json
+          sed -i 's#"url": "https://github.com/trustbloc/wallet-sdk.git",#"url": "https://github.com/trustbloc-cicd/snapshot.git"#g' package.json
+          sed -i '/"directory": "cmd\/wallet-sdk-js"/d' package.json
           
           pushd ../../
-          GIT_REV=$(git rev-parse HEAD) BUILD_TIME=$(date) make generate-js-bindings
+          make generate-js-bindings
           popd
-          
-          cp -r dist umd
-          
-          echo "**wallet-sdk-js files:**"
-          ls -lah
           
           npm publish
         env:
