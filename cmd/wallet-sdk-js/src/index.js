@@ -16,7 +16,7 @@ export default class WalletSDKAgent {
         const assembly = await WebAssembly.instantiateStreaming(fetch(this.opts.assetsPath + "/wallet-sdk.wasm"), this.go.importObject);
         this.go.run(assembly.instance);
         this.goAgent = window.__agentInteropObject;
-        await this.goAgent.initAgent({didResolverURI: this.opts.didResolverURI})
+        await this.goAgent.initAgent({didResolverURI: this.opts.didResolverURI, kmsDatabase: this.opts.kmsDatabase})
     }
 
     async createDID(opts) {
