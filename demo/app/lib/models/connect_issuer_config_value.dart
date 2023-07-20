@@ -1,12 +1,9 @@
-import 'dart:ffi';
-
 class ConnectIssuerConfigValue {
   final String issuerURI;
   final List<String> scopes;
   final String clientID;
   final bool showIssuer;
   final String description;
-  final String redirectURI;
 
   ConnectIssuerConfigValue(
       {
@@ -15,7 +12,6 @@ class ConnectIssuerConfigValue {
         required this.clientID,
         required this.showIssuer,
         required this.description,
-        required this.redirectURI
       });
 
   Map<String, dynamic> toJson() {
@@ -34,8 +30,7 @@ class ConnectIssuerConfigValue {
         scopes: json['scopes'].cast<String>(),
         clientID: json['clientID'],
         showIssuer: json['showIssuer'],
-        description: json['description'],
-        redirectURI: const String.fromEnvironment("redirectURI")
+        description: json['description']
     );
   }
 }
