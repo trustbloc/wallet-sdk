@@ -1,0 +1,33 @@
+{
+  "name": "trustbloc-demo-app",
+  "version": "0.0.1",
+  "description": "The TrustBloc Demo app demonstrates the wallet-sdk API usage",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/trustbloc/wallet-sdk.git",
+    "directory": "demo/app/web"
+  },
+  "keywords": [
+    "wallet",
+    "trustbloc",
+    "wallet",
+    "wasm",
+    "decentrilized",
+    "identity",
+    "verifiable",
+    "credentials"
+  ],
+  "author": "Gen Digital Inc.",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/trustbloc/wallet-sdk/issues"
+  },
+  "homepage": "https://github.com/trustbloc/wallet-sdk/demo/app/#readme",
+  "dependencies": {
+    "@trustbloc-cicd/wallet-sdk-js": "1.1.1-snapshot-563cec8"
+  }
+}
