@@ -65,6 +65,21 @@ The Wallet SDK iOS xcframework packages are distributed through Swift Package Ma
 [wallet-sdk tags](https://github.com/trustbloc/wallet-sdk/tags) with the suffix `-swift-pm` (e.g., `1.0.0-swift-pm`) for the
 latest releases.
 
+### Web
+The Wallet SDK JS package is distributed through npm. Please refer to 
+[wallet-sdk-js package](https://github.com/trustbloc-cicd/snapshot/pkgs/npm/wallet-sdk-js) for the latest snapshot releases.
+
+#### Web Config
+The distributed package contains the WASM build file (`wallet-sdk.wasm`) inside `node_modules/@trustbloc-cicd/wallet-sdk-js/dist`,
+which you may want to store in a different location within your project along with other assets.
+In such case, you need to provide the path to the location of the WASM build file through
+the `opts.assestPath` parameter when you create an Agent instance:
+```js
+const kmsDatabase = await CreateDB("test")
+agent = new Agent({assetsPath: "path-to-folder-with-wallet-sdk-wasm-file", didResolverURI:didResolverURI, kmsDatabase: kmsDatabase});
+await agent.initialize();
+```
+
 ## Project structure
 
 The Go SDK is defined in [pkg](pkg). If you want to build a native Go application, then this is what you'd use.
