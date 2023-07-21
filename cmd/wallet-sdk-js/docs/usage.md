@@ -13,7 +13,7 @@ This example shows the full OpenID4CI flow.
 // initialize the Wallet SDK Agent
 let pathWhereWalletsWasmLocated = ""
 
-let agent = new WalletSDKAgent({
+let agent = new Agent({
     assetsPath: pathWhereWalletsWasmLocated, 
     didResolverURI:didResolverURI,
     kmsDatabase: kmsDatabase
