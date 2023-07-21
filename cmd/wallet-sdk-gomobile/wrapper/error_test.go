@@ -23,22 +23,6 @@ func TestToMobileError(t *testing.T) {
 		err := wrapper.ToMobileError(nil)
 		require.NoError(t, err)
 	})
-	t.Run("Wallet error passed in", func(t *testing.T) {
-		walletError := &goapiwalleterror.Error{
-			Code:        "Code",
-			Scenario:    "Category",
-			ParentError: "Details",
-		}
-
-		err := wrapper.ToMobileError(walletError)
-		require.Error(t, err)
-
-		parsedErr := walleterror.Parse(err.Error())
-
-		require.Equal(t, "Code", parsedErr.Code)
-		require.Equal(t, "Category", parsedErr.Category)
-		require.Equal(t, "Details", parsedErr.Details)
-	})
 	t.Run("goapiwalleterror.Error passed in", func(t *testing.T) {
 		walletError := &goapiwalleterror.Error{
 			Code:        "Code",
@@ -67,26 +51,85 @@ func TestToMobileError(t *testing.T) {
 		require.Equal(t, "UNEXPECTED_ERROR", parsedErr.Category)
 		require.Equal(t, "regular Go error", parsedErr.Details)
 	})
-	t.Run("goapiwalleterror.Error wrapped by a higher-level error is passed in", func(t *testing.T) {
-		walletError := &goapiwalleterror.Error{
-			Code:        "Code",
-			Scenario:    "Category",
-			ParentError: "Details",
+	t.Run("Non-goapiwalleterror.Error wrapped with another Non-goapiwalleterror.Error passed in", func(t *testing.T) {
+		goErr := fmt.Errorf("higher-level error: %w", errors.New("regular Go error"))
+
+		err := wrapper.ToMobileError(goErr)
+		require.Error(t, err)
+
+		parsedErr := walleterror.Parse(err.Error())
+
+		require.Equal(t, "UKN2-000", parsedErr.Code)
+		require.Equal(t, "UNEXPECTED_ERROR", parsedErr.Category)
+		require.Equal(t, "higher-level error: regular Go error", parsedErr.Details)
+	})
+	t.Run("goapiwalleterror.Error wrapped by one higher-level non-goapiwalleterror.Error is passed in",
+		func(t *testing.T) {
+			walletError := &goapiwalleterror.Error{
+				Code:        "Code",
+				Scenario:    "Category",
+				ParentError: "Details",
+			}
+
+			wrappedWalletError := fmt.Errorf("higher-level error: %w", walletError)
+
+			err := wrapper.ToMobileError(wrappedWalletError)
+			require.Error(t, err)
+
+			parsedErr := walleterror.Parse(err.Error())
+
+			require.Equal(t, "Code", parsedErr.Code)
+			require.Equal(t, "Category", parsedErr.Category)
+			require.Equal(t, "higher-level error: Details", parsedErr.Details)
+		})
+	t.Run("goapiwalleterror.Error wrapped by two higher-level non-goapiwalleterror.Errors is passed in",
+		func(t *testing.T) {
+			walletError := &goapiwalleterror.Error{
+				Code:        "Code",
+				Scenario:    "Category",
+				ParentError: "Details",
+			}
+
+			doubleWrappedWalletError := fmt.Errorf("even-higher-level error: %w",
+				fmt.Errorf("higher-level error: %w", walletError))
+
+			err := wrapper.ToMobileError(doubleWrappedWalletError)
+			require.Error(t, err)
+
+			parsedErr := walleterror.Parse(err.Error())
+
+			require.Equal(t, "Code", parsedErr.Code)
+			require.Equal(t, "Category", parsedErr.Category)
+			require.Equal(t, "even-higher-level error: higher-level error: Details", parsedErr.Details)
+		})
+	t.Run("goapiwalleterror.Error wrapped by another goapiwalleterror.Error", func(t *testing.T) {
+		// Note: We shouldn't actually do this anywhere in our code. If this happens, then the highest-level
+		// goapiwalleterror.Error is the one that will be detected and converted properly to the Gomobile error type,
+		// while the lower one will get "squashed" into the Details field. This test just confirms that this is the
+		// expected behaviour in such a scenario.
+
+		lowerLevelWalletError := &goapiwalleterror.Error{
+			Code:        "Lower-Level-Code",
+			Scenario:    "Lower-Level-Category",
+			ParentError: "Lower-Level-Details",
 		}
 
-		wrappedWalletError := fmt.Errorf("higher-level error: %w", walletError)
+		higherLevelWalletError := &goapiwalleterror.Error{
+			Code:        "Higher-Level-Code",
+			Scenario:    "Higher-Level-Category",
+			ParentError: lowerLevelWalletError.Error(),
+		}
 
-		// ToMobileError parses the first goapiwalleterror.Error it finds in the error chain into the
-		// Code, Category, and Details fields. If there was a higher-level error above the first goapiwalleterror.Error,
-		// then it'll be captured in the "Full" field.
+		wrappedWalletError := fmt.Errorf("regular Go error: %w", higherLevelWalletError)
+
 		err := wrapper.ToMobileError(wrappedWalletError)
 		require.Error(t, err)
 
 		parsedErr := walleterror.Parse(err.Error())
 
-		require.Equal(t, "Code", parsedErr.Code)
-		require.Equal(t, "Category", parsedErr.Category)
-		require.Equal(t, "Details", parsedErr.Details)
-		require.Equal(t, "higher-level error: Category(Code):Details", parsedErr.Full)
+		require.Equal(t, "Higher-Level-Code", parsedErr.Code)
+		require.Equal(t, "Higher-Level-Category", parsedErr.Category)
+		require.Equal(t, "regular Go error: Lower-Level-Category(Lower-Level-Code):Lower-Level-Details",
+			parsedErr.Details)
 	})
 }
