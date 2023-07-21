@@ -180,15 +180,34 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 }
 
 func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
-	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
-	require.NoError(t, err)
+	t.Run("Issuer does not support the authorization code grant type", func(t *testing.T) {
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
 
-	interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", false),
-		nil, false)
+		interaction := createIssuerInitiatedInteraction(t, kms, nil,
+			createCredentialOfferIssuanceURI(t, "example.com", false),
+			nil, false)
 
-	authorizationLink, err := interaction.CreateAuthorizationURL("clientID", "redirectURI", nil)
-	require.EqualError(t, err, "issuer does not support the authorization code grant type")
-	require.Empty(t, authorizationLink)
+		authorizationLink, err := interaction.CreateAuthorizationURL("clientID", "redirectURI", nil)
+		require.EqualError(t, err, "issuer does not support the authorization code grant type")
+		require.Empty(t, authorizationLink)
+	})
+	t.Run("Conflicting issuer state", func(t *testing.T) {
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", true),
+			nil, false)
+
+		createAuthorizationURLOpts := openid4ci.NewCreateAuthorizationURLOpts().SetIssuerState("IssuerState")
+
+		authorizationLink, err := interaction.CreateAuthorizationURL("clientID", "redirectURI",
+			createAuthorizationURLOpts)
+		require.EqualError(t, err, "INVALID_SDK_USAGE(OCI3-0000):the credential offer already specifies "+
+			"an issuer state, and a conflicting issuer state value was provided. An issuer state should only be "+
+			"provided if required by the issuer and the credential offer does not specify one already")
+		require.Empty(t, authorizationLink)
+	})
 }
 
 func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {

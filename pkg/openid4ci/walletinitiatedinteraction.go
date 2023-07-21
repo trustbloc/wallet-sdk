@@ -102,7 +102,18 @@ func (i *WalletInitiatedInteraction) SupportedCredentials() ([]SupportedCredenti
 func (i *WalletInitiatedInteraction) CreateAuthorizationURL(clientID, redirectURI, credentialFormat string,
 	credentialTypes []string, opts ...CreateAuthorizationURLOpt,
 ) (string, error) {
-	return i.interaction.createAuthorizationURL(clientID, redirectURI, credentialFormat, credentialTypes, nil, opts...)
+	processedOpts := processCreateAuthorizationURLOpts(opts)
+
+	authorizationURL, err := i.interaction.createAuthorizationURL(clientID, redirectURI, credentialFormat,
+		credentialTypes, processedOpts.issuerState, processedOpts.scopes)
+	if err != nil {
+		return "", err
+	}
+
+	i.credentialFormat = credentialFormat
+	i.credentialTypes = credentialTypes
+
+	return authorizationURL, nil
 }
 
 // RequestCredential requests credential(s) from the issuer. This method is the final step in the

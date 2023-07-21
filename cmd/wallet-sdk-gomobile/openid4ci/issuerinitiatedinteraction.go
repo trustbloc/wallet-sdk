@@ -97,8 +97,13 @@ func (i *IssuerInitiatedInteraction) CreateAuthorizationURL(clientID, redirectUR
 		opts.scopes = api.NewStringArray()
 	}
 
-	return i.goAPIInteraction.CreateAuthorizationURL(clientID, redirectURI,
-		openid4cigoapi.WithScopes(opts.scopes.Strings))
+	goAPIOpts := []openid4cigoapi.CreateAuthorizationURLOpt{openid4cigoapi.WithScopes(opts.scopes.Strings)}
+
+	if opts.issuerState != nil {
+		goAPIOpts = append(goAPIOpts, openid4cigoapi.WithIssuerState(*opts.issuerState))
+	}
+
+	return i.goAPIInteraction.CreateAuthorizationURL(clientID, redirectURI, goAPIOpts...)
 }
 
 // RequestCredentialWithPreAuth requests credential(s) from the issuer. This method can only be used for the

@@ -124,8 +124,14 @@ func (i *WalletInitiatedInteraction) CreateAuthorizationURL(clientID, redirectUR
 		credentialTypes = api.NewStringArray()
 	}
 
+	goAPIOpts := []openid4cigoapi.CreateAuthorizationURLOpt{openid4cigoapi.WithScopes(opts.scopes.Strings)}
+
+	if opts.issuerState != nil {
+		goAPIOpts = append(goAPIOpts, openid4cigoapi.WithIssuerState(*opts.issuerState))
+	}
+
 	authorizationURL, err := i.goAPIInteraction.CreateAuthorizationURL(clientID, redirectURI, credentialFormat,
-		credentialTypes.Strings, openid4cigoapi.WithScopes(opts.scopes.Strings))
+		credentialTypes.Strings, goAPIOpts...)
 	if err != nil {
 		return "", wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}

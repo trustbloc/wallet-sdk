@@ -59,13 +59,11 @@ type interaction struct {
 // Check the issuer's capabilities first using the Capabilities method.
 // If scopes are needed, pass them in using the WithScopes option.
 func (i *interaction) createAuthorizationURL(clientID, redirectURI, format string, types []string, issuerState *string,
-	opts ...CreateAuthorizationURLOpt,
+	scopes []string,
 ) (string, error) {
-	processedOpts := processCreateAuthorizationURLOpts(opts)
-
-	var err error
-
 	if i.issuerMetadata == nil {
+		var err error
+
 		i.issuerMetadata, err = metadatafetcher.Get(i.issuerURI, i.httpClient, i.metricsLogger,
 			"Authorization")
 		if err != nil {
@@ -77,9 +75,9 @@ func (i *interaction) createAuthorizationURL(clientID, redirectURI, format strin
 		}
 	}
 
-	i.instantiateOAuth2Config(clientID, redirectURI, processedOpts.scopes)
+	i.instantiateOAuth2Config(clientID, redirectURI, scopes)
 
-	err = i.instantiateCodeVerifier()
+	err := i.instantiateCodeVerifier()
 	if err != nil {
 		return "", err
 	}
