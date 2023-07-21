@@ -62,7 +62,7 @@ copy-ios-bindings:
 
 .PHONY: copy-js-bindings
 copy-js-bindings:
-	@rm -rf demo/app/web/wallet-sdk-js demo/app/web/agent.js && cp cmd/wallet-sdk-js/dist/wallet-sdk.wasm demo/app/web && mkdir demo/app/web/wallet-sdk-js && cp cmd/wallet-sdk-js/dist/wasm_exec.js demo/app/web/wallet-sdk-js && cp cmd/wallet-sdk-js/src/index.js demo/app/web/wallet-sdk-js
+	@cp -f demo/app/web/node_modules/@trustbloc-cicd/wallet-sdk-js/dist/wallet-sdk.wasm demo/app/web
 
 .PHONY: demo-app-ios
 demo-app-ios:generate-ios-bindings copy-ios-bindings

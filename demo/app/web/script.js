@@ -4,13 +4,14 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-var agent;
-var openID4CIInteraction;
-var createdDID;
+let agent;
+let openID4CIInteraction;
+let createdDID;
 
 async function jsInitSDK(didResolverURI) {
-    let kmsDatabase = await CreateDB("test")
-    agent = await Agent({assetsPath: "", didResolverURI:didResolverURI, kmsDatabase: kmsDatabase});
+    const kmsDatabase = await CreateDB("test")
+    agent = new Agent({assetsPath: "", didResolverURI:didResolverURI, kmsDatabase: kmsDatabase});
+    await agent.initialize();
 }
 
 async function jsCreateDID(didMethod, keyType) {
