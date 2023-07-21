@@ -1,6 +1,6 @@
 # JS SDK Usage
 
-Last updated: Jul 18, 2023
+Last updated: Jul 18, 2023 (commit `0f0e847a345a979d216f1e03313a00b630e7678e`)
 
 This guide explains how to use this SDK in Web. The examples in this document demonstrate
 how to use the various APIs from a JavaScript perspective.
@@ -10,6 +10,7 @@ how to use the various APIs from a JavaScript perspective.
 This example shows the full OpenID4CI flow.
 
 ```javascript
+// initialize the Wallet SDK Agent
 let pathWhereWalletsWasmLocated = ""
 
 let agent = new WalletSDKAgent({
@@ -20,17 +21,21 @@ let agent = new WalletSDKAgent({
 
 await agent.initialize()
 
+// Create Decentralized Identifier (DID)
 const userDID = await agent.createDID({
     didMethod: didMethod,
     keyType: keyType
 })
 
+// get the issuance init url
 let initiateIssuanceURI = "URI from scanned QR code."
 
+// Start OpenID4CI Issaunce flow
 let openID4CIInteraction = await agent.createOpenID4CIIssuerInitiatedInteraction({
     initiateIssuanceURI: initiateIssuanceURI
 })
 
+// check if the issuance requires a PIN
 let userPINRequired = (await openID4CIInteraction.preAuthorizedCodeGrantParams()).userPINRequired;
 
 let issuedCrednetials = await openID4CIInteraction.requestCredentialWithPreAuth({
@@ -38,6 +43,7 @@ let issuedCrednetials = await openID4CIInteraction.requestCredentialWithPreAuth(
     didDoc: userDID
 });
 
+// steps to show credential display on UI
 let issuerURI = openID4CIInteraction.issuerURI()
 
 let rawDisplayData = await agent.resolveDisplayData({
@@ -48,7 +54,6 @@ let rawDisplayData = await agent.resolveDisplayData({
 let parsedDisplayData = await agent.parseResolvedDisplayData({
     resolvedCredentialDisplayData: rawDisplayData
 })
-
 ```
 
 ### KMS Database
