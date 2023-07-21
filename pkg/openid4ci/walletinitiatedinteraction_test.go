@@ -54,7 +54,7 @@ func TestWalletInitiatedInteraction(t *testing.T) {
 
 	// Needed to create the OAuth2 config object.
 	authURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI",
-		"jwt_vc_json", types)
+		"jwt_vc_json", types, openid4ci.WithIssuerState("issuerState"))
 	require.NoError(t, err)
 
 	redirectURIWithParams := "redirectURI?code=1234&state=" + getStateFromAuthURL(t, authURL)

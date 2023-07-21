@@ -81,8 +81,10 @@ func TestWalletInitiatedInteraction_Flow(t *testing.T) {
 
 	credentialTypes := api.NewStringArray().Append("type")
 
+	createAuthorizationURLOpts := openid4ci.NewCreateAuthorizationURLOpts().SetIssuerState("IssuerState")
+
 	authURL, err := interaction.CreateAuthorizationURL("client", "redirectURI",
-		"format", credentialTypes, nil)
+		"format", credentialTypes, createAuthorizationURLOpts)
 	require.NoError(t, err)
 	require.NotEmpty(t, authURL)
 

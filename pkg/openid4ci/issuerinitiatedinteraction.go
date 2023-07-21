@@ -130,8 +130,15 @@ func (i *IssuerInitiatedInteraction) CreateAuthorizationURL(clientID, redirectUR
 		return "", errors.New("issuer does not support the authorization code grant type")
 	}
 
+	processedOpts := processCreateAuthorizationURLOpts(opts)
+
+	issuerState, err := i.determineIssuerStateToUse(processedOpts.issuerState)
+	if err != nil {
+		return "", err
+	}
+
 	return i.interaction.createAuthorizationURL(clientID, redirectURI, i.credentialFormats[0], i.credentialTypes[0],
-		i.authorizationCodeGrantParams.IssuerState, opts...)
+		issuerState, processedOpts.scopes)
 }
 
 // RequestCredentialWithPreAuth requests credential(s) from the issuer. This method can only be used for the
@@ -383,6 +390,28 @@ func (i *IssuerInitiatedInteraction) getPreAuthTokenResponse(pin string) (*preAu
 	}
 
 	return &tokenResp, nil
+}
+
+func (i *IssuerInitiatedInteraction) determineIssuerStateToUse(issuerStateFromOptions *string) (*string, error) {
+	if i.authorizationCodeGrantParams.IssuerState != nil {
+		// The spec says that if an issuer state is provided in the credential offer, then it must be used.
+		// However, the spec also leaves open the possibility that the issuer state value could come from somewhere
+		// else, so the option to set one is provided to the caller for such a case. To avoid confusion, if someone
+		// sets an issuer state, but they shouldn't (because there's already one in the credential offer), then we
+		// return an error.
+		// While it's unnecessary to do so, if the caller specifies the same issuer state as what's in the credential
+		// offer, then there's no conflict and no error is returned.
+		if issuerStateFromOptions != nil && *i.authorizationCodeGrantParams.IssuerState != *issuerStateFromOptions {
+			return nil, walleterror.NewInvalidSDKUsageError(ErrorModule,
+				errors.New("the credential offer already specifies an issuer state, "+
+					"and a conflicting issuer state value was provided. An issuer state should only be provided if "+
+					"required by the issuer and the credential offer does not specify one already"))
+		}
+
+		return i.authorizationCodeGrantParams.IssuerState, nil
+	}
+
+	return issuerStateFromOptions, nil
 }
 
 func tokenErrorResponseHandler(statusCode int, respBody []byte) error {
