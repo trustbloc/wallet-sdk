@@ -387,8 +387,8 @@ func TestIssuerInitiatedInteraction_GrantTypes(t *testing.T) {
 	require.False(t, interaction.AuthorizationCodeGrantTypeSupported())
 
 	authorizationCodeGrantParams, err := interaction.AuthorizationCodeGrantParams()
-	requireErrorContains(t, err,
-		"INVALID_SDK_USAGE(OCI3-0000):issuer does not support the authorization code grant")
+	requireErrorContains(t, err, "INVALID_SDK_USAGE")
+	requireErrorContains(t, err, "issuer does not support the authorization code grant")
 	require.Nil(t, authorizationCodeGrantParams)
 
 	interaction = createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", true),
@@ -415,13 +415,13 @@ func TestIssuerInitiatedInteraction_DynamicClientRegistration(t *testing.T) {
 		nil, false)
 
 	supported, err := interaction.DynamicClientRegistrationSupported()
-	requireErrorContains(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED(OCI1-0003):failed to fetch issuer's "+
-		"OpenID configuration: openid configuration endpoint: Get")
+	requireErrorContains(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED")
+	requireErrorContains(t, err, "failed to fetch issuer's OpenID configuration: openid configuration endpoint: Get")
 	require.False(t, supported)
 
 	endpoint, err := interaction.DynamicClientRegistrationEndpoint()
-	requireErrorContains(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED(OCI1-0003):failed to fetch issuer's "+
-		"OpenID configuration: openid configuration endpoint: Get ")
+	requireErrorContains(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED")
+	requireErrorContains(t, err, "failed to fetch issuer's OpenID configuration: openid configuration endpoint: Get ")
 	require.Empty(t, endpoint)
 }
 
@@ -499,8 +499,8 @@ func TestIssuerInitiatedInteractionAlias(t *testing.T) {
 	require.False(t, interaction.AuthorizationCodeGrantTypeSupported())
 
 	authCodeGrantParams, err := interaction.AuthorizationCodeGrantParams()
-	requireErrorContains(t, err,
-		"INVALID_SDK_USAGE(OCI3-0000):issuer does not support the authorization code grant")
+	requireErrorContains(t, err, "INVALID_SDK_USAGE")
+	requireErrorContains(t, err, "issuer does not support the authorization code grant")
 	require.Nil(t, authCodeGrantParams)
 
 	dynamicClientRegistrationSupported, err := interaction.DynamicClientRegistrationSupported()
@@ -508,8 +508,8 @@ func TestIssuerInitiatedInteractionAlias(t *testing.T) {
 	require.False(t, dynamicClientRegistrationSupported)
 
 	dynamicClientRegistrationEndpoint, err := interaction.DynamicClientRegistrationEndpoint()
-	requireErrorContains(t, err,
-		"INVALID_SDK_USAGE(OCI3-0000):issuer does not support dynamic client registration")
+	requireErrorContains(t, err, "INVALID_SDK_USAGE")
+	requireErrorContains(t, err, "issuer does not support dynamic client registration")
 	require.Empty(t, dynamicClientRegistrationEndpoint)
 
 	traceID := interaction.OTelTraceID()

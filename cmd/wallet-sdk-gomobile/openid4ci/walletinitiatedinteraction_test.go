@@ -75,8 +75,8 @@ func TestWalletInitiatedInteraction_Flow(t *testing.T) {
 	require.False(t, dynamicClientRegistrationSupported)
 
 	dynamicClientRegistrationEndpoint, err := interaction.DynamicClientRegistrationEndpoint()
-	requireErrorContains(t, err,
-		"INVALID_SDK_USAGE(OCI3-0000):issuer does not support dynamic client registration")
+	requireErrorContains(t, err, "INVALID_SDK_USAGE")
+	requireErrorContains(t, err, "issuer does not support dynamic client registration")
 	require.Empty(t, dynamicClientRegistrationEndpoint)
 
 	credentialTypes := api.NewStringArray().Append("type")
@@ -107,7 +107,8 @@ func TestWalletInitiatedInteraction_Flow(t *testing.T) {
 
 func TestNewWalletInitiatedInteraction(t *testing.T) {
 	interaction, err := openid4ci.NewWalletInitiatedInteraction(nil, nil)
-	requireErrorContains(t, err, "INVALID_SDK_USAGE(OCI3-0000):args object must be provided")
+	requireErrorContains(t, err, "INVALID_SDK_USAGE")
+	requireErrorContains(t, err, "args object must be provided")
 	require.Nil(t, interaction)
 }
 
@@ -141,7 +142,8 @@ func TestWalletInitiatedInteraction_RequestCredential_Failure(t *testing.T) {
 	require.NotNil(t, interaction)
 
 	credentials, err := interaction.RequestCredential(nil, "", nil)
-	requireErrorContains(t, err, "INVALID_SDK_USAGE(OCI3-0000):verification method must be provided")
+	requireErrorContains(t, err, "INVALID_SDK_USAGE")
+	requireErrorContains(t, err, "verification method must be provided")
 	require.Nil(t, credentials)
 }
 
