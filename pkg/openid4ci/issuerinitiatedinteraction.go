@@ -127,7 +127,8 @@ func (i *IssuerInitiatedInteraction) CreateAuthorizationURL(clientID, redirectUR
 	opts ...CreateAuthorizationURLOpt,
 ) (string, error) {
 	if !i.AuthorizationCodeGrantTypeSupported() {
-		return "", errors.New("issuer does not support the authorization code grant type")
+		return "", walleterror.NewInvalidSDKUsageError(ErrorModule,
+			errors.New("issuer does not support the authorization code grant type"))
 	}
 
 	processedOpts := processCreateAuthorizationURLOpts(opts)

@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 	"testing"
@@ -322,11 +323,11 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 		err := instance.PresentCredential(credentials)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "NOT_INITIALIZED_PROPERLY")
+		require.Contains(t, err.Error(), "call GetQuery first")
 
 		_, err = instance.VerifierDisplayData()
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "NOT_INITIALIZED_PROPERLY")
+		require.Contains(t, err.Error(), "call GetQuery first")
 	})
 
 	t.Run("Check nonce", func(t *testing.T) {
@@ -516,6 +517,117 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		)
 
 		require.ErrorIs(t, err, expectErr)
+	})
+
+	t.Run("fail to send authorized response", func(t *testing.T) {
+		httpClient := &mock.HTTPClientMock{
+			StatusCode: http.StatusInternalServerError,
+		}
+
+		instance := New(
+			requestObjectJWT,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockDoc},
+			&cryptoMock{SignVal: []byte(testSignature)},
+			lddl,
+			WithHTTPClient(httpClient),
+		)
+
+		query, err := instance.GetQuery()
+		require.NoError(t, err)
+		require.NotNil(t, query)
+
+		t.Run("Invalid scope", func(t *testing.T) {
+			errResponse := &errorResponse{Error: "invalid_scope"}
+
+			errResponseBytes, errMarshal := json.Marshal(errResponse)
+			require.NoError(t, errMarshal)
+
+			httpClient.Response = string(errResponseBytes)
+
+			errMarshal = instance.PresentCredential(credentials)
+			testutil.RequireErrorContains(t, errMarshal, InvalidScopeError)
+		})
+
+		t.Run("Invalid request", func(t *testing.T) {
+			errResponse := &errorResponse{Error: "invalid_request"}
+
+			errResponseBytes, errMarshal := json.Marshal(errResponse)
+			require.NoError(t, errMarshal)
+
+			httpClient.Response = string(errResponseBytes)
+
+			errMarshal = instance.PresentCredential(credentials)
+			testutil.RequireErrorContains(t, errMarshal, InvalidRequestError)
+		})
+
+		t.Run("Invalid client", func(t *testing.T) {
+			errResponse := &errorResponse{Error: "invalid_client"}
+
+			errResponseBytes, errMarshal := json.Marshal(errResponse)
+			require.NoError(t, errMarshal)
+
+			httpClient.Response = string(errResponseBytes)
+
+			errMarshal = instance.PresentCredential(credentials)
+			testutil.RequireErrorContains(t, errMarshal, InvalidClientError)
+		})
+
+		t.Run("VP formats not supported", func(t *testing.T) {
+			errResponse := &errorResponse{Error: "vp_formats_not_supported"}
+
+			errResponseBytes, errMarshal := json.Marshal(errResponse)
+			require.NoError(t, errMarshal)
+
+			httpClient.Response = string(errResponseBytes)
+
+			errMarshal = instance.PresentCredential(credentials)
+			testutil.RequireErrorContains(t, errMarshal, VPFormatsNotSupportedError)
+		})
+
+		t.Run("Invalid presentation definition URI", func(t *testing.T) {
+			errResponse := &errorResponse{Error: "invalid_presentation_definition_uri"}
+
+			errResponseBytes, errMarshal := json.Marshal(errResponse)
+			require.NoError(t, errMarshal)
+
+			httpClient.Response = string(errResponseBytes)
+
+			errMarshal = instance.PresentCredential(credentials)
+			testutil.RequireErrorContains(t, errMarshal, InvalidPresentationDefinitionURIError)
+		})
+
+		t.Run("Invalid presentation definition reference", func(t *testing.T) {
+			errResponse := &errorResponse{Error: "invalid_presentation_definition_reference"}
+
+			errResponseBytes, errMarshal := json.Marshal(errResponse)
+			require.NoError(t, errMarshal)
+
+			httpClient.Response = string(errResponseBytes)
+
+			errMarshal = instance.PresentCredential(credentials)
+			testutil.RequireErrorContains(t, errMarshal, InvalidPresentationDefinitionReferenceError)
+		})
+
+		t.Run("Other error", func(t *testing.T) {
+			t.Run("Response body is not an errorResponse object", func(t *testing.T) {
+				httpClient.Response = ""
+
+				err = instance.PresentCredential(credentials)
+				testutil.RequireErrorContains(t, err, OtherAuthorizationResponseError)
+			})
+			t.Run("Unknown/other error type in errorResponse object", func(t *testing.T) {
+				errResponse := &errorResponse{Error: "other"}
+
+				errResponseBytes, errMarshal := json.Marshal(errResponse)
+				require.NoError(t, errMarshal)
+
+				httpClient.Response = string(errResponseBytes)
+
+				errMarshal = instance.PresentCredential(credentials)
+				testutil.RequireErrorContains(t, errMarshal, OtherAuthorizationResponseError)
+			})
+		})
 	})
 }
 

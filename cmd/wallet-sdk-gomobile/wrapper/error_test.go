@@ -48,7 +48,7 @@ func TestToMobileError(t *testing.T) {
 		parsedErr := walleterror.Parse(err.Error())
 
 		require.Equal(t, "UKN2-000", parsedErr.Code)
-		require.Equal(t, "UNEXPECTED_ERROR", parsedErr.Category)
+		require.Equal(t, "OTHER_ERROR", parsedErr.Category)
 		require.Equal(t, "regular Go error", parsedErr.Details)
 	})
 	t.Run("Non-goapiwalleterror.Error wrapped with another Non-goapiwalleterror.Error passed in", func(t *testing.T) {
@@ -60,7 +60,7 @@ func TestToMobileError(t *testing.T) {
 		parsedErr := walleterror.Parse(err.Error())
 
 		require.Equal(t, "UKN2-000", parsedErr.Code)
-		require.Equal(t, "UNEXPECTED_ERROR", parsedErr.Category)
+		require.Equal(t, "OTHER_ERROR", parsedErr.Category)
 		require.Equal(t, "higher-level error: regular Go error", parsedErr.Details)
 	})
 	t.Run("goapiwalleterror.Error wrapped by one higher-level non-goapiwalleterror.Error is passed in",

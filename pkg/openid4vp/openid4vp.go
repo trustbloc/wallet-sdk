@@ -106,7 +106,7 @@ func (o *Interaction) GetQuery() (*presexch.PresentationDefinition, error) {
 	rawRequestObject, err := o.fetchRequestObject()
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
-			module,
+			ErrorModule,
 			RequestObjectFetchFailedCode,
 			RequestObjectFetchFailedError,
 			fmt.Errorf("fetch request object: %w", err))
@@ -115,7 +115,7 @@ func (o *Interaction) GetQuery() (*presexch.PresentationDefinition, error) {
 	requestObject, err := verifyAuthorizationRequestAndDecodeClaims(rawRequestObject, o.signatureVerifier)
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
-			module,
+			ErrorModule,
 			VerifyAuthorizationRequestFailedCode,
 			VerifyAuthorizationRequestFailedError,
 			fmt.Errorf("verify authorization request: %w", err))
@@ -133,10 +133,8 @@ func (o *Interaction) GetQuery() (*presexch.PresentationDefinition, error) {
 // VerifierDisplayData returns display information about verifier.
 func (o *Interaction) VerifierDisplayData() (*VerifierDisplayData, error) {
 	if o.requestObject == nil {
-		return nil, walleterror.NewExecutionError(
-			module,
-			NotInitializedProperlyErrorCode,
-			NotInitializedProperlyError,
+		return nil, walleterror.NewInvalidSDKUsageError(
+			ErrorModule,
 			fmt.Errorf("call GetQuery first"))
 	}
 
@@ -176,10 +174,8 @@ func (o *Interaction) presentCredentials(credentials []*verifiable.Credential, o
 	timeStartPresentCredential := time.Now()
 
 	if o.requestObject == nil {
-		return walleterror.NewExecutionError(
-			module,
-			NotInitializedProperlyErrorCode,
-			NotInitializedProperlyError,
+		return walleterror.NewInvalidSDKUsageError(
+			ErrorModule,
 			fmt.Errorf("call GetQuery first"))
 	}
 
@@ -193,7 +189,7 @@ func (o *Interaction) presentCredentials(credentials []*verifiable.Credential, o
 	)
 	if err != nil {
 		return walleterror.NewExecutionError(
-			module,
+			ErrorModule,
 			CreateAuthorizedResponseFailedCode,
 			CreateAuthorizedResponseFailedError,
 			fmt.Errorf("create authorized response failed: %w", err))
@@ -206,7 +202,7 @@ func (o *Interaction) presentCredentials(credentials []*verifiable.Credential, o
 
 	err = o.sendAuthorizedResponse(data.Encode())
 	if err != nil {
-		return err
+		return fmt.Errorf("send authorized response failed: %w", err)
 	}
 
 	err = o.metricsLogger.Log(&api.MetricsEvent{
@@ -250,16 +246,9 @@ func (o *Interaction) sendAuthorizedResponse(responseBody string) error {
 		o.requestObject.RedirectURI, "application/x-www-form-urlencoded",
 		bytes.NewBuffer([]byte(responseBody)),
 		fmt.Sprintf(sendAuthorizedResponseEventText, o.requestObject.RedirectURI),
-		presentCredentialEventText, nil)
-	if err != nil {
-		return walleterror.NewExecutionError(
-			module,
-			SendAuthorizedResponseFailedCode,
-			SendAuthorizedResponseFailedError,
-			fmt.Errorf("send authorized response failed: %w", err))
-	}
+		presentCredentialEventText, processAuthorizationErrorResponse)
 
-	return nil
+	return err
 }
 
 func verifyAuthorizationRequestAndDecodeClaims(
@@ -567,4 +556,58 @@ func (r *resolverAdapter) Resolve(did string, opts ...vdrspi.DIDMethodOption) (*
 
 func wrapResolver(didResolver api.DIDResolver) *resolverAdapter {
 	return &resolverAdapter{didResolver: didResolver}
+}
+
+func processAuthorizationErrorResponse(statusCode int, respBytes []byte) error {
+	detailedErr := fmt.Errorf(
+		"received status code [%d] with body [%s] in response to the authorization request",
+		statusCode, string(respBytes))
+
+	var errResponse errorResponse
+
+	err := json.Unmarshal(respBytes, &errResponse)
+	if err != nil {
+		return walleterror.NewExecutionError(ErrorModule,
+			OtherAuthorizationResponseErrorCode,
+			OtherAuthorizationResponseError,
+			detailedErr)
+	}
+
+	switch errResponse.Error {
+	case "invalid_scope":
+		return walleterror.NewExecutionError(ErrorModule,
+			InvalidScopeErrorCode,
+			InvalidScopeError,
+			detailedErr)
+	case "invalid_request":
+		return walleterror.NewExecutionError(ErrorModule,
+			InvalidRequestErrorCode,
+			InvalidRequestError,
+			detailedErr)
+	case "invalid_client":
+		return walleterror.NewExecutionError(ErrorModule,
+			InvalidClientErrorCode,
+			InvalidClientError,
+			detailedErr)
+	case "vp_formats_not_supported":
+		return walleterror.NewExecutionError(ErrorModule,
+			VPFormatsNotSupportedErrorCode,
+			VPFormatsNotSupportedError,
+			detailedErr)
+	case "invalid_presentation_definition_uri":
+		return walleterror.NewExecutionError(ErrorModule,
+			InvalidPresentationDefinitionURIErrorCode,
+			InvalidPresentationDefinitionURIError,
+			detailedErr)
+	case "invalid_presentation_definition_reference":
+		return walleterror.NewExecutionError(ErrorModule,
+			InvalidPresentationDefinitionReferenceErrorCode,
+			InvalidPresentationDefinitionReferenceError,
+			detailedErr)
+	default:
+		return walleterror.NewExecutionError(ErrorModule,
+			OtherAuthorizationResponseErrorCode,
+			OtherAuthorizationResponseError,
+			detailedErr)
+	}
 }

@@ -72,7 +72,7 @@ func convertToGomobileError(err error, trace *otel.Trace) *walleterror.Error {
 	// gomobile wallet error using a generic code.
 	return &walleterror.Error{
 		Code:     "UKN2-000",
-		Category: "UNEXPECTED_ERROR",
+		Category: "OTHER_ERROR",
 		Details:  err.Error(),
 		TraceID:  traceID,
 	}
