@@ -4,6 +4,7 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:app/wallet_sdk/wallet_sdk_model.dart';
@@ -63,6 +64,12 @@ class WalletSDK extends WalletPlatform {
       debugPrint(error.toString());
       rethrow;
     }
+  }
+
+  Future<WalletSDKError> parseWalletSDKError({required String localizedErrorMessage}) async {
+    var parsedWalletError = await methodChannel.invokeMethod(
+        'parseWalletSDKError', <String, dynamic>{'localizedErrorMessage': localizedErrorMessage});
+    return WalletSDKError.fromJson(jsonDecode(json.encode(parsedWalletError)));
   }
 
   Future<String> requestCredentialWithAuth(String redirectURIWithParams) async {

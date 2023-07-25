@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
 
-import 'package:app/main.dart';
 import 'package:app/models/activity_data_object.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +10,7 @@ import 'package:app/services/storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app/widgets/primary_button.dart';
 import 'package:app/widgets/primary_input_field.dart';
+import 'package:app/wallet_sdk/wallet_sdk_mobile.dart';
 import 'credential_preview.dart';
 
 class OTP extends StatefulWidget {
@@ -19,12 +19,15 @@ class OTP extends StatefulWidget {
   @override
   State<OTP> createState() => _OTPPage();
 }
+
 class _OTPPage extends State<OTP> {
   final StorageService _storageService = StorageService();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   final TextEditingController otpController = TextEditingController();
   var userDIDId = '';
   var userDIDDoc = '';
+
+  var WalletSDKPlugin = WalletSDK();
 
   Future<String?> _createDid() async {
     final SharedPreferences pref = await prefs;
@@ -44,15 +47,22 @@ class _OTPPage extends State<OTP> {
     return didID;
   }
 
-
   // This is the entered code
   // It will be displayed in a Text widget
   String? _otp;
   String _requestErrorSubTitleMsg = '';
   String _requestErrorTitleMsg = '';
+  String _requestErrorDetailMsg = '';
   String? actionText = 'Submit';
   late double topPadding;
   bool show = false;
+  bool showDetail = false;
+
+  void detailToggle() {
+    setState(() {
+      showDetail = !showDetail;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,140 +70,194 @@ class _OTPPage extends State<OTP> {
     final width = MediaQuery.of(context).size.width;
     return GestureDetector(
         onTap: () {
-      FocusManager.instance.primaryFocus?.unfocus();
-    },
-    child: Scaffold(
-      appBar: const CustomTitleAppBar(pageTitle: 'Enter OTP', addCloseIcon: true, height: 60,),
-      backgroundColor: const Color(0xffF4F1F5),
-      body: Center(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
+          FocusManager.instance.primaryFocus?.unfocus();
+        },
+        child: Scaffold(
+            appBar: const CustomTitleAppBar(
+              pageTitle: 'Enter OTP',
+              addCloseIcon: true,
+              height: 60,
             ),
-      Container(
-        padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
-        child: PrimaryInputField(textController: otpController, maxLength: 6, labelText: 'Enter OTP Code', textInputFormatter: FilteringTextInputFormatter.digitsOnly),
-      ),
-            Column(
-              children: <Widget>[
-                Column(
-                  children: <Widget>[
-                    Visibility(
-                      visible: show,
-                      child: Container (
-                        padding: const EdgeInsets.all(12),
-                        alignment: Alignment.center,
-                        child: ListTile(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          tileColor:  const Color(0xffFBF8FC),
-                          title: SelectableText(
-                            _requestErrorTitleMsg ?? '',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xff190C21),
+            backgroundColor: const Color(0xffF4F1F5),
+            body: Center(
+              child: ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
+                    child: PrimaryInputField(
+                        textController: otpController,
+                        maxLength: 6,
+                        labelText: 'Enter OTP Code',
+                        textInputFormatter: FilteringTextInputFormatter.digitsOnly),
+                  ),
+                  Column(
+                    children: <Widget>[
+                      Column(
+                        children: <Widget>[
+                          Visibility(
+                            visible: show,
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              alignment: Alignment.center,
+                              child: ListTile(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                tileColor: const Color(0xffFBF8FC),
+                                title: SelectableText(
+                                  _requestErrorTitleMsg ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xff190C21),
+                                  ),
+                                  textAlign: TextAlign.start,
+                                ),
+                                subtitle: SelectableText(
+                                  _requestErrorSubTitleMsg ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xff6C6D7C),
+                                  ),
+                                  textAlign: TextAlign.start,
+                                ),
+                                trailing: IconButton(
+                                  icon: const Icon(
+                                    Icons.more_vert,
+                                    size: 20.0,
+                                  ),
+                                  onPressed: () {
+                                    detailToggle();
+                                  },
+                                ),
+                                //TODO need to add fallback and network image url
+                                leading: const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: Image(
+                                      image: AssetImage('lib/assets/images/errorVector.png'),
+                                      width: 24,
+                                      height: 24,
+                                      fit: BoxFit.cover,
+                                    )),
+                              ),
                             ),
-                            textAlign: TextAlign.start,
                           ),
-                          subtitle:  SelectableText(
-                            _requestErrorSubTitleMsg ?? '',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xff6C6D7C),
-                            ),
-                            textAlign: TextAlign.start,
+                          Visibility(
+                              visible: showDetail,
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: SelectableText(
+                                  _requestErrorDetailMsg ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xff6C6D7C),
+                                  ),
+                                  textAlign: TextAlign.start,
+                                ),
+                              )),
+                          Padding(
+                            padding: EdgeInsets.only(top: height - width),
                           ),
-                          //TODO need to add fallback and network image url
-                          leading: const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: Image(
-                                image: AssetImage('lib/assets/images/errorVector.png'),
-                                width: 24,
-                                height: 24,
-                                fit: BoxFit.cover,
-                              )
+                          PrimaryButton(
+                              onPressed: () async {
+                                setState(() {
+                                  _otp = otpController.text;
+                                });
+
+                                String? credentials;
+                                String? serializeDisplayData;
+                                try {
+                                  final SharedPreferences pref = await prefs;
+                                  await _createDid();
+                                  pref.setString('userDID', userDIDId);
+                                  pref.setString('userDIDDoc', userDIDDoc);
+                                  credentials = await WalletSDKPlugin.requestCredential(_otp!);
+                                  String? issuerURI = await WalletSDKPlugin.issuerURI();
+                                  serializeDisplayData =
+                                      await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
+                                  log("serializeDisplayData -> $serializeDisplayData");
+                                  var activities = await WalletSDKPlugin.storeActivityLogger();
+                                  var credID = await WalletSDKPlugin.getCredID([credentials]);
+                                  log("activities and credID -$activities and $credID");
+                                  _storageService.addActivities(ActivityDataObj(credID!, activities));
+                                  pref.setString("credID", credID);
+                                  _navigateToCredPreviewScreen(
+                                      credentials, issuerURI, serializeDisplayData!, userDIDId, credID);
+                                } catch (err) {
+                                  String errorMessage = err.toString();
+                                  log("errorMessage-> $errorMessage");
+                                  if (err is PlatformException && err.message != null && err.message!.isNotEmpty) {
+                                    log("err.details-> ${err.details}");
+                                    var resp =
+                                        await WalletSDKPlugin.parseWalletSDKError(localizedErrorMessage: err.details);
+                                    (resp.category == "INVALID_GRANT")
+                                        ? {
+                                            errorMessage = "Try re-entering the PIN or scan a new QR code",
+                                            _requestErrorDetailMsg = resp.details
+                                          }
+                                        : (resp.category == "INVALID_TOKEN")
+                                            ? {
+                                                errorMessage = "Try scanning a new QR code",
+                                                _requestErrorDetailMsg = resp.details
+                                              }
+                                            : {errorMessage = resp.details, _requestErrorDetailMsg = resp.traceID};
+                                  }
+                                  setState(() {
+                                    _requestErrorSubTitleMsg = errorMessage;
+                                    _requestErrorTitleMsg = 'Oops! Something went wrong!';
+                                    actionText = 'Re-enter';
+                                    show = true;
+                                    topPadding = height * 0.20;
+                                    _clearOTPInput();
+                                  });
+                                }
+                              },
+                              width: MediaQuery.of(context).size.width,
+                              child: Text(actionText!, style: const TextStyle(fontSize: 16, color: Colors.white))),
+                          const Padding(
+                            padding: EdgeInsets.only(top: 8),
                           ),
-                        ),
+                          PrimaryButton(
+                            onPressed: () {},
+                            width: double.infinity,
+                            gradient: const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [Color(0xffFFFFFF), Color(0xffFFFFFF)]),
+                            child: const Text('Cancel', style: TextStyle(fontSize: 16, color: Color(0xff6C6D7C))),
+                          ),
+                        ],
                       ),
-                    ),
-                   Padding(
-                      padding: EdgeInsets.only(top: height-width),
-                    ),
-                    PrimaryButton(
-                      onPressed: () async {
-                        setState(() {
-                          _otp = otpController.text;
-                        });
-
-                        String? credentials;
-                        String? serializeDisplayData;
-                        try {
-                          final SharedPreferences pref = await prefs;
-                             await _createDid();
-                             pref.setString('userDID',userDIDId);
-                             pref.setString('userDIDDoc',userDIDDoc);
-                          credentials =  await WalletSDKPlugin.requestCredential(_otp!);
-                          String? issuerURI = await WalletSDKPlugin.issuerURI();
-                          serializeDisplayData = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
-                          log("serializeDisplayData -> $serializeDisplayData");
-                          var activities = await WalletSDKPlugin.storeActivityLogger();
-                          var credID = await WalletSDKPlugin.getCredID([credentials]);
-                          log("activities and credID -$activities and $credID");
-                          _storageService.addActivities(ActivityDataObj(credID!, activities));
-                           pref.setString("credID", credID);
-                          _navigateToCredPreviewScreen(credentials, issuerURI, serializeDisplayData!, userDIDId, credID);
-                        } catch (err) {
-                          String errorMessage = err.toString();
-                          if (err is PlatformException &&
-                              err.message != null &&
-                              err.message!.isNotEmpty) {
-                            errorMessage = err.details!;
-                          }
-                            setState(() {
-                              _requestErrorSubTitleMsg = errorMessage;
-                              _requestErrorTitleMsg = 'Error';
-                              actionText = 'Re-enter';
-                               show = true;
-                              topPadding = height*0.20;
-                              _clearOTPInput();
-                            });
-                        }
-                      },
-                      width: double.infinity,
-                     child: Text(actionText!, style: const TextStyle(fontSize: 16, color: Colors.white))
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8),
-                    ),
-                    PrimaryButton(
-                      onPressed: (){},
-                      width: double.infinity,
-                      gradient: const LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Color(0xffFFFFFF), Color(0xffFFFFFF)]),
-                      child: const Text('Cancel', style: TextStyle(fontSize: 16, color: Color(0xff6C6D7C))),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-    ),
- )));
-  }
-  _navigateToCredPreviewScreen(String credentialResp, String issuerURI, String credentialDisplayData, String didID, String credID) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURI, credentialDisplayData: credentialDisplayData, credentialDID: didID, credID: credID),)));
+                    ],
+                  ),
+                ],
+              ),
+            )));
   }
 
-  _clearOTPInput(){
+  _navigateToCredPreviewScreen(
+      String credentialResp, String issuerURI, String credentialDisplayData, String didID, String credID) async {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => CredentialPreview(
+                  credentialData: CredentialData(
+                      rawCredential: credentialResp,
+                      issuerURL: issuerURI,
+                      credentialDisplayData: credentialDisplayData,
+                      credentialDID: didID,
+                      credID: credID),
+                )));
+  }
+
+  _clearOTPInput() {
     otpController.clear();
   }
 }
-

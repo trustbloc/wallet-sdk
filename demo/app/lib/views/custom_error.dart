@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../widgets/common_title_appbar.dart';
+import 'package:app/widgets/common_title_appbar.dart';
 
 class CustomError extends StatefulWidget {
   final String requestErrorTitleMsg;
