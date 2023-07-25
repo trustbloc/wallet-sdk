@@ -15,6 +15,7 @@ import (
 	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/jssupport"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/util"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/walletsdk"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 )
@@ -72,7 +73,7 @@ func SerializeOpenID4CIIssuerInitiatedInteraction(agentMethodsRunner *jssupport.
 					return nil, err
 				}
 
-				marshaledCreds, err := SerializeCredentialArray(creds)
+				marshaledCreds, err := util.MapTo(creds, SerializeCredential)
 				if err != nil {
 					return nil, err
 				}

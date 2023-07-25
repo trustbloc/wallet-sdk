@@ -20,6 +20,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/jssupport"
 	jskms "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/kms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/types"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/util"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/walletsdk"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
@@ -125,6 +126,52 @@ func createOpenID4CIIssuerInitiatedInteraction(_ js.Value, args []js.Value) (any
 	}
 
 	return types.SerializeOpenID4CIIssuerInitiatedInteraction(&agentMethodsRunner, interaction), nil
+}
+
+func createOpenID4VPInteraction(_ js.Value, args []js.Value) (any, error) {
+	if agentInstance == nil {
+		return nil, walleterror.NewExecutionError(
+			errors.Module,
+			errors.InitializationFailedCode,
+			errors.InitializationFailedError,
+			fmt.Errorf("agent instance is not initialized"))
+	}
+
+	authorizationRequest, err := jssupport.EnsureString(jssupport.GetNamedArgument(args, "authorizationRequest"))
+	if err != nil {
+		return nil, err
+	}
+
+	interaction := agentInstance.CreateOpenID4VPInteraction(authorizationRequest)
+
+	return types.SerializeOpenID4VPInteraction(&agentMethodsRunner, interaction), nil
+}
+
+func getSubmissionRequirements(_ js.Value, args []js.Value) (any, error) {
+	if agentInstance == nil {
+		return nil, walleterror.NewExecutionError(
+			errors.Module,
+			errors.InitializationFailedCode,
+			errors.InitializationFailedError,
+			fmt.Errorf("agent instance is not initialized"))
+	}
+
+	query, err := jssupport.EnsureString(jssupport.GetNamedArgument(args, "query"))
+	if err != nil {
+		return nil, err
+	}
+
+	credentials, err := jssupport.EnsureStringArray(jssupport.GetNamedArgument(args, "credentials"))
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := agentInstance.GetSubmissionRequirements(query, credentials)
+	if err != nil {
+		return nil, err
+	}
+
+	return util.MapTo(req, types.SerializeMatchedSubmissionRequirement)
 }
 
 func resolveDisplayData(_ js.Value, args []js.Value) (any, error) {
@@ -241,5 +288,7 @@ func ExportAgentFunctions() map[string]any {
 		"resolveDisplayData":                        agentMethodsRunner.CreateAsyncFunc(resolveDisplayData),
 		"getCredentialID":                           agentMethodsRunner.CreateAsyncFunc(getCredentialID),
 		"parseResolvedDisplayData":                  agentMethodsRunner.CreateAsyncFunc(parseResolvedDisplayData),
+		"createOpenID4VPInteraction":                agentMethodsRunner.CreateAsyncFunc(createOpenID4VPInteraction),
+		"getSubmissionRequirements":                 agentMethodsRunner.CreateAsyncFunc(getSubmissionRequirements),
 	}
 }
