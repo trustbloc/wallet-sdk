@@ -189,7 +189,8 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 			nil, false)
 
 		authorizationLink, err := interaction.CreateAuthorizationURL("clientID", "redirectURI", nil)
-		require.EqualError(t, err, "issuer does not support the authorization code grant type")
+		requireErrorContains(t, err, "INVALID_SDK_USAGE")
+		requireErrorContains(t, err, "issuer does not support the authorization code grant type")
 		require.Empty(t, authorizationLink)
 	})
 	t.Run("Conflicting issuer state", func(t *testing.T) {
@@ -203,7 +204,8 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 
 		authorizationLink, err := interaction.CreateAuthorizationURL("clientID", "redirectURI",
 			createAuthorizationURLOpts)
-		require.EqualError(t, err, "INVALID_SDK_USAGE(OCI3-0000):the credential offer already specifies "+
+		requireErrorContains(t, err, "INVALID_SDK_USAGE")
+		requireErrorContains(t, err, "the credential offer already specifies "+
 			"an issuer state, and a conflicting issuer state value was provided. An issuer state should only be "+
 			"provided if required by the issuer and the credential offer does not specify one already")
 		require.Empty(t, authorizationLink)
@@ -472,7 +474,8 @@ func TestIssuerInitiatedInteractionAlias(t *testing.T) {
 	// IssuerInitiatedInteraction) See TestIssuerInitiatedInteraction_RequestCredential or the integration tests for
 	// better examples.
 	authURL, err := interaction.CreateAuthorizationURL("", "", nil)
-	require.EqualError(t, err, "issuer does not support the authorization code grant type")
+	requireErrorContains(t, err, "INVALID_SDK_USAGE")
+	requireErrorContains(t, err, "issuer does not support the authorization code grant type")
 	require.Empty(t, authURL)
 
 	credentials, err = interaction.RequestCredentialWithPreAuth(nil, nil)

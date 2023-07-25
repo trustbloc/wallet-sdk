@@ -103,7 +103,12 @@ func (i *IssuerInitiatedInteraction) CreateAuthorizationURL(clientID, redirectUR
 		goAPIOpts = append(goAPIOpts, openid4cigoapi.WithIssuerState(*opts.issuerState))
 	}
 
-	return i.goAPIInteraction.CreateAuthorizationURL(clientID, redirectURI, goAPIOpts...)
+	authorizationURL, err := i.goAPIInteraction.CreateAuthorizationURL(clientID, redirectURI, goAPIOpts...)
+	if err != nil {
+		return "", wrapper.ToMobileErrorWithTrace(err, i.oTel)
+	}
+
+	return authorizationURL, nil
 }
 
 // RequestCredentialWithPreAuth requests credential(s) from the issuer. This method can only be used for the

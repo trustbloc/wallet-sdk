@@ -26,8 +26,8 @@ func Parse(message string) *Error {
 	err := json.Unmarshal([]byte(message), walletErr)
 	if err != nil {
 		return &Error{
-			Code:     "GNR2-000",
-			Category: "GENERAL_ERROR",
+			Code:     "UKN2-000",
+			Category: "OTHER_ERROR",
 			Details:  message,
 		}
 	}
