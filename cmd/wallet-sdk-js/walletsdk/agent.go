@@ -13,6 +13,8 @@ import (
 	"net/http"
 
 	"github.com/hyperledger/aries-framework-go/component/models/did"
+	"github.com/hyperledger/aries-framework-go/component/models/jwt"
+	"github.com/hyperledger/aries-framework-go/component/models/presexch"
 	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 	arieskms "github.com/hyperledger/aries-framework-go/spi/kms"
@@ -20,11 +22,13 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
+	"github.com/trustbloc/wallet-sdk/pkg/credentialquery"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 	"github.com/trustbloc/wallet-sdk/pkg/openid4ci"
+	"github.com/trustbloc/wallet-sdk/pkg/openid4vp"
 )
 
 // Agent is a facade around Wallet-SDK functionality. It provides a simplified interface to interop with JS.
@@ -101,6 +105,23 @@ func (a *Agent) CreateOpenID4CIIssuerInitiatedInteraction(
 	}, nil
 }
 
+// CreateOpenID4VPInteraction creates and starts openid4vp Interaction.
+func (a *Agent) CreateOpenID4VPInteraction(
+	authorizationRequest string,
+) *OpenID4VPInteraction {
+	jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
+		common.NewVDRKeyResolver(
+			a.didResolver,
+		).PublicKeyFetcher()))
+
+	interaction := openid4vp.New(authorizationRequest, jwtVerifier, a.didResolver, a.crypto, a.docLoader)
+
+	return &OpenID4VPInteraction{
+		Interaction: interaction,
+		DocLoader:   a.docLoader,
+	}
+}
+
 // ResolveDisplayData resolves display information for issued credentials based on an issuer's metadata,
 // which is fetched using the issuer's (base) URI.
 // The CredentialDisplays in the returned Data object correspond to the VCs passed in and are in the
@@ -156,4 +177,45 @@ func (a *Agent) ParseCredential(credential string) (*verifiable.Credential, erro
 	}
 
 	return verifiableCredential, nil
+}
+
+// GetSubmissionRequirements returns information about VCs matching requirements.
+func (a *Agent) GetSubmissionRequirements(query string, credentials []string,
+) ([]*presexch.MatchedSubmissionRequirement, error) {
+	credInquirer := credentialquery.NewInstance(a.docLoader)
+
+	pdQuery, err := unwrapQuery([]byte(query))
+	if err != nil {
+		return nil, err
+	}
+
+	var parsedCreds []*verifiable.Credential
+
+	for _, cred := range credentials {
+		verifiableCredential, err := a.ParseCredential(cred)
+		if err != nil {
+			return nil, err
+		}
+
+		parsedCreds = append(parsedCreds, verifiableCredential)
+	}
+
+	return credInquirer.GetSubmissionRequirements(pdQuery, credentialquery.WithCredentialsArray(parsedCreds),
+		credentialquery.WithSelectiveDisclosure(a.didResolver))
+}
+
+func unwrapQuery(query []byte) (*presexch.PresentationDefinition, error) {
+	pdQuery := &presexch.PresentationDefinition{}
+
+	err := json.Unmarshal(query, pdQuery)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal of presentation definition failed: %w", err)
+	}
+
+	err = pdQuery.ValidateSchema()
+	if err != nil {
+		return nil, fmt.Errorf("validation of presentation definition failed: %w", err)
+	}
+
+	return pdQuery, nil
 }
