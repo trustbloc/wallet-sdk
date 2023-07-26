@@ -118,14 +118,6 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
-                        "fetchDID" -> {
-                            try {
-                                val didID = call.argument<String>("didID")
-                            } catch (e: Exception) {
-                                result.error("Exception", "Error while setting fetched DID", e)
-                            }
-                        }
-
                         "serializeDisplayData" -> {
                             try {
                                 val credentialDisplay = serializeDisplayData(call)
@@ -161,6 +153,15 @@ class MainActivity : FlutterActivity() {
                                 result.success(issuerURIResp)
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while getting issuerURI", e)
+                            }
+                        }
+
+                        "parseWalletError" -> {
+                            try {
+                                val parsedWalletError = parseWalletSDKError(call)
+                                result.success(parsedWalletError)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while parsing wallet sdk error", e)
                             }
                         }
 
@@ -400,7 +401,19 @@ class MainActivity : FlutterActivity() {
     }
 
 
+    private fun parseWalletSDKError(call: MethodCall): MutableMap<String, String> {
+        val localizedErrorMessage = call.argument<String>("localizedErrorMessage") ?: throw java.lang.Exception("localizedErrorMessage is missing")
 
+        val parsedError = Walleterror.parse(localizedErrorMessage)
+
+        val parsedErrResp: MutableMap<String, String> = mutableMapOf()
+        parsedErrResp["category"] = parsedError.category
+        parsedErrResp["details"] = parsedError.details
+        parsedErrResp["code"] = parsedError.code
+        parsedErrResp["traceID"] = parsedError.traceID
+
+        return parsedErrResp
+    }
     /**
      * ResolveDisplay resolves display information for issued credentials based on an issuer's metadata, which is fetched
     using the issuer's (base) URI. The CredentialDisplays returns DisplayData object correspond to the VCs passed in and are in the

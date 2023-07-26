@@ -1,4 +1,3 @@
-import 'package:app/widgets/success_card.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/widgets/credential_card.dart';
@@ -57,12 +56,12 @@ class CredentialSharedState extends State<CredentialShared> {
                 Image.asset('lib/assets/images/success.png')
               ],
             ),
-            title:  Text('Success',textAlign: TextAlign.left, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            title:  const Text('Success',textAlign: TextAlign.left, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             subtitle: Text("Credentials have been shared with ${widget.verifierName}", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal)),
           ),
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.only(left: 24, right:24, top: 24, bottom: 8),
+              padding: const EdgeInsets.only(left: 24, right:24, top: 24, bottom: 8),
               itemCount: widget.credentialData.length,
               itemBuilder: (BuildContext context, int index) {
                 return CredentialCard(credentialData: widget.credentialData[index], isDashboardWidget: true, isDetailArrowRequired: false,);

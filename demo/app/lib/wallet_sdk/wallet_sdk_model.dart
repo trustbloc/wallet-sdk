@@ -95,6 +95,43 @@ class SupportedCredentials {
   }
 }
 
+class WalletSDKError {
+  final String code;
+  final String category;
+  final String details;
+  final String traceID;
+
+  const WalletSDKError({
+    required this.code,
+    required this.category,
+    required this.details,
+    required this.traceID,
+  });
+
+  @override
+  String toString() {
+    return 'WalletSDKError { code: $code, category: $category, details: $details, traceID: $traceID }';
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['code'] = code;
+    data['category'] = category;
+    data['details'] = details;
+    data['traceID'] = traceID;
+    return data;
+  }
+
+  factory WalletSDKError.fromJson(Map<String, dynamic> json) {
+    return WalletSDKError(
+      code: json['code'],
+      category: json['category'],
+      details: json['details'],
+      traceID: json['traceID'],
+    );
+  }
+}
+
 class CredentialDisplayData {
   final String issuerName;
   final String overviewName;

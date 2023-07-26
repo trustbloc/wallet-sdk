@@ -43,6 +43,10 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             let otp = fetchArgsKeyValue(call, key: "otp")
             requestCredential(otp: otp!, result: result)
             
+        case "parseWalletSDKError":
+            let localizedErrorMessage = fetchArgsKeyValue(call, key: "localizedErrorMessage")
+            parseWalletSDKError(localizedErrorMessage: localizedErrorMessage!, result: result)
+            
         case "requestCredentialWithAuth":
             let redirectURIWithParams = fetchArgsKeyValue(call, key: "redirectURIWithParams")
             requestCredentialWithAuth(redirectURIWithParams: redirectURIWithParams!, result: result)
@@ -528,11 +532,26 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                                      vcCredentials: convertToVerifiableCredentialsArray(credentials: vcCredentials))
             result(displayDataResp)
           } catch let error as NSError {
+              let parsedError = WalleterrorParse(error.localizedDescription)
                return result(FlutterError.init(code: "Exception",
                                          message: "error while resolving credential",
-                                         details: error.localizedDescription))
+                                               details: parsedError))
+              
             }
     }
+    
+    public func parseWalletSDKError(localizedErrorMessage: String, result: @escaping FlutterResult){
+        let parsedError = WalleterrorParse(localizedErrorMessage)!
+        
+        var parsedErrorResult :[String: Any] = [
+            "category":   parsedError.category,
+            "details":  parsedError.details,
+            "code":  parsedError.code,
+            "traceID":  parsedError.traceID
+        ]
+        result(parsedErrorResult)
+    }
+    
     
     public func resolveCredentialDisplay(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
    
