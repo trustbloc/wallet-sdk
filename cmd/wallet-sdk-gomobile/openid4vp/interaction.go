@@ -28,10 +28,10 @@ import (
 )
 
 type goAPIOpenID4VP interface {
-	GetQuery() (*presexch.PresentationDefinition, error)
+	GetQuery() *presexch.PresentationDefinition
 	PresentCredential(credentials []*afgoverifiable.Credential) error
 	PresentCredentialUnsafe(credential *afgoverifiable.Credential) error
-	VerifierDisplayData() (*openid4vp.VerifierDisplayData, error)
+	VerifierDisplayData() *openid4vp.VerifierDisplayData
 }
 
 // Interaction represents a single OpenID4VP interaction between a wallet and a verifier. The methods defined on this
@@ -46,7 +46,7 @@ type Interaction struct {
 }
 
 // NewInteraction creates a new OpenID4VP Interaction.
-// The methods defined on this object are used to help guide the calling code through the OpenID4CI flow.
+// The methods defined on this object are used to help guide the calling code through the OpenID4VP flow.
 func NewInteraction(args *Args, opts *Opts) (*Interaction, error) { //nolint:funlen
 	if opts == nil {
 		opts = NewOpts()
@@ -112,29 +112,31 @@ func NewInteraction(args *Args, opts *Opts) (*Interaction, error) { //nolint:fun
 		return nil, err
 	}
 
+	goAPIInteraction, err := openid4vp.NewInteraction(
+		args.authorizationRequest,
+		jwtVerifier,
+		&wrapper.VDRResolverWrapper{DIDResolver: args.didRes},
+		args.crypto,
+		goAPIDocumentLoader,
+		goAPIOpts...,
+	)
+	if err != nil {
+		return nil, wrapper.ToMobileErrorWithTrace(err, oTel)
+	}
+
 	return &Interaction{
 		ldDocumentLoader: opts.documentLoader,
 		crypto:           args.crypto,
-		goAPIOpenID4VP: openid4vp.New(
-			args.authorizationRequest,
-			jwtVerifier,
-			&wrapper.VDRResolverWrapper{DIDResolver: args.didRes},
-			args.crypto,
-			goAPIDocumentLoader,
-			goAPIOpts...,
-		),
-		didResolver: args.didRes,
-		inquirer:    inquirer,
-		oTel:        oTel,
+		goAPIOpenID4VP:   goAPIInteraction,
+		didResolver:      args.didRes,
+		inquirer:         inquirer,
+		oTel:             oTel,
 	}, nil
 }
 
 // GetQuery creates query based on authorization request data.
 func (o *Interaction) GetQuery() ([]byte, error) {
-	presentationDefinition, err := o.goAPIOpenID4VP.GetQuery()
-	if err != nil {
-		return nil, wrapper.ToMobileErrorWithTrace(err, o.oTel)
-	}
+	presentationDefinition := o.goAPIOpenID4VP.GetQuery()
 
 	pdBytes, err := json.Marshal(presentationDefinition)
 	if err != nil {
@@ -146,13 +148,10 @@ func (o *Interaction) GetQuery() ([]byte, error) {
 }
 
 // VerifierDisplayData returns display information about verifier.
-func (o *Interaction) VerifierDisplayData() (*VerifierDisplayData, error) {
-	displayData, err := o.goAPIOpenID4VP.VerifierDisplayData()
-	if err != nil {
-		return nil, wrapper.ToMobileErrorWithTrace(err, o.oTel)
-	}
+func (o *Interaction) VerifierDisplayData() *VerifierDisplayData {
+	displayData := o.goAPIOpenID4VP.VerifierDisplayData()
 
-	return &VerifierDisplayData{displayData: displayData}, nil
+	return &VerifierDisplayData{displayData: displayData}
 }
 
 // PresentCredential presents credentials to redirect uri from request object.

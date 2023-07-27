@@ -141,18 +141,17 @@ func (h *VPTestHelper) CheckActivityLogAfterOpenID4VPFlow(t *testing.T, activity
 }
 
 func (h *VPTestHelper) CheckMetricsLoggerAfterOpenID4VPFlow(t *testing.T, metricsLogger *metricslogger.MetricsLogger) {
-	require.Len(t, metricsLogger.Events, 4)
+	require.Len(t, metricsLogger.Events, 3)
 
 	h.checkFetchRequestObjectMetricsEvent(t, metricsLogger.Events[0])
-	h.checkGetQueryMetricsEvent(t, metricsLogger.Events[1])
-	h.checkSendAuthorizedResponseMetricsEvent(t, metricsLogger.Events[2])
-	h.checkPresentCredentialMetricsEvent(t, metricsLogger.Events[3])
+	h.checkSendAuthorizedResponseMetricsEvent(t, metricsLogger.Events[1])
+	h.checkPresentCredentialMetricsEvent(t, metricsLogger.Events[2])
 }
 
 func (h *VPTestHelper) checkFetchRequestObjectMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
 	require.Contains(t, metricsEvent.Event(), "Fetch request object via an HTTP GET request to "+
 		"http://localhost:8075/request-object/")
-	require.Equal(t, "Get query", metricsEvent.ParentEvent())
+	require.Equal(t, "Instantiating OpenID4VP interaction object", metricsEvent.ParentEvent())
 	require.Positive(t, metricsEvent.DurationNanoseconds())
 }
 

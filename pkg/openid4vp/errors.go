@@ -10,8 +10,8 @@ package openid4vp
 // nolint:golint,nolintlint
 const (
 	ErrorModule                                 = "OVP"
+	InvalidAuthorizationRequestError            = "INVALID_AUTHORIZATION_REQUEST"
 	RequestObjectFetchFailedError               = "REQUEST_OBJECT_FETCH_FAILED"
-	VerifyAuthorizationRequestFailedError       = "VERIFY_AUTHORIZATION_REQUEST_FAILED"
 	CreateAuthorizedResponseFailedError         = "CREATE_AUTHORIZED_RESPONSE_FAILED"
 	InvalidScopeError                           = "INVALID_SCOPE"
 	InvalidRequestError                         = "INVALID_REQUEST"
@@ -25,8 +25,8 @@ const (
 // Constants' names and reasons are obvious, so they do not require additional comments.
 // nolint:golint,nolintlint
 const (
-	RequestObjectFetchFailedCode                    = 0
-	VerifyAuthorizationRequestFailedCode            = 1
+	InvalidAuthorizationRequestErrorCode            = 0
+	RequestObjectFetchFailedCode                    = 1
 	CreateAuthorizedResponseFailedCode              = 2
 	InvalidScopeErrorCode                           = 3
 	InvalidRequestErrorCode                         = 4

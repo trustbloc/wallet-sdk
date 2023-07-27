@@ -142,7 +142,10 @@ func createOpenID4VPInteraction(_ js.Value, args []js.Value) (any, error) {
 		return nil, err
 	}
 
-	interaction := agentInstance.CreateOpenID4VPInteraction(authorizationRequest)
+	interaction, err := agentInstance.CreateOpenID4VPInteraction(authorizationRequest)
+	if err != nil {
+		return nil, err
+	}
 
 	return types.SerializeOpenID4VPInteraction(&agentMethodsRunner, interaction), nil
 }
@@ -215,8 +218,7 @@ func parseResolvedDisplayData(_ js.Value, args []js.Value) (any, error) {
 			fmt.Errorf("agent instance is not initialized"))
 	}
 
-	resolvedCredentialDisplayData, err :=
-		jssupport.EnsureString(jssupport.GetNamedArgument(args, "resolvedCredentialDisplayData"))
+	resolvedCredentialDisplayData, err := jssupport.EnsureString(jssupport.GetNamedArgument(args, "resolvedCredentialDisplayData"))
 	if err != nil {
 		return nil, err
 	}
