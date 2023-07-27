@@ -29,6 +29,7 @@ const (
 	UnsupportedCredentialFormatError          = "UNSUPPORTED_CREDENTIAL_FORMAT"
 	UnsupportedCredentialTypeError            = "UNSUPPORTED_CREDENTIAL_TYPE"
 	InvalidOrMissingProofError                = "INVALID_OR_MISSING_PROOF"
+	UnsupportedIssuanceURISchemeError         = "UNSUPPORTED_ISSUANCE_URI_SCHEME"
 )
 
 // Constants' names and reasons are obvious, so they do not require additional comments.
@@ -53,4 +54,5 @@ const (
 	UnsupportedCredentialFormatErrorCode     = 16
 	UnsupportedCredentialTypeErrorCode       = 17
 	InvalidOrMissingProofErrorCode           = 18
+	UnsupportedIssuanceURISchemeCode
 )

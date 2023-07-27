@@ -802,7 +802,7 @@ func createCredentialOfferIssuanceURI(t *testing.T, issuerURL string, includeAut
 
 	credentialOfferEscaped := url.QueryEscape(string(credentialOfferBytes))
 
-	return "openid-vc://?credential_offer=" + credentialOfferEscaped
+	return "openid-credential-offer://?credential_offer=" + credentialOfferEscaped
 }
 
 func createCredentialOffer(t *testing.T, issuerURL string, includeAuthCodeGrant bool) *goapiopenid4ci.CredentialOffer {

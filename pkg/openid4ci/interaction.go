@@ -391,6 +391,9 @@ func (i *interaction) createClaimsProof(nonce interface{}, signer api.JWTSigner)
 	return proofJWT, nil
 }
 
+// createOAuthHTTPClient creates the OAuth2 client wrapper using the OAuth2 library.
+// Due to some peculiarities with the OAuth2 library, we need to do some things here to ensure our custom HTTP client
+// settings get preserved. Check the comments in the method below for more details.
 func (i *interaction) createOAuthHTTPClient() *http.Client {
 	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, i.httpClient)
 

@@ -453,10 +453,6 @@ func tokenErrorResponseHandler(statusCode int, respBody []byte) error {
 	}
 }
 
-// createOAuthHTTPClient creates the OAuth2 client wrapper using the OAuth2 library.
-// Due to some peculiarities with the OAuth2 library, we need to do some things here to ensure our custom HTTP client
-// settings get preserved. Check the comments in the method below for more details.
-
 func getCredentialOffer(initiateIssuanceURI string, httpClient *http.Client, metricsLogger api.MetricsLogger,
 ) (*CredentialOffer, error) {
 	requestURIParsed, err := url.Parse(initiateIssuanceURI)
@@ -466,6 +462,14 @@ func getCredentialOffer(initiateIssuanceURI string, httpClient *http.Client, met
 			InvalidIssuanceURICode,
 			InvalidIssuanceURIError,
 			err)
+	}
+
+	if requestURIParsed.Scheme != "openid-credential-offer" {
+		return nil, walleterror.NewValidationError(
+			ErrorModule,
+			UnsupportedIssuanceURISchemeCode,
+			UnsupportedIssuanceURISchemeError,
+			fmt.Errorf("%s is not a supported issuance URL scheme", requestURIParsed.Scheme))
 	}
 
 	var credentialOfferJSON []byte

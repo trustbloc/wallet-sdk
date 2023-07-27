@@ -911,10 +911,11 @@ let issuerURI = interaction.issuer().uri() // Optional (but useful)
 
 #### Creating New Interaction Object
 
-| Error                               | Possible Reasons                                                                                                                                                                                                                 |
-|-------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| INVALID_ISSUANCE_URI(OCI0-0000)     | The issuance URI used to initiate the OpenID4CI flow isn't a valid URL.<br/><br/>The issuance URI doesn't specify a credential offer.                                                                                            |
-| INVALID_CREDENTIAL_OFFER(OCI0-0001) | The credential offer object is malformed.<br/><br/>The issuance URI specified an endpoint for retrieving the credential offer, but there was an error during the GET call. The server may be down or have a configuration issue. |
+| Error                                      | Possible Reasons                                                                                                                                                                                                                 |
+|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| INVALID_ISSUANCE_URI(OCI0-0000)            | The issuance URI used to initiate the OpenID4CI flow isn't a valid URL.<br/><br/>The issuance URI doesn't specify a credential offer.                                                                                            |
+| INVALID_CREDENTIAL_OFFER(OCI0-0001)        | The credential offer object is malformed.<br/><br/>The issuance URI specified an endpoint for retrieving the credential offer, but there was an error during the GET call. The server may be down or have a configuration issue. |
+| UNSUPPORTED_ISSUANCE_URI_SCHEME(OCI0-0018) | The issuance URI used to initiate the OpenID4CI flow uses an unsupported scheme. Wallet-SDK only supports the "openid-credential-offer" scheme.                                                                                  |
 
 ##### Requesting Credential
 
