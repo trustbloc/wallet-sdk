@@ -165,7 +165,7 @@ func TestNewInteraction(t *testing.T) {
 
 			credentialOfferEscaped := url.QueryEscape(string(credentialOfferBytes))
 
-			credentialOfferIssuanceURI := "openid-vc://?credential_offer=" + credentialOfferEscaped
+			credentialOfferIssuanceURI := "openid-credential-offer://?credential_offer=" + credentialOfferEscaped
 
 			newIssuerInitiatedInteraction(t, credentialOfferIssuanceURI)
 		})
@@ -193,7 +193,8 @@ func TestNewInteraction(t *testing.T) {
 	})
 	t.Run("Fail to get credential offer", func(t *testing.T) {
 		t.Run("Credential offer query parameter missing", func(t *testing.T) {
-			interaction, err := openid4ci.NewIssuerInitiatedInteraction("", getTestClientConfig(t))
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction("openid-credential-offer://",
+				getTestClientConfig(t))
 			require.EqualError(t, err, "INVALID_ISSUANCE_URI(OCI0-0000):credential offer query "+
 				"parameter missing from initiate issuance URI")
 			require.Nil(t, interaction)
@@ -248,7 +249,7 @@ func TestNewInteraction(t *testing.T) {
 
 		credentialOfferEscaped := url.QueryEscape(string(credentialOfferBytes))
 
-		credentialOfferIssuanceURI := "openid-vc://?credential_offer=" + credentialOfferEscaped
+		credentialOfferIssuanceURI := "openid-credential-offer://?credential_offer=" + credentialOfferEscaped
 
 		interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
 		require.EqualError(t, err, "no supported grant types found")
@@ -264,7 +265,7 @@ func TestNewInteraction(t *testing.T) {
 
 		credentialOfferEscaped := url.QueryEscape(string(credentialOfferBytes))
 
-		credentialOfferIssuanceURI := "openid-vc://?credential_offer=" + credentialOfferEscaped
+		credentialOfferIssuanceURI := "openid-credential-offer://?credential_offer=" + credentialOfferEscaped
 
 		interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, getTestClientConfig(t))
 		require.EqualError(t, err, "UNSUPPORTED_CREDENTIAL_TYPE_IN_OFFER(OCI0-0002):unsupported "+
@@ -298,6 +299,13 @@ func TestNewInteraction(t *testing.T) {
 		require.Contains(t, err.Error(),
 			"failed to log event (Event=Fetch credential offer via an HTTP GET request to "+
 				"http://127.0.0.1:")
+		require.Nil(t, interaction)
+	})
+	t.Run("Issuance URL using an unsupported scheme", func(t *testing.T) {
+		interaction, err := openid4ci.NewIssuerInitiatedInteraction("https://SomeCredentialOffer",
+			getTestClientConfig(t))
+		testutil.RequireErrorContains(t, err, "UNSUPPORTED_ISSUANCE_URI_SCHEME")
+		testutil.RequireErrorContains(t, err, "https is not a supported issuance URL scheme")
 		require.Nil(t, interaction)
 	})
 }
@@ -1590,7 +1598,7 @@ func createCredentialOfferIssuanceURI(t *testing.T, issuerURL string, includeAut
 
 	credentialOfferEscaped := url.QueryEscape(string(credentialOfferBytes))
 
-	return "openid-vc://?credential_offer=" + credentialOfferEscaped
+	return "openid-credential-offer://?credential_offer=" + credentialOfferEscaped
 }
 
 func createCredentialOffer(t *testing.T, issuerURL string, includeAuthCodeGrant,
