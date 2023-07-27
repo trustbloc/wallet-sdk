@@ -21,6 +21,7 @@ import 'dart:convert';
 
 class PresentationPreview extends StatefulWidget {
   final CredentialData credentialData;
+
   const PresentationPreview({super.key, required this.credentialData});
 
   @override
@@ -31,7 +32,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
   final StorageService _storageService = StorageService();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   var uuid = const Uuid();
-  late Map<Object?, Object?>? verifiedDisplayData;
+
   late String verifierName = '';
   late String serviceURL = '';
   bool verifiedDomain = true;
@@ -40,15 +41,13 @@ class PresentationPreviewState extends State<PresentationPreview> {
   void initState() {
     super.initState();
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) async {
-      verifiedDisplayData = await WalletSDKPlugin.getVerifierDisplayData();
-      var verifiedDisplayDataResp = json.encode(verifiedDisplayData);
-      Map<String, dynamic> responseJson = json.decode(verifiedDisplayDataResp);
-      var resp = await WalletSDKPlugin.wellKnownDidConfig(responseJson["did"]);
+      final verifiedDisplayData = await WalletSDKPlugin.getVerifierDisplayData();
+      var resp = await WalletSDKPlugin.wellKnownDidConfig(verifiedDisplayData.did);
       var wellKnownDidConfig = json.encode(resp);
       Map<String, dynamic> wellKnownDidConfigResp = json.decode(wellKnownDidConfig);
       setState(() {
-        verifierName = responseJson["name"] != '' ? responseJson["name"] : 'Verifier' ;
-        serviceURL =  wellKnownDidConfigResp ["serviceURL"];
+        verifierName = verifiedDisplayData.name;
+        serviceURL = wellKnownDidConfigResp["serviceURL"];
         verifiedDomain = wellKnownDidConfigResp["isValid"];
       });
     });
@@ -57,63 +56,81 @@ class PresentationPreviewState extends State<PresentationPreview> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:  const CustomTitleAppBar(pageTitle: 'Share Credential', addCloseIcon: true, height: 60,),
+      appBar: const CustomTitleAppBar(
+        pageTitle: 'Share Credential',
+        addCloseIcon: true,
+        height: 60,
+      ),
       body: SingleChildScrollView(
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            ListTile(
-              leading: Image.asset('lib/assets/images/credLogo.png'),
-              title: Text(verifierName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              subtitle: Text(serviceURL != "" ? serviceURL: 'verifier.com', style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
-              trailing: FittedBox(
-                  child: verifiedDomain ? Row(
-                    children: [
-                      Text.rich(
-                        textAlign: TextAlign.center,
-                        TextSpan(
-                          children: [
-                            WidgetSpan(child: Icon(Icons.verified_user_outlined,color: Colors.lightGreen, size: 18,)),
-                            TextSpan(
-                              text: 'Verified',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.lightGreen,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              ListTile(
+                leading: Image.asset('lib/assets/images/credLogo.png'),
+                title: Text(verifierName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                subtitle: Text(serviceURL != "" ? serviceURL : 'verifier.com',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+                trailing: FittedBox(
+                    child: verifiedDomain
+                        ? Row(children: [
+                            Text.rich(
+                              textAlign: TextAlign.center,
+                              TextSpan(
+                                children: [
+                                  WidgetSpan(
+                                      child: Icon(
+                                    Icons.verified_user_outlined,
+                                    color: Colors.lightGreen,
+                                    size: 18,
+                                  )),
+                                  TextSpan(
+                                    text: 'Verified',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.lightGreen,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ]):  Row(
-                    children: [
-                      Text.rich(
-                      textAlign: TextAlign.center,
-                      TextSpan(
-                        children: [
-                          WidgetSpan(child: Icon(Icons.dangerous_outlined, color: Colors.redAccent, size: 18,)),
-                          TextSpan(
-                            text: 'Unverified',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.redAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                      ],
-                  )
-                ),
-
-            ),
-            CredentialCard(credentialData:  widget.credentialData,  isDashboardWidget: false, isDetailArrowRequired: false),
-            CredentialMetaDataCard(credentialData: widget.credentialData),
-            CredentialVerifiedInformation(credentialData: widget.credentialData, height: MediaQuery.of(context).size.height*0.38,),
-            Align(
+                          ])
+                        : Row(
+                            children: [
+                              Text.rich(
+                                textAlign: TextAlign.center,
+                                TextSpan(
+                                  children: [
+                                    WidgetSpan(
+                                        child: Icon(
+                                      Icons.dangerous_outlined,
+                                      color: Colors.redAccent,
+                                      size: 18,
+                                    )),
+                                    TextSpan(
+                                      text: 'Unverified',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.redAccent,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            ],
+                          )),
+              ),
+              CredentialCard(
+                  credentialData: widget.credentialData, isDashboardWidget: false, isDetailArrowRequired: false),
+              CredentialMetaDataCard(credentialData: widget.credentialData),
+              CredentialVerifiedInformation(
+                credentialData: widget.credentialData,
+                height: MediaQuery.of(context).size.height * 0.38,
+              ),
+              Align(
                 alignment: Alignment.bottomCenter,
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(8),
@@ -126,18 +143,17 @@ class PresentationPreviewState extends State<PresentationPreview> {
                           onPressed: () async {
                             final SharedPreferences pref = await prefs;
                             try {
-                              await WalletSDKPlugin.presentCredential();
-                            }   catch (error) {
-                             var errString = error.toString().replaceAll(r'\', '');
+                              await WalletSDKPlugin.presentCredential(
+                                  selectedCredentials: [widget.credentialData.rawCredential]);
+                            } catch (error) {
+                              var errString = error.toString().replaceAll(r'\', '');
                               Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            CustomError(
-                                                requestErrorTitleMsg: "error while presenting credential",
-                                                requestErrorSubTitleMsg: "${errString}"
-                                            )));
-                                return;
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => CustomError(
+                                          requestErrorTitleMsg: "error while presenting credential",
+                                          requestErrorSubTitleMsg: "${errString}")));
+                              return;
                             }
                             var activities = await WalletSDKPlugin.storeActivityLogger();
                             var credID = pref.getString('credID');
@@ -145,13 +161,12 @@ class PresentationPreviewState extends State<PresentationPreview> {
                             _navigateToCredentialShareSuccess(verifierName!);
                           },
                           width: double.infinity,
-                          child: const Text('Share Credential', style: TextStyle(fontSize: 16, color: Colors.white))
-                      ),
+                          child: const Text('Share Credential', style: TextStyle(fontSize: 16, color: Colors.white))),
                       const Padding(
                         padding: EdgeInsets.fromLTRB(12, 0, 12, 8),
                       ),
                       PrimaryButton(
-                        onPressed: (){
+                        onPressed: () {
                           _navigateToDashboard();
                         },
                         width: double.infinity,
@@ -165,16 +180,24 @@ class PresentationPreviewState extends State<PresentationPreview> {
                   ),
                 ), //last one
               ),
-          ],
+            ],
+          ),
         ),
-       ),
       ),
     );
   }
+
   _navigateToDashboard() async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }
+
   _navigateToCredentialShareSuccess(String verifierName) async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialShared(verifierName: verifierName, credentialData: [widget.credentialData],)));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => CredentialShared(
+                  verifierName: verifierName,
+                  credentialData: [widget.credentialData],
+                )));
   }
 }

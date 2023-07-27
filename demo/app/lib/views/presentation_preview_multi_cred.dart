@@ -35,7 +35,7 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
   late var checkListItems = widget.credentialData;
   List<CredentialData> selectedCredentialData = [];
   var selectedIndexes = [];
-  late Map<Object?, Object?>? verifiedDisplayData;
+
   late String verifierName = '';
   late String serviceURL = '';
   bool verifiedDomain = true;
@@ -46,14 +46,13 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
   void initState() {
     super.initState();
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) async {
-      verifiedDisplayData = await WalletSDKPlugin.getVerifierDisplayData();
-      var verifiedDisplayDataResp = json.encode(verifiedDisplayData);
-      Map<String, dynamic> responseJson = json.decode(verifiedDisplayDataResp);
-      var resp = await WalletSDKPlugin.wellKnownDidConfig(responseJson["did"]);
+      final verifiedDisplayData = await WalletSDKPlugin.getVerifierDisplayData();
+
+      var resp = await WalletSDKPlugin.wellKnownDidConfig(verifiedDisplayData.did);
       var wellKnownDidConfig = json.encode(resp);
       Map<String, dynamic> wellKnownDidConfigResp = json.decode(wellKnownDidConfig);
       setState(() {
-        verifierName = responseJson["name"] != '' ? responseJson["name"] : 'Verifier';
+        verifierName = verifiedDisplayData.name;
         serviceURL = wellKnownDidConfigResp["serviceURL"];
         verifiedDomain = wellKnownDidConfigResp["isValid"];
       });

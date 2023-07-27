@@ -46,7 +46,7 @@ class WalletSDK extends WalletPlatform {
   Future<List<SupportedCredentials>> initializeWalletInitiatedFlow(String issuerURI) async {
     try {
       List<dynamic> supportedCredentialResp =
-      await methodChannel.invokeMethod('initializeWalletInitiatedFlow', <String, dynamic>{'issuerURI': issuerURI});
+          await methodChannel.invokeMethod('initializeWalletInitiatedFlow', <String, dynamic>{'issuerURI': issuerURI});
       return supportedCredentialResp.map((d) => SupportedCredentials.fromMap(d.cast<String, dynamic>())).toList();
     } on PlatformException catch (error) {
       debugPrint(error.toString());
@@ -135,12 +135,12 @@ class WalletSDK extends WalletPlatform {
     return didLinkedResp;
   }
 
-  Future<Map<Object?, Object?>?> getVerifierDisplayData() async {
-    var verifierDisplayData = await methodChannel.invokeMethod('getVerifierDisplayData');
-    return verifierDisplayData;
+  Future<VerifierDisplayData> getVerifierDisplayData() async {
+    var data = await methodChannel.invokeMethod('getVerifierDisplayData');
+    return VerifierDisplayData(name: data.name, did: data.did, logoURI: data.logoUri, purpose: data.purpose);
   }
 
-  Future<void> presentCredential({List<String>? selectedCredentials}) async {
+  Future<void> presentCredential({required List<String> selectedCredentials}) async {
     await methodChannel
         .invokeMethod('presentCredential', <String, dynamic>{'selectedCredentials': selectedCredentials});
   }

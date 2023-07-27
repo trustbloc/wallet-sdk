@@ -26,6 +26,6 @@ generate-js-bindings:
 .PHONY: copy-js-to-demo
 copy-js-to-demo:
 	@cp dist/wallet-sdk.wasm ../../demo/app/web \
-	&& mkdir -p ../../demo/app/web/wallet-sdk-js/ \
-	&& cp src/index.js ../../demo/app/web/wallet-sdk-js/ \
-	&& cp src/wasm_exec.js ../../demo/app/web/wallet-sdk-js/
+	&& mkdir -p ../../demo/app/web/node_modules/@trustbloc-cicd/wallet-sdk-js/dist/ \
+	&& cp dist/agent.js ../../demo/app/web/node_modules/@trustbloc-cicd/wallet-sdk-js/dist \
+	&& cp dist/wasm_exec.js ../../demo/app/web/node_modules/@trustbloc-cicd/wallet-sdk-js/dist

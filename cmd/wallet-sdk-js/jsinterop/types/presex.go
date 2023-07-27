@@ -16,7 +16,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/util"
 )
 
-func SerializeMatchedSubmissionRequirement(req *presexch.MatchedSubmissionRequirement) (map[string]interface{}, error) {
+func SerializeMatchedSubmissionRequirement(req *presexch.MatchedSubmissionRequirement) (any, error) {
 	descriptors, err := util.MapTo(req.Descriptors, serializeMatchedInputDescriptor)
 	if err != nil {
 		return nil, fmt.Errorf("descriptors serialization failed: %w", err)
@@ -27,10 +27,10 @@ func SerializeMatchedSubmissionRequirement(req *presexch.MatchedSubmissionRequir
 		return nil, fmt.Errorf("nested requirements serialization failed: %w", err)
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"name":        req.Name,
 		"purpose":     req.Purpose,
-		"rule":        req.Rule,
+		"rule":        string(req.Rule),
 		"count":       req.Count,
 		"min":         req.Min,
 		"max":         req.Max,
@@ -39,7 +39,7 @@ func SerializeMatchedSubmissionRequirement(req *presexch.MatchedSubmissionRequir
 	}, nil
 }
 
-func serializeMatchedInputDescriptor(desc *presexch.MatchedInputDescriptor) (map[string]interface{}, error) {
+func serializeMatchedInputDescriptor(desc *presexch.MatchedInputDescriptor) (any, error) {
 	vcs, err := util.MapTo(desc.MatchedVCs, SerializeCredential)
 	if err != nil {
 		return nil, fmt.Errorf("credentials serialization failed: %w", err)

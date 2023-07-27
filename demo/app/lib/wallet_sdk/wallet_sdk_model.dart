@@ -268,3 +268,75 @@ class CredentialDisplayClaim {
 
 //</editor-fold>
 }
+
+class VerifierDisplayData {
+  final String name;
+  final String did;
+  final String purpose;
+  final String logoURI;
+
+//<editor-fold desc="Data Methods">
+  const VerifierDisplayData({
+    required this.name,
+    required this.did,
+    required this.purpose,
+    required this.logoURI,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VerifierDisplayData &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          did == other.did &&
+          purpose == other.purpose &&
+          logoURI == other.logoURI);
+
+  @override
+  int get hashCode => name.hashCode ^ did.hashCode ^ purpose.hashCode ^ logoURI.hashCode;
+
+  @override
+  String toString() {
+    return 'VerifierDisplayData{' +
+        ' name: $name,' +
+        ' did: $did,' +
+        ' purpose: $purpose,' +
+        ' logoURI: $logoURI,' +
+        '}';
+  }
+
+  VerifierDisplayData copyWith({
+    String? name,
+    String? did,
+    String? purpose,
+    String? logoURI,
+  }) {
+    return VerifierDisplayData(
+      name: name ?? this.name,
+      did: did ?? this.did,
+      purpose: purpose ?? this.purpose,
+      logoURI: logoURI ?? this.logoURI,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': this.name,
+      'did': this.did,
+      'purpose': this.purpose,
+      'logoURI': this.logoURI,
+    };
+  }
+
+  factory VerifierDisplayData.fromMap(Map<String, dynamic> map) {
+    return VerifierDisplayData(
+      name: map['name'] as String,
+      did: map['did'] as String,
+      purpose: map['purpose'] as String,
+      logoURI: map['logoURI'] as String,
+    );
+  }
+
+//</editor-fold>
+}
