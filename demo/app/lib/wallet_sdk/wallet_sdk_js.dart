@@ -80,6 +80,27 @@ extension JSClaimsDisplayDataExt on JSClaimsDisplayData {
 }
 
 @JS()
+@staticInterop
+class JSSubmissionRequirement {}
+
+extension JSSubmissionRequirementExt on JSSubmissionRequirement {
+  external String get name;
+
+  external String get purpose;
+
+  external String get rule;
+
+  external int get count;
+
+  external int get min;
+
+  external int get max;
+
+  external List<dynamic> descriptors;
+  external List<dynamic> nested;
+}
+
+@JS()
 external dynamic jsInitSDK(String didResolverURI);
 
 @JS()
@@ -102,6 +123,18 @@ external dynamic jsGetCredentialID(String credential);
 
 @JS()
 external dynamic jsParseResolvedDisplayData(String resolvedCredentialDisplayData);
+
+@JS()
+external dynamic jsCreateOpenID4VPInteraction(authorizationRequest);
+
+@JS()
+external dynamic jsGetSubmissionRequirements(credentials);
+
+@JS()
+external dynamic jsPresentCredential(credentials);
+
+@JS()
+external dynamic jsVerifierDisplayData();
 
 class WalletSDK extends WalletPlatform {
   @visibleForTesting
@@ -204,17 +237,40 @@ class WalletSDK extends WalletPlatform {
 
   Future<List<String>> processAuthorizationRequest(
       {required String authorizationRequest, List<String>? storedCredentials}) async {
-    return (await methodChannel.invokeMethod<List>('processAuthorizationRequest',
-            <String, dynamic>{'authorizationRequest': authorizationRequest, 'storedCredentials': storedCredentials}))!
-        .map((e) => e!.toString())
-        .toList();
+    await promiseToFuture(jsCreateOpenID4VPInteraction(authorizationRequest));
+
+    return [];
   }
 
-  Future<List<SubmissionRequirement>> getSubmissionRequirements({required List<String>? storedCredentials}) async {
-    return (await methodChannel.invokeMethod<List<dynamic>>(
-            'getMatchedSubmissionRequirements', <String, dynamic>{'storedCredentials': storedCredentials}))!
-        .map((obj) => SubmissionRequirement.fromMap(obj.cast<String, dynamic>()))
-        .toList();
+  Future<List<SubmissionRequirement>> getSubmissionRequirements({required List<String> storedCredentials}) async {
+    final List<dynamic> reqs = await promiseToFuture(jsGetSubmissionRequirements(storedCredentials));
+
+    return Future.wait(reqs.map((s) => mapSubmissionRequirement(s)));
+  }
+
+  Future<InputDescriptor> mapInputDescriptor(dynamic d) async {
+    final List<dynamic> jsMatchedVCs = d.matchedVCs;
+
+    final matchedVCs = jsMatchedVCs.map<String>((vc) => vc).toList();
+    final matchedVCsIds = await Future.wait<String>(jsMatchedVCs.map((vc) => promiseToFuture(jsGetCredentialID(vc))));
+
+    return InputDescriptor(
+        name: d.name, purpose: d.purpose, id: d.id, matchedVCs: matchedVCs, matchedVCsID: matchedVCsIds);
+  }
+
+  Future<SubmissionRequirement> mapSubmissionRequirement(JSSubmissionRequirement jsReq) async {
+    final descriptors = await Future.wait(jsReq.descriptors.map(mapInputDescriptor));
+    final nested = await Future.wait(jsReq.nested.map((n) => mapSubmissionRequirement(n)));
+
+    return SubmissionRequirement(
+      name: jsReq.name,
+      rule: jsReq.rule,
+      count: jsReq.count,
+      min: jsReq.min,
+      max: jsReq.max,
+      inputDescriptors: descriptors,
+      nested: nested,
+    );
   }
 
   Future<Map<Object?, Object?>?> getVersionDetails() async {
@@ -229,14 +285,13 @@ class WalletSDK extends WalletPlatform {
     return didLinkedResp;
   }
 
-  Future<Map<Object?, Object?>?> getVerifierDisplayData() async {
-    var verifierDisplayData = await methodChannel.invokeMethod('getVerifierDisplayData');
-    return verifierDisplayData;
+  Future<VerifierDisplayData> getVerifierDisplayData() async {
+    final data = await promiseToFuture(jsVerifierDisplayData());
+    return VerifierDisplayData(name: data.name, did: data.did, logoURI: data.logoURI, purpose: data.purpose);
   }
 
-  Future<void> presentCredential({List<String>? selectedCredentials}) async {
-    await methodChannel
-        .invokeMethod('presentCredential', <String, dynamic>{'selectedCredentials': selectedCredentials});
+  Future<void> presentCredential({required List<String> selectedCredentials}) async {
+    await promiseToFuture(jsPresentCredential(selectedCredentials));
   }
 
   Future<List<Object?>> storeActivityLogger() async {

@@ -10,6 +10,7 @@ package jssupport
 
 import (
 	"fmt"
+	"runtime/debug"
 	"sync"
 	"syscall/js"
 )
@@ -33,6 +34,7 @@ func (r *AsyncRunner) CreateAsyncFunc(innerFunc AsyncFunc) js.Func {
 			go func() {
 				defer func() {
 					if r := recover(); r != nil {
+						fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
 						reject.Invoke(jsErr.New(fmt.Sprint("panic:", r)))
 					}
 				}()

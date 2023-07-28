@@ -10,7 +10,7 @@ package types
 
 import "github.com/hyperledger/aries-framework-go/component/models/verifiable"
 
-func SerializeCredential(cred *verifiable.Credential) (string, error) {
+func SerializeCredential(cred *verifiable.Credential) (any, error) {
 	marshalledVC, err := cred.MarshalJSON()
 	if err != nil {
 		return "", err

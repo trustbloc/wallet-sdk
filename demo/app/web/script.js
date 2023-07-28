@@ -6,11 +6,12 @@ SPDX-License-Identifier: Apache-2.0
 
 let agent;
 let openID4CIInteraction;
+let openID4VPInteraction;
 let createdDID;
 
 async function jsInitSDK(didResolverURI) {
     const kmsDatabase = await CreateDB("test")
-    agent = new Agent({assetsPath: "", didResolverURI:didResolverURI, kmsDatabase: kmsDatabase});
+    agent = new Agent.default({assetsPath: "", didResolverURI:didResolverURI, kmsDatabase: kmsDatabase});
     await agent.initialize();
 }
 
@@ -74,6 +75,30 @@ async function jsParseResolvedDisplayData(resolvedCredentialDisplayData) {
     });
 }
 
+async function jsCreateOpenID4VPInteraction(authorizationRequest) {
+    openID4VPInteraction = await agent.createOpenID4VPInteraction({
+        authorizationRequest: authorizationRequest
+    })
+}
+
+async function jsGetSubmissionRequirements(credentials) {
+    let query = await openID4VPInteraction.getQuery();
+
+    return await agent.getSubmissionRequirements({
+        query: query,
+        credentials: credentials,
+    });
+}
+
+async function jsPresentCredential(credentials) {
+    return await openID4VPInteraction.presentCredential({
+        credentials: credentials
+    })
+}
+
+async function jsVerifierDisplayData() {
+    return await openID4VPInteraction.verifierDisplayData()
+}
 
 // KMS database implementation
 function CreateDB(dbName) {

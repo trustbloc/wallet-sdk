@@ -33,6 +33,19 @@ export default class Agent {
         })
     };
 
+    async createOpenID4VPInteraction(opts) {
+        return await this.goAgent.createOpenID4VPInteraction({
+            authorizationRequest: opts.authorizationRequest
+        })
+    }
+
+    async getSubmissionRequirements(opts) {
+        return await this.goAgent.getSubmissionRequirements({
+            query: opts.query,
+            credentials: opts.credentials
+        })
+    }
+
     async resolveDisplayData(opts) {
         return await this.goAgent.resolveDisplayData({
             issuerURI: opts.issuerURI,

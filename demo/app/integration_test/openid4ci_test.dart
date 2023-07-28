@@ -129,7 +129,7 @@ void main() async {
     expect(matchedCreds[1], equals(credentials[1]));
     expect(matchedCreds[2], equals(credentials[2]));
 
-    await walletSDKPlugin.presentCredential();
+    await walletSDKPlugin.presentCredential(selectedCredentials: matchedCreds);
   });
 
   testWidgets('Testing openid4vc with the auth code flow', (tester) async {
