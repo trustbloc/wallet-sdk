@@ -14,8 +14,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -38,141 +36,68 @@ var (
 
 	//go:embed test_data/credentials.jsonld
 	credentialsJSONLD []byte
+
+	//go:embed test_data/valid_doc_resolution.jsonld
+	sampleDIDDocResolution []byte
 )
 
-type mockVerifierServerHandler struct {
-	t              *testing.T
-	headersToCheck *api.Headers
-}
-
-// Simply checks the headers and return an arbitrary invalid response.
-func (m *mockVerifierServerHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	for _, headerToCheck := range m.headersToCheck.GetAll() {
-		// Note: for these tests, we're assuming that there aren't multiple values under a single name/key.
-		value := request.Header.Get(headerToCheck.Name)
-		require.Equal(m.t, headerToCheck.Value, value)
-	}
-
-	_, err := writer.Write([]byte("invalid"))
-	require.NoError(m.t, err)
-}
-
-func TestOpenID4VP_GetQuery(t *testing.T) {
-	t.Run("NewInteraction success", func(t *testing.T) {
-		t.Run("Without any optional args", func(t *testing.T) {
+func TestNewInteraction(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		t.Run("OpenTelemetry disabled, custom headers used instead", func(t *testing.T) {
 			requiredArgs := NewArgs(
 				requestObjectJWT,
 				&mockCrypto{},
-				&mocksDIDResolver{},
-			)
-
-			instance, err := NewInteraction(requiredArgs, nil)
-			require.NoError(t, err)
-			require.NotNil(t, instance)
-			require.NotNil(t, instance.crypto)
-			require.NotNil(t, instance.goAPIOpenID4VP)
-			require.NotEmpty(t, instance.OTelTraceID())
-		})
-		t.Run("With optional args", func(t *testing.T) {
-			requiredArgs := NewArgs(
-				requestObjectJWT,
-				&mockCrypto{},
-				&mocksDIDResolver{},
+				&mockDIDResolver{ResolveDocBytes: sampleDIDDocResolution},
 			)
 
 			// Note: in-depth testing of opts functionality is done in the integration tests.
 			opts := NewOpts()
-			opts.SetDocumentLoader(nil)
-			opts.SetActivityLogger(nil)
-			opts.SetMetricsLogger(nil)
-			opts.DisableHTTPClientTLSVerify()
+
+			additionalHeaders := api.NewHeaders()
+
+			additionalHeaders.Add(api.NewHeader("header-name-1", "header-value-1"))
+			additionalHeaders.Add(api.NewHeader("header-name-2", "header-value-2"))
+
+			opts.AddHeaders(additionalHeaders)
+
 			opts.DisableOpenTelemetry()
-			opts.SetHTTPTimeoutNanoseconds(0)
 
 			instance, err := NewInteraction(requiredArgs, opts)
 			require.NoError(t, err)
 			require.NotNil(t, instance)
-			require.Empty(t, instance.OTelTraceID())
 		})
-
-		t.Run("With Document loader", func(t *testing.T) {
+		t.Run("All other options invoked", func(t *testing.T) {
 			requiredArgs := NewArgs(
 				requestObjectJWT,
 				&mockCrypto{},
-				&mocksDIDResolver{},
+				&mockDIDResolver{ResolveDocBytes: sampleDIDDocResolution},
 			)
 
 			// Note: in-depth testing of opts functionality is done in the integration tests.
 			opts := NewOpts()
 			opts.SetDocumentLoader(&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)})
+			opts.SetActivityLogger(nil)
+			opts.SetMetricsLogger(nil)
+			opts.DisableHTTPClientTLSVerify()
+			opts.SetHTTPTimeoutNanoseconds(0)
 
 			instance, err := NewInteraction(requiredArgs, opts)
 			require.NoError(t, err)
 			require.NotNil(t, instance)
-			require.NotEmpty(t, instance.OTelTraceID())
 		})
 	})
-
-	t.Run("GetQuery success", func(t *testing.T) {
-		t.Run("Without additional headers", func(t *testing.T) {
-			instance := &Interaction{
-				goAPIOpenID4VP: &mocGoAPIInteraction{
-					GetQueryResult: &presexch.PresentationDefinition{},
-				},
-			}
-
-			query, err := instance.GetQuery()
-			require.NoError(t, err)
-			require.NotNil(t, query)
-		})
-	})
-
-	t.Run("GetQuery failed", func(t *testing.T) {
-		instance := &Interaction{
-			goAPIOpenID4VP: &mocGoAPIInteraction{
-				GetQueryError: errors.New("get query failed"),
-			},
-		}
-
-		query, err := instance.GetQuery()
-		require.Contains(t, err.Error(), "get query failed")
-		require.Nil(t, query)
-	})
-
-	t.Run("With additional headers, and the server receives them", func(t *testing.T) {
-		additionalHeaders := api.NewHeaders()
-
-		additionalHeaders.Add(api.NewHeader("header-name-1", "header-value-1"))
-		additionalHeaders.Add(api.NewHeader("header-name-2", "header-value-2"))
-
-		opts := NewOpts()
-		opts.AddHeaders(additionalHeaders)
-
-		mockServer := &mockVerifierServerHandler{t: t, headersToCheck: additionalHeaders}
-		testServer := httptest.NewServer(mockServer)
-
-		defer testServer.Close()
-
+	t.Run("Failure - invalid authorization request", func(t *testing.T) {
 		requiredArgs := NewArgs(
-			"openid-vc://?request_uri="+testServer.URL,
+			requestObjectJWT,
 			&mockCrypto{},
-			&mocksDIDResolver{},
+			&mockDIDResolver{},
 		)
 
-		instance, err := NewInteraction(requiredArgs, opts)
-		require.NoError(t, err)
-
-		// The purpose of this test is to make sure the mock server receives the additional headers
-		// as set above. It doesn't return a valid response, hence why GetQuery still fails.
-		// If the server doesn't receive the headers as expected, the server itself will fail the
-		// test (see the mockVerifierServerHandler.ServeHTTP method).
-		// Any other error being returned by GetQuery is unexpected.
-		query, err := instance.GetQuery()
-		require.Error(t, err)
-		require.Contains(t, err.Error(), `{"code":"OVP1-0001","category":`+
-			`"VERIFY_AUTHORIZATION_REQUEST_FAILED","details":"verify authorization request: `+
-			`parse JWT: JWT of compacted JWS form is supported only"`)
-		require.Nil(t, query)
+		instance, err := NewInteraction(requiredArgs, nil)
+		testutil.RequireErrorContains(t, err, "INVALID_AUTHORIZATION_REQUEST")
+		testutil.RequireErrorContains(t, err, "verify request object: parse JWT: "+
+			"parse JWT from compact JWS: resolve DID did:ion:EiDYWcDuP-EDjVyFWGFdpgPncar9A7OGFykdeX71ZTU-wg")
+		require.Nil(t, instance)
 	})
 }
 
@@ -201,10 +126,10 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		return &Interaction{
 			crypto:           &mockCrypto{},
 			ldDocumentLoader: &documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)},
-			goAPIOpenID4VP: &mocGoAPIInteraction{
+			goAPIOpenID4VP: &mockGoAPIInteraction{
 				PresentCredentialErr: nil,
 			},
-			didResolver: &mocksDIDResolver{ResolveDocBytes: mockResolution(t, &api.VerificationMethod{
+			didResolver: &mockDIDResolver{ResolveDocBytes: mockResolution(t, &api.VerificationMethod{
 				ID:   "did:example:12345#testId",
 				Type: "Ed25519VerificationKey2018",
 				Key:  models.VerificationKey{Raw: mockKey},
@@ -229,7 +154,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	t.Run("Present credentials failed", func(t *testing.T) {
 		instance := makeInteraction()
 
-		instance.goAPIOpenID4VP = &mocGoAPIInteraction{
+		instance.goAPIOpenID4VP = &mockGoAPIInteraction{
 			PresentCredentialErr: errors.New("present credentials failed"),
 		}
 
@@ -240,7 +165,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	t.Run("Present credentials unsafe failed", func(t *testing.T) {
 		instance := makeInteraction()
 
-		instance.goAPIOpenID4VP = &mocGoAPIInteraction{
+		instance.goAPIOpenID4VP = &mockGoAPIInteraction{
 			PresentCredentialUnsafeErr: errors.New("present credentials failed"),
 		}
 
@@ -252,7 +177,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 func TestInteraction_VerifierDisplayData(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		instance := &Interaction{
-			goAPIOpenID4VP: &mocGoAPIInteraction{
+			goAPIOpenID4VP: &mockGoAPIInteraction{
 				VerifierDisplayDataRes: &openid4vp.VerifierDisplayData{
 					DID:     "DID",
 					Name:    "testName",
@@ -262,25 +187,12 @@ func TestInteraction_VerifierDisplayData(t *testing.T) {
 			},
 		}
 
-		data, err := instance.VerifierDisplayData()
-		require.NoError(t, err)
+		data := instance.VerifierDisplayData()
 		require.NotNil(t, data)
 		require.Equal(t, "DID", data.DID())
 		require.Equal(t, "testName", data.Name())
 		require.Equal(t, "purpose", data.Purpose())
 		require.Equal(t, "logoURI", data.LogoURI())
-	})
-
-	t.Run("Error", func(t *testing.T) {
-		instance := &Interaction{
-			goAPIOpenID4VP: &mocGoAPIInteraction{
-				VerifierDisplayDataError: errors.New("testErr"),
-			},
-		}
-
-		_, err := instance.VerifierDisplayData()
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "testErr")
 	})
 }
 
@@ -320,37 +232,35 @@ func (c *mockCrypto) Verify(signature, msg []byte, keyID string) error {
 	return c.VerifyErr
 }
 
-type mocGoAPIInteraction struct {
+type mockGoAPIInteraction struct {
 	GetQueryResult             *presexch.PresentationDefinition
-	GetQueryError              error
 	PresentCredentialErr       error
 	PresentCredentialUnsafeErr error
 	VerifierDisplayDataRes     *openid4vp.VerifierDisplayData
-	VerifierDisplayDataError   error
 }
 
-func (o *mocGoAPIInteraction) GetQuery() (*presexch.PresentationDefinition, error) {
-	return o.GetQueryResult, o.GetQueryError
+func (o *mockGoAPIInteraction) GetQuery() *presexch.PresentationDefinition {
+	return o.GetQueryResult
 }
 
-func (o *mocGoAPIInteraction) PresentCredential([]*afgoverifiable.Credential) error {
+func (o *mockGoAPIInteraction) PresentCredential([]*afgoverifiable.Credential) error {
 	return o.PresentCredentialErr
 }
 
-func (o *mocGoAPIInteraction) PresentCredentialUnsafe(*afgoverifiable.Credential) error {
+func (o *mockGoAPIInteraction) PresentCredentialUnsafe(*afgoverifiable.Credential) error {
 	return o.PresentCredentialUnsafeErr
 }
 
-func (o *mocGoAPIInteraction) VerifierDisplayData() (*openid4vp.VerifierDisplayData, error) {
-	return o.VerifierDisplayDataRes, o.VerifierDisplayDataError
+func (o *mockGoAPIInteraction) VerifierDisplayData() *openid4vp.VerifierDisplayData {
+	return o.VerifierDisplayDataRes
 }
 
-type mocksDIDResolver struct {
+type mockDIDResolver struct {
 	ResolveDocBytes []byte
 	ResolveErr      error
 }
 
-func (m *mocksDIDResolver) Resolve(string) ([]byte, error) {
+func (m *mockDIDResolver) Resolve(string) ([]byte, error) {
 	return m.ResolveDocBytes, m.ResolveErr
 }
 

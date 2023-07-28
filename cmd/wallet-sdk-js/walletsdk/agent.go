@@ -108,18 +108,22 @@ func (a *Agent) CreateOpenID4CIIssuerInitiatedInteraction(
 // CreateOpenID4VPInteraction creates and starts openid4vp Interaction.
 func (a *Agent) CreateOpenID4VPInteraction(
 	authorizationRequest string,
-) *OpenID4VPInteraction {
+) (*OpenID4VPInteraction, error) {
 	jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
 		common.NewVDRKeyResolver(
 			a.didResolver,
 		).PublicKeyFetcher()))
 
-	interaction := openid4vp.New(authorizationRequest, jwtVerifier, a.didResolver, a.crypto, a.docLoader)
+	interaction, err := openid4vp.NewInteraction(authorizationRequest, jwtVerifier, a.didResolver,
+		a.crypto, a.docLoader)
+	if err != nil {
+		return nil, err
+	}
 
 	return &OpenID4VPInteraction{
 		Interaction: interaction,
 		DocLoader:   a.docLoader,
-	}
+	}, nil
 }
 
 // ResolveDisplayData resolves display information for issued credentials based on an issuer's metadata,

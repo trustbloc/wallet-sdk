@@ -191,7 +191,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		require.NoError(t, err)
 		println("query", string(query))
 
-		displayData, err := interaction.VerifierDisplayData()
+		displayData := interaction.VerifierDisplayData()
 		require.NoError(t, err)
 		require.NotEmpty(t, displayData.DID)
 		require.Equal(t, tc.verifierProfileID, displayData.Name())

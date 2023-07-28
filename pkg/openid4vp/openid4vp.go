@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -35,14 +36,12 @@ import (
 )
 
 const (
-	requestURIPrefix = "openid-vc://?request_uri="
 	tokenLiveTimeSec = 600
 
 	activityLogOperation = "oidc-presentation"
 
-	getQueryEventText           = "Get query"
-	fetchRequestObjectEventText = "Fetch request object via an HTTP GET request to %s"
-
+	newInteractionEventText         = "Instantiating OpenID4VP interaction object"
+	fetchRequestObjectEventText     = "Fetch request object via an HTTP GET request to %s"
 	presentCredentialEventText      = "Present credential" //nolint:gosec // false positive
 	sendAuthorizedResponseEventText = "Send authorized response via an HTTP POST request to %s"
 )
@@ -57,16 +56,13 @@ type httpClient interface {
 
 // Interaction is used to help with OpenID4VP operations.
 type Interaction struct {
-	authorizationRequest string
-	signatureVerifier    jwtSignatureVerifier
-	httpClient           httpClient
-	activityLogger       api.ActivityLogger
-	metricsLogger        api.MetricsLogger
-	didResolver          api.DIDResolver
-	crypto               api.Crypto
-	documentLoader       ld.DocumentLoader
-
-	requestObject *requestObject
+	requestObject  *requestObject
+	httpClient     httpClient
+	activityLogger api.ActivityLogger
+	metricsLogger  api.MetricsLogger
+	didResolver    api.DIDResolver
+	crypto         api.Crypto
+	documentLoader ld.DocumentLoader
 }
 
 type authorizedResponse struct {
@@ -75,75 +71,64 @@ type authorizedResponse struct {
 	State      string
 }
 
-// New creates new openid4vp instance.
+// NewInteraction creates a new OpenID4VP interaction object.
 // If no ActivityLogger is provided (via an option), then no activity logging will take place.
-func New(
+func NewInteraction(
 	authorizationRequest string,
 	signatureVerifier jwtSignatureVerifier,
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
 	opts ...Opt,
-) *Interaction {
+) (*Interaction, error) {
 	client, activityLogger, metricsLogger := processOpts(opts)
 
-	return &Interaction{
-		authorizationRequest: authorizationRequest,
-		signatureVerifier:    signatureVerifier,
-		httpClient:           client,
-		activityLogger:       activityLogger,
-		metricsLogger:        metricsLogger,
-		didResolver:          didResolver,
-		crypto:               crypto,
-		documentLoader:       documentLoader,
+	var rawRequestObject string
+
+	if strings.HasPrefix(authorizationRequest, "openid-vc://") {
+		var err error
+
+		rawRequestObject, err = fetchRequestObject(authorizationRequest, client, metricsLogger)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		rawRequestObject = authorizationRequest
 	}
+
+	requestObject, err := verifyRequestObjectAndDecodeClaims(rawRequestObject, signatureVerifier)
+	if err != nil {
+		return nil, walleterror.NewValidationError(
+			ErrorModule,
+			InvalidAuthorizationRequestErrorCode,
+			InvalidAuthorizationRequestError,
+			fmt.Errorf("verify request object: %w", err))
+	}
+
+	return &Interaction{
+		requestObject:  requestObject,
+		httpClient:     client,
+		activityLogger: activityLogger,
+		metricsLogger:  metricsLogger,
+		didResolver:    didResolver,
+		crypto:         crypto,
+		documentLoader: documentLoader,
+	}, nil
 }
 
 // GetQuery creates query based on authorization request data.
-func (o *Interaction) GetQuery() (*presexch.PresentationDefinition, error) {
-	timeStartGetQuery := time.Now()
-
-	rawRequestObject, err := o.fetchRequestObject()
-	if err != nil {
-		return nil, walleterror.NewExecutionError(
-			ErrorModule,
-			RequestObjectFetchFailedCode,
-			RequestObjectFetchFailedError,
-			fmt.Errorf("fetch request object: %w", err))
-	}
-
-	requestObject, err := verifyAuthorizationRequestAndDecodeClaims(rawRequestObject, o.signatureVerifier)
-	if err != nil {
-		return nil, walleterror.NewExecutionError(
-			ErrorModule,
-			VerifyAuthorizationRequestFailedCode,
-			VerifyAuthorizationRequestFailedError,
-			fmt.Errorf("verify authorization request: %w", err))
-	}
-
-	o.requestObject = requestObject
-
-	return requestObject.Claims.VPToken.PresentationDefinition,
-		o.metricsLogger.Log(&api.MetricsEvent{
-			Event:    getQueryEventText,
-			Duration: time.Since(timeStartGetQuery),
-		})
+func (o *Interaction) GetQuery() *presexch.PresentationDefinition {
+	return o.requestObject.Claims.VPToken.PresentationDefinition
 }
 
 // VerifierDisplayData returns display information about verifier.
-func (o *Interaction) VerifierDisplayData() (*VerifierDisplayData, error) {
-	if o.requestObject == nil {
-		return nil, walleterror.NewInvalidSDKUsageError(
-			ErrorModule,
-			fmt.Errorf("call GetQuery first"))
-	}
-
+func (o *Interaction) VerifierDisplayData() *VerifierDisplayData {
 	return &VerifierDisplayData{
 		DID:     o.requestObject.ClientID,
 		Name:    o.requestObject.Registration.ClientName,
 		Purpose: o.requestObject.Registration.ClientPurpose,
 		LogoURI: o.requestObject.Registration.ClientLogoURI,
-	}, nil
+	}
 }
 
 type presentOpts struct {
@@ -172,12 +157,6 @@ func (o *Interaction) PresentCredentialUnsafe(credential *verifiable.Credential)
 // PresentCredential presents credentials to redirect uri from request object.
 func (o *Interaction) presentCredentials(credentials []*verifiable.Credential, opts *presentOpts) error {
 	timeStartPresentCredential := time.Now()
-
-	if o.requestObject == nil {
-		return walleterror.NewInvalidSDKUsageError(
-			ErrorModule,
-			fmt.Errorf("call GetQuery first"))
-	}
 
 	response, err := createAuthorizedResponse(
 		credentials,
@@ -225,22 +204,6 @@ func (o *Interaction) presentCredentials(credentials []*verifiable.Credential, o
 	})
 }
 
-func (o *Interaction) fetchRequestObject() (string, error) {
-	if !strings.HasPrefix(o.authorizationRequest, requestURIPrefix) {
-		return o.authorizationRequest, nil
-	}
-
-	endpointURL := strings.TrimPrefix(o.authorizationRequest, requestURIPrefix)
-
-	respBytes, err := httprequest.New(o.httpClient, o.metricsLogger).Do(http.MethodGet, endpointURL, "", nil,
-		fmt.Sprintf(fetchRequestObjectEventText, endpointURL), getQueryEventText, nil)
-	if err != nil {
-		return "", err
-	}
-
-	return string(respBytes), nil
-}
-
 func (o *Interaction) sendAuthorizedResponse(responseBody string) error {
 	_, err := httprequest.New(o.httpClient, o.metricsLogger).Do(http.MethodPost,
 		o.requestObject.RedirectURI, "application/x-www-form-urlencoded",
@@ -251,7 +214,42 @@ func (o *Interaction) sendAuthorizedResponse(responseBody string) error {
 	return err
 }
 
-func verifyAuthorizationRequestAndDecodeClaims(
+func fetchRequestObject(authorizationRequest string, client httpClient,
+	metricsLogger api.MetricsLogger,
+) (string, error) {
+	authorizationRequestURL, err := url.Parse(authorizationRequest)
+	if err != nil {
+		return "", walleterror.NewValidationError(
+			ErrorModule,
+			InvalidAuthorizationRequestErrorCode,
+			InvalidAuthorizationRequestError,
+			err)
+	}
+
+	if !authorizationRequestURL.Query().Has("request_uri") {
+		return "", walleterror.NewValidationError(
+			ErrorModule,
+			InvalidAuthorizationRequestErrorCode,
+			InvalidAuthorizationRequestError,
+			errors.New("request_uri missing from authorization request URI"))
+	}
+
+	requestURI := authorizationRequestURL.Query().Get("request_uri")
+
+	respBytes, err := httprequest.New(client, metricsLogger).Do(http.MethodGet, requestURI, "", nil,
+		fmt.Sprintf(fetchRequestObjectEventText, requestURI), newInteractionEventText, nil)
+	if err != nil {
+		return "", walleterror.NewExecutionError(
+			ErrorModule,
+			RequestObjectFetchFailedCode,
+			RequestObjectFetchFailedError,
+			fmt.Errorf("fetch request object: %w", err))
+	}
+
+	return string(respBytes), nil
+}
+
+func verifyRequestObjectAndDecodeClaims(
 	rawRequestObject string,
 	signatureVerifier jwtSignatureVerifier,
 ) (*requestObject, error) {

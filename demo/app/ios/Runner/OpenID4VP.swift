@@ -77,7 +77,7 @@ public class OpenID4VP {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         }
         
-      let verifierDisplayData =  try initiatedInteraction?.verifierDisplayData()
+      let verifierDisplayData = initiatedInteraction?.verifierDisplayData()
       return verifierDisplayData!
          
     }

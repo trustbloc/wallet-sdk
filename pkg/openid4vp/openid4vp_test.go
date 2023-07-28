@@ -66,61 +66,101 @@ func (f *failingMetricsLogger) Log(metricsEvent *api.MetricsEvent) error {
 	return nil
 }
 
-func TestOpenID4VP_GetQuery(t *testing.T) {
+func TestNewInteraction(t *testing.T) {
 	t.Run("Inline Request Object", func(t *testing.T) {
-		instance := New(requestObjectJWT, &jwtSignatureVerifierMock{}, nil, nil, nil)
-
-		query, err := instance.GetQuery()
+		interaction, err := NewInteraction(requestObjectJWT, &jwtSignatureVerifierMock{}, nil, nil, nil)
 		require.NoError(t, err)
-		require.NotNil(t, query)
+		require.NotNil(t, interaction)
 	})
 
 	t.Run("Fetch Request Object", func(t *testing.T) {
-		instance := New(
-			"openid-vc://?request_uri=https://request-object",
-			&jwtSignatureVerifierMock{},
-			nil,
-			nil,
-			nil,
-			WithHTTPClient(&mock.HTTPClientMock{
-				Response:         requestObjectJWT,
-				StatusCode:       200,
-				ExpectedEndpoint: "https://request-object",
-			}),
-		)
-
-		query, err := instance.GetQuery()
-		require.NoError(t, err)
-		require.NotNil(t, query)
+		t.Run("request_uri is not URL-encoded", func(t *testing.T) {
+			interaction, err := NewInteraction(
+				"openid-vc://?request_uri=https://request-object",
+				&jwtSignatureVerifierMock{},
+				nil,
+				nil,
+				nil,
+				WithHTTPClient(&mock.HTTPClientMock{
+					Response:         requestObjectJWT,
+					StatusCode:       200,
+					ExpectedEndpoint: "https://request-object",
+				}),
+			)
+			require.NoError(t, err)
+			require.NotNil(t, interaction)
+		})
+		t.Run("request_uri is URL-encoded", func(t *testing.T) {
+			interaction, err := NewInteraction(
+				"openid-vc://?request_uri=https%3A%2F%2Frequest-object",
+				&jwtSignatureVerifierMock{},
+				nil,
+				nil,
+				nil,
+				WithHTTPClient(&mock.HTTPClientMock{
+					Response:         requestObjectJWT,
+					StatusCode:       200,
+					ExpectedEndpoint: "https://request-object",
+				}),
+			)
+			require.NoError(t, err)
+			require.NotNil(t, interaction)
+		})
 	})
 
 	t.Run("Fetch Request failed", func(t *testing.T) {
-		instance := New(
-			"openid-vc://?request_uri=https://request-object",
-			&jwtSignatureVerifierMock{},
-			nil,
-			nil,
-			nil,
-			WithHTTPClient(&mock.HTTPClientMock{
-				Err: errors.New("http error"),
-			}),
-		)
-
-		_, err := instance.GetQuery()
-		require.Contains(t, err.Error(), "http error")
+		t.Run("HTTP call error", func(t *testing.T) {
+			interaction, err := NewInteraction(
+				"openid-vc://?request_uri=https://request-object",
+				&jwtSignatureVerifierMock{},
+				nil,
+				nil,
+				nil,
+				WithHTTPClient(&mock.HTTPClientMock{
+					Err: errors.New("http error"),
+				}),
+			)
+			require.Contains(t, err.Error(), "http error")
+			require.Nil(t, interaction)
+		})
+		t.Run("URL parsing error", func(t *testing.T) {
+			interaction, err := NewInteraction(
+				"openid-vc://%",
+				&jwtSignatureVerifierMock{},
+				nil,
+				nil,
+				nil,
+				nil,
+			)
+			testutil.RequireErrorContains(t, err, "INVALID_AUTHORIZATION_REQUEST")
+			testutil.RequireErrorContains(t, err, "invalid URL escape")
+			require.Nil(t, interaction)
+		})
+		t.Run("URI missing request_uri parameter", func(t *testing.T) {
+			interaction, err := NewInteraction(
+				"openid-vc://",
+				&jwtSignatureVerifierMock{},
+				nil,
+				nil,
+				nil,
+				nil,
+			)
+			testutil.RequireErrorContains(t, err, "INVALID_AUTHORIZATION_REQUEST")
+			testutil.RequireErrorContains(t, err, "request_uri missing from authorization request URI")
+			require.Nil(t, interaction)
+		})
 	})
 
 	t.Run("Inline Request Object", func(t *testing.T) {
-		instance := New(requestObjectJWT, &jwtSignatureVerifierMock{
+		interaction, err := NewInteraction(requestObjectJWT, &jwtSignatureVerifierMock{
 			err: errors.New("sig verification err"),
 		}, nil, nil, nil, nil)
-
-		_, err := instance.GetQuery()
 		require.Contains(t, err.Error(), "sig verification err")
+		require.Nil(t, interaction)
 	})
 
 	t.Run("Fail to log retrieve request object via HTTP GET metrics event", func(t *testing.T) {
-		instance := New("openid-vc://?request_uri=https://request-object",
+		interaction, err := NewInteraction("openid-vc://?request_uri=https://request-object",
 			&jwtSignatureVerifierMock{},
 			nil,
 			nil,
@@ -132,11 +172,9 @@ func TestOpenID4VP_GetQuery(t *testing.T) {
 			}),
 			WithMetricsLogger(&failingMetricsLogger{}),
 		)
-
-		query, err := instance.GetQuery()
-		require.EqualError(t, err, "REQUEST_OBJECT_FETCH_FAILED(OVP1-0000):fetch request object: "+
+		require.EqualError(t, err, "REQUEST_OBJECT_FETCH_FAILED(OVP1-0001):fetch request object: "+
 			"failed to log event (Event=Fetch request object via an HTTP GET request to https://request-object)")
-		require.Nil(t, query)
+		require.Nil(t, interaction)
 	})
 }
 
@@ -200,7 +238,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			StatusCode: 200,
 		}
 
-		instance := New(
+		interaction, err := NewInteraction(
 			requestObjectJWT,
 			&jwtSignatureVerifierMock{},
 			&didResolverMock{ResolveValue: mockDoc},
@@ -208,19 +246,19 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			lddl,
 			WithHTTPClient(httpClient),
 		)
-
-		query, err := instance.GetQuery()
 		require.NoError(t, err)
+
+		query := interaction.GetQuery()
 		require.NotNil(t, query)
 
-		displayData, err := instance.VerifierDisplayData()
+		displayData := interaction.VerifierDisplayData()
 		require.NoError(t, err)
 		require.Equal(t, verifierDID, displayData.DID)
 		require.Equal(t, "v_myprofile_jwt", displayData.Name)
 		require.Equal(t, "", displayData.Purpose)
 		require.Equal(t, "", displayData.LogoURI)
 
-		err = instance.PresentCredential(credentials)
+		err = interaction.PresentCredential(credentials)
 		require.NoError(t, err)
 
 		expectedState := "636df28459a07d50cc4b657e"
@@ -275,7 +313,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			presentations = append(presentations, parsedPresentation)
 		}
 
-		_, err = instance.requestObject.Claims.VPToken.PresentationDefinition.Match(
+		_, err = interaction.requestObject.Claims.VPToken.PresentationDefinition.Match(
 			presentations,
 			lddl,
 			presexch.WithDisableSchemaValidation(),
@@ -290,7 +328,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			StatusCode: 200,
 		}
 
-		instance := New(
+		interaction, err := NewInteraction(
 			requestObjectJWT,
 			&jwtSignatureVerifierMock{},
 			&didResolverMock{ResolveValue: mockDoc},
@@ -298,36 +336,13 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			lddl,
 			WithHTTPClient(httpClient),
 		)
-
-		query, err := instance.GetQuery()
 		require.NoError(t, err)
+
+		query := interaction.GetQuery()
 		require.NotNil(t, query)
 
-		err = instance.PresentCredentialUnsafe(singleCred[0])
+		err = interaction.PresentCredentialUnsafe(singleCred[0])
 		require.NoError(t, err)
-	})
-
-	t.Run("GetQuery not called", func(t *testing.T) {
-		httpClient := &mock.HTTPClientMock{
-			StatusCode: 200,
-		}
-
-		instance := New(
-			requestObjectJWT,
-			&jwtSignatureVerifierMock{},
-			&didResolverMock{ResolveValue: mockDoc},
-			&cryptoMock{SignVal: []byte(testSignature)},
-			lddl,
-			WithHTTPClient(httpClient),
-		)
-
-		err := instance.PresentCredential(credentials)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "call GetQuery first")
-
-		_, err = instance.VerifierDisplayData()
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "call GetQuery first")
 	})
 
 	t.Run("Check nonce", func(t *testing.T) {
@@ -416,7 +431,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	})
 
 	t.Run("no credentials provided", func(t *testing.T) {
-		instance := New(
+		interaction, err := NewInteraction(
 			requestObjectJWT,
 			&jwtSignatureVerifierMock{},
 			&didResolverMock{ResolveValue: mockDoc},
@@ -426,12 +441,12 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 				StatusCode: 200,
 			}),
 		)
-
-		query, err := instance.GetQuery()
 		require.NoError(t, err)
+
+		query := interaction.GetQuery()
 		require.NotNil(t, query)
 
-		err = instance.PresentCredential(nil)
+		err = interaction.PresentCredential(nil)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "expected at least one credential")
 	})
@@ -524,7 +539,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			StatusCode: http.StatusInternalServerError,
 		}
 
-		instance := New(
+		interaction, err := NewInteraction(
 			requestObjectJWT,
 			&jwtSignatureVerifierMock{},
 			&didResolverMock{ResolveValue: mockDoc},
@@ -532,9 +547,9 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			lddl,
 			WithHTTPClient(httpClient),
 		)
-
-		query, err := instance.GetQuery()
 		require.NoError(t, err)
+
+		query := interaction.GetQuery()
 		require.NotNil(t, query)
 
 		t.Run("Invalid scope", func(t *testing.T) {
@@ -545,7 +560,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			errMarshal = instance.PresentCredential(credentials)
+			errMarshal = interaction.PresentCredential(credentials)
 			testutil.RequireErrorContains(t, errMarshal, InvalidScopeError)
 		})
 
@@ -557,7 +572,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			errMarshal = instance.PresentCredential(credentials)
+			errMarshal = interaction.PresentCredential(credentials)
 			testutil.RequireErrorContains(t, errMarshal, InvalidRequestError)
 		})
 
@@ -569,7 +584,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			errMarshal = instance.PresentCredential(credentials)
+			errMarshal = interaction.PresentCredential(credentials)
 			testutil.RequireErrorContains(t, errMarshal, InvalidClientError)
 		})
 
@@ -581,7 +596,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			errMarshal = instance.PresentCredential(credentials)
+			errMarshal = interaction.PresentCredential(credentials)
 			testutil.RequireErrorContains(t, errMarshal, VPFormatsNotSupportedError)
 		})
 
@@ -593,7 +608,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			errMarshal = instance.PresentCredential(credentials)
+			errMarshal = interaction.PresentCredential(credentials)
 			testutil.RequireErrorContains(t, errMarshal, InvalidPresentationDefinitionURIError)
 		})
 
@@ -605,7 +620,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			errMarshal = instance.PresentCredential(credentials)
+			errMarshal = interaction.PresentCredential(credentials)
 			testutil.RequireErrorContains(t, errMarshal, InvalidPresentationDefinitionReferenceError)
 		})
 
@@ -613,7 +628,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			t.Run("Response body is not an errorResponse object", func(t *testing.T) {
 				httpClient.Response = ""
 
-				err = instance.PresentCredential(credentials)
+				err = interaction.PresentCredential(credentials)
 				testutil.RequireErrorContains(t, err, OtherAuthorizationResponseError)
 			})
 			t.Run("Unknown/other error type in errorResponse object", func(t *testing.T) {
@@ -624,7 +639,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 				httpClient.Response = string(errResponseBytes)
 
-				errMarshal = instance.PresentCredential(credentials)
+				errMarshal = interaction.PresentCredential(credentials)
 				testutil.RequireErrorContains(t, errMarshal, OtherAuthorizationResponseError)
 			})
 		})
