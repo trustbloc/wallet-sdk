@@ -25,12 +25,32 @@ public class WalletInitiatedOpenID4CI {
         
         let opts = Openid4ciNewInteractionOpts()
         opts!.add(trace!.traceHeader())
-        
         self.walletInitiatedInteraction = Openid4ciNewWalletInitiatedInteraction(args, opts, nil)!
     }
     
     func getSupportedCredentials() throws -> Openid4ciSupportedCredentials{
-        let supportedCredentials = try walletInitiatedInteraction.supportedCredentials()
-        return supportedCredentials
+        return try walletInitiatedInteraction.supportedCredentials()
     }
+    
+    func requestCredentialWithWalletInitiatedFlow(didVerificationMethod: ApiVerificationMethod, redirectURIWithParams: String) throws -> VerifiableCredential {
+        let credentials = try walletInitiatedInteraction.requestCredential(didVerificationMethod, redirectURIWithAuthCode: redirectURIWithParams, opts: nil)
+        return credentials.atIndex(0)!;
+    }
+    
+    func createAuthorizationURLWalletInitiatedFlow(scopes: ApiStringArray, credentialFormat: String, credentialTypes: ApiStringArray, clientID: String,
+                                                   redirectURI: String, issuerURI: String) throws -> String {
+        var createAuthURLError: NSError?
+        
+        let opts = Openid4ciNewCreateAuthorizationURLOpts()!.setScopes(scopes)
+        opts!.setIssuerState(issuerURI)
+        
+        let authorizationLink = walletInitiatedInteraction.createAuthorizationURL(clientID, redirectURI: redirectURI, credentialFormat: credentialFormat, credentialTypes: credentialTypes, opts: opts, error: &createAuthURLError)
+        if let actualError = createAuthURLError {
+            print("error from create authorization URL Wallet Initiated Flow",  actualError.localizedDescription)
+            throw actualError
+       }
+
+        return authorizationLink
+    }
+
 }

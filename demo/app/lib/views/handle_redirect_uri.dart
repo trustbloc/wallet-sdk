@@ -9,7 +9,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:developer';
 import 'dart:convert';
-import 'package:app/wallet_sdk/wallet_sdk.dart';
+import 'package:app/wallet_sdk/wallet_sdk_mobile.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app/models/activity_data_object.dart';
@@ -23,7 +23,10 @@ import 'package:app/views/custom_error.dart';
 
 class HandleRedirectUri extends StatefulWidget {
   Uri uri;
-  HandleRedirectUri(this.uri);
+  String flowType;
+  String? issuerURI;
+
+  HandleRedirectUri(this.uri, this.flowType, this.issuerURI, {super.key});
 
   @override
   State<HandleRedirectUri> createState() => HandleRedirectUriState();
@@ -67,36 +70,48 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
     return didID;
   }
 
-  Future<Widget>? launchCredPreview() async {
+  launchCredPreview() async {
     final SharedPreferences pref = await prefs;
     await _createDid();
-    pref.setString('userDID',userDIDId);
-    pref.setString('userDIDDoc',userDIDDoc);
+    pref.setString('userDID', userDIDId);
+    pref.setString('userDIDDoc', userDIDDoc);
     if (_redirectUri != null) {
       try {
-        var credentials = await WalletSDKPlugin.requestCredentialWithAuth(_redirectUri.toString());
-        String? issuerURI = await WalletSDKPlugin.issuerURI();
-        var serializedDisplayData = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
-        log("serializedDisplayData -> $serializedDisplayData");
-        var activities = await WalletSDKPlugin.storeActivityLogger();
-        var credID = await WalletSDKPlugin.getCredID([credentials]);
-        await _storageService.addActivities(ActivityDataObj(credID!, activities));
-        pref.setString("credID", credID);
-         _navigateToCredPreviewScreen(credentials, issuerURI, serializedDisplayData!, userDIDId, credID);
-      } catch (error) {
-        if (!error.toString().contains("UKN2-000")){
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      CustomError(requestErrorTitleMsg: "Redirect uri error", requestErrorSubTitleMsg: error.toString())));
+        if (widget.flowType == "issuer-initiated-flow") {
+          log("_redirectUri.toString() ${_redirectUri.toString()}");
+          var credentials = await WalletSDKPlugin.requestCredentialWithAuth(_redirectUri.toString());
+          var issuerURI = await WalletSDKPlugin.issuerURI();
+          var serializedDisplayData = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
+          log("serializedDisplayData -> $serializedDisplayData");
+          var activities = await WalletSDKPlugin.storeActivityLogger();
+          var credID = await WalletSDKPlugin.getCredID([credentials]);
+          await _storageService.addActivities(ActivityDataObj(credID!, activities));
+          pref.setString("credID", credID);
+          _navigateToCredPreviewScreen(credentials, issuerURI, serializedDisplayData!, userDIDId, credID);
         } else {
+          log("_redirectUri.toString() ${_redirectUri.toString()}");
+          var credentials = await WalletSDKPlugin.requestCredentialWithWalletInitiatedFlow(_redirectUri.toString());
+          var issuerURI = widget.issuerURI;
+          var serializedDisplayData = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
+          log("serializedDisplayData -> $serializedDisplayData");
+          // TODO: Issue-518 Add activity logger support for wallet-initiated-flow
+          _navigateToCredPreviewScreen(credentials, issuerURI, serializedDisplayData!, userDIDId, "");
+        }
+      } catch (error) {
+        log("error -> ${error.toString()}");
+        if (error.toString().contains("UKN2-000") || error.toString().contains("OCI1-0008")) {
           SizedBox(
             height: MediaQuery.of(context).size.height / 1.9,
-            child: Center(
+            child: const Center(
               child: CircularProgressIndicator(),
             ),
           );
+        } else {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => CustomError(
+                      requestErrorTitleMsg: "Redirect uri error", requestErrorSubTitleMsg: error.toString())));
         }
       }
     }
@@ -104,19 +119,18 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-      body: FutureBuilder(
-            future: result,
-            builder: (BuildContext context, AsyncSnapshot snapshot){
-              return SizedBox(
-                height: MediaQuery.of(context).size.height / 1.3,
-                child: Center(
-                  child: CircularProgressIndicator(),
-                ),
-              );
-            },
-       )
-    );
+    return Scaffold(
+        body: FutureBuilder(
+      future: result,
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        return SizedBox(
+          height: MediaQuery.of(context).size.height / 1.3,
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      },
+    ));
   }
 
   _launchUrl(Uri uri) async {
@@ -150,11 +164,23 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
     }
   }
 
- _navigateToCredPreviewScreen(String credentialResp, String issuerURI, String credentialDisplayData, String didID, String credID) async {
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURI, credentialDisplayData: credentialDisplayData, credentialDID: didID, credID: credID),)));
-  });
-}
+  _navigateToCredPreviewScreen(
+      String credentialResp, String issuerURI, String credentialDisplayData, String didID, String credID) async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => CredentialPreview(
+                    credentialData: CredentialData(
+                        rawCredential: credentialResp,
+                        issuerURL: issuerURI,
+                        credentialDisplayData: credentialDisplayData,
+                        credentialDID: didID,
+                        credID: credID),
+                  )));
+    });
+  }
+
   _navigateToDashboard() async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }

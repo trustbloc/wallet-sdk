@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 class ConfigService{
   Future<List<ConnectIssuerConfig>> readConnectIssuerConfig() async {
     List<ConnectIssuerConfig> connectIssuerConfigList = List.empty(growable: true);
-    final String configResponse = await rootBundle.loadString('lib/assets/walletConnectIssuerConfig.json');
+    final String configResponse = await rootBundle.loadString('lib/assets/walletInitiatedIssuerConfig.json');
     final configResponseDecoded = jsonDecode(configResponse);
 
     configResponseDecoded.forEach((key, value) {

@@ -141,6 +141,6 @@ navigateToCredPreviewScreen(
 void navigateToAuthFlow(BuildContext context, Uri uri) async {
   Navigator.of(context).push(
       MaterialPageRoute(
-          builder: (context) => HandleRedirectUri(uri)
+          builder: (context) => HandleRedirectUri(uri, "issuer-initiated-flow", "")
       ));
 }

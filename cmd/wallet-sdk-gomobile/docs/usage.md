@@ -686,7 +686,7 @@ if (issuerCapabilities.preAuthorizedCodeGrantParams().pinRequired()) {
 
 let credentials = interaction.requestCredential(withPreAuth: didDocResolution.assertionMethod(), opts: requestCredentialWithPreAuthOpts)
 
-let issuerURI = interaction.issuer().uri() // Optional (but useful)
+let issuerURI = interaction.issuerURI() // Optional (but useful)
 
 // Consider checking the activity log at some point after the interaction
 ```
@@ -740,7 +740,7 @@ val redirectURIWithParams = "Put the redirect URI with params here"
 
 val credentials = interaction.requestCredentialWithAuth(didDocResolution.assertionMethod(), redirectURIWithParams, null)
 
-val issuerURI = interaction.issuer().uri() // Optional (but useful)
+val issuerURI = interaction.issuerURI() // Optional (but useful)
 
 // Consider checking the activity log at some point after the interaction
 ```
@@ -799,7 +799,7 @@ let redirectURIWithParams = "Put the redirect URI with params here"
 
 let credentials = interaction.requestCredential(withAuth: didDocResolution.assertionMethod(), redirectURIWithParams: redirectURIWithParams, opts: nil)
 
-let issuerURI = interaction.issuer().uri() // Optional (but useful)
+let issuerURI = interaction.issuerURI() // Optional (but useful)
 
 // Consider checking the activity log at some point after the interaction
 ```
@@ -901,8 +901,6 @@ let authorizationLink = interaction.createAuthorizationURL("clientID", redirectU
 let redirectURIWithParams = "Put the redirect URI with params here"
 
 let credentials = interaction.requestCredential(vm: didDocResolution.assertionMethod(), redirectURIWithParams: redirectURIWithParams, opts: nil)
-
-let issuerURI = interaction.issuer().uri() // Optional (but useful)
 
 // Consider checking the activity log at some point after the interaction
 ```
