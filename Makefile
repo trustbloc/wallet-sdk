@@ -62,7 +62,7 @@ copy-ios-bindings:
 
 .PHONY: copy-js-bindings
 copy-js-bindings:
-	@rm -rf demo/app/web/node_modules && cp cmd/wallet-sdk-js/dist/wallet-sdk.wasm demo/app/web && mkdir -p demo/app/web/node_modules/@trustbloc-cicd/wallet-sdk-js/dist && cp cmd/wallet-sdk-js/dist/wasm_exec.js demo/app/web/node_modules/@trustbloc-cicd/wallet-sdk-js/dist && cp cmd/wallet-sdk-js/src/index.js demo/app/web/node_modules/@trustbloc-cicd/wallet-sdk-js/dist/agent.js && sed -i 's/export default class Agent {/class Agent {/g' demo/app/web/node_modules/@trustbloc-cicd/wallet-sdk-js/dist/agent.js
+	@rm -rf demo/app/web/node_modules && mkdir -p demo/app/web/node_modules/@trustbloc-cicd/wallet-sdk-js && cp -r cmd/wallet-sdk-js/dist demo/app/web/node_modules/@trustbloc-cicd/wallet-sdk-js/dist && cp cmd/wallet-sdk-js/dist/wallet-sdk.wasm demo/app/web
 
 .PHONY: demo-app-ios
 demo-app-ios:generate-ios-bindings copy-ios-bindings
@@ -78,7 +78,7 @@ demo-app-web-local: generate-js-bindings copy-js-bindings
 
 .PHONY: demo-app-web
 demo-app-web:
-	@cd demo/app/web && rm -rf node_modules && npm i && cp ../../../cmd/wallet-sdk-js/src/index.js node_modules/@trustbloc-cicd/wallet-sdk-js/dist/agent.js && sed -i 's/export default class Agent {/class Agent {/g' node_modules/@trustbloc-cicd/wallet-sdk-js/dist/agent.js && cp node_modules/@trustbloc-cicd/wallet-sdk-js/dist/wallet-sdk.wasm ./ && flutter doctor && flutter clean && flutter run -d chrome
+	@cd demo/app/web && rm -rf node_modules && npm i && cp node_modules/@trustbloc-cicd/wallet-sdk-js/dist/wallet-sdk.wasm ./ && flutter doctor && flutter clean && flutter run -d chrome
 
 .PHONY: sample-webhook
 sample-webhook:
