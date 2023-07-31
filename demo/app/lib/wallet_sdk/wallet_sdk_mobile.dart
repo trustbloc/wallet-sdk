@@ -114,10 +114,12 @@ class WalletSDK extends WalletPlatform {
     }
   }
 
-  Future<bool?> credentialStatusVerifier(List<String> credentials) async {
+  Future<bool> credentialStatusVerifier(String credential) async {
     try {
-      var credentialStatusVerifier = await methodChannel
-          .invokeMethod<bool>('credentialStatusVerifier', <String, dynamic>{'credentials': credentials});
+      var credentialStatusVerifier =
+          await methodChannel.invokeMethod<bool>('credentialStatusVerifier', <String, dynamic>{
+        'credentials': [credential]
+      });
       return credentialStatusVerifier!;
     } on PlatformException catch (error) {
       if (error.toString().contains("status verification failed: revoked")) {
@@ -167,10 +169,10 @@ class WalletSDK extends WalletPlatform {
     return versionDetailResp;
   }
 
-  Future<Map<Object?, Object?>?> wellKnownDidConfig(String issuerID) async {
-    var didLinkedResp = await methodChannel.invokeMethod('wellKnownDidConfig', <String, dynamic>{'issuerID': issuerID});
-    log("well known config, $didLinkedResp");
-    return didLinkedResp;
+  Future<WellKnownDidConfig> wellKnownDidConfig(String issuerID) async {
+    Map<String, dynamic> config =
+        await methodChannel.invokeMethod('wellKnownDidConfig', <String, dynamic>{'issuerID': issuerID});
+    return WellKnownDidConfig.fromMap(config);
   }
 
   Future<VerifierDisplayData> getVerifierDisplayData() async {

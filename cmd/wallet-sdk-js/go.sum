@@ -65,12 +65,16 @@ github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/hyperledger/aries-framework-go v0.1.9-0.20221025204933-b807371b6f1e h1:3Nio6Rc+IbfcRToEfdkZ3ZWSja/aSs1gSzeLvqQxPyY=
 github.com/hyperledger/aries-framework-go v0.1.9-0.20221025204933-b807371b6f1e/go.mod h1:maFMu4I33a8siIpzgN3ofTNmvlCRWtrN8FLjUVXiF98=
+github.com/hyperledger/aries-framework-go-ext/component/vc/status v0.0.0-20230622181036-ef011d8df3d5 h1:7aE+xX6f7V7/P3CjPdghuOxmTzHTkqrEqHctJKXKVzc=
+github.com/hyperledger/aries-framework-go-ext/component/vc/status v0.0.0-20230622181036-ef011d8df3d5/go.mod h1:7t7Es+QFyP3oOfNU+45vtQPwvsJ/MEGlZMCAJzKqQWM=
 github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk v0.0.0-20230622181036-ef011d8df3d5 h1:XMuiBA4Vcan9nuFobXFQd1XlxnVZAJ0xHi/h/Nurzfw=
 github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk v0.0.0-20230622181036-ef011d8df3d5/go.mod h1:VaRA1a/seup0gv7m9p5AjWIJZucOgMwYIEKtozfEUfs=
 github.com/hyperledger/aries-framework-go-ext/component/vdr/longform v0.0.0-20230622181036-ef011d8df3d5 h1:xN6STL3pvHtRU1cEE9Pc32Z+3yTAhcwL0s3VYotPQxk=
 github.com/hyperledger/aries-framework-go-ext/component/vdr/longform v0.0.0-20230622181036-ef011d8df3d5/go.mod h1:BQy/Yg++6zQ1Gf6t3b1M61+kapxonPeVDTcff7Z2BiM=
 github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v1.0.0-rc4.0.20230622155445-c7c1db73c62a h1:HpLqmI6GDD3eGaO5q2ngwpFQLzp7Eq7gy1QM+ocVwnU=
 github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v1.0.0-rc4.0.20230622155445-c7c1db73c62a/go.mod h1:PHOy7Q1uJ/3mEMODHnljWkYT/cuNbtqvkd9fSWqbixc=
+github.com/hyperledger/aries-framework-go/component/didconfig v0.0.0-20230622211121-852ce35730b4 h1:6pkyx5TMJEZpau/HsDNSndZy+MrX9hJmWAtGM1UaGuI=
+github.com/hyperledger/aries-framework-go/component/didconfig v0.0.0-20230622211121-852ce35730b4/go.mod h1:SCS+CWl/U4qRgy540BAKvSlLHAUXrw29pmuhp3nMzbY=
 github.com/hyperledger/aries-framework-go/component/kmscrypto v0.0.0-20230622082138-3ffab1691857 h1:x7Lt4FAPmMNyKQCUhnUOYeDpskaHnRNrtZj4rKfSKfU=
 github.com/hyperledger/aries-framework-go/component/kmscrypto v0.0.0-20230622082138-3ffab1691857/go.mod h1:xgNlHAVQjqwoknzHbXkeHkAJgUxRWKfHXPT3nhVhH3Q=
 github.com/hyperledger/aries-framework-go/component/log v0.0.0-20230615141038-5d444d6c36de h1:SL1mbNu73iPT/vxg/HHCJJGTdLBPh2DXVU3fuxYrIWc=

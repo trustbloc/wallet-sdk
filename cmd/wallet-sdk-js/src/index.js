@@ -59,6 +59,18 @@ export default class Agent {
         })
     };
 
+    async verifyCredentialsStatus(opts) {
+        return await this.goAgent.verifyCredentialsStatus({
+            credential: opts.credential
+        })
+    }
+
+    async validateLinkedDomains(opts) {
+        return await this.goAgent.validateLinkedDomains({
+            did: opts.did
+        })
+    }
+
     async getCredentialID(opts) {
         return await this.goAgent.getCredentialID({
             credential: opts.credential

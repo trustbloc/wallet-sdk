@@ -35,12 +35,12 @@ class CredentialMetaDataCard extends StatefulWidget {
               isLoading = false;
             });
           });
-      WalletSDKPlugin.credentialStatusVerifier([widget.credentialData.rawCredential]).then(
+      WalletSDKPlugin.credentialStatusVerifier(widget.credentialData.rawCredential).then(
               (response) =>
           {
             setState(() {
               log("status $response");
-              verifiedStatus = response!;
+              verifiedStatus = response;
             }
             )});
     }

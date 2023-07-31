@@ -84,10 +84,12 @@ async function jsCreateOpenID4VPInteraction(authorizationRequest) {
 async function jsGetSubmissionRequirements(credentials) {
     let query = await openID4VPInteraction.getQuery();
 
-    return await agent.getSubmissionRequirements({
+    let result = await agent.getSubmissionRequirements({
         query: query,
         credentials: credentials,
     });
+
+    return result;
 }
 
 async function jsPresentCredential(credentials) {
@@ -98,6 +100,19 @@ async function jsPresentCredential(credentials) {
 
 async function jsVerifierDisplayData() {
     return await openID4VPInteraction.verifierDisplayData()
+}
+
+
+async function jsVerifyCredentialsStatus(credential) {
+    return await agent.verifyCredentialsStatus({
+        credential: credential
+    })
+}
+
+async function jsWellKnownDidConfig(issuerID) {
+    return await agent.validateLinkedDomains({
+        did: issuerID
+    })
 }
 
 // KMS database implementation

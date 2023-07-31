@@ -37,9 +37,11 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/tink/go v1.7.0 // indirect
 	github.com/hyperledger/aries-framework-go v0.1.9-0.20221025204933-b807371b6f1e // indirect
+	github.com/hyperledger/aries-framework-go-ext/component/vc/status v0.0.0-20230622181036-ef011d8df3d5 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk v0.0.0-20230622181036-ef011d8df3d5 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/longform v0.0.0-20230622181036-ef011d8df3d5 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v1.0.0-rc4.0.20230622155445-c7c1db73c62a // indirect
+	github.com/hyperledger/aries-framework-go/component/didconfig v0.0.0-20230622211121-852ce35730b4 // indirect
 	github.com/hyperledger/aries-framework-go/component/log v0.0.0-20230615141038-5d444d6c36de // indirect
 	github.com/hyperledger/aries-framework-go/component/vdr v0.0.0-20230622171716-43af8054a539 // indirect
 	github.com/hyperledger/fabric-amcl v0.0.0-20230602173724-9e02669dceb2 // indirect
