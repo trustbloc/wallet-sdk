@@ -30,10 +30,7 @@ func SerializeOpenID4VPInteraction(agentMethodsRunner *jssupport.AsyncRunner,
 ) map[string]interface{} {
 	return map[string]interface{}{
 		openid4VPGetQuery: agentMethodsRunner.CreateAsyncFunc(func(this js.Value, args []js.Value) (any, error) {
-			presentationDefinition, err := interaction.Interaction.GetQuery()
-			if err != nil {
-				return nil, fmt.Errorf("get presentation definition: %w", err)
-			}
+			presentationDefinition := interaction.Interaction.GetQuery()
 
 			pdBytes, err := json.Marshal(presentationDefinition)
 			if err != nil {
@@ -71,10 +68,7 @@ func SerializeOpenID4VPInteraction(agentMethodsRunner *jssupport.AsyncRunner,
 		}),
 
 		openid4VPVerifierDisplayData: agentMethodsRunner.CreateAsyncFunc(func(this js.Value, args []js.Value) (any, error) {
-			data, err := interaction.Interaction.VerifierDisplayData()
-			if err != nil {
-				return nil, fmt.Errorf("get verifier display data: %w", err)
-			}
+			data := interaction.Interaction.VerifierDisplayData()
 			return map[string]interface{}{
 				"name":    data.Name,
 				"did":     data.DID,
