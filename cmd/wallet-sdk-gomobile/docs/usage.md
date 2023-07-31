@@ -538,10 +538,12 @@ know this, you're ready to [request credentials](#request-credential).
 
 #### Authorization Code Flow
 
-If you are using a `WalletInitiatedInteraction`, then you have the option of checking what credentials the issuer
-supports. To do this call the `SupportedCredentials` method and use the methods on the returned object to see what
+If you are using a `WalletInitiatedInteraction`, then you may want to check what credentials the issuer
+supports. To do this call the `issuerMetadata` method, and then call the `supportedCredentials` method on the returned
+`IssuerMetadata` object. Then, use the methods on the returned `SupportedCredentials` object to see what
 credential formats and types are supported. If you already know what credential format+types you want, then you can
-skip this step.
+skip this step. Note that if you're using an `IssuerInitiatedInteraction` then the credential format+types are already
+pre-specified by the issuer in the credential offer and can't be overridden.
 
 To begin the Authorization Code flow, you need to create an authorization URL. To do this, call the `createAuthorizationURL` method on the
 `Interaction` object. You need to provide the following parameters:

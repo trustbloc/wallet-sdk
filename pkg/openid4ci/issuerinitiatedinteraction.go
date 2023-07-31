@@ -17,6 +17,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
+
 	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose"
 	"github.com/hyperledger/aries-framework-go/component/models/jwt"
@@ -245,6 +247,11 @@ func (i *IssuerInitiatedInteraction) DynamicClientRegistrationSupported() (bool,
 // This method will return an error if the issuer does not support dynamic client registration.
 func (i *IssuerInitiatedInteraction) DynamicClientRegistrationEndpoint() (string, error) {
 	return i.interaction.dynamicClientRegistrationEndpoint()
+}
+
+// IssuerMetadata returns the issuer's metadata.
+func (i *IssuerInitiatedInteraction) IssuerMetadata() (*issuer.Metadata, error) {
+	return i.interaction.getIssuerMetadata()
 }
 
 func (i *IssuerInitiatedInteraction) requestCredentialWithPreAuth(jwtSigner api.JWTSigner,

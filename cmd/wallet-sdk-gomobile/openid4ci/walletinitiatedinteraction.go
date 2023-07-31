@@ -93,16 +93,6 @@ func NewWalletInitiatedInteraction( //nolint: dupl // Similar looking but for di
 	}, nil
 }
 
-// SupportedCredentials returns the credential types and formats that an issuer can issue.
-func (i *WalletInitiatedInteraction) SupportedCredentials() (*SupportedCredentials, error) {
-	goAPISupportedCredentials, err := i.goAPIInteraction.SupportedCredentials()
-	if err != nil {
-		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
-	}
-
-	return &SupportedCredentials{supportedCredentials: goAPISupportedCredentials}, nil
-}
-
 // CreateAuthorizationURL creates an authorization URL that can be opened in a browser to proceed to the login page.
 // It must be called before calling the RequestCredential method.
 // It creates the authorization URL that can be opened in a browser to proceed to the login page.
@@ -181,6 +171,16 @@ func (i *WalletInitiatedInteraction) DynamicClientRegistrationEndpoint() (string
 	}
 
 	return endpoint, nil
+}
+
+// IssuerMetadata returns the issuer's metadata object.
+func (i *WalletInitiatedInteraction) IssuerMetadata() (*IssuerMetadata, error) {
+	goAPIIssuerMetadata, err := i.goAPIInteraction.IssuerMetadata()
+	if err != nil {
+		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
+	}
+
+	return &IssuerMetadata{issuerMetadata: goAPIIssuerMetadata}, nil
 }
 
 func (i *WalletInitiatedInteraction) createSigner(vm *api.VerificationMethod) (*common.JWSSigner, error) {

@@ -177,7 +177,7 @@ func TestResolve(t *testing.T) {
 				err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
 				require.NoError(t, err)
 
-				issuerMetadata.IssuerDisplays = nil
+				issuerMetadata.LocalizedIssuerDisplays = nil
 
 				resolvedDisplayData, err := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
@@ -387,8 +387,8 @@ func TestResolve(t *testing.T) {
 		require.NoError(t, err)
 
 		issuerMetadata.CredentialsSupported[0].CredentialSubject["sensitive_id"] = issuer.Claim{
-			Displays: []issuer.Display{{}},
-			Mask:     "regex(()",
+			LocalizedClaimDisplays: []issuer.LocalizedClaimDisplay{{}},
+			Mask:                   "regex(()",
 		}
 
 		resolvedDisplayData, errResolve := credentialschema.Resolve(

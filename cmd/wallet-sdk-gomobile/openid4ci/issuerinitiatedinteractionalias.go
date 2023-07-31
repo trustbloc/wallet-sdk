@@ -175,6 +175,15 @@ func (i *Interaction) DynamicClientRegistrationEndpoint() (string, error) {
 	return i.issuerInitiatedInteraction.DynamicClientRegistrationEndpoint()
 }
 
+// IssuerMetadata is an alias for the method with the same name on the IssuerInitiatedInteraction
+// object.
+//
+// Deprecated: This only exists for backwards compatibility with code that hasn't been updated to the latest version of
+// Wallet-SDK and will be removed in a future version.
+func (i *Interaction) IssuerMetadata() (*IssuerMetadata, error) {
+	return i.issuerInitiatedInteraction.IssuerMetadata()
+}
+
 // OTelTraceID is an alias for the method with the same name on the IssuerInitiatedInteraction object.
 //
 // Deprecated: This only exists for backwards compatibility with code that hasn't been updated to the latest version of

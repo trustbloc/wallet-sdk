@@ -9,29 +9,28 @@ package issuer
 
 // Metadata represents metadata about an issuer as obtained from their .well-known OpenID configuration.
 type Metadata struct {
-	CredentialIssuer     string                `json:"credential_issuer,omitempty"`
-	AuthorizationServer  string                `json:"authorization_server,omitempty"`
-	CredentialEndpoint   string                `json:"credential_endpoint,omitempty"`
-	CredentialsSupported []SupportedCredential `json:"credentials_supported,omitempty"`
-	// IssuerDisplays represents display information for the issuer's name in various locales.
-	IssuerDisplays []Display `json:"display,omitempty"`
+	CredentialIssuer        string                   `json:"credential_issuer,omitempty"`
+	AuthorizationServer     string                   `json:"authorization_server,omitempty"`
+	CredentialEndpoint      string                   `json:"credential_endpoint,omitempty"`
+	CredentialsSupported    []SupportedCredential    `json:"credentials_supported,omitempty"`
+	LocalizedIssuerDisplays []LocalizedIssuerDisplay `json:"display,omitempty"`
 }
 
 // SupportedCredential represents metadata about a credential type that a credential issuer can issue.
 type SupportedCredential struct {
-	Format                               string               `json:"format,omitempty"`
-	Types                                []string             `json:"types,omitempty"`
-	ID                                   string               `json:"id,omitempty"`
-	Overview                             []CredentialOverview `json:"display,omitempty"`
-	CredentialSubject                    map[string]Claim     `json:"credentialSubject,omitempty"`
-	CryptographicBindingMethodsSupported []string             `json:"cryptographic_binding_methods_supported,omitempty"`
-	CryptographicSuitesSupported         []string             `json:"cryptographic_suites_supported,omitempty"`
+	Format                               string                       `json:"format,omitempty"`
+	Types                                []string                     `json:"types,omitempty"`
+	ID                                   string                       `json:"id,omitempty"`
+	LocalizedCredentialDisplays          []LocalizedCredentialDisplay `json:"display,omitempty"`
+	CredentialSubject                    map[string]Claim             `json:"credentialSubject,omitempty"`
+	CryptographicBindingMethodsSupported []string                     `json:"cryptographic_binding_methods_supported,omitempty"` //nolint:lll // Formatter forces these line symbols to line up, and this is a long name
+	CryptographicSuitesSupported         []string                     `json:"cryptographic_suites_supported,omitempty"`
 }
 
-// CredentialOverview represents display data for a credential as a whole.
+// LocalizedCredentialDisplay represents display data for a credential as a whole for a certain locale.
 // Display data for specific claims (e.g. first name, date of birth, etc.) are in SupportedCredential.CredentialSubject
 // (in the parent object above).
-type CredentialOverview struct {
+type LocalizedCredentialDisplay struct {
 	Name            string `json:"name,omitempty"`
 	Locale          string `json:"locale,omitempty"`
 	Logo            *Logo  `json:"logo,omitempty"`
@@ -42,12 +41,11 @@ type CredentialOverview struct {
 // Claim represents display data for a specific claim in (potentially) multiple locales.
 // Each ClaimDisplay represents display data for a single locale.
 type Claim struct {
-	// Displays represents display data for a specific claim in various locales.
-	Displays  []Display `json:"display,omitempty"`
-	ValueType string    `json:"value_type,omitempty"`
-	Order     *int      `json:"order,omitempty"`
-	Pattern   string    `json:"pattern,omitempty"`
-	Mask      string    `json:"mask,omitempty"`
+	LocalizedClaimDisplays []LocalizedClaimDisplay `json:"display,omitempty"`
+	ValueType              string                  `json:"value_type,omitempty"`
+	Order                  *int                    `json:"order,omitempty"`
+	Pattern                string                  `json:"pattern,omitempty"`
+	Mask                   string                  `json:"mask,omitempty"`
 }
 
 // Logo represents display information for a logo.
@@ -56,8 +54,14 @@ type Logo struct {
 	AltText string `json:"alt_text,omitempty"`
 }
 
-// Display represents display information for some piece of data in a specific locale.
-type Display struct {
+// LocalizedIssuerDisplay represents display information for an issuer in a specific locale.
+type LocalizedIssuerDisplay struct {
+	Name   string `json:"name,omitempty"`
+	Locale string `json:"locale,omitempty"`
+}
+
+// LocalizedClaimDisplay represents display information for a claim in a specific locale.
+type LocalizedClaimDisplay struct {
 	Name   string `json:"name,omitempty"`
 	Locale string `json:"locale,omitempty"`
 }

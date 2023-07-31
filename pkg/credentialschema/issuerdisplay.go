@@ -12,7 +12,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
-func getIssuerDisplay(issuerDisplays []issuer.Display, locale string) *ResolvedIssuerDisplay {
+func getIssuerDisplay(issuerDisplays []issuer.LocalizedIssuerDisplay, locale string) *ResolvedIssuerDisplay {
 	if len(issuerDisplays) == 0 {
 		return nil
 	}
