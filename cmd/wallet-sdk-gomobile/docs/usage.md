@@ -545,10 +545,11 @@ credential formats and types are supported. If you already know what credential 
 skip this step. Note that if you're using an `IssuerInitiatedInteraction` then the credential format+types are already
 pre-specified by the issuer in the credential offer and can't be overridden.
 
-To begin the Authorization Code flow, you need to create an authorization URL. To do this, call the `createAuthorizationURL` method on the
-`Interaction` object. You need to provide the following parameters:
+To begin the Authorization Code flow, you need to create an authorization URL. To do this, call the
+`createAuthorizationURL` method on the`Interaction` object. You need to provide the following parameters:
 * Client ID: This is a value that's specific to your application and/or issuer. The Client ID is a part of 
-the OAuth2 specification, and has to be obtained by out-of-band means.
+the OAuth2 specification, and has to be obtained by out-of-band means or via
+[Dynamic Client Registration](#dynamic-client-registration).
 * Redirect URI: The URI that you want the service to redirect to after authorization is complete.
 You will likely want this to be some sort of deep link to your app. More information on this can be found further below.
 
@@ -558,8 +559,9 @@ parameters:
 * Credential Types: The types of the credential you want to receive from the issuer by the end of the flow.
 
 Additionally, some issuers' authorization servers may require scopes to be passed in. In this case, use the `setScopes`
-method on the `CreateAuthorizationURLOpts` object to pass in scopes. The `scopes` value is also part of the
-OAuth2 specification and needs to be obtained by out-of-band means.
+method on the `CreateAuthorizationURLOpts` object to pass in scopes. The `scopes` value is a part of the
+OAuth2 specification and needs to be obtained by out-of-band means or via
+[Dynamic Client Registration](#dynamic-client-registration).
 
 Once you have your authorization URL, load it in a web browser. The user will then need to log in to the service
 (if they are not already) and give permission to share their data with the issuer. The web page will then
@@ -586,7 +588,28 @@ pass it in using the `setPIN` method on the `RequestCredentialWithPreAuthOpts` o
 Regardless of which of the two methods you use, if the call succeeds, it will return your issued credentials.
 These can then be used in other Wallet-SDK APIs or [serialized for storage](#verifiable-credentials).
 
-### Issuer URI Method (Optional, issuer-initiated interactions only)
+### Dynamic Client Registration
+
+If you are using the Authorization Code flow and the issuer supports Dynamic Client Registration, then you can use that
+to determine a Client ID and/or scopes to use for the flow. Note that all `WalletInitiatedInteraction` flows use
+the Authorization Code Flow, but in the case of an `IssuerInitiatedInteraction`, it may or may not use the Authorization
+Code Flow depending on whether the issuer and/or your app supports it. See [Authorization](#authorization) for more
+information.
+
+To determine if the issuer supports dynamic client registration, call the `dynamicClientRegistrationSupported` method
+on your `Interaction` object. If the issuer does support dynamic client registration, then you will next need to
+retrieve the issuer's dynamic client registration endpoint using `dynamicClientRegistrationEndpoint`.
+
+Finally, pass the returned endpoint into the `registerClient` function along with any other parameters as required for
+your use case. For Android, this function is located in the`oauth2` package. For iOS, this function and the other types
+used with the function are prefixed with `oauth2`.
+
+The `registerClient` function will, upon successful registration, return the registered metadata
+along with a client ID. You should then be able to use this client ID when you go to create the authorization URL.
+You may also want to (or need to) use the registered scopes from the registered metadata depending on the
+issuer and/or authorization server.
+
+### Issuer URI Method
 
 If you're using an `IssuerInitiatedInteraction` object, then there is an additional optional `issuerURI()` method you
 may wish to use. The issuer URI can be used to get the display data for your credentials.
@@ -932,6 +955,7 @@ let credentials = interaction.requestCredential(vm: didDocResolution.assertionMe
 | INVALID_TOKEN(OCI1-0015)                     | The access token has expired or been revoked. Try restarting the flow.                                                                                                                                                                                                                                                                                                                                                                              |
 | UNSUPPORTED_CREDENTIAL_FORMAT(OCI1-0016)     | In the wallet-initiated flow, an unsupported credential format was specified.                                                                                                                                                                                                                                                                                                                                                                       |
 | UNSUPPORTED_CREDENTIAL_TYPE(OCI1-0017)       | In the wallet-initiated flow, an unsupported credential type was specified.                                                                                                                                                                                                                                                                                                                                                                         |
+
 ## Credential Display Data
 
 After completing the `RequestCredential` step of the OpenID4CI flow, you will have your issued Verifiable Credential
