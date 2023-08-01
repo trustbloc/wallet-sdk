@@ -55,6 +55,26 @@ class WalletSDK extends WalletPlatform {
     }
   }
 
+  Future<String> createAuthorizationURLWalletInitiatedFlow(List<String> scopes, List<String> credentialTypes,
+      String credentialFormat, clientID, redirectURI, issuerURI) async {
+    try {
+      String authorizationURL =
+          await methodChannel.invokeMethod('createAuthorizationURLWalletInitiatedFlow', <String, dynamic>{
+        'scopes': scopes,
+        'credentialTypes': credentialTypes,
+        'credentialFormat': credentialFormat,
+        'clientID': clientID,
+        'redirectURI': redirectURI,
+        'issuerURI': issuerURI
+      });
+      log("authorizationURL Wallet-Initiated-Flow -> $authorizationURL");
+      return authorizationURL;
+    } on PlatformException catch (error) {
+      debugPrint(error.toString());
+      rethrow;
+    }
+  }
+
   Future<String> requestCredential(String userPinEntered) async {
     try {
       var credentialResponse =
@@ -67,8 +87,8 @@ class WalletSDK extends WalletPlatform {
   }
 
   Future<WalletSDKError> parseWalletSDKError({required String localizedErrorMessage}) async {
-    var parsedWalletError = await methodChannel.invokeMethod(
-        'parseWalletSDKError', <String, dynamic>{'localizedErrorMessage': localizedErrorMessage});
+    var parsedWalletError = await methodChannel
+        .invokeMethod('parseWalletSDKError', <String, dynamic>{'localizedErrorMessage': localizedErrorMessage});
     return WalletSDKError.fromJson(jsonDecode(json.encode(parsedWalletError)));
   }
 
@@ -76,6 +96,17 @@ class WalletSDK extends WalletPlatform {
     try {
       var credentialResponse = await methodChannel.invokeMethod<String>(
           'requestCredentialWithAuth', <String, dynamic>{'redirectURIWithParams': redirectURIWithParams});
+      return credentialResponse!;
+    } on PlatformException catch (error) {
+      debugPrint(error.toString());
+      rethrow;
+    }
+  }
+
+  Future<String> requestCredentialWithWalletInitiatedFlow(String redirectURIWithParams) async {
+    try {
+      var credentialResponse = await methodChannel.invokeMethod<String>('requestCredentialWithWalletInitiatedFlow',
+          <String, dynamic>{'redirectURIWithParams': redirectURIWithParams});
       return credentialResponse!;
     } on PlatformException catch (error) {
       debugPrint(error.toString());
@@ -164,10 +195,7 @@ class WalletSDK extends WalletPlatform {
 
   Future<String?> getIssuerID(List<String> credentials) async {
     try {
-      final issuerID =
-          await methodChannel.invokeMethod<String>('getIssuerID', <String, dynamic>{'vcCredentials': credentials});
-      log("get issuerID - , $issuerID");
-      return issuerID;
+      return await methodChannel.invokeMethod<String>('getIssuerID', <String, dynamic>{'credentials': credentials});
     } on PlatformException catch (error) {
       if (error.code == errorCode) {
         return error.details.toString();

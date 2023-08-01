@@ -1,8 +1,9 @@
 {
   "TrustBloc Staging Issuer" : {
-   "issuerURI": "https://demo-issuer.stg.trustbloc.dev",
+   "issuerURI": "https://api-gateway.dev.trustbloc.dev/issuer/bank_issuer/v1.0",
    "scopes": ["openid","profile"],
    "clientID": "oidc4vc_client",
+   "redirectURI": "trustbloc-wallet://openid4vci/authcodeflow/callback",
    "showIssuer": true,
    "description": "Demo Issuer to issue demo credentials (e.g. PR card, etc)"
   }

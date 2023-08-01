@@ -3,7 +3,6 @@ import 'package:app/views/dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
-import 'package:app/models/store_credential_data.dart';
 import 'package:app/widgets/common_title_appbar.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/widgets/primary_button.dart';
@@ -12,7 +11,6 @@ import 'package:app/services/storage_service.dart';
 import 'package:app/models/activity_data_object.dart';
 import 'package:app/widgets/credential_card.dart';
 import 'package:app/views/custom_error.dart';
-import 'package:app/main.dart';
 import 'dart:developer';
 import 'dart:convert';
 

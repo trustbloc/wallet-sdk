@@ -1,10 +1,8 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'package:app/widgets/credential_metadata_card.dart';
 import 'package:app/widgets/credential_verified_information_view.dart';
 import 'package:flutter/material.dart';
 import 'package:app/models/credential_data.dart';
-import 'package:intl/intl.dart';
 import 'package:app/widgets/credential_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app/models/activity_logger.dart';

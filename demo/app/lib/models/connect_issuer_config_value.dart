@@ -2,6 +2,7 @@ class ConnectIssuerConfigValue {
   final String issuerURI;
   final List<String> scopes;
   final String clientID;
+  final String redirectURI;
   final bool showIssuer;
   final String description;
 
@@ -10,6 +11,7 @@ class ConnectIssuerConfigValue {
         required this.issuerURI,
         required this.scopes,
         required this.clientID,
+        required this.redirectURI,
         required this.showIssuer,
         required this.description,
       });
@@ -19,6 +21,7 @@ class ConnectIssuerConfigValue {
     data['issuerURI'] = issuerURI;
     data['scopes'] = scopes;
     data['clientID'] = clientID;
+    data['redirectURI'] = redirectURI;
     data['showIssuer'] = showIssuer;
     data['description'] = description;
     return data;
@@ -29,6 +32,7 @@ class ConnectIssuerConfigValue {
         issuerURI: json['issuerURI'],
         scopes: json['scopes'].cast<String>(),
         clientID: json['clientID'],
+        redirectURI: json['redirectURI'],
         showIssuer: json['showIssuer'],
         description: json['description']
     );
