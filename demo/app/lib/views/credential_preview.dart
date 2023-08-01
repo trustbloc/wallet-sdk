@@ -52,10 +52,8 @@ class CredentialPreviewState extends State<CredentialPreview> {
                 (response) =>
                 setState(() {
                   log("well known domain $response");
-                  var wellKnownDidConfig = json.encode(response);
-                  Map<String, dynamic> responseJson = json.decode(wellKnownDidConfig);
-                  verifiedDomain = responseJson["isValid"];
-                  serviceURL = responseJson["serviceURL"];
+                  verifiedDomain = response.isValid;
+                  serviceURL = response.serviceURL;
                 }
                 ))
     );

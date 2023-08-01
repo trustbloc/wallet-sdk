@@ -47,12 +47,10 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
       final verifiedDisplayData = await WalletSDKPlugin.getVerifierDisplayData();
 
       var resp = await WalletSDKPlugin.wellKnownDidConfig(verifiedDisplayData.did);
-      var wellKnownDidConfig = json.encode(resp);
-      Map<String, dynamic> wellKnownDidConfigResp = json.decode(wellKnownDidConfig);
       setState(() {
         verifierName = verifiedDisplayData.name;
-        serviceURL = wellKnownDidConfigResp["serviceURL"];
-        verifiedDomain = wellKnownDidConfigResp["isValid"];
+        serviceURL = resp.serviceURL;
+        verifiedDomain = resp.isValid;
       });
     });
   }

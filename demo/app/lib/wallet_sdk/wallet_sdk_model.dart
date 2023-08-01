@@ -1,3 +1,27 @@
+class WellKnownDidConfig {
+  final bool isValid;
+  final String serviceURL;
+
+  const WellKnownDidConfig({
+    required this.isValid,
+    required this.serviceURL,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'isValid': isValid,
+      'serviceURL': serviceURL,
+    };
+  }
+
+  factory WellKnownDidConfig.fromMap(Map<String, dynamic> map) {
+    return WellKnownDidConfig(
+      isValid: map['isValid'] as bool,
+      serviceURL: map['serviceURL'] as String,
+    );
+  }
+}
+
 class SubmissionRequirement {
   final String rule;
   final String name;
@@ -359,10 +383,10 @@ class VerifierDisplayData {
 
   Map<String, dynamic> toMap() {
     return {
-      'name': this.name,
-      'did': this.did,
-      'purpose': this.purpose,
-      'logoURI': this.logoURI,
+      'name': name,
+      'did': did,
+      'purpose': purpose,
+      'logoURI': logoURI,
     };
   }
 

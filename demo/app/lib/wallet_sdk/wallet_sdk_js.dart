@@ -136,6 +136,12 @@ external dynamic jsPresentCredential(credentials);
 @JS()
 external dynamic jsVerifierDisplayData();
 
+@JS()
+external dynamic jsVerifyCredentialsStatus(String credential);
+
+@JS()
+external dynamic jsWellKnownDidConfig(String issuerID);
+
 class WalletSDK extends WalletPlatform {
   @visibleForTesting
   final methodChannel = const MethodChannel('WalletSDKPlugin');
@@ -192,12 +198,11 @@ class WalletSDK extends WalletPlatform {
     }
   }
 
-  Future<bool?> credentialStatusVerifier(List<String> credentials) async {
+  Future<bool> credentialStatusVerifier(String credential) async {
     try {
-      var credentialStatusVerifier = await methodChannel
-          .invokeMethod<bool>('credentialStatusVerifier', <String, dynamic>{'credentials': credentials});
-      return credentialStatusVerifier!;
-    } on PlatformException catch (error) {
+      await promiseToFuture(jsVerifyCredentialsStatus(credential));
+      return true;
+    } catch (error) {
       if (error.toString().contains("status verification failed: revoked")) {
         return false;
       } else {
@@ -283,10 +288,10 @@ class WalletSDK extends WalletPlatform {
     return versionDetailResp;
   }
 
-  Future<Map<Object?, Object?>?> wellKnownDidConfig(String issuerID) async {
-    var didLinkedResp = await methodChannel.invokeMethod('wellKnownDidConfig', <String, dynamic>{'issuerID': issuerID});
-    log("well known config, $didLinkedResp");
-    return didLinkedResp;
+  Future<WellKnownDidConfig> wellKnownDidConfig(String issuerID) async {
+    final jsConfig = await promiseToFuture(jsWellKnownDidConfig(issuerID));
+
+    return WellKnownDidConfig(isValid: jsConfig.isValid, serviceURL: jsConfig.serviceURL);
   }
 
   Future<VerifierDisplayData> getVerifierDisplayData() async {

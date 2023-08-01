@@ -54,6 +54,27 @@ let rawDisplayData = await agent.resolveDisplayData({
 let parsedDisplayData = await agent.parseResolvedDisplayData({
     resolvedCredentialDisplayData: rawDisplayData
 })
+
+// Start OpenID4VP Issaunce flow
+let openID4VPInteraction = await agent.createOpenID4VPInteraction({
+    authorizationRequest: authorizationRequest
+})
+
+let query = await openID4VPInteraction.getQuery();
+
+// Get submission requirements.
+let submissionRequirements = await agent.getSubmissionRequirements({
+    query: query,
+    credentials: issuedCrednetials,
+});
+
+let matchedVCs = submissionRequirements[0].descriptors[0].matchedVCs;
+
+// Present matched credentials.
+await openID4VPInteraction.presentCredential({
+    credentials: matchedVCs
+})
+
 ```
 
 ### KMS Database

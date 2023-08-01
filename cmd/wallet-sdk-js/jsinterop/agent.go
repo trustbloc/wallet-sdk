@@ -106,6 +106,31 @@ func createDID(_ js.Value, args []js.Value) (any, error) {
 	return types.SerializeDIDDoc(didDoc)
 }
 
+func validateLinkedDomains(_ js.Value, args []js.Value) (any, error) {
+	if agentInstance == nil {
+		return nil, walleterror.NewExecutionError(
+			errors.Module,
+			errors.InitializationFailedCode,
+			errors.InitializationFailedError,
+			fmt.Errorf("agent instance is not initialized"))
+	}
+
+	did, err := jssupport.EnsureString(jssupport.GetNamedArgument(args, "did"))
+	if err != nil {
+		return nil, err
+	}
+
+	isValid, serviceURL, err := agentInstance.ValidateLinkedDomains(did)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]any{
+		"isValid":    isValid,
+		"serviceURL": serviceURL,
+	}, nil
+}
+
 func createOpenID4CIIssuerInitiatedInteraction(_ js.Value, args []js.Value) (any, error) {
 	if agentInstance == nil {
 		return nil, walleterror.NewExecutionError(
@@ -175,6 +200,23 @@ func getSubmissionRequirements(_ js.Value, args []js.Value) (any, error) {
 	}
 
 	return util.MapTo(req, types.SerializeMatchedSubmissionRequirement)
+}
+
+func verifyCredentialsStatus(_ js.Value, args []js.Value) (any, error) {
+	if agentInstance == nil {
+		return nil, walleterror.NewExecutionError(
+			errors.Module,
+			errors.InitializationFailedCode,
+			errors.InitializationFailedError,
+			fmt.Errorf("agent instance is not initialized"))
+	}
+
+	credential, err := jssupport.EnsureString(jssupport.GetNamedArgument(args, "credential"))
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, agentInstance.VerifyCredentialsStatus(credential)
 }
 
 func resolveDisplayData(_ js.Value, args []js.Value) (any, error) {
@@ -292,5 +334,7 @@ func ExportAgentFunctions() map[string]any {
 		"parseResolvedDisplayData":                  agentMethodsRunner.CreateAsyncFunc(parseResolvedDisplayData),
 		"createOpenID4VPInteraction":                agentMethodsRunner.CreateAsyncFunc(createOpenID4VPInteraction),
 		"getSubmissionRequirements":                 agentMethodsRunner.CreateAsyncFunc(getSubmissionRequirements),
+		"verifyCredentialsStatus":                   agentMethodsRunner.CreateAsyncFunc(verifyCredentialsStatus),
+		"validateLinkedDomains":                     agentMethodsRunner.CreateAsyncFunc(validateLinkedDomains),
 	}
 }

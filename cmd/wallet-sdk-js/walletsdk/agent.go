@@ -24,8 +24,10 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialquery"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialschema"
+	"github.com/trustbloc/wallet-sdk/pkg/credentialstatus"
 	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
+	"github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 	"github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 	"github.com/trustbloc/wallet-sdk/pkg/openid4vp"
@@ -206,6 +208,30 @@ func (a *Agent) GetSubmissionRequirements(query string, credentials []string,
 
 	return credInquirer.GetSubmissionRequirements(pdQuery, credentialquery.WithCredentialsArray(parsedCreds),
 		credentialquery.WithSelectiveDisclosure(a.didResolver))
+}
+
+// VerifyCredentialsStatus checks the Credential Status, returning an error if the status field is invalid,
+// the status is revoked, or if it isn't possible to verify the credential's status.
+func (a *Agent) VerifyCredentialsStatus(credential string) error {
+	parsedCred, err := a.ParseCredential(credential)
+	if err != nil {
+		return err
+	}
+
+	v, err := credentialstatus.NewVerifier(&credentialstatus.Config{
+		HTTPClient:  &http.Client{},
+		DIDResolver: a.didResolver,
+	})
+	if err != nil {
+		return err
+	}
+
+	return v.Verify(parsedCred)
+}
+
+// ValidateLinkedDomains validates the given DID's Linked Domains service against its well-known DID configuration.
+func (a *Agent) ValidateLinkedDomains(d string) (bool, string, error) {
+	return wellknown.ValidateLinkedDomains(d, a.didResolver, &http.Client{})
 }
 
 func unwrapQuery(query []byte) (*presexch.PresentationDefinition, error) {
