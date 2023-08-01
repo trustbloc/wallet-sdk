@@ -1,5 +1,5 @@
 {
-  "TrustBloc Staging Issuer" : {
+  "TrustBloc Demo (Dev) Issuer" : {
    "issuerURI": "https://api-gateway.dev.trustbloc.dev/issuer/bank_issuer/v1.0",
    "scopes": ["openid","profile"],
    "clientID": "oidc4vc_client",
