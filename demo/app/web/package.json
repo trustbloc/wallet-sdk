@@ -28,6 +28,6 @@
   },
   "homepage": "https://github.com/trustbloc/wallet-sdk/demo/app/#readme",
   "dependencies": {
-    "@trustbloc-cicd/wallet-sdk-js": "1.1.1-snapshot-563cec8"
+    "@trustbloc-cicd/wallet-sdk-js": "1.1.1-snapshot-aa5bcbb"
   }
 }

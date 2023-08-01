@@ -177,6 +177,10 @@ class WalletSDK extends WalletPlatform {
     }
   }
 
+  Future<WalletSDKError> parseWalletSDKError({required String localizedErrorMessage}) async {
+    return throw Exception('Method not implemented');
+  }
+
   Future<String> requestCredentialWithAuth(String redirectURIWithParams) async {
     try {
       var credentialResponse = await methodChannel.invokeMethod<String>(

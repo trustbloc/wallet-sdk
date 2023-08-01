@@ -10,7 +10,7 @@ import 'package:app/services/storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app/widgets/primary_button.dart';
 import 'package:app/widgets/primary_input_field.dart';
-import 'package:app/wallet_sdk/wallet_sdk_mobile.dart';
+import 'package:app/wallet_sdk/wallet_sdk.dart';
 import 'credential_preview.dart';
 
 class OTP extends StatefulWidget {
