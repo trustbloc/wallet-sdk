@@ -427,6 +427,22 @@ func TestIssuerInitiatedInteraction_DynamicClientRegistration(t *testing.T) {
 	require.Empty(t, endpoint)
 }
 
+func TestIssuerInitiatedInteraction_IssuerMetadata(t *testing.T) {
+	t.Run("Failed to get issuer metadata", func(t *testing.T) {
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		i := createIssuerInitiatedInteraction(t, kms, nil,
+			createCredentialOfferIssuanceURI(t, "example.com", false),
+			nil, false)
+		require.NotEmpty(t, i.OTelTraceID())
+
+		issuerMetadata, err := i.IssuerMetadata()
+		requireErrorContains(t, err, "METADATA_FETCH_FAILED")
+		require.Nil(t, issuerMetadata)
+	})
+}
+
 // The IssuerInitiatedInteraction alias type (Interaction) should behave the same as the
 // IssuerInitiatedInteraction object, since it's just a wrapper for it.
 func TestIssuerInitiatedInteractionAlias(t *testing.T) {
@@ -517,6 +533,10 @@ func TestIssuerInitiatedInteractionAlias(t *testing.T) {
 
 	traceID := interaction.OTelTraceID()
 	require.NotEmpty(t, traceID)
+
+	issuerMetadata, err := interaction.IssuerMetadata()
+	require.NoError(t, err)
+	require.NotNil(t, issuerMetadata)
 }
 
 //nolint:thelper // Not a test helper function
@@ -597,6 +617,10 @@ func doRequestCredentialTest(t *testing.T, additionalHeaders *api.Headers,
 
 	subjectID := subjectIDs.AtIndex(0)
 	require.Equal(t, "did:orb:uAAA:EiARTvvCsWFTSCc35447YpI2MJpFAaJZtFlceVz9lcMYVw", subjectID)
+
+	issuerMetadata, err := interaction.IssuerMetadata()
+	require.NoError(t, err)
+	require.NotNil(t, issuerMetadata)
 }
 
 func createIssuerInitiatedInteraction(t *testing.T, kms *localkms.KMS, activityLogger api.ActivityLogger,

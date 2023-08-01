@@ -29,7 +29,7 @@ public class WalletInitiatedOpenID4CI {
     }
     
     func getSupportedCredentials() throws -> Openid4ciSupportedCredentials{
-        return try walletInitiatedInteraction.supportedCredentials()
+        return try walletInitiatedInteraction.issuerMetadata().supportedCredentials()!
     }
     
     func requestCredentialWithWalletInitiatedFlow(didVerificationMethod: ApiVerificationMethod, redirectURIWithParams: String) throws -> VerifiableCredential {

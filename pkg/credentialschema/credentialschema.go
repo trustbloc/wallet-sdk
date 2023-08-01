@@ -22,7 +22,7 @@ func Resolve(opts ...ResolveOpt) (*ResolvedDisplayData, error) {
 		return nil, err
 	}
 
-	issuerOverview := getIssuerDisplay(metadata.IssuerDisplays, preferredLocale)
+	issuerOverview := getIssuerDisplay(metadata.LocalizedIssuerDisplays, preferredLocale)
 
 	return &ResolvedDisplayData{
 		IssuerDisplay:      issuerOverview,

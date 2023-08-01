@@ -168,7 +168,7 @@ func resolveClaims(supportedCredential *issuer.SupportedCredential, credentialSu
 func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *verifiable.Subject,
 	preferredLocale string,
 ) (*ResolvedClaim, error) {
-	if len(claim.Displays) == 0 {
+	if len(claim.LocalizedClaimDisplays) == 0 {
 		return nil, errNoClaimDisplays
 	}
 
@@ -226,16 +226,16 @@ func getMaskedValue(rawValue, maskingPattern string) (string, error) {
 // on what is available). If no preferred locale is specified, then the first available locale is used.
 func getLocalizedLabel(preferredLocale string, claim *issuer.Claim) (string, string) {
 	if preferredLocale == "" {
-		return claim.Displays[0].Name, claim.Displays[0].Locale
+		return claim.LocalizedClaimDisplays[0].Name, claim.LocalizedClaimDisplays[0].Locale
 	}
 
-	for _, claimDisplay := range claim.Displays {
+	for _, claimDisplay := range claim.LocalizedClaimDisplays {
 		if strings.EqualFold(preferredLocale, claimDisplay.Locale) {
 			return claimDisplay.Name, claimDisplay.Locale
 		}
 	}
 
-	return claim.Displays[0].Name, claim.Displays[0].Locale
+	return claim.LocalizedClaimDisplays[0].Name, claim.LocalizedClaimDisplays[0].Locale
 }
 
 // Returns nil if no matching claim value could be found.
@@ -282,20 +282,20 @@ func getOverviewDisplay(supportedCredential *issuer.SupportedCredential,
 	preferredLocale string,
 ) *CredentialOverview {
 	if preferredLocale == "" {
-		return issuerCredentialDisplayToResolvedCredentialOverview(&supportedCredential.Overview[0])
+		return issuerCredentialDisplayToResolvedCredentialOverview(&supportedCredential.LocalizedCredentialDisplays[0])
 	}
 
-	for i := range supportedCredential.Overview {
-		if strings.EqualFold(preferredLocale, supportedCredential.Overview[i].Locale) {
-			return issuerCredentialDisplayToResolvedCredentialOverview(&supportedCredential.Overview[i])
+	for i := range supportedCredential.LocalizedCredentialDisplays {
+		if strings.EqualFold(preferredLocale, supportedCredential.LocalizedCredentialDisplays[i].Locale) {
+			return issuerCredentialDisplayToResolvedCredentialOverview(&supportedCredential.LocalizedCredentialDisplays[i])
 		}
 	}
 
-	return issuerCredentialDisplayToResolvedCredentialOverview(&supportedCredential.Overview[0])
+	return issuerCredentialDisplayToResolvedCredentialOverview(&supportedCredential.LocalizedCredentialDisplays[0])
 }
 
 func issuerCredentialDisplayToResolvedCredentialOverview(
-	issuerCredentialOverview *issuer.CredentialOverview,
+	issuerCredentialOverview *issuer.LocalizedCredentialDisplay,
 ) *CredentialOverview {
 	resolvedCredentialOverview := &CredentialOverview{
 		Name:            issuerCredentialOverview.Name,

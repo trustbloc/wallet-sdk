@@ -1,0 +1,45 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
+package openid4ci
+
+import "github.com/trustbloc/wallet-sdk/pkg/models/issuer"
+
+// LocalizedIssuerDisplays represents display information for an issuer in various locales.
+type LocalizedIssuerDisplays struct {
+	localizedIssuerDisplays []issuer.LocalizedIssuerDisplay
+}
+
+// AtIndex returns the LocalizedIssuerDisplays at the given index.
+// If the index passed in is out of bounds, then nil is returned.
+func (l *LocalizedIssuerDisplays) AtIndex(index int) *LocalizedIssuerDisplay {
+	maxIndex := len(l.localizedIssuerDisplays) - 1
+	if index > maxIndex || index < 0 {
+		return nil
+	}
+
+	return &LocalizedIssuerDisplay{localizedIssuerDisplay: &l.localizedIssuerDisplays[index]}
+}
+
+// Length returns the number of LocalizedIssuerDisplays contained within this object.
+func (l *LocalizedIssuerDisplays) Length() int {
+	return len(l.localizedIssuerDisplays)
+}
+
+// LocalizedIssuerDisplay represents display information for an issuer in a specific locale.
+type LocalizedIssuerDisplay struct {
+	localizedIssuerDisplay *issuer.LocalizedIssuerDisplay
+}
+
+// Name returns this LocalizedIssuerDisplay's name.
+func (l *LocalizedIssuerDisplay) Name() string {
+	return l.localizedIssuerDisplay.Name
+}
+
+// Locale returns this LocalizedIssuerDisplay's Locale.
+func (l *LocalizedIssuerDisplay) Locale() string {
+	return l.localizedIssuerDisplay.Locale
+}

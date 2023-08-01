@@ -7,10 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package openid4ci
 
 import (
-	"fmt"
 	"time"
 
-	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
+	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
+
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 
 	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
@@ -66,22 +66,12 @@ type SupportedCredential struct {
 
 // SupportedCredentials returns the credential types and formats that an issuer can issue.
 func (i *WalletInitiatedInteraction) SupportedCredentials() ([]SupportedCredential, error) {
-	if i.interaction.issuerMetadata == nil {
-		var err error
-
-		i.interaction.issuerMetadata, err = metadatafetcher.Get(i.interaction.issuerURI, i.interaction.httpClient,
-			i.interaction.metricsLogger,
-			"Authorization")
-		if err != nil {
-			return nil, walleterror.NewExecutionError(
-				ErrorModule,
-				MetadataFetchFailedCode,
-				MetadataFetchFailedError,
-				fmt.Errorf("failed to get issuer metadata: %w", err))
-		}
+	issuerMetadata, err := i.interaction.getIssuerMetadata()
+	if err != nil {
+		return nil, err
 	}
 
-	supportedCredentials := make([]SupportedCredential, len(i.interaction.issuerMetadata.CredentialsSupported))
+	supportedCredentials := make([]SupportedCredential, len(issuerMetadata.CredentialsSupported))
 
 	for j := 0; j < len(i.interaction.issuerMetadata.CredentialsSupported); j++ {
 		supportedCredentials[j] = SupportedCredential{
@@ -142,4 +132,9 @@ func (i *WalletInitiatedInteraction) DynamicClientRegistrationSupported() (bool,
 // This method will return an error if the issuer does not support dynamic client registration.
 func (i *WalletInitiatedInteraction) DynamicClientRegistrationEndpoint() (string, error) {
 	return i.interaction.dynamicClientRegistrationEndpoint()
+}
+
+// IssuerMetadata returns the issuer's metadata.
+func (i *WalletInitiatedInteraction) IssuerMetadata() (*issuer.Metadata, error) {
+	return i.interaction.getIssuerMetadata()
 }

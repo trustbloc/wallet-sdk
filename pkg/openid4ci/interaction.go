@@ -61,23 +61,14 @@ type interaction struct {
 func (i *interaction) createAuthorizationURL(clientID, redirectURI, format string, types []string, issuerState *string,
 	scopes []string,
 ) (string, error) {
-	if i.issuerMetadata == nil {
-		var err error
-
-		i.issuerMetadata, err = metadatafetcher.Get(i.issuerURI, i.httpClient, i.metricsLogger,
-			"Authorization")
-		if err != nil {
-			return "", walleterror.NewExecutionError(
-				ErrorModule,
-				MetadataFetchFailedCode,
-				MetadataFetchFailedError,
-				fmt.Errorf("failed to get issuer metadata: %w", err))
-		}
+	err := i.populateIssuerMetadata()
+	if err != nil {
+		return "", err
 	}
 
 	i.instantiateOAuth2Config(clientID, redirectURI, scopes)
 
-	err := i.instantiateCodeVerifier()
+	err = i.instantiateCodeVerifier()
 	if err != nil {
 		return "", err
 	}
@@ -278,6 +269,36 @@ func (i *interaction) getOpenIDConfig() (*OpenIDConfig, error) {
 	}
 
 	return &config, nil
+}
+
+// getIssuerMetadata returns the issuer's metadata. If the issuer's metadata has already been fetched before,
+// then it's returned without making an additional call.
+func (i *interaction) getIssuerMetadata() (*issuer.Metadata, error) {
+	if i.issuerMetadata == nil {
+		err := i.populateIssuerMetadata()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return i.issuerMetadata, nil
+}
+
+// populateIssuerMetadata fetches the issuer's metadata and stores it within this interaction object.
+func (i *interaction) populateIssuerMetadata() error {
+	issuerMetadata, err := metadatafetcher.Get(i.issuerURI, i.httpClient, i.metricsLogger,
+		"Authorization")
+	if err != nil {
+		return walleterror.NewExecutionError(
+			ErrorModule,
+			MetadataFetchFailedCode,
+			MetadataFetchFailedError,
+			fmt.Errorf("failed to get issuer metadata: %w", err))
+	}
+
+	i.issuerMetadata = issuerMetadata
+
+	return nil
 }
 
 func (i *interaction) requestCredentialWithAuth(jwtSigner api.JWTSigner, credentialFormats []string,

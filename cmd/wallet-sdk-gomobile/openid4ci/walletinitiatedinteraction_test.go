@@ -54,10 +54,11 @@ func TestWalletInitiatedInteraction_Flow(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, interaction)
 
-	supportedCredentials, err := interaction.SupportedCredentials()
+	issuerMetadata, err := interaction.IssuerMetadata()
 	require.NoError(t, err)
-	require.NotNil(t, supportedCredentials)
+	require.NotNil(t, issuerMetadata)
 
+	supportedCredentials := issuerMetadata.SupportedCredentials()
 	require.Equal(t, 2, supportedCredentials.Length())
 
 	require.Equal(t, "jwt_vc_json", supportedCredentials.AtIndex(0).Format())

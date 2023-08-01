@@ -250,6 +250,16 @@ func (i *IssuerInitiatedInteraction) DynamicClientRegistrationEndpoint() (string
 	return endpoint, nil
 }
 
+// IssuerMetadata returns the issuer's metadata.
+func (i *IssuerInitiatedInteraction) IssuerMetadata() (*IssuerMetadata, error) {
+	goAPIIssuerMetadata, err := i.goAPIInteraction.IssuerMetadata()
+	if err != nil {
+		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
+	}
+
+	return &IssuerMetadata{issuerMetadata: goAPIIssuerMetadata}, nil
+}
+
 // OTelTraceID returns the OpenTelemetry trace ID.
 // If OpenTelemetry has been disabled, then an empty string is returned.
 func (i *IssuerInitiatedInteraction) OTelTraceID() string {
