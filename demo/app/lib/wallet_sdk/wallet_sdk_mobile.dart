@@ -171,13 +171,18 @@ class WalletSDK extends WalletPlatform {
 
   Future<WellKnownDidConfig> wellKnownDidConfig(String issuerID) async {
     Map<String, dynamic> config =
-        await methodChannel.invokeMethod('wellKnownDidConfig', <String, dynamic>{'issuerID': issuerID});
+        (await methodChannel.invokeMethod('wellKnownDidConfig', <String, dynamic>{'issuerID': issuerID}))
+            .cast<String, dynamic>();
     return WellKnownDidConfig.fromMap(config);
   }
 
   Future<VerifierDisplayData> getVerifierDisplayData() async {
     var data = await methodChannel.invokeMethod('getVerifierDisplayData');
-    return VerifierDisplayData(name: data.name, did: data.did, logoURI: data.logoUri, purpose: data.purpose);
+    return VerifierDisplayData(
+        name: data['name'] as String,
+        did: data['did'] as String,
+        logoURI: data['logoUri'] as String,
+        purpose: data['purpose'] as String);
   }
 
   Future<void> presentCredential({required List<String> selectedCredentials}) async {
