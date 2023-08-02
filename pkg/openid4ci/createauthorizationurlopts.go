@@ -7,8 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package openid4ci
 
 type createAuthorizationURLOpts struct {
-	scopes      []string
-	issuerState *string
+	scopes                             []string
+	issuerState                        *string
+	useOAuthDiscoverableClientIDScheme bool
 }
 
 // CreateAuthorizationURLOpt is an option for the CreateAuthorizationURL method.
@@ -40,6 +41,18 @@ func WithScopes(scopes []string) CreateAuthorizationURLOpt {
 func WithIssuerState(issuerState string) CreateAuthorizationURLOpt {
 	return func(opts *createAuthorizationURLOpts) {
 		opts.issuerState = &issuerState
+	}
+}
+
+// WithOAuthDiscoverableClientIDScheme is an option for the CreateAuthorizationURL method that will cause the
+// OAuth Discoverable Client ID scheme to be specified in the authorization URL.
+// See https://mattrglobal.github.io/draft-looker-oauth-client-id-scheme/draft-looker-oauth-client-id-scheme.html
+// for more information on the requirements of this scheme. Note that successful usage of this scheme requires the
+// issuer to support it and for the client to meet the scheme's pre-requisites. Be sure to also set your client ID
+// appropriately as required by the scheme.
+func WithOAuthDiscoverableClientIDScheme() CreateAuthorizationURLOpt {
+	return func(opts *createAuthorizationURLOpts) {
+		opts.useOAuthDiscoverableClientIDScheme = true
 	}
 }
 

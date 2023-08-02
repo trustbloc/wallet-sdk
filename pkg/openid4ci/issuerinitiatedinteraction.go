@@ -141,7 +141,7 @@ func (i *IssuerInitiatedInteraction) CreateAuthorizationURL(clientID, redirectUR
 	}
 
 	return i.interaction.createAuthorizationURL(clientID, redirectURI, i.credentialFormats[0], i.credentialTypes[0],
-		issuerState, processedOpts.scopes)
+		issuerState, processedOpts.scopes, processedOpts.useOAuthDiscoverableClientIDScheme)
 }
 
 // RequestCredentialWithPreAuth requests credential(s) from the issuer. This method can only be used for the

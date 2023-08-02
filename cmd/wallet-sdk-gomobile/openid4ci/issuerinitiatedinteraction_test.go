@@ -188,7 +188,9 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 			createCredentialOfferIssuanceURI(t, "example.com", false),
 			nil, false)
 
-		authorizationLink, err := interaction.CreateAuthorizationURL("clientID", "redirectURI", nil)
+		opts := openid4ci.NewCreateAuthorizationURLOpts().UseOAuthDiscoverableClientIDScheme()
+
+		authorizationLink, err := interaction.CreateAuthorizationURL("clientID", "redirectURI", opts)
 		requireErrorContains(t, err, "INVALID_SDK_USAGE")
 		requireErrorContains(t, err, "issuer does not support the authorization code grant type")
 		require.Empty(t, authorizationLink)

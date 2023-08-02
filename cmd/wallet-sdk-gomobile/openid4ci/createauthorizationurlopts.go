@@ -11,8 +11,9 @@ import "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 // CreateAuthorizationURLOpts contains all optional arguments that can be passed into the
 // createAuthorizationURL method.
 type CreateAuthorizationURLOpts struct {
-	scopes      *api.StringArray
-	issuerState *string
+	scopes                             *api.StringArray
+	issuerState                        *string
+	useOAuthDiscoverableClientIDScheme bool
 }
 
 // NewCreateAuthorizationURLOpts returns a new CreateAuthorizationURLOpts object.
@@ -46,6 +47,18 @@ func (c *CreateAuthorizationURLOpts) SetScopes(scopes *api.StringArray) *CreateA
 // this option.
 func (c *CreateAuthorizationURLOpts) SetIssuerState(issuerState string) *CreateAuthorizationURLOpts {
 	c.issuerState = &issuerState
+
+	return c
+}
+
+// UseOAuthDiscoverableClientIDScheme is an option for the CreateAuthorizationURL method that will cause the
+// OAuth Discoverable Client ID scheme to be specified in the authorization URL.
+// See https://mattrglobal.github.io/draft-looker-oauth-client-id-scheme/draft-looker-oauth-client-id-scheme.html
+// for more information on the requirements of this scheme. Note that successful usage of this scheme requires the
+// issuer to support it and for the client to meet the scheme's pre-requisites. Be sure to also set your client ID
+// appropriately as required by the scheme.
+func (c *CreateAuthorizationURLOpts) UseOAuthDiscoverableClientIDScheme() *CreateAuthorizationURLOpts {
+	c.useOAuthDiscoverableClientIDScheme = true
 
 	return c
 }
