@@ -5,11 +5,13 @@
   "display":[
     {
       "locale":"en-US",
-      "name":"Example University"
+      "name":"Example University",
+      "url": "https://server.example.com"
     },
     {
       "name":"サンプル大学",
-      "locale":"jp-JA"
+      "locale":"jp-JA",
+      "url": "https://server.example.com"
     }
   ],
   "credentials_supported":[

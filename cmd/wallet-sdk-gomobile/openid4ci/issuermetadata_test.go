@@ -52,10 +52,12 @@ func TestIssuerMetadata(t *testing.T) {
 	firstLocalizedDisplay := localizedIssuerDisplays.AtIndex(0)
 	require.Equal(t, "Example University", firstLocalizedDisplay.Name())
 	require.Equal(t, "en-US", firstLocalizedDisplay.Locale())
+	require.Equal(t, "https://server.example.com", firstLocalizedDisplay.URL())
 
 	secondLocalizedDisplay := localizedIssuerDisplays.AtIndex(1)
 	require.Equal(t, "サンプル大学", secondLocalizedDisplay.Name())
 	require.Equal(t, "jp-JA", secondLocalizedDisplay.Locale())
+	require.Equal(t, "https://server.example.com", secondLocalizedDisplay.URL())
 
 	require.Nil(t, localizedIssuerDisplays.AtIndex(2))
 

@@ -58,6 +58,7 @@ type Logo struct {
 type LocalizedIssuerDisplay struct {
 	Name   string `json:"name,omitempty"`
 	Locale string `json:"locale,omitempty"`
+	URL    string `json:"url,omitempty"`
 }
 
 // LocalizedClaimDisplay represents display information for a claim in a specific locale.
