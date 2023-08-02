@@ -43,3 +43,8 @@ func (l *LocalizedIssuerDisplay) Name() string {
 func (l *LocalizedIssuerDisplay) Locale() string {
 	return l.localizedIssuerDisplay.Locale
 }
+
+// URL returns this LocalizedIssuerDisplay's URL.
+func (l *LocalizedIssuerDisplay) URL() string {
+	return l.localizedIssuerDisplay.URL
+}
