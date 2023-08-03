@@ -59,7 +59,7 @@ type interaction struct {
 // Check the issuer's capabilities first using the Capabilities method.
 // If scopes are needed, pass them in using the WithScopes option.
 func (i *interaction) createAuthorizationURL(clientID, redirectURI, format string, types []string, issuerState *string,
-	scopes []string,
+	scopes []string, useOAuthDiscoverableClientIDScheme bool,
 ) (string, error) {
 	err := i.populateIssuerMetadata()
 	if err != nil {
@@ -78,7 +78,7 @@ func (i *interaction) createAuthorizationURL(clientID, redirectURI, format strin
 		return "", err
 	}
 
-	authCodeOptions := i.generateAuthCodeOptions(authorizationDetails, issuerState)
+	authCodeOptions := i.generateAuthCodeOptions(authorizationDetails, issuerState, useOAuthDiscoverableClientIDScheme)
 
 	i.authCodeURLState = uuid.New().String()
 
@@ -138,7 +138,7 @@ func (i *interaction) generateAuthorizationDetails(format string, types []string
 }
 
 func (i *interaction) generateAuthCodeOptions(authorizationDetails []byte,
-	issuerState *string,
+	issuerState *string, useOAuthDiscoverableClientIDScheme bool,
 ) []oauth2.AuthCodeOption {
 	authCodeOptions := []oauth2.AuthCodeOption{
 		oauth2.SetAuthURLParam("code_challenge", i.generateCodeChallenge()),
@@ -148,6 +148,11 @@ func (i *interaction) generateAuthCodeOptions(authorizationDetails []byte,
 
 	if issuerState != nil {
 		authCodeOptions = append(authCodeOptions, oauth2.SetAuthURLParam("issuer_state", *issuerState))
+	}
+
+	if useOAuthDiscoverableClientIDScheme {
+		authCodeOptions = append(authCodeOptions, oauth2.SetAuthURLParam("client_id_scheme",
+			"urn:ietf:params:oauth:client-id-scheme:oauth-discoverable-client"))
 	}
 
 	return authCodeOptions

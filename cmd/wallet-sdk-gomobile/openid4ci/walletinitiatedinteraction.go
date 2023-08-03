@@ -11,8 +11,6 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 
-	"github.com/trustbloc/wallet-sdk/pkg/common"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
@@ -102,22 +100,10 @@ func NewWalletInitiatedInteraction( //nolint: dupl // Similar looking but for di
 func (i *WalletInitiatedInteraction) CreateAuthorizationURL(clientID, redirectURI, credentialFormat string,
 	credentialTypes *api.StringArray, opts *CreateAuthorizationURLOpts,
 ) (string, error) {
-	if opts == nil {
-		opts = NewCreateAuthorizationURLOpts()
-	}
-
-	if opts.scopes == nil {
-		opts.scopes = api.NewStringArray()
-	}
+	goAPIOpts := convertToGoAPICreateAuthURLOpts(opts)
 
 	if credentialTypes == nil {
 		credentialTypes = api.NewStringArray()
-	}
-
-	goAPIOpts := []openid4cigoapi.CreateAuthorizationURLOpt{openid4cigoapi.WithScopes(opts.scopes.Strings)}
-
-	if opts.issuerState != nil {
-		goAPIOpts = append(goAPIOpts, openid4cigoapi.WithIssuerState(*opts.issuerState))
 	}
 
 	authorizationURL, err := i.goAPIInteraction.CreateAuthorizationURL(clientID, redirectURI, credentialFormat,
@@ -137,7 +123,7 @@ func (i *WalletInitiatedInteraction) CreateAuthorizationURL(clientID, redirectUR
 func (i *WalletInitiatedInteraction) RequestCredential(vm *api.VerificationMethod,
 	redirectURIWithAuthCode string, opts *RequestCredentialWithAuthOpts,
 ) (*verifiable.CredentialsArray, error) {
-	signer, err := i.createSigner(vm)
+	signer, err := createSigner(vm, i.crypto)
 	if err != nil {
 		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
@@ -181,18 +167,4 @@ func (i *WalletInitiatedInteraction) IssuerMetadata() (*IssuerMetadata, error) {
 	}
 
 	return &IssuerMetadata{issuerMetadata: goAPIIssuerMetadata}, nil
-}
-
-func (i *WalletInitiatedInteraction) createSigner(vm *api.VerificationMethod) (*common.JWSSigner, error) {
-	if vm == nil {
-		return nil, walleterror.NewInvalidSDKUsageError(openid4cigoapi.ErrorModule,
-			errors.New("verification method must be provided"))
-	}
-
-	signer, err := common.NewJWSSigner(vm.ToSDKVerificationMethod(), i.crypto)
-	if err != nil {
-		return nil, err
-	}
-
-	return signer, nil
 }

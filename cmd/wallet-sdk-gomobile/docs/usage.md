@@ -547,9 +547,9 @@ pre-specified by the issuer in the credential offer and can't be overridden.
 
 To begin the Authorization Code flow, you need to create an authorization URL. To do this, call the
 `createAuthorizationURL` method on the`Interaction` object. You need to provide the following parameters:
-* Client ID: This is a value that's specific to your application and/or issuer. The Client ID is a part of 
-the OAuth2 specification, and has to be obtained by out-of-band means or via
-[Dynamic Client Registration](#dynamic-client-registration).
+* Client ID: This is a value that's specific to your application and/or issuer. See [Client ID](#client-id) for more
+information about this parameter.
+[Dynamic Client Registration](#dynamic-client-registration), .
 * Redirect URI: The URI that you want the service to redirect to after authorization is complete.
 You will likely want this to be some sort of deep link to your app. More information on this can be found further below.
 
@@ -582,19 +582,29 @@ If you're using an `IssuerInitiatedInteraction` object, then there are two metho
 Which one you use will depend on your flow:
 * `requestCredentialWithPreAuth`: Use this only if you're using the pre-authorized code flow. If a PIN is required,
 pass it in using the `setPIN` method on the `RequestCredentialWithPreAuthOpts` object.
-* `requestCredentialWithAuth`: Use this only if you're using the authorization code flow. This version of the method
+* `requestCredentialWithAuth`: Use this only if you're using the Authorization Code flow. This version of the method
   will require the redirect URI (that has additional query parameters) that you got before.
 
 Regardless of which of the two methods you use, if the call succeeds, it will return your issued credentials.
 These can then be used in other Wallet-SDK APIs or [serialized for storage](#verifiable-credentials).
 
-### Dynamic Client Registration
+### Client ID
 
-If you are using the Authorization Code flow and the issuer supports Dynamic Client Registration, then you can use that
-to determine a Client ID and/or scopes to use for the flow. Note that all `WalletInitiatedInteraction` flows use
-the Authorization Code Flow, but in the case of an `IssuerInitiatedInteraction`, it may or may not use the Authorization
-Code Flow depending on whether the issuer and/or your app supports it. See [Authorization](#authorization) for more
+This section only applies to the Authorization Code flow. Note that all `WalletInitiatedInteraction` flows use
+the Authorization Code flow, but in the case of an `IssuerInitiatedInteraction`, it may or may not use the Authorization
+Code Flow depending on whether the issuer and/or your app uses it. See [Authorization](#authorization) for more
 information.
+
+In the Authorization Code flow, a client ID must be provided in order to create the authorization URL. The client ID
+parameter is a part of the core OAuth 2.0 specification and can be obtained via several different means.
+Depending on the method you use, Wallet-SDK may have functionality to help with this process. The following sections
+describe some different methods that are explicitly supported by Wallet-SDK. Note that other methods not covered here
+may work (depending on how they're designed), but are untested.
+
+#### Dynamic Client Registration
+
+[Dynamic client registration](https://datatracker.ietf.org/doc/html/rfc7591) is a mechanism that allows a client
+to dynamically register with an authorization server in order to receive a client ID.
 
 To determine if the issuer supports dynamic client registration, call the `dynamicClientRegistrationSupported` method
 on your `Interaction` object. If the issuer does support dynamic client registration, then you will next need to
@@ -608,6 +618,35 @@ The `registerClient` function will, upon successful registration, return the reg
 along with a client ID. You should then be able to use this client ID when you go to create the authorization URL.
 You may also want to (or need to) use the registered scopes from the registered metadata depending on the
 issuer and/or authorization server.
+
+#### OAuth Discoverable Client ID Scheme
+
+[The Client ID Scheme](https://mattrglobal.github.io/draft-looker-oauth-client-id-scheme/draft-looker-oauth-client-id-scheme.html)
+is an extensibility point to the OAuth 2.0 specification that allows a client to use a Client ID that is not assigned
+or managed by the authorization server. The OAuth Discoverable Client ID Scheme is a specific Client ID scheme that
+is also described in the same specification.
+
+The OAuth Discoverable Client ID Scheme has certain pre-requisites that the client must meet that are out-of-scope for
+Wallet-SDK. For example, the client needs to host an endpoint that can be accessed by the authorization server, as
+well as having some requirements on the chosen client ID (that you need to pass into the `createAuthorizationURL`
+method). Also, the issuer must support the OAuth Discoverable Client ID Scheme. Note that Wallet-SDK cannot tell you
+if an issuer supports the OAuth Discoverable Client ID Scheme.
+
+Assuming these pre-requisites are met, then this scheme can be used with Wallet-SDK. To do so, create a
+`CreateAuthorizationURLOpts` object, call the`useOAuthDiscoverableClientIDScheme` method on it, and pass your
+`CreateAuthorizationURLOpts` object into the`createAuthorizationURL` method. Be sure to also set your client ID
+appropriately as required by the scheme.
+
+To determine if the issuer supports dynamic client registration, call the `dynamicClientRegistrationSupported` method
+on your `Interaction` object. If the issuer does support dynamic client registration, then you will next need to
+retrieve the issuer's dynamic client registration endpoint using `dynamicClientRegistrationEndpoint`.
+
+#### Pre-Registration (Out-of-Band)
+
+"Traditional" OAuth 2.0 requires that the client ID is obtained by doing some sort of pre-registration process that is
+specific to the issuer/authorization server. The pre-registration part is out of scope for Wallet-SDK, but the client ID
+you get from that process can be passed into the `createAuthorizationURL` method in order to proceed with the issuance
+flow.
 
 ### Issuer URI Method
 

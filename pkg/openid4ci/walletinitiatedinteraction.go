@@ -95,7 +95,7 @@ func (i *WalletInitiatedInteraction) CreateAuthorizationURL(clientID, redirectUR
 	processedOpts := processCreateAuthorizationURLOpts(opts)
 
 	authorizationURL, err := i.interaction.createAuthorizationURL(clientID, redirectURI, credentialFormat,
-		credentialTypes, processedOpts.issuerState, processedOpts.scopes)
+		credentialTypes, processedOpts.issuerState, processedOpts.scopes, processedOpts.useOAuthDiscoverableClientIDScheme)
 	if err != nil {
 		return "", err
 	}

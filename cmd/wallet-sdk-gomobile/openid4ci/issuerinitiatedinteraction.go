@@ -13,15 +13,10 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 
-	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
-	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
-	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
-	"github.com/trustbloc/wallet-sdk/pkg/common"
 	openid4cigoapi "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
 
@@ -89,19 +84,7 @@ func NewIssuerInitiatedInteraction( //nolint: dupl // Similar looking but for di
 func (i *IssuerInitiatedInteraction) CreateAuthorizationURL(clientID, redirectURI string,
 	opts *CreateAuthorizationURLOpts,
 ) (string, error) {
-	if opts == nil {
-		opts = NewCreateAuthorizationURLOpts()
-	}
-
-	if opts.scopes == nil {
-		opts.scopes = api.NewStringArray()
-	}
-
-	goAPIOpts := []openid4cigoapi.CreateAuthorizationURLOpt{openid4cigoapi.WithScopes(opts.scopes.Strings)}
-
-	if opts.issuerState != nil {
-		goAPIOpts = append(goAPIOpts, openid4cigoapi.WithIssuerState(*opts.issuerState))
-	}
+	goAPIOpts := convertToGoAPICreateAuthURLOpts(opts)
 
 	authorizationURL, err := i.goAPIInteraction.CreateAuthorizationURL(clientID, redirectURI, goAPIOpts...)
 	if err != nil {
@@ -123,7 +106,7 @@ func (i *IssuerInitiatedInteraction) RequestCredentialWithPreAuth(
 		opts = NewRequestCredentialWithPreAuthOpts()
 	}
 
-	signer, err := i.createSigner(vm)
+	signer, err := createSigner(vm, i.crypto)
 	if err != nil {
 		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
@@ -146,7 +129,7 @@ func (i *IssuerInitiatedInteraction) RequestCredentialWithPreAuth(
 func (i *IssuerInitiatedInteraction) RequestCredentialWithAuth(vm *api.VerificationMethod,
 	redirectURIWithAuthCode string, opts *RequestCredentialWithAuthOpts,
 ) (*verifiable.CredentialsArray, error) {
-	signer, err := i.createSigner(vm)
+	signer, err := createSigner(vm, i.crypto)
 	if err != nil {
 		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
@@ -269,69 +252,4 @@ func (i *IssuerInitiatedInteraction) OTelTraceID() string {
 	}
 
 	return traceID
-}
-
-func (i *IssuerInitiatedInteraction) createSigner(vm *api.VerificationMethod) (*common.JWSSigner, error) {
-	if vm == nil {
-		return nil, walleterror.NewInvalidSDKUsageError(openid4cigoapi.ErrorModule,
-			errors.New("verification method must be provided"))
-	}
-
-	signer, err := common.NewJWSSigner(vm.ToSDKVerificationMethod(), i.crypto)
-	if err != nil {
-		return nil, err
-	}
-
-	return signer, nil
-}
-
-func createGoAPIClientConfig(didResolver api.DIDResolver, opts *InteractionOpts) (*openid4cigoapi.ClientConfig, error) {
-	activityLogger := createGoAPIActivityLogger(opts.activityLogger)
-
-	httpClient := wrapper.NewHTTPClient(opts.httpTimeout, opts.additionalHeaders, opts.disableHTTPClientTLSVerification)
-
-	goAPIClientConfig := &openid4cigoapi.ClientConfig{
-		DIDResolver:                      &wrapper.VDRResolverWrapper{DIDResolver: didResolver},
-		ActivityLogger:                   activityLogger,
-		MetricsLogger:                    &wrapper.MobileMetricsLoggerWrapper{MobileAPIMetricsLogger: opts.metricsLogger},
-		DisableVCProofChecks:             opts.disableVCProofChecks,
-		NetworkDocumentLoaderHTTPTimeout: opts.httpTimeout,
-		HTTPClient:                       httpClient,
-	}
-
-	if opts.documentLoader != nil {
-		documentLoaderWrapper := &wrapper.DocumentLoaderWrapper{
-			DocumentLoader: opts.documentLoader,
-		}
-
-		goAPIClientConfig.DocumentLoader = documentLoaderWrapper
-	} else {
-		dlHTTPClient := wrapper.NewHTTPClient(opts.httpTimeout, api.Headers{}, opts.disableHTTPClientTLSVerification)
-
-		var err error
-		goAPIClientConfig.DocumentLoader, err = common.CreateJSONLDDocumentLoader(dlHTTPClient, mem.NewProvider())
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return goAPIClientConfig, nil
-}
-
-func createGoAPIActivityLogger(mobileAPIActivityLogger api.ActivityLogger) goapi.ActivityLogger {
-	if mobileAPIActivityLogger == nil {
-		return nil // Will result in activity logging being disabled in the OpenID4CI IssuerInitiatedInteraction object.
-	}
-
-	return &wrapper.MobileActivityLoggerWrapper{MobileAPIActivityLogger: mobileAPIActivityLogger}
-}
-
-func toGomobileCredentials(credentials []*afgoverifiable.Credential) *verifiable.CredentialsArray {
-	gomobileCredentials := verifiable.NewCredentialsArray()
-
-	for i := range credentials {
-		gomobileCredentials.Add(verifiable.NewCredential(credentials[i]))
-	}
-
-	return gomobileCredentials
 }

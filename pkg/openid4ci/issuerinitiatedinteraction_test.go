@@ -362,14 +362,27 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 			`"authorization_server":"%s"}`,
 			server.URL, authorizationServerURL)
 
-		interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true, true))
+		t.Run("Not using any options", func(t *testing.T) {
+			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true, true))
 
-		authorizationURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
-		require.NoError(t, err)
-		require.Contains(t, authorizationURL, authorizationServerURL+
-			"?authorization_details=%7B%22type%22%3A%22openid_credential%22%2C%22locations"+
-			"%22%3A%5B%22%22%5D%2C%22types%22%3A%5B%22VerifiableCredential%22%2C%22VerifiedEmployee%22%5D%2C%22"+
-			"format%22%3A%22jwt_vc_json%22%7D&client_id=clientID")
+			authorizationURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
+			require.NoError(t, err)
+			require.Contains(t, authorizationURL, authorizationServerURL+
+				"?authorization_details=%7B%22type%22%3A%22openid_credential%22%2C%22locations"+
+				"%22%3A%5B%22%22%5D%2C%22types%22%3A%5B%22VerifiableCredential%22%2C%22VerifiedEmployee%22%5D%2C%22"+
+				"format%22%3A%22jwt_vc_json%22%7D&client_id=clientID")
+		})
+		t.Run("Using the OAuth Discoverable Client ID Scheme", func(t *testing.T) {
+			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true, true))
+
+			authorizationURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI",
+				openid4ci.WithOAuthDiscoverableClientIDScheme())
+			require.NoError(t, err)
+			require.Contains(t, authorizationURL, authorizationServerURL+
+				"?authorization_details=%7B%22type%22%3A%22openid_credential%22%2C%22locations"+
+				"%22%3A%5B%22%22%5D%2C%22types%22%3A%5B%22VerifiableCredential%22%2C%22VerifiedEmployee%22%5D%2C%22"+
+				"format%22%3A%22jwt_vc_json%22%7D&client_id=clientID")
+		})
 	})
 	t.Run("Fail to get issuer metadata", func(t *testing.T) {
 		interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", true, true))
