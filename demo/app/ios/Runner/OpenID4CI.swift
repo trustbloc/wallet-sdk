@@ -110,4 +110,11 @@ public class OpenID4CI {
     func getAuthorizationCodeGrantParams() throws -> Openid4ciAuthorizationCodeGrantParams {
         return  try initiatedInteraction.authorizationCodeGrantParams()
     }
+    
+    // Not doing locale handling or text color handling etc.
+    func getIssuerMetadata() throws -> Openid4ciIssuerMetadata {
+       return try initiatedInteraction.issuerMetadata()
+    }
+       
+        
 }

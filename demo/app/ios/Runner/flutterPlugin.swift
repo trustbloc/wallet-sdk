@@ -87,6 +87,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "getIssuerID":
              getIssuerID(arguments: arguments!, result:result)
             
+        case "getIssuerMetaData":
+            getIssuerMetaData(result:result)
+            
         case "activityLogger":
             storeActivityLogger(result:result)
 
@@ -404,6 +407,88 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
           }
     }
     
+    public func getIssuerMetaData(result: @escaping FlutterResult) {
+        guard let openID4CI = self.openID4CI else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while getting issuer meta data",
+                                             details: "openID4CI not initiated. Call authorize before this."))
+        }
+        
+        do {
+            
+            var issuerMetaData = try openID4CI.getIssuerMetadata()
+            // creddential issuer
+            var credIssuer =  issuerMetaData.credentialIssuer()
+            
+            // supported Credentials list
+            var supportedCredentials = issuerMetaData.supportedCredentials()!
+            var supportedCredentialsList = getSupportedCredentialsList(supportedCredentials: supportedCredentials)
+            
+            // localized issuer displays data
+            var localizedIssuerDisplays =  issuerMetaData.localizedIssuerDisplays()!
+            var localizedIssuerDisplayList :[Any] = []
+            for index in 0..<localizedIssuerDisplays.length() {
+                let localizedIssuerDisplay :[String:Any] = [
+                    "name":  localizedIssuerDisplays.atIndex(index)!.name(),
+                    "locale": localizedIssuerDisplays.atIndex(index)!.locale(),
+                ]
+                
+                localizedIssuerDisplayList.append(localizedIssuerDisplay)
+            }
+           
+        
+            var issuerMetaDataRespList: [Any] = []
+            let issuerMetaDataResp:[String:Any] = [
+                "credentialIssuer": credIssuer,
+                "supportedCredentials" : supportedCredentialsList,
+                "localizedIssuerDisplays":localizedIssuerDisplayList
+            ]
+            
+            issuerMetaDataRespList.append(issuerMetaDataResp)
+            
+            result(issuerMetaDataRespList)
+            
+        } catch {
+            result(FlutterError.init(code: "NATIVE_ERR",
+                                     message: "error while getting issuer meta data",
+                                     details: error))
+        }
+        
+    }
+    
+    public func getSupportedCredentialsList(supportedCredentials: Openid4ciSupportedCredentials) -> [Any] {
+        var supportedCredentialsList: [Any] = []
+        for index in 0..<supportedCredentials.length() {
+            var typeStrArray = [String]()
+            for i in 0..<(supportedCredentials.atIndex(index)!.types()?.length())!{
+                let type1 = supportedCredentials.atIndex(index)!.types()?.atIndex(i)
+                typeStrArray.append(type1!)
+            }
+            
+            var localizedCredentialsDisplayRespList: [Any] = []
+            for i in 0..<(supportedCredentials.atIndex(index)!.localizedDisplays()?.length())!{
+                let localizedCredentialsDisplayResp :[String:Any] = [
+                    "name":  supportedCredentials.atIndex(index)!.localizedDisplays()!.atIndex(i)!.name(),
+                    "locale": supportedCredentials.atIndex(index)!.localizedDisplays()!.atIndex(i)!.locale(),
+                    "logo": supportedCredentials.atIndex(index)!.localizedDisplays()!.atIndex(i)!.logo()!.url(),
+                    "textColor": supportedCredentials.atIndex(index)!.localizedDisplays()!.atIndex(i)!.textColor(),
+                    "backgroundColor": supportedCredentials.atIndex(index)!.localizedDisplays()!.atIndex(i)!.backgroundColor()
+                ]
+                localizedCredentialsDisplayRespList.append(localizedCredentialsDisplayResp)
+            }
+                 
+            let supportedCredentialResp:[String:Any] = [
+                "format":   supportedCredentials.atIndex(index)!.format(),
+                "types":    typeStrArray,
+                "display":   localizedCredentialsDisplayRespList
+            ]
+            
+            supportedCredentialsList.append(supportedCredentialResp)
+        }
+        
+        return supportedCredentialsList
+    }
+    
     public func initializeWalletInitiatedFlow(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
         guard let issuerURI = arguments["issuerURI"] as? String else {
             return  result(FlutterError.init(code: "NATIVE_ERR",
@@ -422,20 +507,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             let walletInitiatedOpenID4CI = try walletSDK.createOpenID4CIWalletIntiatedInteraction(issuerURI: issuerURI)
             let supportedCredentials = try walletInitiatedOpenID4CI.getSupportedCredentials()
             
-            var supportedCredentialsList: [Any] = []
-            for index in 0..<supportedCredentials.length() {
-                var typeStrArray = [String]()
-                for i in 0..<(supportedCredentials.atIndex(index)!.types()?.length())!{
-                    let type1 = supportedCredentials.atIndex(index)!.types()?.atIndex(i)
-                    typeStrArray.append(type1!)
-                }
-                
-                let supportedCredentialResp:[String:Any] = [
-                    "format":  supportedCredentials.atIndex(index)!.format(),
-                    "types":   typeStrArray
-                ]
-                supportedCredentialsList.append(supportedCredentialResp)
-            }
+            var supportedCredentialsList = getSupportedCredentialsList(supportedCredentials: supportedCredentials)
+       
             self.walletInitiatedOpenID4CI = walletInitiatedOpenID4CI
             result(supportedCredentialsList)
         

@@ -3,10 +3,6 @@ Copyright Gen Digital Inc. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
-
-import 'dart:developer';
-
-import 'package:app/models/connect_issuer_config.dart';
 import 'package:app/models/connect_issuer_config_value.dart';
 import 'package:app/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
@@ -14,9 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:app/wallet_sdk/wallet_sdk_mobile.dart';
 import 'package:app/wallet_sdk/wallet_sdk_model.dart';
 import 'package:app/widgets/common_title_appbar.dart';
-
-import 'package:app/services/config_service.dart';
-
 import 'handle_redirect_uri.dart';
 
 class SupportedCredentialsList extends StatefulWidget {
@@ -85,9 +78,6 @@ class SupportedCredentialsListState extends State<SupportedCredentialsList> {
                         style: TextStyle(fontSize: 12, color: Colors.white),
                       ),
                       onPressed: () async {
-                        log("scopes ${widget.connectIssuerConfigValue.scopes}");
-                        log("clientID ${widget.connectIssuerConfigValue.clientID}");
-                        log("redirectURI ${widget.connectIssuerConfigValue.redirectURI}");
                         var authorizationURL = await walletSDKPlugin.createAuthorizationURLWalletInitiatedFlow(
                             widget.connectIssuerConfigValue.scopes,
                             widget.supportedCredentialList.elementAt(index).types,

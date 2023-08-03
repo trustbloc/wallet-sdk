@@ -6,15 +6,11 @@ SPDX-License-Identifier: Apache-2.0
 
 import 'dart:convert';
 import 'dart:developer';
+import 'package:app/views/issuance_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app/wallet_sdk/wallet_sdk.dart';
-import 'package:app/models/activity_data_object.dart';
-import 'package:app/models/credential_data.dart';
 import 'package:app/services/storage_service.dart';
-import 'package:app/views/credential_preview.dart';
-import 'package:app/views/otp.dart';
-import 'package:app/views/handle_redirect_uri.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:app/models/credential_offer.dart';
@@ -25,22 +21,19 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
   final StorageService storageService = StorageService();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   var authCodeArgs;
-  if (qrCodeURL.contains("credential_offer_uri")){
+  if (qrCodeURL.contains("credential_offer_uri")) {
     authCodeArgs = await parseCredentialOfferUri(qrCodeURL);
     log("credential offer uri auth code  ${authCodeArgs}");
   } else {
-    if (qrCodeURL.contains("authorization_code")){
+    if (qrCodeURL.contains("authorization_code")) {
       authCodeArgs = await readIssuerAuthFlowConfig(qrCodeURL);
       log("auth code arguments fetched from config file $authCodeArgs");
       // While fetching auth code args based on issuer key from file, if no key-value pair is found then set the
       // arguments to default scope and redirect url.
       authCodeArgs ??= {
-          "scopes": [
-            "openid",
-            "profile"
-          ],
-          "redirectURI": "trustbloc-wallet://openid4vci/authcodeflow/callback"
-        };
+        "scopes": ["openid", "profile"],
+        "redirectURI": "trustbloc-wallet://openid4vci/authcodeflow/callback"
+      };
     }
   }
 
@@ -50,21 +43,21 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
   var authorizeResultPinRequired = responseJson["pinRequired"];
   log("pin required flow -  $authorizeResultPinRequired");
   if (authorizeResultPinRequired == true) {
-    navigateToOTPScreen(context);
+    navigateToIssuancePreviewScreen(context, authorizeResultPinRequired);
     return;
   } else if (responseJson["authorizationURLLink"] != '') {
     // initiate authCode Flow
     log("initiating authCode Flow- ${responseJson["authorizationURLLink"]}");
     Uri uri = Uri.parse(responseJson["authorizationURLLink"]);
-    navigateToAuthFlow(context, uri);
+    navigateToIssuancePreviewScreenAuthFlow(context, uri);
     return;
   } else {
-    navigateToWithoutPinFlow(context);
+    navigateToIssuancePreviewScreen(context, authorizeResultPinRequired);
     return;
   }
 }
 
- readIssuerAuthFlowConfig(String qrCodeURL) async {
+readIssuerAuthFlowConfig(String qrCodeURL) async {
   var decodedUri = Uri.decodeComponent(qrCodeURL);
   final uri = Uri.parse(decodedUri);
   var credentialIssuerKey = json.decode(uri.queryParameters["credential_offer"]!);
@@ -76,8 +69,7 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
 parseCredentialOfferUri(String qrCodeURL) async {
   var decodedUri = Uri.decodeComponent(qrCodeURL);
   final uri = Uri.parse(decodedUri);
-  final response = await http
-      .get(Uri.parse(uri.queryParameters['credential_offer_uri']!));
+  final response = await http.get(Uri.parse(uri.queryParameters['credential_offer_uri']!));
   if (response.statusCode == 200) {
     final String configResp = await rootBundle.loadString('lib/assets/issuerAuthFlowConfig.json');
     final configData = await json.decode(configResp);
@@ -88,59 +80,11 @@ parseCredentialOfferUri(String qrCodeURL) async {
   }
 }
 
-void navigateToWithoutPinFlow(BuildContext context) async{
-  final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
-  var WalletSDKPlugin = WalletSDK();
-  final StorageService storageService = StorageService();
-  final SharedPreferences pref = await prefs;
-
-  var didType = pref.getString('didType');
-  var keyType = pref.getString('keyType');
-  // choosing default if no selection is made
-  didType = didType ?? "ion";
-  keyType = keyType ?? "ED25519";
-
-  var didResolution = await WalletSDKPlugin.createDID(didType, keyType);
-  var didDocEncoded = json.encode(didResolution);
-  Map<String, dynamic> responseJson = json.decode(didDocEncoded);
-
-  var didID = responseJson["did"];
-  var didDoc = responseJson["didDoc"];
-  log("created didID :$didID");
-  pref.setString('userDID',didID);
-  pref.setString('userDIDDoc',didDoc);
-
-  String? credentials =  await WalletSDKPlugin.requestCredential('');
-  String? issuerURL = await WalletSDKPlugin.issuerURI();
-  String? resolvedCredentialDisplay =  await WalletSDKPlugin.serializeDisplayData([credentials],issuerURL!);
-
-  var activities = await WalletSDKPlugin.storeActivityLogger();
-
-  var credID = await WalletSDKPlugin.getCredID([credentials]);
-
-  log("activities and credID handle open id  -$activities and $credID");
-  storageService.addActivities(ActivityDataObj(credID!, activities));
-
-  navigateToCredPreviewScreen(context, credentials, issuerURL, resolvedCredentialDisplay!, didID, credID);
+void navigateToIssuancePreviewScreen(BuildContext context, bool? authorizeResultPinRequired) async {
+  Navigator.push(context,
+      MaterialPageRoute(builder: (context) => IssuancePreview(authorizeResultPinRequired: authorizeResultPinRequired)));
 }
 
-void navigateToOTPScreen(BuildContext context) async {
-  Navigator.push(context, MaterialPageRoute(builder: (context) => const OTP()));
-}
-
-navigateToCredPreviewScreen(
-    BuildContext context, String credentialResp, String issuerURL, String resolvedCredentialDisplay, String didID, String credID) async {
-  Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            CredentialPreview(credentialData: CredentialData(rawCredential: credentialResp, issuerURL: issuerURL, credentialDisplayData: resolvedCredentialDisplay, credentialDID: didID, credID: credID)),));
-}
-
-
-void navigateToAuthFlow(BuildContext context, Uri uri) async {
-  Navigator.of(context).push(
-      MaterialPageRoute(
-          builder: (context) => HandleRedirectUri(uri, "issuer-initiated-flow", "")
-      ));
+void navigateToIssuancePreviewScreenAuthFlow(BuildContext context, Uri uri) async {
+  Navigator.push(context, MaterialPageRoute(builder: (context) => IssuancePreview(uri: uri)));
 }

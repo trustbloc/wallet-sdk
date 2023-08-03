@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 class WellKnownDidConfig {
   final bool isValid;
   final String serviceURL;
@@ -97,24 +99,152 @@ class InputDescriptor {
   }
 }
 
+class IssuerMetaData {
+  final String credentialIssuer;
+  final List<SupportedCredentials> supportedCredentials;
+  final List<IssuerDisplayData> localizedIssuerDisplays;
+
+  const IssuerMetaData({
+    required this.credentialIssuer,
+    required this.supportedCredentials,
+    required this.localizedIssuerDisplays,
+  });
+  @override
+  String toString() {
+    return 'IssuerMetaData{ credentialIssuer: $credentialIssuer, supportedCredentials: $supportedCredentials, localizedIssuerDisplays: $localizedIssuerDisplays}';
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'credentialIssuer': credentialIssuer,
+      'supportedCredentials': supportedCredentials,
+      'localizedIssuerDisplays': localizedIssuerDisplays
+    };
+  }
+
+  factory IssuerMetaData.fromJson(Map<String, dynamic> json) {
+    return IssuerMetaData(
+      credentialIssuer: json['credentialIssuer'],
+      supportedCredentials: json['supportedCredentials'],
+      localizedIssuerDisplays: json['localizedIssuerDisplays'],
+    );
+  }
+
+  factory IssuerMetaData.fromMap(Map<String, dynamic> map) {
+    return IssuerMetaData(
+      credentialIssuer: map['credentialIssuer'] as String,
+      supportedCredentials: (map['supportedCredentials'] as List<dynamic>)
+          .map((obj) => SupportedCredentials.fromMap(obj.cast<String, dynamic>()))
+          .toList(),
+      localizedIssuerDisplays: (map['localizedIssuerDisplays'] as List<dynamic>)
+          .map((obj) => IssuerDisplayData.fromMap(obj.cast<String, dynamic>()))
+          .toList(),
+    );
+  }
+}
+
 class SupportedCredentials {
   final String format;
   final List<String> types;
+  final List<SupportedCredentialDisplayData> display;
 
   const SupportedCredentials({
     required this.format,
     required this.types,
+    required this.display
   });
 
   @override
   String toString() {
-    return 'SupportedCredentials{ format: $format, types: $types }';
+    return 'SupportedCredentials{ format: $format, types: $types, display: $display }';
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'format': format,
+      'types': types,
+      'display': display
+    };
   }
 
   factory SupportedCredentials.fromMap(Map<String, dynamic> map) {
+    List<dynamic> display = map['display'];
     return SupportedCredentials(
       format: map['format'] as String,
       types: map['types'].cast<String>(),
+      display: display.map((c) => SupportedCredentialDisplayData.fromMap(c.cast<String, dynamic>())).toList()
+    );
+  }
+}
+
+class SupportedCredentialDisplayData {
+  final String name;
+  final String locale;
+  final String logo;
+  final String textColor;
+  final String backgroundColor;
+
+  const SupportedCredentialDisplayData({
+    required this.name,
+    required this.locale,
+    required this.logo,
+    required this.textColor,
+    required this.backgroundColor,
+  });
+
+  @override
+  String toString() {
+    return 'SupportedCredentialDisplayData { name: $name, locale: $locale, logo: $logo, textColor: $textColor, backgroundColor: $backgroundColor }';
+  }
+
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'locale': locale,
+      'textColor': textColor,
+      'logo': logo,
+      'backgroundColor': backgroundColor
+    };
+  }
+
+  factory SupportedCredentialDisplayData.fromMap(Map<String, dynamic> map) {
+    return SupportedCredentialDisplayData(
+      name: map['name'] as String,
+      locale: map['locale'] as String,
+      logo: map['logo'] as String,
+      textColor: map['textColor'] as String,
+      backgroundColor: map['backgroundColor'] as String,
+    );
+  }
+}
+
+class IssuerDisplayData {
+  final String name;
+  final String locale;
+
+  const IssuerDisplayData({
+    required this.name,
+    required this.locale,
+  });
+
+  @override
+  String toString() {
+    return 'IssuerDisplayData { name: $name, locale: $locale }';
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'locale': locale,
+    };
+  }
+
+
+  factory IssuerDisplayData.fromMap(Map<String, dynamic> map) {
+    return IssuerDisplayData(
+      name: map['name'] as String,
+      locale: map['locale'] as String,
     );
   }
 }

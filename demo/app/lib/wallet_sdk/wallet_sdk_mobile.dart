@@ -211,6 +211,12 @@ class WalletSDK extends WalletPlatform {
     return null;
   }
 
+  Future<List<IssuerMetaData>> getIssuerMetaData() async {
+    List<dynamic> getIssuerMetaDataResp =
+    await methodChannel.invokeMethod('getIssuerMetaData', <String, dynamic>{});
+    return getIssuerMetaDataResp.map((d) => IssuerMetaData.fromMap(d.cast<String, dynamic>())).toList();
+  }
+
   Future<String?> getCredID(List<String> credentials) async {
     try {
       final credentialID =

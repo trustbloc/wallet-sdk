@@ -294,6 +294,10 @@ class WalletSDK extends WalletPlatform {
     return WellKnownDidConfig(isValid: jsConfig.isValid, serviceURL: jsConfig.serviceURL);
   }
 
+  Future<List<IssuerMetaData>> getIssuerMetaData() async {
+    return throw Exception('Method not implemented');
+  }
+
   Future<VerifierDisplayData> getVerifierDisplayData() async {
     final data = await promiseToFuture(jsVerifierDisplayData());
     return VerifierDisplayData(name: data.name, did: data.did, logoURI: data.logoURI, purpose: data.purpose);
