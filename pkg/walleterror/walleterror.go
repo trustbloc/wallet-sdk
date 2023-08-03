@@ -18,16 +18,21 @@ const (
 
 // Error represents an error returned by the Go API.
 type Error struct {
-	Code        string
-	Scenario    string
+	// A short, alphanumeric code that includes the Category.
+	Code string
+	// A short descriptor of the general category of error. This will always be a pre-defined string.
+	Category string
+	// A short message describing the error that occurred. Only used in certain cases. It will be blank in all others.
+	Message string
+	// The full underlying error.
 	ParentError string
 }
 
 // NewValidationError creates validation error.
-func NewValidationError(module string, code int, errorName string, parentError error) *Error {
+func NewValidationError(module string, code int, category string, parentError error) *Error {
 	return &Error{
 		Code:        getErrorCode(module, validationError, code),
-		Scenario:    errorName,
+		Category:    category,
 		ParentError: parentError.Error(),
 	}
 }
@@ -36,16 +41,26 @@ func NewValidationError(module string, code int, errorName string, parentError e
 func NewExecutionError(module string, code int, scenario string, cause error) *Error {
 	return &Error{
 		Code:        getErrorCode(module, executionError, code),
-		Scenario:    scenario,
+		Category:    scenario,
 		ParentError: cause.Error(),
 	}
 }
 
+// NewExecutionErrorWithMessage creates an execution error with an additional short error message.
+func NewExecutionErrorWithMessage(module string, code int, category, message string, parentError error) *Error {
+	return &Error{
+		Code:        getErrorCode(module, executionError, code),
+		Category:    category,
+		Message:     message,
+		ParentError: parentError.Error(),
+	}
+}
+
 // NewSystemError creates system error.
-func NewSystemError(module string, code int, errorName string, parentError error) *Error {
+func NewSystemError(module string, code int, category string, parentError error) *Error {
 	return &Error{
 		Code:        getErrorCode(module, systemError, code),
-		Scenario:    errorName,
+		Category:    category,
 		ParentError: parentError.Error(),
 	}
 }
@@ -55,14 +70,14 @@ func NewSystemError(module string, code int, errorName string, parentError error
 func NewInvalidSDKUsageError(module string, parentError error) *Error {
 	return &Error{
 		Code:        getErrorCode(module, incorrectUsageError, 0),
-		Scenario:    "INVALID_SDK_USAGE",
+		Category:    "INVALID_SDK_USAGE",
 		ParentError: parentError.Error(),
 	}
 }
 
 // Error returns string representation of error.
 func (e *Error) Error() string {
-	return fmt.Sprintf("%s(%s):%s", e.Scenario, e.Code, e.ParentError)
+	return fmt.Sprintf("%s(%s):%s", e.Category, e.Code, e.ParentError)
 }
 
 func getErrorCode(module string, errType, code int) string {

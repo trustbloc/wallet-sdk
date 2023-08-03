@@ -26,7 +26,8 @@ func TestToMobileError(t *testing.T) {
 	t.Run("goapiwalleterror.Error passed in", func(t *testing.T) {
 		walletError := &goapiwalleterror.Error{
 			Code:        "Code",
-			Scenario:    "Category",
+			Category:    "Category",
+			Message:     "Message",
 			ParentError: "Details",
 		}
 
@@ -37,6 +38,7 @@ func TestToMobileError(t *testing.T) {
 
 		require.Equal(t, "Code", parsedErr.Code)
 		require.Equal(t, "Category", parsedErr.Category)
+		require.Equal(t, "Message", parsedErr.Message)
 		require.Equal(t, "Details", parsedErr.Details)
 	})
 	t.Run("Non-goapiwalleterror.Error passed in", func(t *testing.T) {
@@ -67,7 +69,7 @@ func TestToMobileError(t *testing.T) {
 		func(t *testing.T) {
 			walletError := &goapiwalleterror.Error{
 				Code:        "Code",
-				Scenario:    "Category",
+				Category:    "Category",
 				ParentError: "Details",
 			}
 
@@ -86,7 +88,7 @@ func TestToMobileError(t *testing.T) {
 		func(t *testing.T) {
 			walletError := &goapiwalleterror.Error{
 				Code:        "Code",
-				Scenario:    "Category",
+				Category:    "Category",
 				ParentError: "Details",
 			}
 
@@ -110,13 +112,13 @@ func TestToMobileError(t *testing.T) {
 
 		lowerLevelWalletError := &goapiwalleterror.Error{
 			Code:        "Lower-Level-Code",
-			Scenario:    "Lower-Level-Category",
+			Category:    "Lower-Level-Category",
 			ParentError: "Lower-Level-Details",
 		}
 
 		higherLevelWalletError := &goapiwalleterror.Error{
 			Code:        "Higher-Level-Code",
-			Scenario:    "Higher-Level-Category",
+			Category:    "Higher-Level-Category",
 			ParentError: lowerLevelWalletError.Error(),
 		}
 

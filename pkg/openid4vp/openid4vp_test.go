@@ -19,6 +19,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
+
 	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose"
 	"github.com/hyperledger/aries-framework-go/component/models/did"
@@ -560,8 +562,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			errMarshal = interaction.PresentCredential(credentials)
-			testutil.RequireErrorContains(t, errMarshal, InvalidScopeError)
+			err = interaction.PresentCredential(credentials)
+			testutil.RequireErrorContains(t, err, InvalidScopeError)
 		})
 
 		t.Run("Invalid request", func(t *testing.T) {
@@ -572,8 +574,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			errMarshal = interaction.PresentCredential(credentials)
-			testutil.RequireErrorContains(t, errMarshal, InvalidRequestError)
+			err = interaction.PresentCredential(credentials)
+			testutil.RequireErrorContains(t, err, InvalidRequestError)
 		})
 
 		t.Run("Invalid client", func(t *testing.T) {
@@ -584,8 +586,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			errMarshal = interaction.PresentCredential(credentials)
-			testutil.RequireErrorContains(t, errMarshal, InvalidClientError)
+			err = interaction.PresentCredential(credentials)
+			testutil.RequireErrorContains(t, err, InvalidClientError)
 		})
 
 		t.Run("VP formats not supported", func(t *testing.T) {
@@ -596,8 +598,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			errMarshal = interaction.PresentCredential(credentials)
-			testutil.RequireErrorContains(t, errMarshal, VPFormatsNotSupportedError)
+			err = interaction.PresentCredential(credentials)
+			testutil.RequireErrorContains(t, err, VPFormatsNotSupportedError)
 		})
 
 		t.Run("Invalid presentation definition URI", func(t *testing.T) {
@@ -608,8 +610,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			errMarshal = interaction.PresentCredential(credentials)
-			testutil.RequireErrorContains(t, errMarshal, InvalidPresentationDefinitionURIError)
+			err = interaction.PresentCredential(credentials)
+			testutil.RequireErrorContains(t, err, InvalidPresentationDefinitionURIError)
 		})
 
 		t.Run("Invalid presentation definition reference", func(t *testing.T) {
@@ -620,8 +622,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			errMarshal = interaction.PresentCredential(credentials)
-			testutil.RequireErrorContains(t, errMarshal, InvalidPresentationDefinitionReferenceError)
+			err = interaction.PresentCredential(credentials)
+			testutil.RequireErrorContains(t, err, InvalidPresentationDefinitionReferenceError)
 		})
 
 		t.Run("Unknown/other error type in errorResponse object", func(t *testing.T) {
@@ -632,21 +634,29 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			errMarshal = interaction.PresentCredential(credentials)
-			testutil.RequireErrorContains(t, errMarshal, OtherAuthorizationResponseError)
+			err = interaction.PresentCredential(credentials)
+			testutil.RequireErrorContains(t, err, OtherAuthorizationResponseError)
 		})
 
 		t.Run("MS Entra error response format", func(t *testing.T) {
 			t.Run("Bad or missing field", func(t *testing.T) {
-				errResponse := &msEntraErrorResponse{Error: errorInfo{InnerError: innerError{Code: "badOrMissingField"}}}
+				errResponse := &msEntraErrorResponse{Error: errorInfo{InnerError: innerError{
+					Code:    "badOrMissingField",
+					Message: "message",
+				}}}
 
 				errResponseBytes, errMarshal := json.Marshal(errResponse)
 				require.NoError(t, errMarshal)
 
 				httpClient.Response = string(errResponseBytes)
 
-				errMarshal = interaction.PresentCredential(credentials)
-				testutil.RequireErrorContains(t, errMarshal, MSEntraBadOrMissingFieldsError)
+				err = interaction.PresentCredential(credentials)
+				require.Error(t, err)
+
+				var walletError *walleterror.Error
+				require.True(t, errors.As(err, &walletError))
+				require.Equal(t, MSEntraBadOrMissingFieldsError, walletError.Category)
+				require.Equal(t, "message", walletError.Message)
 			})
 			t.Run("Not found", func(t *testing.T) {
 				errResponse := &msEntraErrorResponse{Error: errorInfo{InnerError: innerError{Code: "notFound"}}}
@@ -656,8 +666,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 				httpClient.Response = string(errResponseBytes)
 
-				errMarshal = interaction.PresentCredential(credentials)
-				testutil.RequireErrorContains(t, errMarshal, MSEntraNotFoundError)
+				err = interaction.PresentCredential(credentials)
+				testutil.RequireErrorContains(t, err, MSEntraNotFoundError)
 			})
 			t.Run("Token error", func(t *testing.T) {
 				errResponse := &msEntraErrorResponse{Error: errorInfo{InnerError: innerError{Code: "tokenError"}}}
@@ -667,8 +677,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 				httpClient.Response = string(errResponseBytes)
 
-				errMarshal = interaction.PresentCredential(credentials)
-				testutil.RequireErrorContains(t, errMarshal, MSEntraTokenError)
+				err = interaction.PresentCredential(credentials)
+				testutil.RequireErrorContains(t, err, MSEntraTokenError)
 			})
 			t.Run("Transient error", func(t *testing.T) {
 				errResponse := &msEntraErrorResponse{Error: errorInfo{InnerError: innerError{Code: "transientError"}}}
@@ -678,8 +688,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 				httpClient.Response = string(errResponseBytes)
 
-				errMarshal = interaction.PresentCredential(credentials)
-				testutil.RequireErrorContains(t, errMarshal, MSEntraTransientError)
+				err = interaction.PresentCredential(credentials)
+				testutil.RequireErrorContains(t, err, MSEntraTransientError)
 			})
 			t.Run("Unknown/other error type in msEntraErrorResponse object", func(t *testing.T) {
 				errResponse := &msEntraErrorResponse{Error: errorInfo{InnerError: innerError{Code: "other"}}}
@@ -689,8 +699,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 				httpClient.Response = string(errResponseBytes)
 
-				errMarshal = interaction.PresentCredential(credentials)
-				testutil.RequireErrorContains(t, errMarshal, OtherAuthorizationResponseError)
+				err = interaction.PresentCredential(credentials)
+				testutil.RequireErrorContains(t, err, OtherAuthorizationResponseError)
 			})
 		})
 

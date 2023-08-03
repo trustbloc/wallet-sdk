@@ -13,22 +13,29 @@ import (
 
 // Error represents error returned by go mobile api.
 type Error struct {
-	Code     string `json:"code"`
+	// A short, alphanumeric code that includes the Category.
+	Code string `json:"code"`
+	// A short descriptor of the general category of error. This will always be a pre-defined string.
 	Category string `json:"category"`
-	Details  string `json:"details"`
-	TraceID  string `json:"trace_id"`
+	// A short message describing the error that occurred. Only present in certain cases.
+	// It will be blank in all others.
+	Message string `json:"message"`
+	// The full, raw error message. Any lower-level details about the precise cause of the error will be captured here.
+	Details string `json:"details"`
+	// ID of Open Telemetry root trace. Can be used to trace API calls. Only present in certain errors.
+	TraceID string `json:"trace_id"`
 }
 
 // Parse used to parse exception message on mobile side.
-func Parse(message string) *Error {
+func Parse(errorMessage string) *Error {
 	walletErr := &Error{}
 
-	err := json.Unmarshal([]byte(message), walletErr)
+	err := json.Unmarshal([]byte(errorMessage), walletErr)
 	if err != nil {
 		return &Error{
 			Code:     "UKN2-000",
 			Category: "OTHER_ERROR",
-			Details:  message,
+			Details:  errorMessage,
 		}
 	}
 
