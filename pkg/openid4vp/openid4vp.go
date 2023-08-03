@@ -565,10 +565,8 @@ func processAuthorizationErrorResponse(statusCode int, respBytes []byte) error {
 
 	err := json.Unmarshal(respBytes, &errResponse)
 	if err != nil {
-		return walleterror.NewExecutionError(ErrorModule,
-			OtherAuthorizationResponseErrorCode,
-			OtherAuthorizationResponseError,
-			detailedErr)
+		// Try interpreting the response using the MS Entra error response format.
+		return processUsingMSEntraErrorResponseFormat(respBytes, detailedErr)
 	}
 
 	switch errResponse.Error {
@@ -601,6 +599,46 @@ func processAuthorizationErrorResponse(statusCode int, respBytes []byte) error {
 		return walleterror.NewExecutionError(ErrorModule,
 			InvalidPresentationDefinitionReferenceErrorCode,
 			InvalidPresentationDefinitionReferenceError,
+			detailedErr)
+	default:
+		return walleterror.NewExecutionError(ErrorModule,
+			OtherAuthorizationResponseErrorCode,
+			OtherAuthorizationResponseError,
+			detailedErr)
+	}
+}
+
+func processUsingMSEntraErrorResponseFormat(respBytes []byte, detailedErr error) error {
+	var errorResponse msEntraErrorResponse
+
+	err := json.Unmarshal(respBytes, &errorResponse)
+	if err != nil {
+		return walleterror.NewExecutionError(ErrorModule,
+			OtherAuthorizationResponseErrorCode,
+			OtherAuthorizationResponseError,
+			detailedErr)
+	}
+
+	switch errorResponse.Error.InnerError.Code {
+	case "badOrMissingField":
+		return walleterror.NewExecutionError(ErrorModule,
+			MSEntraBadOrMissingFieldsErrorCode,
+			MSEntraBadOrMissingFieldsError,
+			detailedErr)
+	case "notFound":
+		return walleterror.NewExecutionError(ErrorModule,
+			MSEntraNotFoundErrorCode,
+			MSEntraNotFoundError,
+			detailedErr)
+	case "tokenError":
+		return walleterror.NewExecutionError(ErrorModule,
+			MSEntraTokenErrorCode,
+			MSEntraTokenError,
+			detailedErr)
+	case "transientError":
+		return walleterror.NewExecutionError(ErrorModule,
+			MSEntraTransientErrorCode,
+			MSEntraTransientError,
 			detailedErr)
 	default:
 		return walleterror.NewExecutionError(ErrorModule,
