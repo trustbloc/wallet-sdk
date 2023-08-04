@@ -12,6 +12,7 @@ import 'package:app/widgets/primary_button.dart';
 import 'package:app/widgets/primary_input_field.dart';
 import 'package:app/wallet_sdk/wallet_sdk.dart';
 import 'credential_preview.dart';
+import 'package:app/views/dashboard.dart';
 
 class OTP extends StatefulWidget {
   const OTP({Key? key}) : super(key: key);
@@ -80,8 +81,7 @@ class _OTPPage extends State<OTP> {
             ),
             backgroundColor: const Color(0xffF4F1F5),
             body: Center(
-              child: ListView(
-                padding: const EdgeInsets.all(24),
+              child: Column(
                 children: [
                   Container(
                     padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
@@ -162,80 +162,89 @@ class _OTPPage extends State<OTP> {
                                   textAlign: TextAlign.start,
                                 ),
                               )),
-                          Padding(
-                            padding: EdgeInsets.only(top: height - width),
-                          ),
-                          PrimaryButton(
-                              onPressed: () async {
-                                setState(() {
-                                  _otp = otpController.text;
-                                });
-
-                                String? credentials;
-                                String? serializeDisplayData;
-                                try {
-                                  final SharedPreferences pref = await prefs;
-                                  await _createDid();
-                                  pref.setString('userDID', userDIDId);
-                                  pref.setString('userDIDDoc', userDIDDoc);
-                                  credentials = await WalletSDKPlugin.requestCredential(_otp!);
-                                  String? issuerURI = await WalletSDKPlugin.issuerURI();
-                                  serializeDisplayData =
-                                      await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
-                                  log("serializeDisplayData -> $serializeDisplayData");
-                                  var activities = await WalletSDKPlugin.storeActivityLogger();
-                                  var credID = await WalletSDKPlugin.getCredID([credentials]);
-                                  log("activities and credID -$activities and $credID");
-                                  _storageService.addActivities(ActivityDataObj(credID!, activities));
-                                  pref.setString("credID", credID);
-                                  _navigateToCredPreviewScreen(
-                                      credentials, issuerURI, serializeDisplayData!, userDIDId, credID);
-                                } catch (err) {
-                                  String errorMessage = err.toString();
-                                  log("errorMessage-> $errorMessage");
-                                  if (err is PlatformException && err.message != null && err.message!.isNotEmpty) {
-                                    log("err.details-> ${err.details}");
-                                    var resp =
-                                        await WalletSDKPlugin.parseWalletSDKError(localizedErrorMessage: err.details);
-                                    (resp.category == "INVALID_GRANT")
-                                        ? {
-                                            errorMessage = "Try re-entering the PIN or scan a new QR code",
-                                            _requestErrorDetailMsg = resp.details
-                                          }
-                                        : (resp.category == "INVALID_TOKEN")
-                                            ? {
-                                                errorMessage = "Try scanning a new QR code",
-                                                _requestErrorDetailMsg = resp.details
-                                              }
-                                            : {errorMessage = resp.details, _requestErrorDetailMsg = resp.traceID};
-                                  }
-                                  setState(() {
-                                    _requestErrorSubTitleMsg = errorMessage;
-                                    _requestErrorTitleMsg = 'Oops! Something went wrong!';
-                                    actionText = 'Re-enter';
-                                    show = true;
-                                    topPadding = height * 0.20;
-                                    _clearOTPInput();
-                                  });
-                                }
-                              },
-                              width: MediaQuery.of(context).size.width,
-                              child: Text(actionText!, style: const TextStyle(fontSize: 16, color: Colors.white))),
-                          const Padding(
-                            padding: EdgeInsets.only(top: 8),
-                          ),
-                          PrimaryButton(
-                            onPressed: () {},
-                            width: double.infinity,
-                            gradient: const LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [Color(0xffFFFFFF), Color(0xffFFFFFF)]),
-                            child: const Text('Cancel', style: TextStyle(fontSize: 16, color: Color(0xff6C6D7C))),
-                          ),
                         ],
                       ),
                     ],
+                  ),
+                  const Spacer(),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16.0, top: 0, right: 16.0, bottom: 32.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        PrimaryButton(
+                            onPressed: () async {
+                              setState(() {
+                                _otp = otpController.text;
+                              });
+
+                              String? credentials;
+                              String? serializeDisplayData;
+                              try {
+                                final SharedPreferences pref = await prefs;
+                                await _createDid();
+                                pref.setString('userDID', userDIDId);
+                                pref.setString('userDIDDoc', userDIDDoc);
+                                credentials = await WalletSDKPlugin.requestCredential(_otp!);
+                                String? issuerURI = await WalletSDKPlugin.issuerURI();
+                                serializeDisplayData =
+                                await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
+                                log("serializeDisplayData -> $serializeDisplayData");
+                                var activities = await WalletSDKPlugin.storeActivityLogger();
+                                var credID = await WalletSDKPlugin.getCredID([credentials]);
+                                log("activities and credID -$activities and $credID");
+                                _storageService.addActivities(ActivityDataObj(credID!, activities));
+                                pref.setString("credID", credID);
+                                _navigateToCredPreviewScreen(
+                                    credentials, issuerURI, serializeDisplayData!, userDIDId, credID);
+                              } catch (err) {
+                                String errorMessage = err.toString();
+                                log("errorMessage-> $errorMessage");
+                                if (err is PlatformException && err.message != null && err.message!.isNotEmpty) {
+                                  log("err.details-> ${err.details}");
+                                  var resp =
+                                  await WalletSDKPlugin.parseWalletSDKError(localizedErrorMessage: err.details);
+                                  log("resp-> $resp");
+                                  (resp.category == "INVALID_GRANT")
+                                      ? {
+                                    errorMessage = "Try re-entering the PIN or scan a new QR code",
+                                    _requestErrorDetailMsg = resp.details
+                                  }
+                                      : (resp.category == "INVALID_TOKEN")
+                                      ? {
+                                    errorMessage = "Try scanning a new QR code",
+                                    _requestErrorDetailMsg = resp.details
+                                  }
+                                      : {errorMessage = resp.details, _requestErrorDetailMsg = resp.traceID};
+                                }
+                                setState(() {
+                                  _requestErrorSubTitleMsg = errorMessage;
+                                  _requestErrorTitleMsg = 'Oops! Something went wrong!';
+                                  actionText = 'Re-enter';
+                                  show = true;
+                                  topPadding = height * 0.20;
+                                  _clearOTPInput();
+                                });
+                              }
+                            },
+                            width: MediaQuery.of(context).size.width,
+                            child: Text(actionText!, style: const TextStyle(fontSize: 16, color: Colors.white))),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8),
+                        ),
+                        PrimaryButton(
+                          onPressed: () {
+                            _navigateToDashboard();
+                          },
+                          width: double.infinity,
+                          gradient: const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Color(0xffFFFFFF), Color(0xffFFFFFF)]),
+                          child: const Text('Cancel', style: TextStyle(fontSize: 16, color: Color(0xff6C6D7C))),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -248,13 +257,17 @@ class _OTPPage extends State<OTP> {
         context,
         MaterialPageRoute(
             builder: (context) => CredentialPreview(
-                  credentialData: CredentialData(
-                      rawCredential: credentialResp,
-                      issuerURL: issuerURI,
-                      credentialDisplayData: credentialDisplayData,
-                      credentialDID: didID,
-                      credID: credID),
-                )));
+              credentialData: CredentialData(
+                  rawCredential: credentialResp,
+                  issuerURL: issuerURI,
+                  credentialDisplayData: credentialDisplayData,
+                  credentialDID: didID,
+                  credID: credID),
+            )));
+  }
+
+  _navigateToDashboard() async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }
 
   _clearOTPInput() {
