@@ -431,6 +431,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 let localizedIssuerDisplay :[String:Any] = [
                     "name":  localizedIssuerDisplays.atIndex(index)!.name(),
                     "locale": localizedIssuerDisplays.atIndex(index)!.locale(),
+                    "url":   localizedIssuerDisplays.atIndex(index)!.url(),
                 ]
                 
                 localizedIssuerDisplayList.append(localizedIssuerDisplay)
