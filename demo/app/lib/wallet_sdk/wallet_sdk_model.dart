@@ -222,21 +222,24 @@ class SupportedCredentialDisplayData {
 class IssuerDisplayData {
   final String name;
   final String locale;
+  final String url;
 
   const IssuerDisplayData({
     required this.name,
     required this.locale,
+    required this.url,
   });
 
   @override
   String toString() {
-    return 'IssuerDisplayData { name: $name, locale: $locale }';
+    return 'IssuerDisplayData { name: $name, locale: $locale, url: $url }';
   }
 
   Map<String, dynamic> toMap() {
     return {
       'name': name,
       'locale': locale,
+      'url': url,
     };
   }
 
@@ -245,6 +248,7 @@ class IssuerDisplayData {
     return IssuerDisplayData(
       name: map['name'] as String,
       locale: map['locale'] as String,
+      url: map['url'] as String,
     );
   }
 }

@@ -49,7 +49,7 @@ class IssuancePreviewState extends State<IssuancePreview> {
       setState(() {
         credentialIssuer = response.first.credentialIssuer;
         issuerDisplayName = response.first.localizedIssuerDisplays.first.name;
-        issuerDisplayURL = response.first.localizedIssuerDisplays.first.locale;
+        issuerDisplayURL = response.first.localizedIssuerDisplays.first.url;
         credentialDisplayName = response.first.supportedCredentials.first.display.first.name;
         logoURL = response.first.supportedCredentials.first.display.first.logo;
         backgroundColor =

@@ -395,7 +395,7 @@ class MainActivity : FlutterActivity() {
             val localizedIssuerDisplay: MutableMap<String, Any> = mutableMapOf()
             localizedIssuerDisplay["name"] = localizedIssuerDisplays.atIndex(index).name()
             localizedIssuerDisplay["locale"] = localizedIssuerDisplays.atIndex(index).locale()
-
+            localizedIssuerDisplay["url"] = localizedIssuerDisplays.atIndex(index).url()
             localizedIssuerDisplayList.addAll(listOf(localizedIssuerDisplay))
         }
 
