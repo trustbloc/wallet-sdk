@@ -417,7 +417,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         do {
             
             var issuerMetaData = try openID4CI.getIssuerMetadata()
-            // creddential issuer
+            // credential issuer
             var credIssuer =  issuerMetaData.credentialIssuer()
             
             // supported Credentials list
@@ -461,8 +461,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         for index in 0..<supportedCredentials.length() {
             var typeStrArray = [String]()
             for i in 0..<(supportedCredentials.atIndex(index)!.types()?.length())!{
-                let type1 = supportedCredentials.atIndex(index)!.types()?.atIndex(i)
-                typeStrArray.append(type1!)
+                let type = supportedCredentials.atIndex(index)!.types()?.atIndex(i)
+                typeStrArray.append(type!)
             }
             
             var localizedCredentialsDisplayRespList: [Any] = []

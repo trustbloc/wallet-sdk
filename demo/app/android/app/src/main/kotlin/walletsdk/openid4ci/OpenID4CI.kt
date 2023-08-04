@@ -106,4 +106,8 @@ class OpenID4CI constructor(
         return newInteraction.authorizationCodeGrantParams()
     }
 
+    fun getIssuerMetadata(): IssuerMetadata {
+        return newInteraction.issuerMetadata()
+    }
+
 }
