@@ -8,6 +8,8 @@ import dev.trustbloc.wallet.sdk.credential.StatusVerifier
 import dev.trustbloc.wallet.sdk.did.Did
 import dev.trustbloc.wallet.sdk.display.Display
 import dev.trustbloc.wallet.sdk.oauth2.Oauth2
+import dev.trustbloc.wallet.sdk.openid4ci.IssuerMetadata
+import dev.trustbloc.wallet.sdk.openid4ci.SupportedCredentials
 import dev.trustbloc.wallet.sdk.verifiable.Credential
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import dev.trustbloc.wallet.sdk.verifiable.Opts
@@ -124,7 +126,7 @@ class MainActivity : FlutterActivity() {
                                 result.success(credentialDisplay)
 
                             } catch (e: Exception) {
-                                result.error("Exception", "Error while resolving credential display", e)
+                                result.error("Exception", "Error while serializing display data", e)
                             }
                         }
 
@@ -133,7 +135,7 @@ class MainActivity : FlutterActivity() {
                                 val credentialDisplay = resolveCredentialDisplay(call)
                                 result.success(credentialDisplay)
                             } catch (e: Exception)  {
-                                result.error("Exception", "Error while resolving credential display 2", e)
+                                result.error("Exception", "Error while resolving credential display", e)
                             }
                         }
 
@@ -153,6 +155,16 @@ class MainActivity : FlutterActivity() {
                                 result.success(issuerURIResp)
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while getting issuerURI", e)
+                            }
+                        }
+
+                        "getIssuerMetaData" -> {
+                            try {
+                                val issuerMetadataResp = getIssuerMetaData()
+                                println("issuer-meta data resp")
+                                result.success(issuerMetadataResp)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while getting issuer Metadata", e)
                             }
                         }
 
@@ -360,6 +372,82 @@ class MainActivity : FlutterActivity() {
         flowTypeData["authorizationURLLink"] = authorizationLink
 
         return flowTypeData
+    }
+
+    private fun getIssuerMetaData(): MutableList<Any> {
+        println("inside issuer metadata")
+        val openID4CI = this.openID4CI
+            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+
+        val issuerMetaData =   openID4CI.getIssuerMetadata()
+        // credential issuer
+        val credIssuer = issuerMetaData.credentialIssuer()
+        // supported Credentials list
+        val supportedCredentials = issuerMetaData.supportedCredentials()
+        var supportedCredentialsList = getSupportedCredentialsList(supportedCredentials)
+
+        print("suppported credentials $supportedCredentialsList")
+
+        // localized issuer displays data
+        var localizedIssuerDisplays =  issuerMetaData.localizedIssuerDisplays()
+        val localizedIssuerDisplayList = mutableListOf<Any>()
+        for (index in 0 until (localizedIssuerDisplays.length())){
+            val localizedIssuerDisplay: MutableMap<String, Any> = mutableMapOf()
+            localizedIssuerDisplay["name"] = localizedIssuerDisplays.atIndex(index).name()
+            localizedIssuerDisplay["locale"] = localizedIssuerDisplays.atIndex(index).locale()
+
+            localizedIssuerDisplayList.addAll(listOf(localizedIssuerDisplay))
+        }
+
+        val issuerMetaDataRespList = mutableListOf<Any>()
+        val issuerMetaDataResp: MutableMap<String, Any> = mutableMapOf()
+
+        issuerMetaDataResp["credentialIssuer"] = credIssuer
+        issuerMetaDataResp["supportedCredentials"] = supportedCredentialsList
+        issuerMetaDataResp["localizedIssuerDisplays"] = localizedIssuerDisplayList
+
+
+        issuerMetaDataRespList.addAll(listOf(issuerMetaDataResp))
+
+        print(" issuerMetaDataRespList $issuerMetaDataRespList")
+
+
+        return issuerMetaDataRespList
+    }
+
+    private fun getSupportedCredentialsList(supportedCredentials: SupportedCredentials): MutableList<Any> {
+        val supportedCredentialsList = mutableListOf<Any>()
+
+        for (index in 0 until (supportedCredentials.length())){
+
+            var typeStrArray = ArrayList<String>()
+            for(i in 0 until (supportedCredentials.atIndex(index).types().length())){
+                val type = supportedCredentials.atIndex(index).types().atIndex(i)
+                typeStrArray.add(type)
+            }
+
+
+            val localizedCredentialsDisplayRespList = mutableListOf<Any>()
+            for(i in 0 until (supportedCredentials.atIndex(index).localizedDisplays().length())) {
+                val localizedCredentialsDisplayResp: MutableMap<String, String> = mutableMapOf()
+                localizedCredentialsDisplayResp["name"] = supportedCredentials.atIndex(index).localizedDisplays().atIndex(i).name()
+                localizedCredentialsDisplayResp["locale"] = supportedCredentials.atIndex(index).localizedDisplays().atIndex(i).locale()
+                localizedCredentialsDisplayResp["logo"] =supportedCredentials.atIndex(index).localizedDisplays().atIndex(i).logo().url()
+                localizedCredentialsDisplayResp["textColor"] = supportedCredentials.atIndex(index).localizedDisplays().atIndex(i).textColor()
+                localizedCredentialsDisplayResp["backgroundColor"] = supportedCredentials.atIndex(index).localizedDisplays().atIndex(i).backgroundColor()
+
+                localizedCredentialsDisplayRespList.addAll(listOf(localizedCredentialsDisplayResp))
+            }
+
+            val supportedCredentialResp: MutableMap<String, Any> = mutableMapOf()
+            supportedCredentialResp["format"] = supportedCredentials.atIndex(index).format()
+            supportedCredentialResp["types"] = typeStrArray
+            supportedCredentialResp["display"] =localizedCredentialsDisplayRespList
+
+            supportedCredentialsList.addAll(listOf(supportedCredentialResp))
+        }
+
+        return supportedCredentialsList
     }
 
     private fun issuerURI(): String {
