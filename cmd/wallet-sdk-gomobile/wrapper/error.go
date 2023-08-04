@@ -59,7 +59,8 @@ func convertToGomobileError(err error, trace *otel.Trace) *walleterror.Error {
 
 			return &walleterror.Error{
 				Code:     walletError.Code,
-				Category: walletError.Scenario,
+				Category: walletError.Category,
+				Message:  walletError.Message,
 				Details:  mergedErrorMessage,
 				TraceID:  traceID,
 			}

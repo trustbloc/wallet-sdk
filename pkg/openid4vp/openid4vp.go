@@ -621,29 +621,33 @@ func processUsingMSEntraErrorResponseFormat(respBytes []byte, detailedErr error)
 
 	switch errorResponse.Error.InnerError.Code {
 	case "badOrMissingField":
-		return walleterror.NewExecutionError(ErrorModule,
+		return walleterror.NewExecutionErrorWithMessage(ErrorModule,
 			MSEntraBadOrMissingFieldsErrorCode,
 			MSEntraBadOrMissingFieldsError,
+			errorResponse.Error.InnerError.Message,
 			detailedErr)
 	case "notFound":
-		return walleterror.NewExecutionError(ErrorModule,
+		return walleterror.NewExecutionErrorWithMessage(ErrorModule,
 			MSEntraNotFoundErrorCode,
-			MSEntraNotFoundError,
+			MSEntraNotFoundError, errorResponse.Error.InnerError.Message,
 			detailedErr)
 	case "tokenError":
-		return walleterror.NewExecutionError(ErrorModule,
+		return walleterror.NewExecutionErrorWithMessage(ErrorModule,
 			MSEntraTokenErrorCode,
 			MSEntraTokenError,
+			errorResponse.Error.InnerError.Message,
 			detailedErr)
 	case "transientError":
-		return walleterror.NewExecutionError(ErrorModule,
+		return walleterror.NewExecutionErrorWithMessage(ErrorModule,
 			MSEntraTransientErrorCode,
 			MSEntraTransientError,
+			errorResponse.Error.InnerError.Message,
 			detailedErr)
 	default:
-		return walleterror.NewExecutionError(ErrorModule,
+		return walleterror.NewExecutionErrorWithMessage(ErrorModule,
 			OtherAuthorizationResponseErrorCode,
 			OtherAuthorizationResponseError,
+			errorResponse.Error.InnerError.Message,
 			detailedErr)
 	}
 }

@@ -32,15 +32,20 @@ for the particular function/method for more information.
 
 ## Error Handling
 
-Errors from Wallet-SDK come in a structured format that can be (optionally) parsed, allowing for individual fields to be accessed.
+Errors from Wallet-SDK come in a structured format that can be (optionally) parsed, allowing for individual fields to
+be accessed.
 
-Errors have three fields:
+Errors have five fields:
 
-* Category: A short descriptor of the general category of error.
+* Category: A short descriptor of the general category of error. This will always be a pre-defined string.
 * Code: A short alphanumeric code that is used to broadly group various related errors.
 This contains the Category descriptor.
-* Details: Lower-level details about the precise cause of the error.
-* TraceID: ID of Open Telemetry root trace. Can be used to trace API calls. Only present on certain APIs.
+* Details: The full, raw error message. Any lower-level details about the precise cause of the error will be captured
+here.
+* Message: A short message describing the error that occurred. Only present in certain cases. It will be blank in all
+others.
+* TraceID: ID of Open Telemetry root trace. Can be used to trace API calls. Only present on errors return from certain
+APIs. It will be blank if there is no trace ID available.
 
 ### Examples
 
