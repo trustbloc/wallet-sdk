@@ -1,5 +1,6 @@
 import 'package:app/views/credential_shared.dart';
 import 'package:app/views/dashboard.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -12,7 +13,6 @@ import 'package:app/models/activity_data_object.dart';
 import 'package:app/widgets/credential_card.dart';
 import 'package:app/views/custom_error.dart';
 import 'dart:developer';
-import 'dart:convert';
 
 class PresentationPreviewMultiCredCheck extends StatefulWidget {
   final List<CredentialData> credentialData;
@@ -36,6 +36,8 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
 
   late String verifierName = '';
   late String serviceURL = '';
+  late String verifierPurpose = '';
+  late String verifierLogoURL = '';
   bool verifiedDomain = true;
   bool rememberMe = false;
   bool showErrorMessage = false;
@@ -49,6 +51,8 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
       var resp = await WalletSDKPlugin.wellKnownDidConfig(verifiedDisplayData.did);
       setState(() {
         verifierName = verifiedDisplayData.name;
+        verifierLogoURL = verifiedDisplayData.logoURI;
+        verifierPurpose = verifiedDisplayData.purpose;
         serviceURL = resp.serviceURL;
         verifiedDomain = resp.isValid;
       });
@@ -71,10 +75,20 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               ListTile(
-                leading: Image.asset('lib/assets/images/credLogo.png'),
+                leading: verifierLogoURL == ''
+                    ? const SizedBox.shrink()
+                    : CachedNetworkImage(
+                        imageUrl: verifierLogoURL!,
+                        placeholder: (context, url) => const CircularProgressIndicator(),
+                        errorWidget: (context, url, error) =>
+                            Image.asset('lib/assets/images/credLogo.png', fit: BoxFit.contain),
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.contain,
+                      ),
                 title: Text(verifierName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 subtitle: Text(serviceURL != "" ? serviceURL : 'verifier.com',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
                 trailing: FittedBox(
                     child: verifiedDomain
                         ? Row(children: [
@@ -126,13 +140,14 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                             ],
                           )),
               ),
+              Text(verifierPurpose),
               Text.rich(
                 textAlign: TextAlign.center,
                 TextSpan(
                   children: [
                     TextSpan(
                       text: widget.infoData,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.normal,
                         color: Colors.black,
