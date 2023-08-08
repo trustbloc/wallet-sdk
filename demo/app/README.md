@@ -18,18 +18,20 @@ samples, guidance on mobile development, and a full API reference.
 - After installing the flutter Run `flutter doctor`. This command checks your environment and displays a report to the terminal window.
   - If everything is installed as required, the sample output will be like this
   ```
-      [✓] Flutter (Channel stable, 3.3.5, on macOS 13.0 22A380 darwin-arm, locale en-CA)
-      [✓] Android toolchain - develop for Android devices (Android SDK version 33.0.0)
-      [✓] Xcode - develop for iOS and macOS (Xcode 14.2)
-      [✓] Chrome - develop for the web
-      [✓] Android Studio (version 2021.3)
-      [✓] Connected device (3 available)
-      [✓] HTTP Host Availability
+    [✓] Flutter (Channel stable, 3.10.6, on macOS 13.5 22G74 darwin-arm64, locale
+    en-CA)
+    [✓] Android toolchain - develop for Android devices (Android SDK version 33.0.1)
+    [✓] Xcode - develop for iOS and macOS (Xcode 14.2)
+    [✓] Chrome - develop for the web
+    [✓] Android Studio (version 2022.3)
+    [✓] VS Code (version 1.80.2)
+    [✓] Connected device (2 available)
+    [✓] Network resources
     ```
 - The Dart SDK is bundled with Flutter; it is not necessary to install Dart separately.
 - iOS
   - For ios setup - install [XCode](https://docs.flutter.dev/get-started/install/macos#install-xcode)
-  - TrustBloc app uses the plugin, therefore we uses third-party CocoaPods dependency manager `sudo gem install cocoapods`[See More here][https://docs.flutter.dev/get-started/install/macos#deploy-to-ios-devices]
+  - TrustBloc app uses the plugin, therefore we use third-party CocoaPods dependency manager `sudo gem install cocoapods`[See More here][https://docs.flutter.dev/get-started/install/macos#deploy-to-ios-devices]
   - Apple Developer Account
 - Android
   - For android setup - install [Android Studio](https://docs.flutter.dev/get-started/install/macos#android-setup)
