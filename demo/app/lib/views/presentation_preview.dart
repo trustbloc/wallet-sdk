@@ -1,6 +1,9 @@
+import 'dart:developer';
+
 import 'package:app/views/credential_shared.dart';
 import 'package:app/views/dashboard.dart';
 import 'package:app/widgets/credential_verified_information_view.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -13,7 +16,6 @@ import 'package:app/services/storage_service.dart';
 import 'package:app/models/activity_data_object.dart';
 import 'package:app/widgets/credential_card.dart';
 import 'package:app/views/custom_error.dart';
-import 'dart:convert';
 
 class PresentationPreview extends StatefulWidget {
   final CredentialData credentialData;
@@ -30,6 +32,8 @@ class PresentationPreviewState extends State<PresentationPreview> {
   var uuid = const Uuid();
 
   late String verifierName = '';
+  late String verifierLogoURL = '';
+  late String verifierPurpose = '';
   late String serviceURL = '';
   bool verifiedDomain = true;
 
@@ -38,9 +42,12 @@ class PresentationPreviewState extends State<PresentationPreview> {
     super.initState();
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) async {
       final verifiedDisplayData = await WalletSDKPlugin.getVerifierDisplayData();
+      log("verifiedDisplayData ${verifiedDisplayData.logoURI}");
       var resp = await WalletSDKPlugin.wellKnownDidConfig(verifiedDisplayData.did);
       setState(() {
         verifierName = verifiedDisplayData.name;
+        verifierLogoURL = verifiedDisplayData.logoURI;
+        verifierPurpose = verifiedDisplayData.purpose;
         serviceURL = resp.serviceURL;
         verifiedDomain = resp.isValid;
       });
@@ -62,10 +69,20 @@ class PresentationPreviewState extends State<PresentationPreview> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               ListTile(
-                leading: Image.asset('lib/assets/images/credLogo.png'),
+                leading: verifierLogoURL == ''
+                    ? const SizedBox.shrink()
+                    : CachedNetworkImage(
+                        imageUrl: verifierLogoURL!,
+                        placeholder: (context, url) => const CircularProgressIndicator(),
+                        errorWidget: (context, url, error) =>
+                            Image.asset('lib/assets/images/credLogo.png', fit: BoxFit.contain),
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.contain,
+                      ),
                 title: Text(verifierName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 subtitle: Text(serviceURL != "" ? serviceURL : 'verifier.com',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
                 trailing: FittedBox(
                     child: verifiedDomain
                         ? Row(children: [
@@ -117,6 +134,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
                             ],
                           )),
               ),
+              Text(verifierPurpose),
               CredentialCard(
                   credentialData: widget.credentialData, isDashboardWidget: false, isDetailArrowRequired: false),
               CredentialMetaDataCard(credentialData: widget.credentialData),

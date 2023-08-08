@@ -1,5 +1,6 @@
 import 'package:app/views/credential_shared.dart';
 import 'package:app/views/dashboard.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -10,7 +11,6 @@ import 'package:app/main.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:app/models/activity_data_object.dart';
 import 'package:app/widgets/credential_card.dart';
-import 'dart:convert';
 
 class PresentationPreviewMultiCred extends StatefulWidget {
   final List<CredentialData> credentialData;
@@ -28,8 +28,10 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
   bool checked = false;
   late CredentialData selectedCredentialData = widget.credentialData[0];
   int selectedRadio = 0;
+  late String verifierLogoURL = '';
   late String verifierName = '';
   late String serviceURL = '';
+  late String verifierPurpose = '';
   bool verifiedDomain = true;
 
   @override
@@ -40,6 +42,8 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
       var resp = await WalletSDKPlugin.wellKnownDidConfig(verifiedDisplayData.did);
       setState(() {
         verifierName = verifiedDisplayData.name;
+        verifierLogoURL = verifiedDisplayData.logoURI;
+        verifierPurpose = verifiedDisplayData.purpose;
         serviceURL = resp.serviceURL;
         verifiedDomain = resp.isValid;
       });
@@ -68,13 +72,23 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               ListTile(
-                leading: Image.asset('lib/assets/images/credLogo.png'),
+                leading: verifierLogoURL == ''
+                    ? const SizedBox.shrink()
+                    : CachedNetworkImage(
+                        imageUrl: verifierLogoURL!,
+                        placeholder: (context, url) => const CircularProgressIndicator(),
+                        errorWidget: (context, url, error) =>
+                            Image.asset('lib/assets/images/credLogo.png', fit: BoxFit.contain),
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.contain,
+                      ),
                 title: Text(verifierName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 subtitle: Text(serviceURL != "" ? serviceURL : 'verifier.com',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
                 trailing: FittedBox(
                     child: verifiedDomain
-                        ? Row(children: [
+                        ?  Row(children: [
                             Text.rich(
                               textAlign: TextAlign.center,
                               TextSpan(
@@ -97,7 +111,7 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
                               ),
                             ),
                           ])
-                        : Row(
+                        :  Row(
                             children: [
                               Text.rich(
                                 textAlign: TextAlign.center,
@@ -123,6 +137,7 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
                             ],
                           )),
               ),
+              Text(verifierPurpose),
               for (var i = 0; i < widget.credentialData.length; i++)
                 RadioListTile(
                   controlAffinity: ListTileControlAffinity.leading,
