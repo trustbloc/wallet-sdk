@@ -1,6 +1,5 @@
 package dev.trustbloc.wallet
 
-import android.annotation.SuppressLint
 import dev.trustbloc.wallet.sdk.api.Api
 import dev.trustbloc.wallet.sdk.api.DIDDocResolution
 import dev.trustbloc.wallet.sdk.api.StringArray
@@ -8,9 +7,7 @@ import dev.trustbloc.wallet.sdk.credential.StatusVerifier
 import dev.trustbloc.wallet.sdk.did.Did
 import dev.trustbloc.wallet.sdk.display.Display
 import dev.trustbloc.wallet.sdk.oauth2.Oauth2
-import dev.trustbloc.wallet.sdk.openid4ci.IssuerMetadata
 import dev.trustbloc.wallet.sdk.openid4ci.SupportedCredentials
-import dev.trustbloc.wallet.sdk.verifiable.Credential
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import dev.trustbloc.wallet.sdk.verifiable.Opts
 import dev.trustbloc.wallet.sdk.verifiable.Verifiable
@@ -26,6 +23,7 @@ import walletsdk.flutter.converters.convertToVerifiableCredentialsArray
 import walletsdk.flutter.converters.convertVerifiableCredentialsArray
 import walletsdk.kmsStorage.KmsStore
 import walletsdk.openid4ci.OpenID4CI
+import walletsdk.openid4ci.WalletInitiatedOpenID4CI
 import walletsdk.openid4vp.OpenID4VP
 import java.text.SimpleDateFormat
 
@@ -34,7 +32,7 @@ class MainActivity : FlutterActivity() {
     private var walletSDK: WalletSDK? = null
     private var openID4CI: OpenID4CI? = null
     private var openID4VP: OpenID4VP? = null
-
+    private var walletInitiatedOpenID4CI: WalletInitiatedOpenID4CI? = null
 
     // TODO: remove next three variables after refactoring finished.
     private var processAuthorizationRequestVCs: CredentialsArray? = null
@@ -77,11 +75,6 @@ class MainActivity : FlutterActivity() {
 
                             } catch (e: Exception) {
                                 val err = Walleterror.parse(e.message)
-                                // Add custom error handling logic here basing on code and error properties
-                                println("code: ${err.code}")
-                                println("error: ${err.category}")
-                                println("details: ${err.details}")
-
                                 result.error(
                                         "Exception",
                                         "Error while authorizing the oidc vc flow",
@@ -90,6 +83,37 @@ class MainActivity : FlutterActivity() {
 
                             }
                         }
+
+                       "initializeWalletInitiatedFlow" -> {
+                           try {
+                               val supportedCredentials = initializeWalletInitiatedFlow(call)
+                               result.success(supportedCredentials)
+                           } catch (e: Exception) {
+                               val err = Walleterror.parse(e.message)
+                               result.error(
+                                   "Exception",
+                                   "Error while initializing wallet initiated flow",
+                                   "code: ${err.code}, error: ${err.category}, details: ${err.details}"
+                               )
+
+                           }
+                       }
+
+                        "createAuthorizationURLWalletInitiatedFlow" -> {
+                            try {
+                                val authorizationLink = createAuthorizationURLWalletInitiatedFlow(call)
+                                result.success(authorizationLink)
+                            } catch (e: Exception) {
+                                val err = Walleterror.parse(e.message)
+                                result.error(
+                                    "Exception",
+                                    "Error while creating authorization link",
+                                    "code: ${err.code}, error: ${err.category}, details: ${err.details}"
+                                )
+
+                            }
+                        }
+
                         "credentialStatusVerifier" -> {
                             try {
                                 val credentialStatus = credentialStatusVerifier(call)
@@ -113,6 +137,15 @@ class MainActivity : FlutterActivity() {
                                 result.success(credentialCreated)
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while requesting credential auth", e.localizedMessage)
+                            }
+                        }
+
+                        "requestCredentialWithWalletInitiatedFlow" -> {
+                            try {
+                                val credentialCreated =  requestCredentialWithWalletInitiatedFlow(call)
+                                result.success(credentialCreated)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while requesting credential in wallet initiated flow", e.localizedMessage)
                             }
                         }
 
@@ -370,8 +403,62 @@ class MainActivity : FlutterActivity() {
         return flowTypeData
     }
 
+
+    private fun initializeWalletInitiatedFlow(call: MethodCall): MutableList<Any> {
+        val walletSDK = this.walletSDK
+            ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
+
+        val issuerURI = call.argument<String>("issuerURI")
+            ?: throw java.lang.Exception("Missing issuerURI argument")
+
+        val walletInitiatedOpenID4CI =
+            walletSDK.createOpenID4CIWalletInitiatedInteraction(issuerURI)
+        this.walletInitiatedOpenID4CI = walletInitiatedOpenID4CI
+        val supportedCredentials = walletInitiatedOpenID4CI.getSupportedCredentials()
+
+        return getSupportedCredentialsList(supportedCredentials)
+    }
+
+    private fun createAuthorizationURLWalletInitiatedFlow(call: MethodCall): String {
+        val walletInitiatedOpenID4CI = this.walletInitiatedOpenID4CI
+            ?: throw java.lang.Exception("walletInitiatedOpenID4CI interaction is not initialized")
+
+        val scopesFromArgs = call.argument<ArrayList<String>>("scopes")
+            ?: throw java.lang.Exception("Missing scopes argument")
+
+        val credentialTypesFromArgs = call.argument<ArrayList<String>>("credentialTypes")
+            ?: throw java.lang.Exception("Missing credentialTypes argument")
+
+        val clientID = call.argument<String>("clientID")
+            ?: throw java.lang.Exception("Missing clientID argument")
+
+        val redirectURI = call.argument<String>("redirectURI")
+            ?: throw java.lang.Exception("Missing redirectURI argument")
+
+        val credentialFormat = call.argument<String>("credentialFormat")
+            ?: throw java.lang.Exception("Missing credentialFormat argument")
+
+        val issuerURI = call.argument<String>("issuerURI")
+            ?: throw java.lang.Exception("Missing issuerURI argument")
+
+
+        var scopes = StringArray()
+
+        for (scope in scopesFromArgs) {
+            scopes.append(scope)
+        }
+
+
+        var credentialTypes = StringArray()
+
+        for (credentialType in credentialTypesFromArgs) {
+            credentialTypes.append(credentialType)
+        }
+
+        return walletInitiatedOpenID4CI.createAuthorizationURLWalletInitiatedFlow(scopes, credentialFormat, credentialTypes, clientID, redirectURI, issuerURI)
+    }
+
     private fun getIssuerMetaData(): MutableList<Any> {
-        println("inside issuer metadata")
         val openID4CI = this.openID4CI
             ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
@@ -381,8 +468,6 @@ class MainActivity : FlutterActivity() {
         // supported Credentials list
         val supportedCredentials = issuerMetaData.supportedCredentials()
         var supportedCredentialsList = getSupportedCredentialsList(supportedCredentials)
-
-        print("suppported credentials $supportedCredentialsList")
 
         // localized issuer displays data
         var localizedIssuerDisplays =  issuerMetaData.localizedIssuerDisplays()
@@ -484,6 +569,18 @@ class MainActivity : FlutterActivity() {
         return openID4CI.requestCredentialWithAuth(didDocResolution.assertionMethod(), redirectURI)
     }
 
+    private fun requestCredentialWithWalletInitiatedFlow(call: MethodCall): String? {
+        val redirectURI = call.argument<String>("redirectURIWithParams") ?: throw java.lang.Exception("redirectURIWithParams is missed")
+
+        val didDocResolution = this.didDocResolution
+            ?: throw java.lang.Exception("DID should be created first")
+
+        val walletInitiatedOpenID4CI = this.walletInitiatedOpenID4CI
+            ?: throw java.lang.Exception("walletInitiatedOpenID4CI not initiated. Initialize wallet initiated flow before this.")
+
+        return walletInitiatedOpenID4CI.requestCredentialWithWalletInitiatedFlow(didDocResolution.assertionMethod(), redirectURI).serialize()
+    }
+
 
     private fun parseWalletSDKError(call: MethodCall): MutableMap<String, String> {
         val localizedErrorMessage = call.argument<String>("localizedErrorMessage") ?: throw java.lang.Exception("localizedErrorMessage is missing")
@@ -512,10 +609,7 @@ class MainActivity : FlutterActivity() {
         val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
                 ?: throw java.lang.Exception("vcCredentials params is missed")
 
-        val openID4CI = this.openID4CI
-                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
-
-        return openID4CI.serializeDisplayData(issuerURI, convertToVerifiableCredentialsArray(vcCredentials))
+        return Display.resolve(convertToVerifiableCredentialsArray(vcCredentials), issuerURI, null).serialize()
     }
 
     private fun resolveCredentialDisplay(call: MethodCall): MutableList<Any> {

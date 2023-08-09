@@ -90,10 +90,6 @@ class OpenID4CI constructor(
             return credentials.atIndex(0).serialize();
     }
 
-    fun serializeDisplayData(issuerURI: String?, vcCredentials: CredentialsArray): String? {
-        return Display.resolve(vcCredentials, issuerURI, null).serialize()
-    }
-
     fun dynamicRegistrationSupported(): Boolean {
         return newInteraction.dynamicClientRegistrationSupported()
     }

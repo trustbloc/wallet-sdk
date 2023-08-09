@@ -52,7 +52,7 @@ class WalletSDK {
         return OpenID4CI(requestURI: requestURI, didResolver: didResolver, crypto: crypto, activityLogger: activityLogger! )
     }
     
-    func createOpenID4CIWalletIntiatedInteraction(issuerURI: String) throws -> WalletInitiatedOpenID4CI {
+    func createOpenID4CIWalletInitiatedInteraction(issuerURI: String) throws -> WalletInitiatedOpenID4CI {
         guard let crypto = self.crypto else {
             throw WalletSDKError.runtimeError("SDK is not initialized, call initSDK()")
         }
