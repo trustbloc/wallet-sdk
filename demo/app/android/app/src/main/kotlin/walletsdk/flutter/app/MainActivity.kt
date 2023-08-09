@@ -101,22 +101,18 @@ class MainActivity : FlutterActivity() {
                         "requestCredential" -> {
                             try {
                                 val credentialCreated = requestCredential(call)
-                                val serializedCredential = credentialCreated!!.serialize()
-
-                                result.success(serializedCredential)
+                                result.success(credentialCreated)
                             } catch (e: Exception) {
-                                result.error("Exception", "Error while requesting credential", e)
+                                result.error("Exception", "Error while requesting credential", e.localizedMessage)
                             }
                         }
 
                         "requestCredentialWithAuth" -> {
                             try {
                                 val credentialCreated =  requestCredentialAuth(call)
-                                val serializedCredential = credentialCreated!!.serialize()
-
-                                result.success(serializedCredential)
+                                result.success(credentialCreated)
                             } catch (e: Exception) {
-                                result.error("Exception", "Error while requesting credential auth", e)
+                                result.error("Exception", "Error while requesting credential auth", e.localizedMessage)
                             }
                         }
 
@@ -168,7 +164,7 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
-                        "parseWalletError" -> {
+                        "parseWalletSDKError" -> {
                             try {
                                 val parsedWalletError = parseWalletSDKError(call)
                                 result.success(parsedWalletError)
@@ -463,7 +459,7 @@ class MainActivity : FlutterActivity() {
     Here if the pin required is true in the authorize method, then user need to enter OTP which is intercepted to create CredentialRequest Object using
     CredentialRequestOpts.If flow doesnt not require pin than Credential Request Opts will have empty string otp and sdk will return credential Data based on empty otp.
      */
-    private fun requestCredential(call: MethodCall): Credential? {
+    private fun requestCredential(call: MethodCall): String? {
         val otp = call.argument<String>("otp") ?: throw java.lang.Exception("otp params is missed")
 
         val didDocResolution = this.didDocResolution
@@ -476,7 +472,7 @@ class MainActivity : FlutterActivity() {
     }
 
 
-    private fun requestCredentialAuth(call: MethodCall): Credential? {
+    private fun requestCredentialAuth(call: MethodCall): String? {
         val redirectURI = call.argument<String>("redirectURIWithParams") ?: throw java.lang.Exception("redirectURIWithParams is missed")
 
         val didDocResolution = this.didDocResolution
@@ -493,6 +489,8 @@ class MainActivity : FlutterActivity() {
         val localizedErrorMessage = call.argument<String>("localizedErrorMessage") ?: throw java.lang.Exception("localizedErrorMessage is missing")
 
         val parsedError = Walleterror.parse(localizedErrorMessage)
+        println("parsedError ->")
+        print(parsedError)
 
         val parsedErrResp: MutableMap<String, String> = mutableMapOf()
         parsedErrResp["category"] = parsedError.category

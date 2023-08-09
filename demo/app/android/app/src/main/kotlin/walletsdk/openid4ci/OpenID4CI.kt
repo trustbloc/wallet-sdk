@@ -73,21 +73,21 @@ class OpenID4CI constructor(
         return newInteraction.issuerURI()
     }
 
-    fun requestCredential(didVerificationMethod: VerificationMethod, otp: String?): Credential? {
+    fun requestCredential(didVerificationMethod: VerificationMethod, otp: String?): String? {
         val opts = RequestCredentialWithPreAuthOpts().setPIN(otp)
         val credsArr = newInteraction.requestCredentialWithPreAuth(didVerificationMethod, opts)
 
         if (credsArr.length() != 0L) {
-            return credsArr.atIndex(0)
+            return credsArr.atIndex(0).serialize()
         }
 
         return null
     }
 
     @SuppressLint("SuspiciousIndentation")
-    fun requestCredentialWithAuth(didVerificationMethod: VerificationMethod, redirectURIWithParams: String) : Credential? {
+    fun requestCredentialWithAuth(didVerificationMethod: VerificationMethod, redirectURIWithParams: String) : String? {
         var credentials = newInteraction.requestCredentialWithAuth(didVerificationMethod, redirectURIWithParams, null)
-            return credentials.atIndex(0);
+            return credentials.atIndex(0).serialize();
     }
 
     fun serializeDisplayData(issuerURI: String?, vcCredentials: CredentialsArray): String? {
