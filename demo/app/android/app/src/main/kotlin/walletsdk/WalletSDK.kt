@@ -8,6 +8,8 @@ import dev.trustbloc.wallet.sdk.mem.ActivityLogger
 import walletsdk.openid4ci.OpenID4CI
 import walletsdk.openid4vp.OpenID4VP
 import dev.trustbloc.wallet.sdk.localkms.Store
+import dev.trustbloc.wallet.sdk.openid4ci.WalletInitiatedInteractionArgs
+import walletsdk.openid4ci.WalletInitiatedOpenID4CI
 
 class WalletSDK {
     private var kms: KMS? = null
@@ -58,6 +60,21 @@ class WalletSDK {
                 activityLogger
         )
     }
+
+    fun createOpenID4CIWalletInitiatedInteraction(issuerURI: String) : WalletInitiatedOpenID4CI {
+        val didResolver = this.didResolver
+            ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+
+        val crypto = this.crypto
+            ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+
+        return WalletInitiatedOpenID4CI(
+            issuerURI,
+            crypto,
+            didResolver,
+        )
+    }
+
 
     fun createOpenID4VPInteraction(): OpenID4VP {
         val kms = this.kms ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")

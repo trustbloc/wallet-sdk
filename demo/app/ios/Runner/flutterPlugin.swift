@@ -505,7 +505,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         
         do {
 
-            let walletInitiatedOpenID4CI = try walletSDK.createOpenID4CIWalletIntiatedInteraction(issuerURI: issuerURI)
+            let walletInitiatedOpenID4CI = try walletSDK.createOpenID4CIWalletInitiatedInteraction(issuerURI: issuerURI)
             let supportedCredentials = try walletInitiatedOpenID4CI.getSupportedCredentials()
             
             var supportedCredentialsList = getSupportedCredentialsList(supportedCredentials: supportedCredentials)
@@ -665,7 +665,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
           } catch let error as NSError{
              return result(FlutterError.init(code: "Exception",
                                        message: "error while requesting credential with auth",
-                                       details: error.localizedDescription
+                                             details: error.localizedDescription
                                       ))
           }
         
