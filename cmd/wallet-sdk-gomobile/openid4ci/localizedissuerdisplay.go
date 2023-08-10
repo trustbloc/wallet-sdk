@@ -48,3 +48,23 @@ func (l *LocalizedIssuerDisplay) Locale() string {
 func (l *LocalizedIssuerDisplay) URL() string {
 	return l.localizedIssuerDisplay.URL
 }
+
+// Logo returns this LocalizedIssuerDisplay's logo.
+// If it has no logo, then nil/null is returned instead.
+func (l *LocalizedIssuerDisplay) Logo() *Logo {
+	if l.localizedIssuerDisplay.Logo == nil {
+		return nil
+	}
+
+	return &Logo{logo: l.localizedIssuerDisplay.Logo}
+}
+
+// BackgroundColor returns this LocalizedIssuerDisplay's background color.
+func (l *LocalizedIssuerDisplay) BackgroundColor() string {
+	return l.localizedIssuerDisplay.BackgroundColor
+}
+
+// TextColor returns this LocalizedIssuerDisplay's text color.
+func (l *LocalizedIssuerDisplay) TextColor() string {
+	return l.localizedIssuerDisplay.TextColor
+}

@@ -14,6 +14,8 @@ For the sake of readability, the following is omitted in most code examples:
 
 ## General API Patterns
 
+### Function Arguments
+
 Wallet-SDK APIs follow a certain pattern. Arguments to functions and methods are always mandatory unless
 they are in an `Opts` object. If a function or method has an `Opts` argument, it will be the last
 argument (after all the mandatory arguments). The exact name of this object may differ depending on the function/method,
@@ -29,6 +31,28 @@ result in defaults being used for all the options.
 
 Note that in some circumstances, some options may be required (e.g. if an issuer requires a PIN). See the documentation
 for the particular function/method for more information.
+
+### Arrays
+
+Due to a limitation of gomobile, the Wallet-SDK mobile bindings can't use array types directly. As a workaround,
+Wallet-SDK instead exposes "array-like" objects that internally contain the desired array while exposing
+gomobile-compatible methods for performing array operations.
+
+These "array-like" objects can be identified by their names. They will either have "Array" as a suffix in their names,
+or be plural nouns (e.g. `SupportedCredentials`).
+
+These objects will have the following methods:
+* `length()`: Returns the number of elements in the array.
+* `atIndex(index)`: Returns the element at the given `index`. If `index` is out of bounds, then null/nil/an empty value
+is returned instead.
+
+Additionally, some array object types may also support being created directly by the caller (so that they can be used as
+a function argument), in which case they will also have constructors and the following method:
+* `append(arg)`: appends `arg` to the array. It also returns a reference to the array object to allow for
+chaining together multiple `append` calls.
+
+In subsequent sections of this documentation, any reference to "arrays" refer to the "array-like" objects that are
+described above.
 
 ## Error Handling
 
@@ -180,7 +204,7 @@ let vc = VerifiableParseCredential("Serialized VC goes here", opts, &error)
 
 Several APIs allow for an LD document loader to be specified via the `setDocumentLoader` method on their respective
 `Opts` objects.
-If no custom LD document loader is specified (or is nil/null), then network-based document loading will be used instead.
+If no custom LD document loader is specified (or is null/nil), then network-based document loading will be used instead.
 For performance and/or security reasons, you may wish to implement a custom LD document loader that uses
 preloaded local contexts.
 
@@ -544,11 +568,9 @@ know this, you're ready to [request credentials](#request-credential).
 #### Authorization Code Flow
 
 If you are using a `WalletInitiatedInteraction`, then you may want to check what credentials the issuer
-supports. To do this call the `issuerMetadata` method, and then call the `supportedCredentials` method on the returned
-`IssuerMetadata` object. Then, use the methods on the returned `SupportedCredentials` object to see what
-credential formats and types are supported. If you already know what credential format+types you want, then you can
-skip this step. Note that if you're using an `IssuerInitiatedInteraction` then the credential format+types are already
-pre-specified by the issuer in the credential offer and can't be overridden.
+supports. See [Issuer Metadata](#issuer-metadata) for more information. Note that if you're using an
+`IssuerInitiatedInteraction` then the credential format+types are already pre-specified by the issuer in the credential
+offer and can't be overridden.
 
 To begin the Authorization Code flow, you need to create an authorization URL. To do this, call the
 `createAuthorizationURL` method on the`Interaction` object. You need to provide the following parameters:
@@ -592,6 +614,78 @@ pass it in using the `setPIN` method on the `RequestCredentialWithPreAuthOpts` o
 
 Regardless of which of the two methods you use, if the call succeeds, it will return your issued credentials.
 These can then be used in other Wallet-SDK APIs or [serialized for storage](#verifiable-credentials).
+
+### Issuer Metadata
+
+Depending on your use case, you may want to check the issuer's metadata. To do this, call the `issuerMetadata` method
+which will return an `IssuerMetadata` object. Note that some of the methods available on this object and its nested
+sub-objects, can return null/nil/an empty value if the issuer does not supply the corresponding data in its metadata.
+You should ensure that these situations are handled accordingly. Read this section carefully to see which methods may
+return null/nil/an empty value.
+
+The `IssuerMetadata` object has the following methods on it:
+
+* `credentialIssuer()`: Returns the issuer's identifier.
+* `localizedIssuerDisplays()`: Returns the [LocalizedIssuerDisplays](#LocalizedIssuerDisplays) object, which contains
+display information for the issuer.
+* `supportedCredentials()`: Returns the [SupportedCredentials](#SupportedCredentials) object, which contains technical
+and display data about the credential types that this issuer can issue.
+
+#### LocalizedIssuerDisplays
+
+The `LocalizedIssuerDisplays` object contains display information for the issuer. This is optional data; the issuer
+may not provide any display information. If the issuer doesn't provide any display information at all, then the
+`length()` method on the `LocalizedIssuerDisplays` object will return 0.
+Each element (`LocalizedIssuerDisplay`) in the array corresponds to a different locale and has methods on it that return
+various pieces of display information. Note that this display information is all optional, and so any of these methods
+may return null/nil/an empty value if the issuer doesn't provide it.
+
+The methods on a `LocalizedIssuerDisplay` are:
+
+* `locale()`: The locale for this `LocalizedIssuerDisplay`.
+* `name()`: The issuer's name.
+* `url()`: The issuer's URL.
+* `logo()`: The issuer's logo.
+* `backgroundColor()`: The issuer's background color value.
+* `textColor()`: The issuer's text color value.
+
+#### SupportedCredentials
+
+The `SupportedCredentials` object contains information about the credential types that the issuer can issue.
+Each element (`SupportedCredential`) in the array corresponds to a different credential type.
+
+The methods on a `SupportedCredential` are:
+
+* `localizedDisplays()`: Returns the [LocalizedCredentialDisplays](#LocalizedCredentialDisplays) object, which contains
+display info for this credential type.
+
+The next three methods return lower-level technical data that aren't intended for displaying to an end-user in most
+cases, but they may be useful for other Wallet-SDK APIs:
+* `id()`: The credential's ID.
+* `format()`: The credential format.
+* `types()`: The credential's types array. This is the low-level `types` array that appears in the actual issued
+Verifiable Credential object. Not to be confused with the general idea of a credential "type" (e.g. A university degree,
+driver's license, etc).
+
+Note: while unexpected, if the issuer doesn't specify any credential types at all, then the `length()` method on the
+`SupportedCredentials` object will return 0.
+
+##### LocalizedCredentialDisplays
+
+The `LocalizedCredentialDisplays` object contains display information for a credential type. This is optional data;
+the issuer may not provide any display information. If the issuer doesn't provide any display information at all, then
+the`length()` method on the `LocalizedCredentialDisplays` object will return 0.
+Each element (`LocalizedCredentialDisplay`) in the array corresponds to a different locale and has methods on it that return
+various pieces of display information. Note that this display information is all optional, and so any of these methods
+may return null/nil/an empty value if the issuer doesn't provide it.
+
+The methods on a `LocalizedCredentialDisplay` are:
+
+* `locale()`: The locale for this `LocalizedCredentialDisplay`.
+* `name()`: The credential's name.
+* `logo()`: The credential's logo.
+* `backgroundColor()`: The credential's background color value.
+* `textColor()`: The credential's text color value.
 
 ### Client ID
 

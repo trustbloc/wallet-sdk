@@ -53,11 +53,15 @@ func TestIssuerMetadata(t *testing.T) {
 	require.Equal(t, "Example University", firstLocalizedDisplay.Name())
 	require.Equal(t, "en-US", firstLocalizedDisplay.Locale())
 	require.Equal(t, "https://server.example.com", firstLocalizedDisplay.URL())
+	require.NotNil(t, firstLocalizedDisplay.Logo())
+	require.Equal(t, "#12107c", firstLocalizedDisplay.BackgroundColor())
+	require.Equal(t, "#FFFFFF", firstLocalizedDisplay.TextColor())
 
 	secondLocalizedDisplay := localizedIssuerDisplays.AtIndex(1)
 	require.Equal(t, "サンプル大学", secondLocalizedDisplay.Name())
 	require.Equal(t, "jp-JA", secondLocalizedDisplay.Locale())
 	require.Equal(t, "https://server.example.com", secondLocalizedDisplay.URL())
+	require.Nil(t, secondLocalizedDisplay.Logo())
 
 	require.Nil(t, localizedIssuerDisplays.AtIndex(2))
 
@@ -91,8 +95,8 @@ func TestIssuerMetadata(t *testing.T) {
 
 	credentialLogo := localizedDisplay.Logo()
 	require.NotNil(t, credentialLogo)
-	require.Equal(t, "https://exampleuniversity.com/public/logo.png", credentialLogo.URL())
-	require.Equal(t, "a square logo of a university", credentialLogo.AltText())
+	require.Equal(t, "https://exampleuniversity.com/public/degree_logo.png", credentialLogo.URL())
+	require.Equal(t, "a square logo of an Example University degree", credentialLogo.AltText())
 
 	require.Nil(t, localizedDisplays.AtIndex(1))
 }

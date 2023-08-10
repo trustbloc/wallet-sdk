@@ -6,12 +6,20 @@
     {
       "locale":"en-US",
       "name":"Example University",
-      "url": "https://server.example.com"
+      "url": "https://server.example.com",
+      "logo":{
+        "url":"https://exampleuniversity.com/public/logo.png",
+        "alt_text":"a square logo of a university"
+      },
+      "background_color":"#12107c",
+      "text_color":"#FFFFFF"
     },
     {
       "name":"サンプル大学",
       "locale":"jp-JA",
-      "url": "https://server.example.com"
+      "url": "https://server.example.com",
+      "background_color":"#12107c",
+      "text_color":"#FFFFFF"
     }
   ],
   "credentials_supported":[
@@ -103,8 +111,8 @@
           "name":"University Credential",
           "locale":"en-US",
           "logo":{
-            "url":"https://exampleuniversity.com/public/logo.png",
-            "alt_text":"a square logo of a university"
+            "url":"https://exampleuniversity.com/public/degree_logo.png",
+            "alt_text":"a square logo of an Example University degree"
           },
           "background_color":"#12107c",
           "text_color":"#FFFFFF"
