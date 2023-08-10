@@ -41,6 +41,7 @@ class IssuancePreviewState extends State<IssuancePreview> {
   String issuerDisplayURL = '';
   String textColor = '';
   String? logoURL;
+  String? issuerLogoURL;
 
   @override
   void initState() {
@@ -50,6 +51,7 @@ class IssuancePreviewState extends State<IssuancePreview> {
         credentialIssuer = response.first.credentialIssuer;
         issuerDisplayName = response.first.localizedIssuerDisplays.first.name;
         issuerDisplayURL = response.first.localizedIssuerDisplays.first.url;
+        issuerLogoURL = response.first.localizedIssuerDisplays.first.logo;
         credentialDisplayName = response.first.supportedCredentials.first.display.first.name;
         logoURL = response.first.supportedCredentials.first.display.first.logo;
         backgroundColor =
@@ -81,8 +83,19 @@ class IssuancePreviewState extends State<IssuancePreview> {
                   "Add this credential ?"),
             ),
             const SizedBox(height: 30),
+            issuerLogoURL == null
+                ? const SizedBox.shrink()
+           : CachedNetworkImage(
+              imageUrl: issuerLogoURL!,
+              placeholder: (context, url) => const CircularProgressIndicator(),
+              errorWidget: (context, url, error) =>
+                  Image.asset('lib/assets/images/logoIcon.png', fit: BoxFit.cover),
+              width: 400,
+              height: 100,
+              fit: BoxFit.cover,
+            ),
             SizedBox(
-              height: 30,
+              height: 40,
               child: Text(
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 24, color: Color(0xff190C21), fontWeight: FontWeight.bold),
