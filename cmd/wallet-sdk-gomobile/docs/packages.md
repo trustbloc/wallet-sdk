@@ -1,7 +1,5 @@
 # Packages
 
-Last updated: March 13, 2023 (commit `57cea0315411332c6af691ee2a90bc362694a1a5`)
-
 The way you use the SDK differs between Android and iOS. This comes down to differences in how the `gomobile` tool
 generates the bindings for the two platforms. Due to these differences (and the limitations of `gomobile`),
 it's difficult to pick names that look perfect across both platforms and the Go source code.
