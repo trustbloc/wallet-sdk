@@ -124,7 +124,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
         
         let walletSDK = WalletSDK();
-        walletSDK.InitSDK(kmsStore: kmsStore(), didResolverURI: didResolverURI)
+        walletSDK.initSDK(kmsStore: kmsStore(), didResolverURI: didResolverURI)
 
         self.walletSDK = walletSDK
         result(true)

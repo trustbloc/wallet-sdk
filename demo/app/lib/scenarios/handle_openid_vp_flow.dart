@@ -18,7 +18,7 @@ import 'package:app/views/presentation_preview_multi_cred_radio.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 
 void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
-  var WalletSDKPlugin = WalletSDK();
+  var walletSDKPlugin = WalletSDK();
   final StorageService storageService = StorageService();
   late List<CredentialDataObject> storedCredentials;
   late List<String> credentials;
@@ -42,7 +42,7 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
   }
 
   try {
-    await WalletSDKPlugin.processAuthorizationRequest(authorizationRequest: qrCodeURL, storedCredentials: credentials);
+    await walletSDKPlugin.processAuthorizationRequest(authorizationRequest: qrCodeURL, storedCredentials: credentials);
   } catch (error) {
     Navigator.push(
         context,
@@ -50,9 +50,8 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
             builder: (context) => CustomError(
                 requestErrorTitleMsg: "No matching credential found", requestErrorSubTitleMsg: error.toString())));
   }
-
   // Get the matched VCIDs from the submission request.
-  var getSubmissionRequest = await WalletSDKPlugin.getSubmissionRequirements(storedCredentials: credentials);
+  var getSubmissionRequest = await walletSDKPlugin.getSubmissionRequirements(storedCredentials: credentials);
   var submission = getSubmissionRequest.first;
   if (submission.count > 1) {
     // multiple matched vc ids are found therefore, invoking multiple credential Presentation Preview.
@@ -97,7 +96,7 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
       var credentialDisplayData;
       for (var inputDes in submission.inputDescriptors) {
         for (var matchVC in inputDes.matchedVCs) {
-          var credID = (await WalletSDKPlugin.getCredID([matchVC]))!;
+          var credID = (await walletSDKPlugin.getCredID([matchVC]))!;
           var issuerURI = storedCredentials
               .where((element) => credID!.contains(element.value.credID))
               .map((e) => e.value.issuerURL)
@@ -106,7 +105,7 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
               storedCredentials.firstWhere((element) => credID!.contains(element.value.credID)).value.credentialDID;
 
           log("matched issuerURI found: ${issuerURI}");
-          credentialDisplayData = await WalletSDKPlugin.serializeDisplayData([matchVC], issuerURI.first);
+          credentialDisplayData = await walletSDKPlugin.serializeDisplayData([matchVC], issuerURI.first);
           log("credentialDisplayData -> $credentialDisplayData");
           navigateToPresentationPreviewScreen(
               context,

@@ -20,7 +20,7 @@ class WalletSDK {
 
 
 
-    func InitSDK(kmsStore: LocalkmsStoreProtocol, didResolverURI: String) {
+    func initSDK(kmsStore: LocalkmsStoreProtocol, didResolverURI: String) {
         kms = LocalkmsNewKMS(kmsStore, nil)
         
         let opts = DidNewResolverOpts()
@@ -28,6 +28,7 @@ class WalletSDK {
         
         didResolver = DidNewResolver(opts, nil)
         crypto = kms!.getCrypto()
+        activityLogger = MemActivityLogger()
     }
 
     func createDID(didMethodType: String, didKeyType: String) throws -> ApiDIDDocResolution {
@@ -65,13 +66,13 @@ class WalletSDK {
 
     func createOpenID4VPInteraction() throws -> OpenID4VP {
         guard let crypto = self.crypto else {
-            throw WalletSDKError.runtimeError("SDK is not initialized, call initSDK()")
+            throw WalletSDKError.runtimeError("crypto is not initialized, call initSDK()")
         }
         guard let didResolver = self.didResolver else {
-            throw WalletSDKError.runtimeError("SDK is not initialized, call initSDK()")
+            throw WalletSDKError.runtimeError("did resolver is not initialized, call initSDK()")
         }
         guard let activityLogger = self.activityLogger else {
-            throw WalletSDKError.runtimeError("SDK is not initialized, call initSDK()")
+            throw WalletSDKError.runtimeError("activity logger is not initialized, call initSDK()")
         }
         return OpenID4VP(didResolver: didResolver, crypto: crypto, activityLogger: activityLogger)
     }
