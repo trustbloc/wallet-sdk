@@ -432,6 +432,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                     "name":  localizedIssuerDisplays.atIndex(index)!.name(),
                     "locale": localizedIssuerDisplays.atIndex(index)!.locale(),
                     "url":   localizedIssuerDisplays.atIndex(index)!.url(),
+                    "logo":  localizedIssuerDisplays.atIndex(index)?.logo()?.url() ?? "",
+                    "textColor": localizedIssuerDisplays.atIndex(index)!.textColor(),
+                    "backgroundColor": localizedIssuerDisplays.atIndex(index)!.backgroundColor()
                 ]
                 
                 localizedIssuerDisplayList.append(localizedIssuerDisplay)

@@ -109,6 +109,7 @@ class IssuerMetaData {
     required this.supportedCredentials,
     required this.localizedIssuerDisplays,
   });
+
   @override
   String toString() {
     return 'IssuerMetaData{ credentialIssuer: $credentialIssuer, supportedCredentials: $supportedCredentials, localizedIssuerDisplays: $localizedIssuerDisplays}';
@@ -148,11 +149,7 @@ class SupportedCredentials {
   final List<String> types;
   final List<SupportedCredentialDisplayData> display;
 
-  const SupportedCredentials({
-    required this.format,
-    required this.types,
-    required this.display
-  });
+  const SupportedCredentials({required this.format, required this.types, required this.display});
 
   @override
   String toString() {
@@ -160,20 +157,15 @@ class SupportedCredentials {
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'format': format,
-      'types': types,
-      'display': display
-    };
+    return {'format': format, 'types': types, 'display': display};
   }
 
   factory SupportedCredentials.fromMap(Map<String, dynamic> map) {
     List<dynamic> display = map['display'];
     return SupportedCredentials(
-      format: map['format'] as String,
-      types: map['types'].cast<String>(),
-      display: display.map((c) => SupportedCredentialDisplayData.fromMap(c.cast<String, dynamic>())).toList()
-    );
+        format: map['format'] as String,
+        types: map['types'].cast<String>(),
+        display: display.map((c) => SupportedCredentialDisplayData.fromMap(c.cast<String, dynamic>())).toList());
   }
 }
 
@@ -197,15 +189,8 @@ class SupportedCredentialDisplayData {
     return 'SupportedCredentialDisplayData { name: $name, locale: $locale, logo: $logo, textColor: $textColor, backgroundColor: $backgroundColor }';
   }
 
-
   Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'locale': locale,
-      'textColor': textColor,
-      'logo': logo,
-      'backgroundColor': backgroundColor
-    };
+    return {'name': name, 'locale': locale, 'textColor': textColor, 'logo': logo, 'backgroundColor': backgroundColor};
   }
 
   factory SupportedCredentialDisplayData.fromMap(Map<String, dynamic> map) {
@@ -223,16 +208,22 @@ class IssuerDisplayData {
   final String name;
   final String locale;
   final String url;
+  String? logo;
+  final String backgroundColor;
+  final String textColor;
 
-  const IssuerDisplayData({
+  IssuerDisplayData({
     required this.name,
     required this.locale,
     required this.url,
+    required this.logo,
+    required this.textColor,
+    required this.backgroundColor,
   });
 
   @override
   String toString() {
-    return 'IssuerDisplayData { name: $name, locale: $locale, url: $url }';
+    return 'IssuerDisplayData { name: $name, locale: $locale, url: $url , logo: $logo, textColor: $textColor, backgroundColor: $backgroundColor}';
   }
 
   Map<String, dynamic> toMap() {
@@ -240,16 +231,20 @@ class IssuerDisplayData {
       'name': name,
       'locale': locale,
       'url': url,
+      'logo': logo,
+      'textColor': textColor,
+      'backgroundColor': backgroundColor
     };
   }
 
-
   factory IssuerDisplayData.fromMap(Map<String, dynamic> map) {
     return IssuerDisplayData(
-      name: map['name'] as String,
-      locale: map['locale'] as String,
-      url: map['url'] as String,
-    );
+        name: map['name'] as String,
+        locale: map['locale'] as String,
+        url: map['url'] as String,
+        logo: map['logo'] as String?,
+        textColor: map['textColor'] as String,
+        backgroundColor: map['backgroundColor'] as String);
   }
 }
 

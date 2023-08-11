@@ -477,6 +477,15 @@ class MainActivity : FlutterActivity() {
             localizedIssuerDisplay["name"] = localizedIssuerDisplays.atIndex(index).name()
             localizedIssuerDisplay["locale"] = localizedIssuerDisplays.atIndex(index).locale()
             localizedIssuerDisplay["url"] = localizedIssuerDisplays.atIndex(index).url()
+            localizedIssuerDisplay["textColor"] = localizedIssuerDisplays.atIndex(index).textColor()
+            localizedIssuerDisplay["backgroundColor"] = localizedIssuerDisplays.atIndex(index).backgroundColor()
+            if (localizedIssuerDisplays.atIndex(index).logo() != null){
+                localizedIssuerDisplay["logo"] = localizedIssuerDisplays.atIndex(index).logo().url()
+            } else {
+                localizedIssuerDisplay["logo"] = ""
+            }
+
+
             localizedIssuerDisplayList.addAll(listOf(localizedIssuerDisplay))
         }
 
