@@ -285,7 +285,7 @@ class MainActivity : FlutterActivity() {
         val walletSDK = WalletSDK()
         val didResolverURI = call.argument<String>("didResolverURI")
             ?: throw java.lang.Exception("didResolverURI params is missed")
-        walletSDK.InitSDK(KmsStore(context), didResolverURI)
+        walletSDK.initSDK(KmsStore(context), didResolverURI)
         this.walletSDK = walletSDK;
     }
 

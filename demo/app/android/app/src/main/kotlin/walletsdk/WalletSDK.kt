@@ -8,7 +8,6 @@ import dev.trustbloc.wallet.sdk.mem.ActivityLogger
 import walletsdk.openid4ci.OpenID4CI
 import walletsdk.openid4vp.OpenID4VP
 import dev.trustbloc.wallet.sdk.localkms.Store
-import dev.trustbloc.wallet.sdk.openid4ci.WalletInitiatedInteractionArgs
 import walletsdk.openid4ci.WalletInitiatedOpenID4CI
 
 class WalletSDK {
@@ -18,7 +17,7 @@ class WalletSDK {
     var activityLogger: ActivityLogger? = null
 
 
-    fun InitSDK(kmsStore: Store, didResolverURI: String) {
+    fun initSDK(kmsStore: Store, didResolverURI: String) {
         val kms = Localkms.newKMS(kmsStore)
 
         val opts = ResolverOpts()
@@ -77,14 +76,13 @@ class WalletSDK {
 
 
     fun createOpenID4VPInteraction(): OpenID4VP {
-        val kms = this.kms ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
         val crypto = this.crypto
-                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+                ?: throw java.lang.Exception("crypto is not initialized, call initSDK()")
         val didResolver = this.didResolver
-                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+                ?: throw java.lang.Exception("did resolver is not initialized, call initSDK()")
 
         val activityLogger = this.activityLogger
-                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+                ?: throw java.lang.Exception("activity logger is not initialized, call initSDK()")
 
         return OpenID4VP(crypto, didResolver, activityLogger)
     }
