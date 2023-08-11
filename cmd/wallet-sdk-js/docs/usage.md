@@ -1,7 +1,5 @@
 # JS SDK Usage
 
-Last updated: Jul 18, 2023 (commit `0f0e847a345a979d216f1e03313a00b630e7678e`)
-
 This guide explains how to use this SDK in Web. The examples in this document demonstrate
 how to use the various APIs from a JavaScript perspective.
 
