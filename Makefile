@@ -18,6 +18,10 @@ NEW_VERSION ?= $(shell git describe --tags --always `git rev-list --tags --max-c
 GIT_REV ?= $(shell git rev-parse HEAD)
 BUILD_TIME ?= $(shell date)
 
+# Namespace for the images
+DOCKER_OUTPUT_NS         ?= ghcr.io
+REPO_IMAGE_NAME          ?= trustbloc
+
 export TERM := xterm-256color
 
 ANDROID_EMULATOR_NAME ?= WalletSDKDeviceEmulator
@@ -79,6 +83,10 @@ demo-app-web-local: generate-js-bindings copy-js-bindings
 .PHONY: demo-app-web
 demo-app-web:
 	@cd demo/app/web && rm -rf node_modules && npm i && cp node_modules/@trustbloc-cicd/wallet-sdk-js/dist/wallet-sdk.wasm ./ && flutter doctor && flutter clean && flutter run -d chrome
+
+.PHONY: build-demo-app-web-docker
+build-demo-app-web-docker:
+	@docker build -f ./images/demo/app/Dockerfile --no-cache -t $(DOCKER_OUTPUT_NS)/$(REPO_IMAGE_NAME)/wallet-sdk-demo-app-web:latest .
 
 .PHONY: sample-webhook
 sample-webhook:
