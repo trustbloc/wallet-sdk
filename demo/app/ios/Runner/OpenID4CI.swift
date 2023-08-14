@@ -41,24 +41,19 @@ public class OpenID4CI {
         return ""
     }
     
-    func createAuthorizationURLWithScopes(scopes: ApiStringArray, clientID: String, redirectURI: String) throws  -> String {
-     var error: NSError?
-        
-      let opts = Openid4ciNewCreateAuthorizationURLOpts()!.setScopes(scopes)
-    
-       let authorizationLink =  initiatedInteraction.createAuthorizationURL(clientID, redirectURI: redirectURI, opts: opts, error: &error)
-        if let actualError = error {
-            print("error in authorizations", error!.localizedDescription)
-            throw actualError
-       }
-        
-      return authorizationLink
-    }
-    
-    func createAuthorizationURL(clientID: String, redirectURI: String) throws  -> String {
+    func createAuthorizationURL(clientID: String, redirectURI: String, oauthDiscoverableClientURI: String,  scopes:ApiStringArray) throws  -> String {
       var error: NSError?
+        let opts = Openid4ciNewCreateAuthorizationURLOpts()
+        if (scopes.length() != 0) {
+            opts!.setScopes(scopes)
+        }
+        
+        if (oauthDiscoverableClientURI != "") {
+            opts!.useOAuthDiscoverableClientIDScheme()
+        }
+  
     
-        let authorizationLink =  initiatedInteraction.createAuthorizationURL(clientID, redirectURI: redirectURI, opts: nil, error: &error)
+        let authorizationLink =  initiatedInteraction.createAuthorizationURL(clientID, redirectURI: redirectURI, opts: opts, error: &error)
         if let actualError = error {
             print("error in authorizations", error!.localizedDescription)
             throw actualError

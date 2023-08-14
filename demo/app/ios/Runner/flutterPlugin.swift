@@ -345,7 +345,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 var clientID = authCodeArgs["clientID"]
                 let redirectURI = authCodeArgs["redirectURI"]! as? String
                 var scopesFromArgs = authCodeArgs["scopes"]! as! [String]
-                
+                var oauthDiscoverableClientURI = authCodeArgs["oauthDiscoverableClientURI"] as? String
                 var scopes = ApiNewStringArray()!
                 
                 for scope in scopesFromArgs {
@@ -382,11 +382,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                     scopes = registrationResp.registeredMetadata()!.scopes()!
                 }
                 
-                if (scopes.length() == 0) {
-                    authorizationLink = try openID4CI.createAuthorizationURL(clientID: clientID as! String, redirectURI: redirectURI as! String)
-                } else {
-                    authorizationLink = try openID4CI.createAuthorizationURLWithScopes(scopes: scopes, clientID: clientID as! String, redirectURI: redirectURI as! String)
-                }
+                authorizationLink = try openID4CI.createAuthorizationURL(clientID: clientID! as! String, redirectURI: redirectURI!, oauthDiscoverableClientURI: oauthDiscoverableClientURI ?? "", scopes: scopes)
       
             }
             
