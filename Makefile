@@ -86,7 +86,7 @@ demo-app-web:
 
 .PHONY: build-demo-app-web-docker
 build-demo-app-web-docker:
-	@docker build -f ./images/demo/app/Dockerfile --no-cache -t $(DOCKER_OUTPUT_NS)/$(REPO_IMAGE_NAME)/wallet-sdk-demo-app-web:latest .
+	@docker build -f ./images/demo/app/Dockerfile --no-cache -t $(DOCKER_OUTPUT_NS)/$(REPO_IMAGE_NAME)/wallet-demo-app:latest .
 
 .PHONY: sample-webhook
 sample-webhook:
