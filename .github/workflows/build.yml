@@ -427,10 +427,23 @@ jobs:
           echo $NEW_VER
       - name: Set npm authentication tokens
         run: |
+          function logout {
+            docker logout
+          }
+          trap logout EXIT
+          git lfs install
+          git lfs pull
+          
           echo $PATH
           echo ${{ github.workspace }}
           echo '//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}' > ~/.npmrc
           echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
+          echo $GITHUB_TOKEN | docker login ghcr.io --username $DOCKER_USER --password-stdin
+          
+          make build-demo-app-web-docker
+          docker tag ghcr.io/trustbloc/wallet-demo-app:latest ghcr.io/trustbloc-cicd:${{ env.NEW_VERSION }}
+          docker push ghcr.io/trustbloc-cicd:${{ env.NEW_VERSION }}
+
       - name: Generate bindings and publish to npm
         run: |
           export PATH=$PATH:$GOPATH/bin
@@ -448,5 +461,6 @@ jobs:
           
           npm publish
         env:
+          DOCKER_USER: ${{ secrets.CR_USER }}
           GITHUB_TOKEN: ${{ secrets.CR_PAT }}
           GOPATH: /home/runner/work/wallet-sdk/go
