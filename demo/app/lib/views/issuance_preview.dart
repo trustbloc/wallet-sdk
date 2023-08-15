@@ -236,12 +236,10 @@ class IssuancePreviewState extends State<IssuancePreview> {
     keyType = keyType ?? "ED25519";
 
     var didResolution = await WalletSDKPlugin.createDID(didType, keyType);
-    var didDocEncoded = json.encode(didResolution);
-    Map<String, dynamic> responseJson = json.decode(didDocEncoded);
-
-    var didID = responseJson["did"];
-    var didDoc = responseJson["didDoc"];
+    var didID = didResolution.did;
+    var didDoc = didResolution.didDoc;
     log("created didID :$didID");
+
     pref.setString('userDID', didID);
     pref.setString('userDIDDoc', didDoc);
 
