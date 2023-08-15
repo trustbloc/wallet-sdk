@@ -17,7 +17,7 @@ unit-test-wasm: wasm-test-deps
 
 .PHONY: clean build-wasm
 build-wasm:
-	@GOOS=js GOARCH=wasm go build -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn" -o dist/wallet-sdk.wasm main.go
+	@GOOS=js GOARCH=wasm go build -o dist/wallet-sdk.wasm main.go
 
 .PHONY: clean generate-js-bindings
 generate-js-bindings:

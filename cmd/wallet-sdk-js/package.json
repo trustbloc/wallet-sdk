@@ -43,6 +43,10 @@
     "npm": ">=6.13"
   },
   "devDependencies": {
+    "jasmine-core": "^5.1.0",
+    "karma": "^6.4.2",
+    "karma-chrome-launcher": "^3.2.0",
+    "karma-jasmine": "^5.1.0",
     "webpack": "^5.88.1",
     "webpack-cli": "^5.1.4"
   }
