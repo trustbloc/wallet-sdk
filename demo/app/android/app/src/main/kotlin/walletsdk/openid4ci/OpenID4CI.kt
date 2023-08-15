@@ -10,10 +10,10 @@ import dev.trustbloc.wallet.sdk.verifiable.Credential
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
 class OpenID4CI constructor(
-        private val requestURI: String,
-        private val crypto: Crypto,
-        private val didResolver: DIDResolver,
-        private val activityLogger: ActivityLogger,
+    private val requestURI: String,
+    private val crypto: Crypto,
+    private val didResolver: DIDResolver,
+    private val activityLogger: ActivityLogger,
 ) {
     private var newInteraction: IssuerInitiatedInteraction
 
@@ -34,39 +34,40 @@ class OpenID4CI constructor(
         if (newInteraction.authorizationCodeGrantTypeSupported()) {
             return "auth-code-flow"
         }
-        if (newInteraction.preAuthorizedCodeGrantTypeSupported()){
+        if (newInteraction.preAuthorizedCodeGrantTypeSupported()) {
             return "preauth-code-flow"
         }
         return ""
     }
 
-    fun createAuthorizationURLWithScopes(scopes: StringArray, clientID: String, redirectURI: String): String {
-        if (!newInteraction.authorizationCodeGrantTypeSupported()) {
-            return "Not implemented"
+    fun createAuthorizationURL(
+        clientID: String,
+        redirectURI: String,
+        oauthDiscoverableClientURI: String,
+        scopes: StringArray
+    ): String {
+        val opts = CreateAuthorizationURLOpts()
+
+        if (scopes.length() != 0.toLong()) {
+            opts.setScopes(scopes)
         }
 
-        val opts = CreateAuthorizationURLOpts().setScopes(scopes)
+        if (oauthDiscoverableClientURI != "") {
+            opts.useOAuthDiscoverableClientIDScheme()
+        }
 
         return newInteraction.createAuthorizationURL(
             clientID,
             redirectURI,
-            opts
+            opts,
         )
-    }
-
-    fun createAuthorizationURL(clientID: String, redirectURI: String): String {
-      return  newInteraction.createAuthorizationURL(
-          clientID,
-          redirectURI,
-          null,
-      )
     }
 
     fun pinRequired(): Boolean {
         if (!newInteraction.preAuthorizedCodeGrantTypeSupported()) {
             return false
         }
-        return  newInteraction.preAuthorizedCodeGrantParams().pinRequired()
+        return newInteraction.preAuthorizedCodeGrantParams().pinRequired()
     }
 
     fun issuerURI(): String {
@@ -85,9 +86,16 @@ class OpenID4CI constructor(
     }
 
     @SuppressLint("SuspiciousIndentation")
-    fun requestCredentialWithAuth(didVerificationMethod: VerificationMethod, redirectURIWithParams: String) : String? {
-        var credentials = newInteraction.requestCredentialWithAuth(didVerificationMethod, redirectURIWithParams, null)
-            return credentials.atIndex(0).serialize();
+    fun requestCredentialWithAuth(
+        didVerificationMethod: VerificationMethod,
+        redirectURIWithParams: String
+    ): String? {
+        var credentials = newInteraction.requestCredentialWithAuth(
+            didVerificationMethod,
+            redirectURIWithParams,
+            null
+        )
+        return credentials.atIndex(0).serialize();
     }
 
     fun dynamicRegistrationSupported(): Boolean {

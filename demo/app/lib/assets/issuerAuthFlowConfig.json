@@ -35,7 +35,8 @@
       "profile"
     ],
     "clientID": "oidc4vc_client",
-    "redirectURI": "trustbloc-wallet://openid4vci/authcodeflow/callback"
+    "redirectURI": "trustbloc-wallet://openid4vci/authcodeflow/callback",
+    "oauthDiscoverableClientURI": "http://example.com"
   },
   "https://api-gateway.local.trustbloc.dev/issuer/pr_card_issuer_jwtsd/v1.0":
   {
