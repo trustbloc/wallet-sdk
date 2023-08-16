@@ -99,6 +99,35 @@ class InputDescriptor {
   }
 }
 
+class CreateDID {
+  final String did;
+  final String didDoc;
+
+  const CreateDID({
+    required this.did,
+    required this.didDoc,
+  });
+
+  @override
+  String toString() {
+    return 'CreateDID { did: $did, didDoc: $didDoc }';
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['did'] = did;
+    data['didDoc'] = didDoc;
+    return data;
+  }
+
+  factory CreateDID.fromJson(Map<String, dynamic> json) {
+    return CreateDID(
+      did: json['did'],
+      didDoc: json['didDoc'],
+    );
+  }
+}
+
 class IssuerMetaData {
   final String credentialIssuer;
   final List<SupportedCredentials> supportedCredentials;

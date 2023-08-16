@@ -33,9 +33,7 @@ void main() async {
       print("wallet DID Type : $didMethodType");
       print("wallet DID Key Type : $didKeyType");
       var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[i], didKeyType);
-      var didDocEncoded = json.encode(didDocData!);
-      Map<String, dynamic> responseJson = json.decode(didDocEncoded);
-      final didContent= responseJson["did"];
+      final didContent= didDocData.did;
       print("wallet DID : $didContent");
 
       String issuanceURL = issuanceURLsList[i];
@@ -44,7 +42,7 @@ void main() async {
       var initializeResp = await walletSDKPlugin.initialize(issuanceURL, null);
       var initializeRespEncoded = json.encode(initializeResp!);
       Map<String, dynamic> initializeRespJson = json.decode(initializeRespEncoded);
-      var requirePIN = responseJson["pinRequired"];
+      var requirePIN = initializeRespJson["pinRequired"];
       print("requirePIN: $requirePIN");
 
       final credential = await walletSDKPlugin.requestCredential("");
@@ -83,10 +81,7 @@ void main() async {
     print("wallet DID type : $didMethodType");
     print("wallet DID Key type : $didKeyType");
     var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[0], didKeyType);
-    print("wallet didDocData : $didDocData");
-    var didDocEncoded = json.encode(didDocData!);
-    Map<String, dynamic> responseJson = json.decode(didDocEncoded);
-    var didContent= responseJson["did"];
+    var didContent= didDocData.did;
     print("wallet DID : $didContent");
 
     const issuanceURLs = String.fromEnvironment("INITIATE_ISSUANCE_URLS_MULTIPLE_CREDS");
@@ -102,7 +97,7 @@ void main() async {
       var initializeResp = await walletSDKPlugin.initialize(issuanceURL, null);
       var initializeRespEncoded = json.encode(initializeResp!);
       Map<String, dynamic> initializeRespJson = json.decode(initializeRespEncoded);
-      var requirePIN = responseJson["pinRequired"];
+      var requirePIN = initializeRespJson["pinRequired"];
       print("requirePIN: $requirePIN");
 
       final credential = await walletSDKPlugin.requestCredential("");
@@ -140,9 +135,7 @@ void main() async {
     print("wallet DID Key type : $didKeyType");
     var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[0], didKeyType);
     print("wallet didDocData : $didDocData");
-    var didDocEncoded = json.encode(didDocData!);
-    Map<String, dynamic> responseJson = json.decode(didDocEncoded);
-    var didContent= responseJson["did"];
+    var didContent= didDocData.did;
     print("wallet DID : $didContent");
 
     const issuanceURL = String.fromEnvironment("INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW");

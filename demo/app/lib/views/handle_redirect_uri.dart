@@ -59,13 +59,10 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
     var keyType = pref.getString('keyType');
     keyType = keyType ?? "ED25519";
     var didResolution = await WalletSDKPlugin.createDID(didType, keyType);
-    var didDocEncoded = json.encode(didResolution!);
-    Map<String, dynamic> responseJson = json.decode(didDocEncoded);
-    var didID = responseJson["did"];
-    var didDoc = responseJson["didDoc"];
+    var didID = didResolution.did;
     setState(() {
       userDIDId = didID;
-      userDIDDoc = didDoc;
+      userDIDDoc = didResolution.didDoc;
     });
     return didID;
   }

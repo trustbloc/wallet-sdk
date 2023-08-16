@@ -22,10 +22,10 @@ class WalletSDK extends WalletPlatform {
     await methodChannel.invokeMethod<bool>('initSDK', <String, dynamic>{'didResolverURI': didResolverURI});
   }
 
-  Future<Map<Object?, Object?>?> createDID(String didMethodType, String didKeyType) async {
-    final createDIDMsg = await methodChannel.invokeMethod<Map<Object?, Object?>?>(
+  Future<CreateDID> createDID(String didMethodType, String didKeyType) async {
+    final createDIDResp= await methodChannel.invokeMethod<Map<Object?, Object?>?>(
         'createDID', <String, dynamic>{'didMethodType': didMethodType, 'didKeyType': didKeyType});
-    return createDIDMsg;
+    return CreateDID.fromJson(jsonDecode(json.encode(createDIDResp)));
   }
 
   Future<String?> fetchStoredDID(String didID) async {
