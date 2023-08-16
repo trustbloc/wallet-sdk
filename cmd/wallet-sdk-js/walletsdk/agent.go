@@ -16,7 +16,6 @@ import (
 	"github.com/hyperledger/aries-framework-go/component/models/jwt"
 	"github.com/hyperledger/aries-framework-go/component/models/presexch"
 	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
-	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 	arieskms "github.com/hyperledger/aries-framework-go/spi/kms"
 	jsonld "github.com/piprate/json-gold/ld"
 
@@ -29,6 +28,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
 	"github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
+	"github.com/trustbloc/wallet-sdk/pkg/memstorage/legacy"
 	"github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 	"github.com/trustbloc/wallet-sdk/pkg/openid4vp"
 )
@@ -60,7 +60,7 @@ func NewAgent(didResolverURI string, keyStore arieskms.Store) (*Agent, error) {
 
 	agent.didResolver = didResolver
 
-	docLoader, err := common.CreateJSONLDDocumentLoader(&http.Client{}, mem.NewProvider())
+	docLoader, err := common.CreateJSONLDDocumentLoader(&http.Client{}, legacy.NewProvider())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a did resolver: %w", err)
 	}

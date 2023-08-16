@@ -4,22 +4,22 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
-	"github.com/hyperledger/aries-framework-go/component/storageutil/mock/storage"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/pkg/common"
+	"github.com/trustbloc/wallet-sdk/pkg/memstorage/legacy"
+	"github.com/trustbloc/wallet-sdk/pkg/memstorage/legacy/mock"
 )
 
 func TestCreateJSONLDDocumentLoader(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		loader, err := common.CreateJSONLDDocumentLoader(&http.Client{}, mem.NewProvider())
+		loader, err := common.CreateJSONLDDocumentLoader(&http.Client{}, legacy.NewProvider())
 		require.NoError(t, err)
 		require.NotNil(t, loader)
 	})
 
 	t.Run("Fail context store", func(t *testing.T) {
-		store := storage.NewMockStoreProvider()
+		store := mock.NewMockStoreProvider()
 		store.FailNamespace = "ldcontexts"
 
 		loader, err := common.CreateJSONLDDocumentLoader(&http.Client{}, store)
@@ -29,7 +29,7 @@ func TestCreateJSONLDDocumentLoader(t *testing.T) {
 	})
 
 	t.Run("Fail context store", func(t *testing.T) {
-		store := storage.NewMockStoreProvider()
+		store := mock.NewMockStoreProvider()
 		store.FailNamespace = "remoteproviders"
 
 		loader, err := common.CreateJSONLDDocumentLoader(&http.Client{}, store)
