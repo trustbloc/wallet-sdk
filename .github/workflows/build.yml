@@ -452,22 +452,10 @@ jobs:
           echo $NEW_VER
       - name: Set npm authentication tokens
         run: |
-          function logout {
-            docker logout
-          }
-          trap logout EXIT
-          git lfs install
-          git lfs pull
-          
           echo $PATH
           echo ${{ github.workspace }}
           echo '//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}' > ~/.npmrc
           echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
-          echo $GITHUB_TOKEN | docker login ghcr.io --username $DOCKER_USER --password-stdin
-          
-          make build-demo-app-web-docker
-          docker tag ghcr.io/trustbloc/wallet-demo-app:latest ghcr.io/trustbloc-cicd:${{ env.NEW_VERSION }}
-          docker push ghcr.io/trustbloc-cicd:${{ env.NEW_VERSION }}
 
       - name: Generate bindings and publish to npm
         run: |
@@ -489,3 +477,47 @@ jobs:
           DOCKER_USER: ${{ secrets.CR_USER }}
           GITHUB_TOKEN: ${{ secrets.CR_PAT }}
           GOPATH: /home/runner/work/wallet-sdk/go
+
+  PublishDemoAppSnapshot:
+    needs: GenerateVersion
+    if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Derive the new version
+        run: |
+          echo "new version"
+          NEW_VER=${{ needs.GenerateVersion.outputs.version }}-snapshot-$(git rev-parse --short=7 HEAD)
+          echo "NEW_VERSION=$NEW_VER" >> $GITHUB_ENV
+          echo $NEW_VER
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Github Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.CR_USER }}
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Build and Push container image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./images/demo/app/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            ALPINE_VER=3.15
+            GO_VER=1.20
+          push: true
+          tags: |
+            ghcr.io/trustbloc-cicd/wallet-demo-app:${{ env.NEW_VERSION }}
