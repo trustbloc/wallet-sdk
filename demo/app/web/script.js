@@ -24,8 +24,8 @@ async function jsCreateDID(didMethod, keyType) {
     createdDID = did;
 
     return {
-        id: did.id,
-        content: did.content
+        did: did.id,
+        didDoc: did.content
     }
 }
 
