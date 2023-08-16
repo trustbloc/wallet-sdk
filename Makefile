@@ -120,6 +120,10 @@ build-integration-cli:
 	@mkdir -p ./build/bin
 	@cd test/integration/cli && go build -o ../../../build/bin/integration-cli main.go
 
+.PHONY: integration-test-wasm
+integration-test-wasm: build-integration-cli mock-login-consent-docker build-krakend-plugin generate-test-keys
+	@scripts/wasm_test.sh
+
 .PHONY: prepare-integration-test-flutter
 prepare-integration-test-flutter: build-integration-cli mock-login-consent-docker build-krakend-plugin generate-test-keys
 	@scripts/prepare_integration_test_flutter.sh
