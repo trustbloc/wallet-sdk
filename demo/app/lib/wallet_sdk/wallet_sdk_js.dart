@@ -32,9 +32,9 @@ extension CreateOpenID4CIInteractionExt on CreateOpenID4CIInteractionResult {
 class DidDocResolution {}
 
 extension DidDocResolutionExt on DidDocResolution {
-  external String get id;
+  external String get did;
 
-  external String get content;
+  external String get didDoc;
 }
 
 @JS()
@@ -151,9 +151,9 @@ class WalletSDK extends WalletPlatform {
     await promiseToFuture(jsInitSDK(didResolverURI));
   }
 
-  Future<Map<String, dynamic>> createDID(String didMethodType, String didKeyType) async {
+  Future<CreateDID> createDID(String didMethodType, String didKeyType) async {
     DidDocResolution result = await promiseToFuture(jsCreateDID(didMethodType, didKeyType));
-    return {"did": result.id, "didDoc": result.content};
+    return CreateDID(did: result.did, didDoc: result.didDoc);
   }
 
   Future<String?> fetchStoredDID(String didID) async {
