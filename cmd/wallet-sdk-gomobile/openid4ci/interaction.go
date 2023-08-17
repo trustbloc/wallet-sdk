@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 package openid4ci
 
-// This file contains code that's common to both the IssuerInitiatedInteraction and WalletInitiatedInteraction types.
+// This file has functions that are used by both the IssuerInitiatedInteraction and WalletInitiatedInteraction types.
 
 import (
 	"errors"
@@ -51,6 +51,11 @@ func createGoAPIClientConfig(didResolver api.DIDResolver, opts *InteractionOpts)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if opts.kms != nil {
+		goAPIClientConfig.KMS = opts.kms.GoAPILocalKMS.AriesLocalKMS
+		goAPIClientConfig.Verifier = opts.kms.GoAPILocalKMS.AriesCrypto
 	}
 
 	return goAPIClientConfig, nil

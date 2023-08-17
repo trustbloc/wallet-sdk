@@ -9,6 +9,10 @@ package openid4vp
 import (
 	"net/http"
 
+	"github.com/hyperledger/aries-framework-go/spi/kms"
+
+	"github.com/hyperledger/aries-framework-go/component/models/dataintegrity/suite/ecdsa2019"
+
 	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	noopmetricslogger "github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
@@ -18,6 +22,10 @@ type opts struct {
 	httpClient     httpClient
 	activityLogger api.ActivityLogger
 	metricsLogger  api.MetricsLogger
+	// If both of the below fields are set, then data integrity proofs will be added to
+	// presentations sent to the verifier.
+	signer ecdsa2019.Signer
+	kms    kms.KeyManager
 }
 
 // An Opt is a single option for an OpenID4VP instance.
@@ -49,7 +57,16 @@ func WithMetricsLogger(metricsLogger api.MetricsLogger) Opt {
 	}
 }
 
-func processOpts(options []Opt) (httpClient, api.ActivityLogger, api.MetricsLogger) {
+// WithDIProofs enables the adding of data integrity proofs to presentations sent to the verifier. It requires
+// a signer and a KMS to be passed in.
+func WithDIProofs(signer ecdsa2019.Signer, keyManager kms.KeyManager) Opt {
+	return func(opts *opts) {
+		opts.signer = signer
+		opts.kms = keyManager
+	}
+}
+
+func processOpts(options []Opt) (httpClient, api.ActivityLogger, api.MetricsLogger, ecdsa2019.Signer, kms.KeyManager) {
 	opts := mergeOpts(options)
 
 	if opts.httpClient == nil {
@@ -64,7 +81,7 @@ func processOpts(options []Opt) (httpClient, api.ActivityLogger, api.MetricsLogg
 		opts.metricsLogger = noopmetricslogger.NewMetricsLogger()
 	}
 
-	return opts.httpClient, opts.activityLogger, opts.metricsLogger
+	return opts.httpClient, opts.activityLogger, opts.metricsLogger, opts.signer, opts.kms
 }
 
 func mergeOpts(options []Opt) *opts {

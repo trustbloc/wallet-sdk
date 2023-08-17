@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 )
 
 // InteractionOpts contains all optional arguments that can be passed into the NewIssuerInitiatedInteraction function.
@@ -22,6 +23,7 @@ type InteractionOpts struct {
 	documentLoader                   api.LDDocumentLoader
 	disableOpenTelemetry             bool
 	httpTimeout                      *time.Duration
+	kms                              *localkms.KMS
 }
 
 // NewInteractionOpts returns a new InteractionOpts object.
@@ -96,6 +98,13 @@ func (o *InteractionOpts) SetMetricsLogger(metricsLogger api.MetricsLogger) *Int
 // DisableOpenTelemetry disables sending of open telemetry header.
 func (o *InteractionOpts) DisableOpenTelemetry() *InteractionOpts {
 	o.disableOpenTelemetry = true
+
+	return o
+}
+
+// EnableDIProofChecks enables data integrity proof checks for received VCs. It requires a KMS to be passed in.
+func (o *InteractionOpts) EnableDIProofChecks(kms *localkms.KMS) *InteractionOpts {
+	o.kms = kms
 
 	return o
 }

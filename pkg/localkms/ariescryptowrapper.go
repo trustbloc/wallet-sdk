@@ -42,13 +42,3 @@ func (c *AriesCryptoWrapper) Sign(msg []byte, keyID string) ([]byte, error) {
 
 	return c.wrappedCrypto.Sign(msg, kh)
 }
-
-// Verify gets key from kms using keyID and use it to verify data.
-func (c *AriesCryptoWrapper) Verify(signature, msg []byte, keyID string) error {
-	kh, err := c.cryptosKMS.Get(keyID)
-	if err != nil {
-		return fmt.Errorf("invalid key id %q: %w", keyID, err)
-	}
-
-	return c.wrappedCrypto.Verify(signature, msg, kh)
-}

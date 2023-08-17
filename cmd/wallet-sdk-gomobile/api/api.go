@@ -35,10 +35,6 @@ type Crypto interface {
 	// 		signature as []byte
 	//		error in case of errors
 	Sign(msg []byte, keyID string) ([]byte, error)
-	// Verify will verify a signature for the given msg using a matching signature primitive from key referenced by keyID
-	// returns:
-	// 		error in case of errors or nil if signature verification was successful
-	Verify(signature, msg []byte, keyID string) error
 }
 
 // LDDocument is linked domains document.

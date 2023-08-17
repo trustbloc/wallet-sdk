@@ -65,28 +65,7 @@ func NewInteraction(args *Args, opts *Opts) (*Interaction, error) { //nolint:fun
 		opts.AddHeader(oTel.TraceHeader())
 	}
 
-	jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
-		common.NewVDRKeyResolver(&wrapper.VDRResolverWrapper{
-			DIDResolver: args.didRes,
-		}).PublicKeyFetcher()))
-
-	httpClient := wrapper.NewHTTPClient(opts.httpTimeout, opts.additionalHeaders, opts.disableHTTPClientTLSVerification)
-
-	goAPIOpts := []openid4vp.Opt{openid4vp.WithHTTPClient(httpClient)}
-
-	if opts.activityLogger != nil {
-		mobileActivityLoggerWrapper := &wrapper.MobileActivityLoggerWrapper{
-			MobileAPIActivityLogger: opts.activityLogger,
-		}
-
-		goAPIOpts = append(goAPIOpts, openid4vp.WithActivityLogger(mobileActivityLoggerWrapper))
-	}
-
-	if opts.metricsLogger != nil {
-		mobileMetricsLoggerWrapper := &wrapper.MobileMetricsLoggerWrapper{MobileAPIMetricsLogger: opts.metricsLogger}
-
-		goAPIOpts = append(goAPIOpts, openid4vp.WithMetricsLogger(mobileMetricsLoggerWrapper))
-	}
+	goAPIOpts := toGoAPIOpts(opts)
 
 	var goAPIDocumentLoader ld.DocumentLoader
 
@@ -111,6 +90,11 @@ func NewInteraction(args *Args, opts *Opts) (*Interaction, error) { //nolint:fun
 	if err != nil {
 		return nil, err
 	}
+
+	jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
+		common.NewVDRKeyResolver(&wrapper.VDRResolverWrapper{
+			DIDResolver: args.didRes,
+		}).PublicKeyFetcher()))
 
 	goAPIInteraction, err := openid4vp.NewInteraction(
 		args.authorizationRequest,
@@ -178,6 +162,33 @@ func (o *Interaction) OTelTraceID() string {
 	}
 
 	return traceID
+}
+
+func toGoAPIOpts(opts *Opts) []openid4vp.Opt {
+	httpClient := wrapper.NewHTTPClient(opts.httpTimeout, opts.additionalHeaders, opts.disableHTTPClientTLSVerification)
+
+	goAPIOpts := []openid4vp.Opt{openid4vp.WithHTTPClient(httpClient)}
+
+	if opts.activityLogger != nil {
+		mobileActivityLoggerWrapper := &wrapper.MobileActivityLoggerWrapper{
+			MobileAPIActivityLogger: opts.activityLogger,
+		}
+
+		goAPIOpts = append(goAPIOpts, openid4vp.WithActivityLogger(mobileActivityLoggerWrapper))
+	}
+
+	if opts.metricsLogger != nil {
+		mobileMetricsLoggerWrapper := &wrapper.MobileMetricsLoggerWrapper{MobileAPIMetricsLogger: opts.metricsLogger}
+
+		goAPIOpts = append(goAPIOpts, openid4vp.WithMetricsLogger(mobileMetricsLoggerWrapper))
+	}
+
+	if opts.kms != nil {
+		goAPIOpts = append(goAPIOpts,
+			openid4vp.WithDIProofs(opts.kms.GoAPILocalKMS.AriesCrypto, opts.kms.GoAPILocalKMS.AriesLocalKMS))
+	}
+
+	return goAPIOpts
 }
 
 func unwrapVCs(vcs *verifiable.CredentialsArray) []*afgoverifiable.Credential {

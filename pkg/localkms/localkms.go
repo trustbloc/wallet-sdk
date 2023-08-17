@@ -27,8 +27,8 @@ import (
 // Private keys may intermittently reside in local memory with this implementation so
 // keep this consideration in mind when deciding whether to use this or not.
 type LocalKMS struct {
-	ariesLocalKMS *arieslocalkms.LocalKMS
-	ariesCrypto   crypto.Crypto
+	AriesLocalKMS *arieslocalkms.LocalKMS
+	AriesCrypto   crypto.Crypto
 }
 
 // Config is config for local kms constructor.
@@ -54,7 +54,7 @@ func NewLocalKMS(cfg Config) (*LocalKMS, error) {
 		return nil, walleterror.NewExecutionError(module, InitialisationFailedCode, InitialisationFailedError, err)
 	}
 
-	return &LocalKMS{ariesLocalKMS: ariesLocalKMS, ariesCrypto: ariesCrypto}, nil
+	return &LocalKMS{AriesLocalKMS: ariesLocalKMS, AriesCrypto: ariesCrypto}, nil
 }
 
 // Create creates a keyset of the given keyType and then writes it to storage.
@@ -64,7 +64,7 @@ func NewLocalKMS(cfg Config) (*LocalKMS, error) {
 //   - JSON byte string containing the JWK for the keyset's public key.
 //   - JWK object for the same public key.
 func (k *LocalKMS) Create(keyType arieskms.KeyType) (string, *jwk.JWK, error) {
-	keyID, publicKey, err := k.ariesLocalKMS.CreateAndExportPubKeyBytes(keyType)
+	keyID, publicKey, err := k.AriesLocalKMS.CreateAndExportPubKeyBytes(keyType)
 	if err != nil {
 		return "", nil, walleterror.NewExecutionError(module, CreateKeyFailedCode, CreateKeyFailedError, err)
 	}
@@ -87,7 +87,7 @@ func (k *LocalKMS) ExportPubKey(string) (*jwk.JWK, error) {
 // GetCrypto returns Crypto instance that can perform crypto ops with keys created by this kms.
 func (k *LocalKMS) GetCrypto() goapi.Crypto {
 	return &AriesCryptoWrapper{
-		cryptosKMS:    k.ariesLocalKMS,
-		wrappedCrypto: k.ariesCrypto,
+		cryptosKMS:    k.AriesLocalKMS,
+		wrappedCrypto: k.AriesCrypto,
 	}
 }

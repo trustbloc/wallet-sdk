@@ -1540,6 +1540,8 @@ func getTestClientConfig(t *testing.T) *openid4ci.ClientConfig {
 		DIDResolver:                      didResolver,
 		DisableVCProofChecks:             true,
 		NetworkDocumentLoaderHTTPTimeout: &networkDocumentLoaderHTTPTimeout,
+		Verifier:                         localKMS.AriesCrypto,
+		KMS:                              localKMS.AriesLocalKMS,
 	}
 }
 

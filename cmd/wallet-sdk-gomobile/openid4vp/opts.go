@@ -9,6 +9,8 @@ package openid4vp
 import (
 	"time"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
+
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )
 
@@ -21,6 +23,7 @@ type Opts struct {
 	disableHTTPClientTLSVerification bool
 	disableOpenTelemetry             bool
 	httpTimeout                      *time.Duration
+	kms                              *localkms.KMS
 }
 
 // NewOpts returns a new Opts object.
@@ -86,6 +89,14 @@ func (o *Opts) DisableHTTPClientTLSVerify() *Opts {
 // DisableOpenTelemetry disables sending of open telemetry header.
 func (o *Opts) DisableOpenTelemetry() *Opts {
 	o.disableOpenTelemetry = true
+
+	return o
+}
+
+// EnableAddingDIProofs enables the adding of data integrity proofs to presentations sent to the verifier. It requires
+// a KMS to be passed in.
+func (o *Opts) EnableAddingDIProofs(kms *localkms.KMS) *Opts {
+	o.kms = kms
 
 	return o
 }

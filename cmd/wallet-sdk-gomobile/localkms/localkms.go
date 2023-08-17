@@ -49,7 +49,7 @@ type Store interface {
 // Private keys may intermittently reside in local memory with this implementation so
 // keep this consideration in mind when deciding whether to use this or not.
 type KMS struct {
-	goAPILocalKMS *goapilocalkms.LocalKMS
+	GoAPILocalKMS *goapilocalkms.LocalKMS
 }
 
 // NewKMS returns a new local KMS instance.
@@ -65,13 +65,13 @@ func NewKMS(kmsStore Store) (*KMS, error) {
 		return nil, err
 	}
 
-	return &KMS{goAPILocalKMS: goAPILocalKMS}, nil
+	return &KMS{GoAPILocalKMS: goAPILocalKMS}, nil
 }
 
 // Create creates a keyset of the given keyType and then writes it to storage.
 // The public key JWK for the newly generated keyset is returned.
 func (k *KMS) Create(keyType string) (*api.JSONWebKey, error) {
-	_, pkJWK, err := k.goAPILocalKMS.Create(kmsspi.KeyType(keyType))
+	_, pkJWK, err := k.GoAPILocalKMS.Create(kmsspi.KeyType(keyType))
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (k *KMS) Create(keyType string) (*api.JSONWebKey, error) {
 
 // ExportPubKey returns the public key associated with the given keyID as a JWK.
 func (k *KMS) ExportPubKey(keyID string) (*api.JSONWebKey, error) {
-	pkJWK, err := k.goAPILocalKMS.ExportPubKey(keyID)
+	pkJWK, err := k.GoAPILocalKMS.ExportPubKey(keyID)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (k *KMS) ExportPubKey(keyID string) (*api.JSONWebKey, error) {
 
 // GetCrypto returns Crypto instance that can perform crypto ops with keys created by this kms.
 func (k *KMS) GetCrypto() api.Crypto {
-	return k.goAPILocalKMS.GetCrypto()
+	return k.GoAPILocalKMS.GetCrypto()
 }
 
 // kmsStoreWrapper is a wrapper around the Store interface defined here. Its purpose is to convert any Store.Get
