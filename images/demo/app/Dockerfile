@@ -37,4 +37,3 @@ RUN flutter build web
 # Create the run-time image
 FROM nginx:stable-alpine3.17-slim
 COPY --from=build-env /usr/local/bin/app/build/web /usr/share/nginx/html
-COPY --from=build-env /usr/local/bin/app/build/flutter_assets /usr/share/nginx/html
