@@ -205,11 +205,11 @@ type cryptoMock struct {
 	Err       error
 }
 
-func (c *cryptoMock) Sign(msg []byte, keyID string) ([]byte, error) {
+func (c *cryptoMock) Sign([]byte, string) ([]byte, error) {
 	return c.Signature, c.Err
 }
 
 // Verify is not yet defined.
-func (c *cryptoMock) Verify(signature, msg []byte, keyID string) error {
+func (c *cryptoMock) Verify([]byte, []byte, string) error {
 	return nil
 }

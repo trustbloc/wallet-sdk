@@ -44,6 +44,6 @@ func (c *HTTPClientMock) Do(req *http.Request) (*http.Response, error) {
 
 	return &http.Response{
 		StatusCode: c.StatusCode,
-		Body:       io.NopCloser(bytes.NewBuffer([]byte(c.Response))),
+		Body:       io.NopCloser(bytes.NewBufferString(c.Response)),
 	}, nil
 }

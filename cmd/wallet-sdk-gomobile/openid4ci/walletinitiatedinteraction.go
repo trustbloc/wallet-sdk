@@ -121,7 +121,8 @@ func (i *WalletInitiatedInteraction) CreateAuthorizationURL(clientID, redirectUR
 // The redirect URI that you pass in here should look like the redirect URI that you passed in to the
 // CreateAuthorizationURL, except that now it has some URL query parameters appended to it.
 func (i *WalletInitiatedInteraction) RequestCredential(vm *api.VerificationMethod,
-	redirectURIWithAuthCode string, opts *RequestCredentialWithAuthOpts,
+	redirectURIWithAuthCode string,
+	opts *RequestCredentialWithAuthOpts, //nolint: revive // The opts param is reserved for future use.
 ) (*verifiable.CredentialsArray, error) {
 	signer, err := createSigner(vm, i.crypto)
 	if err != nil {

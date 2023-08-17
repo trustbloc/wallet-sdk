@@ -51,6 +51,6 @@ type documentLoaderMock struct {
 	LoadErr    error
 }
 
-func (d *documentLoaderMock) LoadDocument(u string) (*api.LDDocument, error) {
+func (d *documentLoaderMock) LoadDocument(string) (*api.LDDocument, error) {
 	return d.LoadResult, d.LoadErr
 }

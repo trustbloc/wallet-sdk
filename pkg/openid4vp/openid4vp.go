@@ -207,7 +207,7 @@ func (o *Interaction) presentCredentials(credentials []*verifiable.Credential, o
 func (o *Interaction) sendAuthorizedResponse(responseBody string) error {
 	_, err := httprequest.New(o.httpClient, o.metricsLogger).Do(http.MethodPost,
 		o.requestObject.RedirectURI, "application/x-www-form-urlencoded",
-		bytes.NewBuffer([]byte(responseBody)),
+		bytes.NewBufferString(responseBody),
 		fmt.Sprintf(sendAuthorizedResponseEventText, o.requestObject.RedirectURI),
 		presentCredentialEventText, processAuthorizationErrorResponse)
 
@@ -548,7 +548,7 @@ type resolverAdapter struct {
 	didResolver api.DIDResolver
 }
 
-func (r *resolverAdapter) Resolve(did string, opts ...vdrspi.DIDMethodOption) (*diddoc.DocResolution, error) {
+func (r *resolverAdapter) Resolve(did string, _ ...vdrspi.DIDMethodOption) (*diddoc.DocResolution, error) {
 	return r.didResolver.Resolve(did)
 }
 

@@ -23,7 +23,7 @@ type mockServer struct {
 	headersToCheck *api.Headers
 }
 
-func (m *mockServer) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+func (m *mockServer) ServeHTTP(_ http.ResponseWriter, request *http.Request) {
 	if m.headersToCheck != nil {
 		for _, headerToCheck := range m.headersToCheck.GetAll() {
 			// Note: for these tests, we're assuming that there aren't multiple values under a single name/key.
