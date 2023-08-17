@@ -726,7 +726,7 @@ type jwtSignatureVerifierMock struct {
 	err error
 }
 
-func (s *jwtSignatureVerifierMock) Verify(joseHeaders jose.Headers, payload, signingInput, signature []byte) error {
+func (s *jwtSignatureVerifierMock) Verify(jose.Headers, []byte, []byte, []byte) error {
 	return s.err
 }
 

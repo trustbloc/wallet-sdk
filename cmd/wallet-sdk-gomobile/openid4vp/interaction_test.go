@@ -228,7 +228,7 @@ func (c *mockCrypto) Sign(_ []byte, _ string) ([]byte, error) {
 	return c.SignResult, c.SignErr
 }
 
-func (c *mockCrypto) Verify(signature, msg []byte, keyID string) error {
+func (c *mockCrypto) Verify([]byte, []byte, string) error {
 	return c.VerifyErr
 }
 

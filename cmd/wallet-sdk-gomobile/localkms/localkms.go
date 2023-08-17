@@ -123,6 +123,6 @@ func (k *kmsStoreWrapper) Get(keysetID string) ([]byte, error) {
 
 // Delete isn't used since we don't expose the Rotate method from the underlying Aries local KMS.
 // This method is just here as it's required to satisfy the Aries KMS store interface.
-func (k *kmsStoreWrapper) Delete(keysetID string) error {
+func (k *kmsStoreWrapper) Delete(string) error {
 	return nil
 }

@@ -122,7 +122,7 @@ type readerMock struct {
 	err         error
 }
 
-func (r *readerMock) Get(id string) (*verifiable.Credential, error) {
+func (r *readerMock) Get(string) (*verifiable.Credential, error) {
 	return nil, r.err
 }
 

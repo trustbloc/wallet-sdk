@@ -54,6 +54,6 @@ type mocksDIDResolver struct {
 	ResolveErr      error
 }
 
-func (m *mocksDIDResolver) Resolve(did string) ([]byte, error) {
+func (m *mocksDIDResolver) Resolve(string) ([]byte, error) {
 	return m.ResolveDocBytes, m.ResolveErr
 }

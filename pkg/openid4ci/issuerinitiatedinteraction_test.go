@@ -1587,7 +1587,7 @@ func (s *jwtSignerMock) GetKeyID() string {
 	return s.keyID
 }
 
-func (s *jwtSignerMock) Sign(data []byte) ([]byte, error) {
+func (s *jwtSignerMock) Sign([]byte) ([]byte, error) {
 	return []byte("test signature"), s.Err
 }
 
