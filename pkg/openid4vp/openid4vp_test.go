@@ -19,9 +19,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
-
 	"github.com/google/uuid"
+	"github.com/hyperledger/aries-framework-go/component/kmscrypto/crypto/tinkcrypto"
 	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose"
 	"github.com/hyperledger/aries-framework-go/component/models/did"
 	"github.com/hyperledger/aries-framework-go/component/models/presexch"
@@ -31,6 +30,8 @@ import (
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/mock"
+	"github.com/trustbloc/wallet-sdk/pkg/localkms"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 var (
@@ -490,7 +491,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 					&didResolverMock{ResolveValue: mockDoc},
 					&cryptoMock{},
 					lddl,
-					nil,
+					&presentOpts{},
 				)
 
 				require.Error(t, err)
@@ -503,12 +504,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		expectErr := errors.New("resolve failed")
 
 		_, err := createAuthorizedResponse(singleCred, mockRequestObject,
-			&didResolverMock{ResolveErr: expectErr}, &cryptoMock{}, lddl, nil)
-		require.ErrorIs(t, err, expectErr)
-
-		_, err = createAuthorizedResponse(credentials, mockRequestObject,
-			&didResolverMock{ResolveErr: expectErr}, &cryptoMock{}, lddl, nil)
-
+			&didResolverMock{ResolveErr: expectErr}, &cryptoMock{}, lddl, &presentOpts{})
 		require.ErrorIs(t, err, expectErr)
 	})
 
@@ -534,6 +530,49 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		)
 
 		require.ErrorIs(t, err, expectErr)
+	})
+
+	t.Run("fail to add data integrity proof", func(t *testing.T) {
+		t.Run("single credential", func(t *testing.T) {
+			tinkCrypto, err := tinkcrypto.New()
+			require.NoError(t, err)
+
+			localKMS, err := localkms.NewLocalKMS(localkms.Config{
+				Storage: localkms.NewMemKMSStore(),
+			})
+			require.NoError(t, err)
+
+			_, err = createAuthorizedResponse(
+				singleCred,
+				mockRequestObject,
+				&didResolverMock{ResolveValue: mockDoc},
+				&cryptoMock{},
+				lddl,
+				&presentOpts{signer: tinkCrypto, kms: localKMS.AriesLocalKMS},
+			)
+			require.EqualError(t, err,
+				"failed to add data integrity proof to VP: data integrity proof generation error")
+		})
+		t.Run("multiple credentials", func(t *testing.T) {
+			tinkCrypto, err := tinkcrypto.New()
+			require.NoError(t, err)
+
+			localKMS, err := localkms.NewLocalKMS(localkms.Config{
+				Storage: localkms.NewMemKMSStore(),
+			})
+			require.NoError(t, err)
+
+			_, err = createAuthorizedResponse(
+				credentials,
+				mockRequestObject,
+				&didResolverMock{ResolveValue: mockDoc},
+				&cryptoMock{},
+				lddl,
+				&presentOpts{signer: tinkCrypto, kms: localKMS.AriesLocalKMS},
+			)
+			require.EqualError(t, err,
+				"failed to add data integrity proof to VP: data integrity proof generation error")
+		})
 	})
 
 	t.Run("fail to send authorized response", func(t *testing.T) {

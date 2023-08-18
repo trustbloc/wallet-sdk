@@ -9,7 +9,7 @@ go 1.20
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230718141804-b2fdf798c242
+	github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230815195733-cce322df1e8f
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20230615141038-5d444d6c36de
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.1
@@ -83,6 +83,7 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.12.0 // indirect
+	golang.org/x/exp v0.0.0-20230728194245-b0cb94b80691 // indirect
 	golang.org/x/net v0.14.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

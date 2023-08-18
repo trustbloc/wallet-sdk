@@ -672,6 +672,8 @@ func getTestArgs(t *testing.T, initiateIssuanceURI string, kms *localkms.KMS,
 	timeout := time.Second * 10
 	opts.SetHTTPTimeoutNanoseconds(timeout.Nanoseconds())
 
+	opts.EnableDIProofChecks(kms)
+
 	if activityLogger != nil {
 		opts.SetActivityLogger(activityLogger)
 	}

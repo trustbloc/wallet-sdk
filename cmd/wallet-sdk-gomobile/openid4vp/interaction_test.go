@@ -17,6 +17,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
+
 	"github.com/hyperledger/aries-framework-go/component/models/did"
 	"github.com/hyperledger/aries-framework-go/component/models/presexch"
 	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
@@ -76,10 +82,15 @@ func TestNewInteraction(t *testing.T) {
 			// Note: in-depth testing of opts functionality is done in the integration tests.
 			opts := NewOpts()
 			opts.SetDocumentLoader(&documentLoaderWrapper{goAPIDocumentLoader: testutil.DocumentLoader(t)})
-			opts.SetActivityLogger(nil)
-			opts.SetMetricsLogger(nil)
+			opts.SetActivityLogger(mem.NewActivityLogger())
+			opts.SetMetricsLogger(stderr.NewMetricsLogger())
 			opts.DisableHTTPClientTLSVerify()
 			opts.SetHTTPTimeoutNanoseconds(0)
+
+			localKMS, err := localkms.NewKMS(localkms.NewMemKMSStore())
+			require.NoError(t, err)
+
+			opts.EnableAddingDIProofs(localKMS)
 
 			instance, err := NewInteraction(requiredArgs, opts)
 			require.NoError(t, err)

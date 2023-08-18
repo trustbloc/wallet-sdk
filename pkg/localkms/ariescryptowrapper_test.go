@@ -35,9 +35,6 @@ func TestAriesCryptoWrapper(t *testing.T) {
 		signature, err := wrapper.Sign([]byte("test data"), "testID")
 		require.NoError(t, err)
 		require.Equal(t, []byte("test signature"), signature)
-
-		err = wrapper.Verify(signature, []byte("test data"), "testID")
-		require.NoError(t, err)
 	})
 
 	t.Run("Success did key id", func(t *testing.T) {
@@ -67,9 +64,6 @@ func TestAriesCryptoWrapper(t *testing.T) {
 		)
 
 		_, err := wrapper.Sign([]byte("test data"), "testID")
-		require.Error(t, err)
-
-		err = wrapper.Verify([]byte("test signature"), []byte("test data"), "testID")
 		require.Error(t, err)
 	})
 }

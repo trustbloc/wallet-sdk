@@ -20,18 +20,20 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
-
-	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
+	"github.com/hyperledger/aries-framework-go/spi/kms"
 
 	"github.com/google/uuid"
-	"github.com/trustbloc/wallet-sdk/pkg/api"
-	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
-	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
-
+	"github.com/hyperledger/aries-framework-go/component/models/dataintegrity"
+	"github.com/hyperledger/aries-framework-go/component/models/dataintegrity/suite/ecdsa2019"
+	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 	"golang.org/x/oauth2"
+
+	"github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
+	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 // This is a common object shared by both the IssuerInitiatedInteraction and WalletInitiatedInteraction objects.
@@ -50,14 +52,10 @@ type interaction struct {
 	httpClient           *http.Client
 	authCodeURLState     string
 	codeVerifier         string
+	verifier             ecdsa2019.Verifier
+	kms                  kms.KeyManager
 }
 
-// createAuthorizationURL creates an authorization URL that can be opened in a browser to proceed to the login page.
-// It is the first step in the authorization code flow.
-// It creates the authorization URL that can be opened in a browser to proceed to the login page.
-// This method can only be used if the issuer supports authorization code grants.
-// Check the issuer's capabilities first using the Capabilities method.
-// If scopes are needed, pass them in using the WithScopes option.
 func (i *interaction) createAuthorizationURL(clientID, redirectURI, format string, types []string, issuerState *string,
 	scopes []string, useOAuthDiscoverableClientIDScheme bool,
 ) (string, error) {
@@ -513,6 +511,22 @@ func (i *interaction) getVCsFromCredentialResponses(
 	credentialOpts := []verifiable.CredentialOpt{
 		verifiable.WithJSONLDDocumentLoader(i.documentLoader),
 		verifiable.WithPublicKeyFetcher(vdrKeyResolver.PublicKeyFetcher()),
+	}
+
+	if i.verifier != nil && i.kms != nil {
+		opts := dataintegrity.Options{DIDResolver: i.didResolver}
+
+		dataIntegrityVerifier, err := dataintegrity.NewVerifier(&opts,
+			ecdsa2019.NewVerifierInitializer(&ecdsa2019.VerifierInitializerOptions{
+				LDDocumentLoader: i.documentLoader,
+				Verifier:         i.verifier,
+				KMS:              i.kms,
+			}))
+		if err != nil {
+			return nil, err
+		}
+
+		credentialOpts = append(credentialOpts, verifiable.WithDataIntegrityVerifier(dataIntegrityVerifier))
 	}
 
 	if i.disableVCProofChecks {

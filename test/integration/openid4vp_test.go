@@ -85,6 +85,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			walletDIDMethod:    "ion",
 			verifierProfileID:  "v_ldp_university_degree_sd_bbs",
 			matchedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeSD),
+			signingKeyType:     "ECDSAP256IEEEP1363", // Will result in a DI proof being added to the presentation
 		},
 		{
 			issuerProfileIDs:  []string{"university_degree_issuer"},
@@ -181,6 +182,11 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		interactionOptionalArgs.SetActivityLogger(activityLogger)
 		interactionOptionalArgs.SetMetricsLogger(metricsLogger)
 		interactionOptionalArgs.DisableHTTPClientTLSVerify()
+		// DI proofs are only supported for certain key types, so if we're not using a compatible one then we'll need to
+		// skip adding one.
+		if tc.signingKeyType == "ECDSAP256IEEEP1363" {
+			interactionOptionalArgs.EnableAddingDIProofs(testHelper.KMS)
+		}
 
 		interaction, err := openid4vp.NewInteraction(interactionRequiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)

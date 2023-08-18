@@ -21,10 +21,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose"
+	"github.com/hyperledger/aries-framework-go/component/models/dataintegrity"
+	"github.com/hyperledger/aries-framework-go/component/models/dataintegrity/suite/ecdsa2019"
 	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
 	"github.com/hyperledger/aries-framework-go/component/models/jwt"
 	"github.com/hyperledger/aries-framework-go/component/models/presexch"
 	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
+	"github.com/hyperledger/aries-framework-go/spi/kms"
 	vdrspi "github.com/hyperledger/aries-framework-go/spi/vdr"
 	"github.com/piprate/json-gold/ld"
 
@@ -46,6 +49,14 @@ const (
 	sendAuthorizedResponseEventText = "Send authorized response via an HTTP POST request to %s"
 )
 
+type didResolverWrapper struct {
+	didResolver api.DIDResolver
+}
+
+func (d *didResolverWrapper) Resolve(did string, _ ...vdrspi.DIDMethodOption) (*diddoc.DocResolution, error) {
+	return d.didResolver.Resolve(did)
+}
+
 type jwtSignatureVerifier interface {
 	Verify(joseHeaders jose.Headers, payload, signingInput, signature []byte) error
 }
@@ -63,6 +74,8 @@ type Interaction struct {
 	didResolver    api.DIDResolver
 	crypto         api.Crypto
 	documentLoader ld.DocumentLoader
+	signer         ecdsa2019.Signer
+	keyManager     kms.KeyManager
 }
 
 type authorizedResponse struct {
@@ -81,7 +94,7 @@ func NewInteraction(
 	documentLoader ld.DocumentLoader,
 	opts ...Opt,
 ) (*Interaction, error) {
-	client, activityLogger, metricsLogger := processOpts(opts)
+	client, activityLogger, metricsLogger, signer, keyManager := processOpts(opts)
 
 	var rawRequestObject string
 
@@ -113,6 +126,8 @@ func NewInteraction(
 		didResolver:    didResolver,
 		crypto:         crypto,
 		documentLoader: documentLoader,
+		signer:         signer,
+		keyManager:     keyManager,
 	}, nil
 }
 
@@ -133,13 +148,15 @@ func (o *Interaction) VerifierDisplayData() *VerifierDisplayData {
 
 type presentOpts struct {
 	ignoreConstraints bool
+	signer            ecdsa2019.Signer
+	kms               kms.KeyManager
 }
 
 // PresentCredential presents credentials to redirect uri from request object.
 func (o *Interaction) PresentCredential(credentials []*verifiable.Credential) error {
 	return o.presentCredentials(
 		credentials,
-		&presentOpts{},
+		&presentOpts{signer: o.signer, kms: o.keyManager},
 	)
 }
 
@@ -291,11 +308,12 @@ func createAuthorizedResponse(
 	case 1:
 		return createAuthorizedResponseOneCred(credentials[0], requestObject, didResolver, crypto, documentLoader, opts)
 	default:
-		return createAuthorizedResponseMultiCred(credentials, requestObject, didResolver, crypto, documentLoader)
+		return createAuthorizedResponseMultiCred(credentials, requestObject, didResolver, crypto, documentLoader,
+			opts.signer, opts.kms)
 	}
 }
 
-func createAuthorizedResponseOneCred( //nolint:funlen
+func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decompose without a major reworking
 	credential *verifiable.Credential,
 	requestObject *requestObject,
 	didResolver api.DIDResolver,
@@ -303,15 +321,6 @@ func createAuthorizedResponseOneCred( //nolint:funlen
 	documentLoader ld.DocumentLoader,
 	opts *presentOpts,
 ) (*authorizedResponse, error) {
-	var (
-		err        error
-		vpTokenJWS string
-		did        string
-		signer     api.JWTSigner
-	)
-
-	var presentation *verifiable.Presentation
-
 	pd := requestObject.Claims.VPToken.PresentationDefinition
 
 	if opts != nil && opts.ignoreConstraints {
@@ -320,7 +329,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen
 		}
 	}
 
-	presentation, err = pd.CreateVP(
+	presentation, err := pd.CreateVP(
 		[]*verifiable.Credential{credential},
 		documentLoader,
 		verifiable.WithDisabledProofCheck(),
@@ -331,12 +340,19 @@ func createAuthorizedResponseOneCred( //nolint:funlen
 		return nil, err
 	}
 
-	did, err = verifiable.SubjectID(credential.Subject)
+	did, err := verifiable.SubjectID(credential.Subject)
 	if err != nil || did == "" {
 		return nil, fmt.Errorf("presentation VC does not have a subject ID")
 	}
 
-	signer, err = getHolderSigner(did, didResolver, crypto)
+	if opts != nil && opts.signer != nil && opts.kms != nil {
+		err = addDataIntegrityProof(did, didResolver, documentLoader, opts.signer, opts.kms, presentation)
+		if err != nil {
+			return nil, fmt.Errorf("failed to add data integrity proof to VP: %w", err)
+		}
+	}
+
+	jwtSigner, err := getHolderSigner(did, didResolver, crypto)
 	if err != nil {
 		return nil, err
 	}
@@ -345,7 +361,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen
 
 	presentation.CustomFields["presentation_submission"] = nil
 
-	idTokenJWS, err := createIDToken(requestObject, presentationSubmission, did, signer)
+	idTokenJWS, err := createIDToken(requestObject, presentationSubmission, did, jwtSigner)
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +377,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen
 		Jti:   uuid.NewString(),
 	}
 
-	vpTokenJWS, err = signToken(vpTok, signer)
+	vpTokenJWS, err := signToken(vpTok, jwtSigner)
 	if err != nil {
 		return nil, fmt.Errorf("sign vp_token: %w", err)
 	}
@@ -369,12 +385,14 @@ func createAuthorizedResponseOneCred( //nolint:funlen
 	return &authorizedResponse{IDTokenJWS: idTokenJWS, VPTokenJWS: vpTokenJWS, State: requestObject.State}, nil
 }
 
-func createAuthorizedResponseMultiCred( //nolint:funlen
+func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to decompose without a major reworking
 	credentials []*verifiable.Credential,
 	requestObject *requestObject,
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
+	signer ecdsa2019.Signer,
+	keyManager kms.KeyManager,
 ) (*authorizedResponse, error) {
 	pd := requestObject.Claims.VPToken.PresentationDefinition
 
@@ -398,6 +416,13 @@ func createAuthorizedResponseMultiCred( //nolint:funlen
 			return nil, e
 		}
 
+		if signer != nil && keyManager != nil {
+			err = addDataIntegrityProof(holderDID, didResolver, documentLoader, signer, keyManager, presentation)
+			if err != nil {
+				return nil, fmt.Errorf("failed to add data integrity proof to VP: %w", err)
+			}
+		}
+
 		signer, e := getHolderSigner(holderDID, didResolver, crypto)
 		if e != nil {
 			return nil, e
@@ -405,6 +430,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen
 
 		signers[holderDID] = signer
 
+		// TODO: Fix this issue: the vpToken always uses the last presentation from the loop above
 		vpTok := vpTokenClaims{
 			VP:    presentation,
 			Nonce: requestObject.Nonce,
@@ -444,6 +470,34 @@ func createAuthorizedResponseMultiCred( //nolint:funlen
 		VPTokenJWS: string(vpTokenListJSON),
 		State:      requestObject.State,
 	}, nil
+}
+
+func addDataIntegrityProof(did string, didResolver api.DIDResolver, documentLoader ld.DocumentLoader,
+	signer ecdsa2019.Signer, keyManager kms.KeyManager, presentation *verifiable.Presentation,
+) error {
+	context := &verifiable.DataIntegrityProofContext{
+		SigningKeyID: did,
+		CryptoSuite:  ecdsa2019.SuiteType,
+	}
+
+	signerOpts := dataintegrity.Options{DIDResolver: &didResolverWrapper{didResolver: didResolver}}
+
+	dataIntegrityVerifier, err := dataintegrity.NewSigner(&signerOpts,
+		ecdsa2019.NewSignerInitializer(&ecdsa2019.SignerInitializerOptions{
+			LDDocumentLoader: documentLoader,
+			Signer:           signer,
+			KMS:              keyManager,
+		}))
+	if err != nil {
+		return err
+	}
+
+	err = presentation.AddDataIntegrityProof(context, dataIntegrityVerifier)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func createIDToken(

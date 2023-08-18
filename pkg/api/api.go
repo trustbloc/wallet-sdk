@@ -74,8 +74,6 @@ type CredentialWriter interface {
 type Crypto interface {
 	// Sign will sign msg using a matching signature primitive from key referenced by keyID
 	Sign(msg []byte, keyID string) ([]byte, error)
-	// Verify will verify a signature for the given msg using a matching signature primitive from key referenced by keyID
-	Verify(signature, msg []byte, keyID string) error
 }
 
 // JWTSigner defines interface for JWT signing operation.

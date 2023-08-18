@@ -51,6 +51,8 @@ func NewWalletInitiatedInteraction(issuerURI string, config *ClientConfig) (*Wal
 				disableVCProofChecks: config.DisableVCProofChecks,
 				documentLoader:       config.DocumentLoader,
 				httpClient:           config.HTTPClient,
+				verifier:             config.Verifier,
+				kms:                  config.KMS,
 			},
 		}, config.MetricsLogger.Log(&api.MetricsEvent{
 			Event:    newInteractionEventText,

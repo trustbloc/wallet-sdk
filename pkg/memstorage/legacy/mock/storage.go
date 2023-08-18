@@ -65,12 +65,12 @@ func (s *StoreProvider) OpenStore(name string) (storage.Store, error) {
 }
 
 // SetStoreConfig always return a nil error.
-func (s *StoreProvider) SetStoreConfig(name string, config storage.StoreConfiguration) error {
+func (s *StoreProvider) SetStoreConfig(string, storage.StoreConfiguration) error {
 	return s.ErrSetStoreConfig
 }
 
 // GetStoreConfig is not implemented.
-func (s *StoreProvider) GetStoreConfig(name string) (storage.StoreConfiguration, error) {
+func (s *StoreProvider) GetStoreConfig(string) (storage.StoreConfiguration, error) {
 	panic("implement me")
 }
 
@@ -85,7 +85,7 @@ func (s *StoreProvider) Close() error {
 }
 
 // CloseStore closes store for given name space.
-func (s *StoreProvider) CloseStore(name string) error {
+func (s *StoreProvider) CloseStore() error {
 	return s.ErrCloseStore
 }
 
@@ -148,12 +148,12 @@ func (s *Store) Get(k string) ([]byte, error) {
 }
 
 // GetTags is not implemented.
-func (s *Store) GetTags(key string) ([]storage.Tag, error) {
+func (s *Store) GetTags(string) ([]storage.Tag, error) {
 	panic("implement me")
 }
 
 // GetBulk is not implemented.
-func (s *Store) GetBulk(keys ...string) ([][]byte, error) {
+func (s *Store) GetBulk(...string) ([][]byte, error) {
 	panic("implement me")
 }
 

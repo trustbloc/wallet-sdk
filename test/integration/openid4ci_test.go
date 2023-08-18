@@ -219,6 +219,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		interactionOptionalArgs.SetActivityLogger(testHelper.ActivityLogger)
 		interactionOptionalArgs.SetMetricsLogger(testHelper.MetricsLogger)
 		interactionOptionalArgs.DisableHTTPClientTLSVerify()
+		interactionOptionalArgs.EnableDIProofChecks(testHelper.KMS)
 
 		interaction, err := openid4ci.NewIssuerInitiatedInteraction(interactionRequiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)

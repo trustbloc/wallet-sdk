@@ -76,8 +76,8 @@ github.com/hyperledger/aries-framework-go/component/kmscrypto v0.0.0-20230622082
 github.com/hyperledger/aries-framework-go/component/kmscrypto v0.0.0-20230622082138-3ffab1691857/go.mod h1:xgNlHAVQjqwoknzHbXkeHkAJgUxRWKfHXPT3nhVhH3Q=
 github.com/hyperledger/aries-framework-go/component/log v0.0.0-20230615141038-5d444d6c36de h1:SL1mbNu73iPT/vxg/HHCJJGTdLBPh2DXVU3fuxYrIWc=
 github.com/hyperledger/aries-framework-go/component/log v0.0.0-20230615141038-5d444d6c36de/go.mod h1:ud/DVY5ENA3DaMuga1NwN0vsqMtaoZmGbbQYao+fKIg=
-github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230718141804-b2fdf798c242 h1:NGnVWHBsFESM+9m9JGHFF8mtABqGYd+GYPxDootOSHQ=
-github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230718141804-b2fdf798c242/go.mod h1:Qklxf9WG44vpLGF+Efs1aCWeHhsVOU0HFvEslf0RDrQ=
+github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230815195733-cce322df1e8f h1:hNY4RA0X9FP+Py2dn6UpfdXsGR3pNuayWmDLcC8iwQg=
+github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230815195733-cce322df1e8f/go.mod h1:AJkRLmQB1/umL5GfXw/XIarGaH/XCQOL/6wlGtqdDpA=
 github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20230427134832-0c9969493bd3 h1:JGYA9l5zTlvsvfnXT9hYPpCokAjmVKX0/r7njba7OX4=
 github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20230427134832-0c9969493bd3/go.mod h1:aSG2dWjYVzu2PVBtOqsYghaChA5+UUXnBbL+MfVceYQ=
 github.com/hyperledger/aries-framework-go/component/vdr v0.0.0-20230622171716-43af8054a539 h1:QvqSk3CuNXZetpr/hP0bH7VUOzjJUtG16OxknXjdaYE=
@@ -195,6 +195,8 @@ golang.org/x/crypto v0.0.0-20200115085410-6d4e4cb37c7d/go.mod h1:LzIPMQfyMNhhGPh
 golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/crypto v0.1.0 h1:MDRAIl0xIo9Io2xV565hzXHw3zVseKrJKodhohM5CjU=
 golang.org/x/crypto v0.1.0/go.mod h1:RecgLatLF4+eUMCP1PoPZQb+cVrJcOPbHkTkbkB9sbw=
+golang.org/x/exp v0.0.0-20230728194245-b0cb94b80691 h1:/yRP+0AN7mf5DkD3BAI6TOFnd51gEoDEb8o35jIFtgw=
+golang.org/x/exp v0.0.0-20230728194245-b0cb94b80691/go.mod h1:FXUEEKJgO7OQYeo8N01OfiKP8RXMtf6e8aTskBGqWdc=
 golang.org/x/net v0.0.0-20180906233101-161cd47e91fd/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
 golang.org/x/net v0.0.0-20190603091049-60506f45cf65/go.mod h1:HSz+uSET+XFnRR8LxR5pz3Of3rY3CfYBVs4xY44aLks=
