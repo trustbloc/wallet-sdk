@@ -17,7 +17,6 @@ import (
 
 	"github.com/hyperledger/aries-framework-go/component/models/presexch"
 	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
-	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
@@ -25,6 +24,7 @@ import (
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialquery"
+	"github.com/trustbloc/wallet-sdk/pkg/memstorage/legacy"
 )
 
 // Inquirer implements querying credentials using presentation definition.
@@ -55,7 +55,7 @@ func NewInquirer(opts *InquirerOpts) (*Inquirer, error) {
 		}
 
 		var err error
-		goAPIDocumentLoader, err = common.CreateJSONLDDocumentLoader(httpClient, mem.NewProvider())
+		goAPIDocumentLoader, err = common.CreateJSONLDDocumentLoader(httpClient, legacy.NewProvider())
 		if err != nil {
 			return nil, wrapper.ToMobileError(err)
 		}

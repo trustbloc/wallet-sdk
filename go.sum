@@ -85,6 +85,7 @@ github.com/hyperledger/aries-framework-go/component/vdr v0.0.0-20230622171716-43
 github.com/hyperledger/aries-framework-go/spi v0.0.0-20230615141038-5d444d6c36de h1:8taNuOJFN9P23vl2rcoEqhKeF2fxXuHLDpnLld69MeU=
 github.com/hyperledger/aries-framework-go/spi v0.0.0-20230615141038-5d444d6c36de/go.mod h1:6QsNztGTbY1x1rLDodVk3nznsNtd0VlZWgeIHSd5rZw=
 github.com/hyperledger/aries-framework-go/test/component v0.0.0-20220322085443-50e8f9bd208b h1:tq8CYv5vCJBSG2CjWKNt4l1BzZVJUy+GGF4U80fJV8o=
+github.com/hyperledger/aries-framework-go/test/component v0.0.0-20220322085443-50e8f9bd208b/go.mod h1:HojN6OAh8ZtXBe5X2arcSOe1SLo5Dsjqto8ICjSLQ2g=
 github.com/hyperledger/fabric-amcl v0.0.0-20230602173724-9e02669dceb2 h1:B1Nt8hKb//KvgGRprk0h1t4lCnwhE9/ryb1WqfZbV+M=
 github.com/hyperledger/fabric-amcl v0.0.0-20230602173724-9e02669dceb2/go.mod h1:X+DIyUsaTmalOpmpQfIvFZjKHQedrURQ5t4YqquX7lE=
 github.com/hyperledger/ursa-wrapper-go v0.3.1 h1:Do+QrVNniY77YK2jTIcyWqj9rm/Yb5SScN0bqCjiibA=

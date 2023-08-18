@@ -16,11 +16,11 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
+	"github.com/trustbloc/wallet-sdk/pkg/memstorage/legacy"
 	openid4cigoapi "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 
 	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
-	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 )
 
 func createGoAPIClientConfig(didResolver api.DIDResolver, opts *InteractionOpts) (*openid4cigoapi.ClientConfig, error) {
@@ -47,7 +47,7 @@ func createGoAPIClientConfig(didResolver api.DIDResolver, opts *InteractionOpts)
 		dlHTTPClient := wrapper.NewHTTPClient(opts.httpTimeout, api.Headers{}, opts.disableHTTPClientTLSVerification)
 
 		var err error
-		goAPIClientConfig.DocumentLoader, err = common.CreateJSONLDDocumentLoader(dlHTTPClient, mem.NewProvider())
+		goAPIClientConfig.DocumentLoader, err = common.CreateJSONLDDocumentLoader(dlHTTPClient, legacy.NewProvider())
 		if err != nil {
 			return nil, err
 		}

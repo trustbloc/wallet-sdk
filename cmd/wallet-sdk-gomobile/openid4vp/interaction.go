@@ -15,7 +15,6 @@ import (
 	"github.com/hyperledger/aries-framework-go/component/models/jwt"
 	"github.com/hyperledger/aries-framework-go/component/models/presexch"
 	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
-	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 	"github.com/piprate/json-gold/ld"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -24,6 +23,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
+	"github.com/trustbloc/wallet-sdk/pkg/memstorage/legacy"
 	"github.com/trustbloc/wallet-sdk/pkg/openid4vp"
 )
 
@@ -98,7 +98,7 @@ func NewInteraction(args *Args, opts *Opts) (*Interaction, error) { //nolint:fun
 		dlHTTPClient := wrapper.NewHTTPClient(opts.httpTimeout, api.Headers{}, opts.disableHTTPClientTLSVerification)
 
 		var err error
-		goAPIDocumentLoader, err = common.CreateJSONLDDocumentLoader(dlHTTPClient, mem.NewProvider())
+		goAPIDocumentLoader, err = common.CreateJSONLDDocumentLoader(dlHTTPClient, legacy.NewProvider())
 		if err != nil {
 			return nil, wrapper.ToMobileErrorWithTrace(err, oTel)
 		}
