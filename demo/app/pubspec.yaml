@@ -90,6 +90,7 @@ flutter:
    - lib/assets/images/errorVector.png
    - lib/assets/images/success.png
    - lib/assets/images/logoIcon.png
+   - lib/assets/images/logoIcon.png
    - lib/assets/issuerAuthFlowConfig.json
    - lib/assets/walletInitiatedIssuerConfig.json
 

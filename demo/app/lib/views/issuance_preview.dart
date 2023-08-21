@@ -90,8 +90,8 @@ class IssuancePreviewState extends State<IssuancePreview> {
               placeholder: (context, url) => const CircularProgressIndicator(),
               errorWidget: (context, url, error) =>
                   Image.asset('lib/assets/images/logoIcon.png', fit: BoxFit.cover),
-              width: 400,
-              height: 100,
+              width: 60,
+              height: 80,
               fit: BoxFit.cover,
             ),
             SizedBox(

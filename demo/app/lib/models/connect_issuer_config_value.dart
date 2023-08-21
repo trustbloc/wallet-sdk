@@ -5,6 +5,9 @@ class ConnectIssuerConfigValue {
   final String redirectURI;
   final bool showIssuer;
   final String description;
+  final String logo;
+  final String backgroundColor;
+  final String textColor;
 
   ConnectIssuerConfigValue(
       {
@@ -14,6 +17,9 @@ class ConnectIssuerConfigValue {
         required this.redirectURI,
         required this.showIssuer,
         required this.description,
+        required this.logo,
+        required this.backgroundColor,
+        required this.textColor
       });
 
   Map<String, dynamic> toJson() {
@@ -24,6 +30,9 @@ class ConnectIssuerConfigValue {
     data['redirectURI'] = redirectURI;
     data['showIssuer'] = showIssuer;
     data['description'] = description;
+    data['logo'] = logo;
+    data['backgroundColor'] = backgroundColor;
+    data['textColor'] = textColor;
     return data;
   }
 
@@ -34,7 +43,10 @@ class ConnectIssuerConfigValue {
         clientID: json['clientID'],
         redirectURI: json['redirectURI'],
         showIssuer: json['showIssuer'],
-        description: json['description']
+        description: json['description'],
+        logo: json['logo'],
+        backgroundColor: json['backgroundColor'],
+        textColor: json['textColor']
     );
   }
 }
