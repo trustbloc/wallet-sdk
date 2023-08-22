@@ -10,8 +10,8 @@ package jwk
 import (
 	"fmt"
 
-	jwkvdr "github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk"
-	"github.com/hyperledger/aries-framework-go/component/models/did"
+	jwkvdr "github.com/trustbloc/did-go/method/jwk"
+	"github.com/trustbloc/vc-go/did"
 )
 
 // Creator creates did:jwk DID Documents.

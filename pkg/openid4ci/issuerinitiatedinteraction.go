@@ -20,9 +20,9 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 
 	"github.com/google/uuid"
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose"
-	"github.com/hyperledger/aries-framework-go/component/models/jwt"
-	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
+	"github.com/trustbloc/kms-crypto-go/doc/jose"
+	"github.com/trustbloc/vc-go/jwt"
+	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"

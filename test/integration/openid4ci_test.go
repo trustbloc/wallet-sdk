@@ -18,8 +18,8 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/oauth2"
 
-	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/stretchr/testify/require"
+	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"

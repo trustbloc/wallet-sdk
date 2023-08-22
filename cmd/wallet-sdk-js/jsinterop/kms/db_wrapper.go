@@ -15,7 +15,7 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/kms"
+	"github.com/trustbloc/kms-crypto-go/kms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/jssupport"
 )

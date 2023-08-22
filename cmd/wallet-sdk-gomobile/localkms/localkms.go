@@ -12,11 +12,12 @@ package localkms
 import (
 	"errors"
 
-	arieskms "github.com/hyperledger/aries-framework-go/component/kmscrypto/kms"
-	kmsspi "github.com/hyperledger/aries-framework-go/spi/kms"
+	arieskms "github.com/trustbloc/kms-crypto-go/kms"
+	kmsspi "github.com/trustbloc/kms-crypto-go/spi/kms"
+
+	goapilocalkms "github.com/trustbloc/wallet-sdk/pkg/localkms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-	goapilocalkms "github.com/trustbloc/wallet-sdk/pkg/localkms"
 )
 
 const (

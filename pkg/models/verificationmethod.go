@@ -8,8 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package models
 
 import (
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk"
-	"github.com/hyperledger/aries-framework-go/component/models/did"
+	"github.com/trustbloc/kms-crypto-go/doc/jose/jwk"
+	"github.com/trustbloc/vc-go/did"
 )
 
 // VerificationKey holds either a JWK or a raw public key.

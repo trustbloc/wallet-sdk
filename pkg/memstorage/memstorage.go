@@ -11,7 +11,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
+	"github.com/trustbloc/vc-go/verifiable"
 )
 
 // A Provider allows for credential storage and retrieval using in-memory storage only.

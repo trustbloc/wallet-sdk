@@ -13,12 +13,12 @@ import (
 	"testing"
 	"time"
 
-	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
-	afgotime "github.com/hyperledger/aries-framework-go/component/models/util/time"
-	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
-	vdrapi "github.com/hyperledger/aries-framework-go/spi/vdr"
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
+	diddoc "github.com/trustbloc/vc-go/did"
+	vdrapi "github.com/trustbloc/vc-go/spi/vdr"
+	afgotime "github.com/trustbloc/vc-go/util/time"
+	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"

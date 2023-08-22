@@ -12,12 +12,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hyperledger/aries-framework-go-ext/component/vc/status"
-	"github.com/hyperledger/aries-framework-go-ext/component/vc/status/resolver"
-	"github.com/hyperledger/aries-framework-go-ext/component/vc/status/validator"
-	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
-	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
-	vdrspi "github.com/hyperledger/aries-framework-go/spi/vdr"
+	diddoc "github.com/trustbloc/vc-go/did"
+	vdrspi "github.com/trustbloc/vc-go/spi/vdr"
+	"github.com/trustbloc/vc-go/status"
+	"github.com/trustbloc/vc-go/status/resolver"
+	"github.com/trustbloc/vc-go/status/validator"
+	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 )

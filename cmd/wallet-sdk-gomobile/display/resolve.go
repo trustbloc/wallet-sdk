@@ -10,7 +10,7 @@ package display
 import (
 	"errors"
 
-	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
+	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"

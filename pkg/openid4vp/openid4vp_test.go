@@ -20,12 +20,12 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/crypto/tinkcrypto"
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose"
-	"github.com/hyperledger/aries-framework-go/component/models/did"
-	"github.com/hyperledger/aries-framework-go/component/models/presexch"
-	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/stretchr/testify/require"
+	"github.com/trustbloc/kms-crypto-go/crypto/tinkcrypto"
+	"github.com/trustbloc/kms-crypto-go/doc/jose"
+	"github.com/trustbloc/vc-go/did"
+	"github.com/trustbloc/vc-go/presexch"
+	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/pkg/api"

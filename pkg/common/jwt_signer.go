@@ -12,11 +12,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose"
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk"
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/util/jwkkid"
-	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
-	"github.com/hyperledger/aries-framework-go/spi/kms"
+	"github.com/trustbloc/kms-crypto-go/doc/jose"
+	"github.com/trustbloc/kms-crypto-go/doc/jose/jwk"
+	"github.com/trustbloc/kms-crypto-go/doc/util/jwkkid"
+	"github.com/trustbloc/kms-crypto-go/spi/kms"
+	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/models"

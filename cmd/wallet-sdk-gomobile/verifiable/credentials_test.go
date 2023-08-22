@@ -12,9 +12,9 @@ import (
 	_ "embed"
 	"testing"
 
-	afgojwt "github.com/hyperledger/aries-framework-go/component/models/jwt"
-	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/stretchr/testify/require"
+	afgojwt "github.com/trustbloc/vc-go/jwt"
+	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 )

@@ -13,13 +13,13 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 
-	"github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk"
-	"github.com/hyperledger/aries-framework-go-ext/component/vdr/longform"
-	didDoc "github.com/hyperledger/aries-framework-go/component/models/did"
-	"github.com/hyperledger/aries-framework-go/component/vdr"
-	"github.com/hyperledger/aries-framework-go/component/vdr/httpbinding"
-	"github.com/hyperledger/aries-framework-go/component/vdr/key"
-	"github.com/hyperledger/aries-framework-go/component/vdr/web"
+	"github.com/trustbloc/did-go/method/jwk"
+	"github.com/trustbloc/did-go/method/longform"
+	"github.com/trustbloc/did-go/vdr"
+	"github.com/trustbloc/did-go/vdr/httpbinding"
+	"github.com/trustbloc/did-go/vdr/key"
+	"github.com/trustbloc/did-go/vdr/web"
+	didDoc "github.com/trustbloc/vc-go/did"
 
 	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"

@@ -12,9 +12,9 @@ import (
 	"syscall/js"
 	"testing"
 
-	"github.com/hyperledger/aries-framework-go/component/models/presexch"
-	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/stretchr/testify/require"
+	"github.com/trustbloc/vc-go/presexch"
+	"github.com/trustbloc/vc-go/verifiable"
 )
 
 func TestSerializeMatchedSubmissionRequirement(t *testing.T) {

@@ -20,7 +20,7 @@ import (
 	openid4cigoapi "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 
-	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
+	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
 )
 
 func createGoAPIClientConfig(didResolver api.DIDResolver, opts *InteractionOpts) (*openid4cigoapi.ClientConfig, error) {

@@ -11,12 +11,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hyperledger/aries-framework-go/component/models/dataintegrity/suite/ecdsa2019"
-	"github.com/hyperledger/aries-framework-go/spi/kms"
+	"github.com/trustbloc/kms-crypto-go/spi/kms"
+	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
 
-	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
-	"github.com/hyperledger/aries-framework-go/spi/vdr"
 	"github.com/piprate/json-gold/ld"
+	diddoc "github.com/trustbloc/vc-go/did"
+	"github.com/trustbloc/vc-go/spi/vdr"
 
 	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"

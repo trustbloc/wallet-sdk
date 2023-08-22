@@ -15,9 +15,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hyperledger/aries-framework-go/component/models/presexch"
-	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/piprate/json-gold/ld"
+	"github.com/trustbloc/vc-go/presexch"
+	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"

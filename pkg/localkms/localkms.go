@@ -12,12 +12,12 @@ package localkms
 import (
 	"errors"
 
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/crypto/tinkcrypto"
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk"
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/util/jwkkid"
-	arieslocalkms "github.com/hyperledger/aries-framework-go/component/kmscrypto/kms/localkms"
-	"github.com/hyperledger/aries-framework-go/spi/crypto"
-	arieskms "github.com/hyperledger/aries-framework-go/spi/kms"
+	"github.com/trustbloc/kms-crypto-go/crypto/tinkcrypto"
+	"github.com/trustbloc/kms-crypto-go/doc/jose/jwk"
+	"github.com/trustbloc/kms-crypto-go/doc/util/jwkkid"
+	arieslocalkms "github.com/trustbloc/kms-crypto-go/kms/localkms"
+	"github.com/trustbloc/kms-crypto-go/spi/crypto"
+	arieskms "github.com/trustbloc/kms-crypto-go/spi/kms"
 
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
