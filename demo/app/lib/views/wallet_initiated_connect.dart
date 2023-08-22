@@ -65,66 +65,88 @@ class ConnectIssuerListState extends State<ConnectIssuerList> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  color: Colors.grey.shade200,
+                  color: connectIssuerConfigList.elementAt(index).value.backgroundColor.isNotEmpty
+                      ? Color(int.parse(
+                          '0xff${connectIssuerConfigList.elementAt(index).value.backgroundColor.replaceAll('#', '')}'))
+                      : Colors.grey.shade200,
                   clipBehavior: Clip.antiAliasWithSaveLayer,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Container(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+                    Padding(
                         padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              connectIssuerConfigList.elementAt(index).key,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Color(0xff190C21),
-                              ),
-                            ),
-                            // Add a space between the title and the text
-                            Container(height: 10),
-                            Text(
-                              connectIssuerConfigList.elementAt(index).value.description,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                            Container(height: 10),
-                            Row(
+                        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+                          Image.asset(
+                            'lib/assets/images/logoIcon.png',
+                            height:70,
+                            width: 70,
+                            fit: BoxFit.cover,
+                          ),
+                          Container(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
-                                const Spacer(),
-                                PrimaryButton(
-                                  child: const Text(
-                                    "Connect",
-                                    style: TextStyle(color: Colors.white),
+                                Text(
+                                  connectIssuerConfigList.elementAt(index).key,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: connectIssuerConfigList.elementAt(index).value.textColor.isNotEmpty
+                                        ? Color(int.parse(
+                                            '0xff${connectIssuerConfigList.first.value.textColor.replaceAll('#', '')}'))
+                                        : const Color(0xff190C21),
                                   ),
-                                  onPressed: () async {
-                                    var supportedCredentials =
-                                        await connect(connectIssuerConfigList.elementAt(index).value.issuerURI);
-                                    var connectIssuerConfigValue = ConnectIssuerConfigValue(
-                                        issuerURI: "",
-                                        scopes: connectIssuerConfigList.elementAt(index).value.scopes,
-                                        clientID: connectIssuerConfigList.elementAt(index).value.clientID,
-                                        redirectURI: connectIssuerConfigList.elementAt(index).value.redirectURI,
-                                        showIssuer: true,
-                                        description: "");
-                                    _navigateToSupportedCredentialScreen(
-                                        connectIssuerConfigList.elementAt(index).key,
-                                        connectIssuerConfigList.elementAt(index).value.issuerURI,
-                                        supportedCredentials,
-                                        connectIssuerConfigValue);
-                                  },
+                                ),
+                                // Add a space between the title and the text
+                                Container(height: 10),
+                                Text(
+                                  connectIssuerConfigList.elementAt(index).value.description,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: connectIssuerConfigList.elementAt(index).value.textColor.isNotEmpty
+                                        ? Color(int.parse(
+                                            '0xff${connectIssuerConfigList.first.value.textColor.replaceAll('#', '')}'))
+                                        : Colors.grey[700],
+                                  ),
+                                ),
+                                Container(height: 10),
+                                Row(
+                                  children: <Widget>[
+                                    const Spacer(),
+                                    PrimaryButton(
+                                      child: const Text(
+                                        "Connect",
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      onPressed: () async {
+                                        var supportedCredentials =
+                                            await connect(connectIssuerConfigList.elementAt(index).value.issuerURI);
+                                        var connectIssuerConfigValue = ConnectIssuerConfigValue(
+                                            issuerURI: "",
+                                            scopes: connectIssuerConfigList.elementAt(index).value.scopes,
+                                            clientID: connectIssuerConfigList.elementAt(index).value.clientID,
+                                            redirectURI: connectIssuerConfigList.elementAt(index).value.redirectURI,
+                                            showIssuer: true,
+                                            description: "",
+                                            backgroundColor: "",
+                                            textColor: "",
+                                            logo: "");
+                                        _navigateToSupportedCredentialScreen(
+                                            connectIssuerConfigList.elementAt(index).key,
+                                            connectIssuerConfigList.elementAt(index).value.issuerURI,
+                                            supportedCredentials,
+                                            connectIssuerConfigValue);
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
+                          ),
+                          Container(height: 5),
+                        ])
                         ),
-                      ),
-                      Container(height: 5),
-                    ],
-                  ),
+                  ]),
                 );
               },
             ),
