@@ -14,6 +14,7 @@ import 'package:app/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:app/widgets/common_title_appbar.dart';
 import 'package:app/wallet_sdk/wallet_sdk_mobile.dart';
+import 'package:flutter/services.dart';
 
 class ConnectIssuerList extends StatefulWidget {
   const ConnectIssuerList({Key? key}) : super(key: key);
@@ -29,15 +30,18 @@ class ConnectIssuerListState extends State<ConnectIssuerList> {
   final ConfigService _configService = ConfigService();
 
   Future<List<SupportedCredentials>> connect(String issuerURI) async {
-    var supportedCredentialsResp = await walletSDKPlugin.initializeWalletInitiatedFlow(issuerURI);
-    return supportedCredentialsResp;
+    return await walletSDKPlugin.initializeWalletInitiatedFlow(issuerURI);
   }
 
   readConnectIssuerConfig() async {
     connectIssuerConfigList = await _configService.readConnectIssuerConfig();
-    log("${connectIssuerConfigList.length}");
     setState(() {});
   }
+
+  String _requestErrorSubTitleMsg = '';
+  String _requestErrorTitleMsg = '';
+  String? actionText = 'Connect';
+  bool show = false;
 
   @override
   void initState() {
@@ -114,28 +118,60 @@ class ConnectIssuerListState extends State<ConnectIssuerList> {
                                   children: <Widget>[
                                     const Spacer(),
                                     PrimaryButton(
-                                      child: const Text(
-                                        "Connect",
-                                        style: TextStyle(color: Colors.white),
+                                      child: Text(
+                                        actionText!,
+                                        style: const TextStyle(color: Colors.white),
                                       ),
                                       onPressed: () async {
+                                      try {
                                         var supportedCredentials =
-                                            await connect(connectIssuerConfigList.elementAt(index).value.issuerURI);
+                                        await connect(connectIssuerConfigList
+                                            .elementAt(index)
+                                            .value
+                                            .issuerURI);
                                         var connectIssuerConfigValue = ConnectIssuerConfigValue(
                                             issuerURI: "",
-                                            scopes: connectIssuerConfigList.elementAt(index).value.scopes,
-                                            clientID: connectIssuerConfigList.elementAt(index).value.clientID,
-                                            redirectURI: connectIssuerConfigList.elementAt(index).value.redirectURI,
+                                            scopes: connectIssuerConfigList
+                                                .elementAt(index)
+                                                .value
+                                                .scopes,
+                                            clientID: connectIssuerConfigList
+                                                .elementAt(index)
+                                                .value
+                                                .clientID,
+                                            redirectURI: connectIssuerConfigList
+                                                .elementAt(index)
+                                                .value
+                                                .redirectURI,
                                             showIssuer: true,
                                             description: "",
                                             backgroundColor: "",
                                             textColor: "",
                                             logo: "");
                                         _navigateToSupportedCredentialScreen(
-                                            connectIssuerConfigList.elementAt(index).key,
-                                            connectIssuerConfigList.elementAt(index).value.issuerURI,
+                                            connectIssuerConfigList
+                                                .elementAt(index)
+                                                .key,
+                                            connectIssuerConfigList
+                                                .elementAt(index)
+                                                .value
+                                                .issuerURI,
                                             supportedCredentials,
                                             connectIssuerConfigValue);
+                                      } catch (err) {
+                                        if (err is PlatformException && err.message != null &&
+                                            err.message!.isNotEmpty) {
+                                          var resp =
+                                          await walletSDKPlugin.parseWalletSDKError(
+                                              localizedErrorMessage: err.details.toString());
+                                          setState(() {
+                                            _requestErrorSubTitleMsg = resp.details;
+                                            _requestErrorTitleMsg = 'Oops! Something went wrong!';
+                                            actionText = 'Re-Connect';
+                                            show = true;
+                                          });
+                                        }
+                                      }
                                       },
                                     ),
                                   ],
@@ -146,6 +182,54 @@ class ConnectIssuerListState extends State<ConnectIssuerList> {
                           Container(height: 5),
                         ])
                         ),
+                    Column(
+                      children: <Widget>[
+                        Column(
+                          children: <Widget>[
+                            Visibility(
+                              visible: show,
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                alignment: Alignment.center,
+                                child: ListTile(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  tileColor: const Color(0xffFBF8FC),
+                                  title: SelectableText(
+                                    _requestErrorTitleMsg ?? '',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xff190C21),
+                                    ),
+                                    textAlign: TextAlign.start,
+                                  ),
+                                  subtitle: SelectableText(
+                                    _requestErrorSubTitleMsg ?? '',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xff6C6D7C),
+                                    ),
+                                    textAlign: TextAlign.start,
+                                  ),
+                                  leading: const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: Image(
+                                        image: AssetImage('lib/assets/images/errorVector.png'),
+                                        width: 24,
+                                        height: 24,
+                                        fit: BoxFit.cover,
+                                      )),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ]),
                 );
               },
