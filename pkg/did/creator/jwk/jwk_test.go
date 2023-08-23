@@ -14,12 +14,12 @@ import (
 	"crypto/rand"
 	"testing"
 
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk"
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk/jwksupport"
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/util/jwkkid"
-	"github.com/hyperledger/aries-framework-go/component/models/did"
-	"github.com/hyperledger/aries-framework-go/spi/kms"
 	"github.com/stretchr/testify/require"
+	"github.com/trustbloc/kms-crypto-go/doc/jose/jwk"
+	"github.com/trustbloc/kms-crypto-go/doc/jose/jwk/jwksupport"
+	"github.com/trustbloc/kms-crypto-go/doc/util/jwkkid"
+	"github.com/trustbloc/kms-crypto-go/spi/kms"
+	"github.com/trustbloc/vc-go/did"
 
 	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 	. "github.com/trustbloc/wallet-sdk/pkg/did/creator/jwk"

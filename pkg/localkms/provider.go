@@ -7,10 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package localkms
 
 import (
-	arieskms "github.com/hyperledger/aries-framework-go/component/kmscrypto/kms"
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/secretlock/noop"
-	kmsapi "github.com/hyperledger/aries-framework-go/spi/kms"
-	"github.com/hyperledger/aries-framework-go/spi/secretlock"
+	arieskms "github.com/trustbloc/kms-crypto-go/kms"
+	"github.com/trustbloc/kms-crypto-go/secretlock/noop"
+	kmsapi "github.com/trustbloc/kms-crypto-go/spi/kms"
+	"github.com/trustbloc/kms-crypto-go/spi/secretlock"
 )
 
 // MemKMSStore represents an in-memory database of keysets.

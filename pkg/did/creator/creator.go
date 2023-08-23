@@ -12,9 +12,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk"
-	"github.com/hyperledger/aries-framework-go/component/models/did"
-	arieskms "github.com/hyperledger/aries-framework-go/spi/kms"
+	"github.com/trustbloc/kms-crypto-go/doc/jose/jwk"
+	arieskms "github.com/trustbloc/kms-crypto-go/spi/kms"
+	"github.com/trustbloc/vc-go/did"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"

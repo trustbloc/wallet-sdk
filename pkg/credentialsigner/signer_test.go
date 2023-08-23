@@ -13,10 +13,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hyperledger/aries-framework-go/component/models/did"
-	afgotime "github.com/hyperledger/aries-framework-go/component/models/util/time"
-	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/stretchr/testify/require"
+	"github.com/trustbloc/vc-go/did"
+	afgotime "github.com/trustbloc/vc-go/util/time"
+	"github.com/trustbloc/vc-go/verifiable"
 
 	. "github.com/trustbloc/wallet-sdk/pkg/credentialsigner"
 )

@@ -11,10 +11,10 @@ import (
 	"errors"
 	"fmt"
 
-	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
-	"github.com/hyperledger/aries-framework-go/component/models/jwt/didsignjwt"
-	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
-	vdrspi "github.com/hyperledger/aries-framework-go/spi/vdr"
+	diddoc "github.com/trustbloc/vc-go/did"
+	"github.com/trustbloc/vc-go/jwt/didsignjwt"
+	vdrspi "github.com/trustbloc/vc-go/spi/vdr"
+	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"

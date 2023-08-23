@@ -13,7 +13,7 @@ import (
 	"strings"
 	"sync"
 
-	spi "github.com/hyperledger/aries-framework-go/spi/storage"
+	spi "github.com/trustbloc/kms-crypto-go/spi/storage"
 )
 
 const (

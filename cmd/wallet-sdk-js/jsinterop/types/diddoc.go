@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"syscall/js"
 
-	"github.com/hyperledger/aries-framework-go/component/models/did"
+	"github.com/trustbloc/vc-go/did"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/jssupport"
 )

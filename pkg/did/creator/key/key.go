@@ -8,8 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package key
 
 import (
-	"github.com/hyperledger/aries-framework-go/component/models/did"
-	"github.com/hyperledger/aries-framework-go/component/vdr/key"
+	"github.com/trustbloc/did-go/vdr/key"
+	"github.com/trustbloc/vc-go/did"
 )
 
 // Creator is used for creating did:key DID Documents.

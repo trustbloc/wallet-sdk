@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 
 package types
 
-import "github.com/hyperledger/aries-framework-go/component/models/verifiable"
+import "github.com/trustbloc/vc-go/verifiable"
 
 func SerializeCredential(cred *verifiable.Credential) (any, error) {
 	marshalledVC, err := cred.MarshalJSON()

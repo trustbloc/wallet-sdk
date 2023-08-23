@@ -12,10 +12,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/hyperledger/aries-framework-go/component/models/jwt"
-	"github.com/hyperledger/aries-framework-go/component/models/presexch"
-	afgoverifiable "github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/piprate/json-gold/ld"
+	"github.com/trustbloc/vc-go/jwt"
+	"github.com/trustbloc/vc-go/presexch"
+	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	credentialInquirer "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"

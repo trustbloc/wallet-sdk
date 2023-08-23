@@ -17,10 +17,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hyperledger/aries-framework-go/component/models/did"
-	arieskms "github.com/hyperledger/aries-framework-go/spi/kms"
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
+	arieskms "github.com/trustbloc/kms-crypto-go/spi/kms"
+	"github.com/trustbloc/vc-go/did"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"

@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package openid4vp
 
 import (
-	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
+	"github.com/trustbloc/vc-go/verifiable"
 )
 
 type idTokenVPToken struct {

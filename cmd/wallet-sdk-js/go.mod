@@ -7,11 +7,10 @@ module github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js
 go 1.20
 
 require (
-	github.com/hyperledger/aries-framework-go/component/kmscrypto v0.0.0-20230622082138-3ffab1691857
-	github.com/hyperledger/aries-framework-go/component/models v0.0.0-20230815195733-cce322df1e8f
-	github.com/hyperledger/aries-framework-go/spi v0.0.0-20230615141038-5d444d6c36de
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.1
+	github.com/trustbloc/kms-crypto-go v0.0.0-20230817141224-c6cb8c6f1908
+	github.com/trustbloc/vc-go v0.0.0-20230822132219-2e53dba1ff4e
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 )
 
@@ -33,15 +32,8 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/tink/go v1.7.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/hyperledger/aries-framework-go-ext/component/vc/status v0.0.0-20230622181036-ef011d8df3d5 // indirect
-	github.com/hyperledger/aries-framework-go-ext/component/vdr/jwk v0.0.0-20230622181036-ef011d8df3d5 // indirect
-	github.com/hyperledger/aries-framework-go-ext/component/vdr/longform v0.0.0-20230622181036-ef011d8df3d5 // indirect
-	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v1.0.0-rc4.0.20230622155445-c7c1db73c62a // indirect
-	github.com/hyperledger/aries-framework-go/component/didconfig v0.0.0-20230622211121-852ce35730b4 // indirect
 	github.com/hyperledger/aries-framework-go/component/log v0.0.0-20230615141038-5d444d6c36de // indirect
-	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20230427134832-0c9969493bd3 // indirect
-	github.com/hyperledger/aries-framework-go/component/vdr v0.0.0-20230622171716-43af8054a539 // indirect
-	github.com/hyperledger/aries-framework-go/test/component v0.0.0-20220428211718-66cc046674a1 // indirect
+	github.com/hyperledger/aries-framework-go/spi v0.0.0-20230615141038-5d444d6c36de // indirect
 	github.com/hyperledger/fabric-amcl v0.0.0-20230602173724-9e02669dceb2 // indirect
 	github.com/hyperledger/ursa-wrapper-go v0.3.1 // indirect
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a // indirect
@@ -67,8 +59,9 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
+	github.com/trustbloc/did-go v0.0.0-20230822132244-67dac6fdfb1e // indirect
 	github.com/trustbloc/logutil-go v1.0.0-rc1 // indirect
-	github.com/trustbloc/sidetree-core-go v1.0.0-rc5.0.20230609191801-793cbea60692 // indirect
+	github.com/trustbloc/sidetree-core-go v1.0.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
@@ -78,10 +71,10 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.23.0 // indirect
 	golang.org/x/crypto v0.10.0 // indirect
-	golang.org/x/exp v0.0.0-20230728194245-b0cb94b80691 // indirect
+	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/oauth2 v0.7.0 // indirect
-	golang.org/x/sys v0.9.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

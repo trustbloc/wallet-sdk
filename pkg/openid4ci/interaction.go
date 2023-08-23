@@ -20,15 +20,16 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/hyperledger/aries-framework-go/spi/kms"
+	"github.com/trustbloc/kms-crypto-go/spi/kms"
 
 	"github.com/google/uuid"
-	"github.com/hyperledger/aries-framework-go/component/models/dataintegrity"
-	"github.com/hyperledger/aries-framework-go/component/models/dataintegrity/suite/ecdsa2019"
-	"github.com/hyperledger/aries-framework-go/component/models/verifiable"
 	"github.com/piprate/json-gold/ld"
-	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
+	"github.com/trustbloc/vc-go/dataintegrity"
+	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
+	"github.com/trustbloc/vc-go/verifiable"
 	"golang.org/x/oauth2"
+
+	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"

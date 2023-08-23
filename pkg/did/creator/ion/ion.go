@@ -10,10 +10,10 @@ package ion
 import (
 	"fmt"
 
-	"github.com/hyperledger/aries-framework-go-ext/component/vdr/longform"
-	"github.com/hyperledger/aries-framework-go/component/models/did"
-	"github.com/hyperledger/aries-framework-go/spi/kms"
-	vdrspi "github.com/hyperledger/aries-framework-go/spi/vdr"
+	"github.com/trustbloc/did-go/method/longform"
+	"github.com/trustbloc/kms-crypto-go/spi/kms"
+	"github.com/trustbloc/vc-go/did"
+	vdrspi "github.com/trustbloc/vc-go/spi/vdr"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 )

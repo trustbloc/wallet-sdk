@@ -9,7 +9,7 @@ package api
 import (
 	"fmt"
 
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk"
+	"github.com/trustbloc/kms-crypto-go/doc/jose/jwk"
 )
 
 // JSONWebKey holds a public key with associated metadata, in JWK format.

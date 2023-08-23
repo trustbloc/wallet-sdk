@@ -12,8 +12,9 @@ import (
 	"net/url"
 	"testing"
 
-	arieskms "github.com/hyperledger/aries-framework-go/spi/kms"
 	"github.com/stretchr/testify/require"
+	arieskms "github.com/trustbloc/kms-crypto-go/spi/kms"
+
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"

@@ -11,10 +11,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hyperledger/aries-framework-go/component/models/did"
-	vdrapi "github.com/hyperledger/aries-framework-go/component/vdr/api"
-	mockvdr "github.com/hyperledger/aries-framework-go/component/vdr/mock"
 	"github.com/stretchr/testify/require"
+	vdrapi "github.com/trustbloc/did-go/vdr/api"
+	mockvdr "github.com/trustbloc/did-go/vdr/mock"
+	"github.com/trustbloc/vc-go/did"
 
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 )

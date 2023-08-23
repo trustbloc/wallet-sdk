@@ -9,10 +9,11 @@ package oauth2
 import (
 	"strings"
 
-	"github.com/hyperledger/aries-framework-go/component/kmscrypto/doc/jose/jwk"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/kms-crypto-go/doc/jose/jwk"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	goapioauth2 "github.com/trustbloc/wallet-sdk/pkg/oauth2"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )
 
 // ClientMetadata represents a set of client metadata values.

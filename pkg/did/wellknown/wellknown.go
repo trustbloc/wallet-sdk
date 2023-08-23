@@ -14,9 +14,9 @@ import (
 	"net/http"
 	"strings"
 
-	didconfig "github.com/hyperledger/aries-framework-go/component/didconfig/client"
-	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
-	vdrspi "github.com/hyperledger/aries-framework-go/spi/vdr"
+	didconfig "github.com/trustbloc/did-go/didconfig/client"
+	diddoc "github.com/trustbloc/vc-go/did"
+	vdrspi "github.com/trustbloc/vc-go/spi/vdr"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"

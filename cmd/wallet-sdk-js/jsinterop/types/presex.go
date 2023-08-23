@@ -11,7 +11,7 @@ package types
 import (
 	"fmt"
 
-	"github.com/hyperledger/aries-framework-go/component/models/presexch"
+	"github.com/trustbloc/vc-go/presexch"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/util"
 )

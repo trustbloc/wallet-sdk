@@ -9,7 +9,7 @@ package api
 import (
 	"fmt"
 
-	diddoc "github.com/hyperledger/aries-framework-go/component/models/did"
+	diddoc "github.com/trustbloc/vc-go/did"
 
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 )

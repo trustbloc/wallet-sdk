@@ -11,11 +11,11 @@ import (
 	_ "embed" //nolint:gci // required for go:embed
 	"testing"
 
-	ldcontext "github.com/hyperledger/aries-framework-go/component/models/ld/context"
-	lddocloader "github.com/hyperledger/aries-framework-go/component/models/ld/documentloader"
-	mockldstore "github.com/hyperledger/aries-framework-go/component/models/ld/mock"
-	ldstore "github.com/hyperledger/aries-framework-go/component/models/ld/store"
 	"github.com/stretchr/testify/require"
+	ldcontext "github.com/trustbloc/vc-go/ld/context"
+	lddocloader "github.com/trustbloc/vc-go/ld/documentloader"
+	mockldstore "github.com/trustbloc/vc-go/ld/mock"
+	ldstore "github.com/trustbloc/vc-go/ld/store"
 )
 
 var (

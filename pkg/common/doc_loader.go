@@ -11,11 +11,11 @@ import (
 	"fmt"
 	"net/http"
 
-	ldcontext "github.com/hyperledger/aries-framework-go/component/models/ld/context"
-	lddocloader "github.com/hyperledger/aries-framework-go/component/models/ld/documentloader"
-	ldstore "github.com/hyperledger/aries-framework-go/component/models/ld/store"
-	"github.com/hyperledger/aries-framework-go/spi/storage"
 	jsonld "github.com/piprate/json-gold/ld"
+	"github.com/trustbloc/kms-crypto-go/spi/storage"
+	ldcontext "github.com/trustbloc/vc-go/ld/context"
+	lddocloader "github.com/trustbloc/vc-go/ld/documentloader"
+	ldstore "github.com/trustbloc/vc-go/ld/store"
 )
 
 var (

@@ -9,9 +9,9 @@ package localkms_test
 import (
 	"testing"
 
-	arieskms "github.com/hyperledger/aries-framework-go/component/kmscrypto/kms"
-	kmsapi "github.com/hyperledger/aries-framework-go/spi/kms"
 	"github.com/stretchr/testify/require"
+	arieskms "github.com/trustbloc/kms-crypto-go/kms"
+	kmsapi "github.com/trustbloc/kms-crypto-go/spi/kms"
 
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 )

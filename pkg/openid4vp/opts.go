@@ -9,9 +9,9 @@ package openid4vp
 import (
 	"net/http"
 
-	"github.com/hyperledger/aries-framework-go/spi/kms"
+	"github.com/trustbloc/kms-crypto-go/spi/kms"
 
-	"github.com/hyperledger/aries-framework-go/component/models/dataintegrity/suite/ecdsa2019"
+	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
 
 	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
