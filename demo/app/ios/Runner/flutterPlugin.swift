@@ -503,7 +503,6 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
         
         do {
-
             let walletInitiatedOpenID4CI = try walletSDK.createOpenID4CIWalletInitiatedInteraction(issuerURI: issuerURI)
             let supportedCredentials = try walletInitiatedOpenID4CI.getSupportedCredentials()
             
@@ -512,11 +511,12 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             self.walletInitiatedOpenID4CI = walletInitiatedOpenID4CI
             result(supportedCredentialsList)
         
-        } catch {
-            result(FlutterError.init(code: "NATIVE_ERR",
+        }  catch let error as NSError {
+            result(FlutterError.init(code: "Exception",
                                      message: "error while initializing wallet initiated issuance flow",
-                                     details: error))
+                                     details: error.localizedDescription))
         }
+      
         
     }
      
