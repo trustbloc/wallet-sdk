@@ -82,7 +82,7 @@ demo-app-web-local: generate-js-bindings copy-js-bindings
 
 .PHONY: demo-app-web
 demo-app-web:
-	@cd demo/app/web && rm -rf node_modules && npm i && cp node_modules/@trustbloc-cicd/wallet-sdk-js/dist/wallet-sdk.wasm ./ && flutter doctor && flutter clean && flutter run -d chrome
+	@cd demo/app/web && rm -rf node_modules && npm i && flutter doctor && flutter clean && flutter run -d chrome
 
 .PHONY: build-demo-app-web-docker
 build-demo-app-web-docker:
