@@ -37,7 +37,6 @@ class CredentialPreviewState extends State<CredentialPreview> {
             (response) {
               setState(() {
                 issuerDisplayData = response.first.issuerName;
-                log("issuerDisplayData state $issuerDisplayData");
               });
         });
 
@@ -45,13 +44,11 @@ class CredentialPreviewState extends State<CredentialPreview> {
             (response) {
           setState(() {
             issuerID = response!;
-            log("issuerID INSIDE, $issuerID");
           });
         }).whenComplete(() =>
         WalletSDKPlugin.wellKnownDidConfig(issuerID!).then(
                 (response) =>
                 setState(() {
-                  log("well known domain $response");
                   verifiedDomain = response.isValid;
                   serviceURL = response.serviceURL;
                 }

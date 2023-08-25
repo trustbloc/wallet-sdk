@@ -8,18 +8,13 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:app/views/issuance_preview.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app/wallet_sdk/wallet_sdk.dart';
-import 'package:app/services/storage_service.dart';
 import 'package:flutter/services.dart';
-import 'dart:async';
 import 'package:app/models/credential_offer.dart';
 import 'package:http/http.dart' as http;
 
 void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
   var WalletSDKPlugin = WalletSDK();
-  final StorageService storageService = StorageService();
-  final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   var authCodeArgs;
   if (qrCodeURL.contains("credential_offer_uri")) {
     authCodeArgs = await parseCredentialOfferUri(qrCodeURL);
