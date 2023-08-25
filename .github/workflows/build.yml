@@ -505,6 +505,19 @@ jobs:
           echo "NEW_VERSION=$NEW_VER" >> $GITHUB_ENV
           echo $NEW_VER
 
+      - name: Set npm authentication tokens
+        run: |
+          echo $PATH
+          echo ${{ github.workspace }}
+          echo '//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}' > ~/.npmrc
+          echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
+
+      - name: Install dependencies
+        run: |
+          pushd ./demo/app/web
+          npm install
+          popd
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 

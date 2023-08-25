@@ -4,7 +4,8 @@
   "description": "The TrustBloc Demo app demonstrates the wallet-sdk API usage",
   "main": "script.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "cp node_modules/@trustbloc-cicd/wallet-sdk-js/dist/wallet-sdk.wasm ."
   },
   "repository": {
     "type": "git",
