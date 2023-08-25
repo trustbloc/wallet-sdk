@@ -4,7 +4,7 @@
 
 module github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js
 
-go 1.20
+go 1.21
 
 require (
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f

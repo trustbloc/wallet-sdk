@@ -4,7 +4,7 @@
 
 module github.com/trustbloc/wallet-sdk/test/integration/helper
 
-go 1.20
+go 1.21
 
 require github.com/trustbloc/wallet-sdk/test/integration v0.0.0-20221207181956-419a3951143f
 

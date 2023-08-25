@@ -5,7 +5,7 @@
 
 module github.com/trustbloc/wallet-sdk
 
-go 1.20
+go 1.21
 
 require (
 	github.com/go-jose/go-jose/v3 v3.0.1-0.20221117193127-916db76e8214

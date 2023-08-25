@@ -4,7 +4,7 @@ This package contains the `gomobile`-compatible version of the SDK. It acts as a
 
 ## Prerequisites
 
-* [Go 1.20](https://go.dev/doc/install) or newer
+* [Go 1.21](https://go.dev/doc/install) or newer
 * The gomobile tools:
   ```
   go install golang.org/x/mobile/cmd/gomobile@latest

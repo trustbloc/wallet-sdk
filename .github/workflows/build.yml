@@ -7,7 +7,7 @@
 name: "wallet-sdk ci"
 
 env:
-  GO_VERSION: '1.20'
+  GO_VERSION: '1.21'
 
 on:
   push:
@@ -535,8 +535,8 @@ jobs:
           file: ./images/demo/app/Dockerfile
           platforms: linux/amd64,linux/arm64
           build-args: |
-            ALPINE_VER=3.15
-            GO_VER=1.20
+            ALPINE_VER=3.18
+            GO_VER=1.21
           push: true
           tags: |
             ghcr.io/trustbloc-cicd/wallet-demo-app:${{ env.NEW_VERSION }}
