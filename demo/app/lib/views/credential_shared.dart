@@ -64,7 +64,7 @@ class CredentialSharedState extends State<CredentialShared> {
               padding: const EdgeInsets.only(left: 24, right:24, top: 24, bottom: 8),
               itemCount: widget.credentialData.length,
               itemBuilder: (BuildContext context, int index) {
-                return CredentialCard(credentialData: widget.credentialData[index], isDashboardWidget: true, isDetailArrowRequired: false,);
+                return CredentialCard(credentialData: widget.credentialData[index], isDashboardWidget: false, isDetailArrowRequired: false,);
               },
             ),
           )

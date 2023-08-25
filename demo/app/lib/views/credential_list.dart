@@ -22,6 +22,7 @@ class _CredentialListState extends State<CredentialList> {
   String? credentialDisplayData;
   bool _loading = true;
   static String? username = '';
+
   @override
   void initState() {
     super.initState();
@@ -31,10 +32,10 @@ class _CredentialListState extends State<CredentialList> {
   void initList() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final SharedPreferences p = prefs;
-    username =  p.getString("userLoggedIn");
+    username = p.getString("userLoggedIn");
     log("list - $username");
-      _credentialList = await _storageService.retrieveCredentials(username!);
-      if (_credentialList.isEmpty) {
+    _credentialList = await _storageService.retrieveCredentials(username!);
+    if (_credentialList.isEmpty) {
       _loading = true;
       _credentialList.clear();
     }
@@ -57,9 +58,9 @@ class _CredentialListState extends State<CredentialList> {
                   style: TextStyle(color: Color(0xff190C21), fontWeight: FontWeight.bold, fontSize: 16),
                 )),
             Container(
-                padding: const EdgeInsets.fromLTRB(24, 40, 16, 24),
-                alignment: Alignment.center,
-                child: _loading
+              padding: const EdgeInsets.fromLTRB(24, 40, 16, 24),
+              alignment: Alignment.center,
+              child: _loading
                   ? const CircularProgressIndicator()
                   : _credentialList.isEmpty
                   ? const Text("No credentials found")
@@ -67,56 +68,20 @@ class _CredentialListState extends State<CredentialList> {
                   itemCount: _credentialList.length,
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   itemBuilder: (_, index) {
-                    return Dismissible(
-                      key: Key(_credentialList[index].toString()),
-                      direction: DismissDirection.endToStart,
-                      onDismissed: (direction) async {
-                        if (direction == DismissDirection.endToStart) {
-                          await _storageService.deleteData(_credentialList[index])
-                              .then((value) => _credentialList.removeAt(index));
-                          initList();
-                        }
+                    return CredentialCard(credentialData: _credentialList[index].value,
+                      isDashboardWidget: true,
+                      delete: () async {
+                        await _storageService
+                            .deleteData(_credentialList[index])
+                            .then((value) => _credentialList.removeAt(index));
+                        setState(() {});
                       },
-                      background: const ColoredBox(
-                        color: Colors.white,
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: Padding(
-                            padding: EdgeInsets.all(0),
-                            child: Icon(Icons.delete, color: Colors.red),
-                          ),
-                        ),
-                      ),
-                      confirmDismiss: (DismissDirection direction) async {
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: const Text('Are you sure you want to delete?',  style: TextStyle(fontSize: 12)),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, false),
-                                  child: const Text('No'),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, true),
-                                  child: const Text('Yes'),
-                                )
-                              ],
-                            );
-                          },
-                        );
-                        log('Deletion confirmed: $confirmed');
-                        return confirmed;
-                      },
-                      child: CredentialCard(credentialData: _credentialList[index].value, isDashboardWidget: true, isDetailArrowRequired: false,),
-                    );
+                      isDetailArrowRequired: false);
                   }),
             ),
           ],
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
