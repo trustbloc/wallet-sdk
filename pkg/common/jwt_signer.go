@@ -12,10 +12,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/trustbloc/kms-crypto-go/doc/jose"
-	"github.com/trustbloc/kms-crypto-go/doc/jose/jwk"
-	"github.com/trustbloc/kms-crypto-go/doc/util/jwkkid"
-	"github.com/trustbloc/kms-crypto-go/spi/kms"
+	"github.com/trustbloc/kms-go/doc/jose"
+	"github.com/trustbloc/kms-go/doc/jose/jwk"
+	"github.com/trustbloc/kms-go/doc/util/jwkkid"
+	"github.com/trustbloc/kms-go/spi/kms"
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"

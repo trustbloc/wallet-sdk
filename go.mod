@@ -5,7 +5,9 @@
 
 module github.com/trustbloc/wallet-sdk
 
-go 1.20
+go 1.21
+
+toolchain go1.21.0
 
 require (
 	github.com/go-jose/go-jose/v3 v3.0.1-0.20221117193127-916db76e8214
@@ -13,9 +15,9 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.1
-	github.com/trustbloc/did-go v0.0.0-20230822132244-67dac6fdfb1e
-	github.com/trustbloc/kms-crypto-go v0.0.0-20230817141224-c6cb8c6f1908
-	github.com/trustbloc/vc-go v0.0.0-20230822132219-2e53dba1ff4e
+	github.com/trustbloc/did-go v0.0.0-20230824183959-e9f47dff3948
+	github.com/trustbloc/kms-go v0.0.0-20230824183646-318214f7c333
+	github.com/trustbloc/vc-go v0.0.0-20230825210135-072aa746432e
 	golang.org/x/oauth2 v0.7.0
 )
 

@@ -15,7 +15,7 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/trustbloc/kms-crypto-go/kms"
+	"github.com/trustbloc/kms-go/kms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/jssupport"
 )
@@ -53,6 +53,7 @@ func (w *DBWrapper) Put(keysetID string, keyData []byte) error {
 
 	return nil
 }
+
 func (w *DBWrapper) Get(keysetID string) ([]byte, error) {
 	data, err := getResult(w.dbObject.Call("get", keysetID))
 	if err != nil {
@@ -69,6 +70,7 @@ func (w *DBWrapper) Get(keysetID string) ([]byte, error) {
 	}
 	return decoded, err
 }
+
 func (w *DBWrapper) Delete(keysetID string) error {
 	_, err := getResult(w.dbObject.Call("delete", keysetID))
 	if err != nil {

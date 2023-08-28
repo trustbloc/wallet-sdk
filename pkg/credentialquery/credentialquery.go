@@ -80,11 +80,6 @@ func (c *Instance) GetSubmissionRequirements(
 		return nil, err
 	}
 
-	// TODO: https://github.com/trustbloc/wallet-sdk/issues/165 remove this code after to re enable Schema check.
-	for i := range query.InputDescriptors {
-		query.InputDescriptors[i].Schema = nil
-	}
-
 	var matchOpts []presexch.MatchRequirementsOpt
 	if qOpts.applySelectiveDisclosure {
 		matchOpts = append(matchOpts,

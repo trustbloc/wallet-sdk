@@ -8,7 +8,6 @@ package credential
 
 import (
 	"github.com/trustbloc/vc-go/presexch"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 )
 
@@ -24,10 +23,79 @@ type SubmissionRequirementArray struct {
 
 // InputDescriptor contains information about VCs that matched an input descriptor of presentation definition.
 type InputDescriptor struct {
-	ID         string
-	Name       string
-	Purpose    string
-	MatchedVCs *verifiable.CredentialsArray
+	ID          string
+	Name        string
+	Purpose     string
+	MatchedVCs  *verifiable.CredentialsArray
+	constraints *presexch.Constraints
+	schemas     []*presexch.Schema
+}
+
+// TypeConstraint returns the type constraint specified by this InputDescriptor, if any.
+// If there is no type constraint specified, or if it's specified in an unexpected way, then an empty string is
+// returned.
+func (i *InputDescriptor) TypeConstraint() string {
+	if i.constraints != nil {
+		for _, field := range i.constraints.Fields {
+			typeConstraint, found := getTypeConstraintFromField(field)
+			if found {
+				return typeConstraint
+			}
+		}
+	}
+
+	return ""
+}
+
+// SchemaArray represents an array of Schemas.
+type SchemaArray struct {
+	schemas []*presexch.Schema
+}
+
+// Length returns the number of Schemas contained within this SchemaArray object.
+func (s *SchemaArray) Length() int {
+	return len(s.schemas)
+}
+
+// AtIndex returns the Schema at the given index.
+// If the index passed in is out of bounds, or the underlying Schema object at that index is nil, then nil is returned.
+func (s *SchemaArray) AtIndex(index int) *Schema {
+	maxIndex := len(s.schemas) - 1
+	if index > maxIndex || index < 0 {
+		return nil
+	}
+
+	schema := s.schemas[index]
+
+	if schema == nil {
+		return nil
+	}
+
+	return &Schema{schema: schema}
+}
+
+// Schema represents a Schema from an InputDescriptor.
+type Schema struct {
+	schema *presexch.Schema
+}
+
+// URI return's this Schema's URI.
+func (s *Schema) URI() string {
+	return s.schema.URI
+}
+
+// Required returns this Schema's required value.
+func (s *Schema) Required() bool {
+	return s.schema.Required
+}
+
+// Schemas returns the Schemas from this InputDescriptor. If there are none, then nil is returned instead.
+func (i *InputDescriptor) Schemas() *SchemaArray {
+	if i.schemas == nil {
+		return &SchemaArray{}
+	}
+
+	return &SchemaArray{schemas: i.schemas}
 }
 
 // Len returns len of wrapper array.
@@ -35,9 +103,22 @@ func (s *SubmissionRequirementArray) Len() int {
 	return len(s.wrapped)
 }
 
-// AtIndex returns item from wrapper array.
+// AtIndex returns the SubmissionRequirement at the given index.
+// If the index passed in is out of bounds, or the underlying matched submission requirement object at that index is
+// nil, then nil is returned.
 func (s *SubmissionRequirementArray) AtIndex(index int) *SubmissionRequirement {
-	return &SubmissionRequirement{wrapped: s.wrapped[index]}
+	maxIndex := s.Len() - 1
+	if index > maxIndex || index < 0 {
+		return nil
+	}
+
+	matchedSubmissionRequirement := s.wrapped[index]
+
+	if matchedSubmissionRequirement == nil {
+		return nil
+	}
+
+	return &SubmissionRequirement{wrapped: matchedSubmissionRequirement}
 }
 
 // Name returns submission requirement Name.
@@ -75,18 +156,31 @@ func (s *SubmissionRequirement) DescriptorLen() int {
 	return len(s.wrapped.Descriptors)
 }
 
-// DescriptorAtIndex returns submission requirement descriptor at given index.
+// DescriptorAtIndex returns the submission requirement InputDescriptor at the given index.
+// If the index passed in is out of bounds, or the underlying InputDescriptor object at that index is nil,
+// then nil is returned.
 func (s *SubmissionRequirement) DescriptorAtIndex(index int) *InputDescriptor {
-	wrapped := s.wrapped.Descriptors[index]
-
-	descriptor := &InputDescriptor{
-		ID:         wrapped.ID,
-		Name:       wrapped.Name,
-		Purpose:    wrapped.Purpose,
-		MatchedVCs: verifiable.NewCredentialsArray(),
+	maxIndex := s.DescriptorLen() - 1
+	if index > maxIndex || index < 0 {
+		return nil
 	}
 
-	for _, cred := range wrapped.MatchedVCs {
+	inputDescriptor := s.wrapped.Descriptors[index]
+
+	if inputDescriptor == nil {
+		return nil
+	}
+
+	descriptor := &InputDescriptor{
+		ID:          inputDescriptor.ID,
+		Name:        inputDescriptor.Name,
+		Purpose:     inputDescriptor.Purpose,
+		constraints: inputDescriptor.Constraints,
+		schemas:     inputDescriptor.Schemas,
+		MatchedVCs:  verifiable.NewCredentialsArray(),
+	}
+
+	for _, cred := range inputDescriptor.MatchedVCs {
 		descriptor.MatchedVCs.Add(verifiable.NewCredential(cred))
 	}
 
@@ -98,7 +192,37 @@ func (s *SubmissionRequirement) NestedRequirementLength() int {
 	return len(s.wrapped.Nested)
 }
 
-// NestedRequirementAtIndex returns submission requirement nested at given index.
+// NestedRequirementAtIndex returns the nested submission requirement at the given index.
+// If the index passed in is out of bounds, or the underlying matched submission requirement object at that index is
+// nil, then nil is returned.
 func (s *SubmissionRequirement) NestedRequirementAtIndex(index int) *SubmissionRequirement {
-	return &SubmissionRequirement{wrapped: s.wrapped.Nested[index]}
+	maxIndex := s.NestedRequirementLength() - 1
+	if index > maxIndex || index < 0 {
+		return nil
+	}
+
+	matchedSubmissionRequirement := s.wrapped.Nested[index]
+
+	if matchedSubmissionRequirement == nil {
+		return nil
+	}
+
+	return &SubmissionRequirement{wrapped: matchedSubmissionRequirement}
+}
+
+// The bool return value indicates whether a type constraint was found.
+func getTypeConstraintFromField(field *presexch.Field) (string, bool) {
+	for _, path := range field.Path {
+		if path == "$.type" || path == "$.vc.type" {
+			constValue, exists := field.Filter.Contains["const"]
+			if exists {
+				constValueAsString, ok := constValue.(string)
+				if ok {
+					return constValueAsString, true
+				}
+			}
+		}
+	}
+
+	return "", false
 }

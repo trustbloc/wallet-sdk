@@ -12,8 +12,8 @@ package localkms
 import (
 	"errors"
 
-	arieskms "github.com/trustbloc/kms-crypto-go/kms"
-	kmsspi "github.com/trustbloc/kms-crypto-go/spi/kms"
+	arieskms "github.com/trustbloc/kms-go/kms"
+	kmsspi "github.com/trustbloc/kms-go/spi/kms"
 
 	goapilocalkms "github.com/trustbloc/wallet-sdk/pkg/localkms"
 

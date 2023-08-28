@@ -20,8 +20,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/trustbloc/kms-crypto-go/spi/kms"
-
 	"github.com/google/uuid"
 	"github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/vc-go/dataintegrity"
@@ -54,7 +52,6 @@ type interaction struct {
 	authCodeURLState     string
 	codeVerifier         string
 	verifier             ecdsa2019.Verifier
-	kms                  kms.KeyManager
 }
 
 func (i *interaction) createAuthorizationURL(clientID, redirectURI, format string, types []string, issuerState *string,
@@ -514,14 +511,13 @@ func (i *interaction) getVCsFromCredentialResponses(
 		verifiable.WithPublicKeyFetcher(vdrKeyResolver.PublicKeyFetcher()),
 	}
 
-	if i.verifier != nil && i.kms != nil {
+	if i.verifier != nil {
 		opts := dataintegrity.Options{DIDResolver: i.didResolver}
 
 		dataIntegrityVerifier, err := dataintegrity.NewVerifier(&opts,
 			ecdsa2019.NewVerifierInitializer(&ecdsa2019.VerifierInitializerOptions{
 				LDDocumentLoader: i.documentLoader,
 				Verifier:         i.verifier,
-				KMS:              i.kms,
 			}))
 		if err != nil {
 			return nil, err

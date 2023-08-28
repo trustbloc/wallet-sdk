@@ -13,7 +13,7 @@ import (
 	"net/http"
 
 	jsonld "github.com/piprate/json-gold/ld"
-	arieskms "github.com/trustbloc/kms-crypto-go/spi/kms"
+	arieskms "github.com/trustbloc/kms-go/spi/kms"
 	"github.com/trustbloc/vc-go/did"
 	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/vc-go/presexch"

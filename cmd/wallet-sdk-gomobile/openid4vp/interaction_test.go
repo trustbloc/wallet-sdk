@@ -183,6 +183,23 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		err := instance.PresentCredentialUnsafe(singleCredential)
 		require.Contains(t, err.Error(), "present credentials failed")
 	})
+
+	t.Run("CredentialsArray object is nil", func(t *testing.T) {
+		instance := makeInteraction()
+
+		err := instance.PresentCredential(nil)
+		testutil.RequireErrorContains(t, err, "credentialsArray object cannot be nil")
+	})
+
+	t.Run("Nil Credential object in array", func(t *testing.T) {
+		instance := makeInteraction()
+
+		credentials.Add(nil)
+
+		err := instance.PresentCredential(credentials)
+		testutil.RequireErrorContains(t, err, "credential objects cannot be nil "+
+			"(credential at index 5 is nil)")
+	})
 }
 
 func TestInteraction_VerifierDisplayData(t *testing.T) {

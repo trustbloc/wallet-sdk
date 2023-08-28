@@ -194,12 +194,18 @@ func (a *CredentialsArray) Add(cred *Credential) {
 	a.credentials = append(a.credentials, cred)
 }
 
-// Length returns length of underlying array.
+// Length returns the number of Credentials contained within this CredentialsArray.
 func (a *CredentialsArray) Length() int {
 	return len(a.credentials)
 }
 
-// AtIndex returns element from underlying array by index.
+// AtIndex returns the Credential at the given index.
+// If the index passed in is out of bounds, then nil is returned.
 func (a *CredentialsArray) AtIndex(index int) *Credential {
+	maxIndex := len(a.credentials) - 1
+	if index > maxIndex || index < 0 {
+		return nil
+	}
+
 	return a.credentials[index]
 }

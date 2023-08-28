@@ -29,6 +29,9 @@ var (
 	//go:embed test_data/nested_submission_requirements_pd.json
 	nestedRequirementsPD []byte
 
+	//go:embed test_data/schema_pd.json
+	schemaPD []byte
+
 	//go:embed test_data/university_degree.jwt
 	universityDegreeVCJWT []byte
 
@@ -94,6 +97,7 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 		require.Equal(t, req1.Name(), "Information")
 		require.Equal(t, req1.Purpose(), "test purpose")
 		require.Equal(t, req1.Rule(), "pick")
+		require.Nil(t, requirements.AtIndex(1))
 
 		require.Equal(t, req1.Count(), 1)
 		require.Equal(t, req1.Min(), 0)
@@ -106,6 +110,11 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 		require.Equal(t, desc1.Name, "Verified Employee")
 		require.Equal(t, desc1.Purpose, "test purpose")
 		require.Equal(t, desc1.MatchedVCs.Length(), 1)
+		require.Equal(t, 0, desc1.Schemas().Length())
+		require.Nil(t, desc1.Schemas().AtIndex(0))
+		require.Equal(t, "VerifiedEmployee", desc1.TypeConstraint())
+
+		require.Nil(t, req1.DescriptorAtIndex(3))
 	})
 
 	t.Run("Success nested requirements", func(t *testing.T) {
@@ -135,6 +144,31 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 		require.Equal(t, desc1.ID, "VerifiedEmployee")
 		require.Equal(t, desc1.Name, "Verified Employee")
 		require.Equal(t, desc1.MatchedVCs.Length(), 1)
+
+		require.Nil(t, req1.NestedRequirementAtIndex(2))
+	})
+
+	t.Run("Success using PD with a schema", func(t *testing.T) {
+		query, err := credential.NewInquirer(opts)
+		require.NoError(t, err)
+
+		requirements, err := query.GetSubmissionRequirements(schemaPD, createCredJSONArray(t, contents))
+
+		require.NoError(t, err)
+		require.Equal(t, requirements.Len(), 1)
+		req1 := requirements.AtIndex(0)
+
+		desc1 := req1.DescriptorAtIndex(0)
+
+		require.Equal(t, "VerifiableCredential", desc1.ID)
+		require.Equal(t, "VerifiableCredential", desc1.Name)
+		require.Equal(t, "So we can see that you are an expert.", desc1.Purpose)
+		require.Equal(t, desc1.MatchedVCs.Length(), 4)
+		require.Equal(t, "", desc1.TypeConstraint())
+		require.Equal(t, 1, desc1.Schemas().Length())
+		schema := desc1.Schemas().AtIndex(0)
+		require.Equal(t, "VerifiableCredential", schema.URI())
+		require.False(t, schema.Required())
 	})
 
 	t.Run("PD parse failed", func(t *testing.T) {

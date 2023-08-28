@@ -26,6 +26,8 @@ func TestVerifiableCredential(t *testing.T) {
 	t.Run("Valid VCs", func(t *testing.T) {
 		vcArray := verifiable.NewCredentialsArray()
 
+		vcArray.AtIndex(0)
+
 		opts := &verifiable.Opts{}
 		opts.DisableProofCheck()
 
