@@ -15,6 +15,7 @@ import 'package:app/services/storage_service.dart';
 import 'package:app/views/presentation_preview.dart';
 import 'package:app/views/presentation_preview_multi_cred.dart';
 import 'package:app/views/presentation_preview_multi_cred_radio.dart';
+import 'package:flutter/services.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 
 void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
@@ -42,13 +43,14 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
   }
 
   try {
-    await walletSDKPlugin.processAuthorizationRequest(authorizationRequest: qrCodeURL, storedCredentials: credentials);
-  } catch (error) {
+    var resp = await walletSDKPlugin.processAuthorizationRequest(
+        authorizationRequest: qrCodeURL, storedCredentials: credentials);
+  } on PlatformException catch (error) {
     Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => CustomError(
-                requestErrorTitleMsg: "No matching credential found", requestErrorSubTitleMsg: error.toString())));
+            builder: (context) =>
+                CustomError(requestErrorTitleMsg: error.message!, requestErrorSubTitleMsg: error.details)));
   }
   // Get the matched VCIDs from the submission request.
   var getSubmissionRequest = await walletSDKPlugin.getSubmissionRequirements(storedCredentials: credentials);
