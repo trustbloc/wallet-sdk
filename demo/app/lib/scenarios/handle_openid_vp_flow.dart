@@ -30,7 +30,7 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
   storedCredentials = await storageService.retrieveCredentials(username!);
   log("stored credentials -> $storedCredentials");
 
-  credentials = storedCredentials.map((e) => e.value.rawCredential).toList();
+ credentials = storedCredentials.map((e) => e.value.rawCredential).toList();
   if (credentials.isEmpty) {
     log("credentials is empty now $credentials");
     Navigator.push(
@@ -43,7 +43,7 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
   }
 
   try {
-    var resp = await walletSDKPlugin.processAuthorizationRequest(
+     await walletSDKPlugin.processAuthorizationRequest(
         authorizationRequest: qrCodeURL, storedCredentials: credentials);
   } on PlatformException catch (error) {
     Navigator.push(

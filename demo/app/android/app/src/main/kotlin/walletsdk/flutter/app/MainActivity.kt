@@ -801,7 +801,10 @@ class MainActivity : FlutterActivity() {
     /**
     This method invoke processAuthorizationRequest defined in OpenID4Vp.kt file.
      */
-    private fun processAuthorizationRequest(call: MethodCall, result: MethodChannel.Result): List<String> {
+    private fun processAuthorizationRequest(
+        call: MethodCall,
+        result: MethodChannel.Result
+    ): List<String> {
         val walletSDK = this.walletSDK
             ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
         val authorizationRequest = call.argument<String>("authorizationRequest")
@@ -820,14 +823,38 @@ class MainActivity : FlutterActivity() {
             val matchedReq = openID4VP.getMatchedSubmissionRequirements(
                 convertToVerifiableCredentialsArray(storedCredentials)
             )
-            var resp =  convertVerifiableCredentialsArray(
+            var resp = convertVerifiableCredentialsArray(
                 matchedReq.atIndex(0).descriptorAtIndex(0).matchedVCs
             )
             if (resp.isEmpty()) {
                 var typeConstraint = matchedReq.atIndex(0).descriptorAtIndex(0).typeConstraint()
-                result.error("NATIVE_ERR",  "No credentials of type $typeConstraint were found",  "Required credential $typeConstraint is missing from the wallet");
+                if (typeConstraint.isEmpty()) {
+                    var schemas = matchedReq.atIndex(0).descriptorAtIndex(0).schemas()
+                    var schemaList = mutableListOf<Any>()
+                    for (i in 0..schemas.length()) {
+                        val schemasResp: MutableMap<String, Any> = mutableMapOf()
+                        if (schemas.atIndex(i) != null) {
+                            schemasResp["required"] = schemas.atIndex(i).required()
+                            schemasResp["uri"] = schemas.atIndex(i).uri()
+                            schemaList.addAll(listOf(schemasResp))
+                        }
+                    }
+
+                    result.error(
+                        "NATIVE_ERR",
+                        "No credentials conforming to the following schemas were found",
+                        "$schemaList"
+                    );
+                }
+                result.error(
+                    "NATIVE_ERR",
+                    "No credentials of type $typeConstraint were found",
+                    "Required credential $typeConstraint is missing from the wallet"
+                );
             }
+
             return resp
+
         }
         return listOf()
     }
