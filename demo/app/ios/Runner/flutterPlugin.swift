@@ -174,11 +174,13 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                     credentials: storedCredentials!))
                 var resp = convertVerifiableCredentialsArray(arr: matchedReq.atIndex(0)!.descriptor(at:0)!.matchedVCs!)
                 if (resp.isEmpty) {
+                    var typeConstraint = matchedReq.atIndex(0)!.descriptor(at:0)!.typeConstraint()
                     return result(FlutterError.init(code: "NATIVE_ERR",
-                                             message: "error while process authorization request",
-                                             details: "no matching submission requirement is found"))
-                
+                                                    message: "No credentials of type \(typeConstraint) were found",
+                                                    details: "Required credential \(typeConstraint) is missing from the wallet"))
+                    
                 }
+
                 result(resp)
             }
             return result(Array<String>())

@@ -186,7 +186,7 @@ class MainActivity : FlutterActivity() {
 
                     "processAuthorizationRequest" -> {
                         try {
-                            val creds = processAuthorizationRequest(call)
+                            val creds = processAuthorizationRequest(call, result)
 
                             result.success(creds)
                         } catch (e: Exception) {
@@ -755,8 +755,7 @@ class MainActivity : FlutterActivity() {
 
         for (cred in vcCredentials) {
             val parsedVC = Verifiable.parseCredential(cred, opts)
-            var issuerID = parsedVC.issuerID()
-            return issuerID
+            return parsedVC.issuerID()
         }
         return ""
     }
@@ -802,7 +801,7 @@ class MainActivity : FlutterActivity() {
     /**
     This method invoke processAuthorizationRequest defined in OpenID4Vp.kt file.
      */
-    private fun processAuthorizationRequest(call: MethodCall): List<String> {
+    private fun processAuthorizationRequest(call: MethodCall, result: MethodChannel.Result): List<String> {
         val walletSDK = this.walletSDK
             ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
         val authorizationRequest = call.argument<String>("authorizationRequest")
@@ -821,9 +820,14 @@ class MainActivity : FlutterActivity() {
             val matchedReq = openID4VP.getMatchedSubmissionRequirements(
                 convertToVerifiableCredentialsArray(storedCredentials)
             )
-            return convertVerifiableCredentialsArray(
+            var resp =  convertVerifiableCredentialsArray(
                 matchedReq.atIndex(0).descriptorAtIndex(0).matchedVCs
             )
+            if (resp.isEmpty()) {
+                var typeConstraint = matchedReq.atIndex(0).descriptorAtIndex(0).typeConstraint()
+                result.error("NATIVE_ERR",  "No credentials of type $typeConstraint were found",  "Required credential $typeConstraint is missing from the wallet");
+            }
+            return resp
         }
         return listOf()
     }
