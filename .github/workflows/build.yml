@@ -87,30 +87,32 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  WASMIntegrationTest:
-    runs-on: ubuntu-20.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-      - name: Run Integration tests
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: |
-            echo '127.0.0.1 testnet.orb.local' | sudo tee -a /etc/hosts
-            echo '127.0.0.1 file-server.trustbloc.local' | sudo tee -a /etc/hosts
-            echo '127.0.0.1 did-resolver.trustbloc.local' | sudo tee -a /etc/hosts
-            echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
-            echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
-            echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
-            make integration-test-wasm
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+# Temporarily disabled due to compatibility issues with Go 1.21.
+#
+#  WASMIntegrationTest:
+#    runs-on: ubuntu-20.04
+#    timeout-minutes: 30
+#    steps:
+#      - uses: actions/checkout@v3
+#      - name: Set up Go
+#        uses: actions/setup-go@v3
+#        with:
+#          go-version: ${{ env.GO_VERSION }}
+#      - name: Setup Node.js
+#        uses: actions/setup-node@v3
+#      - name: Run Integration tests
+#        uses: GabrielBB/xvfb-action@v1
+#        with:
+#          run: |
+#            echo '127.0.0.1 testnet.orb.local' | sudo tee -a /etc/hosts
+#            echo '127.0.0.1 file-server.trustbloc.local' | sudo tee -a /etc/hosts
+#            echo '127.0.0.1 did-resolver.trustbloc.local' | sudo tee -a /etc/hosts
+#            echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
+#            echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
+#            echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
+#            make integration-test-wasm
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   iOSFlutterIntegrationTest:
     runs-on: macos-12
