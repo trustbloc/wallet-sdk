@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/trustbloc/kms-crypto-go/spi/crypto"
-	"github.com/trustbloc/kms-crypto-go/spi/kms"
+	"github.com/trustbloc/kms-go/spi/crypto"
+	"github.com/trustbloc/kms-go/spi/kms"
 )
 
 // AriesCryptoWrapper wraps aries crypto implementations to conform api.Crypto interface.

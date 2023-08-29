@@ -4,13 +4,15 @@
 
 module github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js
 
-go 1.20
+go 1.21
+
+toolchain go1.21.0
 
 require (
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.1
-	github.com/trustbloc/kms-crypto-go v0.0.0-20230817141224-c6cb8c6f1908
-	github.com/trustbloc/vc-go v0.0.0-20230822132219-2e53dba1ff4e
+	github.com/trustbloc/kms-go v0.0.0-20230824183646-318214f7c333
+	github.com/trustbloc/vc-go v0.0.0-20230825210135-072aa746432e
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 )
 
@@ -59,7 +61,7 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
-	github.com/trustbloc/did-go v0.0.0-20230822132244-67dac6fdfb1e // indirect
+	github.com/trustbloc/did-go v0.0.0-20230824183959-e9f47dff3948 // indirect
 	github.com/trustbloc/logutil-go v1.0.0-rc1 // indirect
 	github.com/trustbloc/sidetree-core-go v1.0.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect

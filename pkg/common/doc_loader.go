@@ -12,7 +12,7 @@ import (
 	"net/http"
 
 	jsonld "github.com/piprate/json-gold/ld"
-	"github.com/trustbloc/kms-crypto-go/spi/storage"
+	"github.com/trustbloc/kms-go/spi/storage"
 	ldcontext "github.com/trustbloc/vc-go/ld/context"
 	lddocloader "github.com/trustbloc/vc-go/ld/documentloader"
 	ldstore "github.com/trustbloc/vc-go/ld/store"

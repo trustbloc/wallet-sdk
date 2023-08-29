@@ -9,7 +9,7 @@ package openid4vp
 import (
 	"net/http"
 
-	"github.com/trustbloc/kms-crypto-go/spi/kms"
+	"github.com/trustbloc/kms-go/spi/kms"
 
 	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
 

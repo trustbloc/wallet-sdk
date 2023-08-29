@@ -5,7 +5,9 @@
 
 module github.com/trustbloc/wallet-sdk/test/integration
 
-go 1.20
+go 1.21
+
+toolchain go1.21.0
 
 require (
 	github.com/google/uuid v1.3.0
@@ -13,7 +15,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/trustbloc/cmdutil-go v0.0.0-20221125151303-09d42adcc811
 	github.com/trustbloc/logutil-go v1.0.0-rc1
-	github.com/trustbloc/vc-go v0.0.0-20230822132219-2e53dba1ff4e
+	github.com/trustbloc/vc-go v0.0.0-20230825210135-072aa746432e
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile v0.0.0-20230102235937-82237ea9dde3
 	go.uber.org/zap v1.23.0
@@ -66,8 +68,8 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
-	github.com/trustbloc/did-go v0.0.0-20230822132244-67dac6fdfb1e // indirect
-	github.com/trustbloc/kms-crypto-go v0.0.0-20230817141224-c6cb8c6f1908 // indirect
+	github.com/trustbloc/did-go v0.0.0-20230824183959-e9f47dff3948 // indirect
+	github.com/trustbloc/kms-go v0.0.0-20230824183646-318214f7c333 // indirect
 	github.com/trustbloc/sidetree-core-go v1.0.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect

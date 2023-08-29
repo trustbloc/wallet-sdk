@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	arieskms "github.com/trustbloc/kms-crypto-go/kms"
-	kmsapi "github.com/trustbloc/kms-crypto-go/spi/kms"
+	arieskms "github.com/trustbloc/kms-go/kms"
+	kmsapi "github.com/trustbloc/kms-go/spi/kms"
 
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 )

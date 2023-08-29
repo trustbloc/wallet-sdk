@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/trustbloc/kms-crypto-go/spi/kms"
 	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
 
 	"github.com/piprate/json-gold/ld"
@@ -46,9 +45,8 @@ type ClientConfig struct {
 	DocumentLoader                   ld.DocumentLoader // If not specified, then a network-based loader will be used.
 	NetworkDocumentLoaderHTTPTimeout *time.Duration    // Only used if the default network-based loader is used.
 	HTTPClient                       *http.Client
-	// If both of the below fields are set, then VC data integrity proof checks for JSON-LD VCs will be enabled.
+	// If the Verifier field is set, then VC data integrity proof checks for JSON-LD VCs will be enabled.
 	Verifier ecdsa2019.Verifier
-	KMS      kms.KeyManager
 }
 
 func validateRequiredParameters(config *ClientConfig) error {

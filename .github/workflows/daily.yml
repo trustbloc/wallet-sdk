@@ -7,7 +7,7 @@
 name: "Wallet-SDK Daily Build"
 
 env:
-  GO_VERSION: '1.20'
+  GO_VERSION: '1.21'
 
 on:
   schedule:

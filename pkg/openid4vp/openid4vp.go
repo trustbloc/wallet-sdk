@@ -21,8 +21,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/piprate/json-gold/ld"
-	"github.com/trustbloc/kms-crypto-go/doc/jose"
-	"github.com/trustbloc/kms-crypto-go/spi/kms"
+	"github.com/trustbloc/kms-go/doc/jose"
+	"github.com/trustbloc/kms-go/spi/kms"
 	"github.com/trustbloc/vc-go/dataintegrity"
 	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
 	diddoc "github.com/trustbloc/vc-go/did"

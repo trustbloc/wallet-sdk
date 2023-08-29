@@ -16,14 +16,14 @@ const (
 	InvalidScopeError                           = "INVALID_SCOPE"
 	InvalidRequestError                         = "INVALID_REQUEST"
 	InvalidClientError                          = "INVALID_CLIENT"
-	VPFormatsNotSupportedError                  = "VP_FORMATS_NOT_SUPPORTED"
+	VPFormatsNotSupportedError                  = "VP_FORMATS_NOT_SUPPORTED" //nolint:gosec,lll //false positive, can't shorten
 	InvalidPresentationDefinitionURIError       = "INVALID_PRESENTATION_DEFINITION_URI"
 	InvalidPresentationDefinitionReferenceError = "INVALID_PRESENTATION_DEFINITION_REFERENCE"
 	OtherAuthorizationResponseError             = "OTHER_AUTHORIZATION_RESPONSE_ERROR"
 	MSEntraBadOrMissingFieldsError              = "MS_ENTRA_BAD_OR_MISSING_FIELDS"
 	MSEntraNotFoundError                        = "MS_ENTRA_NOT_FOUND"
-	MSEntraTokenError                           = "MS_ENTRA_TOKEN_ERROR" //nolint:gosec,lll //false positive, can't shorten
-	MSEntraTransientError                       = "MS_ENTRA_TRANSIENT_ERROR"
+	MSEntraTokenError                           = "MS_ENTRA_TOKEN_ERROR"     //nolint:gosec,lll //false positive, can't shorten
+	MSEntraTransientError                       = "MS_ENTRA_TRANSIENT_ERROR" //nolint:gosec,lll //false positive, can't shorten
 )
 
 // Constants' names and reasons are obvious, so they do not require additional comments.

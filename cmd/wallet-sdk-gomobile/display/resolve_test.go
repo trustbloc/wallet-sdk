@@ -159,7 +159,7 @@ func checkCredentialDisplay(t *testing.T, credentialDisplay *display.CredentialD
 	checkClaims(t, credentialDisplay)
 }
 
-func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { //nolint:gocyclo,gocognit // Test file
+func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { //nolint:gocyclo // Test file
 	t.Helper()
 
 	// Since the claims object in the supported_credentials object from the issuer is a map which effectively gets

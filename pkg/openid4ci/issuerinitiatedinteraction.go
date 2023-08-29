@@ -20,7 +20,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 
 	"github.com/google/uuid"
-	"github.com/trustbloc/kms-crypto-go/doc/jose"
+	"github.com/trustbloc/kms-go/doc/jose"
 	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/vc-go/verifiable"
 
@@ -109,7 +109,6 @@ func NewIssuerInitiatedInteraction(initiateIssuanceURI string,
 				documentLoader:       config.DocumentLoader,
 				httpClient:           config.HTTPClient,
 				verifier:             config.Verifier,
-				kms:                  config.KMS,
 			},
 			preAuthorizedCodeGrantParams: preAuthorizedCodeGrantParams,
 			authorizationCodeGrantParams: authorizationCodeGrantParams,

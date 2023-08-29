@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"syscall/js"
 
-	arieskms "github.com/trustbloc/kms-crypto-go/spi/kms"
+	arieskms "github.com/trustbloc/kms-go/spi/kms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/errors"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/jssupport"

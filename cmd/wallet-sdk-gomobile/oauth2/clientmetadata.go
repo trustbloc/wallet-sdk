@@ -9,7 +9,7 @@ package oauth2
 import (
 	"strings"
 
-	"github.com/trustbloc/kms-crypto-go/doc/jose/jwk"
+	"github.com/trustbloc/kms-go/doc/jose/jwk"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	goapioauth2 "github.com/trustbloc/wallet-sdk/pkg/oauth2"
 

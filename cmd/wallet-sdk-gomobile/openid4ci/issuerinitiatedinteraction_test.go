@@ -19,7 +19,7 @@ import (
 
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
-	arieskms "github.com/trustbloc/kms-crypto-go/spi/kms"
+	arieskms "github.com/trustbloc/kms-go/spi/kms"
 	"github.com/trustbloc/vc-go/did"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"

@@ -10,6 +10,7 @@ package openid4vp
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/piprate/json-gold/ld"
@@ -140,7 +141,12 @@ func (o *Interaction) VerifierDisplayData() *VerifierDisplayData {
 
 // PresentCredential presents credentials to redirect uri from request object.
 func (o *Interaction) PresentCredential(credentials *verifiable.CredentialsArray) error {
-	return wrapper.ToMobileErrorWithTrace(o.goAPIOpenID4VP.PresentCredential(unwrapVCs(credentials)), o.oTel)
+	vcs, err := unwrapVCs(credentials)
+	if err != nil {
+		return wrapper.ToMobileErrorWithTrace(err, o.oTel)
+	}
+
+	return wrapper.ToMobileErrorWithTrace(o.goAPIOpenID4VP.PresentCredential(vcs), o.oTel)
 }
 
 // PresentCredentialUnsafe presents a single credential to redirect uri from
@@ -191,12 +197,21 @@ func toGoAPIOpts(opts *Opts) []openid4vp.Opt {
 	return goAPIOpts
 }
 
-func unwrapVCs(vcs *verifiable.CredentialsArray) []*afgoverifiable.Credential {
+func unwrapVCs(vcs *verifiable.CredentialsArray) ([]*afgoverifiable.Credential, error) {
+	if vcs == nil {
+		return nil, errors.New("credentialsArray object cannot be nil")
+	}
+
 	var credentials []*afgoverifiable.Credential
 
 	for i := 0; i < vcs.Length(); i++ {
-		credentials = append(credentials, vcs.AtIndex(i).VC)
+		vc := vcs.AtIndex(i)
+		if vc == nil {
+			return nil, fmt.Errorf("credential objects cannot be nil (credential at index %d is nil)", i)
+		}
+
+		credentials = append(credentials, vc.VC)
 	}
 
-	return credentials
+	return credentials, nil
 }

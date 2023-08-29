@@ -12,8 +12,8 @@ import (
 
 	"github.com/google/tink/go/keyset"
 	"github.com/stretchr/testify/require"
-	"github.com/trustbloc/kms-crypto-go/mock/crypto"
-	"github.com/trustbloc/kms-crypto-go/mock/kms"
+	"github.com/trustbloc/kms-go/mock/crypto"
+	"github.com/trustbloc/kms-go/mock/kms"
 
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 )

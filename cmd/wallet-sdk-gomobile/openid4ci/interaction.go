@@ -54,7 +54,6 @@ func createGoAPIClientConfig(didResolver api.DIDResolver, opts *InteractionOpts)
 	}
 
 	if opts.kms != nil {
-		goAPIClientConfig.KMS = opts.kms.GoAPILocalKMS.AriesLocalKMS
 		goAPIClientConfig.Verifier = opts.kms.GoAPILocalKMS.AriesCrypto
 	}
 

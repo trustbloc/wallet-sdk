@@ -10,9 +10,9 @@ package api
 import (
 	"time"
 
-	"github.com/trustbloc/kms-crypto-go/doc/jose"
-	"github.com/trustbloc/kms-crypto-go/doc/jose/jwk"
-	"github.com/trustbloc/kms-crypto-go/spi/kms"
+	"github.com/trustbloc/kms-go/doc/jose"
+	"github.com/trustbloc/kms-go/doc/jose/jwk"
+	"github.com/trustbloc/kms-go/spi/kms"
 	"github.com/trustbloc/vc-go/did"
 	"github.com/trustbloc/vc-go/verifiable"
 )
