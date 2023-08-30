@@ -8,8 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package credentialquery
 
 import (
-	"fmt"
-
 	"github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/vc-go/presexch"
 	"github.com/trustbloc/vc-go/verifiable"
@@ -25,10 +23,7 @@ type Instance struct {
 }
 
 type queryOpts struct {
-	// credentials is an array of Verifiable Credentials.
 	credentials []*verifiable.Credential
-	// CredentialReader allows for access to a VC storage mechanism.
-	credentialReader api.CredentialReader
 
 	didResolver              api.DIDResolver
 	applySelectiveDisclosure bool
@@ -37,18 +32,10 @@ type queryOpts struct {
 // QueryOpt is the query credential option.
 type QueryOpt func(opts *queryOpts)
 
-// WithCredentialsArray sets array of Verifiable Credentials. If specified,
-// this takes precedence over the CredentialReader option.
+// WithCredentialsArray sets the array of Verifiable Credentials to check against the Presentation Definition.
 func WithCredentialsArray(vcs []*verifiable.Credential) QueryOpt {
 	return func(opts *queryOpts) {
 		opts.credentials = vcs
-	}
-}
-
-// WithCredentialReader sets credential reader that will be used to fetch credential.
-func WithCredentialReader(credentialReader api.CredentialReader) QueryOpt {
-	return func(opts *queryOpts) {
-		opts.credentialReader = credentialReader
 	}
 }
 
@@ -75,11 +62,6 @@ func (c *Instance) GetSubmissionRequirements(
 		opt(qOpts)
 	}
 
-	credentials, err := getCredentials(qOpts)
-	if err != nil {
-		return nil, err
-	}
-
 	var matchOpts []presexch.MatchRequirementsOpt
 	if qOpts.applySelectiveDisclosure {
 		matchOpts = append(matchOpts,
@@ -93,7 +75,7 @@ func (c *Instance) GetSubmissionRequirements(
 	}
 
 	results, err := query.MatchSubmissionRequirement(
-		credentials,
+		qOpts.credentials,
 		c.documentLoader,
 		matchOpts...,
 	)
@@ -107,31 +89,4 @@ func (c *Instance) GetSubmissionRequirements(
 	}
 
 	return results, nil
-}
-
-func getCredentials(qOpts *queryOpts) ([]*verifiable.Credential, error) {
-	credentials := qOpts.credentials
-	if len(credentials) == 0 {
-		if qOpts.credentialReader == nil {
-			return nil, walleterror.NewValidationError(
-				module,
-				CredentialReaderNotSetCode,
-				CredentialReaderNotSetError,
-				fmt.Errorf("credentials array or credential reader option must be set"))
-		}
-
-		var err error
-
-		credentials, err = qOpts.credentialReader.GetAll()
-		if err != nil {
-			return nil,
-				walleterror.NewValidationError(
-					module,
-					CredentialReaderReadFailedCode,
-					CredentialReaderReadFailedError,
-					fmt.Errorf("credential reader failed: %w", err))
-		}
-	}
-
-	return credentials, nil
 }

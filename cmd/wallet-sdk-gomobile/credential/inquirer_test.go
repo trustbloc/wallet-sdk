@@ -163,7 +163,30 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 		require.Equal(t, "VerifiableCredential", desc1.ID)
 		require.Equal(t, "VerifiableCredential", desc1.Name)
 		require.Equal(t, "So we can see that you are an expert.", desc1.Purpose)
-		require.Equal(t, desc1.MatchedVCs.Length(), 4)
+		require.Equal(t, 4, desc1.MatchedVCs.Length())
+		require.Equal(t, "", desc1.TypeConstraint())
+		require.Equal(t, 1, desc1.Schemas().Length())
+		schema := desc1.Schemas().AtIndex(0)
+		require.Equal(t, "VerifiableCredential", schema.URI())
+		require.False(t, schema.Required())
+	})
+
+	t.Run("Success with a nil credentials object", func(t *testing.T) {
+		query, err := credential.NewInquirer(opts)
+		require.NoError(t, err)
+
+		requirements, err := query.GetSubmissionRequirements(schemaPD, nil)
+
+		require.NoError(t, err)
+		require.Equal(t, requirements.Len(), 1)
+		req1 := requirements.AtIndex(0)
+
+		desc1 := req1.DescriptorAtIndex(0)
+
+		require.Equal(t, "VerifiableCredential", desc1.ID)
+		require.Equal(t, "VerifiableCredential", desc1.Name)
+		require.Equal(t, "So we can see that you are an expert.", desc1.Purpose)
+		require.Equal(t, 0, desc1.MatchedVCs.Length())
 		require.Equal(t, "", desc1.TypeConstraint())
 		require.Equal(t, 1, desc1.Schemas().Length())
 		schema := desc1.Schemas().AtIndex(0)
@@ -191,16 +214,6 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 		)
 
 		require.Contains(t, err.Error(), "validation of presentation definition failed:")
-	})
-
-	t.Run("Nil credentials", func(t *testing.T) {
-		query, err := credential.NewInquirer(opts)
-		require.NoError(t, err)
-
-		submissionRequirements, err := query.GetSubmissionRequirements(nil, nil)
-
-		require.EqualError(t, err, "credentials must be provided")
-		require.Nil(t, submissionRequirements)
 	})
 }
 

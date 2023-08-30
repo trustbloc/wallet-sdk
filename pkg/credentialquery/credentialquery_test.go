@@ -9,7 +9,6 @@ package credentialquery_test
 import (
 	_ "embed"
 	"encoding/json"
-	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -86,24 +85,6 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 		require.Len(t, requirements[0].Descriptors, 3)
 	})
 
-	t.Run("Reader error", func(t *testing.T) {
-		instance := credentialquery.NewInstance(docLoader)
-		_, err := instance.GetSubmissionRequirements(pdQuery, credentialquery.WithCredentialReader(
-			&readerMock{
-				err: errors.New("get all error"),
-			},
-		))
-
-		require.Error(t, err, "credential reader failed: get all error")
-	})
-
-	t.Run("Credentials not provided", func(t *testing.T) {
-		instance := credentialquery.NewInstance(docLoader)
-		_, err := instance.GetSubmissionRequirements(pdQuery)
-
-		testutil.RequireErrorContains(t, err, "CREDENTIAL_READER_NOT_SET")
-	})
-
 	t.Run("Checks schema", func(t *testing.T) {
 		incorrectPD := &presexch.PresentationDefinition{ID: uuid.New().String()}
 
@@ -115,19 +96,6 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 		testutil.RequireErrorContains(t, err, "FAIL_TO_GET_MATCH_REQUIREMENTS_RESULTS")
 		require.Nil(t, requirements)
 	})
-}
-
-type readerMock struct {
-	credentials []*verifiable.Credential
-	err         error
-}
-
-func (r *readerMock) Get(string) (*verifiable.Credential, error) {
-	return nil, r.err
-}
-
-func (r *readerMock) GetAll() ([]*verifiable.Credential, error) {
-	return r.credentials, r.err
 }
 
 type didResolverMock struct {
