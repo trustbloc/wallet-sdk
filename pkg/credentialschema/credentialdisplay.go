@@ -217,7 +217,7 @@ func getMaskedValue(rawValue, maskingPattern string) (string, error) {
 	// Always use the first submatch.
 	valueToBeMasked := r.ReplaceAllString(rawValue, "$1")
 
-	maskedValue := strings.ReplaceAll(rawValue, valueToBeMasked, strings.Repeat("*", len(valueToBeMasked)))
+	maskedValue := strings.ReplaceAll(rawValue, valueToBeMasked, strings.Repeat("•", len(valueToBeMasked)))
 
 	return maskedValue, nil
 }

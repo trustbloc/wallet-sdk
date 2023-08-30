@@ -1108,9 +1108,11 @@ from the issuer. See [Resolve Display](#resolve-display) for more information.
 Display data objects can be serialized using the `serialize()` method (useful for storage) and parsed from serialized
 form back into display data objects using the `parseDisplayData()` function.
 
+### The Display Object Structure
+
 The structure of the display data object is as follows:
 
-### `Data`
+#### `Data`
 
 * The root object.
 * Contains display information for the issuer and each of the credentials passed in to the `resolveDisplay`
@@ -1120,31 +1122,31 @@ function.
 * Use the `credentialDisplaysLength()` and `credentialDisplayAtIndex()` methods to iterate over the `CredentialDisplay`
   objects. There's one for each credential passed in to the `resolveDisplay` function, and they're in the same order.
 
-### `IssuerDisplay`
+#### `IssuerDisplay`
 
 * Describes display information about the issuer.
 * Can be serialized using the `serialize()` method and parsed using the `parseIssuerDisplay()` function.
 * Has `name()` and `locale()` methods.
 
-### `CredentialDisplay`
+#### `CredentialDisplay`
 
 * Describes display information about a credential.
 * Can be serialized using the `serialize()` method and parsed using the `parseCredentialDisplay()` function.
 * The `overview()` method returns the `CredentialOverview` object.
 * Use the `claimsLength()` and `claimAtIndex()` methods to iterate over the `Claim` objects.
 
-### `CredentialOverview`
+#### `CredentialOverview`
 
 * Describes display information for a credential as a whole.
 * Has `name()`, `logo()`, `backgroundColor()`, `textColor()`, and `locale()` methods. The `logo()` method returns
   a `Logo` object.
 
-### `Logo`
+#### `Logo`
 
 * Describes display information for a logo.
 * Has `url()` and `altText()` methods.
 
-### `Claim`
+#### `Claim`
 
 * Describes display information for a specific claim within a credential.
 * Has `label()`, `rawID()`, `valueType()`, `value()`, `rawValue()`, `isMasked()`, `hasOrder()`, `order()`,
@@ -1165,19 +1167,10 @@ It's not localized or formatted for display.
 * `valueType()` returns the value type for this claim - when it's "image", then you should expect the value data to be
 formatted using the [data URL scheme](https://www.rfc-editor.org/rfc/rfc2397).
 
-### A Note about `locale()`
-
-The locale returned by the various `locale()` methods may not be the same as the preferred locale you passed into the
-`ResolveDisplay` function under certain circumstances. For instance, if the locale you passed in wasn't available,
-then a default locale may get used instead.
-
 ### Resolve Display Examples
 
 The following examples show how the `ResolveDisplay` function can be used. The function requires you to pass in
 one or more VCs and the issuer URI.
-
-A preferred locale and/or additional headers to be sent to the issuer can be specified by creating an `Opts`
-object, setting your desired parameters using the supplied methods, and passing the object in.
 
 #### Kotlin (Android)
 
