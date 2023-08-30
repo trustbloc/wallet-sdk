@@ -175,6 +175,26 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 var resp = convertVerifiableCredentialsArray(arr: matchedReq.atIndex(0)!.descriptor(at:0)!.matchedVCs!)
                 if (resp.isEmpty) {
                     var typeConstraint = matchedReq.atIndex(0)!.descriptor(at:0)!.typeConstraint()
+                    if typeConstraint == "" {
+                      var schemas =  matchedReq.atIndex(0)!.descriptor(at:0)!.schemas()
+                        var schemaList:[Any] = []
+                        if let schemas = schemas {
+                            var schemasResp : [String: Any] = [:]
+                            for index in 0..<schemas.length() {
+                                if let schema = schemas.atIndex(index) {
+                                    schemasResp["required"] = schema.required()
+                                    schemasResp["uri"] = schema.uri()
+                                }
+                                
+                                schemaList.append(schemasResp)
+                            }
+                            
+                            return result(FlutterError.init(code: "NATIVE_ERR",
+                                                            message: "No credentials conforming to the following schemas were found",
+                                                            details: "\(schemaList)"))
+                            
+                        }
+                    }
                     return result(FlutterError.init(code: "NATIVE_ERR",
                                                     message: "No credentials of type \(typeConstraint) were found",
                                                     details: "Required credential \(typeConstraint) is missing from the wallet"))
