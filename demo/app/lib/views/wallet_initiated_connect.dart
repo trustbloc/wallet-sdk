@@ -4,13 +4,12 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import 'dart:developer';
 import 'package:app/models/connect_issuer_config.dart';
 import 'package:app/models/connect_issuer_config_value.dart';
 import 'package:app/services/config_service.dart';
 import 'package:app/views/supported_credentials_list.dart';
 import 'package:app/wallet_sdk/wallet_sdk_model.dart';
-import 'package:app/widgets/primary_button.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:app/widgets/common_title_appbar.dart';
 import 'package:app/wallet_sdk/wallet_sdk_mobile.dart';
@@ -40,7 +39,6 @@ class ConnectIssuerListState extends State<ConnectIssuerList> {
 
   String _requestErrorSubTitleMsg = '';
   String _requestErrorTitleMsg = '';
-  String? actionText = 'Connect';
   bool show = false;
 
   @override
@@ -62,176 +60,132 @@ class ConnectIssuerListState extends State<ConnectIssuerList> {
           const SizedBox(height: 20),
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
               itemCount: connectIssuerConfigList.length,
               itemBuilder: (context, index) {
-                return Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  color: connectIssuerConfigList.elementAt(index).value.backgroundColor.isNotEmpty
+                return Column(children: [
+                  Container(
+                    height: 80,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                        color: connectIssuerConfigList.elementAt(index).value.backgroundColor.isNotEmpty
+                            ? Color(int.parse(
+                                '0xff${connectIssuerConfigList.elementAt(index).value.backgroundColor.replaceAll('#', '')}'))
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [BoxShadow(offset: const Offset(3, 3), color: Colors.grey.shade300, blurRadius: 5)]),
+                    /*     color: connectIssuerConfigList.elementAt(index).value.backgroundColor.isNotEmpty
                       ? Color(int.parse(
                           '0xff${connectIssuerConfigList.elementAt(index).value.backgroundColor.replaceAll('#', '')}'))
-                      : Colors.grey.shade200,
-                  clipBehavior: Clip.antiAliasWithSaveLayer,
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-                    Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-                          Image.asset(
-                            'lib/assets/images/logoIcon.png',
-                            height:70,
-                            width: 70,
-                            fit: BoxFit.cover,
+                      : Colors.grey.shade200,*/
+                    clipBehavior: Clip.antiAliasWithSaveLayer,
+                    child: ListTile(
+                        title: Text(
+                          connectIssuerConfigList.elementAt(index).key,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: connectIssuerConfigList.elementAt(index).value.textColor.isNotEmpty
+                                ? Color(int.parse(
+                                    '0xff${connectIssuerConfigList.first.value.textColor.replaceAll('#', '')}'))
+                                : const Color(0xff190C21),
                           ),
-                          Container(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  connectIssuerConfigList.elementAt(index).key,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    color: connectIssuerConfigList.elementAt(index).value.textColor.isNotEmpty
-                                        ? Color(int.parse(
-                                            '0xff${connectIssuerConfigList.first.value.textColor.replaceAll('#', '')}'))
-                                        : const Color(0xff190C21),
-                                  ),
-                                ),
-                                // Add a space between the title and the text
-                                Container(height: 10),
-                                Text(
-                                  connectIssuerConfigList.elementAt(index).value.description,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                    color: connectIssuerConfigList.elementAt(index).value.textColor.isNotEmpty
-                                        ? Color(int.parse(
-                                            '0xff${connectIssuerConfigList.first.value.textColor.replaceAll('#', '')}'))
-                                        : Colors.grey[700],
-                                  ),
-                                ),
-                                Container(height: 10),
-                                Row(
-                                  children: <Widget>[
-                                    const Spacer(),
-                                    PrimaryButton(
-                                      child: Text(
-                                        actionText!,
-                                        style: const TextStyle(color: Colors.white),
-                                      ),
-                                      onPressed: () async {
-                                      try {
-                                        var supportedCredentials =
-                                        await connect(connectIssuerConfigList
-                                            .elementAt(index)
-                                            .value
-                                            .issuerURI);
-                                        var connectIssuerConfigValue = ConnectIssuerConfigValue(
-                                            issuerURI: "",
-                                            scopes: connectIssuerConfigList
-                                                .elementAt(index)
-                                                .value
-                                                .scopes,
-                                            clientID: connectIssuerConfigList
-                                                .elementAt(index)
-                                                .value
-                                                .clientID,
-                                            redirectURI: connectIssuerConfigList
-                                                .elementAt(index)
-                                                .value
-                                                .redirectURI,
-                                            showIssuer: true,
-                                            description: "",
-                                            backgroundColor: "",
-                                            textColor: "",
-                                            logo: "");
-                                        _navigateToSupportedCredentialScreen(
-                                            connectIssuerConfigList
-                                                .elementAt(index)
-                                                .key,
-                                            connectIssuerConfigList
-                                                .elementAt(index)
-                                                .value
-                                                .issuerURI,
-                                            supportedCredentials,
-                                            connectIssuerConfigValue);
-                                      } catch (err) {
-                                        if (err is PlatformException && err.message != null &&
-                                            err.message!.isNotEmpty) {
-                                          var resp =
-                                          await walletSDKPlugin.parseWalletSDKError(
-                                              localizedErrorMessage: err.details.toString());
-                                          setState(() {
-                                            _requestErrorSubTitleMsg = resp.details;
-                                            _requestErrorTitleMsg = 'Oops! Something went wrong!';
-                                            actionText = 'Re-Connect';
-                                            show = true;
-                                          });
-                                        }
-                                      }
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(height: 5),
-                        ])
                         ),
-                    Column(
-                      children: <Widget>[
-                        Column(
-                          children: <Widget>[
-                            Visibility(
-                              visible: show,
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                alignment: Alignment.center,
-                                child: ListTile(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  tileColor: const Color(0xffFBF8FC),
-                                  title: SelectableText(
-                                    _requestErrorTitleMsg ?? '',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xff190C21),
-                                    ),
-                                    textAlign: TextAlign.start,
-                                  ),
-                                  subtitle: SelectableText(
-                                    _requestErrorSubTitleMsg ?? '',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xff6C6D7C),
-                                    ),
-                                    textAlign: TextAlign.start,
-                                  ),
-                                  leading: const SizedBox(
-                                      height: 24,
-                                      width: 24,
-                                      child: Image(
-                                        image: AssetImage('lib/assets/images/errorVector.png'),
-                                        width: 24,
-                                        height: 24,
-                                        fit: BoxFit.cover,
-                                      )),
+                        leading: connectIssuerConfigList.elementAt(index).value.logo == null
+                            ? const SizedBox.shrink()
+                            : CachedNetworkImage(
+                                imageUrl: connectIssuerConfigList.elementAt(index).value.logo,
+                                placeholder: (context, url) => const CircularProgressIndicator(),
+                                errorWidget: (context, url, error) =>
+                                    Image.asset('lib/assets/images/logoIcon.png', fit: BoxFit.contain),
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.contain,
+                              ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.arrow_circle_right_outlined, size: 24, color: Color(0xffB6B7C7)),
+                          onPressed: () async {
+                            try {
+                              var supportedCredentials =
+                                  await connect(connectIssuerConfigList.elementAt(index).value.issuerURI);
+                              var connectIssuerConfigValue = ConnectIssuerConfigValue(
+                                  issuerURI: "",
+                                  scopes: connectIssuerConfigList.elementAt(index).value.scopes,
+                                  clientID: connectIssuerConfigList.elementAt(index).value.clientID,
+                                  redirectURI: connectIssuerConfigList.elementAt(index).value.redirectURI,
+                                  showIssuer: true,
+                                  description: "",
+                                  backgroundColor: "",
+                                  textColor: "",
+                                  logo: "");
+                              _navigateToSupportedCredentialScreen(
+                                  connectIssuerConfigList.elementAt(index).key,
+                                  connectIssuerConfigList.elementAt(index).value.issuerURI,
+                                  supportedCredentials,
+                                  connectIssuerConfigValue);
+                            } catch (err) {
+                              if (err is PlatformException && err.message != null && err.message!.isNotEmpty) {
+                                var resp = await walletSDKPlugin.parseWalletSDKError(
+                                    localizedErrorMessage: err.details.toString());
+                                setState(() {
+                                  _requestErrorSubTitleMsg = resp.details;
+                                  _requestErrorTitleMsg = 'Oops! Something went wrong!';
+                                  show = true;
+                                });
+                              }
+                            }
+                          },
+                        )),
+                  ),
+                  Column(
+                    children: <Widget>[
+                      Column(
+                        children: <Widget>[
+                          Visibility(
+                            visible: show,
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              alignment: Alignment.center,
+                              child: ListTile(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
+                                tileColor: const Color(0xffFBF8FC),
+                                title: SelectableText(
+                                  _requestErrorTitleMsg ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xff190C21),
+                                  ),
+                                  textAlign: TextAlign.start,
+                                ),
+                                subtitle: SelectableText(
+                                  _requestErrorSubTitleMsg ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xff6C6D7C),
+                                  ),
+                                  textAlign: TextAlign.start,
+                                ),
+                                leading: const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: Image(
+                                      image: AssetImage('lib/assets/images/errorVector.png'),
+                                      width: 24,
+                                      height: 24,
+                                      fit: BoxFit.cover,
+                                    )),
                               ),
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ]),
-                );
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ]);
               },
             ),
           ),
