@@ -11,7 +11,6 @@ package credential
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -76,7 +75,7 @@ func NewInquirer(opts *InquirerOpts) (*Inquirer, error) {
 func (c *Inquirer) GetSubmissionRequirements(query []byte, credentials *verifiable.CredentialsArray,
 ) (*SubmissionRequirementArray, error) {
 	if credentials == nil {
-		return nil, errors.New("credentials must be provided")
+		credentials = verifiable.NewCredentialsArray()
 	}
 
 	pdQuery, err := unwrapQuery(query)

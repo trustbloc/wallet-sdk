@@ -31,16 +31,6 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
   log("stored credentials -> $storedCredentials");
 
  credentials = storedCredentials.map((e) => e.value.rawCredential).toList();
-  if (credentials.isEmpty) {
-    log("credentials is empty now $credentials");
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => CustomError(
-                requestErrorTitleMsg: "No Credentials found",
-                requestErrorSubTitleMsg: "Error found in the presentation flow")));
-    return;
-  }
 
   try {
      await walletSDKPlugin.processAuthorizationRequest(

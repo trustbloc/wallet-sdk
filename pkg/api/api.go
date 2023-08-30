@@ -54,14 +54,6 @@ type DIDResolver interface {
 	Resolve(did string) (*did.DocResolution, error)
 }
 
-// A CredentialReader is capable of reading VCs from some underlying storage mechanism.
-type CredentialReader interface {
-	// Get retrieves a VC.
-	Get(id string) (*verifiable.Credential, error)
-	// GetAll retrieves all VCs.
-	GetAll() ([]*verifiable.Credential, error)
-}
-
 // A CredentialWriter is capable of writing VCs to some underlying storage mechanism.
 type CredentialWriter interface {
 	// Add adds a VC.
