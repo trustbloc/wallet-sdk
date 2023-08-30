@@ -98,7 +98,7 @@ class IssuancePreviewState extends State<IssuancePreview> {
               height: 40,
               child: Text(
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 24, color: Color(0xff190C21), fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 18, color: Color(0xff190C21), fontWeight: FontWeight.bold),
                   issuerDisplayName),
             ),
             SizedBox(
