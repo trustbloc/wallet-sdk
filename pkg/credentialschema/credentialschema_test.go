@@ -214,11 +214,11 @@ func TestResolve(t *testing.T) {
 					{RawID: "gpa", Label: "GPA", RawValue: "4.0", ValueType: "number", Locale: "en-US"},
 					{
 						RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789",
-						Value: "*****6789", ValueType: "string", Mask: "regex(^(.*).{4}$)", Locale: "en-US",
+						Value: "•••••6789", ValueType: "string", Mask: "regex(^(.*).{4}$)", Locale: "en-US",
 					},
 					{
 						RawID: "really_sensitive_id", Label: "Really Sensitive ID", RawValue: "abcdefg",
-						Value: "*******", ValueType: "string", Mask: "regex((.*))", Locale: "en-US",
+						Value: "•••••••", ValueType: "string", Mask: "regex((.*))", Locale: "en-US",
 					},
 					{
 						RawID: "chemistry", Label: "Chemistry Final Grade", RawValue: "78",
@@ -432,11 +432,11 @@ func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *crede
 		},
 		{RawID: "gpa", Label: "GPA", RawValue: "4.0", ValueType: "number", Locale: "en-US"},
 		{
-			RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789", Value: "*****6789",
+			RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789", Value: "•••••6789",
 			ValueType: "string", Mask: "regex(^(.*).{4}$)", Locale: "en-US",
 		},
 		{
-			RawID: "really_sensitive_id", Label: "Really Sensitive ID", RawValue: "abcdefg", Value: "*******",
+			RawID: "really_sensitive_id", Label: "Really Sensitive ID", RawValue: "abcdefg", Value: "•••••••",
 			ValueType: "string", Mask: "regex((.*))", Locale: "en-US",
 		},
 		{

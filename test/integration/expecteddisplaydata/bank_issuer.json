@@ -71,7 +71,7 @@
           "raw_id": "sensitiveID",
           "label":"Sensitive ID",
           "value_type": "string",
-          "value":"*****6789",
+          "value":"•••••6789",
           "raw_value":"123456789",
           "mask":"regex(^(.*).{4}$)",
           "locale":"en-US"
@@ -80,7 +80,7 @@
           "raw_id": "reallySensitiveID",
           "label":"Really Sensitive ID",
           "value_type": "string",
-          "value":"*******",
+          "value":"•••••••",
           "raw_value":"abcdefg",
           "mask":"regex((.*))",
           "locale":"en-US"
