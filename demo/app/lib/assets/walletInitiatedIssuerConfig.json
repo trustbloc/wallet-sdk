@@ -1,6 +1,6 @@
 {
-  "TrustBloc (Dev) Issuer" : {
-   "issuerURI": "https://api-gateway.dev.trustbloc.dev/issuer/bank_issuer/v1.0",
+  "TrustBloc (Stg) Issuer" : {
+   "issuerURI": "https://api-gateway.stg.trustbloc.dev/issuer/bank_issuer/v1.0",
    "scopes": ["openid","profile"],
    "clientID": "oidc4vc_client",
    "redirectURI": "trustbloc-wallet://openid4vci/authcodeflow/callback",
