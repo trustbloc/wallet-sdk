@@ -19,6 +19,7 @@ type Opts struct {
 	additionalHeaders                api.Headers
 	httpTimeout                      *time.Duration
 	disableHTTPClientTLSVerification bool
+	maskingString                    *string
 }
 
 // NewOpts returns a new Opts object.
@@ -66,6 +67,35 @@ func (o *Opts) AddHeaders(headers *api.Headers) *Opts {
 // DisableHTTPClientTLSVerify disables TLS verification. Should be used for testing purposes only.
 func (o *Opts) DisableHTTPClientTLSVerify() *Opts {
 	o.disableHTTPClientTLSVerification = true
+
+	return o
+}
+
+// SetMaskingString sets the string to be used when creating masked values for display.
+// The substitution is done on a character-by-character basis, whereby each individual character to be masked
+// will be replaced by the entire string. See the examples below to better understand exactly how the
+// substitution works.
+//
+// (Note that any quote characters in the examples below are only there for readability reasons - they're not actually
+// part of the values.)
+//
+// Scenario: The unmasked display value is 12345, and the issuer's metadata specifies that the first 3 characters are
+// to be masked. The most common use-case is to substitute every masked character with a single character. This is
+// achieved by specifying just a single character in the maskingString. Here's what the masked value would look like
+// with different maskingString choices:
+//
+// maskingString: "•"    -->    •••45
+// maskingString: "*"    -->    ***45
+//
+// It's also possible to specify multiple characters in the maskingString, or even an empty string if so desired.
+// Here's what the masked value would like in such cases:
+//
+// maskingString: "???"  -->    ?????????45
+// maskingString: ""     -->    45
+//
+// If this option isn't used, then by default "•" characters (without the quotes) will be used for masking.
+func (o *Opts) SetMaskingString(maskingString string) *Opts {
+	o.maskingString = &maskingString
 
 	return o
 }

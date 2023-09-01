@@ -67,6 +67,12 @@ func generateGoAPIOpts(vcs *verifiable.CredentialsArray, issuerURI string,
 		goAPIOpts = append(goAPIOpts, goAPIOpt)
 	}
 
+	if opts.maskingString != nil {
+		goAPIOpt := goapicredentialschema.WithMaskingString(*opts.maskingString)
+
+		goAPIOpts = append(goAPIOpts, goAPIOpt)
+	}
+
 	return goAPIOpts, nil
 }
 

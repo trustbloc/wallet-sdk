@@ -22,6 +22,11 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
+const (
+	sensitiveIDLabel       = "Sensitive ID"
+	reallySensitiveIDLabel = "Really Sensitive ID"
+)
+
 var (
 	//go:embed testdata/issuer_metadata.json
 	sampleIssuerMetadata []byte
@@ -54,7 +59,7 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, _ *http.
 	}
 }
 
-func TestResolve(t *testing.T) {
+func TestResolve(t *testing.T) { //nolint: gocognit // Test file
 	t.Run("Success", func(t *testing.T) {
 		t.Run("Credentials supported object contains display info for the given VC", func(t *testing.T) {
 			credential, err := verifiable.ParseCredential(credentialUniversityDegree,
@@ -129,21 +134,75 @@ func TestResolve(t *testing.T) {
 			})
 			t.Run("Credentials supported object does not contain display info for the given VC, "+
 				"resulting in the default display being used", func(t *testing.T) {
-				var issuerMetadata issuer.Metadata
+				var metadata issuer.Metadata
 
-				err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
+				err = json.Unmarshal(sampleIssuerMetadata, &metadata)
 				require.NoError(t, err)
 
-				issuerMetadata.CredentialsSupported[0].Types[1] = "SomeOtherType"
+				metadata.CredentialsSupported[0].Types[1] = "SomeOtherType"
 
 				resolvedDisplayData, errResolve := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-					credentialschema.WithIssuerMetadata(&issuerMetadata),
+					credentialschema.WithIssuerMetadata(&metadata),
 					credentialschema.WithHTTPClient(http.DefaultClient),
 					credentialschema.WithPreferredLocale("en-US"))
 				require.NoError(t, errResolve)
 				checkForDefaultDisplayData(t, resolvedDisplayData)
 			})
+			t.Run("With custom masking string", func(t *testing.T) {
+				t.Run(`"*"`, func(t *testing.T) {
+					resolvedDisplayData, errResolve := credentialschema.Resolve(
+						credentialschema.WithCredentials([]*verifiable.Credential{credential}),
+						credentialschema.WithIssuerMetadata(&issuerMetadata),
+						credentialschema.WithMaskingString("*"))
+					require.NoError(t, errResolve)
+
+					claims := resolvedDisplayData.CredentialDisplays[0].Claims
+
+					for _, claim := range claims {
+						if claim.Label == sensitiveIDLabel {
+							require.Equal(t, "*****6789", *claim.Value)
+						} else if claim.Label == reallySensitiveIDLabel {
+							require.Equal(t, "*******", *claim.Value)
+						}
+					}
+				})
+				t.Run(`"+++"`, func(t *testing.T) {
+					resolvedDisplayData, errResolve := credentialschema.Resolve(
+						credentialschema.WithCredentials([]*verifiable.Credential{credential}),
+						credentialschema.WithIssuerMetadata(&issuerMetadata),
+						credentialschema.WithMaskingString("+++"))
+					require.NoError(t, errResolve)
+
+					claims := resolvedDisplayData.CredentialDisplays[0].Claims
+
+					for _, claim := range claims {
+						if claim.Label == sensitiveIDLabel {
+							require.Equal(t, "+++++++++++++++6789", *claim.Value)
+						} else if claim.Label == reallySensitiveIDLabel {
+							require.Equal(t, "+++++++++++++++++++++", *claim.Value)
+						}
+					}
+				})
+				t.Run(`"" (empty string)`, func(t *testing.T) {
+					resolvedDisplayData, errResolve := credentialschema.Resolve(
+						credentialschema.WithCredentials([]*verifiable.Credential{credential}),
+						credentialschema.WithIssuerMetadata(&issuerMetadata),
+						credentialschema.WithMaskingString(""))
+					require.NoError(t, errResolve)
+
+					claims := resolvedDisplayData.CredentialDisplays[0].Claims
+
+					for _, claim := range claims {
+						if claim.Label == sensitiveIDLabel {
+							require.Equal(t, "6789", *claim.Value)
+						} else if claim.Label == reallySensitiveIDLabel {
+							require.Equal(t, "", *claim.Value)
+						}
+					}
+				})
+			})
+
 			t.Run("Credentials supported object does not have claim display info", func(t *testing.T) {
 				var issuerMetadata issuer.Metadata
 
@@ -201,6 +260,8 @@ func TestResolve(t *testing.T) {
 				expectedIDOrder := 0
 				expectedGivenNameOrder := 1
 				expectedSurnameOrder := 2
+				sensitiveIDValue := "•••••6789"
+				reallySensitiveIDValue := "•••••••"
 				expectedClaims := []credentialschema.ResolvedClaim{
 					{RawID: "id", Label: "ID", RawValue: "1234", ValueType: "string", Locale: "en-US", Order: &expectedIDOrder},
 					{
@@ -214,11 +275,11 @@ func TestResolve(t *testing.T) {
 					{RawID: "gpa", Label: "GPA", RawValue: "4.0", ValueType: "number", Locale: "en-US"},
 					{
 						RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789",
-						Value: "•••••6789", ValueType: "string", Mask: "regex(^(.*).{4}$)", Locale: "en-US",
+						Value: &sensitiveIDValue, ValueType: "string", Mask: "regex(^(.*).{4}$)", Locale: "en-US",
 					},
 					{
 						RawID: "really_sensitive_id", Label: "Really Sensitive ID", RawValue: "abcdefg",
-						Value: "•••••••", ValueType: "string", Mask: "regex((.*))", Locale: "en-US",
+						Value: &reallySensitiveIDValue, ValueType: "string", Mask: "regex((.*))", Locale: "en-US",
 					},
 					{
 						RawID: "chemistry", Label: "Chemistry Final Grade", RawValue: "78",
@@ -420,6 +481,8 @@ func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *crede
 	expectedIDOrder := 0
 	expectedGivenNameOrder := 1
 	expectedSurnameOrder := 2
+	sensitiveIDValue := "•••••6789"
+	reallySensitiveIDValue := "•••••••"
 	expectedClaims := []credentialschema.ResolvedClaim{
 		{RawID: "id", Label: "ID", RawValue: "1234", ValueType: "string", Locale: "en-US", Order: &expectedIDOrder},
 		{
@@ -432,12 +495,12 @@ func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *crede
 		},
 		{RawID: "gpa", Label: "GPA", RawValue: "4.0", ValueType: "number", Locale: "en-US"},
 		{
-			RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789", Value: "•••••6789",
+			RawID: "sensitive_id", Label: "Sensitive ID", RawValue: "123456789", Value: &sensitiveIDValue,
 			ValueType: "string", Mask: "regex(^(.*).{4}$)", Locale: "en-US",
 		},
 		{
-			RawID: "really_sensitive_id", Label: "Really Sensitive ID", RawValue: "abcdefg", Value: "•••••••",
-			ValueType: "string", Mask: "regex((.*))", Locale: "en-US",
+			RawID: "really_sensitive_id", Label: "Really Sensitive ID", RawValue: "abcdefg",
+			Value: &reallySensitiveIDValue, ValueType: "string", Mask: "regex((.*))", Locale: "en-US",
 		},
 		{
 			RawID: "chemistry", Label: "Chemistry Final Grade", RawValue: "78",
@@ -535,9 +598,21 @@ func verifyClaimsAnyOrder(t *testing.T, actualClaims []credentialschema.Resolved
 	}
 }
 
-func claimsMatch(claim1, claim2 *credentialschema.ResolvedClaim) bool {
+func claimsMatch(claim1, claim2 *credentialschema.ResolvedClaim) bool { //nolint: gocyclo // Test file
+	// Check the value pointer fields first.
+	if claim1.Value != nil {
+		if claim2.Value == nil {
+			return false
+		}
+
+		if *claim1.Value != *claim2.Value {
+			return false
+		}
+	} else if claim2.Value != nil {
+		return false
+	}
+
 	if claim1.Label == claim2.Label &&
-		claim1.Value == claim2.Value &&
 		claim1.Locale == claim2.Locale &&
 		claim1.ValueType == claim2.ValueType &&
 		claim1.RawID == claim2.RawID &&

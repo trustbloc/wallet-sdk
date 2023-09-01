@@ -51,6 +51,7 @@ type resolveOpts struct {
 	preferredLocal       string
 	metricsLogger        api.MetricsLogger
 	httpClient           httpClient
+	maskingString        *string
 }
 
 // ResolveOpt represents an option for the Resolve function.
@@ -120,12 +121,41 @@ func WithHTTPClient(httpClient httpClient) ResolveOpt {
 	}
 }
 
-func processOpts(opts []ResolveOpt) ([]*verifiable.Credential, *issuer.Metadata, string, error) {
+// WithMaskingString is an option allowing a caller to specify a string to be used when creating masked values for
+// display. The substitution is done on a character-by-character basis, whereby each individual character to be masked
+// will be replaced by the entire string. See the examples below to better understand exactly how the
+// substitution works.
+//
+// (Note that any quote characters in the examples below are only there for readability reasons - they're not actually
+// part of the values.)
+//
+// Scenario: The unmasked display value is 12345, and the issuer's metadata specifies that the first 3 characters are
+// to be masked. The most common use-case is to substitute every masked character with a single character. This is
+// achieved by specifying just a single character in the maskingString. Here's what the masked value would look like
+// with different maskingString choices:
+//
+// maskingString: "•"    -->    •••45
+// maskingString: "*"    -->    ***45
+//
+// It's also possible to specify multiple characters in the maskingString, or even an empty string if so desired.
+// Here's what the masked value would like in such cases:
+//
+// maskingString: "???"  -->    ?????????45
+// maskingString: ""     -->    45
+//
+// If this option isn't used, then by default "•" characters (without the quotes) will be used for masking.
+func WithMaskingString(maskingString string) ResolveOpt {
+	return func(opts *resolveOpts) {
+		opts.maskingString = &maskingString
+	}
+}
+
+func processOpts(opts []ResolveOpt) ([]*verifiable.Credential, *issuer.Metadata, string, *string, error) {
 	mergedOpts := mergeOpts(opts)
 
 	err := validateOpts(mergedOpts)
 	if err != nil {
-		return nil, nil, "", err
+		return nil, nil, "", nil, err
 	}
 
 	return processValidatedOpts(mergedOpts)
@@ -174,10 +204,10 @@ func validateIssuerMetadataOpts(issuerMetadataSource *issuerMetadataSource) erro
 	return nil
 }
 
-func processValidatedOpts(opts *resolveOpts) ([]*verifiable.Credential, *issuer.Metadata, string, error) {
+func processValidatedOpts(opts *resolveOpts) ([]*verifiable.Credential, *issuer.Metadata, string, *string, error) {
 	vcs, err := processVCOpts(&opts.credentialSource)
 	if err != nil {
-		return nil, nil, "", err
+		return nil, nil, "", nil, err
 	}
 
 	var metricsLogger api.MetricsLogger
@@ -194,10 +224,10 @@ func processValidatedOpts(opts *resolveOpts) ([]*verifiable.Credential, *issuer.
 
 	issuerMetadata, err := processIssuerMetadataOpts(&opts.issuerMetadataSource, opts.httpClient, metricsLogger)
 	if err != nil {
-		return nil, nil, "", err
+		return nil, nil, "", nil, err
 	}
 
-	return vcs, issuerMetadata, opts.preferredLocal, nil
+	return vcs, issuerMetadata, opts.preferredLocal, opts.maskingString, nil
 }
 
 func processVCOpts(credentialSource *credentialSource) ([]*verifiable.Credential, error) {

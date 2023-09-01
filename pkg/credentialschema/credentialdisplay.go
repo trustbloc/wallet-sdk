@@ -23,7 +23,7 @@ var (
 )
 
 func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported []issuer.SupportedCredential,
-	preferredLocale string,
+	preferredLocale, maskingString string,
 ) ([]CredentialDisplay, error) {
 	var credentialDisplays []CredentialDisplay
 
@@ -46,7 +46,8 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 				continue
 			}
 
-			credentialDisplay, err := buildCredentialDisplay(&credentialsSupported[i], subject, preferredLocale)
+			credentialDisplay, err := buildCredentialDisplay(&credentialsSupported[i], subject, preferredLocale,
+				maskingString)
 			if err != nil {
 				return nil, err
 			}
@@ -92,9 +93,9 @@ func haveMatchingTypes(supportedCredential *issuer.SupportedCredential, vc *veri
 }
 
 func buildCredentialDisplay(supportedCredential *issuer.SupportedCredential, subject *verifiable.Subject,
-	preferredLocale string,
+	preferredLocale, maskingString string,
 ) (*CredentialDisplay, error) {
-	resolvedClaims, err := resolveClaims(supportedCredential, subject, preferredLocale)
+	resolvedClaims, err := resolveClaims(supportedCredential, subject, preferredLocale, maskingString)
 	if err != nil {
 		return nil, err
 	}
@@ -145,14 +146,14 @@ func getSubject(vc *verifiable.Credential) (*verifiable.Subject, error) {
 }
 
 func resolveClaims(supportedCredential *issuer.SupportedCredential, credentialSubject *verifiable.Subject,
-	preferredLocale string,
+	preferredLocale, maskingString string,
 ) ([]ResolvedClaim, error) {
 	var resolvedClaims []ResolvedClaim
 
 	for fieldName, claim := range supportedCredential.CredentialSubject {
 		claim := claim // Resolves implicit memory aliasing warning from linter
 
-		resolvedClaim, err := resolveClaim(fieldName, &claim, credentialSubject, preferredLocale)
+		resolvedClaim, err := resolveClaim(fieldName, &claim, credentialSubject, preferredLocale, maskingString)
 		if err != nil && !errors.Is(err, errNoClaimDisplays) && !errors.Is(err, errClaimValueNotFoundInVC) {
 			return nil, err
 		}
@@ -166,7 +167,7 @@ func resolveClaims(supportedCredential *issuer.SupportedCredential, credentialSu
 }
 
 func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *verifiable.Subject,
-	preferredLocale string,
+	preferredLocale, maskingString string,
 ) (*ResolvedClaim, error) {
 	if len(claim.LocalizedClaimDisplays) == 0 {
 		return nil, errNoClaimDisplays
@@ -181,15 +182,15 @@ func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *veri
 
 	rawValue := fmt.Sprintf("%v", untypedValue)
 
-	var value string
+	var value *string
 
 	if claim.Mask != "" {
-		maskedValue, err := getMaskedValue(rawValue, claim.Mask)
+		maskedValue, err := getMaskedValue(rawValue, claim.Mask, maskingString)
 		if err != nil {
 			return nil, err
 		}
 
-		value = maskedValue
+		value = &maskedValue
 	}
 
 	return &ResolvedClaim{
@@ -205,7 +206,7 @@ func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *veri
 	}, nil
 }
 
-func getMaskedValue(rawValue, maskingPattern string) (string, error) {
+func getMaskedValue(rawValue, maskingPattern, maskingString string) (string, error) {
 	// Trim "regex(" from the beginning and ")" from the end
 	regex := maskingPattern[6 : len(maskingPattern)-1]
 
@@ -217,7 +218,7 @@ func getMaskedValue(rawValue, maskingPattern string) (string, error) {
 	// Always use the first submatch.
 	valueToBeMasked := r.ReplaceAllString(rawValue, "$1")
 
-	maskedValue := strings.ReplaceAll(rawValue, valueToBeMasked, strings.Repeat("•", len(valueToBeMasked)))
+	maskedValue := strings.ReplaceAll(rawValue, valueToBeMasked, strings.Repeat(maskingString, len(valueToBeMasked)))
 
 	return maskedValue, nil
 }

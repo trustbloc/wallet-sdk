@@ -12,12 +12,18 @@ package credentialschema
 // same order.
 // This method requires one VC source and one issuer metadata source. See opts.go for more information.
 func Resolve(opts ...ResolveOpt) (*ResolvedDisplayData, error) {
-	vcs, metadata, preferredLocale, err := processOpts(opts)
+	vcs, metadata, preferredLocale, maskingString, err := processOpts(opts)
 	if err != nil {
 		return nil, err
 	}
 
-	credentialDisplays, err := buildCredentialDisplays(vcs, metadata.CredentialsSupported, preferredLocale)
+	if maskingString == nil {
+		defaultMaskingString := "•"
+		maskingString = &defaultMaskingString
+	}
+
+	credentialDisplays, err := buildCredentialDisplays(vcs, metadata.CredentialsSupported, preferredLocale,
+		*maskingString)
 	if err != nil {
 		return nil, err
 	}

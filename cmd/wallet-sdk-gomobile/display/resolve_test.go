@@ -21,6 +21,11 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 )
 
+const (
+	sensitiveIDLabel       = "Sensitive ID"
+	reallySensitiveIDLabel = "Really Sensitive ID"
+)
+
 var (
 	//go:embed testdata/issuer_metadata.json
 	sampleIssuerMetadata []byte
@@ -67,6 +72,62 @@ func TestResolve(t *testing.T) {
 		vcs := verifiable.NewCredentialsArray()
 		vcs.Add(vc)
 
+		t.Run("With custom masking string", func(t *testing.T) {
+			t.Run(`"*"`, func(t *testing.T) {
+				opts := display.NewOpts().SetMaskingString("*")
+
+				resolvedDisplayData, err := display.Resolve(vcs, server.URL, opts)
+				require.NoError(t, err)
+
+				credentialDisplay := resolvedDisplayData.CredentialDisplayAtIndex(0)
+
+				for i := 0; i < credentialDisplay.ClaimsLength(); i++ {
+					claim := credentialDisplay.ClaimAtIndex(i)
+
+					if claim.Label() == sensitiveIDLabel {
+						require.Equal(t, "*****6789", claim.Value())
+					} else if claim.Label() == reallySensitiveIDLabel {
+						require.Equal(t, "*******", claim.Value())
+					}
+				}
+			})
+			t.Run(`"+++"`, func(t *testing.T) {
+				opts := display.NewOpts().SetMaskingString("+++")
+
+				resolvedDisplayData, err := display.Resolve(vcs, server.URL, opts)
+				require.NoError(t, err)
+
+				credentialDisplay := resolvedDisplayData.CredentialDisplayAtIndex(0)
+
+				for i := 0; i < credentialDisplay.ClaimsLength(); i++ {
+					claim := credentialDisplay.ClaimAtIndex(i)
+
+					if claim.Label() == sensitiveIDLabel {
+						require.Equal(t, "+++++++++++++++6789", claim.Value())
+					} else if claim.Label() == reallySensitiveIDLabel {
+						require.Equal(t, "+++++++++++++++++++++", claim.Value())
+					}
+				}
+			})
+			t.Run(`"" (empty string`, func(t *testing.T) {
+				opts := display.NewOpts().SetMaskingString("")
+
+				resolvedDisplayData, err := display.Resolve(vcs, server.URL, opts)
+				require.NoError(t, err)
+
+				credentialDisplay := resolvedDisplayData.CredentialDisplayAtIndex(0)
+
+				for i := 0; i < credentialDisplay.ClaimsLength(); i++ {
+					claim := credentialDisplay.ClaimAtIndex(i)
+
+					if claim.Label() == sensitiveIDLabel {
+						require.Equal(t, "6789", claim.Value())
+					} else if claim.Label() == reallySensitiveIDLabel {
+						require.Equal(t, "", claim.Value())
+					}
+				}
+			})
+		})
 		t.Run("Without additional headers", func(t *testing.T) {
 			t.Run("Without a preferred locale specified", func(t *testing.T) {
 				opts := display.NewOpts().SetHTTPTimeoutNanoseconds(0)
@@ -100,6 +161,7 @@ func TestResolve(t *testing.T) {
 			checkResolvedDisplayData(t, resolvedDisplayData)
 		})
 	})
+
 	t.Run("No credentials specified", func(t *testing.T) {
 		resolvedDisplayData, err := display.Resolve(nil, "", nil)
 		require.EqualError(t, err, "no credentials specified")
