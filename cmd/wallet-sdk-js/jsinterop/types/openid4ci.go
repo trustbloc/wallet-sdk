@@ -9,6 +9,7 @@ SPDX-License-Identifier: Apache-2.0
 package types
 
 import (
+	"encoding/json"
 	"fmt"
 	"syscall/js"
 
@@ -24,6 +25,7 @@ const (
 	openid4ciRequestCredentialWithPreAuth = "requestCredentialWithPreAuth"
 	openid4ciPreAuthorizedCodeGrantParams = "preAuthorizedCodeGrantParams"
 	openid4ciIssuerURI                    = "issuerURI"
+	openid4ciIssuerMetadata               = "issuerMetadata"
 )
 
 func SerializeOpenID4CIIssuerInitiatedInteraction(agentMethodsRunner *jssupport.AsyncRunner,
@@ -32,6 +34,25 @@ func SerializeOpenID4CIIssuerInitiatedInteraction(agentMethodsRunner *jssupport.
 	return map[string]interface{}{
 		openid4ciIssuerURI: js.FuncOf(func(this js.Value, args []js.Value) any {
 			return interaction.Interaction.IssuerURI()
+		}),
+		openid4ciIssuerMetadata: agentMethodsRunner.CreateAsyncFunc(func(this js.Value, args []js.Value) (any, error) {
+			issuerMetadata, err := interaction.Interaction.IssuerMetadata()
+			if err != nil {
+				return nil, err
+			}
+			supportedCredentialsBytes, err := json.Marshal(issuerMetadata.CredentialsSupported)
+			if err != nil {
+				return nil, err
+			}
+			localizedIssuerDisplaysBytes, err := json.Marshal(issuerMetadata.LocalizedIssuerDisplays)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]interface{}{
+				"credentialIssuer":        issuerMetadata.CredentialIssuer,
+				"supportedCredentials":    string(supportedCredentialsBytes),
+				"localizedIssuerDisplays": string(localizedIssuerDisplaysBytes),
+			}, nil
 		}),
 		openid4ciPreAuthorizedCodeGrantParams: agentMethodsRunner.CreateAsyncFunc(func(this js.Value, args []js.Value) (any, error) {
 			params, err := interaction.Interaction.PreAuthorizedCodeGrantParams()
