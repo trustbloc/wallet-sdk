@@ -238,16 +238,16 @@ class IssuerDisplayData {
   final String locale;
   final String url;
   String? logo;
-  final String backgroundColor;
-  final String textColor;
+  String? backgroundColor;
+  String? textColor;
 
   IssuerDisplayData({
     required this.name,
     required this.locale,
     required this.url,
-    required this.logo,
-    required this.textColor,
-    required this.backgroundColor,
+    this.logo,
+    this.textColor,
+    this.backgroundColor,
   });
 
   @override

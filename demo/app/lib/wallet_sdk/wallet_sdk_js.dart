@@ -101,6 +101,29 @@ extension JSSubmissionRequirementExt on JSSubmissionRequirement {
 }
 
 @JS()
+@staticInterop
+class JSSupportedCredentials {}
+
+extension JSSupportedCredentialsExt on JSSupportedCredentials {
+
+  external String get format;
+
+  external List<dynamic> get types;
+
+  external List<dynamic> get display;
+}
+
+@JS()
+@staticInterop
+class JSIssuerMetadata {}
+
+extension JSIssuerMetadataExt on JSIssuerMetadata {
+  external String get credentialIssuer;
+  external List<dynamic> get supportedCredentials;
+  external List<dynamic> get localizedIssuerDisplays;
+}
+
+@JS()
 external dynamic jsInitSDK(String didResolverURI);
 
 @JS()
@@ -141,6 +164,9 @@ external dynamic jsVerifyCredentialsStatus(String credential);
 
 @JS()
 external dynamic jsWellKnownDidConfig(String issuerID);
+
+@JS()
+external dynamic jsGetIssuerMetadata();
 
 class WalletSDK extends WalletPlatform {
   @visibleForTesting
@@ -295,7 +321,39 @@ class WalletSDK extends WalletPlatform {
   }
 
   Future<List<IssuerMetaData>> getIssuerMetaData() async {
-    return throw Exception('Method not implemented');
+    final JSIssuerMetadata data = await promiseToFuture(jsGetIssuerMetadata());
+
+    final List<IssuerMetaData> issuerMetadata = [IssuerMetaData(
+      credentialIssuer: data.credentialIssuer,
+      supportedCredentials: data.supportedCredentials
+        .map((e) => e as JSSupportedCredentials)
+        .map((supportedCredential) => SupportedCredentials(
+          format: supportedCredential.format,
+          types: supportedCredential.types.map((e) => e as String).toList(),
+          display: supportedCredential.display
+                .map((supportedCredentialDisplayData) => SupportedCredentialDisplayData(
+                  name: supportedCredentialDisplayData.name,
+                  locale: supportedCredentialDisplayData.locale,
+                  logo: (supportedCredentialDisplayData.logo != null) ? supportedCredentialDisplayData.logo.url : '',
+                  textColor: supportedCredentialDisplayData.text_color,
+                  backgroundColor: supportedCredentialDisplayData.background_color
+              )
+            ).toList(),
+        )).toList(),
+      localizedIssuerDisplays: data.localizedIssuerDisplays
+          .map((localizedIssuerDisplay) => IssuerDisplayData(
+            name: localizedIssuerDisplay.name,
+            locale: localizedIssuerDisplay.locale,
+            url: (localizedIssuerDisplay.url != null) ? localizedIssuerDisplay.url : '',
+            logo: (localizedIssuerDisplay.logo != null) ? localizedIssuerDisplay.logo.url : '',
+            textColor: localizedIssuerDisplay.text_color,
+            backgroundColor: localizedIssuerDisplay.background_color
+        )).toList(),
+    )];
+
+    debugPrint("Issuer Metadata: $issuerMetadata");
+
+    return issuerMetadata;
   }
 
   Future<VerifierDisplayData> getVerifierDisplayData() async {

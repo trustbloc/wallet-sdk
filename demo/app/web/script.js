@@ -115,6 +115,17 @@ async function jsWellKnownDidConfig(issuerID) {
     })
 }
 
+async function jsGetIssuerMetadata() {
+    const issuerMetadata = await openID4CIInteraction.issuerMetadata()
+    const result = {
+        ...issuerMetadata,
+        supportedCredentials: JSON.parse(issuerMetadata.supportedCredentials),
+        localizedIssuerDisplays: JSON.parse(issuerMetadata.localizedIssuerDisplays)
+    };
+    console.log("JS Issuer Metadata:", result);
+    return result;
+}
+
 // KMS database implementation
 function CreateDB(dbName) {
   const keystoreTable = "keyStore";
