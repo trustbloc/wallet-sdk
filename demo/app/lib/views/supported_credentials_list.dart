@@ -35,7 +35,7 @@ class SupportedCredentialsList extends StatefulWidget {
 class SupportedCredentialsListState extends State<SupportedCredentialsList> {
   var walletSDKPlugin = WalletSDK();
 
-  String convertToFlutterColor(String color){
+  String convertToFlutterColor(String color) {
     return '0xff${color.toString().replaceAll('#', '')}';
   }
 
@@ -50,18 +50,25 @@ class SupportedCredentialsListState extends State<SupportedCredentialsList> {
       body: Column(
         children: <Widget>[
           const SizedBox(height: 20),
+          const Text(
+            "Please select a credential type from below ",
+            style:
+                TextStyle(fontSize: 14, color: Color(0xff190C21), fontFamily: 'SF Pro', fontWeight: FontWeight.bold),
+          ),
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
               itemCount: widget.supportedCredentialList.length,
               itemBuilder: (context, index) {
                 return Container(
                   height: 80,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                      color: convertToFlutterColor(widget.supportedCredentialList.elementAt(index).display.first.backgroundColor)
+                      color: convertToFlutterColor(
+                                  widget.supportedCredentialList.elementAt(index).display.first.backgroundColor)
                               .isNotEmpty
-                          ? Color(int.parse(convertToFlutterColor(widget.supportedCredentialList.elementAt(index).display.first.backgroundColor)))
+                          ? Color(int.parse(convertToFlutterColor(
+                              widget.supportedCredentialList.elementAt(index).display.first.backgroundColor)))
                           : Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [BoxShadow(offset: const Offset(3, 3), color: Colors.grey.shade300, blurRadius: 5)]),
@@ -69,12 +76,13 @@ class SupportedCredentialsListState extends State<SupportedCredentialsList> {
                     title: Text(
                       widget.supportedCredentialList.elementAt(index).display.first.name,
                       style: TextStyle(
-                        fontSize:14,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: convertToFlutterColor(widget.supportedCredentialList.elementAt(index).display.first.textColor)
+                        color: convertToFlutterColor(
+                                    widget.supportedCredentialList.elementAt(index).display.first.textColor)
                                 .isNotEmpty
-                            ? Color(
-                            int.parse(convertToFlutterColor(widget.supportedCredentialList.elementAt(index).display.first.textColor)))
+                            ? Color(int.parse(convertToFlutterColor(
+                                widget.supportedCredentialList.elementAt(index).display.first.textColor)))
                             : const Color(0xff190C21),
                       ),
                       textAlign: TextAlign.start,
@@ -92,10 +100,11 @@ class SupportedCredentialsListState extends State<SupportedCredentialsList> {
                           ),
                     trailing: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(
-                            int.parse(convertToFlutterColor(widget.supportedCredentialList.elementAt(index).display.first.textColor))),
+                        backgroundColor: Color(int.parse(convertToFlutterColor(
+                            widget.supportedCredentialList.elementAt(index).display.first.textColor))),
                         shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: const BorderSide(color: Color(0xffC7C3C8))),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8), side: const BorderSide(color: Color(0xffC7C3C8))),
                       ),
                       onPressed: () async {
                         var authorizationURL = await walletSDKPlugin.createAuthorizationURLWalletInitiatedFlow(
