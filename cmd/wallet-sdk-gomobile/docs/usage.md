@@ -1108,6 +1108,53 @@ from the issuer. See [Resolve Display](#resolve-display) for more information.
 Display data objects can be serialized using the `serialize()` method (useful for storage) and parsed from serialized
 form back into display data objects using the `parseDisplayData()` function.
 
+## Options
+
+The `resolveDisplay` function has a number of different options available. For a full list of available options, check
+the associated `Opts` object. This section will highlight some especially notable ones:
+
+### Set Masking String
+
+The `setMaskingString(maskingString)` option allows you to specify the string to be used when creating masked values for
+display. The substitution is done on a character-by-character basis, whereby each individual character to be masked
+will be replaced by the entire string. See the examples below to better understand exactly how the substitution works.
+
+#### Examples
+
+Note that any quote characters used in these examples are only there for readability reasons - they're not actually
+part of the values.
+
+Scenario: The unmasked display value is 12345, and the issuer's metadata specifies that the first 3 characters are
+to be masked. The most common use-case is to substitute every masked character with a single character. This is
+achieved by specifying just a single character in the `maskingString`. Here's what the masked value would look like
+with different `maskingString` choices:
+```
+maskingString="•"    -->    •••45
+maskingString="*"    -->    ***45
+```
+
+It's also possible to specify multiple characters in the `maskingString`, or even an empty string if so desired.
+Here's what the masked value would like in such cases:
+
+```
+maskingString="???"  -->    ?????????45
+maskingString=""     -->    45
+```
+
+If this option isn't used, then by default "•" characters (without the quotes) will be used for masking.
+
+### Set Preferred Locale
+
+Use the `setPreferredLocale` method to specify what locale to use for resolving display values. The effectiveness of
+this option is contingent on what information the issuer provides. If the issuer specifies display value localizations
+for your preferred locale, then those will be used whenever possible. If localized values aren't available (for your
+preferred locale), then the first locale listed by the issuer will be used instead. Note that some pieces of display
+data may be localized more or less than other pieces.
+
+To determine what locales the resolved display values are in, use the various `locale()` methods available in the
+display data. You can use this to figure out which display values are actually in your preferred locale and which
+used a fallback default locale instead.
+
 ### The Display Object Structure
 
 The structure of the display data object is as follows:
