@@ -64,11 +64,9 @@ class SupportedCredentialsListState extends State<SupportedCredentialsList> {
                   height: 80,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                      color: convertToFlutterColor(
-                                  widget.supportedCredentialList.elementAt(index).display.first.backgroundColor)
-                              .isNotEmpty
+                      color: (widget.supportedCredentialList.elementAt(index).display.first.backgroundColor != null)
                           ? Color(int.parse(convertToFlutterColor(
-                              widget.supportedCredentialList.elementAt(index).display.first.backgroundColor)))
+                              widget.supportedCredentialList.elementAt(index).display.first.backgroundColor!)))
                           : Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [BoxShadow(offset: const Offset(3, 3), color: Colors.grey.shade300, blurRadius: 5)]),
@@ -78,11 +76,9 @@ class SupportedCredentialsListState extends State<SupportedCredentialsList> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: convertToFlutterColor(
-                                    widget.supportedCredentialList.elementAt(index).display.first.textColor)
-                                .isNotEmpty
+                        color: (widget.supportedCredentialList.elementAt(index).display.first.textColor != null)
                             ? Color(int.parse(convertToFlutterColor(
-                                widget.supportedCredentialList.elementAt(index).display.first.textColor)))
+                                widget.supportedCredentialList.elementAt(index).display.first.textColor!)))
                             : const Color(0xff190C21),
                       ),
                       textAlign: TextAlign.start,
@@ -90,7 +86,7 @@ class SupportedCredentialsListState extends State<SupportedCredentialsList> {
                     leading: widget.supportedCredentialList.elementAt(index).display.first.logo == null
                         ? const SizedBox.shrink()
                         : CachedNetworkImage(
-                            imageUrl: widget.supportedCredentialList.elementAt(index).display.first.logo,
+                            imageUrl: widget.supportedCredentialList.elementAt(index).display.first.logo!,
                             placeholder: (context, url) => const CircularProgressIndicator(),
                             errorWidget: (context, url, error) =>
                                 Image.asset('lib/assets/images/genericCredential.png', fit: BoxFit.contain),
@@ -100,8 +96,10 @@ class SupportedCredentialsListState extends State<SupportedCredentialsList> {
                           ),
                     trailing: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(int.parse(convertToFlutterColor(
-                            widget.supportedCredentialList.elementAt(index).display.first.textColor))),
+                        backgroundColor: (widget.supportedCredentialList.elementAt(index).display.first.textColor != null)
+                            ? Color(int.parse(convertToFlutterColor(
+                              widget.supportedCredentialList.elementAt(index).display.first.textColor!)))
+                            : Colors.white,
                         shadowColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8), side: const BorderSide(color: Color(0xffC7C3C8))),
