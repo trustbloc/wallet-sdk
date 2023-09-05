@@ -40,8 +40,8 @@ class IssuancePreviewState extends State<IssuancePreview> {
   String backgroundColor = '';
   String issuerDisplayURL = '';
   String textColor = '';
-  String? logoURL;
-  String? issuerLogoURL;
+  String logoURL = '';
+  String issuerLogoURL = '';
 
   @override
   void initState() {
@@ -51,9 +51,15 @@ class IssuancePreviewState extends State<IssuancePreview> {
         credentialIssuer = response.first.credentialIssuer;
         issuerDisplayName = response.first.localizedIssuerDisplays.first.name;
         issuerDisplayURL = response.first.localizedIssuerDisplays.first.url;
-        issuerLogoURL = response.first.localizedIssuerDisplays.first.logo;
+        final issuerLogo = response.first.localizedIssuerDisplays.first.logo;
+        if (issuerLogo != null) {
+          issuerLogoURL = issuerLogo;
+        }
         credentialDisplayName = response.first.supportedCredentials.first.display.first.name;
-        logoURL = response.first.supportedCredentials.first.display.first.logo;
+        final logo = response.first.supportedCredentials.first.display.first.logo;
+        if (logo != null) {
+          logoURL = logo;
+        }
         backgroundColor =
             '0xff${response.first.supportedCredentials.first.display.first.backgroundColor.toString().replaceAll('#', '')}';
         textColor =
@@ -83,10 +89,8 @@ class IssuancePreviewState extends State<IssuancePreview> {
                   "Add this credential ?"),
             ),
             const SizedBox(height: 30),
-            issuerLogoURL == null
-                ? const SizedBox.shrink()
-           : CachedNetworkImage(
-              imageUrl: issuerLogoURL!,
+            CachedNetworkImage(
+              imageUrl: issuerLogoURL,
               placeholder: (context, url) => const CircularProgressIndicator(),
               errorWidget: (context, url, error) =>
                   Image.asset('lib/assets/images/logoIcon.png', fit: BoxFit.cover),
@@ -135,10 +139,8 @@ class IssuancePreviewState extends State<IssuancePreview> {
                     ),
                     textAlign: TextAlign.start,
                   ),
-                  leading: logoURL == null
-                      ? const SizedBox.shrink()
-                      : CachedNetworkImage(
-                          imageUrl: logoURL!,
+                  leading: CachedNetworkImage(
+                          imageUrl: logoURL,
                           placeholder: (context, url) => const CircularProgressIndicator(),
                           errorWidget: (context, url, error) =>
                               Image.asset('lib/assets/images/genericCredential.png', fit: BoxFit.contain),

@@ -201,16 +201,16 @@ class SupportedCredentials {
 class SupportedCredentialDisplayData {
   final String name;
   final String locale;
-  final String logo;
-  final String textColor;
-  final String backgroundColor;
+  final String? logo;
+  final String? textColor;
+  final String? backgroundColor;
 
   const SupportedCredentialDisplayData({
     required this.name,
     required this.locale,
-    required this.logo,
-    required this.textColor,
-    required this.backgroundColor,
+    this.logo,
+    this.textColor,
+    this.backgroundColor,
   });
 
   @override
