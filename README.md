@@ -8,7 +8,9 @@
 
 # Wallet SDK
 
-The TrustBloc Wallet SDK repo contains APIs to issue/present [W3C Verifiable Credentials(VCs)](https://www.w3.org/TR/vc-data-model/) signed/verified using [W3C Decentralized Identifiers(DIDs)](https://www.w3.org/TR/did-core/). These APIs are useful for the holder role defined in the [W3C VC Specification](https://www.w3.org/TR/vc-data-model/#dfn-holders).
+The TrustBloc Wallet SDK repo contains APIs to receive and present [W3C Verifiable Credentials(VCs)](https://www.w3.org/TR/vc-data-model/) 
+signed using [W3C Decentralized Identifiers(DIDs)](https://www.w3.org/TR/did-core/). These APIs are useful for the holder 
+role defined in the [W3C VC Specification](https://www.w3.org/TR/vc-data-model/#dfn-holders).
 
 This project contains:
 - [A Go SDK](pkg)
@@ -22,6 +24,18 @@ This project contains:
   - Allows the Go SDK to be used in a Web Application. Refer SDK usage guide [here](cmd/wallet-sdk-js/docs/usage.md).
 
 The repo also has code to generate a [Reference iOS, Android or Web App](demo/app/) built using the [Flutter](https://flutter.dev/) framework.
+
+## Specifications
+
+The TrustBloc Wallet SDK implements following specifications.
+- W3C [Verifiable Credential Data Model (VCDM)](https://www.w3.org/TR/vc-data-model/)
+- W3C [Decentralized Identifier (DID)](https://www.w3.org/TR/did-core/)
+- OIDF [OpenID for Verifiable Credential Issuance](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
+  - Pre Authorization Code flow
+  - Authorization Code low
+- OIDF [OpenID for Verifiable Presentation](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
+- DIF [Presentation Exchange](https://identity.foundation/presentation-exchange/)
+- DIF [Well Known DID Configuration](https://identity.foundation/.well-known/resources/did-configuration/)
 
 ## Build/Run
 - [GoMobile Bindings (iOS/Android)](cmd/wallet-sdk-gomobile/README.md)
