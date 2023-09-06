@@ -49,6 +49,28 @@ extension JSResolvedDisplayDataExt on JSResolvedDisplayData {
 
 @JS()
 @staticInterop
+
+class JSVerifierDisplayData {}
+
+extension JSVerifierDisplayDataExt on JSVerifierDisplayData {
+  external String get name;
+  external String get did;
+  external String get logoURI;
+  external String get purpose;
+}
+
+@JS()
+@staticInterop
+
+class JSWellKnownDIDConfig {}
+
+extension JSWellKnownDIDConfigExt on JSWellKnownDIDConfig {
+  external bool get isValid;
+  external String get serviceURL;
+}
+
+@JS()
+@staticInterop
 class JSCredentialDisplayData {}
 
 extension JSCredentialDisplayDataExt on JSCredentialDisplayData {
@@ -98,6 +120,18 @@ extension JSSubmissionRequirementExt on JSSubmissionRequirement {
 
   external List<dynamic> descriptors;
   external List<dynamic> nested;
+}
+
+@JS()
+@staticInterop
+class JSInputDescriptor {}
+
+extension JSInputDescriptorExt on JSInputDescriptor {
+  external String get id;
+  external String get name;
+  external String get purpose;
+  external List<String> get matchedVCsID;
+  external List<dynamic> get matchedVCs;
 }
 
 @JS()
@@ -304,11 +338,9 @@ class WalletSDK extends WalletPlatform {
         .toList();
   }
 
-  Future<List<String>> processAuthorizationRequest(
-      {required String authorizationRequest, List<String>? storedCredentials}) async {
+  Future<void> processAuthorizationRequest({required String authorizationRequest}) async {
     await promiseToFuture(jsCreateOpenID4VPInteraction(authorizationRequest));
-
-    return [];
+    return;
   }
 
   Future<List<SubmissionRequirement>> getSubmissionRequirements({required List<String> storedCredentials}) async {
@@ -317,18 +349,19 @@ class WalletSDK extends WalletPlatform {
     return Future.wait(reqs.map((s) => mapSubmissionRequirement(s)));
   }
 
-  Future<InputDescriptor> mapInputDescriptor(dynamic d) async {
-    final List<dynamic> jsMatchedVCs = d.matchedVCs;
+  Future<InputDescriptor> mapInputDescriptor(JSInputDescriptor d) async {
+    final List<dynamic> jsMatchedVCs = d.matchedVCs.map((e) => e).toList();
 
     final matchedVCs = jsMatchedVCs.map<String>((vc) => vc).toList();
     final matchedVCsIds = await Future.wait<String>(jsMatchedVCs.map((vc) => promiseToFuture(jsGetCredentialID(vc))));
 
     return InputDescriptor(
-        name: d.name, purpose: d.purpose, id: d.id, matchedVCs: matchedVCs, matchedVCsID: matchedVCsIds);
+        name: d.name, purpose: d.purpose, id: d.id, matchedVCs: matchedVCs, matchedVCsID: matchedVCsIds
+    );
   }
 
   Future<SubmissionRequirement> mapSubmissionRequirement(JSSubmissionRequirement jsReq) async {
-    final descriptors = await Future.wait(jsReq.descriptors.map(mapInputDescriptor));
+    final descriptors = await Future.wait(jsReq.descriptors.map((e) => mapInputDescriptor(e)));
     final nested = await Future.wait(jsReq.nested.map((n) => mapSubmissionRequirement(n)));
 
     return SubmissionRequirement(
@@ -349,7 +382,7 @@ class WalletSDK extends WalletPlatform {
   }
 
   Future<WellKnownDidConfig> wellKnownDidConfig(String issuerID) async {
-    final jsConfig = await promiseToFuture(jsWellKnownDidConfig(issuerID));
+    final JSWellKnownDIDConfig jsConfig = await promiseToFuture(jsWellKnownDidConfig(issuerID));
 
     return WellKnownDidConfig(isValid: jsConfig.isValid, serviceURL: jsConfig.serviceURL);
   }
@@ -398,7 +431,7 @@ class WalletSDK extends WalletPlatform {
   }
 
   Future<VerifierDisplayData> getVerifierDisplayData() async {
-    final data = await promiseToFuture(jsVerifierDisplayData());
+    final JSVerifierDisplayData data = await promiseToFuture(jsVerifierDisplayData());
     return VerifierDisplayData(name: data.name, did: data.did, logoURI: data.logoURI, purpose: data.purpose);
   }
 

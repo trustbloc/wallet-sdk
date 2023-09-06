@@ -33,7 +33,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
   @override
   void initState() {
     super.initState();
-    WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData!).then(
+    WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then(
             (response) {
               setState(() {
                 issuerDisplayData = response.first.issuerName;
@@ -54,7 +54,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
                 }
                 ))
     );
-    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) async {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       UserLoginDetails userLoginDetails =  await getUser();
       userLoggedIn = userLoginDetails.username!;
     });
@@ -109,7 +109,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
                 ],
               ),
             ),
-            subtitle: Text(serviceURL!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12,fontWeight: FontWeight.normal)),
+            subtitle: Text(serviceURL, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12,fontWeight: FontWeight.normal)),
 
           ),
           const SizedBox(height: 20),
@@ -142,7 +142,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
                     ),
                     PrimaryButton(
                         onPressed: () async {
-                            _storageService.addCredential(CredentialDataObject("$userLoggedIn-${uuid.v1()}", widget.credentialData!));
+                            _storageService.addCredential(CredentialDataObject("$userLoggedIn-${uuid.v1()}", widget.credentialData));
                             _navigateToCredentialAdded();
                         },
                         width: double.infinity,

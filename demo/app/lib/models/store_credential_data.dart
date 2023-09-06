@@ -16,7 +16,7 @@ class UserLoginDetails {
 Future<UserLoginDetails> getUser() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   final SharedPreferences p = prefs;
-  String? userLoggedIn =  p.getString("userLoggedIn");
+  String? userLoggedIn = p.getString("userLoggedIn");
   print("userLoginDetails -> $userLoggedIn");
   return UserLoginDetails(userLoggedIn);
 }

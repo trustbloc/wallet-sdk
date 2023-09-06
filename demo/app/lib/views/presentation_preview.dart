@@ -40,7 +40,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) async {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       final verifiedDisplayData = await WalletSDKPlugin.getVerifierDisplayData();
       log("verifiedDisplayData ${verifiedDisplayData.logoURI}");
       var resp = await WalletSDKPlugin.wellKnownDidConfig(verifiedDisplayData.did);
