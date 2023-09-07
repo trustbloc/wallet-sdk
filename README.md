@@ -12,16 +12,18 @@ The TrustBloc Wallet SDK repo contains APIs to receive and present [W3C Verifiab
 signed using [W3C Decentralized Identifiers(DIDs)](https://www.w3.org/TR/did-core/). These APIs are useful for the holder 
 role defined in the [W3C VC Specification](https://www.w3.org/TR/vc-data-model/#dfn-holders).
 
-This project contains:
-- [A Go SDK](pkg)
-  - For building native Go applications.
-- [A gomobile-compatible Go SDK](cmd/wallet-sdk-gomobile)
-  - For generating gomobile-compatible bindings (see below).
-  - To jump straight to usage documentation, see [here](cmd/wallet-sdk-gomobile/docs/usage.md).
-- [Scripts to generate Android and iOS-compatible bindings](cmd/wallet-sdk-gomobile/README.md)
-  - Allows the Go SDK to be used in an Android or iOS app.
-- [EXPERIMENTAL - Scripts to generate JavaScript/WebAssembly(WASM) bindings](cmd/wallet-sdk-js/README.md)
-  - Allows the Go SDK to be used in a Web Application. Refer SDK usage guide [here](cmd/wallet-sdk-js/docs/usage.md).
+The project contains the following source code components and build scripts for SDKs.
+- Go SDK
+  - Build native Go applications using the [core pkg](pkg).
+- Android and iOS SDK
+  - [A gomobile-compatible Go SDK](cmd/wallet-sdk-gomobile)
+    - For generating gomobile-compatible bindings (see below).
+    - To jump straight to usage documentation, see [here](cmd/wallet-sdk-gomobile/docs/usage.md).
+  - [Scripts to generate Android and iOS-compatible bindings](cmd/wallet-sdk-gomobile/README.md)
+    - Allows the Go SDK to be used in an Android or iOS app.
+- EXPERIMENTAL: WebAssembly(WASM)/JavaScript(JS) SDK
+  - [Scripts to generate JavaScript/WebAssembly(WASM) bindings](cmd/wallet-sdk-js/README.md)
+    - Allows the Go SDK to be used in a Web Application. Refer SDK usage guide [here](cmd/wallet-sdk-js/docs/usage.md).
 
 The repo also has code to generate a [Reference iOS, Android or Web App](demo/app/) built using the [Flutter](https://flutter.dev/) framework.
 
