@@ -35,6 +35,8 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
+const getIssuerMetadataEventText = "Get issuer metadata"
+
 // This is a common object shared by both the IssuerInitiatedInteraction and WalletInitiatedInteraction objects.
 type interaction struct {
 	issuerURI            string
@@ -57,7 +59,7 @@ type interaction struct {
 func (i *interaction) createAuthorizationURL(clientID, redirectURI, format string, types []string, issuerState *string,
 	scopes []string, useOAuthDiscoverableClientIDScheme bool,
 ) (string, error) {
-	err := i.populateIssuerMetadata()
+	err := i.populateIssuerMetadata("Authorization")
 	if err != nil {
 		return "", err
 	}
@@ -191,16 +193,12 @@ func (i *interaction) requestAccessToken(redirectURIWithAuthCode string) error {
 			errors.New("state in redirect URI does not match the state from the authorization URL"))
 	}
 
-	i.openIDConfig, err = i.getOpenIDConfig()
+	tokenEndpoint, err := i.getTokenEndpoint()
 	if err != nil {
-		return walleterror.NewExecutionError(
-			ErrorModule,
-			IssuerOpenIDConfigFetchFailedCode,
-			IssuerOpenIDConfigFetchFailedError,
-			fmt.Errorf("failed to fetch issuer's OpenID configuration: %w", err))
+		return err
 	}
 
-	i.oAuth2Config.Endpoint.TokenURL = i.openIDConfig.TokenEndpoint
+	i.oAuth2Config.Endpoint.TokenURL = tokenEndpoint
 
 	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, i.httpClient)
 
@@ -208,6 +206,41 @@ func (i *interaction) requestAccessToken(redirectURIWithAuthCode string) error {
 		oauth2.SetAuthURLParam("code_verifier", i.codeVerifier))
 
 	return err
+}
+
+func (i *interaction) getTokenEndpoint() (string, error) {
+	var err error
+
+	i.openIDConfig, err = i.getOpenIDConfig()
+	if err != nil {
+		// Fall back to the issuer metadata. See if it defines the token endpoint instead.
+		if i.issuerMetadata.TokenEndpoint == "" {
+			return "", walleterror.NewExecutionError(
+				ErrorModule,
+				NoTokenEndpointAvailableErrorCode,
+				NoTokenEndpointAvailableError,
+				fmt.Errorf("no token endpoint available. An OpenID configuration couldn't be fetched, and "+
+					"the issuer's metadata doesn't specify a token endpoint. "+
+					"OpenID configuration fetch error: %w", err))
+		}
+
+		return i.issuerMetadata.TokenEndpoint, nil
+	}
+
+	if i.openIDConfig.TokenEndpoint != "" {
+		return i.openIDConfig.TokenEndpoint, nil
+	}
+
+	if i.issuerMetadata.TokenEndpoint != "" {
+		return i.issuerMetadata.TokenEndpoint, nil
+	}
+
+	return "", walleterror.NewExecutionError(
+		ErrorModule,
+		NoTokenEndpointAvailableErrorCode,
+		NoTokenEndpointAvailableError,
+		errors.New("no token endpoint available. Neither the OpenID configuration nor the issuer's "+
+			"metadata specify one"))
 }
 
 func (i *interaction) dynamicClientRegistrationSupported() (bool, error) {
@@ -272,32 +305,22 @@ func (i *interaction) getOpenIDConfig() (*OpenIDConfig, error) {
 	return &config, nil
 }
 
-// getIssuerMetadata returns the issuer's metadata. If the issuer's metadata has already been fetched before,
-// then it's returned without making an additional call.
-func (i *interaction) getIssuerMetadata() (*issuer.Metadata, error) {
+// If the issuer's metadata has not been fetched before in this interaction's lifespan, then this method fetches the
+// issuer's metadata and stores it within this interaction object. If the issuer's metadata has already been fetched
+// before, then this method does nothing in order to avoid making an unnecessary GET call.
+func (i *interaction) populateIssuerMetadata(parentEvent string) error {
 	if i.issuerMetadata == nil {
-		err := i.populateIssuerMetadata()
+		issuerMetadata, err := metadatafetcher.Get(i.issuerURI, i.httpClient, i.metricsLogger, parentEvent)
 		if err != nil {
-			return nil, err
+			return walleterror.NewExecutionError(
+				ErrorModule,
+				MetadataFetchFailedCode,
+				MetadataFetchFailedError,
+				fmt.Errorf("failed to get issuer metadata: %w", err))
 		}
+
+		i.issuerMetadata = issuerMetadata
 	}
-
-	return i.issuerMetadata, nil
-}
-
-// populateIssuerMetadata fetches the issuer's metadata and stores it within this interaction object.
-func (i *interaction) populateIssuerMetadata() error {
-	issuerMetadata, err := metadatafetcher.Get(i.issuerURI, i.httpClient, i.metricsLogger,
-		"Authorization")
-	if err != nil {
-		return walleterror.NewExecutionError(
-			ErrorModule,
-			MetadataFetchFailedCode,
-			MetadataFetchFailedError,
-			fmt.Errorf("failed to get issuer metadata: %w", err))
-	}
-
-	i.issuerMetadata = issuerMetadata
 
 	return nil
 }

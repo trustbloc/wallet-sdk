@@ -67,12 +67,12 @@ type SupportedCredential struct {
 
 // SupportedCredentials returns the credential types and formats that an issuer can issue.
 func (i *WalletInitiatedInteraction) SupportedCredentials() ([]SupportedCredential, error) {
-	issuerMetadata, err := i.interaction.getIssuerMetadata()
+	err := i.interaction.populateIssuerMetadata("Get supported credentials")
 	if err != nil {
 		return nil, err
 	}
 
-	supportedCredentials := make([]SupportedCredential, len(issuerMetadata.CredentialsSupported))
+	supportedCredentials := make([]SupportedCredential, len(i.interaction.issuerMetadata.CredentialsSupported))
 
 	for j := 0; j < len(i.interaction.issuerMetadata.CredentialsSupported); j++ {
 		supportedCredentials[j] = SupportedCredential{
@@ -137,5 +137,10 @@ func (i *WalletInitiatedInteraction) DynamicClientRegistrationEndpoint() (string
 
 // IssuerMetadata returns the issuer's metadata.
 func (i *WalletInitiatedInteraction) IssuerMetadata() (*issuer.Metadata, error) {
-	return i.interaction.getIssuerMetadata()
+	err := i.interaction.populateIssuerMetadata(getIssuerMetadataEventText)
+	if err != nil {
+		return nil, err
+	}
+
+	return i.interaction.issuerMetadata, nil
 }

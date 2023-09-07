@@ -14,6 +14,7 @@ type Metadata struct {
 	CredentialEndpoint      string                   `json:"credential_endpoint,omitempty"`
 	CredentialsSupported    []SupportedCredential    `json:"credentials_supported,omitempty"`
 	LocalizedIssuerDisplays []LocalizedIssuerDisplay `json:"display,omitempty"`
+	TokenEndpoint           string                   `json:"token_endpoint,omitempty"`
 }
 
 // SupportedCredential represents metadata about a credential type that a credential issuer can issue.

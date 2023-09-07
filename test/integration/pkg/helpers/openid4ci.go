@@ -103,12 +103,12 @@ func (h *CITestHelper) CheckMetricsLoggerAfterOpenID4CIFlow(t *testing.T, issuer
 
 	checkInteractionInstantiationMetricsEvent(t, h.MetricsLogger.Events[0])
 
-	checkFetchOpenIDConfigMetricsEvent(t, h.MetricsLogger.Events[1], issuerProfileID)
-
-	checkFetchTokenMetricsEvent(t, h.MetricsLogger.Events[2])
-
-	checkFetchIssuerMetadataMetricsEvent(t, h.MetricsLogger.Events[3],
+	checkFetchIssuerMetadataMetricsEvent(t, h.MetricsLogger.Events[1],
 		"Request credential(s) from issuer", issuerProfileID)
+
+	checkFetchOpenIDConfigMetricsEvent(t, h.MetricsLogger.Events[2], issuerProfileID)
+
+	checkFetchTokenMetricsEvent(t, h.MetricsLogger.Events[3])
 
 	checkFetchCredentialHTTPRequestMetricsEvent(t, h.MetricsLogger.Events[4])
 
