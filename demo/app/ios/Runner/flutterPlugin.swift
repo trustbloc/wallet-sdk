@@ -320,10 +320,10 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             docResolution["did"] = doc.id_(nil)
             docResolution["didDoc"] = doc.content
             result(docResolution)
-        } catch {
+        } catch let error as NSError {
             result(FlutterError.init(code: "NATIVE_ERR",
                                      message: "error while creating did",
-                                     details: error))
+                                     details: error.localizedDescription))
         }
     }
     
@@ -418,10 +418,10 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             
             result(flowTypeData)
             
-          } catch {
-              result(FlutterError.init(code: "NATIVE_ERR",
+          } catch let error as NSError {
+              result(FlutterError.init(code: "Exception",
                                        message: "error while initializing issuance flow",
-                                       details: error))
+                                       details: error.localizedDescription))
           }
     }
     
@@ -470,10 +470,10 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             
             result(issuerMetaDataRespList)
             
-        } catch {
+        } catch let error as NSError {
             result(FlutterError.init(code: "NATIVE_ERR",
                                      message: "error while getting issuer meta data",
-                                     details: error))
+                                     details: error.localizedDescription))
         }
         
     }
@@ -602,10 +602,10 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             let authorizationURL = try walletInitiatedOpenID4CI.createAuthorizationURLWalletInitiatedFlow(scopes: scopes, credentialFormat: credentialFormat, credentialTypes: credentialTypes, clientID: clientID, redirectURI: redirectURI, issuerURI: issuerURI)
             
              result(authorizationURL)
-        } catch {
+        } catch let error as NSError {
             result(FlutterError.init(code: "NATIVE_ERR",
                                      message: "error while creating authorization URL in wallet initiated issuance flow",
-                                     details: error))
+                                     details: error.localizedDescription))
         }
     }
     
@@ -626,10 +626,10 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
 
            result(verifierDisplayData)
     
-        } catch {
+        } catch let error as NSError {
         result(FlutterError.init(code: "NATIVE_ERR",
                                  message: "error while getting verifier display data",
-                                 details: error))
+                                 details: error.localizedDescription))
        }
         
     }

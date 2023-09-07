@@ -77,7 +77,7 @@ class MainActivity : FlutterActivity() {
                             val err = Walleterror.parse(e.message)
                             result.error(
                                 "Exception",
-                                "Error while authorizing the oidc vc flow",
+                                "Error while initializing the interaction",
                                 "code: ${err.code}, error: ${err.category}, details: ${err.details}"
                             )
 

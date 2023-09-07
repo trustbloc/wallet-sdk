@@ -49,8 +49,9 @@ class WalletSDK {
         }
         
         activityLogger = MemNewActivityLogger()
- 
-        return OpenID4CI(requestURI: requestURI, didResolver: didResolver, crypto: crypto, activityLogger: activityLogger! )
+        
+        
+        return try OpenID4CI(requestURI: requestURI, didResolver: didResolver, crypto: crypto, activityLogger: activityLogger! )
     }
     
     func createOpenID4CIWalletInitiatedInteraction(issuerURI: String) throws -> WalletInitiatedOpenID4CI {

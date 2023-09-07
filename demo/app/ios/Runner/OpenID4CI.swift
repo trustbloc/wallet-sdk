@@ -15,21 +15,29 @@ public class OpenID4CI {
     
     private var initiatedInteraction: Openid4ciIssuerInitiatedInteraction
     
-    init (requestURI: String, didResolver: ApiDIDResolverProtocol, crypto: ApiCryptoProtocol, activityLogger: ApiActivityLoggerProtocol) {
+    init (requestURI: String, didResolver: ApiDIDResolverProtocol, crypto: ApiCryptoProtocol, activityLogger: ApiActivityLoggerProtocol) throws {
         self.didResolver = didResolver
         self.crypto = crypto
         self.activityLogger = activityLogger
 
         let trace = OtelNewTrace(nil)
-
-        let args = Openid4ciNewIssuerInitiatedInteractionArgs(requestURI, self.crypto, self.didResolver)
         
+        let args = Openid4ciNewIssuerInitiatedInteractionArgs(requestURI, crypto, didResolver)
+
         let opts = Openid4ciNewInteractionOpts()
         opts!.setActivityLogger(activityLogger)
         opts!.add(trace!.traceHeader())
         
-        self.initiatedInteraction = Openid4ciNewIssuerInitiatedInteraction(args, opts, nil)!
+        
+        var error: NSError?
+        let interaction = Openid4ciNewIssuerInitiatedInteraction(args, opts, &error)
+        if let actualError = error {
+            throw actualError
+       }
+        
+        self.initiatedInteraction = interaction!
     }
+    
     
     func checkFlow() throws -> String {
         if ((initiatedInteraction.authorizationCodeGrantTypeSupported())){
@@ -55,7 +63,7 @@ public class OpenID4CI {
     
         let authorizationLink =  initiatedInteraction.createAuthorizationURL(clientID, redirectURI: redirectURI, opts: opts, error: &error)
         if let actualError = error {
-            print("error in authorizations", error!.localizedDescription)
+            print("error while creating authorization link", error!.localizedDescription)
             throw actualError
        }
     
