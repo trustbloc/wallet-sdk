@@ -13,6 +13,8 @@ import 'package:flutter/services.dart';
 import 'package:app/models/credential_offer.dart';
 import 'package:http/http.dart' as http;
 
+import '../views/custom_error.dart';
+
 void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
   var WalletSDKPlugin = WalletSDK();
   var authCodeArgs;
@@ -31,8 +33,21 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
       };
     }
   }
-
-  var flowTypeData = await WalletSDKPlugin.initialize(qrCodeURL, authCodeArgs);
+  log("qr code url -  $qrCodeURL");
+  var flowTypeData;
+  try {
+    flowTypeData = await WalletSDKPlugin.initialize(qrCodeURL, authCodeArgs);
+  } catch (error) {
+    var errString = error.toString().replaceAll(r'\', '');
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => CustomError(
+                 titleBarString: "QR Code Scanned",
+                requestErrorTitleMsg: "error while intializing the interaction",
+                requestErrorSubTitleMsg: "${errString}")));
+    return;
+  }
   var flowTypeDataEncoded = json.encode(flowTypeData);
   Map<String, dynamic> responseJson = json.decode(flowTypeDataEncoded);
   var authorizeResultPinRequired = responseJson["pinRequired"];
