@@ -78,11 +78,11 @@ demo-app-android: generate-android-bindings copy-android-bindings
 
 .PHONY: demo-app-web-local
 demo-app-web-local: generate-js-bindings copy-js-bindings
-	@cd demo/app && flutter doctor && flutter clean && flutter run -d chrome
+	@cd demo/app && flutter doctor && flutter clean && flutter run -d chrome --release
 
 .PHONY: demo-app-web
 demo-app-web:
-	@cd demo/app/web && rm -rf node_modules && npm i && flutter doctor && flutter clean && flutter run -d chrome
+	@cd demo/app/web && rm -rf node_modules && npm i && flutter doctor && flutter clean && flutter run -d chrome --release
 
 .PHONY: build-demo-app-web-docker
 build-demo-app-web-docker:
