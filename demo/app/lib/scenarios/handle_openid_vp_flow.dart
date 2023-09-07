@@ -26,16 +26,15 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
 
   // Check if the flow is for the verifiable presentation or for issuance.
   UserLoginDetails userLoginDetails = await getUser();
-  var username = userLoginDetails.username!;
+  var username = userLoginDetails.username;
   storedCredentials = await storageService.retrieveCredentials(username!);
-  log("stored credentials -> $storedCredentials");
 
- credentials = storedCredentials.map((e) => e.value.rawCredential).toList();
-
+  credentials = storedCredentials.map((e) => e.value.rawCredential).toList();
   try {
-     await walletSDKPlugin.processAuthorizationRequest(
-        authorizationRequest: qrCodeURL, storedCredentials: credentials);
+    await walletSDKPlugin.processAuthorizationRequest(
+        authorizationRequest: qrCodeURL);
   } on PlatformException catch (error) {
+    if (!context.mounted) return;
     Navigator.push(
         context,
         MaterialPageRoute(
