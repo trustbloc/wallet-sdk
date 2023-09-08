@@ -9,7 +9,7 @@ package api
 import (
 	"fmt"
 
-	diddoc "github.com/trustbloc/vc-go/did"
+	diddoc "github.com/trustbloc/did-go/doc/did"
 
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 )

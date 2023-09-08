@@ -18,9 +18,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"github.com/trustbloc/did-go/doc/did"
 	"github.com/trustbloc/kms-go/doc/jose"
 	arieskms "github.com/trustbloc/kms-go/spi/kms"
-	"github.com/trustbloc/vc-go/did"
 
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -1625,7 +1625,6 @@ func getTestClientConfig(t *testing.T) *openid4ci.ClientConfig {
 		DIDResolver:                      didResolver,
 		DisableVCProofChecks:             true,
 		NetworkDocumentLoaderHTTPTimeout: &networkDocumentLoaderHTTPTimeout,
-		Verifier:                         localKMS.AriesCrypto,
 	}
 }
 

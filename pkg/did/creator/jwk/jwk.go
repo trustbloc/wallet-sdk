@@ -10,8 +10,8 @@ package jwk
 import (
 	"fmt"
 
+	"github.com/trustbloc/did-go/doc/did"
 	jwkvdr "github.com/trustbloc/did-go/method/jwk"
-	"github.com/trustbloc/vc-go/did"
 )
 
 // Creator creates did:jwk DID Documents.

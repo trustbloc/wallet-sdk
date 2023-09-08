@@ -15,9 +15,9 @@ import (
 
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
-	diddoc "github.com/trustbloc/vc-go/did"
-	vdrapi "github.com/trustbloc/vc-go/spi/vdr"
-	afgotime "github.com/trustbloc/vc-go/util/time"
+	diddoc "github.com/trustbloc/did-go/doc/did"
+	afgotime "github.com/trustbloc/did-go/doc/util/time"
+	vdrapi "github.com/trustbloc/did-go/vdr/api"
 	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"

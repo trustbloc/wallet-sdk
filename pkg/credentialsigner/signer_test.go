@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/trustbloc/vc-go/did"
-	afgotime "github.com/trustbloc/vc-go/util/time"
+	"github.com/trustbloc/did-go/doc/did"
+	afgotime "github.com/trustbloc/did-go/doc/util/time"
 	"github.com/trustbloc/vc-go/verifiable"
 
 	. "github.com/trustbloc/wallet-sdk/pkg/credentialsigner"

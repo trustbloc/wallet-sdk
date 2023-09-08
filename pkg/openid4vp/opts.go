@@ -24,7 +24,7 @@ type opts struct {
 	metricsLogger  api.MetricsLogger
 	// If both of the below fields are set, then data integrity proofs will be added to
 	// presentations sent to the verifier.
-	signer ecdsa2019.Signer
+	signer ecdsa2019.KMSSigner
 	kms    kms.KeyManager
 }
 
@@ -59,14 +59,20 @@ func WithMetricsLogger(metricsLogger api.MetricsLogger) Opt {
 
 // WithDIProofs enables the adding of data integrity proofs to presentations sent to the verifier. It requires
 // a signer and a KMS to be passed in.
-func WithDIProofs(signer ecdsa2019.Signer, keyManager kms.KeyManager) Opt {
+func WithDIProofs(signer ecdsa2019.KMSSigner, keyManager kms.KeyManager) Opt {
 	return func(opts *opts) {
 		opts.signer = signer
 		opts.kms = keyManager
 	}
 }
 
-func processOpts(options []Opt) (httpClient, api.ActivityLogger, api.MetricsLogger, ecdsa2019.Signer, kms.KeyManager) {
+func processOpts(options []Opt) (
+	httpClient,
+	api.ActivityLogger,
+	api.MetricsLogger,
+	ecdsa2019.KMSSigner,
+	kms.KeyManager,
+) {
 	opts := mergeOpts(options)
 
 	if opts.httpClient == nil {

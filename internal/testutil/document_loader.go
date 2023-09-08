@@ -12,10 +12,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	ldcontext "github.com/trustbloc/vc-go/ld/context"
-	lddocloader "github.com/trustbloc/vc-go/ld/documentloader"
-	mockldstore "github.com/trustbloc/vc-go/ld/mock"
-	ldstore "github.com/trustbloc/vc-go/ld/store"
+	ldcontext "github.com/trustbloc/did-go/doc/ld/context"
+	lddocloader "github.com/trustbloc/did-go/doc/ld/documentloader"
+	mockldstore "github.com/trustbloc/did-go/doc/ld/mock"
+	ldstore "github.com/trustbloc/did-go/doc/ld/store"
 )
 
 var (

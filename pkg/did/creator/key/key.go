@@ -8,8 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package key
 
 import (
-	"github.com/trustbloc/did-go/vdr/key"
-	"github.com/trustbloc/vc-go/did"
+	"github.com/trustbloc/did-go/doc/did"
+	"github.com/trustbloc/did-go/method/key"
 )
 
 // Creator is used for creating did:key DID Documents.

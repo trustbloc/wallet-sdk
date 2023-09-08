@@ -14,9 +14,9 @@ import (
 	"net/http"
 	"strings"
 
-	didconfig "github.com/trustbloc/did-go/didconfig/client"
-	diddoc "github.com/trustbloc/vc-go/did"
-	vdrspi "github.com/trustbloc/vc-go/spi/vdr"
+	diddoc "github.com/trustbloc/did-go/doc/did"
+	vdrapi "github.com/trustbloc/did-go/vdr/api"
+	didconfig "github.com/trustbloc/vc-go/didconfig/client"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
@@ -119,6 +119,6 @@ type didResolverWrapper struct {
 	didResolver api.DIDResolver
 }
 
-func (d *didResolverWrapper) Resolve(did string, _ ...vdrspi.DIDMethodOption) (*diddoc.DocResolution, error) {
+func (d *didResolverWrapper) Resolve(did string, _ ...vdrapi.DIDMethodOption) (*diddoc.DocResolution, error) {
 	return d.didResolver.Resolve(did)
 }

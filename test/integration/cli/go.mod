@@ -15,8 +15,8 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/trustbloc/cmdutil-go v0.0.0-20221125151303-09d42adcc811 // indirect
 	github.com/trustbloc/logutil-go v1.0.0-rc1 // indirect
-	go.opentelemetry.io/otel v1.12.0 // indirect
-	go.opentelemetry.io/otel/trace v1.12.0 // indirect
+	go.opentelemetry.io/otel v1.14.0 // indirect
+	go.opentelemetry.io/otel/trace v1.14.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.23.0 // indirect
