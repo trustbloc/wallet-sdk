@@ -15,8 +15,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/trustbloc/did-go/vdr/httpbinding"
-	"github.com/trustbloc/vc-go/did"
+	"github.com/trustbloc/did-go/doc/did"
+	"github.com/trustbloc/did-go/method/httpbinding"
 )
 
 //go:embed test_data/didconfig.json

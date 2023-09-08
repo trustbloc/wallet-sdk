@@ -10,10 +10,10 @@ package ion
 import (
 	"fmt"
 
-	"github.com/trustbloc/did-go/method/longform"
+	"github.com/trustbloc/did-go/doc/did"
+	longform "github.com/trustbloc/did-go/method/sidetreelongform"
+	vdrapi "github.com/trustbloc/did-go/vdr/api"
 	"github.com/trustbloc/kms-go/spi/kms"
-	"github.com/trustbloc/vc-go/did"
-	vdrspi "github.com/trustbloc/vc-go/spi/vdr"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 )
@@ -64,8 +64,8 @@ func (d *Creator) Create(vm *did.VerificationMethod) (*did.DocResolution, error)
 
 	return d.vdr.Create(
 		didDocArgument,
-		vdrspi.WithOption(longform.UpdatePublicKeyOpt, updatePK),
-		vdrspi.WithOption(longform.RecoveryPublicKeyOpt, recoveryPK),
+		vdrapi.WithOption(longform.UpdatePublicKeyOpt, updatePK),
+		vdrapi.WithOption(longform.RecoveryPublicKeyOpt, recoveryPK),
 	)
 }
 

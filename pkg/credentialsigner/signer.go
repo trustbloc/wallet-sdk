@@ -11,9 +11,9 @@ import (
 	"errors"
 	"fmt"
 
-	diddoc "github.com/trustbloc/vc-go/did"
+	diddoc "github.com/trustbloc/did-go/doc/did"
+	vdrapi "github.com/trustbloc/did-go/vdr/api"
 	"github.com/trustbloc/vc-go/jwt/didsignjwt"
-	vdrspi "github.com/trustbloc/vc-go/spi/vdr"
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -150,6 +150,6 @@ type didResolverWrapper struct {
 	didResolver api.DIDResolver
 }
 
-func (d *didResolverWrapper) Resolve(did string, _ ...vdrspi.DIDMethodOption) (*diddoc.DocResolution, error) {
+func (d *didResolverWrapper) Resolve(did string, _ ...vdrapi.DIDMethodOption) (*diddoc.DocResolution, error) {
 	return d.didResolver.Resolve(did)
 }

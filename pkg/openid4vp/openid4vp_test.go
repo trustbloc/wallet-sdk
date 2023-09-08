@@ -21,9 +21,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"github.com/trustbloc/did-go/doc/did"
 	"github.com/trustbloc/kms-go/crypto/tinkcrypto"
 	"github.com/trustbloc/kms-go/doc/jose"
-	"github.com/trustbloc/vc-go/did"
 	"github.com/trustbloc/vc-go/presexch"
 	"github.com/trustbloc/vc-go/verifiable"
 
@@ -550,7 +550,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 				lddl,
 				&presentOpts{signer: tinkCrypto, kms: localKMS.AriesLocalKMS},
 			)
-			require.EqualError(t, err,
+			require.Contains(t, err.Error(),
 				"failed to add data integrity proof to VP: data integrity proof generation error")
 		})
 		t.Run("multiple credentials", func(t *testing.T) {
@@ -570,7 +570,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 				lddl,
 				&presentOpts{signer: tinkCrypto, kms: localKMS.AriesLocalKMS},
 			)
-			require.EqualError(t, err,
+			require.Contains(t, err.Error(),
 				"failed to add data integrity proof to VP: data integrity proof generation error")
 		})
 	})

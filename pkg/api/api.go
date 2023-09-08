@@ -10,10 +10,10 @@ package api
 import (
 	"time"
 
+	"github.com/trustbloc/did-go/doc/did"
 	"github.com/trustbloc/kms-go/doc/jose"
 	"github.com/trustbloc/kms-go/doc/jose/jwk"
 	"github.com/trustbloc/kms-go/spi/kms"
-	"github.com/trustbloc/vc-go/did"
 	"github.com/trustbloc/vc-go/verifiable"
 )
 

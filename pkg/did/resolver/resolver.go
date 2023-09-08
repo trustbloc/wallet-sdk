@@ -11,16 +11,15 @@ package resolver
 import (
 	"fmt"
 
-	"github.com/trustbloc/wallet-sdk/pkg/api"
-
+	didDoc "github.com/trustbloc/did-go/doc/did"
+	"github.com/trustbloc/did-go/method/httpbinding"
 	"github.com/trustbloc/did-go/method/jwk"
-	"github.com/trustbloc/did-go/method/longform"
+	"github.com/trustbloc/did-go/method/key"
+	longform "github.com/trustbloc/did-go/method/sidetreelongform"
+	"github.com/trustbloc/did-go/method/web"
 	"github.com/trustbloc/did-go/vdr"
-	"github.com/trustbloc/did-go/vdr/httpbinding"
-	"github.com/trustbloc/did-go/vdr/key"
-	"github.com/trustbloc/did-go/vdr/web"
-	didDoc "github.com/trustbloc/vc-go/did"
 
+	"github.com/trustbloc/wallet-sdk/pkg/api"
 	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )

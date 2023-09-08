@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"syscall/js"
 
-	"github.com/trustbloc/vc-go/did"
+	"github.com/trustbloc/did-go/doc/did"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/jssupport"
 )

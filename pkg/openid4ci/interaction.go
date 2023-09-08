@@ -53,7 +53,6 @@ type interaction struct {
 	httpClient           *http.Client
 	authCodeURLState     string
 	codeVerifier         string
-	verifier             ecdsa2019.Verifier
 }
 
 func (i *interaction) createAuthorizationURL(clientID, redirectURI, format string, types []string, issuerState *string,
@@ -534,20 +533,17 @@ func (i *interaction) getVCsFromCredentialResponses(
 		verifiable.WithPublicKeyFetcher(vdrKeyResolver.PublicKeyFetcher()),
 	}
 
-	if i.verifier != nil {
-		opts := dataintegrity.Options{DIDResolver: i.didResolver}
+	opts := dataintegrity.Options{DIDResolver: i.didResolver}
 
-		dataIntegrityVerifier, err := dataintegrity.NewVerifier(&opts,
-			ecdsa2019.NewVerifierInitializer(&ecdsa2019.VerifierInitializerOptions{
-				LDDocumentLoader: i.documentLoader,
-				Verifier:         i.verifier,
-			}))
-		if err != nil {
-			return nil, err
-		}
-
-		credentialOpts = append(credentialOpts, verifiable.WithDataIntegrityVerifier(dataIntegrityVerifier))
+	dataIntegrityVerifier, err := dataintegrity.NewVerifier(&opts,
+		ecdsa2019.NewVerifierInitializer(&ecdsa2019.VerifierInitializerOptions{
+			LDDocumentLoader: i.documentLoader,
+		}))
+	if err != nil {
+		return nil, err
 	}
+
+	credentialOpts = append(credentialOpts, verifiable.WithDataIntegrityVerifier(dataIntegrityVerifier))
 
 	if i.disableVCProofChecks {
 		credentialOpts = append(credentialOpts, verifiable.WithDisabledProofCheck())

@@ -11,11 +11,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
-
 	"github.com/piprate/json-gold/ld"
-	diddoc "github.com/trustbloc/vc-go/did"
-	"github.com/trustbloc/vc-go/spi/vdr"
+	diddoc "github.com/trustbloc/did-go/doc/did"
+	vdrapi "github.com/trustbloc/did-go/vdr/api"
 
 	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -26,7 +24,7 @@ type didResolverWrapper struct {
 	didResolver api.DIDResolver
 }
 
-func (d *didResolverWrapper) Resolve(did string, _ ...vdr.DIDMethodOption) (*diddoc.DocResolution, error) {
+func (d *didResolverWrapper) Resolve(did string, _ ...vdrapi.DIDMethodOption) (*diddoc.DocResolution, error) {
 	return d.didResolver.Resolve(did)
 }
 
@@ -45,8 +43,6 @@ type ClientConfig struct {
 	DocumentLoader                   ld.DocumentLoader // If not specified, then a network-based loader will be used.
 	NetworkDocumentLoaderHTTPTimeout *time.Duration    // Only used if the default network-based loader is used.
 	HTTPClient                       *http.Client
-	// If the Verifier field is set, then VC data integrity proof checks for JSON-LD VCs will be enabled.
-	Verifier ecdsa2019.Verifier
 }
 
 func validateRequiredParameters(config *ClientConfig) error {

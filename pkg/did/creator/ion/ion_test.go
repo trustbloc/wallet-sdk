@@ -11,9 +11,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/trustbloc/did-go/doc/did"
 	"github.com/trustbloc/kms-go/doc/jose/jwk"
 	"github.com/trustbloc/kms-go/spi/kms"
-	"github.com/trustbloc/vc-go/did"
 
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	. "github.com/trustbloc/wallet-sdk/pkg/did/creator/ion"

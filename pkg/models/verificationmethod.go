@@ -8,8 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package models
 
 import (
+	"github.com/trustbloc/did-go/doc/did"
 	"github.com/trustbloc/kms-go/doc/jose/jwk"
-	"github.com/trustbloc/vc-go/did"
 )
 
 // VerificationKey holds either a JWK or a raw public key.

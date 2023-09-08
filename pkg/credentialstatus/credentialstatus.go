@@ -12,8 +12,8 @@ import (
 	"fmt"
 	"net/http"
 
-	diddoc "github.com/trustbloc/vc-go/did"
-	vdrspi "github.com/trustbloc/vc-go/spi/vdr"
+	diddoc "github.com/trustbloc/did-go/doc/did"
+	vdrapi "github.com/trustbloc/did-go/vdr/api"
 	"github.com/trustbloc/vc-go/status"
 	"github.com/trustbloc/vc-go/status/resolver"
 	"github.com/trustbloc/vc-go/status/validator"
@@ -68,19 +68,19 @@ type wrapResolver struct {
 	resolver api.DIDResolver
 }
 
-func (w *wrapResolver) Resolve(did string, _ ...vdrspi.DIDMethodOption) (*diddoc.DocResolution, error) {
+func (w *wrapResolver) Resolve(did string, _ ...vdrapi.DIDMethodOption) (*diddoc.DocResolution, error) {
 	return w.resolver.Resolve(did)
 }
 
-func (w *wrapResolver) Create(string, *diddoc.Doc, ...vdrspi.DIDMethodOption) (*diddoc.DocResolution, error) {
+func (w *wrapResolver) Create(string, *diddoc.Doc, ...vdrapi.DIDMethodOption) (*diddoc.DocResolution, error) {
 	return nil, fmt.Errorf("create operation is not supported")
 }
 
-func (w *wrapResolver) Update(*diddoc.Doc, ...vdrspi.DIDMethodOption) error {
+func (w *wrapResolver) Update(*diddoc.Doc, ...vdrapi.DIDMethodOption) error {
 	return fmt.Errorf("update operation is not supported")
 }
 
-func (w *wrapResolver) Deactivate(string, ...vdrspi.DIDMethodOption) error {
+func (w *wrapResolver) Deactivate(string, ...vdrapi.DIDMethodOption) error {
 	return fmt.Errorf("deactivate operation is not supported")
 }
 

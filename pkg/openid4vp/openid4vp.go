@@ -21,14 +21,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/piprate/json-gold/ld"
+	diddoc "github.com/trustbloc/did-go/doc/did"
+	vdrapi "github.com/trustbloc/did-go/vdr/api"
 	"github.com/trustbloc/kms-go/doc/jose"
 	"github.com/trustbloc/kms-go/spi/kms"
 	"github.com/trustbloc/vc-go/dataintegrity"
 	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
-	diddoc "github.com/trustbloc/vc-go/did"
 	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/vc-go/presexch"
-	vdrspi "github.com/trustbloc/vc-go/spi/vdr"
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -53,7 +53,7 @@ type didResolverWrapper struct {
 	didResolver api.DIDResolver
 }
 
-func (d *didResolverWrapper) Resolve(did string, _ ...vdrspi.DIDMethodOption) (*diddoc.DocResolution, error) {
+func (d *didResolverWrapper) Resolve(did string, _ ...vdrapi.DIDMethodOption) (*diddoc.DocResolution, error) {
 	return d.didResolver.Resolve(did)
 }
 
@@ -74,7 +74,7 @@ type Interaction struct {
 	didResolver    api.DIDResolver
 	crypto         api.Crypto
 	documentLoader ld.DocumentLoader
-	signer         ecdsa2019.Signer
+	signer         ecdsa2019.KMSSigner
 	keyManager     kms.KeyManager
 }
 
@@ -148,7 +148,7 @@ func (o *Interaction) VerifierDisplayData() *VerifierDisplayData {
 
 type presentOpts struct {
 	ignoreConstraints bool
-	signer            ecdsa2019.Signer
+	signer            ecdsa2019.KMSSigner
 	kms               kms.KeyManager
 }
 
@@ -345,14 +345,26 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 		return nil, fmt.Errorf("presentation VC does not have a subject ID")
 	}
 
+	signingVM, err := getSigningVM(did, didResolver)
+	if err != nil {
+		return nil, err
+	}
+
 	if opts != nil && opts.signer != nil && opts.kms != nil {
-		err = addDataIntegrityProof(did, didResolver, documentLoader, opts.signer, opts.kms, presentation)
+		err = addDataIntegrityProof(
+			fullVMID(did, signingVM.ID),
+			didResolver,
+			documentLoader,
+			opts.signer,
+			opts.kms,
+			presentation,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to add data integrity proof to VP: %w", err)
 		}
 	}
 
-	jwtSigner, err := getHolderSigner(did, didResolver, crypto)
+	jwtSigner, err := getHolderSigner(signingVM, crypto)
 	if err != nil {
 		return nil, err
 	}
@@ -391,7 +403,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
-	signer ecdsa2019.Signer,
+	signer ecdsa2019.KMSSigner,
 	keyManager kms.KeyManager,
 ) (*authorizedResponse, error) {
 	pd := requestObject.Claims.VPToken.PresentationDefinition
@@ -416,14 +428,26 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 			return nil, e
 		}
 
+		signingVM, e := getSigningVM(holderDID, didResolver)
+		if e != nil {
+			return nil, e
+		}
+
 		if signer != nil && keyManager != nil {
-			err = addDataIntegrityProof(holderDID, didResolver, documentLoader, signer, keyManager, presentation)
-			if err != nil {
-				return nil, fmt.Errorf("failed to add data integrity proof to VP: %w", err)
+			e = addDataIntegrityProof(
+				fullVMID(holderDID, signingVM.ID),
+				didResolver,
+				documentLoader,
+				signer,
+				keyManager,
+				presentation,
+			)
+			if e != nil {
+				return nil, fmt.Errorf("failed to add data integrity proof to VP: %w", e)
 			}
 		}
 
-		signer, e := getHolderSigner(holderDID, didResolver, crypto)
+		signer, e := getHolderSigner(signingVM, crypto)
 		if e != nil {
 			return nil, e
 		}
@@ -473,7 +497,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 }
 
 func addDataIntegrityProof(did string, didResolver api.DIDResolver, documentLoader ld.DocumentLoader,
-	signer ecdsa2019.Signer, keyManager kms.KeyManager, presentation *verifiable.Presentation,
+	signer ecdsa2019.KMSSigner, keyManager kms.KeyManager, presentation *verifiable.Presentation,
 ) error {
 	context := &verifiable.DataIntegrityProofContext{
 		SigningKeyID: did,
@@ -485,8 +509,7 @@ func addDataIntegrityProof(did string, didResolver api.DIDResolver, documentLoad
 	dataIntegrityVerifier, err := dataintegrity.NewSigner(&signerOpts,
 		ecdsa2019.NewSignerInitializer(&ecdsa2019.SignerInitializerOptions{
 			LDDocumentLoader: documentLoader,
-			Signer:           signer,
-			KMS:              keyManager,
+			SignerGetter:     ecdsa2019.WithLocalKMSSigner(keyManager, signer),
 		}))
 	if err != nil {
 		return err
@@ -542,7 +565,7 @@ func signToken(claims interface{}, signer api.JWTSigner) (string, error) {
 	return tokenBytes, nil
 }
 
-func getHolderSigner(holderDID string, didResolver api.DIDResolver, crypto api.Crypto) (api.JWTSigner, error) {
+func getSigningVM(holderDID string, didResolver api.DIDResolver) (*diddoc.VerificationMethod, error) {
 	docRes, err := didResolver.Resolve(holderDID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve holder DID for signing: %w", err)
@@ -556,7 +579,11 @@ func getHolderSigner(holderDID string, didResolver api.DIDResolver, crypto api.C
 
 	signingVM := verificationMethods[diddoc.AssertionMethod][0].VerificationMethod
 
-	return common.NewJWSSigner(models.VerificationMethodFromDoc(&signingVM), crypto)
+	return &signingVM, nil
+}
+
+func getHolderSigner(signingVM *diddoc.VerificationMethod, crypto api.Crypto) (api.JWTSigner, error) {
+	return common.NewJWSSigner(models.VerificationMethodFromDoc(signingVM), crypto)
 }
 
 func getSubjectID(vc interface{}) (string, error) {
@@ -598,11 +625,27 @@ func pickRandomElement(list []string) (string, error) {
 	return list[idx.Int64()], nil
 }
 
+func fullVMID(did, vmID string) string {
+	if vmID == "" {
+		return did
+	}
+
+	if vmID[0] == '#' {
+		return did + vmID
+	}
+
+	if strings.HasPrefix(vmID, "did:") {
+		return vmID
+	}
+
+	return did + "#" + vmID
+}
+
 type resolverAdapter struct {
 	didResolver api.DIDResolver
 }
 
-func (r *resolverAdapter) Resolve(did string, _ ...vdrspi.DIDMethodOption) (*diddoc.DocResolution, error) {
+func (r *resolverAdapter) Resolve(did string, _ ...vdrapi.DIDMethodOption) (*diddoc.DocResolution, error) {
 	return r.didResolver.Resolve(did)
 }
 
