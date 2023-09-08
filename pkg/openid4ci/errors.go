@@ -30,6 +30,7 @@ const (
 	UnsupportedCredentialTypeError            = "UNSUPPORTED_CREDENTIAL_TYPE"
 	InvalidOrMissingProofError                = "INVALID_OR_MISSING_PROOF"
 	UnsupportedIssuanceURISchemeError         = "UNSUPPORTED_ISSUANCE_URI_SCHEME"
+	NoTokenEndpointAvailableError             = "NO_TOKEN_ENDPOINT_AVAILABLE" //nolint:gosec //false positive
 )
 
 // Constants' names and reasons are obvious, so they do not require additional comments.
@@ -55,4 +56,5 @@ const (
 	UnsupportedCredentialTypeErrorCode       = 17
 	InvalidOrMissingProofErrorCode           = 18
 	UnsupportedIssuanceURISchemeCode
+	NoTokenEndpointAvailableErrorCode = 19
 )

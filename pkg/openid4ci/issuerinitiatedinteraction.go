@@ -26,7 +26,6 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
-	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
@@ -252,7 +251,12 @@ func (i *IssuerInitiatedInteraction) DynamicClientRegistrationEndpoint() (string
 
 // IssuerMetadata returns the issuer's metadata.
 func (i *IssuerInitiatedInteraction) IssuerMetadata() (*issuer.Metadata, error) {
-	return i.interaction.getIssuerMetadata()
+	err := i.interaction.populateIssuerMetadata(getIssuerMetadataEventText)
+	if err != nil {
+		return nil, err
+	}
+
+	return i.interaction.issuerMetadata, nil
 }
 
 func (i *IssuerInitiatedInteraction) requestCredentialWithPreAuth(jwtSigner api.JWTSigner,
@@ -304,21 +308,20 @@ func (i *IssuerInitiatedInteraction) requestCredentialWithPreAuth(jwtSigner api.
 	})
 }
 
-func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth( //nolint:funlen // Difficult to decompose
+func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 	pin string, signer api.JWTSigner,
 ) ([]CredentialResponse, error) {
-	var err error
-
-	i.interaction.openIDConfig, err = i.interaction.getOpenIDConfig()
+	err := i.interaction.populateIssuerMetadata(requestCredentialEventText)
 	if err != nil {
-		return nil, walleterror.NewExecutionError(
-			ErrorModule,
-			IssuerOpenIDConfigFetchFailedCode,
-			IssuerOpenIDConfigFetchFailedError,
-			fmt.Errorf("failed to fetch issuer's OpenID configuration: %w", err))
+		return nil, err
 	}
 
-	tokenResponse, err := i.getPreAuthTokenResponse(pin)
+	tokenEndpoint, err := i.interaction.getTokenEndpoint()
+	if err != nil {
+		return nil, err
+	}
+
+	tokenResponse, err := i.getPreAuthTokenResponse(pin, tokenEndpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get token response: %w", err)
 	}
@@ -326,17 +329,6 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth( //nolint
 	proofJWT, err := i.interaction.createClaimsProof(tokenResponse.CNonce, signer)
 	if err != nil {
 		return nil, err
-	}
-
-	i.interaction.issuerMetadata, err = metadatafetcher.Get(i.interaction.issuerURI, i.interaction.httpClient,
-		i.interaction.metricsLogger,
-		requestCredentialEventText)
-	if err != nil {
-		return nil, walleterror.NewExecutionError(
-			ErrorModule,
-			MetadataFetchFailedCode,
-			MetadataFetchFailedError,
-			fmt.Errorf("failed to get issuer metadata: %w", err))
 	}
 
 	credentialResponses := make([]CredentialResponse, len(i.credentialTypes))
@@ -372,7 +364,7 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth( //nolint
 	return credentialResponses, nil
 }
 
-func (i *IssuerInitiatedInteraction) getPreAuthTokenResponse(pin string) (*preAuthTokenResponse, error) {
+func (i *IssuerInitiatedInteraction) getPreAuthTokenResponse(pin, tokenEndpoint string) (*preAuthTokenResponse, error) {
 	params := url.Values{}
 	params.Add("grant_type", preAuthorizedGrantType)
 	params.Add("pre-authorized_code", i.preAuthorizedCodeGrantParams.preAuthorizedCode)
@@ -384,8 +376,8 @@ func (i *IssuerInitiatedInteraction) getPreAuthTokenResponse(pin string) (*preAu
 	paramsReader := strings.NewReader(params.Encode())
 
 	responseBytes, err := httprequest.New(i.interaction.httpClient, i.interaction.metricsLogger).Do(
-		http.MethodPost, i.interaction.openIDConfig.TokenEndpoint, "application/x-www-form-urlencoded", paramsReader,
-		fmt.Sprintf(fetchTokenViaPOSTReqEventText, i.interaction.openIDConfig.TokenEndpoint),
+		http.MethodPost, tokenEndpoint, "application/x-www-form-urlencoded", paramsReader,
+		fmt.Sprintf(fetchTokenViaPOSTReqEventText, tokenEndpoint),
 		requestCredentialEventText, tokenErrorResponseHandler)
 	if err != nil {
 		return nil, fmt.Errorf("issuer's token endpoint: %w", err)
