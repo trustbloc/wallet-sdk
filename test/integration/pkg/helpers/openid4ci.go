@@ -17,6 +17,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didkey"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
@@ -36,20 +37,35 @@ func NewCITestHelper(t *testing.T, didMethod string, keyType string) *CITestHelp
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
-	// create DID
-	c, err := did.NewCreator(kms)
-	require.NoError(t, err)
+	var didDoc *api.DIDDocResolution
 
-	metricsLogger := metricslogger.NewMetricsLogger()
+	if didMethod == "key" {
+		// Create the DID using our new DID creation pattern.
 
-	opts := did.NewCreateOpts()
-	opts.SetKeyType(keyType)
-	opts.SetMetricsLogger(metricsLogger)
+		if keyType == "" {
+			keyType = localkms.KeyTypeED25519
+		}
 
-	didDoc, err := c.Create(didMethod, opts)
-	require.NoError(t, err)
+		jwk, err := kms.Create(keyType)
+		require.NoError(t, err)
 
-	checkDIDCreationMetricsLoggerEvents(t, metricsLogger)
+		didDoc, err = didkey.Create(jwk)
+		require.NoError(t, err)
+	} else {
+		c, err := did.NewCreator(kms)
+		require.NoError(t, err)
+
+		metricsLogger := metricslogger.NewMetricsLogger()
+
+		opts := did.NewCreateOpts()
+		opts.SetKeyType(keyType)
+		opts.SetMetricsLogger(metricsLogger)
+
+		didDoc, err = c.Create(didMethod, opts)
+		require.NoError(t, err)
+
+		checkDIDCreationMetricsLoggerEvents(t, metricsLogger)
+	}
 
 	return &CITestHelper{
 		KMS:            kms,
