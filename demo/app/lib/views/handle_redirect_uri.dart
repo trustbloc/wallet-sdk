@@ -108,6 +108,7 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
               context,
               MaterialPageRoute(
                   builder: (context) => CustomError(
+                      titleBar: "Redirect URI",
                       requestErrorTitleMsg: "Redirect uri error", requestErrorSubTitleMsg: error.toString())));
         }
       }
