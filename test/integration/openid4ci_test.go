@@ -140,7 +140,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		},
 		{
 			issuerProfileID:     "bank_issuer_jwtsd",
-			issuerDIDMethod:     "orb",
+			issuerDIDMethod:     "ion",
 			walletDIDMethod:     "jwk",
 			expectedIssuerURI:   "http://localhost:8075/issuer/bank_issuer_jwtsd/v1.0",
 			claimData:           verifiableEmployeeClaims,
@@ -149,7 +149,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		},
 		{
 			issuerProfileID:     "bank_issuer",
-			issuerDIDMethod:     "orb",
+			issuerDIDMethod:     "ion",
 			walletDIDMethod:     "ion",
 			claimData:           verifiableEmployeeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataBankIssuer),

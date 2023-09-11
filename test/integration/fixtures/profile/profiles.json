@@ -14,7 +14,7 @@
           "signatureRepresentation": 0,
           "keyType": "ED25519",
           "format": "jwt",
-          "didMethod": "orb",
+          "didMethod": "ion",
           "status": {
             "type": "StatusList2021Entry"
           },
@@ -388,7 +388,7 @@
           "signatureRepresentation": 0,
           "keyType": "ED25519",
           "format": "jwt",
-          "didMethod": "orb",
+          "didMethod": "ion",
           "status": {
             "type": "StatusList2021Entry"
           }
@@ -984,7 +984,7 @@
         "oidcConfig": {
           "roSigningAlgorithm": "Ed25519Signature2018",
           "keyType": "ED25519",
-          "didMethod": "orb"
+          "didMethod": "ion"
         },
         "presentationDefinitions": [
           {
@@ -1075,7 +1075,7 @@
         "oidcConfig": {
           "roSigningAlgorithm": "Ed25519Signature2018",
           "keyType": "ED25519",
-          "didMethod": "orb"
+          "didMethod": "ion"
         },
         "presentationDefinitions": [
           {
@@ -1161,7 +1161,7 @@
         "oidcConfig": {
           "roSigningAlgorithm": "Ed25519Signature2018",
           "keyType": "ED25519",
-          "didMethod": "orb"
+          "didMethod": "ion"
         },
         "presentationDefinitions": [
           {
