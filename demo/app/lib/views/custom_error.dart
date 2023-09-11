@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:app/widgets/common_title_appbar.dart';
 
 class CustomError extends StatefulWidget {
-  String? titleBarString;
+  String? titleBar;
   final String requestErrorTitleMsg;
   final String requestErrorSubTitleMsg ;
 
-  CustomError({super.key, required this.requestErrorTitleMsg, required this.requestErrorSubTitleMsg, this.titleBarString});
+  CustomError({super.key, required this.requestErrorTitleMsg, required this.requestErrorSubTitleMsg, this.titleBar});
 
   @override
   State<CustomError> createState() => CustomErrorPage();
@@ -19,7 +19,7 @@ class CustomErrorPage extends State<CustomError> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomTitleAppBar(pageTitle: widget.titleBarString, addCloseIcon: true, height: 60),
+      appBar: CustomTitleAppBar(pageTitle: widget.titleBar, addCloseIcon: true, height: 60),
      body: Center(
       child: Container (
         padding: const EdgeInsets.all(12),

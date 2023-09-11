@@ -233,6 +233,7 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                                     context,
                                     MaterialPageRoute(
                                         builder: (context) => CustomError(
+                                            titleBar: "Multi Presentation Preview",
                                             requestErrorTitleMsg: "error while presenting credential",
                                             requestErrorSubTitleMsg: "${errString}")));
                                 return;

@@ -32,14 +32,14 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
   credentials = storedCredentials.map((e) => e.value.rawCredential).toList();
   try {
     await walletSDKPlugin.processAuthorizationRequest(
-        authorizationRequest: qrCodeURL);
+        authorizationRequest: qrCodeURL, storedCredentials: credentials);
   } on PlatformException catch (error) {
     if (!context.mounted) return;
     Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) =>
-                CustomError(requestErrorTitleMsg: error.message!, requestErrorSubTitleMsg: error.details)));
+                CustomError(titleBar: "Processing Presentation", requestErrorTitleMsg: error.message!, requestErrorSubTitleMsg: error.details)));
   }
   // Get the matched VCIDs from the submission request.
   var getSubmissionRequest = await walletSDKPlugin.getSubmissionRequirements(storedCredentials: credentials);

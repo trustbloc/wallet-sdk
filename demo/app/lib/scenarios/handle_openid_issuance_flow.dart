@@ -43,7 +43,7 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
         context,
         MaterialPageRoute(
             builder: (context) => CustomError(
-                 titleBarString: "QR Code Scanned",
+                 titleBar: "QR Code Scanned",
                 requestErrorTitleMsg: "error while intializing the interaction",
                 requestErrorSubTitleMsg: "${errString}")));
     return;

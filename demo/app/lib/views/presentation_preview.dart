@@ -163,6 +163,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) => CustomError(
+                                          titleBar: "Presentation Preview",
                                           requestErrorTitleMsg: "error while presenting credential",
                                           requestErrorSubTitleMsg: "${errString}")));
                               return;
