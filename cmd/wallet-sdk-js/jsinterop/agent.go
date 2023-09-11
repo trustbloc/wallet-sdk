@@ -284,7 +284,10 @@ func parseResolvedDisplayData(_ js.Value, args []js.Value) (any, error) {
 				"rawValue":  claimDisp.RawValue,
 				"valueType": claimDisp.ValueType,
 				"label":     claimDisp.Label,
-				"value":     claimDisp.Value,
+			}
+
+			if claimDisp.Value != nil {
+				claim["value"] = *claimDisp.Value
 			}
 
 			if claimDisp.Order != nil {
