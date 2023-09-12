@@ -11,9 +11,9 @@ toolchain go1.21.0
 require (
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.2
-	github.com/trustbloc/did-go v0.0.0-20230908203710-8c4f5146a514
+	github.com/trustbloc/did-go v0.0.0-20230912072609-b99774e957a9
 	github.com/trustbloc/kms-go v0.0.0-20230906134914-b9afaf3b793d
-	github.com/trustbloc/vc-go v0.0.0-20230908212925-754e5de46099
+	github.com/trustbloc/vc-go v0.0.0-20230912150315-b2bc304313f8
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 )
 
@@ -37,7 +37,6 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hyperledger/fabric-amcl v0.0.0-20230602173724-9e02669dceb2 // indirect
 	github.com/hyperledger/ursa-wrapper-go v0.3.1 // indirect
-	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a // indirect
 	github.com/kawamuray/jsonpath v0.0.0-20201211160320-7483bafabd7e // indirect
 	github.com/kilic/bls12-381 v0.1.1-0.20210503002446-7b7597926c69 // indirect
 	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1 // indirect
