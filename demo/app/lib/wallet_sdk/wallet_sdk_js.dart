@@ -338,7 +338,8 @@ class WalletSDK extends WalletPlatform {
         .toList();
   }
 
-  Future<void> processAuthorizationRequest({required String authorizationRequest}) async {
+  Future<void> processAuthorizationRequest(
+      {required String authorizationRequest, List<String>? storedCredentials}) async {
     await promiseToFuture(jsCreateOpenID4VPInteraction(authorizationRequest));
     return;
   }
