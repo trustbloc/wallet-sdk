@@ -9,13 +9,11 @@ package key_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/kms-go/doc/jose/jwk"
 
 	kmsspi "github.com/trustbloc/kms-go/spi/kms"
 	"github.com/trustbloc/wallet-sdk/pkg/did/creator/key"
-
-	"github.com/stretchr/testify/require"
-
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 )
 
