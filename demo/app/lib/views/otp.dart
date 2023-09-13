@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:app/models/activity_data_object.dart';
@@ -10,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app/widgets/primary_button.dart';
 import 'package:app/widgets/primary_input_field.dart';
 import 'package:app/wallet_sdk/wallet_sdk.dart';
+import '../widgets/loading_overlay.dart';
 import 'credential_preview.dart';
 import 'package:app/views/dashboard.dart';
 
@@ -54,6 +56,7 @@ class _OTPPage extends State<OTP> {
   late double topPadding;
   bool show = false;
   bool showDetail = false;
+  bool _isLoading = false;
 
   void detailToggle() {
     setState(() {
@@ -64,7 +67,6 @@ class _OTPPage extends State<OTP> {
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
-    final width = MediaQuery.of(context).size.width;
     return GestureDetector(
         onTap: () {
           FocusManager.instance.primaryFocus?.unfocus();
@@ -76,103 +78,106 @@ class _OTPPage extends State<OTP> {
               height: 60,
             ),
             backgroundColor: const Color(0xffF4F1F5),
-            body: Center(
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
-                    child: PrimaryInputField(
-                        textController: otpController,
-                        maxLength: 6,
-                        labelText: 'Enter OTP Code',
-                        textInputFormatter: FilteringTextInputFormatter.digitsOnly),
-                  ),
-                  Column(
-                    children: <Widget>[
+            body: Stack(
+              children: [
+                Center(
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
+                        child: PrimaryInputField(
+                            textController: otpController,
+                            maxLength: 6,
+                            labelText: 'Enter OTP Code',
+                            textInputFormatter: FilteringTextInputFormatter.digitsOnly),
+                      ),
                       Column(
                         children: <Widget>[
-                          Visibility(
-                            visible: show,
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              alignment: Alignment.center,
-                              child: ListTile(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                tileColor: const Color(0xffFBF8FC),
-                                title: SelectableText(
-                                  _requestErrorTitleMsg ?? '',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xff190C21),
+                          Column(
+                            children: <Widget>[
+                              Visibility(
+                                visible: show,
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  alignment: Alignment.center,
+                                  child: ListTile(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    tileColor: const Color(0xffFBF8FC),
+                                    title: SelectableText(
+                                      _requestErrorTitleMsg ?? '',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xff190C21),
+                                      ),
+                                      textAlign: TextAlign.start,
+                                    ),
+                                    subtitle: SelectableText(
+                                      _requestErrorSubTitleMsg ?? '',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xff6C6D7C),
+                                      ),
+                                      textAlign: TextAlign.start,
+                                    ),
+                                    trailing: IconButton(
+                                      icon: const Icon(
+                                        Icons.more_vert,
+                                        size: 20.0,
+                                      ),
+                                      onPressed: () {
+                                        detailToggle();
+                                      },
+                                    ),
+                                    //TODO need to add fallback and network image url
+                                    leading: const SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: Image(
+                                          image: AssetImage('lib/assets/images/errorVector.png'),
+                                          width: 24,
+                                          height: 24,
+                                          fit: BoxFit.cover,
+                                        )),
                                   ),
-                                  textAlign: TextAlign.start,
                                 ),
-                                subtitle: SelectableText(
-                                  _requestErrorSubTitleMsg ?? '',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xff6C6D7C),
-                                  ),
-                                  textAlign: TextAlign.start,
-                                ),
-                                trailing: IconButton(
-                                  icon: const Icon(
-                                    Icons.more_vert,
-                                    size: 20.0,
-                                  ),
-                                  onPressed: () {
-                                    detailToggle();
-                                  },
-                                ),
-                                //TODO need to add fallback and network image url
-                                leading: const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: Image(
-                                      image: AssetImage('lib/assets/images/errorVector.png'),
-                                      width: 24,
-                                      height: 24,
-                                      fit: BoxFit.cover,
-                                    )),
                               ),
-                            ),
+                              Visibility(
+                                  visible: showDetail,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: SelectableText(
+                                      _requestErrorDetailMsg ?? '',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xff6C6D7C),
+                                      ),
+                                      textAlign: TextAlign.start,
+                                    ),
+                                  )),
+                            ],
                           ),
-                          Visibility(
-                              visible: showDetail,
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: SelectableText(
-                                  _requestErrorDetailMsg ?? '',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xff6C6D7C),
-                                  ),
-                                  textAlign: TextAlign.start,
-                                ),
-                              )),
                         ],
                       ),
-                    ],
-                  ),
-                  const Spacer(),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16.0, top: 0, right: 16.0, bottom: 32.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        PrimaryButton(
-                            onPressed: () async {
-                              setState(() {
-                                _otp = otpController.text;
-                              });
+                      const Spacer(),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 16.0, top: 0, right: 16.0, bottom: 32.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            PrimaryButton(
+                                onPressed: () async {
+                                  setState(() {
+                                    _otp = otpController.text;
+                                    _isLoading = true;
+                                  });
 
                               String? credentials;
                               String? serializeDisplayData;
@@ -191,6 +196,9 @@ class _OTPPage extends State<OTP> {
                                 log('activities and credID -$activities and $credID');
                                 _storageService.addActivities(ActivityDataObj(credID!, activities));
                                 pref.setString('credID', credID);
+                                setState(() {
+                                  _isLoading = false;
+                                });
                                 _navigateToCredPreviewScreen(
                                     credentials, issuerURI, serializeDisplayData!, userDIDId, credID);
                               } catch (err) {
@@ -220,6 +228,7 @@ class _OTPPage extends State<OTP> {
                                   show = true;
                                   topPadding = height * 0.20;
                                   _clearOTPInput();
+                                  _isLoading = false;
                                 });
                               }
                             },
@@ -244,7 +253,12 @@ class _OTPPage extends State<OTP> {
                   ),
                 ],
               ),
-            )));
+            ),
+            // Loading overlay
+            if (_isLoading) const LoadingOverlay(),
+          ],
+        ),
+    ));
   }
 
   _navigateToCredPreviewScreen(
