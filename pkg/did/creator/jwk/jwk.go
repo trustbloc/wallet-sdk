@@ -8,11 +8,18 @@ SPDX-License-Identifier: Apache-2.0
 package jwk
 
 import (
+	"errors"
 	"fmt"
+
+	"github.com/trustbloc/kms-go/doc/jose/jwk"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 
 	"github.com/trustbloc/did-go/doc/did"
 	jwkvdr "github.com/trustbloc/did-go/method/jwk"
 )
+
+// ErrorModule is the error module name used for errors relating to did:jwk creation.
+const ErrorModule = "DIDJWK"
 
 // Creator creates did:jwk DID Documents.
 type Creator struct {
@@ -38,4 +45,21 @@ func (creator *Creator) Create(vm *did.VerificationMethod) (*did.DocResolution, 
 	}
 
 	return docRes, nil
+}
+
+// Create creates a new did:key document using the given verification method.
+func Create(jsonWebKey *jwk.JWK) (*did.DocResolution, error) {
+	if jsonWebKey == nil {
+		return nil, walleterror.NewInvalidSDKUsageError(
+			ErrorModule, errors.New("jwk object cannot be nil"))
+	}
+
+	vm, err := did.NewVerificationMethodFromJWK("#"+jsonWebKey.KeyID, "JsonWebKey2020", "", jsonWebKey)
+	if err != nil {
+		return nil, err
+	}
+
+	didDocArgument := &did.Doc{VerificationMethod: []did.VerificationMethod{*vm}}
+
+	return jwkvdr.New().Create(didDocArgument)
 }

@@ -23,6 +23,7 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 	. "github.com/trustbloc/wallet-sdk/pkg/did/creator/jwk"
+	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 )
 
 func TestNewCreator(t *testing.T) {
@@ -85,6 +86,30 @@ func TestCreator_Create(t *testing.T) {
 	})
 }
 
+func TestCreate(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		localKMS := createTestKMS(t)
+
+		_, jsonWebKey, err := localKMS.Create(kms.ED25519)
+		require.NoError(t, err)
+
+		didDoc, err := Create(jsonWebKey)
+		require.NoError(t, err)
+		require.NotNil(t, didDoc)
+	})
+	t.Run("Nil JWK", func(t *testing.T) {
+		didDoc, err := Create(nil)
+		require.Contains(t, err.Error(), "jwk object cannot be nil")
+		require.Nil(t, didDoc)
+	})
+	t.Run("Fail to create verification method from JWK", func(t *testing.T) {
+		didDoc, err := Create(&jwk.JWK{})
+		require.Contains(t, err.Error(),
+			"convert JWK to public key bytes: unsupported public key type in kid ''")
+		require.Nil(t, didDoc)
+	})
+}
+
 type makeJWK func(t *testing.T) *jwk.JWK
 
 func p256JWK(t *testing.T) *jwk.JWK {
@@ -111,4 +136,15 @@ func ed225519JWK(t *testing.T) *jwk.JWK {
 	require.NoError(t, err)
 
 	return pubJWK
+}
+
+func createTestKMS(t *testing.T) *localkms.LocalKMS {
+	t.Helper()
+
+	kmsStore := localkms.NewMemKMSStore()
+
+	localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: kmsStore})
+	require.NoError(t, err)
+
+	return localKMS
 }

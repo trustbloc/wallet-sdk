@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didjwk"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
@@ -39,8 +41,9 @@ func NewCITestHelper(t *testing.T, didMethod string, keyType string) *CITestHelp
 
 	var didDoc *api.DIDDocResolution
 
-	if didMethod == "key" {
-		// Create the DID using our new DID creation pattern.
+	switch didMethod {
+	case "key":
+		// Create the did:key DID using our new DID creation pattern.
 
 		if keyType == "" {
 			keyType = localkms.KeyTypeED25519
@@ -51,7 +54,19 @@ func NewCITestHelper(t *testing.T, didMethod string, keyType string) *CITestHelp
 
 		didDoc, err = didkey.Create(jwk)
 		require.NoError(t, err)
-	} else {
+	case "jwk":
+		// Create the did:jwk DID using our new DID creation pattern.
+
+		if keyType == "" {
+			keyType = localkms.KeyTypeED25519
+		}
+
+		jwk, err := kms.Create(keyType)
+		require.NoError(t, err)
+
+		didDoc, err = didjwk.Create(jwk)
+		require.NoError(t, err)
+	default:
 		c, err := did.NewCreator(kms)
 		require.NoError(t, err)
 
