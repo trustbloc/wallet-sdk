@@ -12,7 +12,7 @@ import (
 
 	"github.com/trustbloc/did-go/doc/did"
 	"github.com/trustbloc/did-go/method/key"
-	"github.com/trustbloc/kms-go/doc/jose/jwk"
+	jwktype "github.com/trustbloc/kms-go/doc/jose/jwk"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
@@ -39,18 +39,19 @@ func (d *Creator) Create(vm *did.VerificationMethod) (*did.DocResolution, error)
 }
 
 // Create creates a new did:key document using the given verification method.
-func Create(jsonWebKey *jwk.JWK) (*did.DocResolution, error) {
-	if jsonWebKey == nil {
+// Deprecated: The standalone Create function should be used instead.
+func Create(jwk *jwktype.JWK) (*did.DocResolution, error) {
+	if jwk == nil {
 		return nil, walleterror.NewInvalidSDKUsageError(
 			ErrorModule, errors.New("jwk object cannot be nil"))
 	}
 
 	var vm *did.VerificationMethod
 
-	if jsonWebKey.Crv == "Ed25519" {
+	if jwk.Crv == "Ed25519" {
 		// Workaround: when the did:key VDR creates a DID for ed25519, Ed25519VerificationKey2018 is the expected
 		// verification method.
-		publicKeyBytes, err := jsonWebKey.PublicKeyBytes()
+		publicKeyBytes, err := jwk.PublicKeyBytes()
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +60,7 @@ func Create(jsonWebKey *jwk.JWK) (*did.DocResolution, error) {
 	} else {
 		var err error
 
-		vm, err = did.NewVerificationMethodFromJWK("", "JsonWebKey2020", "", jsonWebKey)
+		vm, err = did.NewVerificationMethodFromJWK("", "JsonWebKey2020", "", jwk)
 		if err != nil {
 			return nil, err
 		}

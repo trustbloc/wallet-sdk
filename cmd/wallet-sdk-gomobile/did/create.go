@@ -33,7 +33,7 @@ func create(method, keyID string, goAPICreator *goapicreator.Creator, opts *Crea
 		KeyID:            keyID,
 	}
 
-	didDocResolution, err := goAPICreator.Create(method, goAPIOpts)
+	didDocResolution, err := goAPICreator.Create(method, goAPIOpts) //nolint:staticcheck // To be removed later.
 	if err != nil {
 		return nil, wrapper.ToMobileError(err)
 	}

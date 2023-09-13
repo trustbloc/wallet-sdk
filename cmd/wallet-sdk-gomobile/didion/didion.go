@@ -4,26 +4,26 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package didjwk contains a function that can be used to create did:jwk documents.
-package didjwk
+// Package didion contains a function that can be used to create did:ion documents.
+package didion
 
 import (
 	"errors"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
-	didjwk "github.com/trustbloc/wallet-sdk/pkg/did/creator/jwk"
+	didion "github.com/trustbloc/wallet-sdk/pkg/did/creator/ion"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
-// Create creates a new did:jwk document using the given JWK.
-func Create(jwk *api.JSONWebKey) (*api.DIDDocResolution, error) {
+// CreateLongForm creates a new did:ion long-form document using the given JWK.
+func CreateLongForm(jwk *api.JSONWebKey) (*api.DIDDocResolution, error) {
 	if jwk == nil {
 		return nil, wrapper.ToMobileError(walleterror.NewInvalidSDKUsageError(
-			didjwk.ErrorModule, errors.New("jwk object cannot be null/nil")))
+			didion.ErrorModule, errors.New("jwk object cannot be null/nil")))
 	}
 
-	didDocResolution, err := didjwk.Create(jwk.JWK)
+	didDocResolution, err := didion.CreateLongForm(jwk.JWK)
 	if err != nil {
 		return nil, wrapper.ToMobileError(err)
 	}

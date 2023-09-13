@@ -16,8 +16,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/oauth2"
-
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/vc-go/verifiable"
 
@@ -26,6 +24,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/oauth2"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/helpers"

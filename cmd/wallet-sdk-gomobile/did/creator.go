@@ -32,6 +32,7 @@ type Creator struct {
 
 // NewCreator returns a new DID document Creator. Any keys needed for DID creation will be generated and
 // stored using the given KeyWriter.
+// Deprecated: The standalone Create functions specific to each DID method should be used instead.
 func NewCreator(keyWriter api.KeyWriter) (*Creator, error) {
 	if keyWriter == nil {
 		return nil, errors.New("a KeyWriter must be specified")
@@ -51,6 +52,7 @@ func NewCreator(keyWriter api.KeyWriter) (*Creator, error) {
 
 // Create creates a DID document using the given DID method.
 // A default key type and verification type will be used if they aren't specified in opts.
+// Deprecated: The standalone Create functions specific to each DID method should be used instead.
 func (d *Creator) Create(method string, opts *CreateOpts) (*api.DIDDocResolution, error) {
 	if method == "" {
 		return nil, errors.New("DID method must be provided")

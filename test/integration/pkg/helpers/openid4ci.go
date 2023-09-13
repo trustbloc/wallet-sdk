@@ -12,13 +12,12 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didjwk"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didion"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didjwk"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didkey"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
@@ -43,8 +42,6 @@ func NewCITestHelper(t *testing.T, didMethod string, keyType string) *CITestHelp
 
 	switch didMethod {
 	case "key":
-		// Create the did:key DID using our new DID creation pattern.
-
 		if keyType == "" {
 			keyType = localkms.KeyTypeED25519
 		}
@@ -55,8 +52,6 @@ func NewCITestHelper(t *testing.T, didMethod string, keyType string) *CITestHelp
 		didDoc, err = didkey.Create(jwk)
 		require.NoError(t, err)
 	case "jwk":
-		// Create the did:jwk DID using our new DID creation pattern.
-
 		if keyType == "" {
 			keyType = localkms.KeyTypeED25519
 		}
@@ -66,20 +61,18 @@ func NewCITestHelper(t *testing.T, didMethod string, keyType string) *CITestHelp
 
 		didDoc, err = didjwk.Create(jwk)
 		require.NoError(t, err)
+	case "ion":
+		if keyType == "" {
+			keyType = localkms.KeyTypeED25519
+		}
+
+		jwk, err := kms.Create(keyType)
+		require.NoError(t, err)
+
+		didDoc, err = didion.CreateLongForm(jwk)
+		require.NoError(t, err)
 	default:
-		c, err := did.NewCreator(kms)
-		require.NoError(t, err)
-
-		metricsLogger := metricslogger.NewMetricsLogger()
-
-		opts := did.NewCreateOpts()
-		opts.SetKeyType(keyType)
-		opts.SetMetricsLogger(metricsLogger)
-
-		didDoc, err = c.Create(didMethod, opts)
-		require.NoError(t, err)
-
-		checkDIDCreationMetricsLoggerEvents(t, metricsLogger)
+		require.Fail(t, fmt.Sprintf("%s is not a supported DID method", didMethod))
 	}
 
 	return &CITestHelper{
@@ -146,14 +139,6 @@ func (h *CITestHelper) CheckMetricsLoggerAfterOpenID4CIFlow(t *testing.T, issuer
 	checkParseCredentialMetricsEvent(t, h.MetricsLogger.Events[5])
 
 	checkRequestCredentialsMetricsEvent(t, h.MetricsLogger.Events[6])
-}
-
-func checkDIDCreationMetricsLoggerEvents(t *testing.T, metricsLogger *metricslogger.MetricsLogger) {
-	require.Len(t, metricsLogger.Events, 1)
-
-	require.Equal(t, "Creating DID", metricsLogger.Events[0].Event())
-	require.Empty(t, metricsLogger.Events[0].ParentEvent())
-	require.Positive(t, metricsLogger.Events[0].DurationNanoseconds())
 }
 
 func checkIssuerDisplay(t *testing.T, actualIssuerDisplay, expectedIssuerDisplay *display.IssuerDisplay) {
