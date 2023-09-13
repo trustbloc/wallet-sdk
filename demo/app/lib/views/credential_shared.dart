@@ -6,7 +6,7 @@ import 'package:app/views/dashboard.dart';
 class CredentialShared extends StatefulWidget {
   final String? verifierName;
   final List<CredentialData> credentialData;
-  CredentialShared({super.key, this.verifierName, required this.credentialData,});
+  const CredentialShared({super.key, this.verifierName, required this.credentialData,});
 
   @override
   State<CredentialShared> createState() => CredentialSharedState ();
@@ -57,7 +57,7 @@ class CredentialSharedState extends State<CredentialShared> {
               ],
             ),
             title:  const Text('Success',textAlign: TextAlign.left, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            subtitle: Text("Credentials have been shared with ${widget.verifierName}", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal)),
+            subtitle: Text('Credentials have been shared with ${widget.verifierName}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal)),
           ),
           Expanded(
             child: ListView.builder(

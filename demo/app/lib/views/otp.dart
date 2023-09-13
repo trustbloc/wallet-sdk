@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:developer';
 
 import 'package:app/models/activity_data_object.dart';
@@ -33,9 +32,9 @@ class _OTPPage extends State<OTP> {
   Future<String?> _createDid() async {
     final SharedPreferences pref = await prefs;
     var didType = pref.getString('didType');
-    didType = didType ?? "ion";
+    didType = didType ?? 'ion';
     var keyType = pref.getString('keyType');
-    keyType = keyType ?? "ED25519";
+    keyType = keyType ?? 'ED25519';
     var didResolution = await WalletSDKPlugin.createDID(didType, keyType);
     var didID = didResolution.did;
     setState(() {
@@ -186,30 +185,30 @@ class _OTPPage extends State<OTP> {
                                 String? issuerURI = await WalletSDKPlugin.issuerURI();
                                 serializeDisplayData =
                                 await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
-                                log("serializeDisplayData -> $serializeDisplayData");
+                                log('serializeDisplayData -> $serializeDisplayData');
                                 var activities = await WalletSDKPlugin.storeActivityLogger();
                                 var credID = await WalletSDKPlugin.getCredID([credentials]);
-                                log("activities and credID -$activities and $credID");
+                                log('activities and credID -$activities and $credID');
                                 _storageService.addActivities(ActivityDataObj(credID!, activities));
-                                pref.setString("credID", credID);
+                                pref.setString('credID', credID);
                                 _navigateToCredPreviewScreen(
                                     credentials, issuerURI, serializeDisplayData!, userDIDId, credID);
                               } catch (err) {
                                 String errorMessage = err.toString();
-                                log("errorMessage-> $errorMessage");
+                                log('errorMessage-> $errorMessage');
                                 if (err is PlatformException && err.message != null && err.message!.isNotEmpty) {
-                                  log("err.details-> ${err.details}");
+                                  log('err.details-> ${err.details}');
                                   var resp =
                                   await WalletSDKPlugin.parseWalletSDKError(localizedErrorMessage: err.details);
-                                  log("resp-> $resp");
-                                  (resp.category == "INVALID_GRANT")
+                                  log('resp-> $resp');
+                                  (resp.category == 'INVALID_GRANT')
                                       ? {
-                                    errorMessage = "Try re-entering the PIN or scan a new QR code",
+                                    errorMessage = 'Try re-entering the PIN or scan a new QR code',
                                     _requestErrorDetailMsg = resp.details
                                   }
-                                      : (resp.category == "INVALID_TOKEN")
+                                      : (resp.category == 'INVALID_TOKEN')
                                       ? {
-                                    errorMessage = "Try scanning a new QR code",
+                                    errorMessage = 'Try scanning a new QR code',
                                     _requestErrorDetailMsg = resp.details
                                   }
                                       : {errorMessage = resp.details, _requestErrorDetailMsg = resp.traceID};

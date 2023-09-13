@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:developer';
 import 'package:app/main.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/views/credential_added.dart';
@@ -25,7 +23,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
   final StorageService _storageService = StorageService();
   var uuid = const Uuid();
   late final String userLoggedIn;
-  String issuerDisplayData = "";
+  String issuerDisplayData = '';
   bool verifiedDomain = true;
   late String serviceURL = '';
   String? issuerID;
@@ -117,7 +115,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
             child:  Text(
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 18, color: Colors.black),
-                "wants to issue the credential"),
+                'wants to issue the credential'),
           ),
           CredentialCard(credentialData: widget.credentialData, isDashboardWidget: false, isDetailArrowRequired: false),
           Expanded(
@@ -142,7 +140,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
                     ),
                     PrimaryButton(
                         onPressed: () async {
-                            _storageService.addCredential(CredentialDataObject("$userLoggedIn-${uuid.v1()}", widget.credentialData));
+                            _storageService.addCredential(CredentialDataObject('$userLoggedIn-${uuid.v1()}', widget.credentialData));
                             _navigateToCredentialAdded();
                         },
                         width: double.infinity,

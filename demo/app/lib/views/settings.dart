@@ -104,7 +104,7 @@ class SettingsState extends State<Settings> {
               SwitchListTile(
                 value: isSwitched,
                 contentPadding: EdgeInsets.zero,
-                title: const Text("Dev Mode", style: TextStyle(color: Color(0xff190C21),
+                title: const Text('Dev Mode', style: TextStyle(color: Color(0xff190C21),
                     fontWeight: FontWeight.w700,
                     fontFamily: 'SF Pro',
                     fontSize: 14,
@@ -120,8 +120,8 @@ class SettingsState extends State<Settings> {
               ),
               DropdownButtonFormField<String>(
                 value: selectedDIDType,
-                decoration: InputDecoration(
-                  labelText: "Select DID Method",
+                decoration: const InputDecoration(
+                  labelText: 'Select DID Method',
                   filled: false,
                 ),
                 icon: const Icon(Icons.arrow_drop_down),
@@ -143,8 +143,8 @@ class SettingsState extends State<Settings> {
               ),
               DropdownButtonFormField<String>(
                 value: selectedKeyType,
-                decoration: InputDecoration(
-                  labelText: "Select Key Type",
+                decoration: const InputDecoration(
+                  labelText: 'Select Key Type',
                   filled: false,
                 ),
                 icon: const Icon(Icons.arrow_drop_down),
@@ -232,14 +232,14 @@ class SettingsState extends State<Settings> {
     var versionDetailResp = await walletSDKPlugin.getVersionDetails();
     var didDocEncoded = json.encode(versionDetailResp!);
     Map<String, dynamic> responseJson = json.decode(didDocEncoded);
-    walletSDKVersion = responseJson["walletSDKVersion"];
-    gitRevision = responseJson["gitRevision"];
-    buildTimeRev = responseJson["buildTimeRev"];
+    walletSDKVersion = responseJson['walletSDKVersion'];
+    gitRevision = responseJson['gitRevision'];
+    buildTimeRev = responseJson['buildTimeRev'];
   }
 
   getUserDetails() async {
     UserLoginDetails userLoginDetails = await getUser();
-    log("userLoginDetails -> $userLoginDetails");
+    log('userLoginDetails -> $userLoginDetails');
     usernameController.text = userLoginDetails.username!;
   }
 

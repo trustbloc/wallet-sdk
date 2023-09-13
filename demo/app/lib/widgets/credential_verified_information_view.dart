@@ -51,7 +51,7 @@ class CredentialVerifiedInformation extends StatefulWidget {
         controller: credDataController,
         shrinkWrap: true,
         itemBuilder: (context, position) {
-          if (credPrev[position].valueType != "image"){
+          if (credPrev[position].valueType != 'image'){
               return Row(
                 children: [
                   const Divider(
@@ -96,7 +96,7 @@ class CredentialVerifiedInformation extends StatefulWidget {
                             },
                           )
                         ],
-                      ) :  Column()
+                      ) :  const Column()
                     ),
                   ),
                 ],
@@ -145,10 +145,10 @@ class CredentialVerifiedInformation extends StatefulWidget {
         child: SingleChildScrollView(
           child: Column(
             children: <Widget>[
-              Row(
+              const Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const <Widget>[
-                    Text( "Verified information", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700))
+                  children: <Widget>[
+                    Text( 'Verified information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700))
                   ]
               ),
               const SizedBox(height: 10),

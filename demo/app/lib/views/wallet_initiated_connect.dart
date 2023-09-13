@@ -109,15 +109,15 @@ class ConnectIssuerListState extends State<ConnectIssuerList> {
                               var supportedCredentials =
                                   await connect(connectIssuerConfigList.elementAt(index).value.issuerURI);
                               var connectIssuerConfigValue = ConnectIssuerConfigValue(
-                                  issuerURI: "",
+                                  issuerURI: '',
                                   scopes: connectIssuerConfigList.elementAt(index).value.scopes,
                                   clientID: connectIssuerConfigList.elementAt(index).value.clientID,
                                   redirectURI: connectIssuerConfigList.elementAt(index).value.redirectURI,
                                   showIssuer: true,
-                                  description: "",
-                                  backgroundColor: "",
-                                  textColor: "",
-                                  logo: "");
+                                  description: '',
+                                  backgroundColor: '',
+                                  textColor: '',
+                                  logo: '');
                               _navigateToSupportedCredentialScreen(
                                   connectIssuerConfigList.elementAt(index).key,
                                   connectIssuerConfigList.elementAt(index).value.issuerURI,

@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 class WellKnownDidConfig {
   final bool isValid;
@@ -355,13 +354,7 @@ class CredentialDisplayData {
 
   @override
   String toString() {
-    return 'CredentialDisplayData{' +
-        ' issuerName: $issuerName,' +
-        ' overviewName: $overviewName,' +
-        ' logo: $logo,' +
-        ' backgroundColor: $backgroundColor,' +
-        ' textColor: $textColor,' +
-        '}';
+    return 'CredentialDisplayData{ issuerName: $issuerName, overviewName: $overviewName, logo: $logo, backgroundColor: $backgroundColor, textColor: $textColor,}';
   }
 
   CredentialDisplayData copyWith({
@@ -440,13 +433,7 @@ class CredentialDisplayClaim {
 
   @override
   String toString() {
-    return 'CredentialDisplayClaim{' +
-        ' rawValue: $rawValue,' +
-        ' valueType: $valueType,' +
-        ' label: $label,' +
-        ' value: $value,' +
-        ' order: $order,' +
-        '}';
+    return 'CredentialDisplayClaim{ rawValue: $rawValue, valueType: $valueType, label: $label, value: $value, order: $order,}';
   }
 
   CredentialDisplayClaim copyWith({
@@ -517,12 +504,7 @@ class VerifierDisplayData {
 
   @override
   String toString() {
-    return 'VerifierDisplayData{' +
-        ' name: $name,' +
-        ' did: $did,' +
-        ' purpose: $purpose,' +
-        ' logoURI: $logoURI,' +
-        '}';
+    return 'VerifierDisplayData{ name: $name, did: $did, purpose: $purpose, logoURI: $logoURI,}';
   }
 
   VerifierDisplayData copyWith({

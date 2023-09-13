@@ -9,6 +9,7 @@ class SuccessCard extends StatelessWidget {
 
   SuccessCard({required this.credentialData, this.verifierName, this.subTitle,  Key? key}) : super(key: key);
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: const Color(0xffF4F1F5),

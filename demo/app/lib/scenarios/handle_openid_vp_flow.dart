@@ -39,7 +39,7 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
         context,
         MaterialPageRoute(
             builder: (context) =>
-                CustomError(titleBar: "Processing Presentation", requestErrorTitleMsg: error.message!, requestErrorSubTitleMsg: error.details)));
+                CustomError(titleBar: 'Processing Presentation', requestErrorTitleMsg: error.message!, requestErrorSubTitleMsg: error.details)));
   }
   // Get the matched VCIDs from the submission request.
   var getSubmissionRequest = await walletSDKPlugin.getSubmissionRequirements(storedCredentials: credentials);
@@ -48,10 +48,10 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
     // multiple matched vc ids are found therefore, invoking multiple credential Presentation Preview.
     List<CredentialData> credentialDisplayDataList = [];
     for (var cred in credentials) {
-      log("multi cred flow $submission and ${credentials.length}");
+      log('multi cred flow $submission and ${credentials.length}');
       for (var inputDescriptor in submission.inputDescriptors) {
         Map<String, dynamic> payload = Jwt.parseJwt(cred);
-        if (inputDescriptor.matchedVCsID.contains(payload["jti"])) {
+        if (inputDescriptor.matchedVCsID.contains(payload['jti'])) {
           var credentialDisplayData = storedCredentials
               .where((element) => cred.contains(element.value.rawCredential))
               .map((e) => CredentialData(
@@ -65,12 +65,12 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
         }
       }
     }
-    navigateToPresentMultiCred(context, credentialDisplayDataList, "Choose ${submission.count} credentials to present");
+    navigateToPresentMultiCred(context, credentialDisplayDataList, 'Choose ${submission.count} credentials to present');
     return;
   } else if (submission.count == 1) {
     var matchedVCsID = submission.inputDescriptors.first.matchedVCsID;
     if (matchedVCsID.length > 1) {
-      log("matched length, more than matched vc ids are found ${matchedVCsID.length}");
+      log('matched length, more than matched vc ids are found ${matchedVCsID.length}');
       var credentialDisplayData = storedCredentials
           .where((element) => credentials.contains(element.value.rawCredential))
           .map((e) => CredentialData(
@@ -83,21 +83,21 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
       navigateToPresentMultiCredChooseOne(context, credentialDisplayData);
       return;
     } else {
-      log("single matched vc id flow");
-      var credentialDisplayData;
+      log('single matched vc id flow');
+      String credentialDisplayData;
       for (var inputDes in submission.inputDescriptors) {
         for (var matchVC in inputDes.matchedVCs) {
           var credID = (await walletSDKPlugin.getCredID([matchVC]))!;
           var issuerURI = storedCredentials
-              .where((element) => credID!.contains(element.value.credID))
+              .where((element) => credID.contains(element.value.credID))
               .map((e) => e.value.issuerURL)
               .toList();
           var credentialDID =
-              storedCredentials.firstWhere((element) => credID!.contains(element.value.credID)).value.credentialDID;
+              storedCredentials.firstWhere((element) => credID.contains(element.value.credID)).value.credentialDID;
 
-          log("matched issuerURI found: ${issuerURI}");
-          credentialDisplayData = await walletSDKPlugin.serializeDisplayData([matchVC], issuerURI.first);
-          log("credentialDisplayData -> $credentialDisplayData");
+          log('matched issuerURI found: $issuerURI');
+          credentialDisplayData = (await walletSDKPlugin.serializeDisplayData([matchVC], issuerURI.first))!;
+          log('credentialDisplayData -> $credentialDisplayData');
           navigateToPresentationPreviewScreen(
               context,
               CredentialData(

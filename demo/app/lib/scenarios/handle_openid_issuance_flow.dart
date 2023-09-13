@@ -18,23 +18,23 @@ import '../views/custom_error.dart';
 void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
   var WalletSDKPlugin = WalletSDK();
   var authCodeArgs;
-  if (qrCodeURL.contains("credential_offer_uri")) {
+  if (qrCodeURL.contains('credential_offer_uri')) {
     authCodeArgs = await parseCredentialOfferUri(qrCodeURL);
-    log("credential offer uri auth code  ${authCodeArgs}");
+    log('credential offer uri auth code  $authCodeArgs');
   } else {
-    if (qrCodeURL.contains("authorization_code")) {
+    if (qrCodeURL.contains('authorization_code')) {
       authCodeArgs = await readIssuerAuthFlowConfig(qrCodeURL);
-      log("auth code arguments fetched from config file $authCodeArgs");
+      log('auth code arguments fetched from config file $authCodeArgs');
       // While fetching auth code args based on issuer key from file, if no key-value pair is found then set the
       // arguments to default scope and redirect url.
       authCodeArgs ??= {
-        "scopes": ["openid", "profile"],
-        "redirectURI": "trustbloc-wallet://openid4vci/authcodeflow/callback"
+        'scopes': ['openid', 'profile'],
+        'redirectURI': 'trustbloc-wallet://openid4vci/authcodeflow/callback'
       };
     }
   }
-  log("qr code url -  $qrCodeURL");
-  var flowTypeData;
+  log('qr code url -  $qrCodeURL');
+  Map<Object?, Object?>? flowTypeData;
   try {
     flowTypeData = await WalletSDKPlugin.initialize(qrCodeURL, authCodeArgs);
   } catch (error) {
@@ -43,22 +43,22 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
         context,
         MaterialPageRoute(
             builder: (context) => CustomError(
-                 titleBar: "QR Code Scanned",
-                requestErrorTitleMsg: "error while intializing the interaction",
-                requestErrorSubTitleMsg: "${errString}")));
+                 titleBar: 'QR Code Scanned',
+                requestErrorTitleMsg: 'error while intializing the interaction',
+                requestErrorSubTitleMsg: errString)));
     return;
   }
   var flowTypeDataEncoded = json.encode(flowTypeData);
   Map<String, dynamic> responseJson = json.decode(flowTypeDataEncoded);
-  var authorizeResultPinRequired = responseJson["pinRequired"];
-  log("pin required flow -  $authorizeResultPinRequired");
+  var authorizeResultPinRequired = responseJson['pinRequired'];
+  log('pin required flow -  $authorizeResultPinRequired');
   if (authorizeResultPinRequired == true) {
     navigateToIssuancePreviewScreen(context, authorizeResultPinRequired);
     return;
-  } else if (responseJson["authorizationURLLink"] != '') {
+  } else if (responseJson['authorizationURLLink'] != '') {
     // initiate authCode Flow
     log("initiating authCode Flow- ${responseJson["authorizationURLLink"]}");
-    Uri uri = Uri.parse(responseJson["authorizationURLLink"]);
+    Uri uri = Uri.parse(responseJson['authorizationURLLink']);
     navigateToIssuancePreviewScreenAuthFlow(context, uri);
     return;
   } else {
@@ -70,10 +70,10 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
 readIssuerAuthFlowConfig(String qrCodeURL) async {
   var decodedUri = Uri.decodeComponent(qrCodeURL);
   final uri = Uri.parse(decodedUri);
-  var credentialIssuerKey = json.decode(uri.queryParameters["credential_offer"]!);
+  var credentialIssuerKey = json.decode(uri.queryParameters['credential_offer']!);
   final String response = await rootBundle.loadString('lib/assets/issuerAuthFlowConfig.json');
   final configData = await json.decode(response);
-  return configData[credentialIssuerKey["credential_issuer"]];
+  return configData[credentialIssuerKey['credential_issuer']];
 }
 
 parseCredentialOfferUri(String qrCodeURL) async {

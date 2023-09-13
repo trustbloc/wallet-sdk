@@ -65,13 +65,13 @@ class CredentialDetailsState extends State<CredentialDetails> {
   }
 
   getCredentialDID(){
-    return SelectableText(widget.credentialData.credentialDID!);
+    return SelectableText(widget.credentialData.credentialDID);
   }
 
   getDidDocument() async {
     final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
     final SharedPreferences pref = await prefs;
-    var userDIDDoc = pref.getString("userDIDDoc");
+    var userDIDDoc = pref.getString('userDIDDoc');
     final parsedJson = json.decode(userDIDDoc!);
     didDoc = const JsonEncoder.withIndent('  ').convert(parsedJson);
   }
@@ -105,7 +105,7 @@ class CredentialDetailsState extends State<CredentialDetails> {
                       child: SizedBox(
                         width: 50,
                         child: Text(
-                          "Details",
+                          'Details',
                           textAlign: TextAlign.start,
                         ),
                       ),
@@ -116,7 +116,7 @@ class CredentialDetailsState extends State<CredentialDetails> {
                       child: SizedBox(
                         width: 150,
                         child: Text(
-                          "Raw",
+                          'Raw',
                           textAlign: TextAlign.start,
                         ),
                       ),
@@ -126,18 +126,18 @@ class CredentialDetailsState extends State<CredentialDetails> {
                       child: SizedBox(
                       width: 60,
                       child: Text(
-                        "Activity",
+                        'Activity',
                         textAlign: TextAlign.start,
                         textScaleFactor:1.0,
                       ),
                     ),
                     ),
                    Visibility(
-                    visible: isSwitched!=null?isSwitched!:false,
+                    visible: isSwitched ?? false,
                      child: const Tab(  child: SizedBox(
                       width: 50,
                       child: Text(
-                        "DID",
+                        'DID',
                         textAlign: TextAlign.start,
                       ),
                      ),
@@ -194,16 +194,16 @@ class CredentialDetailsState extends State<CredentialDetails> {
                                       title: Text(
                                         resp.date,
                                         textAlign: TextAlign.start,
-                                        style: TextStyle(fontSize: 14.0),
+                                        style: const TextStyle(fontSize: 14.0),
                                       ),
                                       subtitle: resp.operation == 'oidc-issuance' ? Text(
-                                        "Issued by: ${resp.issuedBy}",
+                                        'Issued by: ${resp.issuedBy}',
                                         textAlign: TextAlign.start,
-                                        style: TextStyle(fontSize: 13.0, color: Colors.blue),
+                                        style: const TextStyle(fontSize: 13.0, color: Colors.blue),
                                       ) : Text(
-                                        "Presented to: ${resp.issuedBy!}",
+                                        'Presented to: ${resp.issuedBy}',
                                         textAlign: TextAlign.start,
-                                        style: TextStyle(fontSize: 13.0, color: Colors.purple),
+                                        style: const TextStyle(fontSize: 13.0, color: Colors.purple),
                                       ),
                                       leading: resp.status == 'success' ? IconButton(
                                         icon: const Icon(Icons.check_circle, size: 32, color: Color(0xff66BB6A)),
@@ -236,7 +236,7 @@ class CredentialDetailsState extends State<CredentialDetails> {
                                       const Padding(
                                           padding:EdgeInsets.all(8.0),
                                           child:  Text(
-                                            "DID",
+                                            'DID',
                                             style: TextStyle(
                                               fontSize: 16,
                                               color: Color(0xff190C21),
@@ -250,7 +250,7 @@ class CredentialDetailsState extends State<CredentialDetails> {
                                       const Padding(
                                           padding:EdgeInsets.all(8.0),
                                           child:  Text(
-                                            "DidDocument",
+                                            'DidDocument',
                                             style: TextStyle(
                                               fontSize: 16,
                                               color: Color(0xff190C21),
