@@ -51,7 +51,7 @@ class SupportedCredentialsListState extends State<SupportedCredentialsList> {
         children: <Widget>[
           const SizedBox(height: 20),
           const Text(
-            "Please select a credential type from below ",
+            'Please select a credential type from below ',
             style:
                 TextStyle(fontSize: 14, color: Color(0xff190C21), fontFamily: 'SF Pro', fontWeight: FontWeight.bold),
           ),
@@ -116,7 +116,7 @@ class SupportedCredentialsListState extends State<SupportedCredentialsList> {
                         navigateToAuthFlow(context, uri, widget.issuerURI);
                       },
                       child: const Text(
-                        "Request",
+                        'Request',
                         style: TextStyle(fontSize: 12, color: Color(0xff190C21)),
                       ),
                     ),
@@ -132,6 +132,6 @@ class SupportedCredentialsListState extends State<SupportedCredentialsList> {
 
   void navigateToAuthFlow(BuildContext context, Uri uri, String? issuerURI) async {
     Navigator.of(context)
-        .push(MaterialPageRoute(builder: (context) => HandleRedirectUri(uri, "wallet-initiated-flow", issuerURI)));
+        .push(MaterialPageRoute(builder: (context) => HandleRedirectUri(uri, 'wallet-initiated-flow', issuerURI)));
   }
 }

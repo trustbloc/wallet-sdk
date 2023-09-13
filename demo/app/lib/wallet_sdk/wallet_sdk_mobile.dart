@@ -67,7 +67,7 @@ class WalletSDK extends WalletPlatform {
         'redirectURI': redirectURI,
         'issuerURI': issuerURI
       });
-      log("authorizationURL Wallet-Initiated-Flow -> $authorizationURL");
+      log('authorizationURL Wallet-Initiated-Flow -> $authorizationURL');
       return authorizationURL;
     } on PlatformException catch (error) {
       debugPrint(error.toString());
@@ -122,7 +122,7 @@ class WalletSDK extends WalletPlatform {
       });
       return credentialStatusVerifier!;
     } on PlatformException catch (error) {
-      if (error.toString().contains("status verification failed: revoked")) {
+      if (error.toString().contains('status verification failed: revoked')) {
         return false;
       } else {
         debugPrint(error.toString());
@@ -165,7 +165,7 @@ class WalletSDK extends WalletPlatform {
 
   Future<Map<Object?, Object?>?> getVersionDetails() async {
     var versionDetailResp = await methodChannel.invokeMethod('getVersionDetails');
-    log("getVersionDetails in the app, $versionDetailResp");
+    log('getVersionDetails in the app, $versionDetailResp');
     return versionDetailResp;
   }
 

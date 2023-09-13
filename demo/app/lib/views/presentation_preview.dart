@@ -42,7 +42,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       final verifiedDisplayData = await WalletSDKPlugin.getVerifierDisplayData();
-      log("verifiedDisplayData ${verifiedDisplayData.logoURI}");
+      log('verifiedDisplayData ${verifiedDisplayData.logoURI}');
       var resp = await WalletSDKPlugin.wellKnownDidConfig(verifiedDisplayData.did);
       setState(() {
         verifierName = verifiedDisplayData.name;
@@ -72,7 +72,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
                 leading: verifierLogoURL == ''
                     ? const SizedBox.shrink()
                     : CachedNetworkImage(
-                        imageUrl: verifierLogoURL!,
+                        imageUrl: verifierLogoURL,
                         placeholder: (context, url) => const CircularProgressIndicator(),
                         errorWidget: (context, url, error) =>
                             Image.asset('lib/assets/images/credLogo.png', fit: BoxFit.contain),
@@ -81,11 +81,11 @@ class PresentationPreviewState extends State<PresentationPreview> {
                         fit: BoxFit.contain,
                       ),
                 title: Text(verifierName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                subtitle: Text(serviceURL != "" ? serviceURL : 'verifier.com',
+                subtitle: Text(serviceURL != '' ? serviceURL : 'verifier.com',
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
                 trailing: FittedBox(
                     child: verifiedDomain
-                        ? Row(children: [
+                        ? const Row(children: [
                             Text.rich(
                               textAlign: TextAlign.center,
                               TextSpan(
@@ -108,7 +108,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
                               ),
                             ),
                           ])
-                        : Row(
+                        : const Row(
                             children: [
                               Text.rich(
                                 textAlign: TextAlign.center,
@@ -163,15 +163,15 @@ class PresentationPreviewState extends State<PresentationPreview> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) => CustomError(
-                                          titleBar: "Presentation Preview",
-                                          requestErrorTitleMsg: "error while presenting credential",
-                                          requestErrorSubTitleMsg: "${errString}")));
+                                          titleBar: 'Presentation Preview',
+                                          requestErrorTitleMsg: 'error while presenting credential',
+                                          requestErrorSubTitleMsg: errString)));
                               return;
                             }
                             var activities = await WalletSDKPlugin.storeActivityLogger();
                             var credID = pref.getString('credID');
                             _storageService.addActivities(ActivityDataObj(credID!, activities));
-                            _navigateToCredentialShareSuccess(verifierName!);
+                            _navigateToCredentialShareSuccess(verifierName);
                           },
                           width: double.infinity,
                           child: const Text('Share Credential', style: TextStyle(fontSize: 16, color: Colors.white))),

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:developer';
 
 import 'package:app/wallet_sdk/wallet_sdk_model.dart';
@@ -39,7 +38,7 @@ class CredentialMetaDataCard extends StatefulWidget {
               (response) =>
           {
             setState(() {
-              log("status $response");
+              log('status $response');
               verifiedStatus = response;
             }
             )});
@@ -47,7 +46,7 @@ class CredentialMetaDataCard extends StatefulWidget {
     getIssuanceDate() {
       var claimsList = credentialClaimsData;
       for (var claims in claimsList) {
-        if (claims.label.contains("Issue Date")) {
+        if (claims.label.contains('Issue Date')) {
           var issueDate = claims.rawValue;
           return issueDate;
         }
@@ -60,7 +59,7 @@ class CredentialMetaDataCard extends StatefulWidget {
     getExpiryDate() {
       var claimsList = credentialClaimsData;
       for (var claims in claimsList) {
-        if (claims.label.contains("Expiry Date")) {
+        if (claims.label.contains('Expiry Date')) {
           var expiryDate = claims.rawValue;
           return expiryDate;
         }

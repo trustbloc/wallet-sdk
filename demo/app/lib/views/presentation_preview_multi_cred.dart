@@ -45,7 +45,7 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) async {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       final verifiedDisplayData = await WalletSDKPlugin.getVerifierDisplayData();
 
       var resp = await WalletSDKPlugin.wellKnownDidConfig(verifiedDisplayData.did);
@@ -78,7 +78,7 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                 leading: verifierLogoURL == ''
                     ? const SizedBox.shrink()
                     : CachedNetworkImage(
-                        imageUrl: verifierLogoURL!,
+                        imageUrl: verifierLogoURL,
                         placeholder: (context, url) => const CircularProgressIndicator(),
                         errorWidget: (context, url, error) =>
                             Image.asset('lib/assets/images/credLogo.png', fit: BoxFit.contain),
@@ -87,11 +87,11 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                         fit: BoxFit.contain,
                       ),
                 title: Text(verifierName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                subtitle: Text(serviceURL != "" ? serviceURL : 'verifier.com',
+                subtitle: Text(serviceURL != '' ? serviceURL : 'verifier.com',
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
                 trailing: FittedBox(
                     child: verifiedDomain
-                        ? Row(children: [
+                        ? const Row(children: [
                             Text.rich(
                               textAlign: TextAlign.center,
                               TextSpan(
@@ -114,7 +114,7 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                               ),
                             ),
                           ])
-                        : Row(
+                        : const Row(
                             children: [
                               Text.rich(
                                 textAlign: TextAlign.center,
@@ -168,17 +168,17 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                     value: selectedIndexes.contains(index),
                     onChanged: (value) {
                       setState(() {
-                        log("selected item ${selectedIndexes.contains(index)}");
+                        log('selected item ${selectedIndexes.contains(index)}');
                         if (selectedIndexes.contains(index)) {
                           selectedIndexes.remove(index);
                           multipleSelected.remove(checkListItems[index].rawCredential);
-                          log("multiple selected removing ${multipleSelected}");
+                          log('multiple selected removing $multipleSelected');
                           selectedCredentialData.removeAt(index);
                           setState(() => rememberMe = value!);
                         } else {
                           selectedIndexes.add(index);
                           multipleSelected.add(checkListItems[index].rawCredential);
-                          log("multiple selected adding ${multipleSelected}");
+                          log('multiple selected adding $multipleSelected');
                           selectedCredentialData.add(CredentialData(
                               rawCredential: checkListItems[index].rawCredential,
                               credentialDisplayData: checkListItems[index].credentialDisplayData,
@@ -200,7 +200,7 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                   ? Container(
                       decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(8.0)),
                       child: Padding(
-                          padding: EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(12),
                           child: SelectableText(
                             widget.infoData!,
                             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.8)),
@@ -217,25 +217,26 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                       ),
                       PrimaryButton(
                           onPressed: () async {
-                            if (rememberMe != true)
+                            if (rememberMe != true) {
                               setState(() => showErrorMessage = true);
-                            else
+                            } else {
                               setState(() => showErrorMessage = false);
+                            }
                             final SharedPreferences pref = await prefs;
                             try {
                               await WalletSDKPlugin.presentCredential(
                                   selectedCredentials: multipleSelected.cast<String>());
                             } catch (error) {
                               log(error.toString());
-                              if (!error.toString().contains("OVP1-0002")) {
+                              if (!error.toString().contains('OVP1-0002')) {
                                 var errString = error.toString().replaceAll(r'\', '');
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                         builder: (context) => CustomError(
-                                            titleBar: "Multi Presentation Preview",
-                                            requestErrorTitleMsg: "error while presenting credential",
-                                            requestErrorSubTitleMsg: "${errString}")));
+                                            titleBar: 'Multi Presentation Preview',
+                                            requestErrorTitleMsg: 'error while presenting credential',
+                                            requestErrorSubTitleMsg: errString)));
                                 return;
                               } else {
                                 await WalletSDKPlugin.presentCredential(

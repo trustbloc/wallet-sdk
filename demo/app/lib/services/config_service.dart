@@ -18,7 +18,7 @@ class ConfigService{
       connectIssuerConfigList.add(connectIssuerConfig);
     });
 
-    log("decodedResponse $configResponseDecoded");
+    log('decodedResponse $configResponseDecoded');
     return connectIssuerConfigList;
   }
 }

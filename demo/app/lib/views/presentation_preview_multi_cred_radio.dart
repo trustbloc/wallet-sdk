@@ -37,7 +37,7 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) async {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       final verifiedDisplayData = await WalletSDKPlugin.getVerifierDisplayData();
       var resp = await WalletSDKPlugin.wellKnownDidConfig(verifiedDisplayData.did);
       setState(() {
@@ -75,7 +75,7 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
                 leading: verifierLogoURL == ''
                     ? const SizedBox.shrink()
                     : CachedNetworkImage(
-                        imageUrl: verifierLogoURL!,
+                        imageUrl: verifierLogoURL,
                         placeholder: (context, url) => const CircularProgressIndicator(),
                         errorWidget: (context, url, error) =>
                             Image.asset('lib/assets/images/credLogo.png', fit: BoxFit.contain),
@@ -84,11 +84,11 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
                         fit: BoxFit.contain,
                       ),
                 title: Text(verifierName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                subtitle: Text(serviceURL != "" ? serviceURL : 'verifier.com',
+                subtitle: Text(serviceURL != '' ? serviceURL : 'verifier.com',
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
                 trailing: FittedBox(
                     child: verifiedDomain
-                        ?  Row(children: [
+                        ?  const Row(children: [
                             Text.rich(
                               textAlign: TextAlign.center,
                               TextSpan(
@@ -111,7 +111,7 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
                               ),
                             ),
                           ])
-                        :  Row(
+                        :  const Row(
                             children: [
                               Text.rich(
                                 textAlign: TextAlign.center,
@@ -148,7 +148,7 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
                   value: i,
                   groupValue: selectedRadio,
                   onChanged: (val) {
-                    print("Radio $val");
+                    print('Radio $val');
                     selectedCredentialData = widget.credentialData[i];
                     setSelectedRadio(val!);
                   },

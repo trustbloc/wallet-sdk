@@ -4,7 +4,6 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import 'dart:convert';
 import 'dart:developer';
 
 import 'package:app/main.dart';
@@ -34,9 +33,9 @@ class IssuancePreview extends StatefulWidget {
 }
 
 class IssuancePreviewState extends State<IssuancePreview> {
-  String issuerDisplayName = "";
-  String credentialIssuer = "";
-  String credentialDisplayName = "";
+  String issuerDisplayName = '';
+  String credentialIssuer = '';
+  String credentialDisplayName = '';
   String backgroundColor = '';
   String issuerDisplayURL = '';
   String textColor = '';
@@ -86,7 +85,7 @@ class IssuancePreviewState extends State<IssuancePreview> {
               child: Text(
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 18, color: Colors.black),
-                  "Add this credential ?"),
+                  'Add this credential ?'),
             ),
             const SizedBox(height: 30),
             CachedNetworkImage(
@@ -216,7 +215,7 @@ class IssuancePreviewState extends State<IssuancePreview> {
 
   void navigateToAuthFlow(BuildContext context, Uri uri) async {
     Navigator.of(context)
-        .push(MaterialPageRoute(builder: (context) => HandleRedirectUri(uri, "issuer-initiated-flow", "")));
+        .push(MaterialPageRoute(builder: (context) => HandleRedirectUri(uri, 'issuer-initiated-flow', '')));
   }
 
   void navigateToWithoutPinFlow(BuildContext context) async {
@@ -234,13 +233,13 @@ class IssuancePreviewState extends State<IssuancePreview> {
     var didType = pref.getString('didType');
     var keyType = pref.getString('keyType');
     // choosing default if no selection is made
-    didType = didType ?? "ion";
-    keyType = keyType ?? "ED25519";
+    didType = didType ?? 'ion';
+    keyType = keyType ?? 'ED25519';
 
     var didResolution = await WalletSDKPlugin.createDID(didType, keyType);
     var didID = didResolution.did;
     var didDoc = didResolution.didDoc;
-    log("created didID :$didID");
+    log('created didID :$didID');
 
     pref.setString('userDID', didID);
     pref.setString('userDIDDoc', didDoc);
@@ -253,7 +252,7 @@ class IssuancePreviewState extends State<IssuancePreview> {
 
     var credID = await WalletSDKPlugin.getCredID([credentials]);
 
-    log("activities and credID handle open id  -$activities and $credID");
+    log('activities and credID handle open id  -$activities and $credID');
     storageService.addActivities(ActivityDataObj(credID!, activities));
 
     return CredentialData(

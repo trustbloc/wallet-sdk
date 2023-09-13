@@ -32,8 +32,8 @@ class _CredentialListState extends State<CredentialList> {
   void initList() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final SharedPreferences p = prefs;
-    username = p.getString("userLoggedIn");
-    log("list - $username");
+    username = p.getString('userLoggedIn');
+    log('list - $username');
     _credentialList = await _storageService.retrieveCredentials(username!);
     if (_credentialList.isEmpty) {
       _loading = true;
@@ -63,7 +63,7 @@ class _CredentialListState extends State<CredentialList> {
               child: _loading
                   ? const CircularProgressIndicator()
                   : _credentialList.isEmpty
-                  ? const Text("No credentials found")
+                  ? const Text('No credentials found')
                   : ListView.builder(
                   itemCount: _credentialList.length,
                   padding: const EdgeInsets.symmetric(horizontal: 8),

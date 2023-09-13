@@ -8,7 +8,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'dart:developer';
-import 'dart:convert';
 import 'package:app/wallet_sdk/wallet_sdk_mobile.dart';
 import 'package:app/services/storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -55,9 +54,9 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
   Future<String?> _createDid() async {
     final SharedPreferences pref = await prefs;
     var didType = pref.getString('didType');
-    didType = didType ?? "ion";
+    didType = didType ?? 'ion';
     var keyType = pref.getString('keyType');
-    keyType = keyType ?? "ED25519";
+    keyType = keyType ?? 'ED25519';
     var didResolution = await WalletSDKPlugin.createDID(didType, keyType);
     var didID = didResolution.did;
     setState(() {
@@ -74,29 +73,29 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
     pref.setString('userDIDDoc', userDIDDoc);
     if (_redirectUri != null) {
       try {
-        if (widget.flowType == "issuer-initiated-flow") {
-          log("_redirectUri.toString() ${_redirectUri.toString()}");
+        if (widget.flowType == 'issuer-initiated-flow') {
+          log('_redirectUri.toString() ${_redirectUri.toString()}');
           var credentials = await WalletSDKPlugin.requestCredentialWithAuth(_redirectUri.toString());
           var issuerURI = await WalletSDKPlugin.issuerURI();
           var serializedDisplayData = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
-          log("serializedDisplayData -> $serializedDisplayData");
+          log('serializedDisplayData -> $serializedDisplayData');
           var activities = await WalletSDKPlugin.storeActivityLogger();
           var credID = await WalletSDKPlugin.getCredID([credentials]);
           await _storageService.addActivities(ActivityDataObj(credID!, activities));
-          pref.setString("credID", credID);
+          pref.setString('credID', credID);
           _navigateToCredPreviewScreen(credentials, issuerURI, serializedDisplayData!, userDIDId, credID);
         } else {
-          log("_redirectUri.toString() ${_redirectUri.toString()}");
+          log('_redirectUri.toString() ${_redirectUri.toString()}');
           var credentials = await WalletSDKPlugin.requestCredentialWithWalletInitiatedFlow(_redirectUri.toString());
           var issuerURI = widget.issuerURI;
           var serializedDisplayData = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
-          log("serializedDisplayData -> $serializedDisplayData");
+          log('serializedDisplayData -> $serializedDisplayData');
           // TODO: Issue-518 Add activity logger support for wallet-initiated-flow
-          _navigateToCredPreviewScreen(credentials, issuerURI, serializedDisplayData!, userDIDId, "");
+          _navigateToCredPreviewScreen(credentials, issuerURI, serializedDisplayData!, userDIDId, '');
         }
       } catch (error) {
-        log("error -> ${error.toString()}");
-        if (error.toString().contains("UKN2-000") || error.toString().contains("OCI1-0008")) {
+        log('error -> ${error.toString()}');
+        if (error.toString().contains('UKN2-000') || error.toString().contains('OCI1-0008')) {
           SizedBox(
             height: MediaQuery.of(context).size.height / 1.9,
             child: const Center(
@@ -108,8 +107,8 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
               context,
               MaterialPageRoute(
                   builder: (context) => CustomError(
-                      titleBar: "Redirect URI",
-                      requestErrorTitleMsg: "Redirect uri error", requestErrorSubTitleMsg: error.toString())));
+                      titleBar: 'Redirect URI',
+                      requestErrorTitleMsg: 'Redirect uri error', requestErrorSubTitleMsg: error.toString())));
         }
       }
     }
@@ -140,9 +139,9 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
 
   _handleIncomingLinks() async {
     if (!kIsWeb) {
-      _sub = await uriLinkStream.listen((Uri? uri) {
+      _sub = uriLinkStream.listen((Uri? uri) {
         if (!mounted) return;
-        log("received redirect uri $uri");
+        log('received redirect uri $uri');
         setState(() {
           _redirectUri = uri;
           _err = null;

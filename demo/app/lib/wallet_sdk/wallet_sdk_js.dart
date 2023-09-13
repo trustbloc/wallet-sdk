@@ -260,7 +260,7 @@ class WalletSDK extends WalletPlatform {
       final result =
           await promiseToFuture(jsCreateOpenID4CIInteraction(initiateIssuanceURI)) as CreateOpenID4CIInteractionResult;
 
-      return {"pinRequired": result.userPINRequired};
+      return {'pinRequired': result.userPINRequired};
     } on PlatformException catch (error) {
       debugPrint(error.toString());
       rethrow;
@@ -297,7 +297,7 @@ class WalletSDK extends WalletPlatform {
       await promiseToFuture(jsVerifyCredentialsStatus(credential));
       return true;
     } catch (error) {
-      if (error.toString().contains("status verification failed: revoked")) {
+      if (error.toString().contains('status verification failed: revoked')) {
         return false;
       } else {
         debugPrint(error.toString());
@@ -378,7 +378,7 @@ class WalletSDK extends WalletPlatform {
 
   Future<Map<Object?, Object?>?> getVersionDetails() async {
     var versionDetailResp = await methodChannel.invokeMethod('getVersionDetails');
-    log("getVersionDetails in the app, $versionDetailResp");
+    log('getVersionDetails in the app, $versionDetailResp');
     return versionDetailResp;
   }
 
@@ -426,7 +426,7 @@ class WalletSDK extends WalletPlatform {
       localizedIssuerDisplays: localizedIssuerDisplays,
     )];
 
-    debugPrint("Issuer Metadata: $issuerMetadata");
+    debugPrint('Issuer Metadata: $issuerMetadata');
 
     return issuerMetadata;
   }
@@ -452,7 +452,7 @@ class WalletSDK extends WalletPlatform {
     try {
       final issuerID =
           await methodChannel.invokeMethod<String>('getIssuerID', <String, dynamic>{'vcCredentials': credentials});
-      log("get issuerID - , $issuerID");
+      log('get issuerID - , $issuerID');
       return issuerID;
     } on PlatformException catch (error) {
       if (error.code == errorCode) {
