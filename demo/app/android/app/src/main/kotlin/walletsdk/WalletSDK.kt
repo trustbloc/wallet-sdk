@@ -42,25 +42,28 @@ class WalletSDK {
         return creatorDID.create(didMethodType, createDIDOpts)
     }
 
-    fun createOpenID4CIInteraction(requestURI: String) : OpenID4CI {
+    fun createOpenID4CIInteraction(requestURI: String): OpenID4CI {
         val didResolver = this.didResolver
-                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+            ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
         val crypto = this.crypto
-                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+            ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
         val activityLogger = this.activityLogger
-                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+            ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
+        val kms =
+            this.kms ?: throw java.lang.Exception("Local kms is not initialized, call initSDK()")
         return OpenID4CI(
-                requestURI,
-                crypto,
-                didResolver,
-                activityLogger
+            requestURI,
+            crypto,
+            didResolver,
+            activityLogger,
+            kms
         )
     }
 
-    fun createOpenID4CIWalletInitiatedInteraction(issuerURI: String) : WalletInitiatedOpenID4CI {
+    fun createOpenID4CIWalletInitiatedInteraction(issuerURI: String): WalletInitiatedOpenID4CI {
         val didResolver = this.didResolver
             ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
@@ -77,12 +80,12 @@ class WalletSDK {
 
     fun createOpenID4VPInteraction(): OpenID4VP {
         val crypto = this.crypto
-                ?: throw java.lang.Exception("crypto is not initialized, call initSDK()")
+            ?: throw java.lang.Exception("crypto is not initialized, call initSDK()")
         val didResolver = this.didResolver
-                ?: throw java.lang.Exception("did resolver is not initialized, call initSDK()")
+            ?: throw java.lang.Exception("did resolver is not initialized, call initSDK()")
 
         val activityLogger = this.activityLogger
-                ?: throw java.lang.Exception("activity logger is not initialized, call initSDK()")
+            ?: throw java.lang.Exception("activity logger is not initialized, call initSDK()")
 
         return OpenID4VP(crypto, didResolver, activityLogger)
     }

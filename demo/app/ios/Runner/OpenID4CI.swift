@@ -12,13 +12,15 @@ public class OpenID4CI {
     private var didResolver: ApiDIDResolverProtocol
     private var crypto: ApiCryptoProtocol
     private var activityLogger: ApiActivityLoggerProtocol
+    private var kms: LocalkmsKMS
     
     private var initiatedInteraction: Openid4ciIssuerInitiatedInteraction
     
-    init (requestURI: String, didResolver: ApiDIDResolverProtocol, crypto: ApiCryptoProtocol, activityLogger: ApiActivityLoggerProtocol) throws {
+    init (requestURI: String, didResolver: ApiDIDResolverProtocol, crypto: ApiCryptoProtocol, activityLogger: ApiActivityLoggerProtocol, kms: LocalkmsKMS) throws {
         self.didResolver = didResolver
         self.crypto = crypto
         self.activityLogger = activityLogger
+        self.kms = kms
 
         let trace = OtelNewTrace(nil)
         
@@ -27,6 +29,7 @@ public class OpenID4CI {
         let opts = Openid4ciNewInteractionOpts()
         opts!.setActivityLogger(activityLogger)
         opts!.add(trace!.traceHeader())
+        opts!.enableDIProofChecks(kms)
         
         
         var error: NSError?
