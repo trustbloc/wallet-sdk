@@ -3,6 +3,7 @@ package walletsdk.openid4ci
 import android.annotation.SuppressLint
 import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.display.*
+import dev.trustbloc.wallet.sdk.localkms.KMS
 import dev.trustbloc.wallet.sdk.openid4ci.*
 import dev.trustbloc.wallet.sdk.otel.Otel
 import dev.trustbloc.wallet.sdk.stderr.MetricsLogger
@@ -14,6 +15,7 @@ class OpenID4CI constructor(
     private val crypto: Crypto,
     private val didResolver: DIDResolver,
     private val activityLogger: ActivityLogger,
+    private val kms: KMS,
 ) {
     private var newInteraction: IssuerInitiatedInteraction
 
@@ -26,6 +28,7 @@ class OpenID4CI constructor(
         opts.addHeader(trace.traceHeader())
         opts.setActivityLogger(activityLogger)
         opts.setMetricsLogger(MetricsLogger())
+        opts.enableDIProofChecks(kms)
 
         newInteraction = IssuerInitiatedInteraction(args, opts)
     }

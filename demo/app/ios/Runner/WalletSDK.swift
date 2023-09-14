@@ -48,10 +48,14 @@ class WalletSDK {
             throw WalletSDKError.runtimeError("SDK is not initialized, call initSDK()")
         }
         
+        guard let localKMS = self.kms else {
+            throw WalletSDKError.runtimeError("Local kms is not initialized, call initSDK()")
+        }
+        
         activityLogger = MemNewActivityLogger()
         
         
-        return try OpenID4CI(requestURI: requestURI, didResolver: didResolver, crypto: crypto, activityLogger: activityLogger! )
+        return try OpenID4CI(requestURI: requestURI, didResolver: didResolver, crypto: crypto, activityLogger: activityLogger!, kms: localKMS )
     }
     
     func createOpenID4CIWalletInitiatedInteraction(issuerURI: String) throws -> WalletInitiatedOpenID4CI {
