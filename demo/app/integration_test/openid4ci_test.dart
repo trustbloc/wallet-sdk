@@ -33,7 +33,7 @@ void main() async {
       print('wallet DID Type : $didMethodType');
       print('wallet DID Key Type : $didKeyType');
       var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[i], didKeyType);
-      final didContent= didDocData.did;
+      final didContent = didDocData.did;
       print('wallet DID : $didContent');
 
       String issuanceURL = issuanceURLsList[i];
@@ -57,12 +57,11 @@ void main() async {
       String verificationURL = verificationURLsList[i];
       print('verificationURL : $verificationURL');
 
-      await walletSDKPlugin
-          .processAuthorizationRequest(authorizationRequest: verificationURL);
+      await walletSDKPlugin.processAuthorizationRequest(authorizationRequest: verificationURL);
 
       print('getSubmissionRequirements');
 
-      final requirements = await walletSDKPlugin.getSubmissionRequirements( storedCredentials: [credential]);
+      final requirements = await walletSDKPlugin.getSubmissionRequirements(storedCredentials: [credential]);
 
       print('getSubmissionRequirements finished');
 
@@ -81,7 +80,7 @@ void main() async {
     print('wallet DID type : $didMethodType');
     print('wallet DID Key type : $didKeyType');
     var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[0], didKeyType);
-    var didContent= didDocData.did;
+    var didContent = didDocData.did;
     print('wallet DID : $didContent');
 
     const issuanceURLs = String.fromEnvironment('INITIATE_ISSUANCE_URLS_MULTIPLE_CREDS');
@@ -113,8 +112,8 @@ void main() async {
     String verificationURL = verificationURLsList[0];
     print('verificationURL : $verificationURL');
 
-    final matchedCreds = await walletSDKPlugin
-        .processAuthorizationRequest(authorizationRequest: verificationURL, storedCredentials: credentials);
+    final matchedCreds = await walletSDKPlugin.processAuthorizationRequest(
+        authorizationRequest: verificationURL, storedCredentials: credentials);
 
     print('matchedCreds : $matchedCreds');
 
@@ -135,22 +134,22 @@ void main() async {
     print('wallet DID Key type : $didKeyType');
     var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[0], didKeyType);
     print('wallet didDocData : $didDocData');
-    var didContent= didDocData.did;
+    var didContent = didDocData.did;
     print('wallet DID : $didContent');
 
     const issuanceURL = String.fromEnvironment('INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW');
     debugPrint('issuanceURLs: $issuanceURL');
 
-      var authCodeArgs =   {
-        'scopes': ['openid','profile'],
-        'clientID': 'oidc4vc_client',
-        'redirectURI': 'http://127.0.0.1/callback'
-      };
+    var authCodeArgs = {
+      'scopes': ['openid', 'profile'],
+      'clientID': 'oidc4vc_client',
+      'redirectURI': 'http://127.0.0.1/callback'
+    };
 
-      var initializeResp = await walletSDKPlugin.initialize(issuanceURL, authCodeArgs);
-      var initializeRespEncoded = json.encode(initializeResp!);
-      Map<String, dynamic> initializeRespJson = json.decode(initializeRespEncoded);
-      var authorizationURLLink= initializeRespJson['authorizationURLLink'];
+    var initializeResp = await walletSDKPlugin.initialize(issuanceURL, authCodeArgs);
+    var initializeRespEncoded = json.encode(initializeResp!);
+    Map<String, dynamic> initializeRespJson = json.decode(initializeRespEncoded);
+    var authorizationURLLink = initializeRespJson['authorizationURLLink'];
     debugPrint('authorizationURLLink: $authorizationURLLink');
     // fetching redirect uri
     String redirectURI = '';
@@ -164,12 +163,11 @@ void main() async {
       final location = response.headers.value(HttpHeaders.locationHeader);
       if (location != null) {
         redirectUrl = redirectUrl.resolve(location);
-        if (location.contains('http://127.0.0.1/callback'))
-        {
+        if (location.contains('http://127.0.0.1/callback')) {
           redirectURI = location;
           break;
         }
-        if (redirectUrl.host.contains('cognito-mock.trustbloc.local')){
+        if (redirectUrl.host.contains('cognito-mock.trustbloc.local')) {
           redirectUrl = Uri.parse(redirectUrl.toString().replaceAll('cognito-mock.trustbloc.local', 'localhost'));
           print('uri updated $redirectUrl');
         }
@@ -181,13 +179,13 @@ void main() async {
 
     debugPrint('redirectURI $redirectURI');
 
-      final credential = await walletSDKPlugin.requestCredentialWithAuth(redirectURI);
-      debugPrint('content: $credential');
-      for (final p in credential.split('.')) {
-        print('----');
-        print(p);
-      }
+    final credential = await walletSDKPlugin.requestCredentialWithAuth(redirectURI);
+    debugPrint('content: $credential');
+    for (final p in credential.split('.')) {
+      print('----');
+      print(p);
+    }
 
-      expect(credential, hasLength(greaterThan(0)));
+    expect(credential, hasLength(greaterThan(0)));
   });
 }

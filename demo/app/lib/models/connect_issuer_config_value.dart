@@ -10,17 +10,15 @@ class ConnectIssuerConfigValue {
   final String textColor;
 
   ConnectIssuerConfigValue(
-      {
-        required this.issuerURI,
-        required this.scopes,
-        required this.clientID,
-        required this.redirectURI,
-        required this.showIssuer,
-        required this.description,
-        required this.logo,
-        required this.backgroundColor,
-        required this.textColor
-      });
+      {required this.issuerURI,
+      required this.scopes,
+      required this.clientID,
+      required this.redirectURI,
+      required this.showIssuer,
+      required this.description,
+      required this.logo,
+      required this.backgroundColor,
+      required this.textColor});
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
@@ -46,7 +44,6 @@ class ConnectIssuerConfigValue {
         description: json['description'],
         logo: json['logo'],
         backgroundColor: json['backgroundColor'],
-        textColor: json['textColor']
-    );
+        textColor: json['textColor']);
   }
 }

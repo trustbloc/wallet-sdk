@@ -23,7 +23,7 @@ class WalletSDK extends WalletPlatform {
   }
 
   Future<CreateDID> createDID(String didMethodType, String didKeyType) async {
-    final createDIDResp= await methodChannel.invokeMethod<Map<Object?, Object?>?>(
+    final createDIDResp = await methodChannel.invokeMethod<Map<Object?, Object?>?>(
         'createDID', <String, dynamic>{'didMethodType': didMethodType, 'didKeyType': didKeyType});
     return CreateDID.fromJson(jsonDecode(json.encode(createDIDResp)));
   }

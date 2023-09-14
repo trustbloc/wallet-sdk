@@ -1,5 +1,3 @@
-
-
 import 'dart:convert';
 import 'dart:developer';
 
@@ -7,7 +5,7 @@ import 'package:app/models/connect_issuer_config.dart';
 import 'package:app/models/connect_issuer_config_value.dart';
 import 'package:flutter/services.dart';
 
-class ConfigService{
+class ConfigService {
   Future<List<ConnectIssuerConfig>> readConnectIssuerConfig() async {
     List<ConnectIssuerConfig> connectIssuerConfigList = List.empty(growable: true);
     final String configResponse = await rootBundle.loadString('lib/assets/walletInitiatedIssuerConfig.json');

@@ -91,8 +91,7 @@ class IssuancePreviewState extends State<IssuancePreview> {
             CachedNetworkImage(
               imageUrl: issuerLogoURL,
               placeholder: (context, url) => const CircularProgressIndicator(),
-              errorWidget: (context, url, error) =>
-                  Image.asset('lib/assets/images/logoIcon.png', fit: BoxFit.cover),
+              errorWidget: (context, url, error) => Image.asset('lib/assets/images/logoIcon.png', fit: BoxFit.cover),
               width: 60,
               height: 80,
               fit: BoxFit.cover,
@@ -139,14 +138,14 @@ class IssuancePreviewState extends State<IssuancePreview> {
                     textAlign: TextAlign.start,
                   ),
                   leading: CachedNetworkImage(
-                          imageUrl: logoURL,
-                          placeholder: (context, url) => const CircularProgressIndicator(),
-                          errorWidget: (context, url, error) =>
-                              Image.asset('lib/assets/images/genericCredential.png', fit: BoxFit.contain),
-                          width: 60,
-                          height: 60,
-                          fit: BoxFit.contain,
-                        ),
+                    imageUrl: logoURL,
+                    placeholder: (context, url) => const CircularProgressIndicator(),
+                    errorWidget: (context, url, error) =>
+                        Image.asset('lib/assets/images/genericCredential.png', fit: BoxFit.contain),
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.contain,
+                  ),
                 )),
             Expanded(
               child: Align(

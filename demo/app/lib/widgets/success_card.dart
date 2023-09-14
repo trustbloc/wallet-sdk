@@ -5,9 +5,9 @@ import 'package:app/widgets/credential_card.dart';
 class SuccessCard extends StatelessWidget {
   String? verifierName;
   String? subTitle;
-  List<CredentialData>  credentialData;
+  List<CredentialData> credentialData;
 
-  SuccessCard({required this.credentialData, this.verifierName, this.subTitle,  Key? key}) : super(key: key);
+  SuccessCard({required this.credentialData, this.verifierName, this.subTitle, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,7 @@ class SuccessCard extends StatelessWidget {
         backgroundColor: const Color(0xffF4F1F5),
         body: Center(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(24,24, 24, 0),
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
             children: [
               ListTile(
                 horizontalTitleGap: 0.5,
@@ -26,17 +26,19 @@ class SuccessCard extends StatelessWidget {
                 leading: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Image.asset('lib/assets/images/success.png')
-                  ],
+                  children: [Image.asset('lib/assets/images/success.png')],
                 ),
                 title: const Text('Success', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                subtitle: Text(subTitle! + verifierName!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+                subtitle: Text(subTitle! + verifierName!,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
               ),
-              CredentialCard(credentialData: credentialData[0], isDashboardWidget: false, isDetailArrowRequired: false,),
+              CredentialCard(
+                credentialData: credentialData[0],
+                isDashboardWidget: false,
+                isDetailArrowRequired: false,
+              ),
             ],
           ),
         ));
   }
 }
-

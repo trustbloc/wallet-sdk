@@ -10,7 +10,6 @@ import 'package:app/widgets/common_logo_appbar.dart';
 class CredentialList extends StatefulWidget {
   const CredentialList({super.key});
 
-
   @override
   State<CredentialList> createState() => _CredentialListState();
 }
@@ -63,21 +62,22 @@ class _CredentialListState extends State<CredentialList> {
               child: _loading
                   ? const CircularProgressIndicator()
                   : _credentialList.isEmpty
-                  ? const Text('No credentials found')
-                  : ListView.builder(
-                  itemCount: _credentialList.length,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  itemBuilder: (_, index) {
-                    return CredentialCard(credentialData: _credentialList[index].value,
-                      isDashboardWidget: true,
-                      delete: () async {
-                        await _storageService
-                            .deleteData(_credentialList[index])
-                            .then((value) => _credentialList.removeAt(index));
-                        setState(() {});
-                      },
-                      isDetailArrowRequired: false);
-                  }),
+                      ? const Text('No credentials found')
+                      : ListView.builder(
+                          itemCount: _credentialList.length,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          itemBuilder: (_, index) {
+                            return CredentialCard(
+                                credentialData: _credentialList[index].value,
+                                isDashboardWidget: true,
+                                delete: () async {
+                                  await _storageService
+                                      .deleteData(_credentialList[index])
+                                      .then((value) => _credentialList.removeAt(index));
+                                  setState(() {});
+                                },
+                                isDetailArrowRequired: false);
+                          }),
             ),
           ],
         ),

@@ -16,10 +16,8 @@ class PrimaryButton extends StatelessWidget {
     this.width,
     this.height = 44.0,
     this.gradient = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Color(0xff8631A0), Color(0xff360B4C)]),
-        padding = const EdgeInsets.all(16),
+        begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xff8631A0), Color(0xff360B4C)]),
+    padding = const EdgeInsets.all(16),
   }) : super(key: key);
 
   @override

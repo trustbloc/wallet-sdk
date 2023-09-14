@@ -31,29 +31,22 @@ class CredentialPreviewState extends State<CredentialPreview> {
   @override
   void initState() {
     super.initState();
-    WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then(
-            (response) {
-              setState(() {
-                issuerDisplayData = response.first.issuerName;
-              });
-        });
+    WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then((response) {
+      setState(() {
+        issuerDisplayData = response.first.issuerName;
+      });
+    });
 
-    WalletSDKPlugin.getIssuerID([widget.credentialData.rawCredential]).then(
-            (response) {
-          setState(() {
-            issuerID = response!;
-          });
-        }).whenComplete(() =>
-        WalletSDKPlugin.wellKnownDidConfig(issuerID!).then(
-                (response) =>
-                setState(() {
-                  verifiedDomain = response.isValid;
-                  serviceURL = response.serviceURL;
-                }
-                ))
-    );
+    WalletSDKPlugin.getIssuerID([widget.credentialData.rawCredential]).then((response) {
+      setState(() {
+        issuerID = response!;
+      });
+    }).whenComplete(() => WalletSDKPlugin.wellKnownDidConfig(issuerID!).then((response) => setState(() {
+          verifiedDomain = response.isValid;
+          serviceURL = response.serviceURL;
+        })));
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      UserLoginDetails userLoginDetails =  await getUser();
+      UserLoginDetails userLoginDetails = await getUser();
       userLoggedIn = userLoginDetails.username!;
     });
   }
@@ -61,119 +54,138 @@ class CredentialPreviewState extends State<CredentialPreview> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:  const CustomTitleAppBar(pageTitle: 'Credential Preview', addCloseIcon: true, height: 60,),
+      appBar: const CustomTitleAppBar(
+        pageTitle: 'Credential Preview',
+        addCloseIcon: true,
+        height: 60,
+      ),
       body: Container(
         padding: const EdgeInsets.fromLTRB(24, 40, 16, 24),
         child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          const SizedBox(height: 50),
-          SizedBox(
-            height: 30,
-            child:  Text(
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 24, color: Color(0xff190C21), fontWeight: FontWeight.bold),
-                issuerDisplayData),
-          ),
-          ListTile(
-            title: verifiedDomain ? const Text.rich(
-              textAlign: TextAlign.center,
-              TextSpan(
-                children: [
-                  WidgetSpan(child: Icon(Icons.verified_user_outlined,color: Colors.lightGreen, size: 18,)),
-                  TextSpan(
-                    text: 'Verified',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.lightGreen,
-                    ),
-                  ),
-                ],
-              ),
-            ) : const Text.rich(
-              textAlign: TextAlign.center,
-              TextSpan(
-                children: [
-                  WidgetSpan(child: Icon(Icons.dangerous_outlined, color: Colors.redAccent, size: 18,)),
-                  TextSpan(
-                    text: 'Unverified',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.redAccent,
-                    ),
-                  ),
-                ],
-              ),
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            const SizedBox(height: 50),
+            SizedBox(
+              height: 30,
+              child: Text(
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 24, color: Color(0xff190C21), fontWeight: FontWeight.bold),
+                  issuerDisplayData),
             ),
-            subtitle: Text(serviceURL, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12,fontWeight: FontWeight.normal)),
-
-          ),
-          const SizedBox(height: 20),
-          const SizedBox(
-            child:  Text(
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, color: Colors.black),
-                'wants to issue the credential'),
-          ),
-          CredentialCard(credentialData: widget.credentialData, isDashboardWidget: false, isDetailArrowRequired: false),
-          Expanded(
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                height: 150,
-                padding: const EdgeInsets.all(16),
-                alignment: Alignment.topCenter,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xffDBD7DC),
-                    width: 0.5,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(24, 0, 24, 0),
+            ListTile(
+              title: verifiedDomain
+                  ? const Text.rich(
+                      textAlign: TextAlign.center,
+                      TextSpan(
+                        children: [
+                          WidgetSpan(
+                              child: Icon(
+                            Icons.verified_user_outlined,
+                            color: Colors.lightGreen,
+                            size: 18,
+                          )),
+                          TextSpan(
+                            text: 'Verified',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.lightGreen,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : const Text.rich(
+                      textAlign: TextAlign.center,
+                      TextSpan(
+                        children: [
+                          WidgetSpan(
+                              child: Icon(
+                            Icons.dangerous_outlined,
+                            color: Colors.redAccent,
+                            size: 18,
+                          )),
+                          TextSpan(
+                            text: 'Unverified',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.redAccent,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    PrimaryButton(
-                        onPressed: () async {
-                            _storageService.addCredential(CredentialDataObject('$userLoggedIn-${uuid.v1()}', widget.credentialData));
+              subtitle: Text(serviceURL,
+                  textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+            ),
+            const SizedBox(height: 20),
+            const SizedBox(
+              child: Text(
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, color: Colors.black),
+                  'wants to issue the credential'),
+            ),
+            CredentialCard(
+                credentialData: widget.credentialData, isDashboardWidget: false, isDetailArrowRequired: false),
+            Expanded(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  height: 150,
+                  padding: const EdgeInsets.all(16),
+                  alignment: Alignment.topCenter,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xffDBD7DC),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(24, 0, 24, 0),
+                      ),
+                      PrimaryButton(
+                          onPressed: () async {
+                            _storageService.addCredential(
+                                CredentialDataObject('$userLoggedIn-${uuid.v1()}', widget.credentialData));
                             _navigateToCredentialAdded();
+                          },
+                          width: double.infinity,
+                          child: const Text('Save Credential', style: TextStyle(fontSize: 16, color: Colors.white))),
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(24, 0, 24, 8),
+                      ),
+                      PrimaryButton(
+                        onPressed: () {
+                          _navigateToDashboard();
                         },
                         width: double.infinity,
-                        child: const Text('Save Credential', style: TextStyle(fontSize: 16, color: Colors.white))
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(24, 0, 24, 8),
-                    ),
-                    PrimaryButton(
-                      onPressed: (){
-                        _navigateToDashboard();
-                      },
-                      width: double.infinity,
-                      gradient: const LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Color(0xffFFFFFF), Color(0xffFFFFFF)]),
-                      child: const Text('Cancel', style: TextStyle(fontSize: 16, color: Color(0xff6C6D7C))),
-                    ),
-                  ],
-                ),
-              ), //last one
+                        gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color(0xffFFFFFF), Color(0xffFFFFFF)]),
+                        child: const Text('Cancel', style: TextStyle(fontSize: 16, color: Color(0xff6C6D7C))),
+                      ),
+                    ],
+                  ),
+                ), //last one
+              ),
             ),
-          ),
-        ],
+          ],
         ),
       ),
     );
   }
 
   _navigateToCredentialAdded() async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialAdded(credentialData: widget.credentialData)));
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => CredentialAdded(credentialData: widget.credentialData)));
   }
+
   _navigateToDashboard() async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }

@@ -20,8 +20,7 @@ void handleOpenIDUrl(BuildContext context, String qrCodeURL) async {
   }
 }
 
-
-List<String> handleSubmissionRequirement(List<SubmissionRequirement> submissionRequirement){
-     var submission =  submissionRequirement.first;
-     return submission.inputDescriptors.first.matchedVCsID;
+List<String> handleSubmissionRequirement(List<SubmissionRequirement> submissionRequirement) {
+  var submission = submissionRequirement.first;
+  return submission.inputDescriptors.first.matchedVCsID;
 }

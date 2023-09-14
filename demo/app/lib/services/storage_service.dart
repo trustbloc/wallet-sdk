@@ -15,7 +15,6 @@ class StorageService {
         encryptedSharedPreferences: true,
       );
 
-
   Future<void> addCredential(CredentialDataObject newItem) async {
     debugPrint('Adding new data having key ${newItem.key}');
     await _secureStorage.write(
@@ -41,10 +40,7 @@ class StorageService {
   Future<List> retrieveActivities(String credID) async {
     debugPrint('Retrieve stored activities $credID');
     var allData = await _secureStorage.readAll(aOptions: _getAndroidOptions());
-    List list = allData.entries
-        .where((e) => e.key.contains(credID))
-        .map((e) => jsonDecode(e.value))
-        .toList();
+    List list = allData.entries.where((e) => e.key.contains(credID)).map((e) => jsonDecode(e.value)).toList();
     return list.first;
   }
 

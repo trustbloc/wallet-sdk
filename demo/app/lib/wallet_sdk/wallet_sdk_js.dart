@@ -49,7 +49,6 @@ extension JSResolvedDisplayDataExt on JSResolvedDisplayData {
 
 @JS()
 @staticInterop
-
 class JSVerifierDisplayData {}
 
 extension JSVerifierDisplayDataExt on JSVerifierDisplayData {
@@ -61,7 +60,6 @@ extension JSVerifierDisplayDataExt on JSVerifierDisplayData {
 
 @JS()
 @staticInterop
-
 class JSWellKnownDIDConfig {}
 
 extension JSWellKnownDIDConfigExt on JSWellKnownDIDConfig {
@@ -139,7 +137,6 @@ extension JSInputDescriptorExt on JSInputDescriptor {
 class JSSupportedCredentials {}
 
 extension JSSupportedCredentialsExt on JSSupportedCredentials {
-
   external String get format;
 
   external List<dynamic> get types;
@@ -357,8 +354,7 @@ class WalletSDK extends WalletPlatform {
     final matchedVCsIds = await Future.wait<String>(jsMatchedVCs.map((vc) => promiseToFuture(jsGetCredentialID(vc))));
 
     return InputDescriptor(
-        name: d.name, purpose: d.purpose, id: d.id, matchedVCs: matchedVCs, matchedVCsID: matchedVCsIds
-    );
+        name: d.name, purpose: d.purpose, id: d.id, matchedVCs: matchedVCs, matchedVCsID: matchedVCsIds);
   }
 
   Future<SubmissionRequirement> mapSubmissionRequirement(JSSubmissionRequirement jsReq) async {
@@ -394,37 +390,38 @@ class WalletSDK extends WalletPlatform {
     final supportedCredentials = data.supportedCredentials
         .map((e) => e as JSSupportedCredentials)
         .map((supportedCredential) => SupportedCredentials(
-            format: supportedCredential.format,
-            types: supportedCredential.types.map((e) => e as String).toList(),
-            display: supportedCredential.display
-                .map((e) => e as JSSupportedCredentialDisplayData)
-                .map((supportedCredentialDisplayData) => SupportedCredentialDisplayData(
-                  name: supportedCredentialDisplayData.name,
-                  locale: supportedCredentialDisplayData.locale,
-                  logo: supportedCredentialDisplayData.logo?.url,
-                  textColor: supportedCredentialDisplayData.text_color,
-                  backgroundColor: supportedCredentialDisplayData.background_color
-                  )
-          ).toList(),
-        )).toList();
-
+              format: supportedCredential.format,
+              types: supportedCredential.types.map((e) => e as String).toList(),
+              display: supportedCredential.display
+                  .map((e) => e as JSSupportedCredentialDisplayData)
+                  .map((supportedCredentialDisplayData) => SupportedCredentialDisplayData(
+                      name: supportedCredentialDisplayData.name,
+                      locale: supportedCredentialDisplayData.locale,
+                      logo: supportedCredentialDisplayData.logo?.url,
+                      textColor: supportedCredentialDisplayData.text_color,
+                      backgroundColor: supportedCredentialDisplayData.background_color))
+                  .toList(),
+            ))
+        .toList();
 
     final localizedIssuerDisplays = data.localizedIssuerDisplays
         .map((e) => e as JSIssuerDisplayData)
         .map((localizedIssuerDisplay) => IssuerDisplayData(
-          name: localizedIssuerDisplay.name,
-          locale: localizedIssuerDisplay.locale,
-          url: localizedIssuerDisplay.url,
-          logo: localizedIssuerDisplay.logo?.url,
-          textColor: localizedIssuerDisplay.text_color,
-          backgroundColor: localizedIssuerDisplay.background_color
-    )).toList();
+            name: localizedIssuerDisplay.name,
+            locale: localizedIssuerDisplay.locale,
+            url: localizedIssuerDisplay.url,
+            logo: localizedIssuerDisplay.logo?.url,
+            textColor: localizedIssuerDisplay.text_color,
+            backgroundColor: localizedIssuerDisplay.background_color))
+        .toList();
 
-    final List<IssuerMetaData> issuerMetadata = [IssuerMetaData(
-      credentialIssuer: data.credentialIssuer,
-      supportedCredentials: supportedCredentials,
-      localizedIssuerDisplays: localizedIssuerDisplays,
-    )];
+    final List<IssuerMetaData> issuerMetadata = [
+      IssuerMetaData(
+        credentialIssuer: data.credentialIssuer,
+        supportedCredentials: supportedCredentials,
+        localizedIssuerDisplays: localizedIssuerDisplays,
+      )
+    ];
 
     debugPrint('Issuer Metadata: $issuerMetadata');
 

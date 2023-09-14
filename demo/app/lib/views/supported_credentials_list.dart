@@ -52,8 +52,7 @@ class SupportedCredentialsListState extends State<SupportedCredentialsList> {
           const SizedBox(height: 20),
           const Text(
             'Please select a credential type from below ',
-            style:
-                TextStyle(fontSize: 14, color: Color(0xff190C21), fontFamily: 'SF Pro', fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 14, color: Color(0xff190C21), fontFamily: 'SF Pro', fontWeight: FontWeight.bold),
           ),
           Expanded(
             child: ListView.builder(
@@ -96,10 +95,11 @@ class SupportedCredentialsListState extends State<SupportedCredentialsList> {
                           ),
                     trailing: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: (widget.supportedCredentialList.elementAt(index).display.first.textColor != null)
-                            ? Color(int.parse(convertToFlutterColor(
-                              widget.supportedCredentialList.elementAt(index).display.first.textColor!)))
-                            : Colors.white,
+                        backgroundColor:
+                            (widget.supportedCredentialList.elementAt(index).display.first.textColor != null)
+                                ? Color(int.parse(convertToFlutterColor(
+                                    widget.supportedCredentialList.elementAt(index).display.first.textColor!)))
+                                : Colors.white,
                         shadowColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8), side: const BorderSide(color: Color(0xffC7C3C8))),

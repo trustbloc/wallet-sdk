@@ -4,7 +4,6 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-
 import 'package:app/scenarios/handle_openid_url.dart';
 import 'package:app/widgets/common_logo_appbar.dart';
 import 'package:app/widgets/primary_input_field.dart';
@@ -98,8 +97,8 @@ class _MainWidgetState extends State<MainWidget> {
             width: double.infinity,
             onPressed: () async {
               final SharedPreferences pref = await prefs;
-                pref.setString('userLoggedIn', _usernameController.text);
-                _loginCompleted();
+              pref.setString('userLoggedIn', _usernameController.text);
+              _loginCompleted();
             },
             child: const Text('Sign In ', style: TextStyle(fontSize: 16, color: Colors.white)),
           ),
