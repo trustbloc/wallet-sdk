@@ -21,7 +21,6 @@ class Settings extends StatefulWidget {
 
   @override
   SettingsState createState() => SettingsState();
-
 }
 
 class SettingsState extends State<Settings> {
@@ -68,15 +67,13 @@ class SettingsState extends State<Settings> {
           backgroundColor: const Color(0xffEEEAEE),
           flexibleSpace: Container(
             decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    stops: [0.0, 1.0],
-                    colors: <Color>[
-                      Color(0xff261131),
-                      Color(0xff100716),
-                    ])
-            ),
+                gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, stops: [
+              0.0,
+              1.0
+            ], colors: <Color>[
+              Color(0xff261131),
+              Color(0xff100716),
+            ])),
           ),
         ),
         body: Container(
@@ -93,22 +90,24 @@ class SettingsState extends State<Settings> {
                       fillColor: Color(0xff8D8A8E),
                       border: UnderlineInputBorder(),
                       labelText: 'Username',
-                      labelStyle: TextStyle(color: Color(0xff190C21),
+                      labelStyle: TextStyle(
+                          color: Color(0xff190C21),
                           fontWeight: FontWeight.w700,
                           fontFamily: 'SF Pro',
                           fontSize: 16,
                           fontStyle: FontStyle.normal),
-                    )
-                ),
+                    )),
               ),
               SwitchListTile(
                 value: isSwitched,
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Dev Mode', style: TextStyle(color: Color(0xff190C21),
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'SF Pro',
-                    fontSize: 14,
-                    fontStyle: FontStyle.normal)),
+                title: const Text('Dev Mode',
+                    style: TextStyle(
+                        color: Color(0xff190C21),
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'SF Pro',
+                        fontSize: 14,
+                        fontStyle: FontStyle.normal)),
                 onChanged: (value) {
                   setState(() {
                     isSwitched = value;
@@ -191,35 +190,23 @@ class SettingsState extends State<Settings> {
                     Align(
                       alignment: Alignment.bottomLeft,
                       child: Text('Version: $walletSDKVersion',
-                          textAlign: TextAlign.left,
-                          style: const TextStyle(
-                              fontSize: 12, color: Color(0xff6C6D7C))
-                      ),
+                          textAlign: TextAlign.left, style: const TextStyle(fontSize: 12, color: Color(0xff6C6D7C))),
                     ),
                     Align(
                         alignment: Alignment.bottomLeft,
                         child: Text('GitRevision: $gitRevision',
-                            textAlign: TextAlign.left,
-                            style: const TextStyle(
-                                fontSize: 12, color: Color(0xff6C6D7C))
-                        )
-                    ),
+                            textAlign: TextAlign.left, style: const TextStyle(fontSize: 12, color: Color(0xff6C6D7C)))),
                     Align(
                       alignment: Alignment.bottomLeft,
                       child: Text('Build Time: $buildTimeRev',
-                          textAlign: TextAlign.left,
-                          style: const TextStyle(
-                              fontSize: 12, color: Color(0xff6C6D7C))
-                      ),
+                          textAlign: TextAlign.left, style: const TextStyle(fontSize: 12, color: Color(0xff6C6D7C))),
                     )
                   ],
-
                 ),
               ),
             ],
           ),
-        )
-    );
+        ));
   }
 
   saveDevMode() async {
@@ -274,9 +261,7 @@ class SettingsState extends State<Settings> {
     });
   }
 
-
   signOut() async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const MyApp()));
   }
 }
-

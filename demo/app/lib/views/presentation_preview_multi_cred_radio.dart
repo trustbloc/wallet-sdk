@@ -88,7 +88,7 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
                 trailing: FittedBox(
                     child: verifiedDomain
-                        ?  const Row(children: [
+                        ? const Row(children: [
                             Text.rich(
                               textAlign: TextAlign.center,
                               TextSpan(
@@ -111,7 +111,7 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
                               ),
                             ),
                           ])
-                        :  const Row(
+                        : const Row(
                             children: [
                               Text.rich(
                                 textAlign: TextAlign.center,

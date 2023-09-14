@@ -20,8 +20,7 @@ class AddDataDialog extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                     onPressed: () {
-                      final StorageItem storageItem = StorageItem(
-                          _keyController.text, _valueController.text);
+                      final StorageItem storageItem = StorageItem(_keyController.text, _valueController.text);
                       Navigator.of(context).pop(storageItem);
                     },
                     child: const Text('Save')))

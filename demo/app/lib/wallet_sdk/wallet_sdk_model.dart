@@ -1,4 +1,3 @@
-
 class WellKnownDidConfig {
   final bool isValid;
   final String serviceURL;

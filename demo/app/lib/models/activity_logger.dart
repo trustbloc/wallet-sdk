@@ -6,7 +6,11 @@ class ActivityLogger {
   final String activityType;
 
   ActivityLogger(
-      { required this.status, required this.operation, required this.date, required this.issuedBy, required this.activityType});
+      {required this.status,
+      required this.operation,
+      required this.date,
+      required this.issuedBy,
+      required this.activityType});
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};

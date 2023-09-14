@@ -158,6 +158,10 @@ generate-test-keys:
 		--entrypoint /opt/workspace/wallet-sdk/scripts/generate_test_keys.sh \
 		frapsoft/openssl
 
+.PHONY: dart-format
+dart-format:
+	@dart format demo/app/ -l 120
+
 .PHONY: clean
 clean:
 	@rm -rf ./.build

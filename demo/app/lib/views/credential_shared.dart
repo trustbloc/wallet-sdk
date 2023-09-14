@@ -6,10 +6,14 @@ import 'package:app/views/dashboard.dart';
 class CredentialShared extends StatefulWidget {
   final String? verifierName;
   final List<CredentialData> credentialData;
-  const CredentialShared({super.key, this.verifierName, required this.credentialData,});
+  const CredentialShared({
+    super.key,
+    this.verifierName,
+    required this.credentialData,
+  });
 
   @override
-  State<CredentialShared> createState() => CredentialSharedState ();
+  State<CredentialShared> createState() => CredentialSharedState();
 }
 
 class CredentialSharedState extends State<CredentialShared> {
@@ -22,21 +26,19 @@ class CredentialSharedState extends State<CredentialShared> {
           IconButton(
             onPressed: () {
               _navigateToDashboard();
-          },
+            },
             icon: const Icon(Icons.close),
           ),
         ],
         flexibleSpace: Container(
           decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  stops: [0.0, 1.0],
-                  colors: <Color>[
-                    Color(0xff261131),
-                    Color(0xff100716),
-                  ])
-          ),
+              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, stops: [
+            0.0,
+            1.0
+          ], colors: <Color>[
+            Color(0xff261131),
+            Color(0xff100716),
+          ])),
         ),
       ),
       body: Column(
@@ -52,19 +54,23 @@ class CredentialSharedState extends State<CredentialShared> {
             leading: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Image.asset('lib/assets/images/success.png')
-              ],
+              children: [Image.asset('lib/assets/images/success.png')],
             ),
-            title:  const Text('Success',textAlign: TextAlign.left, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            subtitle: Text('Credentials have been shared with ${widget.verifierName}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal)),
+            title: const Text('Success',
+                textAlign: TextAlign.left, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            subtitle: Text('Credentials have been shared with ${widget.verifierName}',
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal)),
           ),
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.only(left: 24, right:24, top: 24, bottom: 8),
+              padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
               itemCount: widget.credentialData.length,
               itemBuilder: (BuildContext context, int index) {
-                return CredentialCard(credentialData: widget.credentialData[index], isDashboardWidget: false, isDetailArrowRequired: false,);
+                return CredentialCard(
+                  credentialData: widget.credentialData[index],
+                  isDashboardWidget: false,
+                  isDetailArrowRequired: false,
+                );
               },
             ),
           )
@@ -72,6 +78,7 @@ class CredentialSharedState extends State<CredentialShared> {
       ),
     );
   }
+
   _navigateToDashboard() async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }
