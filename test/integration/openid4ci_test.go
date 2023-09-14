@@ -74,8 +74,7 @@ type test struct {
 func TestOpenID4CIFullFlow(t *testing.T) {
 	println("!!! Ensure the test certificate is imported into your keychain, and make sure the following" +
 		" entries are in your hosts file:")
-	println(`127.0.0.1 testnet.orb.local
-          127.0.0.1 file-server.trustbloc.local
+	println(`127.0.0.1 file-server.trustbloc.local
           127.0.0.1 did-resolver.trustbloc.local
           127.0.0.1 vc-rest-echo.trustbloc.local
           127.0.0.1 api-gateway.trustbloc.local
@@ -140,7 +139,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		},
 		{
 			issuerProfileID:     "bank_issuer_jwtsd",
-			issuerDIDMethod:     "orb",
+			issuerDIDMethod:     "ion",
 			walletDIDMethod:     "jwk",
 			expectedIssuerURI:   "http://localhost:8075/issuer/bank_issuer_jwtsd/v1.0",
 			claimData:           verifiableEmployeeClaims,
@@ -149,7 +148,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		},
 		{
 			issuerProfileID:     "bank_issuer",
-			issuerDIDMethod:     "orb",
+			issuerDIDMethod:     "ion",
 			walletDIDMethod:     "ion",
 			claimData:           verifiableEmployeeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataBankIssuer),
