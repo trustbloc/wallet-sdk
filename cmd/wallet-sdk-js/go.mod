@@ -11,7 +11,7 @@ toolchain go1.21.0
 require (
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.2
-	github.com/trustbloc/did-go v1.0.0
+	github.com/trustbloc/did-go v1.0.1-0.20230914142643-4dc243c15f5d
 	github.com/trustbloc/kms-go v1.0.0
 	github.com/trustbloc/vc-go v1.0.0
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000

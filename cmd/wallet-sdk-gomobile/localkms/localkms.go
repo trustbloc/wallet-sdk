@@ -23,6 +23,8 @@ import (
 const (
 	// KeyTypeED25519 is the name recognized by the Create method for creating an ED25519 keyset.
 	KeyTypeED25519 = kmsspi.ED25519
+	// KeyTypeP256 is the name recognized by the Create method for creating a P-256 keyset.
+	KeyTypeP256 = kmsspi.ECDSAP256TypeIEEEP1363
 	// KeyTypeP384 is the name recognized by the Create method for creating a P-384 keyset.
 	KeyTypeP384 = kmsspi.ECDSAP384IEEEP1363
 )

@@ -47,6 +47,7 @@ type Creator struct {
 }
 
 // NewCreator returns a new DID document Creator. KeyReader is optional.
+// Deprecated: The standalone Create functions specific to each DID method should be used instead.
 func NewCreator(keyWriter api.KeyWriter, keyReader api.KeyReader) (*Creator, error) {
 	if keyWriter == nil {
 		return nil, errors.New("a KeyWriter must be specified")
@@ -61,6 +62,7 @@ func NewCreator(keyWriter api.KeyWriter, keyReader api.KeyReader) (*Creator, err
 // NewCreatorWithKeyWriter returns a new DID document Creator. A Creator created with this function will automatically
 // generate keys for you when creating new DID documents. Those keys will be generated and stored using the given
 // KeyWriter. See the Create method for more information.
+// Deprecated: The standalone Create functions specific to each DID method should be used instead.
 func NewCreatorWithKeyWriter(keyWriter api.KeyWriter) (*Creator, error) {
 	if keyWriter == nil {
 		return nil, errors.New("a KeyWriter must be specified")
@@ -74,6 +76,7 @@ func NewCreatorWithKeyWriter(keyWriter api.KeyWriter) (*Creator, error) {
 // NewCreatorWithKeyReader returns a new DID document Creator. A Creator created with this function can be used to
 // create DID documents using your own already-generated keys from the given KeyReader.
 // At least one of keyHandleCreator and keyReader must be provided. See the Create method for more information.
+// Deprecated: The standalone Create functions specific to each DID method should be used instead.
 func NewCreatorWithKeyReader(keyReader api.KeyReader) (*Creator, error) {
 	if keyReader == nil {
 		return nil, errors.New("a KeyReader must be specified")
@@ -95,6 +98,8 @@ func NewCreatorWithKeyReader(keyReader api.KeyReader) (*Creator, error) {
 //	Ed25519VerificationKey2018. TODO (#51): Support more key types. ED25519 is the chosen default for now.
 //	If the Creator was created using the NewCreatorWithKeyReader function, then you must specify the KeyID and also
 //	the VerificationType in the createDIDOpts object to use for the creation of the DID document.
+//
+// Deprecated: The standalone Create functions specific to each DID method should be used instead.
 func (d *Creator) Create(method string, createDIDOpts *api.CreateDIDOpts) (*did.DocResolution, error) {
 	if createDIDOpts == nil {
 		return nil, errors.New("createDIDOpts object not set")

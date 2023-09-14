@@ -66,6 +66,32 @@ func TestCreator_Create(t *testing.T) {
 	})
 }
 
+func TestCreateLongForm(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		localKMS := createTestKMS(t)
+
+		_, signingJWK, err := localKMS.Create(kms.ED25519)
+		require.NoError(t, err)
+
+		didDoc, err := CreateLongForm(signingJWK)
+		require.NoError(t, err)
+		require.NotNil(t, didDoc)
+	})
+	t.Run("Nil JWK", func(t *testing.T) {
+		didDoc, err := CreateLongForm(nil)
+		require.Contains(t, err.Error(), "jwk object cannot be null/nil")
+		require.Nil(t, didDoc)
+	})
+	t.Run("Fail to create verification method from JWK", func(t *testing.T) {
+		jsonWebKey := &jwk.JWK{}
+
+		didDoc, err := CreateLongForm(jsonWebKey)
+		require.Contains(t, err.Error(),
+			"convert JWK to public key bytes: unsupported public key type in kid ''")
+		require.Nil(t, didDoc)
+	})
+}
+
 func createTestKMS(t *testing.T) *localkms.LocalKMS {
 	t.Helper()
 

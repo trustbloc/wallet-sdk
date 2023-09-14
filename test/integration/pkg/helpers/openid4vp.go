@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package helpers
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -15,6 +16,9 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didion"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didjwk"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didkey"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
@@ -39,18 +43,42 @@ func NewVPTestHelper(t *testing.T, didMethod string, keyType string) *VPTestHelp
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
-	// create DID
-	c, err := did.NewCreator(kms)
-	require.NoError(t, err)
+	var didDoc *api.DIDDocResolution
 
-	metricsLogger := stderr.NewMetricsLogger()
+	switch didMethod {
+	case "key":
+		if keyType == "" {
+			keyType = localkms.KeyTypeED25519
+		}
 
-	opts := did.NewCreateOpts()
-	opts.SetKeyType(keyType)
-	opts.SetMetricsLogger(metricsLogger)
+		jwk, err := kms.Create(keyType)
+		require.NoError(t, err)
 
-	didDoc, err := c.Create(didMethod, opts)
-	require.NoError(t, err)
+		didDoc, err = didkey.Create(jwk)
+		require.NoError(t, err)
+	case "jwk":
+		if keyType == "" {
+			keyType = localkms.KeyTypeED25519
+		}
+
+		jwk, err := kms.Create(keyType)
+		require.NoError(t, err)
+
+		didDoc, err = didjwk.Create(jwk)
+		require.NoError(t, err)
+	case "ion":
+		if keyType == "" {
+			keyType = localkms.KeyTypeED25519
+		}
+
+		jwk, err := kms.Create(keyType)
+		require.NoError(t, err)
+
+		didDoc, err = didion.CreateLongForm(jwk)
+		require.NoError(t, err)
+	default:
+		require.Fail(t, fmt.Sprintf("%s is not a supported DID method", didMethod))
+	}
 
 	return &VPTestHelper{
 		KMS:    kms,

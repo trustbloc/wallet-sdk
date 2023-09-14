@@ -13,7 +13,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.2
-	github.com/trustbloc/did-go v1.0.0
+	github.com/trustbloc/did-go v1.0.1-0.20230914142643-4dc243c15f5d
 	github.com/trustbloc/kms-go v1.0.0
 	github.com/trustbloc/vc-go v1.0.0
 	golang.org/x/oauth2 v0.7.0

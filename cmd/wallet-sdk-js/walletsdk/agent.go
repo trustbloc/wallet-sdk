@@ -78,7 +78,7 @@ func (a *Agent) CreateDID(didMethodType string, didKeyType arieskms.KeyType, ver
 		return nil, fmt.Errorf("failed to create did creator: %w", err)
 	}
 
-	didDoc, err := didCreator.Create(didMethodType, &api.CreateDIDOpts{
+	didDoc, err := didCreator.Create(didMethodType, &api.CreateDIDOpts{ //nolint:staticcheck // To be removed later.
 		VerificationType: verificationType,
 		KeyType:          didKeyType,
 		MetricsLogger:    nil,
