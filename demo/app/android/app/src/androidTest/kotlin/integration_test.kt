@@ -1,17 +1,14 @@
 import android.content.Context
-import android.net.Uri
-import android.util.Log
 import androidx.test.filters.SmallTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import dev.trustbloc.wallet.BuildConfig
-import dev.trustbloc.wallet.sdk.api.KeyWriter
 import dev.trustbloc.wallet.sdk.api.StringArray
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import dev.trustbloc.wallet.sdk.credential.Inquirer
-import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.did.ResolverOpts
+import dev.trustbloc.wallet.sdk.didion.Didion
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.oauth2.Oauth2
 import dev.trustbloc.wallet.sdk.openid4ci.*
@@ -22,7 +19,6 @@ import okhttp3.*
 import org.junit.Before
 import org.junit.Test
 import walletsdk.kmsStorage.KmsStore
-import java.io.IOException
 import java.net.URI
 
 
@@ -51,8 +47,9 @@ class IntegrationTest {
 
         val crypto = kms.crypto
 
-        val didCreator = Creator(kms as KeyWriter)
-        val userDID = didCreator.create("ion", null)
+        val jwk = kms.create(Localkms.KeyTypeED25519)
+
+        val userDID = Didion.createLongForm(jwk)
 
         // Issue VCs
         val requestURI = BuildConfig.INITIATE_ISSUANCE_URL
@@ -130,8 +127,9 @@ class IntegrationTest {
 
         val crypto = kms.crypto
 
-        val didCreator = Creator(kms as KeyWriter)
-        val userDID = didCreator.create("ion", null)
+        val jwk = kms.create(Localkms.KeyTypeED25519)
+
+        val userDID = Didion.createLongForm(jwk)
 
         // Issue VCs
         val requestURI = BuildConfig.INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW

@@ -38,37 +38,24 @@ func NewCITestHelper(t *testing.T, didMethod string, keyType string) *CITestHelp
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
+	if keyType == "" {
+		keyType = localkms.KeyTypeED25519
+	}
+
+	jwk, err := kms.Create(keyType)
+	require.NoError(t, err)
+
 	var didDoc *api.DIDDocResolution
 
 	switch didMethod {
 	case "key":
-		if keyType == "" {
-			keyType = localkms.KeyTypeED25519
-		}
-
-		jwk, err := kms.Create(keyType)
-		require.NoError(t, err)
 
 		didDoc, err = didkey.Create(jwk)
 		require.NoError(t, err)
 	case "jwk":
-		if keyType == "" {
-			keyType = localkms.KeyTypeED25519
-		}
-
-		jwk, err := kms.Create(keyType)
-		require.NoError(t, err)
-
 		didDoc, err = didjwk.Create(jwk)
 		require.NoError(t, err)
 	case "ion":
-		if keyType == "" {
-			keyType = localkms.KeyTypeED25519
-		}
-
-		jwk, err := kms.Create(keyType)
-		require.NoError(t, err)
-
 		didDoc, err = didion.CreateLongForm(jwk)
 		require.NoError(t, err)
 	default:

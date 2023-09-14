@@ -2,6 +2,9 @@ package walletsdk
 
 import dev.trustbloc.wallet.sdk.api.*
 import dev.trustbloc.wallet.sdk.did.*
+import dev.trustbloc.wallet.sdk.didion.Didion
+import dev.trustbloc.wallet.sdk.didjwk.Didjwk
+import dev.trustbloc.wallet.sdk.didkey.Didkey
 import dev.trustbloc.wallet.sdk.localkms.KMS
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.mem.ActivityLogger
@@ -34,12 +37,26 @@ class WalletSDK {
     fun createDID(didMethodType: String, didKeyType: String): DIDDocResolution {
         val kms = this.kms ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
-        val createDIDOpts = CreateOpts()
-        createDIDOpts.setKeyType(didKeyType)
+        val jwk = kms.create(didKeyType)
 
-        val creatorDID = Creator(kms as KeyWriter)
+        println("Created a new key. The key ID is ${jwk.id()}")
 
-        return creatorDID.create(didMethodType, createDIDOpts)
+        val doc: DIDDocResolution
+
+        if (didMethodType == "key") {
+            doc = Didkey.create(jwk)
+        } else if (didMethodType == "jwk") {
+            doc = Didjwk.create(jwk)
+        } else if (didMethodType == "ion") {
+            doc = Didion.createLongForm(jwk)
+        } else {
+            throw java.lang.Exception("DID method type $didMethodType not supported")
+        }
+
+        println("Successfully created a new did:${didMethodType} DID. The DID is ${doc.id()}")
+
+        return doc
+
     }
 
     fun createOpenID4CIInteraction(requestURI: String) : OpenID4CI {
