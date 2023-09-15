@@ -13,6 +13,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didion"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didjwk"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didkey"
+
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
 	diddoc "github.com/trustbloc/did-go/doc/did"
@@ -43,9 +47,6 @@ func TestCredentialAPI(t *testing.T) {
 	require.NoError(t, e)
 
 	signer := credential.NewSigner(didResolver, crypto)
-
-	c, e := did.NewCreator(kms)
-	require.NoError(t, e)
 
 	sdkResolver, e := resolver.NewDIDResolver()
 	require.NoError(t, e)
@@ -82,8 +83,30 @@ func TestCredentialAPI(t *testing.T) {
 			createDIDOptionalArgs := did.NewCreateOpts()
 			createDIDOptionalArgs.SetMetricsLogger(stderr.NewMetricsLogger())
 
-			didDoc, err := c.Create(tc.didMethod, createDIDOptionalArgs)
-			require.NoError(t, err)
+			var didDoc *api.DIDDocResolution
+
+			switch tc.didMethod {
+			case "key":
+				jwk, err := kms.Create(localkms.KeyTypeED25519)
+				require.NoError(t, err)
+
+				didDoc, err = didkey.Create(jwk)
+				require.NoError(t, err)
+			case "jwk":
+				jwk, err := kms.Create(localkms.KeyTypeED25519)
+				require.NoError(t, err)
+
+				didDoc, err = didjwk.Create(jwk)
+				require.NoError(t, err)
+			case "ion":
+				jwk, err := kms.Create(localkms.KeyTypeED25519)
+				require.NoError(t, err)
+
+				didDoc, err = didion.CreateLongForm(jwk)
+				require.NoError(t, err)
+			default:
+				require.Fail(t, fmt.Sprintf("%s is not a supported DID method", tc.didMethod))
+			}
 
 			docID, err := didDoc.ID()
 			require.NoError(t, err)

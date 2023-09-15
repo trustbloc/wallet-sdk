@@ -32,12 +32,38 @@ class WalletSDK {
     }
 
     func createDID(didMethodType: String, didKeyType: String) throws -> ApiDIDDocResolution {
-        let didCreator = DidNewCreator(self.kms, nil)
-        let opts = DidNewCreateOpts()
-        opts!.setKeyType(didKeyType)
-    
-        return try didCreator!.create(didMethodType, opts: opts)
-         
+        let jwk = try self.kms!.create(didKeyType)
+        
+        print("Created a new key. The key ID is \(jwk.id_())")
+        
+        var didCreateError: NSError?
+        var doc: ApiDIDDocResolution?
+        
+        if didMethodType == "key" {
+            doc = DidkeyCreate(jwk, &didCreateError)
+        } else if didMethodType == "jwk" {
+            doc = DidjwkCreate(jwk, &didCreateError)
+        } else if didMethodType == "ion" {
+            doc = DidionCreateLongForm(jwk, &didCreateError)
+        } else {
+            throw WalletSDKError.runtimeError("DID method type \(didMethodType) not supported")
+        }
+        
+        if let didCreateError = didCreateError {
+            throw didCreateError
+        }
+        
+        var docIDError: NSError?
+        
+        let docID = doc!.id_(&docIDError)
+        
+        if let docIDError = docIDError {
+            throw docIDError
+        }
+        
+        print("Successfully created a new did:\(didMethodType) DID. The DID is \(docID)")
+        
+        return doc!
     }
 
     func createOpenID4CIInteraction(requestURI: String) throws -> OpenID4CI {

@@ -35,9 +35,13 @@ class IntegrationTest: XCTestCase {
         let didResolver = DidNewResolver(resolverOpts, nil)!
 
         let crypto = kms.getCrypto()
+        
+        let jwk = try kms.create(LocalkmsKeyTypeED25519)
+        
+        var error: NSError?
 
-        let didCreator = DidNewCreator(kms, nil)!
-        let userDID = try didCreator.create("ion", opts: nil)
+        let userDID = DidionCreateLongForm(jwk, &error)
+        XCTAssertNil(error)
 
         // Issue VCs
         let requestURI = ProcessInfo.processInfo.environment["INITIATE_ISSUANCE_URL"]
@@ -55,7 +59,7 @@ class IntegrationTest: XCTestCase {
         let pinRequired = try ciInteraction!.preAuthorizedCodeGrantParams().pinRequired()
         XCTAssertFalse(pinRequired)
 
-        let issuedCreds = try ciInteraction!.requestCredential(userDID.assertionMethod())
+        let issuedCreds = try ciInteraction!.requestCredential(userDID!.assertionMethod())
         XCTAssertTrue(issuedCreds.length() > 0)
 
         //Presenting VCs
@@ -110,8 +114,12 @@ class IntegrationTest: XCTestCase {
 
           let crypto = kms.getCrypto()
 
-          let didCreator = DidNewCreator(kms, nil)!
-          let userDID = try didCreator.create("ion", opts: nil)
+          let jwk = try kms.create(LocalkmsKeyTypeED25519)
+        
+          var error: NSError?
+
+          let userDID = DidionCreateLongForm(jwk, &error)
+          XCTAssertNil(error)
 
           // Issue VCs in auth flow
           let requestAuthURI = ProcessInfo.processInfo.environment["INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW"]
@@ -185,7 +193,7 @@ class IntegrationTest: XCTestCase {
                             guard let locationURL = location else {return}
                             redirectURL = locationURL.absoluteString
                             do {
-                              let issuedCreds = try ciInteraction!.requestCredential(withAuth:userDID.assertionMethod(), redirectURIWithAuthCode: redirectURL, opts: nil)
+                              let issuedCreds = try ciInteraction!.requestCredential(withAuth:userDID!.assertionMethod(), redirectURIWithAuthCode: redirectURL, opts: nil)
                               XCTAssertTrue(issuedCreds.length() > 0)
                             } catch {
                                print("Error: \(error)")

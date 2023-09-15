@@ -22,8 +22,7 @@ export default class Agent {
     async createDID(opts) {
         return await this.goAgent.createDID({
             didMethod: opts.didMethod,
-            keyType: opts.keyType,
-            verificationType: opts.verificationType
+            keyType: opts.keyType
         });
     };
 

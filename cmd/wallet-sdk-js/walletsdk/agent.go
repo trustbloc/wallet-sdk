@@ -12,6 +12,12 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/trustbloc/wallet-sdk/pkg/did/creator/ion"
+
+	didjwk "github.com/trustbloc/wallet-sdk/pkg/did/creator/jwk"
+
+	"github.com/trustbloc/wallet-sdk/pkg/did/creator/key"
+
 	jsonld "github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/did-go/doc/did"
 	arieskms "github.com/trustbloc/kms-go/spi/kms"
@@ -24,7 +30,6 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/credentialquery"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 	"github.com/trustbloc/wallet-sdk/pkg/credentialstatus"
-	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
 	"github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
@@ -71,18 +76,25 @@ func NewAgent(didResolverURI string, keyStore arieskms.Store) (*Agent, error) {
 }
 
 // CreateDID creates a DID document using the given DID method.
-func (a *Agent) CreateDID(didMethodType string, didKeyType arieskms.KeyType, verificationType string,
-) (*did.DocResolution, error) {
-	didCreator, err := creator.NewCreatorWithKeyWriter(a.keyWriter)
+func (a *Agent) CreateDID(didMethodType string, didKeyType arieskms.KeyType) (*did.DocResolution, error) {
+	_, jwk, err := a.keyWriter.Create(didKeyType)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create did creator: %w", err)
+		return nil, fmt.Errorf("failed to create key: %w", err)
 	}
 
-	didDoc, err := didCreator.Create(didMethodType, &api.CreateDIDOpts{ //nolint:staticcheck // To be removed later.
-		VerificationType: verificationType,
-		KeyType:          didKeyType,
-		MetricsLogger:    nil,
-	})
+	var didDoc *did.DocResolution
+
+	switch didMethodType {
+	case "key":
+		didDoc, err = key.Create(jwk)
+	case "jwk":
+		didDoc, err = didjwk.Create(jwk)
+	case "ion":
+		didDoc, err = ion.CreateLongForm(jwk)
+	default:
+		return nil, fmt.Errorf("%s is not a supported DID method", didMethodType)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to create did: %w", err)
 	}

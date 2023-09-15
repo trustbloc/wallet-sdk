@@ -3,7 +3,8 @@
 This document outlines some best practices for using the mobile bindings.
 
 For information on best practices for higher-level concepts that appear in Wallet-SDK,
-see [here](../docs/bestpractices.md). This document is only applicable to the mobile bindings specifically.
+see [here](../docs/bestpractices.md). While this document is only applicable to the mobile bindings specifically,
+those higher-level best practices that are applicable here as well since they're common to all Wallet-SDK bindings.
 
 ## Using Serializable Objects
 

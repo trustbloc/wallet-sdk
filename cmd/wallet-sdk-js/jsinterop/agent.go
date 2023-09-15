@@ -93,12 +93,7 @@ func createDID(_ js.Value, args []js.Value) (any, error) {
 		return nil, err
 	}
 
-	verificationType, err := jssupport.EnsureString(jssupport.GetOptionalNamedArgument(args, "verificationType"))
-	if err != nil {
-		return nil, err
-	}
-
-	didDoc, err := agentInstance.CreateDID(didMethod, arieskms.KeyType(keyType), verificationType)
+	didDoc, err := agentInstance.CreateDID(didMethod, arieskms.KeyType(keyType))
 	if err != nil {
 		return nil, err
 	}

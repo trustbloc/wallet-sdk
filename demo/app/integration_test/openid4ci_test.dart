@@ -17,7 +17,7 @@ void main() async {
   print('Init SDK');
   const didResolverURI = String.fromEnvironment('DID_RESOLVER_URI');
   await walletSDKPlugin.initSDK(didResolverURI);
-  var didKeyType = '';
+  var didKeyType = 'ED25519';
   testWidgets('Testing openid4vc with a single credential', (tester) async {
     const didMethodTypes = String.fromEnvironment('WALLET_DID_METHODS');
     var didMethodTypesList = didMethodTypes.split(' ');

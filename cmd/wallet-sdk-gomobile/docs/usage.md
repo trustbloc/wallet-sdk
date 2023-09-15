@@ -260,12 +260,17 @@ db.remove("VC_ID")
 ```
 
 ## Local KMS
-This package contains a local KMS implementation that uses Google's Tink crypto library.
-Private keys may intermittently reside in local memory with this implementation so
-keep this consideration in mind when deciding whether to use this or not.
-The caller must inject a key store for the KMS to use. This package includes an in-memory key store implementation
-that can be used, but you will likely want to inject in your own implementation at some point so your keys are
-persisted.
+This package contains a local KMS implementation that uses Google's Tink crypto library. The caller must inject a key
+store for the KMS to use. Keys returned by local KMS are returned as `JWK` objects. The key IDs used for storage
+are assigned by local KMS and can be determined by using the `id()`  on the `JWK` object. Note: in the iOS
+bindings, the method is called `id_()` instead due to a technical limitation.
+
+Wallet-SDK includes an in-memory key store implementation that you can use for getting up and running with local KMS.
+It'll allow you to test out its functionality, but in order to ensure your keys aren't lost when your app closes,
+you'll want to inject in your own persistent implementation at some point.
+
+Note that regardless of what storage implementation you use, private keys may intermittently reside in local memory
+when using local KMS, so keep this limitation in mind.
 
 ### Examples
 
@@ -296,94 +301,69 @@ let jwk1 = kms.create(LocalkmsKeyTypeED25519)
 let jwk2 = kms.create(LocalkmsKeyTypeP384)
 ```
 
-## DID Creator
+## DID Creation
 
-The DID creator can be used to create DIDs using various supported DID methods.
+Wallet-SDK provides support for creating `key`, `jwk`, or `ion` (longform) DIDs.
 
-It needs to be instantiated with a KeyWriter implementation. As part of the DID creation process, one or more keys
-need to be created - the KeyWriter is used to create any required keys as needed.
+To create a DID, call the corresponding `create` function with a key of your choice.
 
-Call the `create` method to create a new DID. The `method` parameter is required and must be specified. The
-following DID methods are supported: `key`, `ion`, and `jwk`.
-
-The following optional arguments can be passed in via the methods available on the `CreateOpts` object:
-* `setVerificationType`: Sets the verification type to use. If not set, then an appropriate default for the given
-DID method will be used.
-* `setKeyType`: Sets the key type to use for keys generated during DID creation.
-If not set, then Ed25519 keys will be generated. Note that when using the `ion` DID method, update and recovery keys
-will also be generated. The key type used for generation of these update and recovery keys is not affected by this
-option. They will always be ECDSA P-256 keys.
-* `setMetricsLogger`: Sets a metrics logger to use for capturing performance metrics events. If not set, then
-no performance metrics events will be logged.
+Note: currently, in order to create a DID in Wallet-SDK, you must use a key created by a [local KMS](#local-kms)
+instance, which will be in a `JWK` object.
 
 ### Examples
 
-These examples make use of the [in-memory KMS](#local-kms) implementation as the KeyWriter.
+The examples below show the full process of creating a DID, including the creation of a LocalKMS
+instance (using in-memory storage) and a key. Each example shows how to create `key`, `jwk`, or `ion` (longform) DIDs.
 
 #### Kotlin (Android)
 
-##### Using Default Options
-
 ```kotlin
-import dev.trustbloc.wallet.sdk.did.Creator
+import dev.trustbloc.wallet.sdk.didion.Didion
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 
 val memKMSStore = MemKMSStore.MemKMSStore()
 val kms = Localkms.newKMS(memKMSStore)
-val didCreator = Creator(kms as KeyWriter)
 
-val didDocResolution = didCreator.create("key", null)
-```
 
-##### Using Specified Options
+val jwk1 = kms.create(Localkms.KeyTypeED25519)
+val didDocument1 = Didkey.create(jwk1)
 
-```kotlin
-import dev.trustbloc.wallet.sdk.did.*
-import dev.trustbloc.wallet.sdk.localkms.Localkms
-import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
+// It's considered a best practice to create a new key for every new DID you want to create.
 
-val memKMSStore = MemKMSStore.MemKMSStore()
-val kms = Localkms.newKMS(memKMSStore)
-val didCreator = Creator(kms as KeyWriter)
+val jwk2 = kms.create(Localkms.KeyTypeED25519)
+val didDocument2 = Didjwk.create(jwk2)
 
-val createDIDOpts = CreateOpts().setKeyType("ED25519").setVerificationType("JsonWebKey2020")
-val didDocResolution = didCreator.create("key", createDIDOpts)
+val jwk3 = kms.create(Localkms.KeyTypeED25519)
+val didDocument3 = Didion.createLongForm(jwk3)
 ```
 
 #### Swift (iOS)
 
-##### Using Default Options
-
 ```swift
 import Walletsdk
 
 let memKMSStore = LocalkmsNewMemKMSStore()
 
-var newKMSError: NSError?
+var newKMSError: NSError? //Be sure to actually check this error in real code.
 let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
 
-var newDIDCreatorError: NSError?
-let didCreator = DidNewCreator(kms, &newDIDCreatorError)
+let jwk1 = try kms.create(LocalkmsKeyTypeED25519)
 
-let didDocResolution = didCreator.create("key", nil)
-```
+var didKeyCreateError: NSError? //Be sure to actually check this error in real code.
+let didDoc1 = DidkeyCreate(jwk1, &didKeyCreateError)
 
-##### Using Specified Options
+// It's considered a best practice to create a new key for every new DID you want to create.
 
-```swift
-import Walletsdk
+let jwk2 = try kms.create(LocalkmsKeyTypeED25519)
 
-let memKMSStore = LocalkmsNewMemKMSStore()
+var didJWKCreateError: NSError? //Be sure to actually check this error in real code.
+let didDoc2 = DidjwkCreate(jwk2, &didJWKCreateError)
 
-var newKMSError: NSError?
-let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
+let jwk3 = try kms.create(LocalkmsKeyTypeED25519)
 
-var newDIDCreatorError: NSError?
-let didCreator = DidNewCreator(kms, &newDIDCreatorError)
-
-let opts = DidNewCreateOpts().setKeyType("ED25519").setVerificationType("JsonWebKey2020")
-let didDocResolution = didCreator.create("key", opts)
+var didIONCreateError: NSError? //Be sure to actually check this error in real code.
+let didDoc3 = DidionCreateLongForm(jwk3, &didIONCreateError)
 ```
 
 ### Error Codes & Troubleshooting Tips

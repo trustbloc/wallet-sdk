@@ -39,7 +39,6 @@ func (d *Creator) Create(vm *did.VerificationMethod) (*did.DocResolution, error)
 }
 
 // Create creates a new did:key document using the given verification method.
-// Deprecated: The standalone Create function should be used instead.
 func Create(jwk *jwktype.JWK) (*did.DocResolution, error) {
 	if jwk == nil {
 		return nil, walleterror.NewInvalidSDKUsageError(
