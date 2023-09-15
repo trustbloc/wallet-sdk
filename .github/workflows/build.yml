@@ -483,7 +483,7 @@ jobs:
           GOPATH: /home/runner/work/wallet-sdk/go
 
   PublishDemoAppSnapshot:
-    needs: PublishJSSDKSnapshot
+    needs: [ GenerateVersion, PublishJSSDKSnapshot ]
     if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-22.04
     timeout-minutes: 40
