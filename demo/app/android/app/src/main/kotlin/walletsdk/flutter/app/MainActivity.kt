@@ -394,7 +394,7 @@ class MainActivity : FlutterActivity() {
             var dynamicRegistrationSupported = openID4CI.dynamicRegistrationSupported()
             var clientID = authCodeArgs["clientID"].toString()
             val redirectURI = authCodeArgs["redirectURI"].toString()
-            val oauthDiscoverableClientURI = authCodeArgs["oauthDiscoverableClientURI"].toString()
+            val oauthDiscoverableClientURI = authCodeArgs["oauthDiscoverableClientURI"]
             var scopesFromArgs = authCodeArgs["scopes"] as ArrayList<String>
 
             var scopes = StringArray()
@@ -433,7 +433,7 @@ class MainActivity : FlutterActivity() {
             authorizationLink = openID4CI.createAuthorizationURL(
                 clientID,
                 redirectURI,
-                oauthDiscoverableClientURI,
+                oauthDiscoverableClientURI ?: "",
                 scopes,
             )
 
