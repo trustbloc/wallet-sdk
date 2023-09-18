@@ -318,13 +318,14 @@ instance (using in-memory storage) and a key. Each example shows how to create `
 #### Kotlin (Android)
 
 ```kotlin
+import dev.trustbloc.wallet.sdk.didion.Didkey
+import dev.trustbloc.wallet.sdk.didion.Didjwk
 import dev.trustbloc.wallet.sdk.didion.Didion
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 
 val memKMSStore = MemKMSStore.MemKMSStore()
 val kms = Localkms.newKMS(memKMSStore)
-
 
 val jwk1 = kms.create(Localkms.KeyTypeED25519)
 val didDocument1 = Didkey.create(jwk1)
@@ -351,19 +352,19 @@ let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
 let jwk1 = try kms.create(LocalkmsKeyTypeED25519)
 
 var didKeyCreateError: NSError? //Be sure to actually check this error in real code.
-let didDoc1 = DidkeyCreate(jwk1, &didKeyCreateError)
+let didDocument1 = DidkeyCreate(jwk1, &didKeyCreateError)
 
 // It's considered a best practice to create a new key for every new DID you want to create.
 
 let jwk2 = try kms.create(LocalkmsKeyTypeED25519)
 
 var didJWKCreateError: NSError? //Be sure to actually check this error in real code.
-let didDoc2 = DidjwkCreate(jwk2, &didJWKCreateError)
+let didDocument2 = DidjwkCreate(jwk2, &didJWKCreateError)
 
 let jwk3 = try kms.create(LocalkmsKeyTypeED25519)
 
 var didIONCreateError: NSError? //Be sure to actually check this error in real code.
-let didDoc3 = DidionCreateLongForm(jwk3, &didIONCreateError)
+let didDocument3 = DidionCreateLongForm(jwk3, &didIONCreateError)
 ```
 
 ### Error Codes & Troubleshooting Tips
@@ -393,7 +394,7 @@ import dev.trustbloc.wallet.sdk.did.*
 
 val didResolver = did.Resolver(null)
 
-val didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
+val didDocument = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
 ```
 
 ##### Using Specified Options
@@ -404,7 +405,7 @@ import dev.trustbloc.wallet.sdk.did.*
 val opts = ResolverOpts().setResolverServerURI("https://example.com/")
 val didResolver = did.Resolver(opts)
 
-val didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
+val didDocument = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
 ```
 
 #### Swift (iOS)
@@ -416,7 +417,7 @@ import Walletsdk
 
 let didResolver = DidNewResolver(nil)
 
-let didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
+let didDocument = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
 ```
 
 ##### Using Specified Options
@@ -427,7 +428,7 @@ import Walletsdk
 let resolverOpts = DidNewResolverOpts()?.setResolverServerURI("https://example.com/")
 let didResolver = DidNewResolver(resolverOpts)
 
-let didDoc = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
+let didDocument = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK")
 ```
 
 ### Error Codes & Troubleshooting Tips
@@ -743,10 +744,10 @@ They use in-memory key storage and the Tink crypto library.
 #### Kotlin (Android) - Issuer-Initiated - Pre-Authorized Code Flow
 
 ```kotlin
+import dev.trustbloc.wallet.sdk.didion.Didkey
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 import dev.trustbloc.wallet.sdk.did.Resolver
-import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.openid4ci.*
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
@@ -754,8 +755,9 @@ import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 val memKMSStore = MemKMSStore.MemKMSStore()
 val kms = Localkms.newKMS(memKMSStore)
 val didResolver = Resolver(null)
-val didCreator = Creator(kms as KeyWriter)
-val didDocResolution = didCreator.create("key", null) // Create a did:key doc
+
+val jwk = kms.create(Localkms.KeyTypeED25519)
+val didDocument = Didkey.create(jwk) // Create a did:key document
 
 val activityLogger = mem.ActivityLogger()
 
@@ -777,7 +779,7 @@ if (interaction.preAuthorizedCodeGrantParams().pinRequired()) {
     requestCredentialWithPreAuthOpts.setPIN("1234")
 }
 
-val credentials = interaction.requestCredentialWithPreAuth(didDocResolution.assertionMethod(), requestCredentialWithPreAuthOpts)
+val credentials = interaction.requestCredentialWithPreAuth(didDocument.assertionMethod(), requestCredentialWithPreAuthOpts)
 
 val issuerURI = interaction.issuerURI() // Optional (but useful)
 
@@ -792,15 +794,15 @@ import Walletsdk
 // Setup
 let memKMSStore = LocalkmsNewMemKMSStore()
 
-var newKMSError: NSError?
+var newKMSError: NSError? //Be sure to actually check this error in real code
 let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
 
 let didResolver = DidNewResolver(nil)
 
-var newDIDCreatorError: NSError?
-let didCreator = DidNewCreator(kms, &newDIDCreatorError)
+let jwk = try kms.create(LocalkmsKeyTypeED25519)
 
-let didDocResolution = didCreator.create("key", nil) // Create a did:key doc with default options
+var didKeyCreateError: NSError? //Be sure to actually check this error in real code
+let didDocument = DidkeyCreate(jwk, &didKeyCreateError)// Create a did:key document
 
 let activityLogger = MemNewActivityLogger()
 
@@ -825,7 +827,7 @@ if (issuerCapabilities.preAuthorizedCodeGrantParams().pinRequired()) {
     requestCredentialWithPreAuthOpts!.setPIN("1234")
 }
 
-let credentials = interaction.requestCredential(withPreAuth: didDocResolution.assertionMethod(), opts: requestCredentialWithPreAuthOpts)
+let credentials = interaction.requestCredential(withPreAuth: didDocument.assertionMethod(), opts: requestCredentialWithPreAuthOpts)
 
 let issuerURI = interaction.issuerURI() // Optional (but useful)
 
@@ -836,10 +838,10 @@ let issuerURI = interaction.issuerURI() // Optional (but useful)
 
 ```kotlin
 import dev.trustbloc.wallet.sdk.api.*
+import dev.trustbloc.wallet.sdk.didion.Didkey
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 import dev.trustbloc.wallet.sdk.did.Resolver
-import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.openid4ci.*
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
@@ -847,8 +849,9 @@ import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 val memKMSStore = MemKMSStore.MemKMSStore()
 val kms = Localkms.newKMS(memKMSStore)
 val didResolver = Resolver(null)
-val didCreator = Creator(kms as KeyWriter)
-val didDocResolution = didCreator.create("key", null) // Create a did:key doc
+
+val jwk = kms.create(Localkms.KeyTypeED25519)
+val didDocument = Didkey.create(jwk) // Create a did:key document
 
 val activityLogger = mem.ActivityLogger()
 
@@ -879,7 +882,7 @@ val authorizationLink := interaction.createAuthorizationURL("clientID", "redirec
 // createAuthorizationURL() call like in this example since control has to flow back to the user first.
 val redirectURIWithParams = "Put the redirect URI with params here"
 
-val credentials = interaction.requestCredentialWithAuth(didDocResolution.assertionMethod(), redirectURIWithParams, null)
+val credentials = interaction.requestCredentialWithAuth(didDocument.assertionMethod(), redirectURIWithParams, null)
 
 val issuerURI = interaction.issuerURI() // Optional (but useful)
 
@@ -894,15 +897,15 @@ import Walletsdk
 // Setup
 let memKMSStore = LocalkmsNewMemKMSStore()
 
-var newKMSError: NSError?
+var newKMSError: NSError? //Be sure to actually check this error in real code
 let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
 
 let didResolver = DidNewResolver(nil)
 
-var newDIDCreatorError: NSError?
-let didCreator = DidNewCreator(kms, &newDIDCreatorError)
+let jwk = try kms.create(LocalkmsKeyTypeED25519)
 
-let didDocResolution = didCreator.create("key", nil) // Create a did:key doc with default options
+var didKeyCreateError: NSError? //Be sure to actually check this error in real code
+let didDocument = DidkeyCreate(jwk, &didKeyCreateError)// Create a did:key document
 
 let activityLogger = MemNewActivityLogger()
 
@@ -938,7 +941,7 @@ let authorizationLink = interaction.createAuthorizationURL("clientID", redirectU
 // createAuthorizationURL() call like in this example since control has to flow back to the user first.
 let redirectURIWithParams = "Put the redirect URI with params here"
 
-let credentials = interaction.requestCredential(withAuth: didDocResolution.assertionMethod(), redirectURIWithParams: redirectURIWithParams, opts: nil)
+let credentials = interaction.requestCredential(withAuth: didDocument.assertionMethod(), redirectURIWithParams: redirectURIWithParams, opts: nil)
 
 let issuerURI = interaction.issuerURI() // Optional (but useful)
 
@@ -949,10 +952,10 @@ let issuerURI = interaction.issuerURI() // Optional (but useful)
 
 ```kotlin
 import dev.trustbloc.wallet.sdk.api.*
+import dev.trustbloc.wallet.sdk.didion.Didkey
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 import dev.trustbloc.wallet.sdk.did.Resolver
-import dev.trustbloc.wallet.sdk.did.Creator
 import dev.trustbloc.wallet.sdk.openid4ci.*
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
@@ -960,8 +963,9 @@ import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 val memKMSStore = MemKMSStore.MemKMSStore()
 val kms = Localkms.newKMS(memKMSStore)
 val didResolver = Resolver(null)
-val didCreator = Creator(kms as KeyWriter)
-val didDocResolution = didCreator.create("key", null) // Create a did:key doc
+
+val jwk = kms.create(Localkms.KeyTypeED25519)
+val didDocument = Didkey.create(jwk) // Create a did:key document
 
 val activityLogger = mem.ActivityLogger()
 
@@ -988,7 +992,7 @@ val authorizationLink := interaction.createAuthorizationURL("clientID", "redirec
 // createAuthorizationURL() call like in this example since control has to flow back to the user first.
 val redirectURIWithParams = "Put the redirect URI with params here"
 
-val credentials = interaction.requestCredential(didDocResolution.assertionMethod(), redirectURIWithParams, null)
+val credentials = interaction.requestCredential(didDocument.assertionMethod(), redirectURIWithParams, null)
 
 // Consider checking the activity log at some point after the interaction
 ```
@@ -1001,15 +1005,15 @@ import Walletsdk
 // Setup
 let memKMSStore = LocalkmsNewMemKMSStore()
 
-var newKMSError: NSError?
+var newKMSError: NSError? //Be sure to actually check this error in real code
 let kms = LocalkmsNewKMS(memKMSStore, &newKMSError)
 
 let didResolver = DidNewResolver(nil)
 
-var newDIDCreatorError: NSError?
-let didCreator = DidNewCreator(kms, &newDIDCreatorError)
+let jwk = try kms.create(LocalkmsKeyTypeED25519)
 
-let didDocResolution = didCreator.create("key", nil) // Create a did:key doc with default options
+var didKeyCreateError: NSError? //Be sure to actually check this error in real code
+let didDocument = DidkeyCreate(jwk, &didKeyCreateError)// Create a did:key document
 
 let activityLogger = MemNewActivityLogger()
 
@@ -1041,7 +1045,7 @@ let authorizationLink = interaction.createAuthorizationURL("clientID", redirectU
 // createAuthorizationURL() call like in this example since control has to flow back to the user first.
 let redirectURIWithParams = "Put the redirect URI with params here"
 
-let credentials = interaction.requestCredential(vm: didDocResolution.assertionMethod(), redirectURIWithParams: redirectURIWithParams, opts: nil)
+let credentials = interaction.requestCredential(vm: didDocument.assertionMethod(), redirectURIWithParams: redirectURIWithParams, opts: nil)
 
 // Consider checking the activity log at some point after the interaction
 ```
@@ -1406,8 +1410,6 @@ They use in-memory key storage and the Tink crypto library.
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.localkms.MemKMSStore
 import dev.trustbloc.wallet.sdk.did.Resolver
-import dev.trustbloc.wallet.sdk.did.Creator
-import dev.trustbloc.wallet.sdk.localkms
 import dev.trustbloc.wallet.sdk.openid4vp.*
 import dev.trustbloc.wallet.sdk.credential.*
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
