@@ -153,7 +153,7 @@ jobs:
           tags: |
             ghcr.io/trustbloc/wallet-demo-app:${{ env.NEW_VERSION }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CR_PAT }}
 
   PublishIosSDKRelease:
     needs: [ PublishAndroidSDKRelease, PublishJSSDKRelease ]
