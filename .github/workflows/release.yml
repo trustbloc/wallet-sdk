@@ -130,7 +130,7 @@ jobs:
         run: |
           echo $PATH
           echo ${{ github.workspace }}
-          echo '//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}' > ~/.npmrc
+          echo '//npm.pkg.github.com/:_authToken=${{ secrets.CR_PAT }}' > ~/.npmrc
           echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
           echo '@trustbloc:registry=https://npm.pkg.github.com' >> ~/.npmrc
       - name: Install dependencies
