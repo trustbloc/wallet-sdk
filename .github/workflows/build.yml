@@ -231,8 +231,6 @@ jobs:
           colima start
           export PATH=$PATH:$GOPATH/bin
           echo $PATH
-          go install golang.org/x/mobile/cmd/gomobile@latest
-          gomobile init
           make prepare-integration-test-flutter
       - uses: actions/setup-java@v3
         with:
