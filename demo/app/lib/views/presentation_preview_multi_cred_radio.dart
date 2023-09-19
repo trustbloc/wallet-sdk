@@ -1,3 +1,9 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 import 'package:app/views/credential_shared.dart';
 import 'package:app/views/dashboard.dart';
 import 'package:cached_network_image/cached_network_image.dart';

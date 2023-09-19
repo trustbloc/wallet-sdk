@@ -1,3 +1,9 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package dev.trustbloc.wallet
 
 import dev.trustbloc.wallet.sdk.api.Api
