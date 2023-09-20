@@ -1,9 +1,8 @@
-//
-//  OpenID4VP.swift
-//  Runner
-//
-//  Created by Volodymyr Kubiv on 29.11.2022.
-//
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
 
 import Foundation
 import Walletsdk

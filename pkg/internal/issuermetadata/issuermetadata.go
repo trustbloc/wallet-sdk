@@ -1,5 +1,5 @@
 /*
-Copyright Avast Software. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -26,6 +26,7 @@ type httpClient interface {
 
 // Get gets an issuer's metadata by doing a lookup on its OpenID configuration endpoint.
 // issuerURI is expected to be the base URL for the issuer.
+// Test.
 func Get(issuerURI string, httpClient httpClient, metricsLogger api.MetricsLogger, parentEvent string,
 ) (*issuer.Metadata, error) {
 	if metricsLogger == nil {

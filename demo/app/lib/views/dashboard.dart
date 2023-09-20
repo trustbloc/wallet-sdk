@@ -1,3 +1,9 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 import 'package:app/views/credential_list.dart';
 import 'package:app/views/wallet_initiated_connect.dart';
 import 'package:app/views/settings.dart';

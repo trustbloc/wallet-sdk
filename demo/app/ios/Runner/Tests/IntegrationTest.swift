@@ -1,9 +1,8 @@
-//
-//  IntegrationTest.swift
-//  WalletTests
-//
-//  Created by Volodymyr Kubiv on 06.03.2023.
-//
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
 
 import XCTest
 import Walletsdk

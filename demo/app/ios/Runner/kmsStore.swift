@@ -1,9 +1,8 @@
-//
-//  kmsStore.swift
-//  Runner
-//
-//  Created by Avast.Inc on 2022-10-24.
-//
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
 
 import UIKit
 import Walletsdk
