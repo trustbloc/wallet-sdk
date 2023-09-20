@@ -1,9 +1,8 @@
-//
-//  toFlutterTypes.swift
-//  Runner
-//
-//  Created by Volodymyr Kubiv on 28.02.2023.
-//
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
 
 import Foundation
 import Walletsdk

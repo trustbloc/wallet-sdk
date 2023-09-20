@@ -1,3 +1,9 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package walletsdk.flutter.converters
 
 import dev.trustbloc.wallet.sdk.credential.InputDescriptor

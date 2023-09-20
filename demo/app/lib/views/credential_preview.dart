@@ -1,3 +1,9 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 import 'package:app/main.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/views/credential_added.dart';

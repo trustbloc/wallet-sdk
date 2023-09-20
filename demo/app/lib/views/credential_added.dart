@@ -1,3 +1,9 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 import 'package:app/models/credential_data.dart';
 import 'package:flutter/material.dart';
 import 'package:app/widgets/common_title_appbar.dart';

@@ -1,3 +1,9 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 import 'dart:convert';
 import 'package:app/widgets/credential_metadata_card.dart';
 import 'package:app/widgets/credential_verified_information_view.dart';

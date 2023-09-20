@@ -1,9 +1,8 @@
-//
-//  LocalActivityLogger.swift
-//  Runner
-//
-//  Created by Talwinder Kaur on 2023-02-06.
-//
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
 
 import Foundation
 import Walletsdk

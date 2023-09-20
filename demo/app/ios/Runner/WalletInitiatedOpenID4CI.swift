@@ -1,8 +1,8 @@
-//
-//  WalletInitiatedOpenID4CI.swift
-//  Runner
-// Copyright Gen Digital Inc. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
 
 import Foundation
 import Walletsdk

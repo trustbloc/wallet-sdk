@@ -1,4 +1,9 @@
-import 'dart:convert';
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 import 'dart:developer';
 
 import 'package:app/models/activity_data_object.dart';
