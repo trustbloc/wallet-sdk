@@ -55,6 +55,6 @@ const (
 	UnsupportedCredentialFormatErrorCode     = 16
 	UnsupportedCredentialTypeErrorCode       = 17
 	InvalidOrMissingProofErrorCode           = 18
-	UnsupportedIssuanceURISchemeCode
-	NoTokenEndpointAvailableErrorCode = 19
+	UnsupportedIssuanceURISchemeCode         = 19
+	NoTokenEndpointAvailableErrorCode        = 20
 )

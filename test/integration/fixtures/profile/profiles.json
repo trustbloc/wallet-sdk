@@ -409,7 +409,8 @@
             "none"
           ],
           "enable_dynamic_client_registration": true,
-          "pre-authorized_grant_anonymous_access_supported": true
+          "pre-authorized_grant_anonymous_access_supported": true,
+          "signed_issuer_metadata_supported": true
         },
         "credentialTemplates": [
           {

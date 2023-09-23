@@ -10,6 +10,9 @@ package display
 import (
 	"errors"
 
+	"github.com/trustbloc/vc-go/jwt"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
+
 	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
@@ -69,6 +72,17 @@ func generateGoAPIOpts(vcs *verifiable.CredentialsArray, issuerURI string,
 
 	if opts.maskingString != nil {
 		goAPIOpt := goapicredentialschema.WithMaskingString(*opts.maskingString)
+
+		goAPIOpts = append(goAPIOpts, goAPIOpt)
+	}
+
+	if opts.didResolver != nil {
+		jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
+			common.NewVDRKeyResolver(&wrapper.VDRResolverWrapper{
+				DIDResolver: opts.didResolver,
+			}).PublicKeyFetcher()))
+
+		goAPIOpt := goapicredentialschema.WithJWTSignatureVerifier(jwtVerifier)
 
 		goAPIOpts = append(goAPIOpts, goAPIOpt)
 	}

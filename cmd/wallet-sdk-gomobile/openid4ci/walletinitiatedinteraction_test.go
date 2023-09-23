@@ -149,6 +149,36 @@ func TestWalletInitiatedInteraction_RequestCredential_Failure(t *testing.T) {
 	require.Nil(t, credentials)
 }
 
+func TestWalletInitiatedInteraction_VerifyIssuer(t *testing.T) {
+	t.Run("Metadata not signed", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t:              t,
+			issuerMetadata: "{}",
+		}
+		server := httptest.NewServer(issuerServerHandler)
+
+		defer server.Close()
+
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		resolver := &mockResolver{keyWriter: kms}
+
+		requiredArgs := openid4ci.NewWalletInitiatedInteractionArgs(server.URL, kms.GetCrypto(), resolver)
+
+		opts := openid4ci.NewInteractionOpts()
+		opts.DisableVCProofChecks()
+
+		interaction, err := openid4ci.NewWalletInitiatedInteraction(requiredArgs, opts)
+		require.NoError(t, err)
+		require.NotNil(t, interaction)
+
+		serviceURL, err := interaction.VerifyIssuer()
+		requireErrorContains(t, err, "issuer's metadata is not signed")
+		require.Empty(t, serviceURL)
+	})
+}
+
 func getStateFromAuthURL(t *testing.T, authURL string) string {
 	t.Helper()
 

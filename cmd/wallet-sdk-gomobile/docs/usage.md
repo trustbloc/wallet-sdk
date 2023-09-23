@@ -736,6 +736,12 @@ You may want to save the issuer URI somewhere so that you can get/refresh displa
 This method isn't required on the `WalletInitiatedInteraction` since the caller already has the issuer URI to
 begin with.
 
+### Verifying the Issuer
+
+At any point during an interaction flow, you can call `verifyIssuer()` on your interaction object. This will return a
+service URL if the issuer was verified. An error means that either the issuer failed the verification check, or
+something went wrong during the process (and so a verification status could not be determined).
+
 ### Examples
 
 The following examples show how to use the APIs to go through the OpenID4CI flow using the iOS and Android bindings.
@@ -1058,7 +1064,7 @@ let credentials = interaction.requestCredential(vm: didDocument.assertionMethod(
 |--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | INVALID_ISSUANCE_URI(OCI0-0000)            | The issuance URI used to initiate the OpenID4CI flow isn't a valid URL.<br/><br/>The issuance URI doesn't specify a credential offer.                                                                                            |
 | INVALID_CREDENTIAL_OFFER(OCI0-0001)        | The credential offer object is malformed.<br/><br/>The issuance URI specified an endpoint for retrieving the credential offer, but there was an error during the GET call. The server may be down or have a configuration issue. |
-| UNSUPPORTED_ISSUANCE_URI_SCHEME(OCI0-0018) | The issuance URI used to initiate the OpenID4CI flow uses an unsupported scheme. Wallet-SDK only supports the "openid-credential-offer" scheme.                                                                                  |
+| UNSUPPORTED_ISSUANCE_URI_SCHEME(OCI0-0019) | The issuance URI used to initiate the OpenID4CI flow uses an unsupported scheme. Wallet-SDK only supports the "openid-credential-offer" scheme.                                                                                  |
 
 ##### Requesting Credential
 
@@ -1087,7 +1093,8 @@ To get display data, call the `resolveDisplay` function with your VCs and the is
 calling the `issuerURI` method on an OpenID4CI interaction object after it's been instantiated. It's a good idea to
 store the issuer URI somewhere in persistent storage after going through the OpenID4CI flow. This way, you can call the
 `resolveDisplay` function later if/when you need to refresh your display data based on the latest display information
-from the issuer. See [Resolve Display](#resolve-display) for more information.
+from the issuer. Note that if the issuer uses signed metadata, then you'll need to also pass a DID resolver into
+the `resolveDisplay` function. See the [Options](#options) section for more information.
 
 Display data objects can be serialized using the `serialize()` method (useful for storage) and parsed from serialized
 form back into display data objects using the `parseDisplayData()` function.
@@ -1096,6 +1103,11 @@ form back into display data objects using the `parseDisplayData()` function.
 
 The `resolveDisplay` function has a number of different options available. For a full list of available options, check
 the associated `Opts` object. This section will highlight some especially notable ones:
+
+### Set DID Resolver
+
+If the issuer makes use of signed issuer metadata, then you'll need to pass in a DID resolver using the 
+`setDIDResolver(didResolver)` option. Otherwise, the`resolveDisplay` call will fail.
 
 ### Set Masking String
 

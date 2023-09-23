@@ -20,6 +20,7 @@ type Opts struct {
 	httpTimeout                      *time.Duration
 	disableHTTPClientTLSVerification bool
 	maskingString                    *string
+	didResolver                      api.DIDResolver
 }
 
 // NewOpts returns a new Opts object.
@@ -96,6 +97,14 @@ func (o *Opts) DisableHTTPClientTLSVerify() *Opts {
 // If this option isn't used, then by default "•" characters (without the quotes) will be used for masking.
 func (o *Opts) SetMaskingString(maskingString string) *Opts {
 	o.maskingString = &maskingString
+
+	return o
+}
+
+// SetDIDResolver sets a DID resolver to be used. If the issuer metadata is signed, then a DID resolver must be
+// provided so that the issuer metadata's signature can be verified.
+func (o *Opts) SetDIDResolver(didResolver api.DIDResolver) *Opts {
+	o.didResolver = didResolver
 
 	return o
 }

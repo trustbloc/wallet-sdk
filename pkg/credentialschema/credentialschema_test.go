@@ -13,6 +13,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/trustbloc/kms-go/doc/jose"
+
 	"github.com/trustbloc/wallet-sdk/pkg/memstorage"
 
 	"github.com/stretchr/testify/require"
@@ -127,7 +129,8 @@ func TestResolve(t *testing.T) { //nolint: gocognit // Test file
 				resolvedDisplayData, errResolve := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 					credentialschema.WithHTTPClient(http.DefaultClient),
-					credentialschema.WithIssuerURI(server.URL))
+					credentialschema.WithIssuerURI(server.URL),
+					credentialschema.WithJWTSignatureVerifier(&mockSignatureVerifier{}))
 				require.NoError(t, errResolve)
 
 				checkSuccessCaseMatchedDisplayData(t, resolvedDisplayData)
@@ -447,7 +450,7 @@ func TestResolve(t *testing.T) { //nolint: gocognit // Test file
 		err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
 		require.NoError(t, err)
 
-		issuerMetadata.CredentialsSupported[0].CredentialSubject["sensitive_id"] = issuer.Claim{
+		issuerMetadata.CredentialsSupported[0].CredentialSubject["sensitive_id"] = &issuer.Claim{
 			LocalizedClaimDisplays: []issuer.LocalizedClaimDisplay{{}},
 			Mask:                   "regex(()",
 		}
@@ -639,4 +642,10 @@ func ordersMatch(order1, order2 *int) bool {
 	}
 
 	return true
+}
+
+type mockSignatureVerifier struct{}
+
+func (*mockSignatureVerifier) Verify(jose.Headers, []byte, []byte, []byte) error {
+	return nil
 }

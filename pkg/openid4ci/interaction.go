@@ -18,7 +18,14 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
+
+	"github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
+
+	diddoc "github.com/trustbloc/did-go/doc/did"
+	"github.com/trustbloc/vc-go/jwt"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 
 	"github.com/google/uuid"
 	"github.com/piprate/json-gold/ld"
@@ -309,7 +316,10 @@ func (i *interaction) getOpenIDConfig() (*OpenIDConfig, error) {
 // before, then this method does nothing in order to avoid making an unnecessary GET call.
 func (i *interaction) populateIssuerMetadata(parentEvent string) error {
 	if i.issuerMetadata == nil {
-		issuerMetadata, err := metadatafetcher.Get(i.issuerURI, i.httpClient, i.metricsLogger, parentEvent)
+		jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
+			common.NewVDRKeyResolver(&resolverAdapter{didResolver: i.didResolver}).PublicKeyFetcher()))
+
+		issuerMetadata, err := metadatafetcher.Get(i.issuerURI, i.httpClient, i.metricsLogger, parentEvent, jwtVerifier)
 		if err != nil {
 			return walleterror.NewExecutionError(
 				ErrorModule,
@@ -623,4 +633,39 @@ func processCredentialErrorResponse(statusCode int, respBytes []byte) error {
 			OtherCredentialRequestError,
 			detailedErr)
 	}
+}
+
+func (i *interaction) verifyIssuer() (string, error) {
+	err := i.populateIssuerMetadata("Verify issuer")
+	if err != nil {
+		return "", err
+	}
+
+	jwtKID := i.issuerMetadata.GetJWTKID()
+
+	if jwtKID == nil {
+		return "", errors.New("issuer's metadata is not signed")
+	}
+
+	jwtKIDSplit := strings.Split(*jwtKID, "#")
+
+	did := jwtKIDSplit[0]
+
+	// The first return parameter (a bool) is redundant with the error return. It's always false if there's an error
+	// and always true if there was no error. Thus, it provides no additional information and can be ignored.
+	_, serviceURL, err := wellknown.ValidateLinkedDomains(did, &resolverAdapter{didResolver: i.didResolver},
+		i.httpClient)
+	if err != nil {
+		return "", err
+	}
+
+	return serviceURL, nil
+}
+
+type resolverAdapter struct {
+	didResolver *didResolverWrapper
+}
+
+func (r *resolverAdapter) Resolve(did string) (*diddoc.DocResolution, error) {
+	return r.didResolver.Resolve(did)
 }

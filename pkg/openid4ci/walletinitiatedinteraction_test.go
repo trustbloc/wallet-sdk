@@ -144,7 +144,29 @@ func TestWalletInitiatedInteraction_IssuerMetadata(t *testing.T) {
 
 		issuerMetadata, err := interaction.IssuerMetadata()
 		require.EqualError(t, err, "METADATA_FETCH_FAILED(OCI1-0004):failed to get issuer metadata: "+
-			`openid configuration endpoint: Get "/.well-known/openid-credential-issuer": unsupported protocol scheme ""`)
+			"failed to get response from the issuer's metadata endpoint: "+
+			`Get "/.well-known/openid-credential-issuer": unsupported protocol scheme ""`)
 		require.Nil(t, issuerMetadata)
+	})
+}
+
+func TestWalletInitiatedInteraction_VerifyIssuer(t *testing.T) {
+	t.Run("", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t:              t,
+			issuerMetadata: "{}",
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		config := getTestClientConfig(t)
+
+		interaction, err := openid4ci.NewWalletInitiatedInteraction(server.URL, config)
+		require.NoError(t, err)
+
+		serviceURL, err := interaction.VerifyIssuer()
+		require.EqualError(t, err, "issuer's metadata is not signed")
+		require.Empty(t, serviceURL)
 	})
 }
