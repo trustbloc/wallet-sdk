@@ -1027,7 +1027,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			}, openid4ci.WithPIN("1234"))
 			require.EqualError(t, err, "CREDENTIAL_PARSE_FAILED(OCI1-0007):failed to parse credential from "+
 				"credential response at index 0: "+
-				"decode new JWT credential: JWS decoding: unmarshal VC JWT claims: parse JWT: "+
+				"JWS proof check: unmarshal VC JWT claims: parse JWT: "+
 				"parse JWT from compact JWS: public key with KID d3cfd36b-4f75-4041-b416-f0a7a3c6b9f6 is not "+
 				"found for DID did:orb:uAAA:EiDpzs0hy0q0If4ZfJA1kxBQd9ed6FoBFhhqDWSiBeKaIg")
 			require.Nil(t, credentials)

@@ -456,10 +456,10 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 	t.Run("no subject ID found", func(t *testing.T) {
 		testCases := []struct {
-			vc []*verifiable.Credential
+			vc []verifiable.CredentialContents
 		}{
 			{
-				vc: []*verifiable.Credential{
+				vc: []verifiable.CredentialContents{
 					{
 						ID:      "foo",
 						Context: []string{verifiable.ContextURI},
@@ -468,7 +468,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 				},
 			},
 			{
-				vc: []*verifiable.Credential{
+				vc: []verifiable.CredentialContents{
 					{
 						ID:      "foo",
 						Context: []string{verifiable.ContextURI},
@@ -485,8 +485,15 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 		for _, testCase := range testCases {
 			t.Run("", func(t *testing.T) {
+				var vcs []*verifiable.Credential
+				for _, vcc := range testCase.vc {
+					vc, err := verifiable.CreateCredential(vcc, nil)
+					require.NoError(t, err)
+					vcs = append(vcs, vc)
+				}
+
 				_, err := createAuthorizedResponse(
-					testCase.vc,
+					vcs,
 					mockRequestObject,
 					&didResolverMock{ResolveValue: mockDoc},
 					&cryptoMock{},

@@ -63,7 +63,7 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 			// In case the issuer's metadata doesn't contain display info for this type of credential for some
 			// reason, we build up a default/generic type of credential display based only on information in the VC.
 			// It'll be functional, but won't be pretty.
-			credentialDisplay := buildDefaultCredentialDisplay(vc.ID, subject)
+			credentialDisplay := buildDefaultCredentialDisplay(vc.Contents().ID, subject)
 
 			credentialDisplays = append(credentialDisplays, *credentialDisplay)
 		}
@@ -75,7 +75,7 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 // The VC is considered to be a match for the supportedCredential if the VC has at least one type that's the same as
 // the type specified by the supportCredential (excluding the "VerifiableCredential" type that all VCs have).
 func haveMatchingTypes(supportedCredential *issuer.SupportedCredential, vc *verifiable.Credential) bool {
-	for _, typeFromVC := range vc.Types {
+	for _, typeFromVC := range vc.Contents().Types {
 		// We expect the types in the VC and SupportedCredential to always include VerifiableCredential,
 		// so we skip this case.
 		if strings.EqualFold(typeFromVC, "VerifiableCredential") {
@@ -133,10 +133,7 @@ func buildDefaultCredentialDisplay(vcID string, subject *verifiable.Subject) *Cr
 }
 
 func getSubject(vc *verifiable.Credential) (*verifiable.Subject, error) {
-	credentialSubjects, ok := vc.Subject.([]verifiable.Subject)
-	if !ok {
-		return nil, errors.New("unsupported vc subject type")
-	}
+	credentialSubjects := vc.Contents().Subject
 
 	if len(credentialSubjects) != 1 {
 		return nil, errors.New("only VCs with one credential subject are supported")

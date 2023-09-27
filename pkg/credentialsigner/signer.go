@@ -71,7 +71,8 @@ func (s *Signer) Issue(credential *verifiable.Credential, proofOptions *ProofOpt
 	}
 }
 
-func (s *Signer) issueJWTVC(vc *verifiable.Credential, proofOptions *ProofOptions) (*verifiable.Credential, error) {
+func (s *Signer) issueJWTVC(unsignedVC *verifiable.Credential, proofOptions *ProofOptions,
+) (*verifiable.Credential, error) {
 	docVM, fullKID, err := didsignjwt.ResolveSigningVM(proofOptions.KeyID, &didResolverWrapper{didResolver: s.didResolver})
 	if err != nil {
 		return nil, fmt.Errorf("resolving verification method for signing key: %w", err)
@@ -84,11 +85,6 @@ func (s *Signer) issueJWTVC(vc *verifiable.Credential, proofOptions *ProofOption
 		return nil, fmt.Errorf("initializing jwt signer: %w", err)
 	}
 
-	claims, err := vc.JWTClaims(false)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate JWT claims for VC: %w", err)
-	}
-
 	alg, hasAlg := jwtSigner.Headers().Algorithm()
 	if !hasAlg {
 		return nil, fmt.Errorf("signer missing algorithm header")
@@ -99,12 +95,10 @@ func (s *Signer) issueJWTVC(vc *verifiable.Credential, proofOptions *ProofOption
 		return nil, err
 	}
 
-	jws, err := claims.MarshalJWS(vcAlg, &signerWrapper{jwtSigner}, fullKID)
+	vc, err := unsignedVC.CreateSignedJWTVC(false, vcAlg, &signerWrapper{jwtSigner}, fullKID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to sign JWT VC: %w", err)
+		return nil, fmt.Errorf("failed to create JWT VC: %w", err)
 	}
-
-	vc.JWT = jws
 
 	return vc, nil
 }

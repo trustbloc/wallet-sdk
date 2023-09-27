@@ -54,7 +54,7 @@ func (p *Provider) Add(vc *verifiable.Credential) error {
 		return errors.New("VC cannot be nil")
 	}
 
-	p.credentialStore[vc.ID] = *vc
+	p.credentialStore[vc.Contents().ID] = *vc
 
 	return nil
 }

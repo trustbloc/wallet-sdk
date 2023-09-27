@@ -342,10 +342,7 @@ func (i *interaction) requestCredentialWithAuth(jwtSigner api.JWTSigner, credent
 			CredentialParseError, err)
 	}
 
-	subjectIDs, err := getSubjectIDs(vcs)
-	if err != nil {
-		return nil, err
-	}
+	subjectIDs := getSubjectIDs(vcs)
 
 	err = i.metricsLogger.Log(&api.MetricsEvent{
 		Event:    requestCredentialEventText,
