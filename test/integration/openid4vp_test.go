@@ -222,7 +222,8 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		if tc.matchedDisplayData != nil {
 			vc := matchedVCs.AtIndex(0)
 			issuer := issuersInfo[vc.ID()]
-			helpers.ResolveDisplayData(t, toCredArray(vc), tc.matchedDisplayData, issuer.IssuerURI, issuer.ProfileID)
+			helpers.ResolveDisplayData(t, toCredArray(vc), tc.matchedDisplayData, issuer.IssuerURI, issuer.ProfileID,
+				didResolver)
 		}
 
 		selectedCreds := verifiable.NewCredentialsArray()

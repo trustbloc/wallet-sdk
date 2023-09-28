@@ -10,6 +10,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/trustbloc/kms-go/doc/jose"
+
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -52,6 +54,7 @@ type resolveOpts struct {
 	metricsLogger        api.MetricsLogger
 	httpClient           httpClient
 	maskingString        *string
+	signatureVerifier    jose.SignatureVerifier
 }
 
 // ResolveOpt represents an option for the Resolve function.
@@ -150,6 +153,15 @@ func WithMaskingString(maskingString string) ResolveOpt {
 	}
 }
 
+// WithJWTSignatureVerifier is an option that allows a caller to pass in a signature verifier. If the issuer metadata is
+// retrieved from the issuer via an issuerURI, and it's signed, then a signature verifier must be provided so that
+// the issuer metadata's signature can be verified.
+func WithJWTSignatureVerifier(signatureVerifier jose.SignatureVerifier) ResolveOpt {
+	return func(opts *resolveOpts) {
+		opts.signatureVerifier = signatureVerifier
+	}
+}
+
 func processOpts(opts []ResolveOpt) ([]*verifiable.Credential, *issuer.Metadata, string, *string, error) {
 	mergedOpts := mergeOpts(opts)
 
@@ -222,7 +234,8 @@ func processValidatedOpts(opts *resolveOpts) ([]*verifiable.Credential, *issuer.
 		opts.httpClient = &http.Client{Timeout: api.DefaultHTTPTimeout}
 	}
 
-	issuerMetadata, err := processIssuerMetadataOpts(&opts.issuerMetadataSource, opts.httpClient, metricsLogger)
+	issuerMetadata, err := processIssuerMetadataOpts(&opts.issuerMetadataSource, opts.httpClient, metricsLogger,
+		opts.signatureVerifier)
 	if err != nil {
 		return nil, nil, "", nil, err
 	}
@@ -250,14 +263,14 @@ func processVCOpts(credentialSource *credentialSource) ([]*verifiable.Credential
 }
 
 func processIssuerMetadataOpts(issuerMetadataSource *issuerMetadataSource, httpClient httpClient,
-	metricsLogger api.MetricsLogger,
+	metricsLogger api.MetricsLogger, signatureVerifier jose.SignatureVerifier,
 ) (*issuer.Metadata, error) {
 	if issuerMetadataSource.metadata != nil {
 		return issuerMetadataSource.metadata, nil
 	}
 
 	metadata, err := metadatafetcher.Get(issuerMetadataSource.issuerURI,
-		httpClient, metricsLogger, "Resolve display")
+		httpClient, metricsLogger, "Resolve display", signatureVerifier)
 	if err != nil {
 		return nil, err
 	}

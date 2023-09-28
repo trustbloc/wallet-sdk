@@ -17,6 +17,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
+
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/did-go/doc/did"
 	"github.com/trustbloc/kms-go/doc/jose"
@@ -41,6 +43,9 @@ var (
 
 	//go:embed testdata/sample_credential_response.json
 	sampleCredentialResponse []byte
+
+	//go:embed testdata/sample_signed_issuer_metadata.jwt
+	sampleSignedIssuerMetadata string
 )
 
 type mockIssuerServerHandler struct {
@@ -388,8 +393,9 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 		interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, "example.com", true, true))
 
 		authorizationURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
-		require.EqualError(t, err, "METADATA_FETCH_FAILED(OCI1-0004):failed to get issuer metadata: openid "+
-			`configuration endpoint: Get "example.com/.well-known/openid-credential-issuer": unsupported protocol scheme ""`)
+		require.EqualError(t, err, "METADATA_FETCH_FAILED(OCI1-0004):failed to get issuer metadata: "+
+			"failed to get response from the issuer's metadata endpoint: "+
+			`Get "example.com/.well-known/openid-credential-issuer": unsupported protocol scheme ""`)
 		require.Empty(t, authorizationURL)
 	})
 }
@@ -527,7 +533,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				keyID: mockKeyID,
 			}, openid4ci.WithPIN("1234"))
 			require.EqualError(t, err, "failed to get credential response: "+
-				"NO_TOKEN_ENDPOINT_AVAILABLE(OCI1-0019):no token endpoint available. Neither the OpenID "+
+				"NO_TOKEN_ENDPOINT_AVAILABLE(OCI1-0020):no token endpoint available. Neither the OpenID "+
 				"configuration nor the issuer's metadata specify one")
 			require.Nil(t, credentials)
 		})
@@ -1111,7 +1117,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				keyID: mockKeyID,
 			}, openid4ci.WithPIN("1234"))
 			require.Contains(t, err.Error(), "METADATA_FETCH_FAILED(OCI1-0004):failed to get issuer metadata: "+
-				"openid configuration endpoint: "+
+				"failed to get response from the issuer's metadata endpoint: "+
 				"failed to log event (Event=Fetch issuer metadata via an HTTP GET request to http://127.0.0.1:")
 			require.Nil(t, credentials)
 		})
@@ -1403,7 +1409,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithAuth(&jwtSignerMock{
 				keyID: mockKeyID,
 			}, redirectURIWithParams)
-			require.EqualError(t, err, "NO_TOKEN_ENDPOINT_AVAILABLE(OCI1-0019):no token endpoint available. "+
+			require.EqualError(t, err, "NO_TOKEN_ENDPOINT_AVAILABLE(OCI1-0020):no token endpoint available. "+
 				"An OpenID configuration couldn't be fetched, and the issuer's metadata doesn't specify a token "+
 				"endpoint. OpenID configuration fetch error: openid configuration endpoint: expected status code 200 "+
 				"but got status code 500 with response body test failure instead")
@@ -1590,13 +1596,73 @@ func TestIssuerInitiatedInteraction_DynamicClientRegistration(t *testing.T) {
 	})
 }
 
-func TestIssuerInitiatedInteraction_Issuer_URI(t *testing.T) {
+func TestIssuerInitiatedInteraction_IssuerURI(t *testing.T) {
 	testIssuerURI := "https://example.com"
 	requestURI := createCredentialOfferIssuanceURI(t, testIssuerURI, false, true)
 
 	interaction := newIssuerInitiatedInteraction(t, requestURI)
 
 	require.Equal(t, testIssuerURI, interaction.IssuerURI())
+}
+
+func TestIssuerInitiatedInteraction_VerifyIssuer(t *testing.T) {
+	t.Run("Failed to get issuer metadata", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t: t,
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false, true))
+
+		serviceURL, err := interaction.VerifyIssuer()
+		require.EqualError(t, err, "METADATA_FETCH_FAILED(OCI1-0004):failed to get issuer metadata: "+
+			"failed to parse the response from the issuer's OpenID Credential Issuer endpoint as JSON or "+
+			"as a JWT: unexpected end of JSON input\nJWT of compacted JWS form is supported only")
+		require.Empty(t, serviceURL)
+	})
+	t.Run("Resolved DID document has no Linked Domains services specified", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t:              t,
+			issuerMetadata: sampleSignedIssuerMetadata,
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		config := getTestClientConfig(t)
+
+		didResolver, err := resolver.NewDIDResolver()
+		require.NoError(t, err)
+
+		config.DIDResolver = didResolver
+
+		credentialOfferIssuanceURI := createCredentialOfferIssuanceURI(t, server.URL, false, true)
+
+		interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, config)
+		require.NoError(t, err)
+		require.NotNil(t, interaction)
+
+		serviceURL, err := interaction.VerifyIssuer()
+		require.EqualError(t, err, "resolved DID document has no Linked Domains services specified")
+		require.Empty(t, serviceURL)
+	})
+	t.Run("Metadata not signed", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t:              t,
+			issuerMetadata: "{}",
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false, true))
+
+		serviceURL, err := interaction.VerifyIssuer()
+		require.EqualError(t, err, "issuer's metadata is not signed")
+		require.Empty(t, serviceURL)
+	})
 }
 
 func newIssuerInitiatedInteraction(t *testing.T, requestURI string) *openid4ci.IssuerInitiatedInteraction {

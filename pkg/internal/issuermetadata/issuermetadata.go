@@ -9,8 +9,13 @@ package issuermetadata
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/trustbloc/vc-go/jwt"
+
+	"github.com/trustbloc/kms-go/doc/jose"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
@@ -27,6 +32,7 @@ type httpClient interface {
 // Get gets an issuer's metadata by doing a lookup on its OpenID configuration endpoint.
 // issuerURI is expected to be the base URL for the issuer.
 func Get(issuerURI string, httpClient httpClient, metricsLogger api.MetricsLogger, parentEvent string,
+	signatureVerifier jose.SignatureVerifier,
 ) (*issuer.Metadata, error) {
 	if metricsLogger == nil {
 		metricsLogger = noop.NewMetricsLogger()
@@ -42,16 +48,74 @@ func Get(issuerURI string, httpClient httpClient, metricsLogger api.MetricsLogge
 		http.MethodGet, metadataEndpoint, "", nil,
 		fmt.Sprintf(fetchIssuerMetadataViaGETReqEventText, metadataEndpoint), parentEvent, nil)
 	if err != nil {
-		return nil, fmt.Errorf("openid configuration endpoint: %w", err)
+		return nil, fmt.Errorf("failed to get response from the issuer's metadata endpoint: %w", err)
 	}
 
+	return responseBytesToIssuerMetadataObject(responseBytes, signatureVerifier)
+}
+
+func responseBytesToIssuerMetadataObject(responseBytes []byte,
+	signatureVerifier jose.SignatureVerifier,
+) (*issuer.Metadata, error) {
+	// The issuer metadata can come in one of two formats - either directly as JSON, or as a JWT.
 	var metadata issuer.Metadata
 
-	err = json.Unmarshal(responseBytes, &metadata)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response from the issuer's "+
-			"OpenID configuration endpoint: %w", err)
+	// First, try parsing directly as JSON.
+	err := json.Unmarshal(responseBytes, &metadata)
+	if err == nil {
+		return &metadata, nil
 	}
 
-	return &metadata, err
+	return issuerMetadataObjectFromJWT(responseBytes, signatureVerifier, err)
+}
+
+// errUnmarshal is the error that happened when the response bytes couldn't be unmarshalled into the issuer metadata
+// struct directly. It's passed here so that it can be included in the error message in case the response
+// is also not a JWT. This gives the caller additional information that can help them to more easily debug the cause
+// of the parsing failure.
+func issuerMetadataObjectFromJWT(responseBytes []byte, signatureVerifier jose.SignatureVerifier,
+	errUnmarshal error,
+) (*issuer.Metadata, error) {
+	var metadata issuer.Metadata
+
+	// Try to parse it as a JWT.
+	// But first, make sure a signature verifier was passed in. If it wasn't, then the jwt.Parse call below will
+	// panic.
+	if signatureVerifier == nil {
+		return nil, errors.New("missing signature verifier")
+	}
+
+	jsonWebToken, _, errParseJWT := jwt.Parse(string(responseBytes), jwt.WithSignatureVerifier(signatureVerifier))
+	if errParseJWT != nil {
+		return nil, fmt.Errorf("failed to parse the response from the issuer's OpenID Credential Issuer "+
+			"endpoint as JSON or as a JWT: %w", errors.Join(errUnmarshal, errParseJWT))
+	}
+
+	embeddedIssuerMetadata, exists := jsonWebToken.Payload["well_known_openid_issuer_configuration"]
+	if !exists {
+		return nil, errors.New("issuer's OpenID configuration endpoint returned a JWT, but no issuer " +
+			"metadata was detected (well_known_openid_issuer_configuration field is missing)")
+	}
+
+	issuerMetadataJSON, err := json.Marshal(embeddedIssuerMetadata)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal issuer metadata embedded within the "+
+			"JWT into JSON: %w", err)
+	}
+
+	err = json.Unmarshal(issuerMetadataJSON, &metadata)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal the marshalled issuer metadata JSON into an "+
+			"issuer metadata object OpenID configuration endpoint: %w", err)
+	}
+
+	kid, ok := jsonWebToken.Headers.KeyID()
+	if !ok {
+		return nil, errors.New("issuer's OpenID configuration endpoint returned a JWT, but the kid header " +
+			"value is missing or is not a string")
+	}
+
+	metadata.SetJWTKID(kid)
+
+	return &metadata, nil
 }

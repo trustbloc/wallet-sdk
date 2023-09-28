@@ -143,3 +143,10 @@ func (i *WalletInitiatedInteraction) IssuerMetadata() (*issuer.Metadata, error) 
 
 	return i.interaction.issuerMetadata, nil
 }
+
+// VerifyIssuer verifies the issuer via its issuer metadata. If successful, then the service URL is returned.
+// An error means that either the issuer failed the verification check, or something went wrong during the
+// process (and so a verification status could not be determined).
+func (i *WalletInitiatedInteraction) VerifyIssuer() (string, error) {
+	return i.interaction.verifyIssuer()
+}

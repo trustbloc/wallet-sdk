@@ -169,3 +169,15 @@ func (i *WalletInitiatedInteraction) IssuerMetadata() (*IssuerMetadata, error) {
 
 	return &IssuerMetadata{issuerMetadata: goAPIIssuerMetadata}, nil
 }
+
+// VerifyIssuer verifies the issuer via its issuer metadata. If successful, then the service URL is returned.
+// An error means that either the issuer failed the verification check, or something went wrong during the
+// process (and so a verification status could not be determined).
+func (i *WalletInitiatedInteraction) VerifyIssuer() (string, error) {
+	serviceURL, err := i.goAPIInteraction.VerifyIssuer()
+	if err != nil {
+		return "", wrapper.ToMobileErrorWithTrace(err, i.oTel)
+	}
+
+	return serviceURL, nil
+}

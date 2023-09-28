@@ -134,13 +134,13 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			walletDIDMethod:     "ion",
 			claimData:           universityDegreeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeIssuer),
-			expectedIssuerURI:   "http://localhost:8075/issuer/university_degree_issuer_bbs/v1.0",
+			expectedIssuerURI:   "http://localhost:8075/oidc/idp/university_degree_issuer_bbs/v1.0",
 		},
 		{
 			issuerProfileID:     "bank_issuer_jwtsd",
 			issuerDIDMethod:     "ion",
 			walletDIDMethod:     "jwk",
-			expectedIssuerURI:   "http://localhost:8075/issuer/bank_issuer_jwtsd/v1.0",
+			expectedIssuerURI:   "http://localhost:8075/oidc/idp/bank_issuer_jwtsd/v1.0",
 			claimData:           verifiableEmployeeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataBankIssuer),
 			walletKeyType:       localkms.KeyTypeP384,
@@ -151,7 +151,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			walletDIDMethod:     "ion",
 			claimData:           verifiableEmployeeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataBankIssuer),
-			expectedIssuerURI:   "http://localhost:8075/issuer/bank_issuer/v1.0",
+			expectedIssuerURI:   "http://localhost:8075/oidc/idp/bank_issuer/v1.0",
 		},
 		{
 			issuerProfileID:     "did_ion_issuer",
@@ -159,7 +159,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			walletDIDMethod:     "key",
 			claimData:           verifiableEmployeeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataDIDION),
-			expectedIssuerURI:   "http://localhost:8075/issuer/did_ion_issuer/v1.0",
+			expectedIssuerURI:   "http://localhost:8075/oidc/idp/did_ion_issuer/v1.0",
 		},
 		{
 			issuerProfileID:     "drivers_license_issuer",
@@ -167,7 +167,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			walletDIDMethod:     "ion",
 			claimData:           driverLicenseClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataDriversLicenseIssuer),
-			expectedIssuerURI:   "http://localhost:8075/issuer/drivers_license_issuer/v1.0",
+			expectedIssuerURI:   "http://localhost:8075/oidc/idp/drivers_license_issuer/v1.0",
 		},
 		{
 			issuerProfileID:     "university_degree_issuer",
@@ -175,7 +175,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			walletDIDMethod:     "ion",
 			claimData:           universityDegreeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeIssuer),
-			expectedIssuerURI:   "http://localhost:8075/issuer/university_degree_issuer/v1.0",
+			expectedIssuerURI:   "http://localhost:8075/oidc/idp/university_degree_issuer/v1.0",
 		},
 	}
 
@@ -247,7 +247,8 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		require.NoError(t, err)
 		require.Contains(t, vc.VC.Contents().Issuer.ID, tc.issuerDIDMethod)
 
-		helpers.ResolveDisplayData(t, credentials, tc.expectedDisplayData, interaction.IssuerURI(), tc.issuerProfileID)
+		helpers.ResolveDisplayData(t, credentials, tc.expectedDisplayData, interaction.IssuerURI(), tc.issuerProfileID,
+			didResolver)
 
 		issuerURI := interaction.IssuerURI()
 		require.Equal(t, tc.expectedIssuerURI, issuerURI)

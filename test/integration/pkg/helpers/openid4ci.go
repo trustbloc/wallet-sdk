@@ -260,7 +260,7 @@ func checkInteractionInstantiationMetricsEvent(t *testing.T, metricsEvent *api.M
 }
 
 func checkFetchOpenIDConfigMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent, issuerProfileID string) {
-	expectedEndpoint := fmt.Sprintf("http://localhost:8075/issuer/%s/v1.0/.well-known"+
+	expectedEndpoint := fmt.Sprintf("http://localhost:8075/oidc/idp/%s/v1.0/.well-known"+
 		"/openid-configuration",
 		issuerProfileID)
 
@@ -283,7 +283,7 @@ func checkFetchTokenMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent) {
 func checkFetchIssuerMetadataMetricsEvent(t *testing.T, metricsEvent *api.MetricsEvent, expectedParentEvent,
 	issuerProfileID string,
 ) {
-	expectedEndpoint := fmt.Sprintf("http://localhost:8075/issuer/%s/v1.0/.well-known"+
+	expectedEndpoint := fmt.Sprintf("http://localhost:8075/oidc/idp/%s/v1.0/.well-known"+
 		"/openid-credential-issuer",
 		issuerProfileID)
 

@@ -14,66 +14,87 @@
   ],
   "credentials_supported":[
     {
-      "claims":{
-        "id":{
+      "credentialSubject":{
+        "displayName":{
           "display":[
             {
-              "name":"ID",
-              "locale":"en-US"
+              "locale":"en-US",
+              "name":"Employee"
             }
           ],
-          "value_type":"string"
+          "order":3
         },
-        "given_name":{
+        "givenName":{
           "display":[
             {
-              "name":"Given Name",
-              "locale":"en-US"
+              "locale":"en-US",
+              "name":"Given Name"
             }
-          ],
-          "value_type":"string"
+          ]
+        },
+        "jobTitle":{
+          "display":[
+            {
+              "locale":"en-US",
+              "name":"Job Title"
+            }
+          ]
+        },
+        "mail":{
+          "display":[
+            {
+              "locale":"en-US",
+              "name":"Mail"
+            }
+          ]
+        },
+        "photo":{
+          "display":[
+            {
+              "name":"Photo"
+            }
+          ]
+        },
+        "preferredLanguage":{
+          "display":[
+            {
+              "locale":"en-US",
+              "name":"Preferred Language"
+            }
+          ]
         },
         "surname":{
           "display":[
             {
-              "name":"Surname",
-              "locale":"en-US"
+              "locale":"en-US",
+              "name":"Surname"
             }
-          ],
-          "value_type":"string"
-        },
-        "gpa":{
-          "display":[
-            {
-              "name":"GPA",
-              "locale":"en-US"
-            }
-          ],
-          "value_type":"number"
+          ]
         }
       },
       "cryptographic_binding_methods_supported":[
-        "did"
+        "jwk"
       ],
       "cryptographic_suites_supported":[
-        "ES256K"
+        "ECDSAP256DER"
       ],
       "display":[
         {
-          "name":"University Credential",
+          "background_color":"#12107c",
           "locale":"en-US",
           "logo":{
-            "url":"https://exampleuniversity.com/public/logo.png",
-            "alt_text":"a square logo of a university"
+            "alt_text":"a square logo of a employee verification",
+            "url":"https://example.com/public/logo.png"
           },
-          "background_color":"#12107c",
+          "name":"Verified Employee",
           "text_color":"#FFFFFF"
         }
       ],
-      "format":"jwt_vc_json",
+      "format":"ldp_vc",
+      "id":"VerifiedEmployee_LDP",
       "types":[
         "VerifiableCredential",
-        "UniversityDegreeCredential"
+        "VerifiedEmployee"
       ]
     }
   ]

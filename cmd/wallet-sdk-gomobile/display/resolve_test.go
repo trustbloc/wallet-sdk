@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -146,6 +148,17 @@ func TestResolve(t *testing.T) {
 				checkResolvedDisplayData(t, resolvedDisplayData)
 			})
 		})
+		t.Run("With DID resolver", func(t *testing.T) {
+			resolver, err := did.NewResolver(nil)
+			require.NoError(t, err)
+
+			opts := display.NewOpts()
+			opts.SetDIDResolver(resolver)
+
+			resolvedDisplayData, err := display.Resolve(vcs, server.URL, opts)
+			require.NoError(t, err)
+			checkResolvedDisplayData(t, resolvedDisplayData)
+		})
 		t.Run("With additional headers", func(t *testing.T) {
 			additionalHeaders := api.NewHeaders()
 			additionalHeaders.Add(api.NewHeader("header-name-1", "header-value-1"))
@@ -181,7 +194,7 @@ func TestResolve(t *testing.T) {
 
 		resolvedDisplayData, err := display.Resolve(verifiable.NewCredentialsArray(), "badURL", opts)
 		require.EqualError(t, err,
-			"openid configuration endpoint: "+
+			"failed to get response from the issuer's metadata endpoint: "+
 				`Get "badURL/.well-known/openid-credential-issuer": unsupported protocol scheme ""`)
 		require.Nil(t, resolvedDisplayData)
 	})

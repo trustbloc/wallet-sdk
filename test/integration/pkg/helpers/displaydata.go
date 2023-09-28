@@ -12,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/metricslogger"
@@ -25,13 +26,14 @@ func ParseDisplayData(t *testing.T, displayData string) *display.Data {
 }
 
 func ResolveDisplayData(t *testing.T, credentials *verifiable.CredentialsArray, expectedDisplayData *display.Data,
-	issuerURI, issuerProfileID string,
+	issuerURI, issuerProfileID string, didResolver *did.Resolver,
 ) {
 	metricsLogger := metricslogger.NewMetricsLogger()
 
 	opts := display.NewOpts()
 	opts.SetMetricsLogger(metricsLogger)
 	opts.DisableHTTPClientTLSVerify()
+	opts.SetDIDResolver(didResolver)
 
 	displayData, err := display.Resolve(credentials, issuerURI, opts)
 	require.NoError(t, err)

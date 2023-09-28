@@ -148,9 +148,7 @@ func resolveClaims(supportedCredential *issuer.SupportedCredential, credentialSu
 	var resolvedClaims []ResolvedClaim
 
 	for fieldName, claim := range supportedCredential.CredentialSubject {
-		claim := claim // Resolves implicit memory aliasing warning from linter
-
-		resolvedClaim, err := resolveClaim(fieldName, &claim, credentialSubject, preferredLocale, maskingString)
+		resolvedClaim, err := resolveClaim(fieldName, claim, credentialSubject, preferredLocale, maskingString)
 		if err != nil && !errors.Is(err, errNoClaimDisplays) && !errors.Is(err, errClaimValueNotFoundInVC) {
 			return nil, err
 		}
@@ -190,11 +188,22 @@ func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *veri
 		value = &maskedValue
 	}
 
+	var order *int
+
+	if claim.Order != nil {
+		orderAsInt, err := claim.OrderAsInt()
+		if err != nil {
+			return nil, err
+		}
+
+		order = &orderAsInt
+	}
+
 	return &ResolvedClaim{
 		RawID:     fieldName,
 		Label:     label,
 		ValueType: claim.ValueType,
-		Order:     claim.Order,
+		Order:     order,
 		RawValue:  rawValue,
 		Value:     value,
 		Pattern:   claim.Pattern,

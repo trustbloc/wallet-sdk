@@ -244,6 +244,18 @@ func (i *IssuerInitiatedInteraction) IssuerMetadata() (*IssuerMetadata, error) {
 	return &IssuerMetadata{issuerMetadata: goAPIIssuerMetadata}, nil
 }
 
+// VerifyIssuer verifies the issuer via its issuer metadata. If successful, then the service URL is returned.
+// An error means that either the issuer failed the verification check, or something went wrong during the
+// process (and so a verification status could not be determined).
+func (i *IssuerInitiatedInteraction) VerifyIssuer() (string, error) {
+	serviceURL, err := i.goAPIInteraction.VerifyIssuer()
+	if err != nil {
+		return "", wrapper.ToMobileErrorWithTrace(err, i.oTel)
+	}
+
+	return serviceURL, nil
+}
+
 // OTelTraceID returns the OpenTelemetry trace ID.
 // If OpenTelemetry has been disabled, then an empty string is returned.
 func (i *IssuerInitiatedInteraction) OTelTraceID() string {
