@@ -20,11 +20,14 @@ import (
 //go:embed testdata/credential_university_degree.jsonld
 var universityDegreeCredential string
 
+//go:embed testdata/credential_university_degree_without_name.jsonld
+var universityDegreeCredentialWithoutName string
+
 func TestParse(t *testing.T) {
 	t.Run("Success - default options", func(t *testing.T) {
 		universityDegreeVC, err := verifiable.ParseCredential(universityDegreeCredential, nil)
 		require.NoError(t, err)
-		require.Equal(t, "http://example.edu/credentials/1872", universityDegreeVC.VC.ID)
+		require.Equal(t, "http://example.edu/credentials/1872", universityDegreeVC.VC.Contents().ID)
 	})
 	t.Run("Success - proof check disabled", func(t *testing.T) {
 		opts := verifiable.NewOpts()
@@ -33,15 +36,15 @@ func TestParse(t *testing.T) {
 
 		universityDegreeVC, err := verifiable.ParseCredential(universityDegreeCredential, opts)
 		require.NoError(t, err)
-		require.Equal(t, "http://example.edu/credentials/1872", universityDegreeVC.VC.ID)
+		require.Equal(t, "http://example.edu/credentials/1872", universityDegreeVC.VC.Contents().ID)
 	})
 	t.Run("Failure - blank VC", func(t *testing.T) {
 		opts := &verifiable.Opts{}
 		opts.SetDocumentLoader(&documentLoaderMock{})
 
 		universityDegreeVC, err := verifiable.ParseCredential("", opts)
-		require.EqualError(t, err, "decode new credential: embedded proof is not JSON: "+
-			"unexpected end of JSON input")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unexpected end of JSON input")
 		require.Nil(t, universityDegreeVC)
 	})
 }

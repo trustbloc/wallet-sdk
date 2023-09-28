@@ -281,10 +281,7 @@ func (i *IssuerInitiatedInteraction) requestCredentialWithPreAuth(jwtSigner api.
 			CredentialParseError, err)
 	}
 
-	subjectIDs, err := getSubjectIDs(vcs)
-	if err != nil {
-		return nil, err
-	}
+	subjectIDs := getSubjectIDs(vcs)
 
 	err = i.interaction.metricsLogger.Log(&api.MetricsEvent{
 		Event:    requestCredentialEventText,
@@ -564,21 +561,18 @@ func validateSignerKeyID(jwtSigner api.JWTSigner) error {
 	return nil
 }
 
-func getSubjectIDs(vcs []*verifiable.Credential) ([]string, error) {
+func getSubjectIDs(vcs []*verifiable.Credential) []string {
 	var subjectIDs []string
 
 	for i := 0; i < len(vcs); i++ {
-		subjects, ok := vcs[i].Subject.([]verifiable.Subject)
-		if !ok {
-			return nil, fmt.Errorf("unexpected VC subject type for credential at index %d", i)
-		}
+		subjects := vcs[i].Contents().Subject
 
 		for j := 0; j < len(subjects); j++ {
 			subjectIDs = append(subjectIDs, subjects[j].ID)
 		}
 	}
 
-	return subjectIDs, nil
+	return subjectIDs
 }
 
 func signToken(claims interface{}, signer api.JWTSigner) (string, error) {

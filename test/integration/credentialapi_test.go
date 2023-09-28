@@ -111,18 +111,19 @@ func TestCredentialAPI(t *testing.T) {
 			docID, err := didDoc.ID()
 			require.NoError(t, err)
 
-			templateCredential := &afgoverifiable.Credential{
+			templateCredential, err := afgoverifiable.CreateCredential(afgoverifiable.CredentialContents{
 				ID:      "cred-ID",
 				Types:   []string{afgoverifiable.VCType},
 				Context: []string{afgoverifiable.ContextURI},
-				Subject: afgoverifiable.Subject{
+				Subject: []afgoverifiable.Subject{{
 					ID: "foo",
-				},
-				Issuer: afgoverifiable.Issuer{
+				}},
+				Issuer: &afgoverifiable.Issuer{
 					ID: docID,
 				},
 				Issued: afgotime.NewTime(time.Now()),
-			}
+			}, nil)
+			require.NoError(t, err)
 
 			err = credStore.Add(verifiable.NewCredential(templateCredential))
 			require.NoError(t, err)

@@ -30,18 +30,20 @@ const (
 func TestSigner_Issue(t *testing.T) {
 	expectErr := errors.New("expected error")
 
-	mockCredential := &verifiable.Credential{
+	mockCredential, cErr := verifiable.CreateCredential(verifiable.CredentialContents{
 		ID:      "foo",
 		Types:   []string{verifiable.VCType},
 		Context: []string{verifiable.ContextURI},
-		Subject: verifiable.Subject{
+		Subject: []verifiable.Subject{{
 			ID: "foo",
-		},
-		Issuer: verifiable.Issuer{
+		}},
+		Issuer: &verifiable.Issuer{
 			ID: "did:foo:bar",
 		},
 		Issued: afgotime.NewTime(time.Now()),
-	}
+	}, nil)
+
+	require.NoError(t, cErr)
 
 	t.Run("success", func(t *testing.T) {
 		signer := New(&mockResolver{
@@ -131,16 +133,17 @@ func TestSigner_Issue(t *testing.T) {
 	})
 
 	t.Run("fail to generate VC JWT claims", func(t *testing.T) {
-		badCredential := &verifiable.Credential{
+		badCredential, cErr := verifiable.CreateCredential(verifiable.CredentialContents{
 			ID:      "foo",
 			Types:   []string{verifiable.VCType},
 			Context: []string{verifiable.ContextURI},
 			Subject: []verifiable.Subject{},
-			Issuer: verifiable.Issuer{
+			Issuer: &verifiable.Issuer{
 				ID: "did:foo:bar",
 			},
 			Issued: afgotime.NewTime(time.Now()),
-		}
+		}, nil)
+		require.NoError(t, cErr)
 
 		signer := New(&mockResolver{
 			doc: mockDoc(t),
@@ -152,7 +155,7 @@ func TestSigner_Issue(t *testing.T) {
 		})
 		require.Error(t, err)
 		require.Empty(t, jwtVC)
-		require.Contains(t, err.Error(), "failed to generate JWT claims for VC")
+		require.Contains(t, err.Error(), "failed to create JWT VC")
 	})
 
 	t.Run("signing error", func(t *testing.T) {
@@ -169,7 +172,7 @@ func TestSigner_Issue(t *testing.T) {
 		require.Error(t, err)
 		require.Empty(t, jwtVC)
 		require.ErrorIs(t, err, expectErr)
-		require.Contains(t, err.Error(), "failed to sign JWT VC")
+		require.Contains(t, err.Error(), "failed to create JWT VC")
 	})
 }
 

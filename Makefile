@@ -167,3 +167,11 @@ clean:
 	@rm -rf ./.build
 	@rm -rf coverage*.out
 	@rm -Rf ./test/bdd/docker-compose.log
+
+.PHONY: tidy-modules
+tidy-modules:
+	@find . -type d \( -name build -prune \) -o -name go.mod -print | while read -r gomod_path; do \
+		dir_path=$$(dirname "$$gomod_path"); \
+		echo "Executing 'go mod tidy' in directory: $$dir_path"; \
+		(cd "$$dir_path" && go mod tidy) || exit 1; \
+	done

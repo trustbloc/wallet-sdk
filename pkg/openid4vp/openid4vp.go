@@ -25,6 +25,7 @@ import (
 	vdrapi "github.com/trustbloc/did-go/vdr/api"
 	"github.com/trustbloc/kms-go/doc/jose"
 	"github.com/trustbloc/kms-go/spi/kms"
+	"github.com/trustbloc/kms-go/wrapper"
 	"github.com/trustbloc/vc-go/dataintegrity"
 	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
 	"github.com/trustbloc/vc-go/jwt"
@@ -340,8 +341,12 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 		return nil, err
 	}
 
-	did, err := verifiable.SubjectID(credential.Subject)
-	if err != nil || did == "" {
+	did, err := verifiable.SubjectID(credential.Contents().Subject)
+	if err != nil {
+		return nil, fmt.Errorf("presentation VC does not have a subject ID: %w", err)
+	}
+
+	if did == "" {
 		return nil, fmt.Errorf("presentation VC does not have a subject ID")
 	}
 
@@ -425,7 +430,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 	for _, presentation := range presentations {
 		holderDID, e := getSubjectID(presentation.Credentials()[0])
 		if e != nil {
-			return nil, e
+			return nil, fmt.Errorf("presentation VC does not have a subject ID: %w", e)
 		}
 
 		signingVM, e := getSigningVM(holderDID, didResolver)
@@ -509,7 +514,7 @@ func addDataIntegrityProof(did string, didResolver api.DIDResolver, documentLoad
 	dataIntegrityVerifier, err := dataintegrity.NewSigner(&signerOpts,
 		ecdsa2019.NewSignerInitializer(&ecdsa2019.SignerInitializerOptions{
 			LDDocumentLoader: documentLoader,
-			SignerGetter:     ecdsa2019.WithLocalKMSSigner(keyManager, signer),
+			SignerGetter:     ecdsa2019.WithKMSCryptoWrapper(wrapper.NewKMSCryptoSigner(keyManager, signer)),
 		}))
 	if err != nil {
 		return err
@@ -586,24 +591,8 @@ func getHolderSigner(signingVM *diddoc.VerificationMethod, crypto api.Crypto) (a
 	return common.NewJWSSigner(models.VerificationMethodFromDoc(signingVM), crypto)
 }
 
-func getSubjectID(vc interface{}) (string, error) {
-	var (
-		err    error
-		subjID string
-	)
-
-	switch cred := vc.(type) {
-	case *verifiable.Credential:
-		subjID, err = verifiable.SubjectID(cred.Subject)
-	case map[string]interface{}:
-		subjID, err = verifiable.SubjectID(cred["credentialSubject"])
-	}
-
-	if err != nil || subjID == "" {
-		return "", fmt.Errorf("VC does not have a subject ID")
-	}
-
-	return subjID, nil
+func getSubjectID(vc *verifiable.Credential) (string, error) {
+	return verifiable.SubjectID(vc.Contents().Subject)
 }
 
 func mapKeys(in map[string]api.JWTSigner) []string {

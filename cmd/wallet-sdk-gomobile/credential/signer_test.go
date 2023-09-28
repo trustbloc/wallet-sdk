@@ -33,18 +33,19 @@ const (
 func TestSigner_Issue(t *testing.T) {
 	expectErr := errors.New("expected error")
 
-	mockCredential := &afgoverifiable.Credential{
+	mockCredential, err := afgoverifiable.CreateCredential(afgoverifiable.CredentialContents{
 		ID:      credID,
 		Types:   []string{afgoverifiable.VCType},
 		Context: []string{afgoverifiable.ContextURI},
-		Subject: afgoverifiable.Subject{
+		Subject: []afgoverifiable.Subject{{
 			ID: "foo",
-		},
-		Issuer: afgoverifiable.Issuer{
+		}},
+		Issuer: &afgoverifiable.Issuer{
 			ID: mockDID,
 		},
 		Issued: afgotime.NewTime(time.Now()),
-	}
+	}, nil)
+	require.NoError(t, err)
 
 	t.Run("success", func(t *testing.T) {
 		t.Run("given raw credential", func(t *testing.T) {

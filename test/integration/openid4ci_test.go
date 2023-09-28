@@ -245,14 +245,14 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 
 		println("credential:", serializedVC)
 		require.NoError(t, err)
-		require.Contains(t, vc.VC.Issuer.ID, tc.issuerDIDMethod)
+		require.Contains(t, vc.VC.Contents().Issuer.ID, tc.issuerDIDMethod)
 
 		helpers.ResolveDisplayData(t, credentials, tc.expectedDisplayData, interaction.IssuerURI(), tc.issuerProfileID)
 
 		issuerURI := interaction.IssuerURI()
 		require.Equal(t, tc.expectedIssuerURI, issuerURI)
 
-		subID, err := verifiable.SubjectID(vc.VC.Subject)
+		subID, err := verifiable.SubjectID(vc.VC.Contents().Subject)
 		require.NoError(t, err)
 		require.Contains(t, subID, didID)
 

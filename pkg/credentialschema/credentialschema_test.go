@@ -37,9 +37,6 @@ var (
 	//go:embed testdata/credential_university_degree.jsonld
 	credentialUniversityDegree []byte
 
-	//go:embed testdata/unsupported_credential_string_subject.jsonld
-	unsupportedCredentialStringSubject []byte
-
 	//go:embed testdata/unsupported_credential_multiple_subjects.jsonld
 	unsupportedCredentialMultipleSubjects []byte
 
@@ -290,17 +287,18 @@ func TestResolve(t *testing.T) { //nolint: gocognit // Test file
 				verifyClaimsAnyOrder(t, resolvedDisplayData.CredentialDisplays[0].Claims, expectedClaims)
 			})
 			t.Run("VC does not have the subject fields specified by the claim display info", func(t *testing.T) {
-				credential, err := verifiable.ParseCredential(credentialUniversityDegree,
+				var rawCred verifiable.JSONObject
+				require.NoError(t, json.Unmarshal(credentialUniversityDegree, &rawCred))
+				// TODO: it not works in case of nil credentialSubject, but works with empty subject id.
+				// Is empty subject id has sense at all?
+				rawCred["credentialSubject"] = map[string]interface{}{
+					"id": "",
+				}
+
+				credential, err := verifiable.ParseCredentialJSON(rawCred,
 					verifiable.WithCredDisableValidation(),
 					verifiable.WithDisabledProofCheck())
 				require.NoError(t, err)
-
-				credential.Subject = []verifiable.Subject{
-					{
-						ID:           "",
-						CustomFields: nil,
-					},
-				}
 
 				var issuerMetadata issuer.Metadata
 
@@ -399,24 +397,6 @@ func TestResolve(t *testing.T) { //nolint: gocognit // Test file
 		})
 	})
 	t.Run("Unsupported VC", func(t *testing.T) {
-		t.Run("Unsupported subject type", func(t *testing.T) {
-			credential, err := verifiable.ParseCredential(unsupportedCredentialStringSubject,
-				verifiable.WithCredDisableValidation(),
-				verifiable.WithDisabledProofCheck())
-			require.NoError(t, err)
-
-			var issuerMetadata issuer.Metadata
-
-			err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
-			require.NoError(t, err)
-
-			resolvedDisplayData, err := credentialschema.Resolve(
-				credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-				credentialschema.WithHTTPClient(http.DefaultClient),
-				credentialschema.WithIssuerMetadata(&issuerMetadata))
-			require.EqualError(t, err, "unsupported vc subject type")
-			require.Nil(t, resolvedDisplayData)
-		})
 		t.Run("Multiple subjects", func(t *testing.T) {
 			credential, err := verifiable.ParseCredential(unsupportedCredentialMultipleSubjects,
 				verifiable.WithCredDisableValidation(),

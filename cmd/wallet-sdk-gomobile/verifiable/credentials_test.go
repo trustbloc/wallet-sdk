@@ -118,10 +118,8 @@ func TestVerifiableCredential_NameIsNotAString(t *testing.T) {
 	opts := &verifiable.Opts{}
 	opts.DisableProofCheck()
 
-	universityDegreeVC, err := verifiable.ParseCredential(universityDegreeCredential, opts)
+	universityDegreeVC, err := verifiable.ParseCredential(universityDegreeCredentialWithoutName, opts)
 	require.NoError(t, err)
-
-	universityDegreeVC.VC.CustomFields["name"] = 0
 
 	name := universityDegreeVC.Name()
 	require.Empty(t, name)
@@ -163,7 +161,7 @@ func TestVerifiableCredential_ClaimTypes(t *testing.T) {
 		require.NoError(t, err)
 
 		universityDegreeVCSDJWT, err := universityDegreeVC.MakeSDJWT(afgojwt.NewEd25519Signer(privKey),
-			universityDegreeVC.Issuer.ID+"#keys-1")
+			universityDegreeVC.Contents().Issuer.ID+"#keys-1")
 		require.NoError(t, err)
 
 		universityDegreeVCSD, err := afgoverifiable.ParseCredential([]byte(universityDegreeVCSDJWT), opts...)

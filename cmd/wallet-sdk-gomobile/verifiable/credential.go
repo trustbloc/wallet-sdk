@@ -36,14 +36,14 @@ func NewCredential(vc *verifiable.Credential) *Credential {
 
 // ID returns this VC's ID.
 func (v *Credential) ID() string {
-	return v.VC.ID
+	return v.VC.Contents().ID
 }
 
 // Name returns this VC's name.
 // If this VC doesn't provide a name, or the name isn't a string, then an empty string is returned.
 func (v *Credential) Name() string {
-	rawName, found := v.VC.CustomFields["name"]
-	if !found {
+	rawName := v.VC.CustomField("name")
+	if rawName == nil {
 		return ""
 	}
 
@@ -58,13 +58,13 @@ func (v *Credential) Name() string {
 // IssuerID returns the ID of this VC's issuer.
 // While the ID is typically going to be a DID, the Verifiable Credential spec does not mandate this.
 func (v *Credential) IssuerID() string {
-	return v.VC.Issuer.ID
+	return v.VC.Contents().Issuer.ID
 }
 
 // Types returns the types of this VC. At a minimum, one of the types will be "VerifiableCredential".
 // There may be additional more specific credential types as well.
 func (v *Credential) Types() *api.StringArray {
-	return &api.StringArray{Strings: v.VC.Types}
+	return &api.StringArray{Strings: v.VC.Contents().Types}
 }
 
 // ClaimTypes returns the types specified in the claims of this VC.
@@ -87,8 +87,8 @@ func (v *Credential) ClaimTypes() *api.StringArray {
 }
 
 func (v *Credential) claimTypesFromSelectiveDisclosures() *api.StringArray {
-	if len(v.VC.SDJWTDisclosures) > 0 {
-		for _, disclosure := range v.VC.SDJWTDisclosures {
+	if len(v.VC.SDJWTDisclosures()) > 0 {
+		for _, disclosure := range v.VC.SDJWTDisclosures() {
 			if disclosure.Name == claimsTypesFieldName {
 				return rawTypesToStringArray(disclosure.Value)
 			}
@@ -99,10 +99,7 @@ func (v *Credential) claimTypesFromSelectiveDisclosures() *api.StringArray {
 }
 
 func (v *Credential) claimTypesFromCredentialSubject() *api.StringArray {
-	credentialSubjects, ok := v.VC.Subject.([]verifiable.Subject)
-	if !ok {
-		return nil
-	}
+	credentialSubjects := v.VC.Contents().Subject
 
 	if len(credentialSubjects) == 0 {
 		return nil
@@ -145,27 +142,27 @@ func rawTypesToStringArray(rawTypes interface{}) *api.StringArray {
 
 // IssuanceDate returns this VC's issuance date as a Unix timestamp.
 func (v *Credential) IssuanceDate() (int64, error) {
-	if v.VC.Issued == nil {
+	if v.VC.Contents().Issued == nil {
 		return -1, errors.New("issuance date missing (invalid VC)")
 	}
 
-	return v.VC.Issued.Unix(), nil
+	return v.VC.Contents().Issued.Unix(), nil
 }
 
 // HasExpirationDate returns whether this VC has an expiration date.
 func (v *Credential) HasExpirationDate() bool {
-	return v.VC.Expired != nil
+	return v.VC.Contents().Expired != nil
 }
 
 // ExpirationDate returns this VC's expiration date as a Unix timestamp.
 // HasExpirationDate should be called first to ensure this VC has an expiration date before calling this method.
 // This method returns an error if the VC has no expiration date.
 func (v *Credential) ExpirationDate() (int64, error) {
-	if v.VC.Expired == nil {
+	if v.VC.Contents().Expired == nil {
 		return -1, errors.New("VC has no expiration date")
 	}
 
-	return v.VC.Expired.Unix(), nil
+	return v.VC.Contents().Expired.Unix(), nil
 }
 
 // Serialize returns a JSON representation of this VC.
