@@ -319,7 +319,7 @@ func getCredentialID(_ js.Value, args []js.Value) (any, error) {
 		return nil, err
 	}
 
-	return parsed.ID, nil
+	return parsed.Contents().ID, nil
 }
 
 func ExportAgentFunctions() map[string]any {
