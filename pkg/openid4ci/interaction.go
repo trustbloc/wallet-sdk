@@ -514,7 +514,7 @@ func (i *interaction) getRawCredentialResponse(credentialReq *http.Request, even
 		return nil, err
 	}
 
-	if response.StatusCode != http.StatusOK {
+	if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusCreated {
 		return nil, processCredentialErrorResponse(response.StatusCode, responseBytes)
 	}
 

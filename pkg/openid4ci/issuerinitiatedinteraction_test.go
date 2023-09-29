@@ -63,6 +63,7 @@ type mockIssuerServerHandler struct {
 	credentialRequestErrorResponse                          string
 	credentialRequestShouldGiveUnmarshallableResponse       bool
 	credentialResponse                                      []byte
+	httpStatusCode                                          int
 }
 
 //nolint:gocyclo // test file
@@ -131,6 +132,14 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 				_, err = writer.Write([]byte("test failure"))
 			}
 		case m.credentialRequestShouldGiveUnmarshallableResponse:
+			statusCode := http.StatusOK
+
+			if m.httpStatusCode != 0 {
+				statusCode = m.httpStatusCode
+			}
+
+			writer.WriteHeader(statusCode)
+
 			_, err = writer.Write([]byte("invalid"))
 		default:
 			_, err = writer.Write(m.credentialResponse)
@@ -434,6 +443,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 						t:                  t,
 						credentialResponse: sampleCredentialResponse,
 						openIDConfig:       &openid4ci.OpenIDConfig{},
+						httpStatusCode:     http.StatusOK,
 					}
 
 					server := httptest.NewServer(issuerServerHandler)
@@ -500,6 +510,33 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				require.Len(t, credentials, 1)
 				require.NotEmpty(t, credentials[0])
 			})
+			t.Run("Token endpoint defined in the OpenID configuration - request credential HTTP 201",
+				func(t *testing.T) {
+					issuerServerHandler := &mockIssuerServerHandler{
+						t:                  t,
+						credentialResponse: sampleCredentialResponse,
+						httpStatusCode:     http.StatusCreated,
+					}
+
+					server := httptest.NewServer(issuerServerHandler)
+					defer server.Close()
+
+					issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
+						TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
+					}
+
+					issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`,
+						server.URL)
+
+					interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false, true))
+
+					credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+						keyID: mockKeyID,
+					}, openid4ci.WithPIN("1234"))
+					require.NoError(t, err)
+					require.Len(t, credentials, 1)
+					require.NotEmpty(t, credentials[0])
+				})
 		})
 		t.Run("Missing PIN", func(t *testing.T) {
 			config := getTestClientConfig(t)
