@@ -47,7 +47,7 @@ func TestLocalKMS_Create(t *testing.T) {
 	t.Run("key type not supported", func(t *testing.T) {
 		localKMS := createTestKMS(t)
 
-		_, _, err := localKMS.Create(kmsapi.BLS12381G2Type)
+		_, _, err := localKMS.Create(kmsapi.AES256GCMType)
 		require.Error(t, err)
 	})
 }

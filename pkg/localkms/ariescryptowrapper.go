@@ -10,21 +10,18 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/trustbloc/kms-go/spi/crypto"
-	"github.com/trustbloc/kms-go/spi/kms"
+	"github.com/trustbloc/kms-go/wrapper/api"
 )
 
 // AriesCryptoWrapper wraps aries crypto implementations to conform api.Crypto interface.
 type AriesCryptoWrapper struct {
-	cryptosKMS    kms.KeyManager
-	wrappedCrypto crypto.Crypto
+	cryptoSuite api.Suite
 }
 
 // NewAriesCryptoWrapper returns new instance of AriesCryptoWrapper.
-func NewAriesCryptoWrapper(cryptosKMS kms.KeyManager, wrappedCrypto crypto.Crypto) *AriesCryptoWrapper {
+func NewAriesCryptoWrapper(cryptoSuite api.Suite) *AriesCryptoWrapper {
 	return &AriesCryptoWrapper{
-		cryptosKMS:    cryptosKMS,
-		wrappedCrypto: wrappedCrypto,
+		cryptoSuite: cryptoSuite,
 	}
 }
 
@@ -35,10 +32,10 @@ func (c *AriesCryptoWrapper) Sign(msg []byte, keyID string) ([]byte, error) {
 		keyID = kidParts[1]
 	}
 
-	kh, err := c.cryptosKMS.Get(keyID)
+	fks, err := c.cryptoSuite.FixedKeySigner(keyID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid key id %q: %w", keyID, err)
 	}
 
-	return c.wrappedCrypto.Sign(msg, kh)
+	return fks.Sign(msg)
 }

@@ -7,15 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package ion_test
 
 import (
+	"crypto/x509"
 	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/trustbloc/did-go/doc/did"
 	"github.com/trustbloc/kms-go/doc/jose/jwk"
 	"github.com/trustbloc/kms-go/spi/kms"
 
-	"github.com/trustbloc/wallet-sdk/pkg/common"
 	. "github.com/trustbloc/wallet-sdk/pkg/did/creator/ion"
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 )
@@ -32,21 +31,22 @@ func TestCreator_Create(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		localKMS := createTestKMS(t)
 
-		kid, pkJWK, err := localKMS.Create(kms.ED25519Type)
+		_, pkJWK, err := localKMS.Create(kms.ED25519Type)
 		require.NoError(t, err)
 
-		vm, err := did.NewVerificationMethodFromJWK("#"+kid, common.JSONWebKey2020, "", pkJWK)
-		require.NoError(t, err)
-
-		c, err := NewCreator(localKMS)
-		require.NoError(t, err)
-
-		doc, err := c.Create(vm)
+		doc, err := CreateLongForm(pkJWK)
 		require.NoError(t, err)
 		require.NotNil(t, doc)
 		require.NotNil(t, doc.DIDDocument)
 		require.NotEmpty(t, doc.DIDDocument.VerificationMethod)
 		require.NotNil(t, doc.DIDDocument.VerificationMethod[0])
+
+		// localkms returns a key without these fields set, whereas the fields are set
+		// when marshalling/unmarshalling in creating the did doc.
+		pkJWK.Certificates = []*x509.Certificate{}
+		pkJWK.CertificateThumbprintSHA1 = []byte{}
+		pkJWK.CertificateThumbprintSHA256 = []byte{}
+
 		require.Equal(t, pkJWK, doc.DIDDocument.VerificationMethod[0].JSONWebKey())
 	})
 

@@ -9,9 +9,7 @@ package openid4vp
 import (
 	"net/http"
 
-	"github.com/trustbloc/kms-go/spi/kms"
-
-	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
+	wrapperapi "github.com/trustbloc/kms-go/wrapper/api"
 
 	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -24,8 +22,7 @@ type opts struct {
 	metricsLogger  api.MetricsLogger
 	// If both of the below fields are set, then data integrity proofs will be added to
 	// presentations sent to the verifier.
-	signer ecdsa2019.KMSSigner
-	kms    kms.KeyManager
+	signer wrapperapi.KMSCryptoSigner
 }
 
 // An Opt is a single option for an OpenID4VP instance.
@@ -59,10 +56,9 @@ func WithMetricsLogger(metricsLogger api.MetricsLogger) Opt {
 
 // WithDIProofs enables the adding of data integrity proofs to presentations sent to the verifier. It requires
 // a signer and a KMS to be passed in.
-func WithDIProofs(signer ecdsa2019.KMSSigner, keyManager kms.KeyManager) Opt {
+func WithDIProofs(signer wrapperapi.KMSCryptoSigner) Opt {
 	return func(opts *opts) {
 		opts.signer = signer
-		opts.kms = keyManager
 	}
 }
 
@@ -70,8 +66,7 @@ func processOpts(options []Opt) (
 	httpClient,
 	api.ActivityLogger,
 	api.MetricsLogger,
-	ecdsa2019.KMSSigner,
-	kms.KeyManager,
+	wrapperapi.KMSCryptoSigner,
 ) {
 	opts := mergeOpts(options)
 
@@ -87,7 +82,7 @@ func processOpts(options []Opt) (
 		opts.metricsLogger = noopmetricslogger.NewMetricsLogger()
 	}
 
-	return opts.httpClient, opts.activityLogger, opts.metricsLogger, opts.signer, opts.kms
+	return opts.httpClient, opts.activityLogger, opts.metricsLogger, opts.signer
 }
 
 func mergeOpts(options []Opt) *opts {

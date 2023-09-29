@@ -24,8 +24,7 @@ import (
 	diddoc "github.com/trustbloc/did-go/doc/did"
 	vdrapi "github.com/trustbloc/did-go/vdr/api"
 	"github.com/trustbloc/kms-go/doc/jose"
-	"github.com/trustbloc/kms-go/spi/kms"
-	"github.com/trustbloc/kms-go/wrapper"
+	wrapperapi "github.com/trustbloc/kms-go/wrapper/api"
 	"github.com/trustbloc/vc-go/dataintegrity"
 	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
 	"github.com/trustbloc/vc-go/jwt"
@@ -75,8 +74,7 @@ type Interaction struct {
 	didResolver    api.DIDResolver
 	crypto         api.Crypto
 	documentLoader ld.DocumentLoader
-	signer         ecdsa2019.KMSSigner
-	keyManager     kms.KeyManager
+	signer         wrapperapi.KMSCryptoSigner
 }
 
 type authorizedResponse struct {
@@ -95,7 +93,7 @@ func NewInteraction(
 	documentLoader ld.DocumentLoader,
 	opts ...Opt,
 ) (*Interaction, error) {
-	client, activityLogger, metricsLogger, signer, keyManager := processOpts(opts)
+	client, activityLogger, metricsLogger, signer := processOpts(opts)
 
 	var rawRequestObject string
 
@@ -128,7 +126,6 @@ func NewInteraction(
 		crypto:         crypto,
 		documentLoader: documentLoader,
 		signer:         signer,
-		keyManager:     keyManager,
 	}, nil
 }
 
@@ -149,15 +146,14 @@ func (o *Interaction) VerifierDisplayData() *VerifierDisplayData {
 
 type presentOpts struct {
 	ignoreConstraints bool
-	signer            ecdsa2019.KMSSigner
-	kms               kms.KeyManager
+	signer            wrapperapi.KMSCryptoSigner
 }
 
 // PresentCredential presents credentials to redirect uri from request object.
 func (o *Interaction) PresentCredential(credentials []*verifiable.Credential) error {
 	return o.presentCredentials(
 		credentials,
-		&presentOpts{signer: o.signer, kms: o.keyManager},
+		&presentOpts{signer: o.signer},
 	)
 }
 
@@ -310,7 +306,7 @@ func createAuthorizedResponse(
 		return createAuthorizedResponseOneCred(credentials[0], requestObject, didResolver, crypto, documentLoader, opts)
 	default:
 		return createAuthorizedResponseMultiCred(credentials, requestObject, didResolver, crypto, documentLoader,
-			opts.signer, opts.kms)
+			opts.signer)
 	}
 }
 
@@ -355,13 +351,12 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 		return nil, err
 	}
 
-	if opts != nil && opts.signer != nil && opts.kms != nil {
+	if opts != nil && opts.signer != nil {
 		err = addDataIntegrityProof(
 			fullVMID(did, signingVM.ID),
 			didResolver,
 			documentLoader,
 			opts.signer,
-			opts.kms,
 			presentation,
 		)
 		if err != nil {
@@ -408,8 +403,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
-	signer ecdsa2019.KMSSigner,
-	keyManager kms.KeyManager,
+	signer wrapperapi.KMSCryptoSigner,
 ) (*authorizedResponse, error) {
 	pd := requestObject.Claims.VPToken.PresentationDefinition
 
@@ -438,13 +432,12 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 			return nil, e
 		}
 
-		if signer != nil && keyManager != nil {
+		if signer != nil {
 			e = addDataIntegrityProof(
 				fullVMID(holderDID, signingVM.ID),
 				didResolver,
 				documentLoader,
 				signer,
-				keyManager,
 				presentation,
 			)
 			if e != nil {
@@ -502,7 +495,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 }
 
 func addDataIntegrityProof(did string, didResolver api.DIDResolver, documentLoader ld.DocumentLoader,
-	signer ecdsa2019.KMSSigner, keyManager kms.KeyManager, presentation *verifiable.Presentation,
+	signer wrapperapi.KMSCryptoSigner, presentation *verifiable.Presentation,
 ) error {
 	context := &verifiable.DataIntegrityProofContext{
 		SigningKeyID: did,
@@ -511,16 +504,16 @@ func addDataIntegrityProof(did string, didResolver api.DIDResolver, documentLoad
 
 	signerOpts := dataintegrity.Options{DIDResolver: &didResolverWrapper{didResolver: didResolver}}
 
-	dataIntegrityVerifier, err := dataintegrity.NewSigner(&signerOpts,
+	dataIntegritySigner, err := dataintegrity.NewSigner(&signerOpts,
 		ecdsa2019.NewSignerInitializer(&ecdsa2019.SignerInitializerOptions{
 			LDDocumentLoader: documentLoader,
-			SignerGetter:     ecdsa2019.WithKMSCryptoWrapper(wrapper.NewKMSCryptoSigner(keyManager, signer)),
+			SignerGetter:     ecdsa2019.WithKMSCryptoWrapper(signer),
 		}))
 	if err != nil {
 		return err
 	}
 
-	err = presentation.AddDataIntegrityProof(context, dataIntegrityVerifier)
+	err = presentation.AddDataIntegrityProof(context, dataIntegritySigner)
 	if err != nil {
 		return err
 	}

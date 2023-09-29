@@ -8,9 +8,6 @@ package localkms
 
 import (
 	arieskms "github.com/trustbloc/kms-go/kms"
-	"github.com/trustbloc/kms-go/secretlock/noop"
-	kmsapi "github.com/trustbloc/kms-go/spi/kms"
-	"github.com/trustbloc/kms-go/spi/secretlock"
 )
 
 // MemKMSStore represents an in-memory database of keysets.
@@ -48,17 +45,4 @@ func (k *MemKMSStore) Delete(keysetID string) error {
 	delete(k.keys, keysetID)
 
 	return nil
-}
-
-type storageProvider struct {
-	Storage kmsapi.Store
-}
-
-func (p *storageProvider) StorageProvider() kmsapi.Store {
-	return p.Storage
-}
-
-// SecretLock returns the Aries no-op secretlock.Service implementation.
-func (p *storageProvider) SecretLock() secretlock.Service {
-	return &noop.NoLock{}
 }

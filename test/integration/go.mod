@@ -16,7 +16,7 @@ require (
 	github.com/trustbloc/cmdutil-go v0.0.0-20221125151303-09d42adcc811
 	github.com/trustbloc/did-go v1.0.2-0.20230922190208-b53738d979e9
 	github.com/trustbloc/logutil-go v1.0.0-rc1
-	github.com/trustbloc/vc-go v1.0.3-0.20230927100750-6e0ff8399468
+	github.com/trustbloc/vc-go v1.0.3-0.20230928151511-79dcd24234b2
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile v0.0.0-20230102235937-82237ea9dde3
 	go.uber.org/zap v1.23.0
@@ -66,7 +66,7 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
 	github.com/trustbloc/bbs-signature-go v1.0.0 // indirect
-	github.com/trustbloc/kms-go v1.0.1-0.20230922134356-24e819a06a30 // indirect
+	github.com/trustbloc/kms-go v1.0.1-0.20230928143453-638bd66bb721 // indirect
 	github.com/trustbloc/sidetree-core-go v1.0.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect

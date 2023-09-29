@@ -14,8 +14,8 @@ require (
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.2
 	github.com/trustbloc/did-go v1.0.2-0.20230922190208-b53738d979e9
-	github.com/trustbloc/kms-go v1.0.1-0.20230922134356-24e819a06a30
-	github.com/trustbloc/vc-go v1.0.3-0.20230927100750-6e0ff8399468
+	github.com/trustbloc/kms-go v1.0.1-0.20230928143453-638bd66bb721
+	github.com/trustbloc/vc-go v1.0.3-0.20230928151511-79dcd24234b2
 	golang.org/x/oauth2 v0.7.0
 )
 

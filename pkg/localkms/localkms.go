@@ -12,12 +12,11 @@ package localkms
 import (
 	"errors"
 
-	"github.com/trustbloc/kms-go/crypto/tinkcrypto"
 	"github.com/trustbloc/kms-go/doc/jose/jwk"
-	"github.com/trustbloc/kms-go/doc/util/jwkkid"
-	arieslocalkms "github.com/trustbloc/kms-go/kms/localkms"
-	"github.com/trustbloc/kms-go/spi/crypto"
+	"github.com/trustbloc/kms-go/secretlock/noop"
 	arieskms "github.com/trustbloc/kms-go/spi/kms"
+	"github.com/trustbloc/kms-go/wrapper/api"
+	"github.com/trustbloc/kms-go/wrapper/localsuite"
 
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
@@ -27,8 +26,8 @@ import (
 // Private keys may intermittently reside in local memory with this implementation so
 // keep this consideration in mind when deciding whether to use this or not.
 type LocalKMS struct {
-	AriesLocalKMS *arieslocalkms.LocalKMS
-	AriesCrypto   crypto.Crypto
+	AriesSuite api.Suite
+	keyCreator api.KeyCreator
 }
 
 // Config is config for local kms constructor.
@@ -42,41 +41,34 @@ func NewLocalKMS(cfg Config) (*LocalKMS, error) {
 		return nil, errors.New("cfg.Storage cannot be nil")
 	}
 
-	ariesLocalKMS, err := arieslocalkms.New("ThisIs://Unused", &storageProvider{
-		Storage: cfg.Storage,
-	})
+	suite, err := localsuite.NewLocalCryptoSuite("ThisIs://Unused", cfg.Storage, &noop.NoLock{})
 	if err != nil {
 		return nil, walleterror.NewExecutionError(module, InitialisationFailedCode, InitialisationFailedError, err)
 	}
 
-	ariesCrypto, err := tinkcrypto.New()
+	keyCreator, err := suite.KeyCreator()
 	if err != nil {
 		return nil, walleterror.NewExecutionError(module, InitialisationFailedCode, InitialisationFailedError, err)
 	}
 
-	return &LocalKMS{AriesLocalKMS: ariesLocalKMS, AriesCrypto: ariesCrypto}, nil
+	return &LocalKMS{
+		AriesSuite: suite,
+		keyCreator: keyCreator,
+	}, nil
 }
 
 // Create creates a keyset of the given keyType and then writes it to storage.
 //
 // Returns:
 //   - key ID for the newly generated keyset.
-//   - JSON byte string containing the JWK for the keyset's public key.
-//   - JWK object for the same public key.
+//   - JWK object for the keyset's public key.
 func (k *LocalKMS) Create(keyType arieskms.KeyType) (string, *jwk.JWK, error) {
-	keyID, publicKey, err := k.AriesLocalKMS.CreateAndExportPubKeyBytes(keyType)
+	pkJWK, err := k.keyCreator.Create(keyType)
 	if err != nil {
 		return "", nil, walleterror.NewExecutionError(module, CreateKeyFailedCode, CreateKeyFailedError, err)
 	}
 
-	pkJWK, err := jwkkid.BuildJWK(publicKey, keyType)
-	if err != nil {
-		return "", nil, walleterror.NewExecutionError(module, CreateKeyFailedCode, CreateKeyFailedError, err)
-	}
-
-	pkJWK.KeyID = keyID
-
-	return keyID, pkJWK, nil
+	return pkJWK.KeyID, pkJWK, nil
 }
 
 // ExportPubKey returns the public key associated with the given keyID as a JWK byte string.
@@ -87,7 +79,6 @@ func (k *LocalKMS) ExportPubKey(string) (*jwk.JWK, error) {
 // GetCrypto returns Crypto instance that can perform crypto ops with keys created by this kms.
 func (k *LocalKMS) GetCrypto() goapi.Crypto {
 	return &AriesCryptoWrapper{
-		cryptosKMS:    k.AriesLocalKMS,
-		wrappedCrypto: k.AriesCrypto,
+		cryptoSuite: k.AriesSuite,
 	}
 }
