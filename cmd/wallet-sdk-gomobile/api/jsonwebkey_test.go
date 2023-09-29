@@ -9,6 +9,7 @@ package api_test
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"crypto/x509"
 	"testing"
 
 	"github.com/go-jose/go-jose/v3"
@@ -26,6 +27,12 @@ func TestKeyHandle(t *testing.T) {
 
 	key, err := jwkkid.BuildJWK(pkb, kms.ED25519Type)
 	require.NoError(t, err)
+
+	// for Ed25519, localkms returns a key without these fields set, whereas the
+	// fields are set when marshalling/unmarshalling in creating the did doc.
+	key.Certificates = []*x509.Certificate{}
+	key.CertificateThumbprintSHA1 = []byte{}
+	key.CertificateThumbprintSHA256 = []byte{}
 
 	kid, err := jwkkid.CreateKID(pkb, kms.ED25519Type)
 	require.NoError(t, err)

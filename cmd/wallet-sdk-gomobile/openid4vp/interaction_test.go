@@ -17,7 +17,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/trustbloc/kms-go/doc/jose/jwk"
+	wrapperapi "github.com/trustbloc/kms-go/wrapper/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
+	goapilocalkms "github.com/trustbloc/wallet-sdk/pkg/localkms"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
 
@@ -97,6 +100,25 @@ func TestNewInteraction(t *testing.T) {
 			require.NotNil(t, instance)
 		})
 	})
+
+	t.Run("Failure - kms crypto suite does not support signing for DI proofs", func(t *testing.T) {
+		requiredArgs := NewArgs(
+			requestObjectJWT,
+			&mockCrypto{},
+			&mockDIDResolver{},
+		)
+
+		opts := NewOpts()
+
+		localKMS := &localkms.KMS{GoAPILocalKMS: &goapilocalkms.LocalKMS{AriesSuite: &mockSuite{}}}
+
+		opts.EnableAddingDIProofs(localKMS)
+
+		instance, err := NewInteraction(requiredArgs, opts)
+		testutil.RequireErrorContains(t, err, "aries local crypto suite missing support for signing")
+		require.Nil(t, instance)
+	})
+
 	t.Run("Failure - invalid authorization request", func(t *testing.T) {
 		requiredArgs := NewArgs(
 			requestObjectJWT,
@@ -340,3 +362,49 @@ func mockResolution(t *testing.T, vm *api.VerificationMethod) []byte {
 
 	return docBytes
 }
+
+type mockSuite struct{}
+
+var errSuiteNoSupport = errors.New("mock suite supports nothing")
+
+func (m mockSuite) KeyCreator() (wrapperapi.KeyCreator, error) {
+	return nil, errSuiteNoSupport
+}
+
+func (m mockSuite) RawKeyCreator() (wrapperapi.RawKeyCreator, error) {
+	return nil, errSuiteNoSupport
+}
+
+func (m mockSuite) KMSCrypto() (wrapperapi.KMSCrypto, error) {
+	return nil, errSuiteNoSupport
+}
+
+func (m mockSuite) KMSCryptoSigner() (wrapperapi.KMSCryptoSigner, error) {
+	return nil, errSuiteNoSupport
+}
+
+func (m mockSuite) KMSCryptoMultiSigner() (wrapperapi.KMSCryptoMultiSigner, error) {
+	return nil, errSuiteNoSupport
+}
+
+func (m mockSuite) KMSCryptoVerifier() (wrapperapi.KMSCryptoVerifier, error) {
+	return nil, errSuiteNoSupport
+}
+
+func (m mockSuite) EncrypterDecrypter() (wrapperapi.EncrypterDecrypter, error) {
+	return nil, errSuiteNoSupport
+}
+
+func (m mockSuite) FixedKeyCrypto(*jwk.JWK) (wrapperapi.FixedKeyCrypto, error) {
+	return nil, errSuiteNoSupport
+}
+
+func (m mockSuite) FixedKeySigner(string) (wrapperapi.FixedKeySigner, error) {
+	return nil, errSuiteNoSupport
+}
+
+func (m mockSuite) FixedKeyMultiSigner(string) (wrapperapi.FixedKeyMultiSigner, error) {
+	return nil, errSuiteNoSupport
+}
+
+var _ wrapperapi.Suite = &mockSuite{}

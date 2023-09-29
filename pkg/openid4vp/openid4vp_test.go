@@ -22,7 +22,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/did-go/doc/did"
-	"github.com/trustbloc/kms-go/crypto/tinkcrypto"
 	"github.com/trustbloc/kms-go/doc/jose"
 	"github.com/trustbloc/vc-go/presexch"
 	"github.com/trustbloc/vc-go/verifiable"
@@ -541,12 +540,12 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 	t.Run("fail to add data integrity proof", func(t *testing.T) {
 		t.Run("single credential", func(t *testing.T) {
-			tinkCrypto, err := tinkcrypto.New()
-			require.NoError(t, err)
-
 			localKMS, err := localkms.NewLocalKMS(localkms.Config{
 				Storage: localkms.NewMemKMSStore(),
 			})
+			require.NoError(t, err)
+
+			signer, err := localKMS.AriesSuite.KMSCryptoSigner()
 			require.NoError(t, err)
 
 			_, err = createAuthorizedResponse(
@@ -555,18 +554,18 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 				&didResolverMock{ResolveValue: mockDoc},
 				&cryptoMock{},
 				lddl,
-				&presentOpts{signer: tinkCrypto, kms: localKMS.AriesLocalKMS},
+				&presentOpts{signer: signer},
 			)
 			require.Contains(t, err.Error(),
 				"failed to add data integrity proof to VP: data integrity proof generation error")
 		})
 		t.Run("multiple credentials", func(t *testing.T) {
-			tinkCrypto, err := tinkcrypto.New()
-			require.NoError(t, err)
-
 			localKMS, err := localkms.NewLocalKMS(localkms.Config{
 				Storage: localkms.NewMemKMSStore(),
 			})
+			require.NoError(t, err)
+
+			signer, err := localKMS.AriesSuite.KMSCryptoSigner()
 			require.NoError(t, err)
 
 			_, err = createAuthorizedResponse(
@@ -575,7 +574,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 				&didResolverMock{ResolveValue: mockDoc},
 				&cryptoMock{},
 				lddl,
-				&presentOpts{signer: tinkCrypto, kms: localKMS.AriesLocalKMS},
+				&presentOpts{signer: signer},
 			)
 			require.Contains(t, err.Error(),
 				"failed to add data integrity proof to VP: data integrity proof generation error")

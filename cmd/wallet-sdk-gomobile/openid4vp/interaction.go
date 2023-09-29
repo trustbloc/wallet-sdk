@@ -66,7 +66,10 @@ func NewInteraction(args *Args, opts *Opts) (*Interaction, error) { //nolint:fun
 		opts.AddHeader(oTel.TraceHeader())
 	}
 
-	goAPIOpts := toGoAPIOpts(opts)
+	goAPIOpts, err := toGoAPIOpts(opts)
+	if err != nil {
+		return nil, wrapper.ToMobileError(err)
+	}
 
 	var goAPIDocumentLoader ld.DocumentLoader
 
@@ -77,7 +80,6 @@ func NewInteraction(args *Args, opts *Opts) (*Interaction, error) { //nolint:fun
 	} else {
 		dlHTTPClient := wrapper.NewHTTPClient(opts.httpTimeout, api.Headers{}, opts.disableHTTPClientTLSVerification)
 
-		var err error
 		goAPIDocumentLoader, err = common.CreateJSONLDDocumentLoader(dlHTTPClient, legacy.NewProvider())
 		if err != nil {
 			return nil, wrapper.ToMobileErrorWithTrace(err, oTel)
@@ -170,7 +172,7 @@ func (o *Interaction) OTelTraceID() string {
 	return traceID
 }
 
-func toGoAPIOpts(opts *Opts) []openid4vp.Opt {
+func toGoAPIOpts(opts *Opts) ([]openid4vp.Opt, error) {
 	httpClient := wrapper.NewHTTPClient(opts.httpTimeout, opts.additionalHeaders, opts.disableHTTPClientTLSVerification)
 
 	goAPIOpts := []openid4vp.Opt{openid4vp.WithHTTPClient(httpClient)}
@@ -190,11 +192,16 @@ func toGoAPIOpts(opts *Opts) []openid4vp.Opt {
 	}
 
 	if opts.kms != nil {
+		signer, err := opts.kms.GoAPILocalKMS.AriesSuite.KMSCryptoSigner()
+		if err != nil {
+			return nil, fmt.Errorf("aries local crypto suite missing support for signing: %w", err)
+		}
+
 		goAPIOpts = append(goAPIOpts,
-			openid4vp.WithDIProofs(opts.kms.GoAPILocalKMS.AriesCrypto, opts.kms.GoAPILocalKMS.AriesLocalKMS))
+			openid4vp.WithDIProofs(signer))
 	}
 
-	return goAPIOpts
+	return goAPIOpts, nil
 }
 
 func unwrapVCs(vcs *verifiable.CredentialsArray) ([]*afgoverifiable.Credential, error) {
