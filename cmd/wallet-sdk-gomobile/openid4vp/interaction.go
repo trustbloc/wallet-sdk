@@ -14,8 +14,8 @@ import (
 	"fmt"
 
 	"github.com/piprate/json-gold/ld"
-	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/vc-go/presexch"
+	"github.com/trustbloc/vc-go/proof/defaults"
 	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -94,10 +94,10 @@ func NewInteraction(args *Args, opts *Opts) (*Interaction, error) { //nolint:fun
 		return nil, err
 	}
 
-	jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
+	jwtVerifier := defaults.NewDefaultProofChecker(
 		common.NewVDRKeyResolver(&wrapper.VDRResolverWrapper{
 			DIDResolver: args.didRes,
-		}).PublicKeyFetcher()))
+		}))
 
 	goAPIInteraction, err := openid4vp.NewInteraction(
 		args.authorizationRequest,

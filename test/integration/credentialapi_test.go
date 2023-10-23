@@ -13,9 +13,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/trustbloc/vc-go/proof/defaults"
+
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didion"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didjwk"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/didkey"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
@@ -55,9 +58,8 @@ func TestCredentialAPI(t *testing.T) {
 
 	verifier := jwtvcVerifier{
 		ldLoader: ldLoader,
-		publicKeyFetcher: afgoverifiable.NewVDRKeyResolver(&didResolverWrapper{
-			didResolver: sdkResolver,
-		}).PublicKeyFetcher(),
+		proofChecker: defaults.NewDefaultProofChecker(
+			common.NewVDRKeyResolver(sdkResolver)),
 	}
 
 	testCases := []struct {
@@ -142,15 +144,15 @@ func TestCredentialAPI(t *testing.T) {
 }
 
 type jwtvcVerifier struct {
-	ldLoader         ld.DocumentLoader
-	publicKeyFetcher afgoverifiable.PublicKeyFetcher
+	ldLoader     ld.DocumentLoader
+	proofChecker afgoverifiable.CombinedProofChecker
 }
 
 func (j *jwtvcVerifier) verify(cred []byte) error {
 	_, err := afgoverifiable.ParseCredential(
 		cred,
 		afgoverifiable.WithJSONLDDocumentLoader(j.ldLoader),
-		afgoverifiable.WithPublicKeyFetcher(j.publicKeyFetcher),
+		afgoverifiable.WithProofChecker(j.proofChecker),
 	)
 
 	return err

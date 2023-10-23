@@ -19,6 +19,7 @@ import (
 	"github.com/trustbloc/kms-go/doc/jose/jwk/jwksupport"
 	"github.com/trustbloc/kms-go/doc/util/jwkkid"
 	"github.com/trustbloc/kms-go/spi/kms"
+	"github.com/trustbloc/vc-go/jwt"
 
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
@@ -79,8 +80,7 @@ func TestNewJWSSigner(t *testing.T) {
 					&cryptoMock{})
 				require.NoError(t, err)
 				require.NotNil(t, signer)
-				alg, hasAlg := signer.Headers().Algorithm()
-				require.True(t, hasAlg)
+				alg := signer.Algorithm()
 				require.Equal(t, successCase.expectedAlg, alg)
 			})
 		}
@@ -162,14 +162,18 @@ func TestJWSSigner_Sign(t *testing.T) {
 			&cryptoMock{Signature: []byte("mock sig")})
 		require.NoError(t, err)
 
-		sig, err := signer.Sign([]byte("test data"))
+		sig, err := signer.SignJWT(jwt.SignParameters{}, []byte("test data"))
 
 		require.NoError(t, err)
 		require.Equal(t, sig, []byte("mock sig"))
 
-		require.Equal(t, signer.Headers()["kid"], "testKeyID")
 		require.Equal(t, signer.GetKeyID(), "testKeyID")
-		require.Equal(t, signer.Headers()["alg"], "EdDSA")
+		require.Equal(t, signer.Algorithm(), "EdDSA")
+
+		headers, err := signer.CreateJWTHeaders(jwt.SignParameters{})
+		require.NoError(t, err)
+		require.Equal(t, headers["kid"], "testKeyID")
+		require.Equal(t, headers["alg"], "EdDSA")
 	})
 
 	t.Run("Failed", func(t *testing.T) {
@@ -182,7 +186,7 @@ func TestJWSSigner_Sign(t *testing.T) {
 			&cryptoMock{Err: errors.New("test error")})
 		require.NoError(t, err)
 
-		_, err = s.Sign([]byte("test data"))
+		_, err = s.SignJWT(jwt.SignParameters{}, []byte("test data"))
 		require.Error(t, err)
 	})
 }

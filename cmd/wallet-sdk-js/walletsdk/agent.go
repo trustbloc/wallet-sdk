@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/trustbloc/vc-go/proof/defaults"
+
 	"github.com/trustbloc/wallet-sdk/pkg/did/creator/ion"
 
 	didjwk "github.com/trustbloc/wallet-sdk/pkg/did/creator/jwk"
@@ -21,7 +23,6 @@ import (
 	jsonld "github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/did-go/doc/did"
 	arieskms "github.com/trustbloc/kms-go/spi/kms"
-	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/vc-go/presexch"
 	"github.com/trustbloc/vc-go/verifiable"
 
@@ -123,10 +124,8 @@ func (a *Agent) CreateOpenID4CIIssuerInitiatedInteraction(
 func (a *Agent) CreateOpenID4VPInteraction(
 	authorizationRequest string,
 ) (*OpenID4VPInteraction, error) {
-	jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
-		common.NewVDRKeyResolver(
-			a.didResolver,
-		).PublicKeyFetcher()))
+	jwtVerifier := defaults.NewDefaultProofChecker(
+		common.NewVDRKeyResolver(a.didResolver))
 
 	interaction, err := openid4vp.NewInteraction(authorizationRequest, jwtVerifier, a.didResolver,
 		a.crypto, a.docLoader)

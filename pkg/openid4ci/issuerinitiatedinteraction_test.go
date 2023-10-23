@@ -17,6 +17,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/trustbloc/vc-go/jwt"
+
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
 
 	"github.com/stretchr/testify/require"
@@ -1071,7 +1073,8 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			require.EqualError(t, err, "CREDENTIAL_PARSE_FAILED(OCI1-0007):failed to parse credential from "+
 				"credential response at index 0: "+
 				"JWS proof check: unmarshal VC JWT claims: parse JWT: "+
-				"parse JWT from compact JWS: public key with KID d3cfd36b-4f75-4041-b416-f0a7a3c6b9f6 is not "+
+				"parse JWT from compact JWS: invalid public key id: public key with KID "+
+				"#d3cfd36b-4f75-4041-b416-f0a7a3c6b9f6 is not "+
 				"found for DID did:orb:uAAA:EiDpzs0hy0q0If4ZfJA1kxBQd9ed6FoBFhhqDWSiBeKaIg")
 			require.Nil(t, credentials)
 		})
@@ -1775,15 +1778,15 @@ func (s *jwtSignerMock) GetKeyID() string {
 	return s.keyID
 }
 
-func (s *jwtSignerMock) Sign([]byte) ([]byte, error) {
+func (s *jwtSignerMock) SignJWT(_ jwt.SignParameters, _ []byte) ([]byte, error) {
 	return []byte("test signature"), s.Err
 }
 
-func (s *jwtSignerMock) Headers() jose.Headers {
+func (s *jwtSignerMock) CreateJWTHeaders(_ jwt.SignParameters) (jose.Headers, error) {
 	return jose.Headers{
 		jose.HeaderKeyID:     "KeyID",
 		jose.HeaderAlgorithm: "ES384",
-	}
+	}, nil
 }
 
 // includeIssuerStateParam only applies if includeAuthCodeGrant is true.

@@ -10,7 +10,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/trustbloc/kms-go/doc/jose"
+	"github.com/trustbloc/vc-go/jwt"
 
 	"github.com/trustbloc/vc-go/verifiable"
 
@@ -54,7 +54,7 @@ type resolveOpts struct {
 	metricsLogger        api.MetricsLogger
 	httpClient           httpClient
 	maskingString        *string
-	signatureVerifier    jose.SignatureVerifier
+	signatureVerifier    jwt.ProofChecker
 }
 
 // ResolveOpt represents an option for the Resolve function.
@@ -156,7 +156,7 @@ func WithMaskingString(maskingString string) ResolveOpt {
 // WithJWTSignatureVerifier is an option that allows a caller to pass in a signature verifier. If the issuer metadata is
 // retrieved from the issuer via an issuerURI, and it's signed, then a signature verifier must be provided so that
 // the issuer metadata's signature can be verified.
-func WithJWTSignatureVerifier(signatureVerifier jose.SignatureVerifier) ResolveOpt {
+func WithJWTSignatureVerifier(signatureVerifier jwt.ProofChecker) ResolveOpt {
 	return func(opts *resolveOpts) {
 		opts.signatureVerifier = signatureVerifier
 	}
@@ -263,7 +263,7 @@ func processVCOpts(credentialSource *credentialSource) ([]*verifiable.Credential
 }
 
 func processIssuerMetadataOpts(issuerMetadataSource *issuerMetadataSource, httpClient httpClient,
-	metricsLogger api.MetricsLogger, signatureVerifier jose.SignatureVerifier,
+	metricsLogger api.MetricsLogger, signatureVerifier jwt.ProofChecker,
 ) (*issuer.Metadata, error) {
 	if issuerMetadataSource.metadata != nil {
 		return issuerMetadataSource.metadata, nil

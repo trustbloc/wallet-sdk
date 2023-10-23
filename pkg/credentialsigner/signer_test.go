@@ -58,6 +58,31 @@ func TestSigner_Issue(t *testing.T) {
 		require.NotEmpty(t, jwtVC)
 	})
 
+	t.Run("success did", func(t *testing.T) {
+		signer := New(&mockResolver{
+			doc: mockDoc(t),
+		}, &mockCrypto{})
+
+		jwtVC, err := signer.Issue(mockCredential, &ProofOptions{
+			KeyID:       mockDID,
+			ProofFormat: ExternalJWTProofFormat,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, jwtVC)
+	})
+
+	t.Run("invalid kid format", func(t *testing.T) {
+		signer := New(&mockResolver{
+			doc: mockDoc(t),
+		}, &mockCrypto{})
+
+		_, err := signer.Issue(mockCredential, &ProofOptions{
+			KeyID:       "1#1#1",
+			ProofFormat: ExternalJWTProofFormat,
+		})
+		require.ErrorContains(t, err, "invalid verification method format")
+	})
+
 	t.Run("no credential provided for signing", func(t *testing.T) {
 		signer := New(&mockResolver{
 			doc: mockDoc(t),

@@ -14,6 +14,7 @@ import (
 	"github.com/trustbloc/kms-go/doc/jose"
 	"github.com/trustbloc/kms-go/doc/jose/jwk"
 	"github.com/trustbloc/kms-go/spi/kms"
+	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/vc-go/verifiable"
 )
 
@@ -71,8 +72,8 @@ type Crypto interface {
 // JWTSigner defines interface for JWT signing operation.
 type JWTSigner interface {
 	GetKeyID() string
-	Sign(data []byte) ([]byte, error)
-	Headers() jose.Headers
+	SignJWT(sigParams jwt.SignParameters, data []byte) ([]byte, error)
+	CreateJWTHeaders(sigParams jwt.SignParameters) (jose.Headers, error)
 }
 
 // JSONWebKeySet represents a JWK Set object.

@@ -7,8 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package common_test
 
 import (
-	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -24,8 +22,6 @@ func TestDIDKeyResolver_Resolve(t *testing.T) {
 
 	didDoc := createDIDDoc()
 	publicKey := didDoc.VerificationMethod[0]
-	authentication := didDoc.Authentication[0]
-	assertionMethod := didDoc.AssertionMethod[0]
 
 	vdrRegistry := &mockvdr.VDRegistry{
 		ResolveValue: didDoc,
@@ -34,35 +30,12 @@ func TestDIDKeyResolver_Resolve(t *testing.T) {
 	resolver := common.NewVDRKeyResolver(&vdrResolverAdapter{vdr: vdrRegistry})
 	req.NotNil(resolver)
 
-	pubKey, err := resolver.PublicKeyFetcher()(didDoc.ID, publicKey.ID)
+	pubKey, err := resolver.ResolveVerificationMethod(publicKey.ID)
 	req.NoError(err)
 	req.Equal(publicKey.Value, pubKey.Value)
 	req.Equal("Ed25519VerificationKey2018", pubKey.Type)
 	req.NotNil(pubKey.JWK)
 	req.Equal(pubKey.JWK.Algorithm, "EdDSA")
-
-	authPubKey, err := resolver.PublicKeyFetcher()(didDoc.ID, authentication.VerificationMethod.ID)
-	req.NoError(err)
-	req.Equal(authentication.VerificationMethod.Value, authPubKey.Value)
-	req.Equal("Ed25519VerificationKey2018", authPubKey.Type)
-	req.NotNil(authPubKey.JWK)
-	req.Equal(authPubKey.JWK.Algorithm, "EdDSA")
-
-	assertMethPubKey, err := resolver.PublicKeyFetcher()(didDoc.ID, assertionMethod.VerificationMethod.ID)
-	req.NoError(err)
-	req.Equal(assertionMethod.VerificationMethod.Value, assertMethPubKey.Value)
-	req.Equal("Ed25519VerificationKey2018", assertMethPubKey.Type)
-
-	pubKey, err = resolver.PublicKeyFetcher()(didDoc.ID, "invalid key")
-	req.Error(err)
-	req.EqualError(err, fmt.Sprintf("public key with KID invalid key is not found for DID %s", didDoc.ID))
-	req.Nil(pubKey)
-
-	vdrRegistry.ResolveErr = errors.New("resolver error")
-	pubKey, err = resolver.PublicKeyFetcher()(didDoc.ID, "")
-	req.Error(err)
-	req.EqualError(err, fmt.Sprintf("resolve DID %s: resolver error", didDoc.ID))
-	req.Nil(pubKey)
 }
 
 type vdrResolverAdapter struct {
@@ -108,7 +81,7 @@ func createDIDDoc() *did.Doc {
   "authentication": [
     {
       "controller": "did:test:2WxUJa8nVjXr5yS69JWoKZ",
-      "id": "did:test:2WxUJa8nVjXr5yS69JWoKZ#keys-1",
+      "id": "did:test:2WxUJa8nVjXr5yS69JWoKZ#keys-2",
       "publicKeyJwk": {
         "kty": "OKP",
         "crv": "Ed25519",

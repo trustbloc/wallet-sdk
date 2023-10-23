@@ -15,8 +15,6 @@ import (
 
 	"github.com/trustbloc/vc-go/jwt"
 
-	"github.com/trustbloc/kms-go/doc/jose"
-
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
 	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
@@ -32,7 +30,7 @@ type httpClient interface {
 // Get gets an issuer's metadata by doing a lookup on its OpenID configuration endpoint.
 // issuerURI is expected to be the base URL for the issuer.
 func Get(issuerURI string, httpClient httpClient, metricsLogger api.MetricsLogger, parentEvent string,
-	signatureVerifier jose.SignatureVerifier,
+	signatureVerifier jwt.ProofChecker,
 ) (*issuer.Metadata, error) {
 	if metricsLogger == nil {
 		metricsLogger = noop.NewMetricsLogger()
@@ -55,7 +53,7 @@ func Get(issuerURI string, httpClient httpClient, metricsLogger api.MetricsLogge
 }
 
 func responseBytesToIssuerMetadataObject(responseBytes []byte,
-	signatureVerifier jose.SignatureVerifier,
+	signatureVerifier jwt.ProofChecker,
 ) (*issuer.Metadata, error) {
 	// The issuer metadata can come in one of two formats - either directly as JSON, or as a JWT.
 	var metadata issuer.Metadata
@@ -73,7 +71,7 @@ func responseBytesToIssuerMetadataObject(responseBytes []byte,
 // struct directly. It's passed here so that it can be included in the error message in case the response
 // is also not a JWT. This gives the caller additional information that can help them to more easily debug the cause
 // of the parsing failure.
-func issuerMetadataObjectFromJWT(responseBytes []byte, signatureVerifier jose.SignatureVerifier,
+func issuerMetadataObjectFromJWT(responseBytes []byte, signatureVerifier jwt.ProofChecker,
 	errUnmarshal error,
 ) (*issuer.Metadata, error) {
 	var metadata issuer.Metadata
@@ -85,7 +83,7 @@ func issuerMetadataObjectFromJWT(responseBytes []byte, signatureVerifier jose.Si
 		return nil, errors.New("missing signature verifier")
 	}
 
-	jsonWebToken, _, errParseJWT := jwt.Parse(string(responseBytes), jwt.WithSignatureVerifier(signatureVerifier))
+	jsonWebToken, _, errParseJWT := jwt.Parse(string(responseBytes), jwt.WithProofChecker(signatureVerifier))
 	if errParseJWT != nil {
 		return nil, fmt.Errorf("failed to parse the response from the issuer's OpenID Credential Issuer "+
 			"endpoint as JSON or as a JWT: %w", errors.Join(errUnmarshal, errParseJWT))
