@@ -16,6 +16,7 @@ import (
 	"github.com/trustbloc/kms-go/doc/jose/jwk"
 	"github.com/trustbloc/kms-go/doc/util/jwkkid"
 	"github.com/trustbloc/kms-go/spi/kms"
+	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -124,15 +125,20 @@ func (s *JWSSigner) GetKeyID() string {
 	return s.keyID
 }
 
-// Sign signs jwt token.
-func (s *JWSSigner) Sign(data []byte) ([]byte, error) {
+// Algorithm return jwt algorithm.
+func (s *JWSSigner) Algorithm() string {
+	return s.algorithm
+}
+
+// SignJWT signs jwt token.
+func (s *JWSSigner) SignJWT(_ jwt.SignParameters, data []byte) ([]byte, error) {
 	return s.crypto.Sign(data, s.cryptoKID)
 }
 
-// Headers provides JWS headers.
-func (s *JWSSigner) Headers() jose.Headers {
+// CreateJWTHeaders provides JWS headers.
+func (s *JWSSigner) CreateJWTHeaders(_ jwt.SignParameters) (jose.Headers, error) {
 	return jose.Headers{
 		jose.HeaderKeyID:     s.keyID,
 		jose.HeaderAlgorithm: s.algorithm,
-	}
+	}, nil
 }

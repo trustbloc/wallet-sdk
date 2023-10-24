@@ -67,7 +67,7 @@ func TestSigner_Issue(t *testing.T) {
 				&mockCrypto{SignErr: expectErr},
 			)
 
-			_, err := s.Issue(verifiable.NewCredential(mockCredential), "")
+			_, err := s.Issue(verifiable.NewCredential(mockCredential), "did:test:foo#key-1")
 			require.Error(t, err)
 			require.Contains(t, err.Error(), "signing credential")
 			require.ErrorIs(t, err, expectErr)

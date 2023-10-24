@@ -101,7 +101,7 @@ func NewIssuerInitiatedInteraction(initiateIssuanceURI string,
 	return &IssuerInitiatedInteraction{
 			interaction: &interaction{
 				issuerURI:            credentialOffer.CredentialIssuer,
-				didResolver:          &didResolverWrapper{didResolver: config.DIDResolver},
+				didResolver:          config.DIDResolver,
 				activityLogger:       config.ActivityLogger,
 				metricsLogger:        config.MetricsLogger,
 				disableVCProofChecks: config.DisableVCProofChecks,
@@ -587,7 +587,7 @@ func signToken(claims interface{}, signer api.JWTSigner) (string, error) {
 	// TODO: Send "typ" header.
 	// headers["typ"] = "openid4vci-proof+jwt"
 
-	token, err := jwt.NewSigned(claims, headers, signer)
+	token, err := jwt.NewSigned(claims, jwt.SignParameters{AdditionalHeaders: headers}, signer)
 	if err != nil {
 		return "", fmt.Errorf("sign token failed: %w", err)
 	}

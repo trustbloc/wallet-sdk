@@ -10,10 +10,9 @@ package credentialsigner
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	diddoc "github.com/trustbloc/did-go/doc/did"
-	vdrapi "github.com/trustbloc/did-go/vdr/api"
-	"github.com/trustbloc/vc-go/jwt/didsignjwt"
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -44,6 +43,8 @@ const (
 	ExternalJWTProofFormat = "ExternalJWTProofFormat"
 	// EmbeddedLDProofFormat indicates that a credential or presentation should be signed with an embedded LD proof.
 	EmbeddedLDProofFormat = "EmbeddedLDProofFormat"
+	// number of sections in verification method.
+	vmSectionCount = 2
 )
 
 // ProofOptions contains options for issuing a credential.
@@ -73,7 +74,7 @@ func (s *Signer) Issue(credential *verifiable.Credential, proofOptions *ProofOpt
 
 func (s *Signer) issueJWTVC(unsignedVC *verifiable.Credential, proofOptions *ProofOptions,
 ) (*verifiable.Credential, error) {
-	docVM, fullKID, err := didsignjwt.ResolveSigningVM(proofOptions.KeyID, &didResolverWrapper{didResolver: s.didResolver})
+	docVM, fullKID, _, err := resolveSigningVMWithRelationship(proofOptions.KeyID, s.didResolver)
 	if err != nil {
 		return nil, fmt.Errorf("resolving verification method for signing key: %w", err)
 	}
@@ -85,17 +86,12 @@ func (s *Signer) issueJWTVC(unsignedVC *verifiable.Credential, proofOptions *Pro
 		return nil, fmt.Errorf("initializing jwt signer: %w", err)
 	}
 
-	alg, hasAlg := jwtSigner.Headers().Algorithm()
-	if !hasAlg {
-		return nil, fmt.Errorf("signer missing algorithm header")
-	}
-
-	vcAlg, err := algByName(alg)
+	vcAlg, err := algByName(jwtSigner.Algorithm())
 	if err != nil {
 		return nil, err
 	}
 
-	vc, err := unsignedVC.CreateSignedJWTVC(false, vcAlg, &signerWrapper{jwtSigner}, fullKID)
+	vc, err := unsignedVC.CreateSignedJWTVC(false, vcAlg, jwtSigner, fullKID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create JWT VC: %w", err)
 	}
@@ -124,26 +120,99 @@ func algByName(alg string) (verifiable.JWSAlgorithm, error) {
 	}
 }
 
-type signerWrapper struct {
-	signer api.JWTSigner
+// resolveSigningVMWithRelationship resolves a DID KeyID using the given did resolver, and returns either:
+//
+//   - the Verification Method identified by the given key ID, or
+//   - the first Assertion Method in the DID doc, if the DID provided has no fragment component.
+//
+// Returns:
+//   - a verification method suitable for signing.
+//   - the full DID#KID identifier of the returned verification method.
+//   - the name of the signing-supporting verification relationship found for this verification method.
+func resolveSigningVMWithRelationship(
+	kid string,
+	didResolver api.DIDResolver,
+) (*diddoc.VerificationMethod, string, string, error) {
+	vmSplit := strings.Split(kid, "#")
+
+	if len(vmSplit) > vmSectionCount {
+		return nil, "", "", errors.New("invalid verification method format")
+	}
+
+	signingDID := vmSplit[0]
+
+	docRes, err := didResolver.Resolve(signingDID)
+	if err != nil {
+		return nil, "", "", fmt.Errorf("failed to resolve signing DID: %w", err)
+	}
+
+	if len(vmSplit) == 1 {
+		// look for assertionmethod
+		verificationMethods := docRes.DIDDocument.VerificationMethods(diddoc.AssertionMethod)
+
+		if len(verificationMethods[diddoc.AssertionMethod]) > 0 {
+			vm := verificationMethods[diddoc.AssertionMethod][0].VerificationMethod
+
+			return &vm, fullVMID(signingDID, vm.ID), "assertionMethod", nil
+		}
+
+		return nil, "", "", fmt.Errorf("DID provided has no assertion method to use as a default signing key")
+	}
+
+	vmID := vmSplit[vmSectionCount-1]
+
+	for _, verifications := range docRes.DIDDocument.VerificationMethods() {
+		for _, verification := range verifications {
+			if isSigningKey(verification.Relationship) && vmIDFragmentOnly(verification.VerificationMethod.ID) == vmID {
+				vm := verification.VerificationMethod
+
+				return &vm, kid, verificationRelationshipName(verification.Relationship), nil
+			}
+		}
+	}
+
+	return nil, "", "", fmt.Errorf("did document has no verification method with given ID")
 }
 
-// Sign wraps api.JWTSigner.
-func (s *signerWrapper) Sign(data []byte) ([]byte, error) {
-	return s.signer.Sign(data)
+func fullVMID(did, vmID string) string {
+	vmIDSplit := strings.Split(vmID, "#")
+
+	if len(vmIDSplit) == 1 {
+		return did + "#" + vmIDSplit[0]
+	} else if vmIDSplit[0] == "" {
+		return did + "#" + vmIDSplit[1]
+	}
+
+	return vmID
 }
 
-// Alg returns the alg field from api.JWTSigner Headers().
-func (s *signerWrapper) Alg() string {
-	alg, _ := s.signer.Headers().Algorithm()
+func verificationRelationshipName(rel diddoc.VerificationRelationship) string {
+	switch rel { //nolint:exhaustive
+	case diddoc.VerificationRelationshipGeneral:
+		return ""
+	case diddoc.AssertionMethod:
+		return "assertionMethod"
+	case diddoc.Authentication:
+		return "authentication"
+	}
 
-	return alg
+	return ""
 }
 
-type didResolverWrapper struct {
-	didResolver api.DIDResolver
+func vmIDFragmentOnly(vmID string) string {
+	vmSplit := strings.Split(vmID, "#")
+	if len(vmSplit) == 1 {
+		return vmSplit[0]
+	}
+
+	return vmSplit[1]
 }
 
-func (d *didResolverWrapper) Resolve(did string, _ ...vdrapi.DIDMethodOption) (*diddoc.DocResolution, error) {
-	return d.didResolver.Resolve(did)
+func isSigningKey(vr diddoc.VerificationRelationship) bool {
+	switch vr { //nolint:exhaustive
+	case diddoc.AssertionMethod, diddoc.Authentication, diddoc.VerificationRelationshipGeneral:
+		return true
+	}
+
+	return false
 }

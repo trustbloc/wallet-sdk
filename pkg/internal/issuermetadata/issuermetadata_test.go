@@ -14,9 +14,9 @@ import (
 	"testing"
 
 	"github.com/trustbloc/kms-go/doc/jose"
+	"github.com/trustbloc/vc-go/proof/defaults"
 
 	"github.com/stretchr/testify/require"
-	"github.com/trustbloc/vc-go/jwt"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
@@ -104,8 +104,7 @@ func TestGet(t *testing.T) {
 			didResolver, err := resolver.NewDIDResolver()
 			require.NoError(t, err)
 
-			jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
-				common.NewVDRKeyResolver(didResolver).PublicKeyFetcher()))
+			jwtVerifier := defaults.NewDefaultProofChecker(common.NewVDRKeyResolver(didResolver))
 
 			issuerMetadata, err := issuermetadata.Get(server.URL, http.DefaultClient, nil,
 				"", jwtVerifier)
@@ -214,6 +213,6 @@ func TestGet(t *testing.T) {
 
 type mockVerifier struct{}
 
-func (m *mockVerifier) Verify(jose.Headers, []byte, []byte, []byte) error {
+func (m *mockVerifier) CheckJWTProof(jose.Headers, []byte, []byte, []byte) error {
 	return nil
 }

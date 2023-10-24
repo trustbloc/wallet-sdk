@@ -13,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	afgojwt "github.com/trustbloc/vc-go/jwt"
+	"github.com/trustbloc/vc-go/crypto-ext/testutil"
 	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
@@ -160,7 +160,7 @@ func TestVerifiableCredential_ClaimTypes(t *testing.T) {
 		_, privKey, err := ed25519.GenerateKey(rand.Reader)
 		require.NoError(t, err)
 
-		universityDegreeVCSDJWT, err := universityDegreeVC.MakeSDJWT(afgojwt.NewEd25519Signer(privKey),
+		universityDegreeVCSDJWT, err := universityDegreeVC.MakeSDJWT(testutil.NewEd25519Signer(privKey),
 			universityDegreeVC.Contents().Issuer.ID+"#keys-1")
 		require.NoError(t, err)
 

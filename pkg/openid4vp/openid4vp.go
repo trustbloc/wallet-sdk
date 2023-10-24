@@ -21,14 +21,15 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/piprate/json-gold/ld"
+	"github.com/trustbloc/bbs-signature-go/bbs12381g2pub"
 	diddoc "github.com/trustbloc/did-go/doc/did"
 	vdrapi "github.com/trustbloc/did-go/vdr/api"
-	"github.com/trustbloc/kms-go/doc/jose"
 	wrapperapi "github.com/trustbloc/kms-go/wrapper/api"
 	"github.com/trustbloc/vc-go/dataintegrity"
 	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
 	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/vc-go/presexch"
+	"github.com/trustbloc/vc-go/proof/defaults"
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -57,10 +58,6 @@ func (d *didResolverWrapper) Resolve(did string, _ ...vdrapi.DIDMethodOption) (*
 	return d.didResolver.Resolve(did)
 }
 
-type jwtSignatureVerifier interface {
-	Verify(joseHeaders jose.Headers, payload, signingInput, signature []byte) error
-}
-
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
@@ -87,7 +84,7 @@ type authorizedResponse struct {
 // If no ActivityLogger is provided (via an option), then no activity logging will take place.
 func NewInteraction(
 	authorizationRequest string,
-	signatureVerifier jwtSignatureVerifier,
+	signatureVerifier jwt.ProofChecker,
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
@@ -265,7 +262,7 @@ func fetchRequestObject(authorizationRequest string, client httpClient,
 
 func verifyRequestObjectAndDecodeClaims(
 	rawRequestObject string,
-	signatureVerifier jwtSignatureVerifier,
+	signatureVerifier jwt.ProofChecker,
 ) (*requestObject, error) {
 	requestObject := &requestObject{}
 
@@ -277,8 +274,8 @@ func verifyRequestObjectAndDecodeClaims(
 	return requestObject, nil
 }
 
-func verifyTokenSignature(rawJwt string, claims interface{}, verifier jose.SignatureVerifier) error {
-	jsonWebToken, _, err := jwt.Parse(rawJwt, jwt.WithSignatureVerifier(verifier))
+func verifyTokenSignature(rawJwt string, claims interface{}, proofChecker jwt.ProofChecker) error {
+	jsonWebToken, _, err := jwt.Parse(rawJwt, jwt.WithProofChecker(proofChecker))
 	if err != nil {
 		return fmt.Errorf("parse JWT: %w", err)
 	}
@@ -326,12 +323,20 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 		}
 	}
 
+	bbsProofCreator := &verifiable.BBSProofCreator{
+		ProofDerivation:            bbs12381g2pub.New(),
+		VerificationMethodResolver: common.NewVDRKeyResolver(didResolver),
+	}
+
 	presentation, err := pd.CreateVP(
 		[]*verifiable.Credential{credential},
 		documentLoader,
-		verifiable.WithDisabledProofCheck(),
-		verifiable.WithJSONLDDocumentLoader(documentLoader),
-		verifiable.WithPublicKeyFetcher(verifiable.NewVDRKeyResolver(wrapResolver(didResolver)).PublicKeyFetcher()),
+		presexch.WithSDBBSProofCreator(bbsProofCreator),
+		presexch.WithSDCredentialOptions(
+			verifiable.WithDisabledProofCheck(),
+			verifiable.WithJSONLDDocumentLoader(documentLoader),
+			verifiable.WithProofChecker(defaults.NewDefaultProofChecker(common.NewVDRKeyResolver(didResolver))),
+		),
 	)
 	if err != nil {
 		return nil, err
@@ -407,11 +412,19 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 ) (*authorizedResponse, error) {
 	pd := requestObject.Claims.VPToken.PresentationDefinition
 
+	bbsProofCreator := &verifiable.BBSProofCreator{
+		ProofDerivation:            bbs12381g2pub.New(),
+		VerificationMethodResolver: common.NewVDRKeyResolver(didResolver),
+	}
+
 	presentations, submission, err := pd.CreateVPArray(
 		credentials,
 		documentLoader,
-		verifiable.WithDisabledProofCheck(),
-		verifiable.WithJSONLDDocumentLoader(documentLoader),
+		presexch.WithSDBBSProofCreator(bbsProofCreator),
+		presexch.WithSDCredentialOptions(
+			verifiable.WithDisabledProofCheck(),
+			verifiable.WithJSONLDDocumentLoader(documentLoader),
+		),
 	)
 	if err != nil {
 		return nil, err
@@ -550,7 +563,7 @@ func createIDToken(
 }
 
 func signToken(claims interface{}, signer api.JWTSigner) (string, error) {
-	token, err := jwt.NewSigned(claims, nil, signer)
+	token, err := jwt.NewSigned(claims, jwt.SignParameters{}, signer)
 	if err != nil {
 		return "", fmt.Errorf("sign token failed: %w", err)
 	}

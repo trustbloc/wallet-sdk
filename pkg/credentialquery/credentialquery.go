@@ -9,7 +9,9 @@ package credentialquery
 
 import (
 	"github.com/piprate/json-gold/ld"
+	"github.com/trustbloc/bbs-signature-go/bbs12381g2pub"
 	"github.com/trustbloc/vc-go/presexch"
+	"github.com/trustbloc/vc-go/proof/defaults"
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -62,14 +64,21 @@ func (c *Instance) GetSubmissionRequirements(
 		opt(qOpts)
 	}
 
+	bbsProofCreator := &verifiable.BBSProofCreator{
+		ProofDerivation:            bbs12381g2pub.New(),
+		VerificationMethodResolver: common.NewVDRKeyResolver(qOpts.didResolver),
+	}
+
 	var matchOpts []presexch.MatchRequirementsOpt
 	if qOpts.applySelectiveDisclosure {
 		matchOpts = append(matchOpts,
 			presexch.WithSelectiveDisclosureApply(),
+			presexch.WithSDBBSProofCreator(bbsProofCreator),
 			presexch.WithSDCredentialOptions(
 				verifiable.WithDisabledProofCheck(),
 				verifiable.WithJSONLDDocumentLoader(c.documentLoader),
-				verifiable.WithPublicKeyFetcher(common.NewVDRKeyResolver(qOpts.didResolver).PublicKeyFetcher()),
+				verifiable.WithProofChecker(
+					defaults.NewDefaultProofChecker(common.NewVDRKeyResolver(qOpts.didResolver))),
 			),
 		)
 	}

@@ -45,7 +45,7 @@ func NewWalletInitiatedInteraction(issuerURI string, config *ClientConfig) (*Wal
 	return &WalletInitiatedInteraction{
 			interaction: &interaction{
 				issuerURI:            issuerURI,
-				didResolver:          &didResolverWrapper{didResolver: config.DIDResolver},
+				didResolver:          config.DIDResolver,
 				activityLogger:       config.ActivityLogger,
 				metricsLogger:        config.MetricsLogger,
 				disableVCProofChecks: config.DisableVCProofChecks,

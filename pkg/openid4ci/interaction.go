@@ -21,10 +21,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/trustbloc/vc-go/proof/defaults"
+
 	"github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
 
-	diddoc "github.com/trustbloc/did-go/doc/did"
-	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 
 	"github.com/google/uuid"
@@ -48,7 +48,7 @@ const getIssuerMetadataEventText = "Get issuer metadata"
 type interaction struct {
 	issuerURI            string
 	clientID             string
-	didResolver          *didResolverWrapper
+	didResolver          api.DIDResolver
 	activityLogger       api.ActivityLogger
 	metricsLogger        api.MetricsLogger
 	disableVCProofChecks bool
@@ -316,8 +316,7 @@ func (i *interaction) getOpenIDConfig() (*OpenIDConfig, error) {
 // before, then this method does nothing in order to avoid making an unnecessary GET call.
 func (i *interaction) populateIssuerMetadata(parentEvent string) error {
 	if i.issuerMetadata == nil {
-		jwtVerifier := jwt.NewVerifier(jwt.KeyResolverFunc(
-			common.NewVDRKeyResolver(&resolverAdapter{didResolver: i.didResolver}).PublicKeyFetcher()))
+		jwtVerifier := defaults.NewDefaultProofChecker(common.NewVDRKeyResolver(i.didResolver))
 
 		issuerMetadata, err := metadatafetcher.Get(i.issuerURI, i.httpClient, i.metricsLogger, parentEvent, jwtVerifier)
 		if err != nil {
@@ -533,14 +532,12 @@ func (i *interaction) getVCsFromCredentialResponses(
 ) ([]*verifiable.Credential, error) {
 	var vcs []*verifiable.Credential
 
-	vdrKeyResolver := verifiable.NewVDRKeyResolver(i.didResolver)
-
 	credentialOpts := []verifiable.CredentialOpt{
 		verifiable.WithJSONLDDocumentLoader(i.documentLoader),
-		verifiable.WithPublicKeyFetcher(vdrKeyResolver.PublicKeyFetcher()),
+		verifiable.WithProofChecker(defaults.NewDefaultProofChecker(common.NewVDRKeyResolver(i.didResolver))),
 	}
 
-	opts := dataintegrity.Options{DIDResolver: i.didResolver}
+	opts := dataintegrity.Options{DIDResolver: &didResolverWrapper{didResolver: i.didResolver}}
 
 	dataIntegrityVerifier, err := dataintegrity.NewVerifier(&opts,
 		ecdsa2019.NewVerifierInitializer(&ecdsa2019.VerifierInitializerOptions{
@@ -650,19 +647,10 @@ func (i *interaction) verifyIssuer() (string, error) {
 
 	// The first return parameter (a bool) is redundant with the error return. It's always false if there's an error
 	// and always true if there was no error. Thus, it provides no additional information and can be ignored.
-	_, serviceURL, err := wellknown.ValidateLinkedDomains(did, &resolverAdapter{didResolver: i.didResolver},
-		i.httpClient)
+	_, serviceURL, err := wellknown.ValidateLinkedDomains(did, i.didResolver, i.httpClient)
 	if err != nil {
 		return "", err
 	}
 
 	return serviceURL, nil
-}
-
-type resolverAdapter struct {
-	didResolver *didResolverWrapper
-}
-
-func (r *resolverAdapter) Resolve(did string) (*diddoc.DocResolution, error) {
-	return r.didResolver.Resolve(did)
 }
