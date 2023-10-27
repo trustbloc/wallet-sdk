@@ -16,7 +16,7 @@ require (
 	github.com/stretchr/testify v1.8.2
 	github.com/trustbloc/did-go v1.0.2-0.20230928194341-39d5462574c0
 	github.com/trustbloc/kms-go v1.0.1-0.20230928143453-638bd66bb721
-	github.com/trustbloc/vc-go v1.0.3-0.20231019085953-561fd4e9b9f3
+	github.com/trustbloc/vc-go v1.0.3-0.20231027105821-33039864132e
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 )
 

@@ -626,6 +626,6 @@ func ordersMatch(order1, order2 *int) bool {
 
 type mockSignatureVerifier struct{}
 
-func (*mockSignatureVerifier) CheckJWTProof(jose.Headers, []byte, []byte, []byte) error {
+func (*mockSignatureVerifier) CheckJWTProof(jose.Headers, string, []byte, []byte) error {
 	return nil
 }

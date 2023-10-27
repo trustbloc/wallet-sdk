@@ -30,7 +30,7 @@ func TestDIDKeyResolver_Resolve(t *testing.T) {
 	resolver := common.NewVDRKeyResolver(&vdrResolverAdapter{vdr: vdrRegistry})
 	req.NotNil(resolver)
 
-	pubKey, err := resolver.ResolveVerificationMethod(publicKey.ID)
+	pubKey, err := resolver.ResolveVerificationMethod(publicKey.ID, didDoc.ID)
 	req.NoError(err)
 	req.Equal(publicKey.Value, pubKey.Value)
 	req.Equal("Ed25519VerificationKey2018", pubKey.Type)
