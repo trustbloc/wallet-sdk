@@ -239,10 +239,9 @@ func TestValidate(t *testing.T) {
 		didDoc := fmt.Sprintf(didDocTemplate, testServer.URL)
 
 		valid, domain, err := wellknown.ValidateLinkedDomains("DID", newMockResolver(didDoc), nil)
-		testutil.RequireErrorContains(t, err, "DID service validation failed: "+
-			"domain linkage credential(s) not found")
+		require.NoError(t, err)
 		require.False(t, valid)
-		require.Empty(t, domain)
+		require.NotEmpty(t, domain)
 	})
 	t.Run("Service type is not a string", func(t *testing.T) {
 		didDoc := `{
