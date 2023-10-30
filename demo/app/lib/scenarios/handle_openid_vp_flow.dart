@@ -73,7 +73,7 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
     if (matchedVCsID.length > 1) {
       log('matched length, more than matched vc ids are found ${matchedVCsID.length}');
       var credentialDisplayData = storedCredentials
-          .where((element) => credentials.contains(element.value.rawCredential))
+          .where((element) => matchedVCsID.contains(element.value.credID))
           .map((e) => CredentialData(
               rawCredential: e.value.rawCredential,
               issuerURL: e.value.issuerURL,
