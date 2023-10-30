@@ -213,6 +213,6 @@ func TestGet(t *testing.T) {
 
 type mockVerifier struct{}
 
-func (m *mockVerifier) CheckJWTProof(jose.Headers, []byte, []byte, []byte) error {
+func (m *mockVerifier) CheckJWTProof(jose.Headers, string, []byte, []byte) error {
 	return nil
 }

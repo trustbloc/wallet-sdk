@@ -275,7 +275,9 @@ func verifyRequestObjectAndDecodeClaims(
 }
 
 func verifyTokenSignature(rawJwt string, claims interface{}, proofChecker jwt.ProofChecker) error {
-	jsonWebToken, _, err := jwt.Parse(rawJwt, jwt.WithProofChecker(proofChecker))
+	jsonWebToken, _, err := jwt.ParseAndCheckProof(rawJwt, proofChecker, true,
+		jwt.DecodeClaimsTo(claims),
+		jwt.WithIgnoreClaimsMapDecoding(true))
 	if err != nil {
 		return fmt.Errorf("parse JWT: %w", err)
 	}

@@ -154,8 +154,10 @@ func TestValidate(t *testing.T) {
 		defer func() { testServer.Close() }()
 
 		validationResult, err := ValidateLinkedDomains("DID", newMockResolver(testServer.URL), nil)
-		requireErrorContains(t, err, "DOMAIN_AND_DID_VERIFICATION_FAILED")
-		require.Nil(t, validationResult)
+		require.NoError(t, err, "DOMAIN_AND_DID_VERIFICATION_FAILED")
+		require.NotNil(t, validationResult)
+		require.False(t, validationResult.IsValid)
+		require.NotEmpty(t, validationResult.ServiceURL)
 	})
 }
 
@@ -224,9 +226,4 @@ func (m *mockResolver) Resolve(string) ([]byte, error) {
 	didDocResolution := did.DocResolution{DIDDocument: parsedDIDDoc}
 
 	return didDocResolution.JSONBytes()
-}
-
-func requireErrorContains(t *testing.T, err error, errString string) { //nolint:thelper
-	require.Error(t, err)
-	require.Contains(t, err.Error(), errString)
 }

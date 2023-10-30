@@ -77,16 +77,14 @@ func ValidateLinkedDomains(did string, resolver api.DIDResolver,
 			diderrors.WellknownInitializationFailed, err)
 	}
 
-	err = client.VerifyDIDAndDomain(did, strings.TrimSuffix(uri, "/"))
-	if err != nil {
-		return false, "", walleterror.NewExecutionError(
-			diderrors.Module,
-			diderrors.DomainAndDidVerificationCode,
-			diderrors.DomainAndDidVerificationFailed,
-			fmt.Errorf("DID service validation failed: %w", err))
+	didBelongsToDomain := true
+
+	verErr := client.VerifyDIDAndDomain(did, strings.TrimSuffix(uri, "/"))
+	if verErr != nil {
+		didBelongsToDomain = false
 	}
 
-	return true, uri, nil
+	return didBelongsToDomain, uri, nil
 }
 
 func getLinkedDomainsService(didDoc *diddoc.Doc) (*diddoc.Service, error) {

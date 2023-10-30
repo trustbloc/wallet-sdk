@@ -166,8 +166,8 @@ github.com/trustbloc/logutil-go v1.0.0-rc1 h1:rRJbvgQfrlUfyej+mY0nuQJymGqjRW4oZE
 github.com/trustbloc/logutil-go v1.0.0-rc1/go.mod h1:JlxT0oZfNKgIlSNtgc001WEeDMxlnAvOM43gNm8DQVc=
 github.com/trustbloc/sidetree-go v0.0.0-20230928172705-30e78b6b6ddd h1:hWWZ7lQSRK5FOcVhG5cUtwaNwWLYaz9wASiR5GyPtQE=
 github.com/trustbloc/sidetree-go v0.0.0-20230928172705-30e78b6b6ddd/go.mod h1:3oQhk0vOdhaUpPEQBFBzwqH8t0d8bcP2XLU2orBY13U=
-github.com/trustbloc/vc-go v1.0.3-0.20231019085953-561fd4e9b9f3 h1:mh7s/lAqcShmgpxYYDyTY+2fGs9COkBVYcTJGVvR/Y0=
-github.com/trustbloc/vc-go v1.0.3-0.20231019085953-561fd4e9b9f3/go.mod h1:VuXhnz0ojxFCRL9dPxETYTtFPNNFHqzS1Ati/lnQs1o=
+github.com/trustbloc/vc-go v1.0.3-0.20231027105821-33039864132e h1:XzigWeypMEq/SLBcYhi794jDJ5uZU6q208TXgNuhhI4=
+github.com/trustbloc/vc-go v1.0.3-0.20231027105821-33039864132e/go.mod h1:pSA6JbLCFEtJCFAci63weHOzbZbrtCI0cS7wh2GIKMI=
 github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=
 github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb h1:zGWFAtiMcyryUHoUjUJX0/lt1H2+i2Ka2n+D3DImSNo=
 github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=

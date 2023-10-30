@@ -1070,12 +1070,9 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
 			}, openid4ci.WithPIN("1234"))
-			require.EqualError(t, err, "CREDENTIAL_PARSE_FAILED(OCI1-0007):failed to parse credential from "+
+			require.ErrorContains(t, err, "CREDENTIAL_PARSE_FAILED(OCI1-0007):failed to parse credential from "+
 				"credential response at index 0: "+
-				"JWS proof check: unmarshal VC JWT claims: parse JWT: "+
-				"parse JWT from compact JWS: invalid public key id: public key with KID "+
-				"#d3cfd36b-4f75-4041-b416-f0a7a3c6b9f6 is not "+
-				"found for DID did:orb:uAAA:EiDpzs0hy0q0If4ZfJA1kxBQd9ed6FoBFhhqDWSiBeKaIg")
+				"JWS proof check: invalid public key id: public key with KID ")
 			require.Nil(t, credentials)
 		})
 		t.Run("Fail to log fetch OpenID config metrics event", func(t *testing.T) {

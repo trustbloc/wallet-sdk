@@ -20,6 +20,7 @@ import (
 	"github.com/trustbloc/kms-go/doc/jose/jwk"
 	wrapperapi "github.com/trustbloc/kms-go/wrapper/api"
 
+	gomobdid "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
 	goapilocalkms "github.com/trustbloc/wallet-sdk/pkg/localkms"
 
@@ -46,18 +47,18 @@ var (
 
 	//go:embed test_data/credentials.jsonld
 	credentialsJSONLD []byte
-
-	//go:embed test_data/valid_doc_resolution.jsonld
-	sampleDIDDocResolution []byte
 )
 
 func TestNewInteraction(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Run("OpenTelemetry disabled, custom headers used instead", func(t *testing.T) {
+			resolver, err := gomobdid.NewResolver(gomobdid.NewResolverOpts())
+			require.NoError(t, err)
+
 			requiredArgs := NewArgs(
 				requestObjectJWT,
 				&mockCrypto{},
-				&mockDIDResolver{ResolveDocBytes: sampleDIDDocResolution},
+				resolver,
 			)
 
 			// Note: in-depth testing of opts functionality is done in the integration tests.
@@ -77,10 +78,13 @@ func TestNewInteraction(t *testing.T) {
 			require.NotNil(t, instance)
 		})
 		t.Run("All other options invoked", func(t *testing.T) {
+			resolver, err := gomobdid.NewResolver(gomobdid.NewResolverOpts())
+			require.NoError(t, err)
+
 			requiredArgs := NewArgs(
 				requestObjectJWT,
 				&mockCrypto{},
-				&mockDIDResolver{ResolveDocBytes: sampleDIDDocResolution},
+				resolver,
 			)
 
 			// Note: in-depth testing of opts functionality is done in the integration tests.
@@ -129,9 +133,8 @@ func TestNewInteraction(t *testing.T) {
 
 		instance, err := NewInteraction(requiredArgs, nil)
 		testutil.RequireErrorContains(t, err, "INVALID_AUTHORIZATION_REQUEST")
-		testutil.RequireErrorContains(t, err, "verify request object: parse JWT: "+
-			"parse JWT from compact JWS: invalid public key id: resolve DID "+
-			"did:ion:EiDYWcDuP-EDjVyFWGFdpgPncar9A7OGFykdeX71ZTU-wg")
+		testutil.RequireErrorContains(t, err, "verify request object: parse JWT: invalid public key id:"+
+			" resolve DID did:ion:EiDYWcDuP-EDjVyFWGFdpgPncar9A7OGFykdeX71ZTU-wg:")
 		require.Nil(t, instance)
 	})
 }
