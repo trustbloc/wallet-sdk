@@ -30,8 +30,9 @@ import (
 
 type goAPIOpenID4VP interface {
 	GetQuery() *presexch.PresentationDefinition
-	PresentCredential(credentials []*afgoverifiable.Credential) error
-	PresentCredentialUnsafe(credential *afgoverifiable.Credential) error
+	Scope() []string
+	PresentCredential(credentials []*afgoverifiable.Credential, customClaims openid4vp.CustomClaims) error
+	PresentCredentialUnsafe(credential *afgoverifiable.Credential, customClaims openid4vp.CustomClaims) error
 	VerifierDisplayData() *openid4vp.VerifierDisplayData
 }
 
@@ -134,6 +135,11 @@ func (o *Interaction) GetQuery() ([]byte, error) {
 	return pdBytes, nil
 }
 
+// Scope returns vp integration scope.
+func (o *Interaction) Scope() *Scope {
+	return NewScope(o.goAPIOpenID4VP.Scope())
+}
+
 // VerifierDisplayData returns display information about verifier.
 func (o *Interaction) VerifierDisplayData() *VerifierDisplayData {
 	displayData := o.goAPIOpenID4VP.VerifierDisplayData()
@@ -148,7 +154,25 @@ func (o *Interaction) PresentCredential(credentials *verifiable.CredentialsArray
 		return wrapper.ToMobileErrorWithTrace(err, o.oTel)
 	}
 
-	return wrapper.ToMobileErrorWithTrace(o.goAPIOpenID4VP.PresentCredential(vcs), o.oTel)
+	return wrapper.ToMobileErrorWithTrace(o.goAPIOpenID4VP.PresentCredential(vcs, openid4vp.CustomClaims{}), o.oTel)
+}
+
+// PresentCredentialWithOpts presents credentials to redirect uri from request object.
+func (o *Interaction) PresentCredentialWithOpts(
+	credentials *verifiable.CredentialsArray,
+	opts *PresentCredentialOpts,
+) error {
+	vcs, err := unwrapVCs(credentials)
+	if err != nil {
+		return wrapper.ToMobileErrorWithTrace(err, o.oTel)
+	}
+
+	claims, err := getCustomClaims(opts)
+	if err != nil {
+		return err
+	}
+
+	return wrapper.ToMobileErrorWithTrace(o.goAPIOpenID4VP.PresentCredential(vcs, claims), o.oTel)
 }
 
 // PresentCredentialUnsafe presents a single credential to redirect uri from
@@ -159,7 +183,8 @@ func (o *Interaction) PresentCredential(credentials *verifiable.CredentialsArray
 // provided credential, at least in terms of issuer fields, and subject data
 // fields.
 func (o *Interaction) PresentCredentialUnsafe(credential *verifiable.Credential) error {
-	return wrapper.ToMobileErrorWithTrace(o.goAPIOpenID4VP.PresentCredentialUnsafe(credential.VC), o.oTel)
+	return wrapper.ToMobileErrorWithTrace(o.goAPIOpenID4VP.PresentCredentialUnsafe(credential.VC,
+		openid4vp.CustomClaims{}), o.oTel)
 }
 
 // OTelTraceID returns open telemetry trace id.
@@ -221,4 +246,27 @@ func unwrapVCs(vcs *verifiable.CredentialsArray) ([]*afgoverifiable.Credential, 
 	}
 
 	return credentials, nil
+}
+
+func getCustomClaims(opts *PresentCredentialOpts) (openid4vp.CustomClaims, error) {
+	if opts == nil {
+		return openid4vp.CustomClaims{}, nil
+	}
+
+	claims := openid4vp.CustomClaims{
+		ScopeClaims: map[string]interface{}{},
+	}
+
+	for key, value := range opts.scopeClaims {
+		var jsonValue interface{}
+
+		err := json.Unmarshal([]byte(value), &jsonValue)
+		if err != nil {
+			return openid4vp.CustomClaims{}, fmt.Errorf("fail to parse %q claim json: %w", key, err)
+		}
+
+		claims.ScopeClaims[key] = jsonValue
+	}
+
+	return claims, nil
 }

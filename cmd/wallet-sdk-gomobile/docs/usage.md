@@ -1465,6 +1465,18 @@ val preferredVC = savedCredentials.atIndex(0)
 interaction.presentCredentialUnsafe(preferredVC)
 ```
 
+###### Read scope and add custom scope claims
+
+```kotlin
+
+val scope = interaction.scope()
+
+interaction.presentCredentialWithOpts(selectedCredentials, PresentCredentialOpts()
+                .addScopeClaim("registration", """{"email", "test@example.com"}"""))
+
+```
+
+
 #### Swift (iOS)
 
 ```swift
@@ -1512,6 +1524,18 @@ let credentials = interaction.presentCredential(selectedVCs)
 // requirements, use this instead of presentCredential:
 let preferredVC = savedCredentials.atIndex(0)
 interaction.presentCredentialUnsafe(preferredVC)
+```
+
+###### Read scope and add custom scope claims
+
+```swift
+
+val scope = interaction.scope()
+
+let opts = Openid4vpNewPresentCredentialOpts()?.addScopeClaim("registration", #"{"email", "test@example.com"}"#)
+
+try interaction.presentCredentialWithOpts(selectedCredentials, opts)
+
 ```
 
 ### Error Codes & Troubleshooting Tips
