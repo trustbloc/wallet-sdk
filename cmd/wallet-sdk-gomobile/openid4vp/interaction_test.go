@@ -76,6 +76,8 @@ func TestNewInteraction(t *testing.T) {
 			instance, err := NewInteraction(requiredArgs, opts)
 			require.NoError(t, err)
 			require.NotNil(t, instance)
+			require.Equal(t, 1, instance.Scope().Length())
+			require.Equal(t, "openid", instance.Scope().AtIndex(0))
 		})
 		t.Run("All other options invoked", func(t *testing.T) {
 			resolver, err := gomobdid.NewResolver(gomobdid.NewResolverOpts())
@@ -182,6 +184,21 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("Success With Opts", func(t *testing.T) {
+		instance := makeInteraction()
+
+		err := instance.PresentCredentialWithOpts(credentials, NewPresentCredentialOpts().
+			AddScopeClaim("claim1", `{"key" : "val"}`))
+		require.NoError(t, err)
+	})
+
+	t.Run("Success With nil Opts", func(t *testing.T) {
+		instance := makeInteraction()
+
+		err := instance.PresentCredentialWithOpts(credentials, nil)
+		require.NoError(t, err)
+	})
+
 	t.Run("Success Unsafe", func(t *testing.T) {
 		instance := makeInteraction()
 
@@ -198,6 +215,26 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 		err := instance.PresentCredential(credentials)
 		require.Contains(t, err.Error(), "present credentials failed")
+	})
+
+	t.Run("Present credentials with opts failed", func(t *testing.T) {
+		instance := makeInteraction()
+
+		instance.goAPIOpenID4VP = &mockGoAPIInteraction{
+			PresentCredentialErr: errors.New("present credentials failed"),
+		}
+
+		err := instance.PresentCredentialWithOpts(credentials, NewPresentCredentialOpts().
+			AddScopeClaim("claim1", `{"key" : "val"}`))
+		require.Contains(t, err.Error(), "present credentials failed")
+	})
+
+	t.Run("Present credentials with invalid scope value", func(t *testing.T) {
+		instance := makeInteraction()
+
+		err := instance.PresentCredentialWithOpts(credentials, NewPresentCredentialOpts().
+			AddScopeClaim("claim1", `"key" : "val"`))
+		require.ErrorContains(t, err, `fail to parse "claim1" claim json`)
 	})
 
 	t.Run("Present credentials unsafe failed", func(t *testing.T) {
@@ -226,6 +263,20 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		err := instance.PresentCredential(credentials)
 		testutil.RequireErrorContains(t, err, "credential objects cannot be nil "+
 			"(credential at index 5 is nil)")
+	})
+}
+
+func TestGetCustomClaims(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		claims, err := getCustomClaims(NewPresentCredentialOpts().
+			AddScopeClaim("claim1", `{"key" : "val"}`))
+		require.NoError(t, err)
+		require.Equal(t, map[string]interface{}{
+			"claim1": map[string]interface{}{
+				"key": "val",
+			},
+		},
+			claims.ScopeClaims)
 	})
 }
 
@@ -289,6 +340,7 @@ func (c *mockCrypto) Verify([]byte, []byte, string) error {
 
 type mockGoAPIInteraction struct {
 	GetQueryResult             *presexch.PresentationDefinition
+	ScopeResult                []string
 	PresentCredentialErr       error
 	PresentCredentialUnsafeErr error
 	VerifierDisplayDataRes     *openid4vp.VerifierDisplayData
@@ -298,11 +350,15 @@ func (o *mockGoAPIInteraction) GetQuery() *presexch.PresentationDefinition {
 	return o.GetQueryResult
 }
 
-func (o *mockGoAPIInteraction) PresentCredential([]*afgoverifiable.Credential) error {
+func (o *mockGoAPIInteraction) Scope() []string {
+	return o.ScopeResult
+}
+
+func (o *mockGoAPIInteraction) PresentCredential([]*afgoverifiable.Credential, openid4vp.CustomClaims) error {
 	return o.PresentCredentialErr
 }
 
-func (o *mockGoAPIInteraction) PresentCredentialUnsafe(*afgoverifiable.Credential) error {
+func (o *mockGoAPIInteraction) PresentCredentialUnsafe(*afgoverifiable.Credential, openid4vp.CustomClaims) error {
 	return o.PresentCredentialUnsafeErr
 }
 

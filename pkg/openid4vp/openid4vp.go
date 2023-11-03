@@ -131,6 +131,11 @@ func (o *Interaction) GetQuery() *presexch.PresentationDefinition {
 	return o.requestObject.Claims.VPToken.PresentationDefinition
 }
 
+// Scope returns vp integration scope.
+func (o *Interaction) Scope() []string {
+	return strings.Split(o.requestObject.Scope, "+")
+}
+
 // VerifierDisplayData returns display information about verifier.
 func (o *Interaction) VerifierDisplayData() *VerifierDisplayData {
 	return &VerifierDisplayData{
@@ -147,18 +152,20 @@ type presentOpts struct {
 }
 
 // PresentCredential presents credentials to redirect uri from request object.
-func (o *Interaction) PresentCredential(credentials []*verifiable.Credential) error {
+func (o *Interaction) PresentCredential(credentials []*verifiable.Credential, customClaims CustomClaims) error {
 	return o.presentCredentials(
 		credentials,
+		customClaims,
 		&presentOpts{signer: o.signer},
 	)
 }
 
 // PresentCredentialUnsafe presents a single credential to redirect uri from request object.
 // This skips presentation definition constraint validation.
-func (o *Interaction) PresentCredentialUnsafe(credential *verifiable.Credential) error {
+func (o *Interaction) PresentCredentialUnsafe(credential *verifiable.Credential, customClaims CustomClaims) error {
 	return o.presentCredentials(
 		[]*verifiable.Credential{credential},
+		customClaims,
 		&presentOpts{
 			ignoreConstraints: true,
 		},
@@ -166,12 +173,17 @@ func (o *Interaction) PresentCredentialUnsafe(credential *verifiable.Credential)
 }
 
 // PresentCredential presents credentials to redirect uri from request object.
-func (o *Interaction) presentCredentials(credentials []*verifiable.Credential, opts *presentOpts) error {
+func (o *Interaction) presentCredentials(
+	credentials []*verifiable.Credential,
+	customClaims CustomClaims,
+	opts *presentOpts,
+) error {
 	timeStartPresentCredential := time.Now()
 
 	response, err := createAuthorizedResponse(
 		credentials,
 		o.requestObject,
+		customClaims,
 		o.didResolver,
 		o.crypto,
 		o.documentLoader,
@@ -293,6 +305,7 @@ func verifyTokenSignature(rawJwt string, claims interface{}, proofChecker jwt.Pr
 func createAuthorizedResponse(
 	credentials []*verifiable.Credential,
 	requestObject *requestObject,
+	customClaims CustomClaims,
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
@@ -302,9 +315,11 @@ func createAuthorizedResponse(
 	case 0:
 		return nil, fmt.Errorf("expected at least one credential to present to verifier")
 	case 1:
-		return createAuthorizedResponseOneCred(credentials[0], requestObject, didResolver, crypto, documentLoader, opts)
+		return createAuthorizedResponseOneCred(credentials[0], requestObject, customClaims,
+			didResolver, crypto, documentLoader, opts)
 	default:
-		return createAuthorizedResponseMultiCred(credentials, requestObject, didResolver, crypto, documentLoader,
+		return createAuthorizedResponseMultiCred(credentials, requestObject, customClaims,
+			didResolver, crypto, documentLoader,
 			opts.signer)
 	}
 }
@@ -312,6 +327,7 @@ func createAuthorizedResponse(
 func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decompose without a major reworking
 	credential *verifiable.Credential,
 	requestObject *requestObject,
+	customClaims CustomClaims,
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
@@ -380,7 +396,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 
 	presentation.CustomFields["presentation_submission"] = nil
 
-	idTokenJWS, err := createIDToken(requestObject, presentationSubmission, did, jwtSigner)
+	idTokenJWS, err := createIDToken(requestObject, presentationSubmission, did, customClaims, jwtSigner)
 	if err != nil {
 		return nil, err
 	}
@@ -407,6 +423,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to decompose without a major reworking
 	credentials []*verifiable.Credential,
 	requestObject *requestObject,
+	customClaims CustomClaims,
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
@@ -497,7 +514,8 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 		return nil, err
 	}
 
-	idTokenJWS, err := createIDToken(requestObject, submission, idTokenSigningDID, signers[idTokenSigningDID])
+	idTokenJWS, err := createIDToken(requestObject, submission, idTokenSigningDID,
+		customClaims, signers[idTokenSigningDID])
 	if err != nil {
 		return nil, err
 	}
@@ -540,12 +558,14 @@ func createIDToken(
 	req *requestObject,
 	submission interface{},
 	signingDID string,
+	customClaims CustomClaims,
 	signer api.JWTSigner,
 ) (string, error) {
 	idToken := &idTokenClaims{
 		VPToken: idTokenVPToken{
 			PresentationSubmission: submission,
 		},
+		Scope: customClaims.ScopeClaims,
 		Nonce: req.Nonce,
 		Exp:   time.Now().Unix() + tokenLiveTimeSec,
 		Iss:   "https://self-issued.me/v2/openid-vc",

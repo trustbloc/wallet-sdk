@@ -260,7 +260,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.Equal(t, "", displayData.Purpose)
 		require.Equal(t, "", displayData.LogoURI)
 
-		err = interaction.PresentCredential(credentials)
+		err = interaction.PresentCredential(credentials, CustomClaims{})
+
 		require.NoError(t, err)
 
 		expectedState := "636df28459a07d50cc4b657e"
@@ -343,14 +344,36 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		query := interaction.GetQuery()
 		require.NotNil(t, query)
 
-		err = interaction.PresentCredentialUnsafe(singleCred[0])
+		err = interaction.PresentCredentialUnsafe(singleCred[0], CustomClaims{})
 		require.NoError(t, err)
+	})
+
+	t.Run("Check custom claims", func(t *testing.T) {
+		response, err := createAuthorizedResponse(
+			singleCred,
+			mockRequestObject,
+			CustomClaims{ScopeClaims: map[string]interface{}{
+				"customClaimName": "customClaimValue",
+			}},
+			&didResolverMock{ResolveValue: mockDoc},
+			&cryptoMock{SignVal: []byte(testSignature)},
+			lddl,
+			nil,
+		)
+		require.NoError(t, err)
+
+		body, err := base64.RawURLEncoding.DecodeString(strings.Split(response.IDTokenJWS, ".")[1])
+		require.NoError(t, err)
+
+		require.Contains(t, string(body), "customClaimName")
+		require.Contains(t, string(body), "customClaimValue")
 	})
 
 	t.Run("Check nonce", func(t *testing.T) {
 		response, err := createAuthorizedResponse(
 			singleCred,
 			mockRequestObject,
+			CustomClaims{},
 			&didResolverMock{ResolveValue: mockDoc},
 			&cryptoMock{SignVal: []byte(testSignature)},
 			lddl,
@@ -407,6 +430,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		response, err := createAuthorizedResponse(
 			singleCred,
 			req,
+			CustomClaims{},
 			&didResolverMock{ResolveValue: mockDoc},
 			&cryptoMock{SignVal: []byte(testSignature)},
 			lddl,
@@ -420,6 +444,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		response, err = createAuthorizedResponse(
 			singleCred,
 			req,
+			CustomClaims{},
 			&didResolverMock{ResolveValue: mockDoc},
 			&cryptoMock{SignVal: []byte(testSignature)},
 			lddl,
@@ -448,7 +473,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		query := interaction.GetQuery()
 		require.NotNil(t, query)
 
-		err = interaction.PresentCredential(nil)
+		err = interaction.PresentCredential(nil, CustomClaims{})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "expected at least one credential")
 	})
@@ -494,6 +519,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 				_, err := createAuthorizedResponse(
 					vcs,
 					mockRequestObject,
+					CustomClaims{},
 					&didResolverMock{ResolveValue: mockDoc},
 					&cryptoMock{},
 					lddl,
@@ -509,15 +535,16 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	t.Run("fail to resolve signing DID", func(t *testing.T) {
 		expectErr := errors.New("resolve failed")
 
-		_, err := createAuthorizedResponse(singleCred, mockRequestObject,
+		_, err := createAuthorizedResponse(singleCred, mockRequestObject, CustomClaims{},
 			&didResolverMock{ResolveErr: expectErr}, &cryptoMock{}, lddl, &presentOpts{})
 		require.ErrorIs(t, err, expectErr)
 	})
 
 	t.Run("signing DID has no signing key", func(t *testing.T) {
-		_, err := createAuthorizedResponse(singleCred, mockRequestObject, &didResolverMock{ResolveValue: &did.DocResolution{
-			DIDDocument: &did.Doc{},
-		}}, &cryptoMock{}, lddl, nil)
+		_, err := createAuthorizedResponse(singleCred, mockRequestObject, CustomClaims{},
+			&didResolverMock{ResolveValue: &did.DocResolution{
+				DIDDocument: &did.Doc{},
+			}}, &cryptoMock{}, lddl, nil)
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "no assertion method for signing")
@@ -529,6 +556,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		_, err := createAuthorizedResponse(
 			singleCred,
 			mockRequestObject,
+			CustomClaims{},
 			&didResolverMock{ResolveValue: mockDoc},
 			&cryptoMock{SignErr: expectErr},
 			lddl,
@@ -551,6 +579,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			_, err = createAuthorizedResponse(
 				singleCred,
 				mockRequestObject,
+				CustomClaims{},
 				&didResolverMock{ResolveValue: mockDoc},
 				&cryptoMock{},
 				lddl,
@@ -571,6 +600,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			_, err = createAuthorizedResponse(
 				credentials,
 				mockRequestObject,
+				CustomClaims{},
 				&didResolverMock{ResolveValue: mockDoc},
 				&cryptoMock{},
 				lddl,
@@ -607,7 +637,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			err = interaction.PresentCredential(credentials)
+			err = interaction.PresentCredential(credentials, CustomClaims{})
 			testutil.RequireErrorContains(t, err, InvalidScopeError)
 		})
 
@@ -619,7 +649,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			err = interaction.PresentCredential(credentials)
+			err = interaction.PresentCredential(credentials, CustomClaims{})
 			testutil.RequireErrorContains(t, err, InvalidRequestError)
 		})
 
@@ -631,7 +661,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			err = interaction.PresentCredential(credentials)
+			err = interaction.PresentCredential(credentials, CustomClaims{})
 			testutil.RequireErrorContains(t, err, InvalidClientError)
 		})
 
@@ -643,7 +673,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			err = interaction.PresentCredential(credentials)
+			err = interaction.PresentCredential(credentials, CustomClaims{})
 			testutil.RequireErrorContains(t, err, VPFormatsNotSupportedError)
 		})
 
@@ -655,7 +685,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			err = interaction.PresentCredential(credentials)
+			err = interaction.PresentCredential(credentials, CustomClaims{})
 			testutil.RequireErrorContains(t, err, InvalidPresentationDefinitionURIError)
 		})
 
@@ -667,7 +697,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			err = interaction.PresentCredential(credentials)
+			err = interaction.PresentCredential(credentials, CustomClaims{})
 			testutil.RequireErrorContains(t, err, InvalidPresentationDefinitionReferenceError)
 		})
 
@@ -679,7 +709,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			httpClient.Response = string(errResponseBytes)
 
-			err = interaction.PresentCredential(credentials)
+			err = interaction.PresentCredential(credentials, CustomClaims{})
 			testutil.RequireErrorContains(t, err, OtherAuthorizationResponseError)
 		})
 
@@ -695,7 +725,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 				httpClient.Response = string(errResponseBytes)
 
-				err = interaction.PresentCredential(credentials)
+				err = interaction.PresentCredential(credentials, CustomClaims{})
 				require.Error(t, err)
 
 				var walletError *walleterror.Error
@@ -711,7 +741,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 				httpClient.Response = string(errResponseBytes)
 
-				err = interaction.PresentCredential(credentials)
+				err = interaction.PresentCredential(credentials, CustomClaims{})
 				testutil.RequireErrorContains(t, err, MSEntraNotFoundError)
 			})
 			t.Run("Token error", func(t *testing.T) {
@@ -722,7 +752,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 				httpClient.Response = string(errResponseBytes)
 
-				err = interaction.PresentCredential(credentials)
+				err = interaction.PresentCredential(credentials, CustomClaims{})
 				testutil.RequireErrorContains(t, err, MSEntraTokenError)
 			})
 			t.Run("Transient error", func(t *testing.T) {
@@ -733,7 +763,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 				httpClient.Response = string(errResponseBytes)
 
-				err = interaction.PresentCredential(credentials)
+				err = interaction.PresentCredential(credentials, CustomClaims{})
 				testutil.RequireErrorContains(t, err, MSEntraTransientError)
 			})
 			t.Run("Unknown/other error type in msEntraErrorResponse object", func(t *testing.T) {
@@ -744,7 +774,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 				httpClient.Response = string(errResponseBytes)
 
-				err = interaction.PresentCredential(credentials)
+				err = interaction.PresentCredential(credentials, CustomClaims{})
 				testutil.RequireErrorContains(t, err, OtherAuthorizationResponseError)
 			})
 		})
@@ -752,9 +782,21 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		t.Run("Response body is neither an errorResponse nor an msEntraErrorResponse object", func(t *testing.T) {
 			httpClient.Response = ""
 
-			err = interaction.PresentCredential(credentials)
+			err = interaction.PresentCredential(credentials, CustomClaims{})
 			testutil.RequireErrorContains(t, err, OtherAuthorizationResponseError)
 		})
+	})
+}
+
+func TestInteraction_Scope(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		interaction := &Interaction{requestObject: &requestObject{
+			Scope: "openid+msregistration",
+		}}
+
+		require.Len(t, interaction.Scope(), 2)
+		require.Contains(t, interaction.Scope(), "openid")
+		require.Contains(t, interaction.Scope(), "msregistration")
 	})
 }
 

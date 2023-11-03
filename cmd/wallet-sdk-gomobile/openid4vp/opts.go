@@ -100,3 +100,24 @@ func (o *Opts) EnableAddingDIProofs(kms *localkms.KMS) *Opts {
 
 	return o
 }
+
+// NewPresentCredentialOpts returns a new PresentCredentialOpts object.
+func NewPresentCredentialOpts() *PresentCredentialOpts {
+	return &PresentCredentialOpts{}
+}
+
+// PresentCredentialOpts contains options for present credential operation.
+type PresentCredentialOpts struct {
+	scopeClaims map[string]string
+}
+
+// AddScopeClaim adds scope claim with given name.
+func (o *PresentCredentialOpts) AddScopeClaim(claimName, claimJSON string) *PresentCredentialOpts {
+	if o.scopeClaims == nil {
+		o.scopeClaims = map[string]string{}
+	}
+
+	o.scopeClaims[claimName] = claimJSON
+
+	return o
+}

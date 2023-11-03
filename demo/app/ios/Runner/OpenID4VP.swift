@@ -41,7 +41,7 @@ public class OpenID4VP {
         opts!.add(trace!.traceHeader())
         
         let interaction = Openid4vpNewInteraction(args, opts, nil)
-        
+
         vpQueryContent = try interaction!.getQuery()
         initiatedInteraction = interaction
     }
@@ -67,7 +67,7 @@ public class OpenID4VP {
         }
         
 //         let  verifiablePresentation = try CredentialNewInquirer(documentLoader)!.query(vpQueryContent, credentials: selectedCredentials)
-                       
+
         try initiatedInteraction.presentCredential(selectedCredentials)
     }
     
