@@ -41,11 +41,15 @@ class IssuancePreviewState extends State<IssuancePreview> {
   String textColor = '';
   String logoURL = '';
   String issuerLogoURL = '';
+  final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
+  List<String>? credentialTypes;
 
   @override
   void initState() {
     super.initState();
-    WalletSDKPlugin.getIssuerMetaData().then((response) {
+    prefs.then((value) {
+      credentialTypes = value.getStringList('credentialTypes');
+    }).whenComplete(() => WalletSDKPlugin.getIssuerMetaData(credentialTypes!).then((response) {
       setState(() {
         credentialIssuer = response.first.credentialIssuer;
         issuerDisplayName = response.first.localizedIssuerDisplays.first.name;
@@ -64,7 +68,8 @@ class IssuancePreviewState extends State<IssuancePreview> {
         textColor =
             '0xff${response.first.supportedCredentials.first.display.first.textColor.toString().replaceAll('#', '')}';
       });
-    });
+    }),
+    );
   }
 
   @override
@@ -246,6 +251,8 @@ class IssuancePreviewState extends State<IssuancePreview> {
     String? credentials = await WalletSDKPlugin.requestCredential('');
     String? issuerURL = await WalletSDKPlugin.issuerURI();
     String? resolvedCredentialDisplay = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURL!);
+    log('resolvedCredentialDisplay $resolvedCredentialDisplay');
+    resolvedCredentialDisplay = '{"credential_displays":[{"overview":{"name":"Permanent Resident Card","logo":{"url":"https://static.mattr.global/credential-assets/government-of-kakapo/web/logo.svg"},"background_color":"#3a2d2d"}}]}';
 
     var activities = await WalletSDKPlugin.storeActivityLogger();
 

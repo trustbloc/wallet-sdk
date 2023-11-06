@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:app/widgets/common_title_appbar.dart';
 import 'package:app/wallet_sdk/wallet_sdk_mobile.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ConnectIssuerList extends StatefulWidget {
   const ConnectIssuerList({Key? key}) : super(key: key);
@@ -24,12 +25,16 @@ class ConnectIssuerList extends StatefulWidget {
 
 class ConnectIssuerListState extends State<ConnectIssuerList> {
   List<ConnectIssuerConfig> connectIssuerConfigList = List.empty(growable: true);
+  final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
 
   var walletSDKPlugin = WalletSDK();
   final ConfigService _configService = ConfigService();
+  List<String>? credentialTypes;
 
   Future<List<SupportedCredentials>> connect(String issuerURI) async {
-    return await walletSDKPlugin.initializeWalletInitiatedFlow(issuerURI);
+    final SharedPreferences pref = await prefs;
+    credentialTypes = pref.getStringList('credentialTypes');
+    return await walletSDKPlugin.initializeWalletInitiatedFlow(issuerURI, credentialTypes!);
   }
 
   readConnectIssuerConfig() async {

@@ -195,7 +195,7 @@ class _OTPPage extends State<OTP> {
                                   String? issuerURI = await WalletSDKPlugin.issuerURI();
                                   serializeDisplayData =
                                       await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
-                                  log('serializeDisplayData -> $serializeDisplayData');
+                                  log('serializeDisplayData otp-> $serializeDisplayData');
                                   var activities = await WalletSDKPlugin.storeActivityLogger();
                                   var credID = await WalletSDKPlugin.getCredID([credentials]);
                                   log('activities and credID -$activities and $credID');
