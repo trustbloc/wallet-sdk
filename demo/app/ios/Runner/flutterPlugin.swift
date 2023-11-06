@@ -878,12 +878,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             var didValidateResult = DidValidateLinkedDomains(issuerID, didResolver, nil, &error)
            
             if let actualError = error {
-               print("error in validate result", error!.localizedDescription)
-                var didValidateResultResp :[String:Any] = [
-                    "isValid": false,
-                    "serviceURL":  "",
-                ]
-                return result(didValidateResultResp)
+               return result(FlutterError.init(code: "Exception",
+                                         message: "error while validating linked domains",
+                                         details: actualError.localizedDescription))
               }
 
             var didValidateResultResp :[String:Any] = [
