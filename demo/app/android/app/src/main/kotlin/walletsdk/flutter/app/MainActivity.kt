@@ -776,11 +776,7 @@ class MainActivity : FlutterActivity() {
         val validationResult = try {
             Did.validateLinkedDomains(issuerID, walletSDK.didResolver, null)
         } catch (e: Exception) {
-            println("error received while getting well known didConfig $e")
-            val didValidateResultResp: MutableMap<String, Any> = mutableMapOf()
-            didValidateResultResp["isValid"] = false
-            didValidateResultResp["serviceURL"] = ""
-            return didValidateResultResp
+            throw java.lang.Exception("error while validating linked domains")
         }
 
         val didValidateResultResp: MutableMap<String, Any> = mutableMapOf()
