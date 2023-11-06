@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:app/models/credential_data.dart';
 import 'package:app/views/credential_details.dart';
 import 'package:app/widgets/primary_button.dart';
@@ -38,10 +40,10 @@ class _CredentialCardState extends State<CredentialCard> {
   void initState() {
     WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then((response) {
       setState(() {
-        credentialDisplayName = response.first.overviewName;
-        logoURL = response.first.logo;
-        backgroundColor = '0xff${response.first.backgroundColor.toString().replaceAll('#', '')}';
-        textColor = '0xff${response.first.textColor.toString().replaceAll('#', '')}';
+          credentialDisplayName = response.first.overviewName;
+          logoURL = response.first.logo;
+          backgroundColor = '0xff${response.first.backgroundColor.toString().replaceAll('#', '')}';
+          textColor = '0xff${response.first.textColor.toString().replaceAll('#', '')}';
       });
     });
     super.initState();

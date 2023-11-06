@@ -44,10 +44,10 @@ class WalletSDK extends WalletPlatform {
     }
   }
 
-  Future<List<SupportedCredentials>> initializeWalletInitiatedFlow(String issuerURI) async {
+  Future<List<SupportedCredentials>> initializeWalletInitiatedFlow(String issuerURI, List<String> credentialTypes ) async {
     try {
       List<dynamic> supportedCredentialResp =
-          await methodChannel.invokeMethod('initializeWalletInitiatedFlow', <String, dynamic>{'issuerURI': issuerURI});
+          await methodChannel.invokeMethod('initializeWalletInitiatedFlow', <String, dynamic>{'issuerURI': issuerURI, 'credentialTypes': credentialTypes});
       return supportedCredentialResp.map((d) => SupportedCredentials.fromMap(d.cast<String, dynamic>())).toList();
     } on PlatformException catch (error) {
       debugPrint(error.toString());
@@ -211,8 +211,8 @@ class WalletSDK extends WalletPlatform {
     return null;
   }
 
-  Future<List<IssuerMetaData>> getIssuerMetaData() async {
-    List<dynamic> getIssuerMetaDataResp = await methodChannel.invokeMethod('getIssuerMetaData', <String, dynamic>{});
+  Future<List<IssuerMetaData>> getIssuerMetaData(List<String> credentialTypes) async {
+    List<dynamic> getIssuerMetaDataResp = await methodChannel.invokeMethod('getIssuerMetaData', <String, dynamic>{'credentialTypes': credentialTypes});
     return getIssuerMetaDataResp.map((d) => IssuerMetaData.fromMap(d.cast<String, dynamic>())).toList();
   }
 

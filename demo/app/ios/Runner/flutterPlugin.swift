@@ -87,7 +87,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
              getIssuerID(arguments: arguments!, result:result)
             
         case "getIssuerMetaData":
-            getIssuerMetaData(result:result)
+            getIssuerMetaData(arguments: arguments!, result:result)
             
         case "activityLogger":
             storeActivityLogger(result:result)
@@ -424,12 +424,18 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
           }
     }
     
-    public func getIssuerMetaData(result: @escaping FlutterResult) {
+    public func getIssuerMetaData(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
         guard let openID4CI = self.openID4CI else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
                                              message: "error while getting issuer meta data",
                                              details: "openID4CI not initiated. Call authorize before this."))
         }
+        
+        guard let credentialTypes = arguments["credentialTypes"] as? Array<String> else{
+                  return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                   message: "error while reading credentialTypes",
+                                                   details: "parameter credential types is missed"))
+              }
         
         do {
             
@@ -439,7 +445,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             
             // supported Credentials list
             var supportedCredentials = issuerMetaData.supportedCredentials()!
-            var supportedCredentialsList = getSupportedCredentialsList(supportedCredentials: supportedCredentials)
+            var supportedCredentialsList = getSupportedCredentialsList(supportedCredentials: supportedCredentials, credentialTypes: credentialTypes)
             
             // localized issuer displays data
             var localizedIssuerDisplays =  issuerMetaData.localizedIssuerDisplays()!
@@ -466,7 +472,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             ]
             
             issuerMetaDataRespList.append(issuerMetaDataResp)
-            
+            print(issuerMetaDataRespList)
             result(issuerMetaDataRespList)
             
         } catch let error as NSError {
@@ -477,34 +483,39 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         
     }
     
-    public func getSupportedCredentialsList(supportedCredentials: Openid4ciSupportedCredentials) -> [Any] {
+    public func getSupportedCredentialsList(supportedCredentials: Openid4ciSupportedCredentials, credentialTypes: [String]) -> [Any] {
         var supportedCredentialsList: [Any] = []
         for index in 0..<supportedCredentials.length() {
             var typeStrArray = [String]()
             for i in 0..<(supportedCredentials.atIndex(index)!.types()?.length())!{
                 let type = supportedCredentials.atIndex(index)!.types()?.atIndex(i)
-                typeStrArray.append(type!)
+                for credType in credentialTypes {
+                    if (credType == type){
+                        typeStrArray.append(type!)
+                        typeStrArray.append("VerifiableCredential")
+                        
+                        var localizedCredentialsDisplayRespList: [Any] = []
+                        for i in 0..<(supportedCredentials.atIndex(index)!.localizedDisplays()?.length())!{
+                            let localizedCredentialsDisplayResp :[String:Any] = [
+                                "name":  supportedCredentials.atIndex(index)!.localizedDisplays()!.atIndex(i)!.name(),
+                                "locale": supportedCredentials.atIndex(index)!.localizedDisplays()!.atIndex(i)!.locale(),
+                                "logo": supportedCredentials.atIndex(index)!.localizedDisplays()!.atIndex(i)!.logo()!.url(),
+                                "textColor": supportedCredentials.atIndex(index)!.localizedDisplays()!.atIndex(i)!.textColor(),
+                                "backgroundColor": supportedCredentials.atIndex(index)!.localizedDisplays()!.atIndex(i)!.backgroundColor()
+                            ]
+                            localizedCredentialsDisplayRespList.append(localizedCredentialsDisplayResp)
+                        }
+                        
+                        let supportedCredentialResp:[String:Any] = [
+                            "format":   supportedCredentials.atIndex(index)!.format(),
+                            "types":    typeStrArray,
+                            "display":   localizedCredentialsDisplayRespList
+                        ]
+                        
+                        supportedCredentialsList.append(supportedCredentialResp)
+                    }
+                }
             }
-            
-            var localizedCredentialsDisplayRespList: [Any] = []
-            for i in 0..<(supportedCredentials.atIndex(index)!.localizedDisplays()?.length())!{
-                let localizedCredentialsDisplayResp :[String:Any] = [
-                    "name":  supportedCredentials.atIndex(index)!.localizedDisplays()!.atIndex(i)!.name(),
-                    "locale": supportedCredentials.atIndex(index)!.localizedDisplays()!.atIndex(i)!.locale(),
-                    "logo": supportedCredentials.atIndex(index)!.localizedDisplays()!.atIndex(i)!.logo()!.url(),
-                    "textColor": supportedCredentials.atIndex(index)!.localizedDisplays()!.atIndex(i)!.textColor(),
-                    "backgroundColor": supportedCredentials.atIndex(index)!.localizedDisplays()!.atIndex(i)!.backgroundColor()
-                ]
-                localizedCredentialsDisplayRespList.append(localizedCredentialsDisplayResp)
-            }
-                 
-            let supportedCredentialResp:[String:Any] = [
-                "format":   supportedCredentials.atIndex(index)!.format(),
-                "types":    typeStrArray,
-                "display":   localizedCredentialsDisplayRespList
-            ]
-            
-            supportedCredentialsList.append(supportedCredentialResp)
         }
         
         return supportedCredentialsList
@@ -516,6 +527,12 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              message: "error while reading initializeWalletInitiatedFlow issuer URI",
                                              details: "Pass issuerURI as the arguments"))
         }
+        
+        guard let credentialTypes = arguments["credentialTypes"] as? Array<String> else{
+                  return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                   message: "error while reading credentialTypes",
+                                                   details: "parameter credential types is missed"))
+              }
                 
         guard let walletSDK = self.walletSDK else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
@@ -527,7 +544,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             let walletInitiatedOpenID4CI = try walletSDK.createOpenID4CIWalletInitiatedInteraction(issuerURI: issuerURI)
             let supportedCredentials = try walletInitiatedOpenID4CI.getSupportedCredentials()
             
-            var supportedCredentialsList = getSupportedCredentialsList(supportedCredentials: supportedCredentials)
+            var supportedCredentialsList = getSupportedCredentialsList(supportedCredentials: supportedCredentials, credentialTypes: credentialTypes)
        
             self.walletInitiatedOpenID4CI = walletInitiatedOpenID4CI
             result(supportedCredentialsList)
@@ -767,7 +784,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     
     
     public func resolveCredentialDisplay(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
-   
+
         
         guard let resolvedCredentialDisplayData = arguments["resolvedCredentialDisplayData"] as? String else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
@@ -780,43 +797,47 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         var resolvedCredDisplayList : [Any] = []
         var claimList:[Any] = []
         
-        
-        for i in 0...((displayData!.credentialDisplaysLength())-1){
-            let credentialDisplay = displayData!.credentialDisplay(at: i)!
-            for i in 0...(credentialDisplay.claimsLength())-1{
-                let claim = credentialDisplay.claim(at: i)!
-                var claims : [String: Any] = [:]
-                if claim.isMasked(){
-                     claims["value"] = claim.value()
-                     claims["rawValue"] = claim.rawValue()
-                }
-                var order: Int = -1
-                if claim.hasOrder() {
-                    do {
-                        try claim.order(&order)
-                        claims["order"] = order
-                    } catch let err as NSError {
-                        print("Error: \(err)")
+        if(displayData!.credentialDisplaysLength() != 0){
+            for i in 0...((displayData!.credentialDisplaysLength())-1){
+                let credentialDisplay = displayData!.credentialDisplay(at: i)!
+                if(credentialDisplay.claimsLength() != 0){
+                    for i in 0...(credentialDisplay.claimsLength())-1{
+                        let claim = credentialDisplay.claim(at: i)!
+                        var claims : [String: Any] = [:]
+                        if claim.isMasked(){
+                            claims["value"] = claim.value()
+                            claims["rawValue"] = claim.rawValue()
+                        }
+                        var order: Int = -1
+                        if claim.hasOrder() {
+                            do {
+                                try claim.order(&order)
+                                claims["order"] = order
+                            } catch let err as NSError {
+                                print("Error: \(err)")
+                            }
+                        }
+                        claims["rawValue"] = claim.rawValue()
+                        claims["valueType"] = claim.valueType()
+                        claims["label"] = claim.label()
+                        claimList.append(claims)
                     }
                 }
-                claims["rawValue"] = claim.rawValue()
-                claims["valueType"] = claim.valueType()
-                claims["label"] = claim.label()
-                claimList.append(claims)
+                
+                let overview = credentialDisplay.overview()
+                let logo = overview?.logo()
+                
+                var resolveDisplayResp : [String: Any] = [:]
+                resolveDisplayResp["claims"] = claimList
+                resolveDisplayResp["overviewName"] = overview?.name()
+                resolveDisplayResp["logo"] = logo?.url()
+                resolveDisplayResp["textColor"] = overview?.textColor()
+                resolveDisplayResp["backgroundColor"] = overview?.backgroundColor()
+                resolveDisplayResp["issuerName"] =  issuerDisplayData?.name()
+
+                
+                resolvedCredDisplayList.append(resolveDisplayResp)
             }
-     
-            let overview = credentialDisplay.overview()
-            let logo = overview?.logo()
-            
-            var resolveDisplayResp : [String: Any] = [:]
-            resolveDisplayResp["claims"] = claimList
-            resolveDisplayResp["overviewName"] = overview?.name()
-            resolveDisplayResp["logo"] = logo?.url()
-            resolveDisplayResp["textColor"] = overview?.textColor()
-            resolveDisplayResp["backgroundColor"] = overview?.backgroundColor()
-            resolveDisplayResp["issuerName"] = issuerDisplayData!.name()
-            
-            resolvedCredDisplayList.append(resolveDisplayResp)
         }
         
        

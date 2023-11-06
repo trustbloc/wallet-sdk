@@ -39,7 +39,9 @@ class CredentialPreviewState extends State<CredentialPreview> {
     super.initState();
     WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then((response) {
       setState(() {
-        issuerDisplayData = response.first.issuerName;
+        if (response.first.issuerName.isNotEmpty){
+          issuerDisplayData = response.first.issuerName;
+        }
       });
     });
 
