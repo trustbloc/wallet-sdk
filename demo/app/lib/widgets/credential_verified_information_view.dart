@@ -28,6 +28,7 @@ class CredentialVerifiedState extends State<CredentialVerifiedInformation> {
     });
     WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then((response) {
       setState(() {
+        if(response.first.claims.isNotEmpty){
         credentialClaimsData = response.first.claims;
 
         credentialClaimsData.sort((a, b) {
@@ -38,7 +39,7 @@ class CredentialVerifiedState extends State<CredentialVerifiedInformation> {
         });
 
         isLoading = false;
-      });
+      }});
     });
     super.initState();
   }

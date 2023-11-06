@@ -12,8 +12,9 @@ import 'package:app/wallet_sdk/wallet_sdk.dart';
 import 'package:flutter/services.dart';
 import 'package:app/models/credential_offer.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../views/custom_error.dart';
+import 'package:app/views/custom_error.dart';
 
 void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
   var WalletSDKPlugin = WalletSDK();
@@ -21,19 +22,22 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
   if (qrCodeURL.contains('credential_offer_uri')) {
     authCodeArgs = await parseCredentialOfferUri(qrCodeURL);
     log('credential offer uri auth code  $authCodeArgs');
+  } else if (qrCodeURL.contains('authorization_code')) {
+    authCodeArgs = await readIssuerAuthFlowConfig(qrCodeURL);
+    log('auth code arguments fetched from config file $authCodeArgs');
+    // While fetching auth code args based on issuer key from file, if no key-value pair is found then set the
+    // arguments to default scope and redirect url.
+    authCodeArgs ??= {
+      'scopes': ['openid', 'profile'],
+      'redirectURI': 'trustbloc-wallet://openid4vci/authcodeflow/callback'
+    };
   } else {
-    if (qrCodeURL.contains('authorization_code')) {
-      authCodeArgs = await readIssuerAuthFlowConfig(qrCodeURL);
-      log('auth code arguments fetched from config file $authCodeArgs');
-      // While fetching auth code args based on issuer key from file, if no key-value pair is found then set the
-      // arguments to default scope and redirect url.
-      authCodeArgs ??= {
-        'scopes': ['openid', 'profile'],
-        'redirectURI': 'trustbloc-wallet://openid4vci/authcodeflow/callback'
-      };
-    }
+    // Fetching and persisting credential type from credential offer query
+    await getCredentialType(qrCodeURL);
   }
+
   log('qr code url -  $qrCodeURL');
+
   Map<Object?, Object?>? flowTypeData;
   try {
     flowTypeData = await WalletSDKPlugin.initialize(qrCodeURL, authCodeArgs);
@@ -70,10 +74,27 @@ void handleOpenIDIssuanceFlow(BuildContext context, String qrCodeURL) async {
 readIssuerAuthFlowConfig(String qrCodeURL) async {
   var decodedUri = Uri.decodeComponent(qrCodeURL);
   final uri = Uri.parse(decodedUri);
-  var credentialIssuerKey = json.decode(uri.queryParameters['credential_offer']!);
+  var credentialsQuery = json.decode(uri.queryParameters['credential_offer']!);
+  await persistCredentialType(credentialsQuery);
   final String response = await rootBundle.loadString('lib/assets/issuerAuthFlowConfig.json');
   final configData = await json.decode(response);
-  return configData[credentialIssuerKey['credential_issuer']];
+  return configData[credentialsQuery['credential_issuer']];
+}
+
+getCredentialType(String qrCodeURL) async {
+  var decodedUri = Uri.decodeComponent(qrCodeURL);
+  final uri = Uri.parse(decodedUri);
+  var credentialsQuery = json.decode(uri.queryParameters['credential_offer']!);
+  await persistCredentialType(credentialsQuery);
+}
+
+persistCredentialType(credentialsQuery) async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  final value = credentialsQuery['credentials'];
+  for (var val in value) {
+    var types = val['types'];
+    prefs.setStringList('credentialTypes', List<String>.from(types));
+  }
 }
 
 parseCredentialOfferUri(String qrCodeURL) async {
