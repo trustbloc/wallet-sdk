@@ -375,7 +375,7 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 		authorizationServerURL := fmt.Sprintf("%s/auth", server.URL)
 
 		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential", `+
-			`"authorization_server":"%s"}`,
+			`"authorization_endpoint":"%s"}`,
 			server.URL, authorizationServerURL)
 
 		t.Run("Not using any options", func(t *testing.T) {

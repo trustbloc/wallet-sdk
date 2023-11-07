@@ -15,7 +15,7 @@ import (
 // Metadata represents metadata about an issuer as obtained from their .well-known OpenID configuration.
 type Metadata struct {
 	CredentialIssuer        string                   `json:"credential_issuer,omitempty"`
-	AuthorizationServer     string                   `json:"authorization_server,omitempty"`
+	AuthorizationServer     string                   `json:"authorization_endpoint,omitempty"`
 	CredentialEndpoint      string                   `json:"credential_endpoint,omitempty"`
 	CredentialsSupported    []SupportedCredential    `json:"credentials_supported,omitempty"`
 	LocalizedIssuerDisplays []LocalizedIssuerDisplay `json:"display,omitempty"`
