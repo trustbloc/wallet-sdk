@@ -20,7 +20,7 @@ require (
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile v0.0.0-20230102235937-82237ea9dde3
 	go.uber.org/zap v1.23.0
-	golang.org/x/oauth2 v0.7.0
+	golang.org/x/oauth2 v0.13.0
 )
 
 require (
@@ -38,7 +38,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/evanphx/json-patch v4.1.0+incompatible // indirect
 	github.com/go-jose/go-jose/v3 v3.0.1-0.20221117193127-916db76e8214 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/tink/go v1.7.0 // indirect
 	github.com/hyperledger/fabric-amcl v0.0.0-20230602173724-9e02669dceb2 // indirect
@@ -79,7 +79,7 @@ require (
 	golang.org/x/net v0.16.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
