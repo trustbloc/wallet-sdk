@@ -69,6 +69,11 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		"photo":        "binary data",
 	}
 
+	type customScope struct {
+		name         string
+		customClaims string
+	}
+
 	type test struct {
 		issuerProfileIDs   []string
 		claimData          []claimData
@@ -76,6 +81,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		verifierProfileID  string
 		signingKeyType     string
 		matchedDisplayData *display.Data
+		customScope        *customScope
 	}
 
 	tests := []test{
@@ -135,6 +141,10 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			claimData:         []claimData{verifiableEmployeeClaims, verifiableEmployeeClaims},
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_myprofile_jwt_verified_employee",
+			customScope: &customScope{
+				name:         "registration",
+				customClaims: `{"email": "test@example.com"}`,
+			},
 		},
 	}
 
@@ -162,7 +172,12 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		err := setup.AuthorizeVerifierBypassAuth("f13d1va9lp403pb9lyj89vk55", vcsAPIDirectURL)
 		require.NoError(t, err)
 
-		initiateURL, err := setup.InitiateInteraction(tc.verifierProfileID, "test purpose.")
+		var customScopeName *string
+		if tc.customScope != nil {
+			customScopeName = &tc.customScope.name
+		}
+
+		initiateURL, err := setup.InitiateInteraction(tc.verifierProfileID, "test purpose.", customScopeName)
 		require.NoError(t, err)
 
 		opts := did.NewResolverOpts()
@@ -247,7 +262,11 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		require.Equal(t, serializedIssuedVC, serializedMatchedVC)
 
-		err = interaction.PresentCredential(selectedCreds)
+		presentOps := openid4vp.NewPresentCredentialOpts()
+		if tc.customScope != nil {
+			presentOps.AddScopeClaim(tc.customScope.name, tc.customScope.customClaims)
+		}
+		err = interaction.PresentCredentialWithOpts(selectedCreds, presentOps)
 		require.NoError(t, err)
 
 		testHelper.CheckActivityLogAfterOpenID4VPFlow(t, activityLogger, tc.verifierProfileID)

@@ -123,7 +123,7 @@ func initiatePreAuthorizedIssuance(issuerProfileIDs []string) {
 	fmt.Print(result)
 }
 
-func initiatePreAuthorizedVerification(verifierProfileIDs []string) {
+func initiatePreAuthorizedVerification(verifierProfileInfos []string) {
 	oidc4vpSetup := oidc4vp.NewSetup(testenv.NewHttpRequest())
 
 	err := oidc4vpSetup.AuthorizeVerifierBypassAuth("f13d1va9lp403pb9lyj89vk55", vcsAPIDirectURL)
@@ -133,9 +133,18 @@ func initiatePreAuthorizedVerification(verifierProfileIDs []string) {
 
 	var initiateVerificationURLs []string
 
-	for i := 0; i < len(verifierProfileIDs); i++ {
+	for i := 0; i < len(verifierProfileInfos); i++ {
 		for j := 0; j < 120; j++ {
-			initiateVerificationURL, err := oidc4vpSetup.InitiateInteraction(verifierProfileIDs[i], "test purpose.")
+			verifierInfo := strings.Split(verifierProfileInfos[i], "#")
+			verifierProfileID := verifierInfo[0]
+
+			var customScope *string
+			if len(verifierInfo) > 1 && strings.HasPrefix(verifierInfo[1], "withScope=") {
+				scopeName := strings.TrimPrefix(verifierInfo[1], "withScope=")
+				customScope = &scopeName
+			}
+
+			initiateVerificationURL, err := oidc4vpSetup.InitiateInteraction(verifierProfileID, "test purpose.", customScope)
 			if err == nil {
 				initiateVerificationURLs = append(initiateVerificationURLs, initiateVerificationURL)
 				break
