@@ -18,6 +18,7 @@ import dev.trustbloc.wallet.sdk.didion.Didion
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.oauth2.Oauth2
 import dev.trustbloc.wallet.sdk.openid4ci.*
+import dev.trustbloc.wallet.sdk.openid4vp.PresentCredentialOpts
 import dev.trustbloc.wallet.sdk.openid4vp.Interaction as VPInteraction
 import dev.trustbloc.wallet.sdk.version.Version
 import dev.trustbloc.wallet.sdk.otel.Otel
@@ -37,11 +38,11 @@ class IntegrationTest {
         instrumentationContext = InstrumentationRegistry.getInstrumentation().context
     }
 
-      @Test
+    @Test
     fun fullFlow() {
-         val trace = Otel.newTrace()
+        val trace = Otel.newTrace()
 
-         assertThat(Version.getVersion()).isEqualTo("testVer")
+        assertThat(Version.getVersion()).isEqualTo("testVer")
         assertThat(Version.getGitRevision()).isEqualTo("testRev")
         assertThat(Version.getBuildTime()).isEqualTo("testTime")
 
@@ -77,9 +78,9 @@ class IntegrationTest {
         val authorizationRequestURI = BuildConfig.INITIATE_VERIFICATION_URL
 
         val openID4VPInteractionRequiredArgs = dev.trustbloc.wallet.sdk.openid4vp.Args(
-            authorizationRequestURI,
-            crypto,
-            didResolver
+                authorizationRequestURI,
+                crypto,
+                didResolver
         )
 
         val vpOpts = dev.trustbloc.wallet.sdk.openid4vp.Opts()
@@ -114,11 +115,12 @@ class IntegrationTest {
         selectedCreds.add(requirementDescriptor.matchedVCs.atIndex(0))
 
         // Presenting from selected credentials.
-        vpInteraction.presentCredential(selectedCreds)
+        vpInteraction.presentCredentialWithOpts(selectedCreds, PresentCredentialOpts().addScopeClaim(
+                "registration", """{"email":"test@example.com"}"""))
     }
 
     @Test
-     fun testAuthFlow() {
+    fun testAuthFlow() {
         val trace = Otel.newTrace()
 
         assertThat(Version.getVersion()).isEqualTo("testVer")
@@ -140,7 +142,7 @@ class IntegrationTest {
         // Issue VCs
         val requestURI = BuildConfig.INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW
         println("requestURI ->")
-        println( requestURI)
+        println(requestURI)
 
         val requiredOpenID4CIArgs = IssuerInitiatedInteractionArgs(requestURI, crypto, didResolver)
         println("requiredOpenID4CIArgs")
@@ -156,7 +158,7 @@ class IntegrationTest {
 
         assertThat(ciInteraction.dynamicClientRegistrationSupported()).isTrue()
 
-        if (ciInteraction.dynamicClientRegistrationSupported()){
+        if (ciInteraction.dynamicClientRegistrationSupported()) {
             var dynamicRegistrationEndpoint = ciInteraction.dynamicClientRegistrationEndpoint()
             assertThat(dynamicRegistrationEndpoint).isNotEmpty()
 
@@ -175,7 +177,7 @@ class IntegrationTest {
             clientMetadata.setTokenEndpointAuthMethod("none")
 
             var authorizationCodeGrantParams = ciInteraction.authorizationCodeGrantParams()
-            if (authorizationCodeGrantParams.hasIssuerState()){
+            if (authorizationCodeGrantParams.hasIssuerState()) {
                 var issuerState = authorizationCodeGrantParams.issuerState()
                 clientMetadata.setIssuerState(issuerState)
                 assertThat(clientMetadata.issuerState()).isNotEmpty()
@@ -200,39 +202,39 @@ class IntegrationTest {
         var redirectUrl = URI(authorizationLink)
 
         val client = OkHttpClient.Builder()
-            .retryOnConnectionFailure(true)
-            .followRedirects(false)
-            .build()
+                .retryOnConnectionFailure(true)
+                .followRedirects(false)
+                .build()
 
         var request = Request.Builder()
-            .url(redirectUrl.toString())
-            .header("Connection", "close")
-            .build()
+                .url(redirectUrl.toString())
+                .header("Connection", "close")
+                .build()
         val response = client.newCall(request).execute()
         assertThat(response.isRedirect).isTrue()
         var location = response.headers["Location"]
         assertThat(location).contains("cognito-mock.trustbloc.local")
-            if (location != null) {
-                if (location.contains("cognito-mock.trustbloc.local")){
-                    var upr = URI(location.replace("cognito-mock.trustbloc.local", "localhost"));
-                    assertThat(upr.toString()).contains("localhost")
-                    var request = Request.Builder()
+        if (location != null) {
+            if (location.contains("cognito-mock.trustbloc.local")) {
+                var upr = URI(location.replace("cognito-mock.trustbloc.local", "localhost"));
+                assertThat(upr.toString()).contains("localhost")
+                var request = Request.Builder()
                         .url(upr.toString())
                         .header("Connection", "close")
                         .build()
-                    val response = client.newCall(request).clone().execute()
-                    location = response.headers["location"]
-                    assertThat(location).contains("oidc/redirect")
-                    var request2 = Request.Builder()
+                val response = client.newCall(request).clone().execute()
+                location = response.headers["location"]
+                assertThat(location).contains("oidc/redirect")
+                var request2 = Request.Builder()
                         .url(location.toString())
                         .header("Connection", "close")
                         .build()
-                    val response2 = client.newCall(request2).clone().execute()
-                    location = response2.headers["location"]
-                    assertThat(location).contains("127.0.0.1")
-                    var issuedCreds = ciInteraction.requestCredentialWithAuth(userDID.assertionMethod(), location, null)
-                    assertThat(issuedCreds.length()).isGreaterThan(0)
-                }
+                val response2 = client.newCall(request2).clone().execute()
+                location = response2.headers["location"]
+                assertThat(location).contains("127.0.0.1")
+                var issuedCreds = ciInteraction.requestCredentialWithAuth(userDID.assertionMethod(), location, null)
+                assertThat(issuedCreds.length()).isGreaterThan(0)
             }
+        }
     }
 }
