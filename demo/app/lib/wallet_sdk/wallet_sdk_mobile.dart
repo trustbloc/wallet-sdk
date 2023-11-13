@@ -44,10 +44,11 @@ class WalletSDK extends WalletPlatform {
     }
   }
 
-  Future<List<SupportedCredentials>> initializeWalletInitiatedFlow(String issuerURI, List<String> credentialTypes ) async {
+  Future<List<SupportedCredentials>> initializeWalletInitiatedFlow(
+      String issuerURI, List<String> credentialTypes) async {
     try {
-      List<dynamic> supportedCredentialResp =
-          await methodChannel.invokeMethod('initializeWalletInitiatedFlow', <String, dynamic>{'issuerURI': issuerURI, 'credentialTypes': credentialTypes});
+      List<dynamic> supportedCredentialResp = await methodChannel.invokeMethod('initializeWalletInitiatedFlow',
+          <String, dynamic>{'issuerURI': issuerURI, 'credentialTypes': credentialTypes});
       return supportedCredentialResp.map((d) => SupportedCredentials.fromMap(d.cast<String, dynamic>())).toList();
     } on PlatformException catch (error) {
       debugPrint(error.toString());
@@ -156,6 +157,10 @@ class WalletSDK extends WalletPlatform {
         .toList();
   }
 
+  Future<List<Object?>> getCustomScope() async {
+    return await methodChannel.invokeMethod('getCustomScope');
+  }
+
   Future<List<SubmissionRequirement>> getSubmissionRequirements({required List<String>? storedCredentials}) async {
     return (await methodChannel.invokeMethod<List<dynamic>>(
             'getMatchedSubmissionRequirements', <String, dynamic>{'storedCredentials': storedCredentials}))!
@@ -185,9 +190,15 @@ class WalletSDK extends WalletPlatform {
         purpose: data['purpose'] as String);
   }
 
-  Future<void> presentCredential({required List<String> selectedCredentials}) async {
-    await methodChannel
-        .invokeMethod('presentCredential', <String, dynamic>{'selectedCredentials': selectedCredentials});
+  Future<void> presentCredential(
+      {required List<String> selectedCredentials, Map<String, dynamic>? customScopeList}) async {
+    try {
+      return await methodChannel.invokeMethod('presentCredential',
+          <String, dynamic>{'selectedCredentials': selectedCredentials, 'customScopeList': customScopeList});
+    } on PlatformException catch (error) {
+      debugPrint(error.toString());
+      rethrow;
+    }
   }
 
   Future<List<Object?>> storeActivityLogger() async {
@@ -212,7 +223,8 @@ class WalletSDK extends WalletPlatform {
   }
 
   Future<List<IssuerMetaData>> getIssuerMetaData(List<String> credentialTypes) async {
-    List<dynamic> getIssuerMetaDataResp = await methodChannel.invokeMethod('getIssuerMetaData', <String, dynamic>{'credentialTypes': credentialTypes});
+    List<dynamic> getIssuerMetaDataResp =
+        await methodChannel.invokeMethod('getIssuerMetaData', <String, dynamic>{'credentialTypes': credentialTypes});
     return getIssuerMetaDataResp.map((d) => IssuerMetaData.fromMap(d.cast<String, dynamic>())).toList();
   }
 

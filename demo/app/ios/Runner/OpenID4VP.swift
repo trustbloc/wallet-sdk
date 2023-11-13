@@ -58,17 +58,43 @@ public class OpenID4VP {
     /**
      * initiatedInteraction has PresentCredential method which presents credentials to redirect uri from request object.
      */
-    func presentCredential(selectedCredentials: VerifiableCredentialsArray) throws {
+    func presentCredential(selectedCredentials: VerifiableCredentialsArray, customScopes: Dictionary<String, Any>) throws {
 //         guard let vpQueryContent = self.vpQueryContent else {
 //             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
 //         }
         guard let initiatedInteraction = self.initiatedInteraction else {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         }
+    
+        let opts = Openid4vpNewPresentCredentialOpts()
         
-//         let  verifiablePresentation = try CredentialNewInquirer(documentLoader)!.query(vpQueryContent, credentials: selectedCredentials)
+            
+        for scope in customScopes {
+            opts?.addScopeClaim(scope.key, claimJSON: scope.value as? String)
 
-        try initiatedInteraction.presentCredential(selectedCredentials)
+        }
+        try initiatedInteraction.presentCredentialOpts(selectedCredentials, opts: opts)
+    
+    }
+    
+    func getCustomScope() throws -> [String] {
+        guard let initiatedInteraction = self.initiatedInteraction else {
+            throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
+        }
+        
+        let customScopes = initiatedInteraction.customScope()
+        var customScopesList = [String]()
+        
+        if (customScopes?.length() != 0){
+            for i in 0...((customScopes?.length() ?? 0)-1) {
+                if (customScopes?.atIndex(i) != "openid"){
+                    customScopesList.append(customScopes?.atIndex(i) ?? "")
+                }
+            }
+        }
+     
+        // Otherwise return the default scope
+        return customScopesList
     }
     
     func getVerifierDisplayData() throws -> Openid4vpVerifierDisplayData {
@@ -76,7 +102,6 @@ public class OpenID4VP {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         }
         
-        let verifierDisplayData = try initiatedInteraction?.verifierDisplayData()
-        return verifierDisplayData!
+        return initiatedInteraction?.verifierDisplayData() ?? Openid4vpVerifierDisplayData()
     }
 }

@@ -100,6 +100,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
 
         case "getMatchedSubmissionRequirements":
             getMatchedSubmissionRequirements(arguments: arguments!, result: result)
+            
+        case "getCustomScope":
+            getCustomScope(result: result)
 
         case "presentCredential":
             presentCredential(arguments: arguments!, result: result)
@@ -247,6 +250,23 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
     }
     
+    public func getCustomScope(result: @escaping FlutterResult){
+        do {
+            guard let openID4VP = self.openID4VP else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while process present credential",
+                                                 details: "OpenID4VP interaction is not initialted"))
+            }
+            
+            let customScopeList = try openID4VP.getCustomScope()
+            result(customScopeList)
+        } catch let error as NSError{
+            result(FlutterError.init(code: "NATIVE_ERR",
+                                     message: "error while getting custom scope ",
+                                     details: error.localizedDescription))
+        }
+    }
+    
     /**
      This method invokes presentCredentialt defined in OpenID4Vp file.
      */
@@ -259,6 +279,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             }
             
             let selectedCredentials = arguments["selectedCredentials"] as? Array<String>
+            let customScopeList = arguments["customScopeList"] as? Dictionary<String, Any> ?? [String: Any]()
+    
             
             let selectedCredentialsArray: VerifiableCredentialsArray?
             if (selectedCredentials != nil) {
@@ -274,14 +296,10 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             }
 
             try openID4VP.presentCredential(
-                selectedCredentials: selectedCredentialsArray!)
+                selectedCredentials: selectedCredentialsArray!, customScopes: customScopeList)
             result(true);
             
-        } catch OpenID4VPError.runtimeError(let errorMsg as NSError){
-            result(FlutterError.init(code: "NATIVE_ERR",
-                                     message: "error while processing present credential",
-                                     details: errorMsg.localizedDescription))
-        } catch let error as NSError{
+        }  catch let error as NSError{
             result(FlutterError.init(code: "NATIVE_ERR",
                                      message: "error while processing present credential",
                                      details: error.localizedDescription))

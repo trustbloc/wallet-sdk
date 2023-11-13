@@ -25,4 +25,20 @@ class ConfigService {
     log('decodedResponse $configResponseDecoded');
     return connectIssuerConfigList;
   }
+
+  Future<Map<String, dynamic>> readCustomScopeConfig(List<Object?> customScopeList) async {
+    Map<String, dynamic> customScopeConfigList = {};
+    final String scopeConfigResponse = await rootBundle.loadString('lib/assets/customScopes.json');
+    final configDataResp = await json.decode(scopeConfigResponse);
+
+    List<String> customScopeStr = customScopeList.cast<String>();
+    for (var customScope in customScopeStr) {
+      var claimJSON = configDataResp[customScope];
+      customScopeConfigList.addAll(
+          {customScope.toString(): jsonEncode(claimJSON)}
+      );
+    }
+    log('customScope config list $customScopeConfigList');
+    return customScopeConfigList;
+  }
 }
