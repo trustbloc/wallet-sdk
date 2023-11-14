@@ -30,7 +30,7 @@ import (
 
 type goAPIOpenID4VP interface {
 	GetQuery() *presexch.PresentationDefinition
-	Scope() []string
+	CustomScope() []string
 	PresentCredential(credentials []*afgoverifiable.Credential, customClaims openid4vp.CustomClaims) error
 	PresentCredentialUnsafe(credential *afgoverifiable.Credential, customClaims openid4vp.CustomClaims) error
 	VerifierDisplayData() *openid4vp.VerifierDisplayData
@@ -135,9 +135,9 @@ func (o *Interaction) GetQuery() ([]byte, error) {
 	return pdBytes, nil
 }
 
-// Scope returns vp integration scope.
-func (o *Interaction) Scope() *Scope {
-	return NewScope(o.goAPIOpenID4VP.Scope())
+// CustomScope returns vp integration scope.
+func (o *Interaction) CustomScope() *Scope {
+	return NewScope(o.goAPIOpenID4VP.CustomScope())
 }
 
 // VerifierDisplayData returns display information about verifier.
@@ -157,8 +157,8 @@ func (o *Interaction) PresentCredential(credentials *verifiable.CredentialsArray
 	return wrapper.ToMobileErrorWithTrace(o.goAPIOpenID4VP.PresentCredential(vcs, openid4vp.CustomClaims{}), o.oTel)
 }
 
-// PresentCredentialWithOpts presents credentials to redirect uri from request object.
-func (o *Interaction) PresentCredentialWithOpts(
+// PresentCredentialOpts presents credentials to redirect uri from request object.
+func (o *Interaction) PresentCredentialOpts(
 	credentials *verifiable.CredentialsArray,
 	opts *PresentCredentialOpts,
 ) error {

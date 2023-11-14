@@ -76,8 +76,7 @@ func TestNewInteraction(t *testing.T) {
 			instance, err := NewInteraction(requiredArgs, opts)
 			require.NoError(t, err)
 			require.NotNil(t, instance)
-			require.Equal(t, 1, instance.Scope().Length())
-			require.Equal(t, "openid", instance.Scope().AtIndex(0))
+			require.Equal(t, 0, instance.CustomScope().Length())
 		})
 		t.Run("All other options invoked", func(t *testing.T) {
 			resolver, err := gomobdid.NewResolver(gomobdid.NewResolverOpts())
@@ -187,7 +186,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	t.Run("Success With Opts", func(t *testing.T) {
 		instance := makeInteraction()
 
-		err := instance.PresentCredentialWithOpts(credentials, NewPresentCredentialOpts().
+		err := instance.PresentCredentialOpts(credentials, NewPresentCredentialOpts().
 			AddScopeClaim("claim1", `{"key" : "val"}`))
 		require.NoError(t, err)
 	})
@@ -195,7 +194,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	t.Run("Success With nil Opts", func(t *testing.T) {
 		instance := makeInteraction()
 
-		err := instance.PresentCredentialWithOpts(credentials, nil)
+		err := instance.PresentCredentialOpts(credentials, nil)
 		require.NoError(t, err)
 	})
 
@@ -224,7 +223,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			PresentCredentialErr: errors.New("present credentials failed"),
 		}
 
-		err := instance.PresentCredentialWithOpts(credentials, NewPresentCredentialOpts().
+		err := instance.PresentCredentialOpts(credentials, NewPresentCredentialOpts().
 			AddScopeClaim("claim1", `{"key" : "val"}`))
 		require.Contains(t, err.Error(), "present credentials failed")
 	})
@@ -232,7 +231,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	t.Run("Present credentials with invalid scope value", func(t *testing.T) {
 		instance := makeInteraction()
 
-		err := instance.PresentCredentialWithOpts(credentials, NewPresentCredentialOpts().
+		err := instance.PresentCredentialOpts(credentials, NewPresentCredentialOpts().
 			AddScopeClaim("claim1", `"key" : "val"`))
 		require.ErrorContains(t, err, `fail to parse "claim1" claim json`)
 	})
@@ -350,7 +349,7 @@ func (o *mockGoAPIInteraction) GetQuery() *presexch.PresentationDefinition {
 	return o.GetQueryResult
 }
 
-func (o *mockGoAPIInteraction) Scope() []string {
+func (o *mockGoAPIInteraction) CustomScope() []string {
 	return o.ScopeResult
 }
 

@@ -100,7 +100,8 @@ class IntegrationTest: XCTestCase {
         selectedCreds.add(requirementDescriptor.matchedVCs!.atIndex(0))
 
         // Presenting from selected credentials.
-        try vpInteraction.presentCredential(withOpts: selectedCreds,
+        try vpInteraction.presentCredentialOpts(
+            selectedCreds,
             opts: Openid4vpNewPresentCredentialOpts()?.addScopeClaim("registration", claimJSON:#"{"email":"test@example.com"}"#)
         )
     }
