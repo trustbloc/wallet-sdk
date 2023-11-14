@@ -115,7 +115,7 @@ class IntegrationTest {
         selectedCreds.add(requirementDescriptor.matchedVCs.atIndex(0))
 
         // Presenting from selected credentials.
-        vpInteraction.presentCredentialWithOpts(selectedCreds, PresentCredentialOpts().addScopeClaim(
+        vpInteraction.presentCredentialOpts(selectedCreds, PresentCredentialOpts().addScopeClaim(
                 "registration", """{"email":"test@example.com"}"""))
     }
 

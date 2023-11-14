@@ -81,7 +81,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		verifierProfileID  string
 		signingKeyType     string
 		matchedDisplayData *display.Data
-		customScope        *customScope
+		customScopes       []customScope
 	}
 
 	tests := []test{
@@ -141,10 +141,10 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			claimData:         []claimData{verifiableEmployeeClaims, verifiableEmployeeClaims},
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_myprofile_jwt_verified_employee",
-			customScope: &customScope{
+			customScopes: []customScope{{
 				name:         "registration",
 				customClaims: `{"email": "test@example.com"}`,
-			},
+			}},
 		},
 	}
 
@@ -173,8 +173,15 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		require.NoError(t, err)
 
 		var customScopeName *string
-		if tc.customScope != nil {
-			customScopeName = &tc.customScope.name
+		if len(tc.customScopes) > 0 {
+			name := ""
+			for i, scope := range tc.customScopes {
+				if i != 0 {
+					name += "+"
+				}
+				name += scope.name
+			}
+			customScopeName = &name
 		}
 
 		initiateURL, err := setup.InitiateInteraction(tc.verifierProfileID, "test purpose.", customScopeName)
@@ -263,10 +270,10 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		require.Equal(t, serializedIssuedVC, serializedMatchedVC)
 
 		presentOps := openid4vp.NewPresentCredentialOpts()
-		if tc.customScope != nil {
-			presentOps.AddScopeClaim(tc.customScope.name, tc.customScope.customClaims)
+		for _, scope := range tc.customScopes {
+			presentOps.AddScopeClaim(scope.name, scope.customClaims)
 		}
-		err = interaction.PresentCredentialWithOpts(selectedCreds, presentOps)
+		err = interaction.PresentCredentialOpts(selectedCreds, presentOps)
 		require.NoError(t, err)
 
 		testHelper.CheckActivityLogAfterOpenID4VPFlow(t, activityLogger, tc.verifierProfileID)

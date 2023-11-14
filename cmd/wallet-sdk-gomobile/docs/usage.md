@@ -1469,13 +1469,12 @@ interaction.presentCredentialUnsafe(preferredVC)
 
 ```kotlin
 
-val scope = interaction.scope()
+val scope = interaction.customScope()
 
-interaction.presentCredentialWithOpts(selectedCredentials, PresentCredentialOpts()
-                .addScopeClaim("registration", """{"email", "test@example.com"}"""))
+interaction.PresentCredentialOpts(PresentCredentialOpts().addScopeClaim(
+        scope.atIndex(0), """{"email":"test@example.com"}"""), selectedCredentials)
 
 ```
-
 
 #### Swift (iOS)
 
@@ -1530,11 +1529,12 @@ interaction.presentCredentialUnsafe(preferredVC)
 
 ```swift
 
-val scope = interaction.scope()
+val scope = interaction.customScope()
 
-let opts = Openid4vpNewPresentCredentialOpts()?.addScopeClaim("registration", #"{"email", "test@example.com"}"#)
-
-try interaction.presentCredentialWithOpts(selectedCredentials, opts)
+try interaction.presentCredentialOpts(
+    selectedCreds,
+    opts: Openid4vpNewPresentCredentialOpts()?.addScopeClaim(scope.atIndex(0), claimJSON:#"{"email":"test@example.com"}"#)     
+)
 
 ```
 

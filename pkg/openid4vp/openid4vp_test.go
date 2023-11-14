@@ -794,9 +794,9 @@ func TestInteraction_Scope(t *testing.T) {
 			Scope: "openid+msregistration",
 		}}
 
-		require.Len(t, interaction.Scope(), 2)
-		require.Contains(t, interaction.Scope(), "openid")
-		require.Contains(t, interaction.Scope(), "msregistration")
+		require.Len(t, interaction.CustomScope(), 1)
+		require.NotContains(t, interaction.CustomScope(), "openid")
+		require.Contains(t, interaction.CustomScope(), "msregistration")
 	})
 }
 

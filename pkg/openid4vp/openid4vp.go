@@ -131,9 +131,17 @@ func (o *Interaction) GetQuery() *presexch.PresentationDefinition {
 	return o.requestObject.Claims.VPToken.PresentationDefinition
 }
 
-// Scope returns vp integration scope.
-func (o *Interaction) Scope() []string {
-	return strings.Split(o.requestObject.Scope, "+")
+// CustomScope returns vp integration scope.
+func (o *Interaction) CustomScope() []string {
+	var customScopes []string
+
+	for _, scope := range strings.Split(o.requestObject.Scope, "+") {
+		if scope != "openid" {
+			customScopes = append(customScopes, scope)
+		}
+	}
+
+	return customScopes
 }
 
 // VerifierDisplayData returns display information about verifier.
