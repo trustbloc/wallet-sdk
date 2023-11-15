@@ -23,6 +23,8 @@ import 'package:app/models/activity_data_object.dart';
 import 'package:app/widgets/credential_card.dart';
 import 'package:app/views/custom_error.dart';
 
+import 'package:app/services/config_service.dart';
+
 class PresentationPreview extends StatefulWidget {
   final CredentialData credentialData;
 
@@ -160,20 +162,25 @@ class PresentationPreviewState extends State<PresentationPreview> {
                       PrimaryButton(
                           onPressed: () async {
                             final SharedPreferences pref = await prefs;
-                            try {
-                              await WalletSDKPlugin.presentCredential(
-                                  selectedCredentials: [widget.credentialData.rawCredential]);
-                            } catch (error) {
-                              var errString = error.toString().replaceAll(r'\', '');
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => CustomError(
-                                          titleBar: 'Presentation Preview',
-                                          requestErrorTitleMsg: 'error while presenting credential',
-                                          requestErrorSubTitleMsg: errString)));
-                              return;
-                            }
+                            Map<String, dynamic> customScopeConfigList = {};
+                            final ConfigService configService = ConfigService();
+                            WalletSDKPlugin.getCustomScope()
+                                .then((customScopeList) async {
+                                  customScopeConfigList = await configService.readCustomScopeConfig(customScopeList);
+                                })
+                                .whenComplete(() => WalletSDKPlugin.presentCredential(
+                                    selectedCredentials: [widget.credentialData.rawCredential],
+                                    customScopeList: customScopeConfigList))
+                                .onError((error, stackTrace) {
+                                  var errString = error.toString().replaceAll(r'\', '');
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => CustomError(
+                                              titleBar: 'Presentation Preview',
+                                              requestErrorTitleMsg: 'error while presenting credential',
+                                              requestErrorSubTitleMsg: errString)));
+                                });
                             var activities = await WalletSDKPlugin.storeActivityLogger();
                             var credID = pref.getString('credID');
                             _storageService.addActivities(ActivityDataObj(credID!, activities));
