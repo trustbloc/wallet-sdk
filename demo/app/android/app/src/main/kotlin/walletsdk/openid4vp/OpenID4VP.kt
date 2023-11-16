@@ -56,11 +56,32 @@ class OpenID4VP constructor(
     /**
      * initiatedInteraction has PresentCredential method which presents credentials to redirect uri from request object.
      */
-    fun presentCredential(selectedCredentials: CredentialsArray) {
+    fun presentCredential(selectedCredentials: CredentialsArray, customScopes: MutableMap<String, Any>? ) {
         val initiatedInteraction = this.initiatedInteraction
                 ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
 
-        initiatedInteraction.presentCredential(selectedCredentials)
+        val opts = PresentCredentialOpts()
+        if (customScopes != null) {
+            for (scope in customScopes) {
+                opts?.addScopeClaim(scope.key, scope.value.toString())
+            }
+        }
+        initiatedInteraction.presentCredentialOpts(selectedCredentials, opts)
+    }
+
+    fun getCustomScope(): ArrayList<String> {
+        val initiatedInteraction = this.initiatedInteraction
+            ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
+
+      val customScopes =  initiatedInteraction.customScope()
+        val customScopesList = ArrayList<String>()
+        for (i in 0 until (customScopes.length())) {
+                if(customScopes.atIndex(i) != "openid"){
+                    customScopesList.add(customScopes.atIndex(i))
+                }
+            }
+
+        return  customScopesList
     }
 
     fun getVerifierDisplayData(): VerifierDisplayData {
