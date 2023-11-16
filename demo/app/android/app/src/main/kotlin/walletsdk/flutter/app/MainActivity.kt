@@ -302,6 +302,20 @@ class MainActivity : FlutterActivity() {
                         }
                     }
 
+                    "getCustomScope" -> {
+                        try {
+                            val customScopeList = getCustomScope()
+                            result.success(customScopeList)
+                        } catch (e: Exception) {
+                            result.error(
+                                "Exception",
+                                "Error while getting custom scope",
+                                e
+                            )
+                        }
+                    }
+
+
                     "getMatchedSubmissionRequirements" -> {
                         try {
                             result.success(getMatchedSubmissionRequirements(call))
@@ -893,6 +907,7 @@ class MainActivity : FlutterActivity() {
 
     private fun presentCredential(call: MethodCall) {
         val selectedCredentials = call.argument<ArrayList<String>>("selectedCredentials")
+        val customScopeList = call.argument<MutableMap<String, Any>>("customScopeList")
         val selectedCredentialsArray = if (selectedCredentials != null) {
             convertToVerifiableCredentialsArray(selectedCredentials)
         } else {
@@ -904,8 +919,15 @@ class MainActivity : FlutterActivity() {
         val openID4VP = this.openID4VP
             ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
 
-        openID4VP.presentCredential(selectedCredentialsArray)
+        openID4VP.presentCredential(selectedCredentialsArray,customScopeList)
         this.openID4VP = null
+    }
+
+    private fun getCustomScope(): ArrayList<String> {
+        val openID4VP = this.openID4VP
+            ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
+
+      return openID4VP.getCustomScope()
     }
 
     /**
