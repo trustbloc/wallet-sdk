@@ -99,7 +99,7 @@ class IssuancePreviewState extends State<IssuancePreview> {
               errorWidget: (context, url, error) => Image.asset('lib/assets/images/logoIcon.png', fit: BoxFit.cover),
               width: 60,
               height: 80,
-              fit: BoxFit.cover,
+              fit: BoxFit.fitWidth,
             ),
             SizedBox(
               height: 40,

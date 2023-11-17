@@ -105,6 +105,7 @@ parseCredentialOfferUri(String qrCodeURL) async {
     final String configResp = await rootBundle.loadString('lib/assets/issuerAuthFlowConfig.json');
     final configData = await json.decode(configResp);
     var resp = CredentialOfferObject.fromJson(jsonDecode(response.body));
+    await persistCredentialType(json.decode(response.body.toString()));
     return configData[resp.credentialIssuer];
   } else {
     throw Exception('Failed to load credential offer uri');
