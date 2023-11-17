@@ -63,12 +63,12 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^2.0.3
-  flutter_launcher_icons: "^0.9.0"
+  flutter_launcher_icons: "^0.13.1"
 
 flutter_launcher_name:
   name: "TrustBloc"
 
-flutter_icons:
+flutter_launcher_icons:
   image_path: "images/appicon.png"
   android: true
   ios: true
