@@ -172,19 +172,13 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		err := setup.AuthorizeVerifierBypassAuth("f13d1va9lp403pb9lyj89vk55", vcsAPIDirectURL)
 		require.NoError(t, err)
 
-		var customScopeName *string
-		if len(tc.customScopes) > 0 {
-			name := ""
-			for i, scope := range tc.customScopes {
-				if i != 0 {
-					name += "+"
-				}
-				name += scope.name
-			}
-			customScopeName = &name
+		var customScopes []string
+
+		for _, scope := range tc.customScopes {
+			customScopes = append(customScopes, scope.name)
 		}
 
-		initiateURL, err := setup.InitiateInteraction(tc.verifierProfileID, "test purpose.", customScopeName)
+		initiateURL, err := setup.InitiateInteraction(tc.verifierProfileID, "test purpose.", customScopes)
 		require.NoError(t, err)
 
 		opts := did.NewResolverOpts()

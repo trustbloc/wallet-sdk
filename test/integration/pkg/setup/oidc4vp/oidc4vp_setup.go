@@ -38,8 +38,8 @@ type Setup struct {
 }
 
 type initiateOIDC4VPData struct {
-	Purpose *string `json:"purpose,omitempty"`
-	Scope   *string `json:"scope,omitempty"`
+	Purpose *string   `json:"purpose,omitempty"`
+	Scopes  *[]string `json:"scopes"`
 }
 
 func NewSetup(httpRequest *httprequest.Request) *Setup {
@@ -67,12 +67,16 @@ func (e *Setup) AuthorizeVerifier(orgID, oidcProviderURL, vcsAPIGateway string) 
 	return nil
 }
 
-func (e *Setup) InitiateInteraction(profileName, purpose string, customScope *string) (string, error) {
+func (e *Setup) InitiateInteraction(profileName, purpose string, customScopes []string) (string, error) {
 	endpointURL := fmt.Sprintf(initiateOidcInteractionURLFormat, e.apiURL, profileName)
+
+	if customScopes == nil {
+		customScopes = []string{}
+	}
 
 	reqBody, err := json.Marshal(&initiateOIDC4VPData{
 		Purpose: &purpose,
-		Scope:   customScope,
+		Scopes:  &customScopes,
 	})
 	if err != nil {
 		return "", fmt.Errorf("marshal initiate oidc4vp req: %w", err)
