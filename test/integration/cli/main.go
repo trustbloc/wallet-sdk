@@ -138,10 +138,10 @@ func initiatePreAuthorizedVerification(verifierProfileInfos []string) {
 			verifierInfo := strings.Split(verifierProfileInfos[i], "#")
 			verifierProfileID := verifierInfo[0]
 
-			var customScope *string
+			var customScope []string
 			if len(verifierInfo) > 1 && strings.HasPrefix(verifierInfo[1], "withScope=") {
 				scopeName := strings.TrimPrefix(verifierInfo[1], "withScope=")
-				customScope = &scopeName
+				customScope = strings.Split(scopeName, "+")
 			}
 
 			initiateVerificationURL, err := oidc4vpSetup.InitiateInteraction(verifierProfileID, "test purpose.", customScope)
