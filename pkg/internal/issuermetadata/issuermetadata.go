@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/trustbloc/vc-go/jwt"
 
@@ -40,7 +41,7 @@ func Get(issuerURI string, httpClient httpClient, metricsLogger api.MetricsLogge
 		httpClient = &http.Client{Timeout: api.DefaultHTTPTimeout}
 	}
 
-	metadataEndpoint := issuerURI + "/.well-known/openid-credential-issuer"
+	metadataEndpoint := strings.TrimSuffix(issuerURI, "/") + "/.well-known/openid-credential-issuer"
 
 	responseBytes, err := httprequest.New(httpClient, metricsLogger).Do(
 		http.MethodGet, metadataEndpoint, "", nil,
