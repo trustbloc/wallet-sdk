@@ -291,7 +291,7 @@ func (i *interaction) getOpenIDConfig() (*OpenIDConfig, error) {
 		return i.openIDConfig, nil
 	}
 
-	openIDConfigEndpoint := i.issuerURI + "/.well-known/openid-configuration"
+	openIDConfigEndpoint := strings.TrimSuffix(i.issuerURI, "/") + "/.well-known/openid-configuration"
 
 	responseBytes, err := httprequest.New(i.httpClient, i.metricsLogger).Do(
 		http.MethodGet, openIDConfigEndpoint, "", nil,
