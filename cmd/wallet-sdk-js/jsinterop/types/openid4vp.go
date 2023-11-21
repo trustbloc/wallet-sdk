@@ -17,6 +17,7 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/jsinterop/jssupport"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-js/walletsdk"
+	"github.com/trustbloc/wallet-sdk/pkg/openid4vp"
 )
 
 const (
@@ -59,7 +60,7 @@ func SerializeOpenID4VPInteraction(agentMethodsRunner *jssupport.AsyncRunner,
 				parsedCreds = append(parsedCreds, verifiableCredential)
 			}
 
-			err = interaction.Interaction.PresentCredential(parsedCreds)
+			err = interaction.Interaction.PresentCredential(parsedCreds, openid4vp.CustomClaims{})
 			if err != nil {
 				return nil, fmt.Errorf("present credentials: %w", err)
 			}
