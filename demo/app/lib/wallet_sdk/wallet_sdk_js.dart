@@ -231,7 +231,7 @@ external dynamic jsVerifyCredentialsStatus(String credential);
 external dynamic jsWellKnownDidConfig(String issuerID);
 
 @JS()
-external dynamic jsGetIssuerMetadata();
+external dynamic jsGetIssuerMetadata(List<String> credentialTypes);
 
 class WalletSDK extends WalletPlatform {
   @visibleForTesting
@@ -378,14 +378,18 @@ class WalletSDK extends WalletPlatform {
     return versionDetailResp;
   }
 
+  Future<List<Object?>> getCustomScope() async {
+    return await methodChannel.invokeMethod('getCustomScope');
+  }
+
   Future<WellKnownDidConfig> wellKnownDidConfig(String issuerID) async {
     final JSWellKnownDIDConfig jsConfig = await promiseToFuture(jsWellKnownDidConfig(issuerID));
 
     return WellKnownDidConfig(isValid: jsConfig.isValid, serviceURL: jsConfig.serviceURL);
   }
 
-  Future<List<IssuerMetaData>> getIssuerMetaData() async {
-    final JSIssuerMetadata data = await promiseToFuture(jsGetIssuerMetadata());
+  Future<List<IssuerMetaData>> getIssuerMetaData(List<String> credentialTypes) async {
+    final JSIssuerMetadata data = await promiseToFuture(jsGetIssuerMetadata(credentialTypes));
 
     final supportedCredentials = data.supportedCredentials
         .map((e) => e as JSSupportedCredentials)
@@ -433,7 +437,7 @@ class WalletSDK extends WalletPlatform {
     return VerifierDisplayData(name: data.name, did: data.did, logoURI: data.logoURI, purpose: data.purpose);
   }
 
-  Future<void> presentCredential({required List<String> selectedCredentials}) async {
+  Future<void> presentCredential({required List<String> selectedCredentials, Map<String, dynamic>? customScopeList}) async {
     await promiseToFuture(jsPresentCredential(selectedCredentials));
   }
 
