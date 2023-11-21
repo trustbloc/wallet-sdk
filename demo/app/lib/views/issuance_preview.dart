@@ -252,7 +252,6 @@ class IssuancePreviewState extends State<IssuancePreview> {
     String? issuerURL = await WalletSDKPlugin.issuerURI();
     String? resolvedCredentialDisplay = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURL!);
     log('resolvedCredentialDisplay $resolvedCredentialDisplay');
-    resolvedCredentialDisplay = '{"credential_displays":[{"overview":{"name":"Permanent Resident Card","logo":{"url":"https://static.mattr.global/credential-assets/government-of-kakapo/web/logo.svg"},"background_color":"#3a2d2d"}}]}';
 
     var activities = await WalletSDKPlugin.storeActivityLogger();
 
