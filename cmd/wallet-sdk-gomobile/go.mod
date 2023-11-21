@@ -14,9 +14,9 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.2
-	github.com/trustbloc/did-go v1.0.2-0.20231117120416-ed019bda587f
-	github.com/trustbloc/kms-go v1.0.1-0.20231116141347-14d6bea5727a
-	github.com/trustbloc/vc-go v1.0.3-0.20231117124429-a8a3b24ef734
+	github.com/trustbloc/did-go v1.1.0
+	github.com/trustbloc/kms-go v1.1.0
+	github.com/trustbloc/vc-go v1.1.0
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 )
 
@@ -62,7 +62,7 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
 	github.com/trustbloc/bbs-signature-go v1.0.1 // indirect
-	github.com/trustbloc/sidetree-go v0.0.0-20231117115139-d71ec9786d12 // indirect
+	github.com/trustbloc/sidetree-go v1.0.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
