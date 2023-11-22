@@ -10,7 +10,7 @@ go 1.21
 toolchain go1.21.0
 
 require (
-	github.com/go-jose/go-jose/v3 v3.0.1-0.20221117193127-916db76e8214
+	github.com/go-jose/go-jose/v3 v3.0.1
 	github.com/google/uuid v1.3.0
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.2
