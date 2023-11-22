@@ -45,7 +45,7 @@ dependencies:
   intl: ^0.18.0
   uni_links: ^0.5.1
   safe_device: ^1.1.2
-  cached_network_image: ^3.2.3
+  cached_network_image: ^3.3.0
   jwt_decode: ^0.3.1
   url_launcher: ^6.1.11
   http: ^0.13.4
