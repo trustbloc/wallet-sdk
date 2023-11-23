@@ -201,6 +201,19 @@ class WalletSDK extends WalletPlatform {
     }
   }
 
+  Future<String?> verifyIssuer() async{
+    try {
+      return await methodChannel.invokeMethod<String>('verifyIssuer');
+    } on PlatformException catch (error) {
+      debugPrint(error.toString());
+      if (error.code == errorCode) {
+        debugPrint(error.toString());
+        return error.details.toString();
+      }
+    }
+    return null;
+  }
+
   Future<List<Object?>> storeActivityLogger() async {
     var activityObj = await methodChannel.invokeMethod('activityLogger');
     return activityObj;

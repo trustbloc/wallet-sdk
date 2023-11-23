@@ -91,6 +91,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             
         case "activityLogger":
             storeActivityLogger(result:result)
+            
+        case "verifyIssuer":
+            verifyIssuer(result:result)
 
         case "getVerifierDisplayData":
              getVerifierDisplayData(result:result)
@@ -440,6 +443,25 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                        message: "error while initializing issuance flow",
                                        details: error.localizedDescription))
           }
+    }
+    
+    public func verifyIssuer(result: @escaping FlutterResult) {
+        guard let openID4CI = self.openID4CI else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while getting issuer meta data",
+                                             details: "openID4CI not initiated. Call authorize before this."))
+        }
+        do {
+            let issuerVerified = try openID4CI.verifyIssuer()
+            print(issuerVerified)
+            result(issuerVerified)
+        } catch let error as NSError {
+            result(FlutterError.init(code: "NATIVE_ERR",
+                                     message: "error while verifying the issuer",
+                                     details: error.localizedDescription))
+        }
+
+        
     }
     
     public func getIssuerMetaData(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {

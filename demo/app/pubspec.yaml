@@ -50,6 +50,7 @@ dependencies:
   url_launcher: ^6.1.11
   http: ^0.13.4
   js: ^0.6.4
+  flutter_svg: ^2.0.9
 
 dev_dependencies:
   integration_test:
@@ -95,6 +96,8 @@ flutter:
    - lib/assets/images/success.png
    - lib/assets/images/logoIcon.png
    - lib/assets/images/logoIcon.png
+   - lib/assets/images/error_icon.svg
+   - lib/assets/images/tick-checked.svg
    - lib/assets/issuerAuthFlowConfig.json
    - lib/assets/walletInitiatedIssuerConfig.json
    - lib/assets/customScopes.json

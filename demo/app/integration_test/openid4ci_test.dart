@@ -138,7 +138,7 @@ void main() async {
     print('wallet DID : $didContent');
 
     const issuanceURL = String.fromEnvironment('INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW');
-    debugPrint('issuanceURLs: $issuanceURL');
+    debugPrint('issuanceURLs Auth Code Flow: $issuanceURL');
 
     var authCodeArgs = {
       'scopes': ['openid', 'profile'],
