@@ -18,6 +18,7 @@ import 'package:app/widgets/primary_button.dart';
 import 'package:app/models/activity_data_object.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/wallet_sdk/wallet_sdk.dart';
+import 'package:app/widgets/domain_verification_component.dart';
 import 'credential_preview.dart';
 import 'handle_redirect_uri.dart';
 import 'otp.dart';
@@ -43,32 +44,38 @@ class IssuancePreviewState extends State<IssuancePreview> {
   String issuerLogoURL = '';
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   List<String>? credentialTypes;
+  String? issuerServiceURL;
 
   @override
   void initState() {
     super.initState();
     prefs.then((value) {
       credentialTypes = value.getStringList('credentialTypes');
-    }).whenComplete(() => WalletSDKPlugin.getIssuerMetaData(credentialTypes!).then((response) {
-      setState(() {
-        credentialIssuer = response.first.credentialIssuer;
-        issuerDisplayName = response.first.localizedIssuerDisplays.first.name;
-        issuerDisplayURL = response.first.localizedIssuerDisplays.first.url;
-        final issuerLogo = response.first.localizedIssuerDisplays.first.logo;
-        if (issuerLogo != null) {
-          issuerLogoURL = issuerLogo;
-        }
-        credentialDisplayName = response.first.supportedCredentials.first.display.first.name;
-        final logo = response.first.supportedCredentials.first.display.first.logo;
-        if (logo != null) {
-          logoURL = logo;
-        }
-        backgroundColor =
-            '0xff${response.first.supportedCredentials.first.display.first.backgroundColor.toString().replaceAll('#', '')}';
-        textColor =
-            '0xff${response.first.supportedCredentials.first.display.first.textColor.toString().replaceAll('#', '')}';
-      });
-    }),
+    }).whenComplete(
+      () => WalletSDKPlugin.getIssuerMetaData(credentialTypes!).then((response) {
+        setState(() {
+          credentialIssuer = response.first.credentialIssuer;
+          issuerDisplayName = response.first.localizedIssuerDisplays.first.name;
+          issuerDisplayURL = response.first.localizedIssuerDisplays.first.url;
+          final issuerLogo = response.first.localizedIssuerDisplays.first.logo;
+          if (issuerLogo != null) {
+            issuerLogoURL = issuerLogo;
+          }
+          credentialDisplayName = response.first.supportedCredentials.first.display.first.name;
+          final logo = response.first.supportedCredentials.first.display.first.logo;
+          if (logo != null) {
+            logoURL = logo;
+          }
+          backgroundColor =
+              '0xff${response.first.supportedCredentials.first.display.first.backgroundColor.toString().replaceAll('#', '')}';
+          textColor =
+              '0xff${response.first.supportedCredentials.first.display.first.textColor.toString().replaceAll('#', '')}';
+        });
+      })).whenComplete(() => WalletSDKPlugin.verifyIssuer().then((serviceURL) {
+            setState(() {
+              issuerServiceURL = serviceURL;
+            });
+          }),
     );
   }
 
@@ -102,12 +109,25 @@ class IssuancePreviewState extends State<IssuancePreview> {
               fit: BoxFit.fitWidth,
             ),
             SizedBox(
-              height: 40,
+              height: 30,
               child: Text(
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 18, color: Color(0xff190C21), fontWeight: FontWeight.bold),
                   issuerDisplayName),
             ),
+            FittedBox(
+              child: issuerServiceURL != null
+                  ? const DomainVerificationComponent(
+                status: 'Verified',
+                imagePath:
+                'lib/assets/images/tick-checked.svg',
+              )
+                  : const DomainVerificationComponent(
+                status: 'Unverified',
+                imagePath: 'lib/assets/images/error_icon.svg',
+              ),
+            ),
+            const SizedBox(height: 4),
             SizedBox(
               height: 30,
               child: Text(

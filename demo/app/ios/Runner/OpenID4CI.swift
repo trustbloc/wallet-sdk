@@ -119,6 +119,16 @@ public class OpenID4CI {
     func getIssuerMetadata() throws -> Openid4ciIssuerMetadata {
        return try initiatedInteraction.issuerMetadata()
     }
+    
+    func verifyIssuer() throws -> String {
+        var error: NSError?
+        let issuerServiceURL = initiatedInteraction.verifyIssuer(&error)
+        if let actualError = error {
+            print("error from verify issuer",  actualError.localizedDescription)
+            throw actualError
+       }
+       return issuerServiceURL
+    }
        
         
 }
