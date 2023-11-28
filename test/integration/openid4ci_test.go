@@ -68,6 +68,7 @@ type test struct {
 	expectedIssuerURI   string
 	expectedDisplayData *display.Data
 	claimData           map[string]interface{}
+	acknowledgeReject   bool
 }
 
 func TestOpenID4CIFullFlow(t *testing.T) {
@@ -152,6 +153,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			claimData:           verifiableEmployeeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataBankIssuer),
 			expectedIssuerURI:   "http://localhost:8075/oidc/idp/bank_issuer/v1.0",
+			acknowledgeReject:   true,
 		},
 		{
 			issuerProfileID:     "did_ion_issuer",
@@ -160,6 +162,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			claimData:           verifiableEmployeeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataDIDION),
 			expectedIssuerURI:   "http://localhost:8075/oidc/idp/did_ion_issuer/v1.0",
+			acknowledgeReject:   true,
 		},
 		{
 			issuerProfileID:     "drivers_license_issuer",
@@ -237,6 +240,13 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		credentials, err := interaction.RequestCredentialWithPreAuth(vm, nil)
 		require.NoError(t, err)
 		require.NotNil(t, credentials)
+
+		require.True(t, interaction.RequireAcknowledgment())
+		if tc.acknowledgeReject {
+			require.NoError(t, interaction.AcknowledgeReject())
+		} else {
+			require.NoError(t, interaction.AcknowledgeSuccess())
+		}
 
 		vc := credentials.AtIndex(0)
 
@@ -357,6 +367,9 @@ func doAuthCodeFlowTest(t *testing.T, useDynamicClientRegistration bool) {
 	require.NoError(t, err)
 	require.NotNil(t, credentials)
 	require.Equal(t, 1, credentials.Length())
+
+	require.True(t, interaction.RequireAcknowledgment())
+	require.NoError(t, interaction.AcknowledgeSuccess())
 }
 
 func getRedirectURIWithAuthCode(t *testing.T, clientID string, interaction *openid4ci.IssuerInitiatedInteraction,

@@ -174,6 +174,8 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 		default:
 			_, err = writer.Write(m.credentialResponse)
 		}
+	case "/ack_endpoint":
+		writer.WriteHeader(http.StatusNoContent)
 	}
 
 	require.NoError(m.t, err)
@@ -233,6 +235,9 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		})
 		t.Run("With TLS verification disabled", func(t *testing.T) {
 			doRequestCredentialTest(t, nil, true)
+		})
+		t.Run("Acknowledge reject", func(t *testing.T) {
+			doRequestCredentialTestExt(t, nil, false, true)
 		})
 	})
 	t.Run("Success with jwk public key", func(t *testing.T) {
@@ -566,9 +571,16 @@ func TestIssuerInitiatedInteractionAlias(t *testing.T) {
 	require.NotNil(t, issuerMetadata)
 }
 
-//nolint:thelper // Not a test helper function
 func doRequestCredentialTest(t *testing.T, additionalHeaders *api.Headers,
 	disableTLSVerification bool,
+) {
+	t.Helper()
+	doRequestCredentialTestExt(t, additionalHeaders, disableTLSVerification, false)
+}
+
+//nolint:thelper // Not a test helper function
+func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
+	disableTLSVerification bool, acknowledgeReject bool,
 ) {
 	issuerServerHandler := &mockIssuerServerHandler{
 		t:                  t,
@@ -582,7 +594,8 @@ func doRequestCredentialTest(t *testing.T, additionalHeaders *api.Headers,
 	}
 
 	issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential",`+
-		`"credential_issuer":"https://server.example.com"}`, server.URL)
+		`"credential_ack_endpoint":"%s/ack_endpoint",`+
+		`"credential_issuer":"https://server.example.com"}`, server.URL, server.URL)
 
 	defer server.Close()
 
@@ -609,6 +622,15 @@ func doRequestCredentialTest(t *testing.T, additionalHeaders *api.Headers,
 	}, "1234")
 	require.NoError(t, err)
 	require.NotNil(t, credentials)
+	require.True(t, interaction.RequireAcknowledgment())
+
+	if acknowledgeReject {
+		err = interaction.AcknowledgeReject()
+	} else {
+		err = interaction.AcknowledgeSuccess()
+	}
+
+	require.NoError(t, err)
 
 	numberOfActivitiesLogged := activityLogger.Length()
 	require.Equal(t, 1, numberOfActivitiesLogged)

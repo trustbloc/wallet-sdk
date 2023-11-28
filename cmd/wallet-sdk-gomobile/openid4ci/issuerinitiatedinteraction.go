@@ -266,3 +266,19 @@ func (i *IssuerInitiatedInteraction) OTelTraceID() string {
 
 	return traceID
 }
+
+// RequireAcknowledgment if true indicates that the issuer requires to be acknowledged if
+// the user accepts or rejects credentials.
+func (i *IssuerInitiatedInteraction) RequireAcknowledgment() bool {
+	return i.goAPIInteraction.RequireAcknowledgment()
+}
+
+// AcknowledgeSuccess acknowledges the issuer that the client accepted credentials.
+func (i *IssuerInitiatedInteraction) AcknowledgeSuccess() error {
+	return i.goAPIInteraction.AcknowledgeSuccess()
+}
+
+// AcknowledgeReject acknowledges the issuer that the client rejected credentials.
+func (i *IssuerInitiatedInteraction) AcknowledgeReject() error {
+	return i.goAPIInteraction.AcknowledgeReject()
+}
