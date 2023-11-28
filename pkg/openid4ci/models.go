@@ -49,6 +49,7 @@ type OpenIDConfig struct {
 type CredentialResponse struct {
 	Credential interface{} `json:"credential,omitempty"` // Optional for deferred credential flow.
 	Format     string      `json:"format,omitempty"`
+	AscID      string      `json:"ack_id"`
 }
 
 // SerializeToCredentialsBytes serializes underlying credential to proper bytes representation depending on
@@ -88,4 +89,14 @@ type proof struct {
 
 type errorResponse struct {
 	Error string `json:"error,omitempty"`
+}
+
+type acknowledgementRequest struct {
+	Credentials []credentialAcknowledgement `json:"credentials"`
+}
+
+type credentialAcknowledgement struct {
+	AckID            string `json:"ack_id"`
+	Status           string `json:"status"`
+	IssuerIdentifier string `json:"issuer_identifier"`
 }

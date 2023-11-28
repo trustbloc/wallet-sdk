@@ -64,6 +64,8 @@ type IssuerInitiatedInteraction struct {
 	credentialFormats            []string
 	preAuthorizedCodeGrantParams *PreAuthorizedCodeGrantParams
 	authorizationCodeGrantParams *AuthorizationCodeGrantParams
+
+	preAuthTokenResponse *preAuthTokenResponse
 }
 
 // NewIssuerInitiatedInteraction creates a new OpenID4CI IssuerInitiatedInteraction.
@@ -265,6 +267,32 @@ func (i *IssuerInitiatedInteraction) VerifyIssuer() (string, error) {
 	return i.interaction.verifyIssuer()
 }
 
+// RequireAcknowledgment if true indicates that the issuer requires to be acknowledged if
+// the user accepts or rejects credentials.
+func (i *IssuerInitiatedInteraction) RequireAcknowledgment() bool {
+	return i.interaction.requireAcknowledgment()
+}
+
+// AcknowledgeSuccess acknowledge issuer that client accepts credentials.
+func (i *IssuerInitiatedInteraction) AcknowledgeSuccess() error {
+	var exernalAccessToken string
+	if i.preAuthTokenResponse != nil {
+		exernalAccessToken = i.preAuthTokenResponse.AccessToken
+	}
+
+	return i.interaction.acknowledgeIssuer(AskStatusSuccess, exernalAccessToken)
+}
+
+// AcknowledgeReject acknowledge issuer that client rejects credentials.
+func (i *IssuerInitiatedInteraction) AcknowledgeReject() error {
+	var exernalAccessToken string
+	if i.preAuthTokenResponse != nil {
+		exernalAccessToken = i.preAuthTokenResponse.AccessToken
+	}
+
+	return i.interaction.acknowledgeIssuer(AskStatusRejected, exernalAccessToken)
+}
+
 func (i *IssuerInitiatedInteraction) requestCredentialWithPreAuth(jwtSigner api.JWTSigner,
 	pin string,
 ) ([]*verifiable.Credential, error) {
@@ -362,7 +390,11 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 		}
 
 		credentialResponses[index] = credentialResponse
+
+		i.interaction.storeAcknowledgmentID(credentialResponse.AscID)
 	}
+
+	i.preAuthTokenResponse = tokenResponse
 
 	return credentialResponses, nil
 }

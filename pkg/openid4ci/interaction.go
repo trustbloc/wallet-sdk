@@ -44,22 +44,37 @@ import (
 
 const getIssuerMetadataEventText = "Get issuer metadata"
 
+// AskStatus used to acknowledge issuer that client accepts or rejects credentials.
+type AskStatus string
+
+const (
+	// AskStatusSuccess acknowledge issuer that client accepts credentials.
+	AskStatusSuccess AskStatus = "success"
+	// AskStatusRejected acknowledge issuer that client rejects credentials.
+	AskStatusRejected AskStatus = "rejected"
+)
+
 // This is a common object shared by both the IssuerInitiatedInteraction and WalletInitiatedInteraction objects.
 type interaction struct {
-	issuerURI            string
-	clientID             string
-	didResolver          api.DIDResolver
-	activityLogger       api.ActivityLogger
-	metricsLogger        api.MetricsLogger
-	disableVCProofChecks bool
-	documentLoader       ld.DocumentLoader
-	issuerMetadata       *issuer.Metadata
-	openIDConfig         *OpenIDConfig
-	oAuth2Config         *oauth2.Config
-	authTokenResponse    *oauth2.Token
-	httpClient           *http.Client
-	authCodeURLState     string
-	codeVerifier         string
+	issuerURI               string
+	clientID                string
+	didResolver             api.DIDResolver
+	activityLogger          api.ActivityLogger
+	metricsLogger           api.MetricsLogger
+	disableVCProofChecks    bool
+	documentLoader          ld.DocumentLoader
+	issuerMetadata          *issuer.Metadata
+	openIDConfig            *OpenIDConfig
+	oAuth2Config            *oauth2.Config
+	authTokenResponse       *oauth2.Token
+	httpClient              *http.Client
+	authCodeURLState        string
+	codeVerifier            string
+	requestedAcknowledgment *requestedAcknowledgment
+}
+
+type requestedAcknowledgment struct {
+	askIDs []string
 }
 
 func (i *interaction) createAuthorizationURL(clientID, redirectURI, format string, types []string, issuerState *string,
@@ -413,6 +428,8 @@ func (i *interaction) getCredentialResponsesWithAuth(signer api.JWTSigner, crede
 		}
 
 		credentialResponses[index] = credentialResponse
+
+		i.storeAcknowledgmentID(credentialResponse.AscID)
 	}
 
 	return credentialResponses, nil
@@ -653,4 +670,84 @@ func (i *interaction) verifyIssuer() (string, error) {
 	}
 
 	return serviceURL, nil
+}
+
+func (i *interaction) requireAcknowledgment() bool {
+	return i.requestedAcknowledgment != nil && i.issuerMetadata.CredentialAckEndpoint != ""
+}
+
+func (i *interaction) storeAcknowledgmentID(id string) {
+	if i.requestedAcknowledgment == nil {
+		i.requestedAcknowledgment = &requestedAcknowledgment{}
+	}
+
+	i.requestedAcknowledgment.askIDs = append(i.requestedAcknowledgment.askIDs, id)
+}
+
+func (i *interaction) acknowledgeIssuer(status AskStatus, externalAccessToken string) error {
+	if !i.requireAcknowledgment() {
+		return fmt.Errorf("issuer not support credential acknowledgement")
+	}
+
+	var ackRequest acknowledgementRequest
+
+	for _, ackID := range i.requestedAcknowledgment.askIDs {
+		ackRequest.Credentials = append(ackRequest.Credentials, credentialAcknowledgement{
+			AckID:            ackID,
+			Status:           string(status),
+			IssuerIdentifier: i.issuerURI,
+		})
+	}
+
+	return i.sendAcknowledgeRequest(externalAccessToken, ackRequest)
+}
+
+func (i *interaction) sendAcknowledgeRequest(
+	externalAccessToken string, acknowledgementRequest acknowledgementRequest,
+) error {
+	askEndpointURL := i.issuerMetadata.CredentialAckEndpoint
+
+	requestBytes, err := json.Marshal(acknowledgementRequest)
+	if err != nil {
+		return fmt.Errorf("fail to marshal acknowledgementRequest: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(context.Background(),
+		http.MethodPost, askEndpointURL, bytes.NewBuffer(requestBytes))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+
+	httpClient := i.httpClient
+
+	if externalAccessToken != "" {
+		req.Header.Add("Authorization", "Bearer "+externalAccessToken)
+	} else {
+		httpClient = i.createOAuthHTTPClient()
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		errClose := resp.Body.Close()
+		if errClose != nil {
+			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
+		}
+	}()
+
+	respBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusNoContent {
+		return processCredentialErrorResponse(resp.StatusCode, respBytes)
+	}
+
+	return nil
 }
