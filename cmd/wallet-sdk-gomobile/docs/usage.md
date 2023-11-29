@@ -789,6 +789,10 @@ val credentials = interaction.requestCredentialWithPreAuth(didDocument.assertion
 
 val issuerURI = interaction.issuerURI() // Optional (but useful)
 
+interaction.requireAcknowledgment() // return true if the issuer requires acknowledgment that credentials are accepted or rejected by the user.
+interaction.acknowledgeSuccess() // acknowledgment issuer that the user accepted credentials.
+interaction.acknowledgeReject() // acknowledgment issuer that the user rejected credentials.
+
 // Consider checking the activity log at some point after the interaction
 ```
 
@@ -836,6 +840,10 @@ if (issuerCapabilities.preAuthorizedCodeGrantParams().pinRequired()) {
 let credentials = interaction.requestCredential(withPreAuth: didDocument.assertionMethod(), opts: requestCredentialWithPreAuthOpts)
 
 let issuerURI = interaction.issuerURI() // Optional (but useful)
+
+interaction.requireAcknowledgment() // return true if the issuer requires acknowledgment that credentials are accepted or rejected by the user.
+try interaction.acknowledgeSuccess() // acknowledgment issuer that the user accepted credentials.
+try interaction.acknowledgeReject() // acknowledgment issuer that the user rejected credentials.
 
 // Consider checking the activity log at some point after the interaction
 ```

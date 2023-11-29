@@ -241,7 +241,8 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, credentials)
 
-		require.True(t, interaction.RequireAcknowledgment())
+		requireAcknowledgment, err := interaction.RequireAcknowledgment()
+		require.True(t, requireAcknowledgment)
 		if tc.acknowledgeReject {
 			require.NoError(t, interaction.AcknowledgeReject())
 		} else {
@@ -368,7 +369,8 @@ func doAuthCodeFlowTest(t *testing.T, useDynamicClientRegistration bool) {
 	require.NotNil(t, credentials)
 	require.Equal(t, 1, credentials.Length())
 
-	require.True(t, interaction.RequireAcknowledgment())
+	requireAcknowledgment, err := interaction.RequireAcknowledgment()
+	require.True(t, requireAcknowledgment)
 	require.NoError(t, interaction.AcknowledgeSuccess())
 }
 

@@ -672,8 +672,12 @@ func (i *interaction) verifyIssuer() (string, error) {
 	return serviceURL, nil
 }
 
-func (i *interaction) requireAcknowledgment() bool {
-	return i.requestedAcknowledgment != nil && i.issuerMetadata.CredentialAckEndpoint != ""
+func (i *interaction) requireAcknowledgment() (bool, error) {
+	if i.requestedAcknowledgment == nil {
+		return false, fmt.Errorf("no acknowledgment data: request credentials first")
+	}
+
+	return i.requestedAcknowledgment != nil && i.issuerMetadata.CredentialAckEndpoint != "", nil
 }
 
 func (i *interaction) storeAcknowledgmentID(id string) {
@@ -685,7 +689,7 @@ func (i *interaction) storeAcknowledgmentID(id string) {
 }
 
 func (i *interaction) acknowledgeIssuer(status AskStatus, externalAccessToken string) error {
-	if !i.requireAcknowledgment() {
+	if i.requestedAcknowledgment == nil || i.issuerMetadata.CredentialAckEndpoint == "" {
 		return fmt.Errorf("issuer not support credential acknowledgement")
 	}
 

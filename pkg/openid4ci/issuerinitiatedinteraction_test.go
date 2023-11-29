@@ -447,7 +447,8 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 					require.NoError(t, err)
 					require.NotNil(t, metadata)
 
-					require.False(t, interaction.RequireAcknowledgment())
+					requireAcknowledgment, err := interaction.RequireAcknowledgment()
+					require.False(t, requireAcknowledgment)
 					require.NoError(t, err)
 					require.Len(t, credentials, 1)
 					require.NotEmpty(t, credentials[0])
@@ -509,13 +510,19 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				for _, tc := range testCases {
 					interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false, true))
 
+					_, err := interaction.RequireAcknowledgment()
+					require.ErrorContains(t, err, "no acknowledgment data: request credentials first")
+
 					credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 						keyID: mockKeyID,
 					}, openid4ci.WithPIN("1234"))
 					require.NoError(t, err)
 					require.Len(t, credentials, 1)
 					require.NotEmpty(t, credentials[0])
-					require.True(t, interaction.RequireAcknowledgment())
+
+					requireAcknowledgment, err := interaction.RequireAcknowledgment()
+					require.NoError(t, err)
+					require.True(t, requireAcknowledgment)
 
 					if !tc.reject {
 						err = interaction.AcknowledgeSuccess()
