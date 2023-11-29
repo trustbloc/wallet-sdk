@@ -622,7 +622,10 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 	}, "1234")
 	require.NoError(t, err)
 	require.NotNil(t, credentials)
-	require.True(t, interaction.RequireAcknowledgment())
+
+	equireAcknowledgment, err := interaction.RequireAcknowledgment()
+	require.NoError(t, err)
+	require.True(t, equireAcknowledgment)
 
 	if acknowledgeReject {
 		err = interaction.AcknowledgeReject()

@@ -269,7 +269,7 @@ func (i *IssuerInitiatedInteraction) VerifyIssuer() (string, error) {
 
 // RequireAcknowledgment if true indicates that the issuer requires to be acknowledged if
 // the user accepts or rejects credentials.
-func (i *IssuerInitiatedInteraction) RequireAcknowledgment() bool {
+func (i *IssuerInitiatedInteraction) RequireAcknowledgment() (bool, error) {
 	return i.interaction.requireAcknowledgment()
 }
 
