@@ -88,8 +88,8 @@ SPEC CHECKSUMS:
   shared_preferences_foundation: 5b919d13b803cadd15ed2dc053125c68730e5126
   sqflite: 31f7eba61e3074736dff8807a9b41581e4f7f15a
   uni_links: d97da20c7701486ba192624d99bffaaffcfc298a
-  url_launcher_ios: 08a3dfac5fb39e8759aeb0abbd5d9480f30fc8b4
+  url_launcher_ios: bf5ce03e0e2088bad9cc378ea97fa0ed5b49673b
 
-PODFILE CHECKSUM: 008d194c9666dcdf1f915be8d965a4a8f9f99d44
+PODFILE CHECKSUM: b6b881b314b4d8dbf0a9ac26486f6850f3c29060
 
-COCOAPODS: 1.12.1
+COCOAPODS: 1.13.0

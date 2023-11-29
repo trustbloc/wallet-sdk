@@ -19,9 +19,10 @@ class IntegrationTest: XCTestCase {
     override func tearDownWithError() throws {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
-
+    
+    /// <#Description#>
     func testFullFlow() throws {
-        XCTAssertEqual(VersionGetVersion(), "testVer")
+       XCTAssertEqual(VersionGetVersion(), "testVer")
         XCTAssertEqual(VersionGetGitRevision(), "testRev")
         XCTAssertEqual(VersionGetBuildTime(), "testTime")
 
@@ -106,10 +107,10 @@ class IntegrationTest: XCTestCase {
         // Presenting from selected credentials.
         try vpInteraction.presentCredentialOpts(
             selectedCreds,
-            opts: Openid4vpNewPresentCredentialOpts()?.addScopeClaim("registration", claimJSON:#"{"email":"test@example.com"}"#)
+            opts: Openid4vpNewPresentCredentialOpts()?.addScopeClaim("registration", claimJSON:#"{"email":"test@example.com"}"#)?.addScopeClaim("testscope", claimJSON: #"{"data": "testdata"}"#)
         )
     }
-
+    
         func testAuthFlow() throws {
           let trace = OtelNewTrace(nil)
           let kms = LocalkmsNewKMS(kmsStore(), nil)!
