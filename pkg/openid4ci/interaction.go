@@ -486,7 +486,7 @@ func (i *interaction) createCredentialRequestWithoutAccessToken(proofJWT, creden
 		Types:  credentialTypes,
 		Format: credentialFormat,
 		Proof: proof{
-			ProofType: "jwt", // TODO: https://github.com/trustbloc/wallet-sdk/issues/159 support other proof types
+			ProofType: "jwt",
 			JWT:       proofJWT,
 		},
 	}
