@@ -141,10 +141,19 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			claimData:         []claimData{verifiableEmployeeClaims, verifiableEmployeeClaims},
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_myprofile_jwt_verified_employee",
-			customScopes: []customScope{{
-				name:         "registration",
-				customClaims: `{"email": "test@example.com"}`,
-			}},
+			customScopes: []customScope{
+				{
+					name:         "registration",
+					customClaims: `{"email": "test@example.com"}`,
+				},
+				{
+					name: "profile",
+					customClaims: `{
+								"name": "Json chow",
+								"email":"profile@example.com"
+								}`,
+				},
+			},
 		},
 	}
 
