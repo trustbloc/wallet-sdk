@@ -91,6 +91,24 @@ public class OpenID4CI {
         return credentials.atIndex(0)!;
     }
     
+    func requireAcknowledgment() throws -> ObjCBool{
+        var ackResp: ObjCBool = false
+        try initiatedInteraction.requireAcknowledgment(&ackResp)
+        return ackResp
+    }
+    
+    func acknowledgeSuccess() throws -> ObjCBool{
+        var ackSuccess: ObjCBool = false
+        try initiatedInteraction.acknowledgeSuccess()
+        return ackSuccess
+    }
+    
+    func acknowledgeReject() throws -> ObjCBool{
+        var ackReject: ObjCBool = false
+        try initiatedInteraction.acknowledgeReject()
+        return ackReject
+    }
+    
     public func serializeDisplayData(issuerURI: String, vcCredentials: VerifiableCredentialsArray) -> String{
        let resolvedDisplayData = DisplayResolve(vcCredentials, issuerURI, nil, nil)
         return resolvedDisplayData!.serialize(nil)

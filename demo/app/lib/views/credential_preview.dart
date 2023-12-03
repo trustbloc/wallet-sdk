@@ -4,6 +4,8 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+import 'dart:developer';
+
 import 'package:app/main.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/views/credential_added.dart';
@@ -19,6 +21,7 @@ import 'package:app/widgets/primary_button.dart';
 
 class CredentialPreview extends StatefulWidget {
   final CredentialData credentialData;
+
   const CredentialPreview({super.key, required this.credentialData});
 
   @override
@@ -39,7 +42,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
     super.initState();
     WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then((response) {
       setState(() {
-        if (response.first.issuerName.isNotEmpty){
+        if (response.first.issuerName.isNotEmpty) {
           issuerDisplayData = response.first.issuerName;
         }
       });
@@ -158,6 +161,10 @@ class CredentialPreviewState extends State<CredentialPreview> {
                       ),
                       PrimaryButton(
                           onPressed: () async {
+                            var ackResp = await WalletSDKPlugin.requireAcknowledgment();
+                            if (ackResp == true) {
+                              await WalletSDKPlugin.acknowledgeSuccess();
+                            }
                             _storageService.addCredential(
                                 CredentialDataObject('$userLoggedIn-${uuid.v1()}', widget.credentialData));
                             _navigateToCredentialAdded();
@@ -168,7 +175,11 @@ class CredentialPreviewState extends State<CredentialPreview> {
                         padding: EdgeInsets.fromLTRB(24, 0, 24, 8),
                       ),
                       PrimaryButton(
-                        onPressed: () {
+                        onPressed: () async {
+                          var ackResp = await WalletSDKPlugin.requireAcknowledgment();
+                          if (ackResp == true) {
+                            await WalletSDKPlugin.acknowledgeReject();
+                          }
                           _navigateToDashboard();
                         },
                         width: double.infinity,
