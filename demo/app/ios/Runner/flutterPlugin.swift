@@ -283,7 +283,6 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             
             let selectedCredentials = arguments["selectedCredentials"] as? Array<String>
             let customScopeList = arguments["customScopeList"] as? Dictionary<String, Any> ?? [String: Any]()
-    
             
             let selectedCredentialsArray: VerifiableCredentialsArray?
             if (selectedCredentials != nil) {
@@ -292,7 +291,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 guard let processAuthorizationRequestVCs = self.processAuthorizationRequestVCs else {
                     return  result(FlutterError.init(code: "NATIVE_ERR",
                                                      message: "error while process present credential",
-                                                     details: "OpenID4VP interaction is not initialted"))
+                                                     details: "OpenID4VP interaction is not initiated"))
                 }
                 
                 selectedCredentialsArray = processAuthorizationRequestVCs

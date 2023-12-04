@@ -25,14 +25,16 @@ void main() async {
     const issuanceURLs = String.fromEnvironment('INITIATE_ISSUANCE_URLS');
     var issuanceURLsList = issuanceURLs.split(' ');
 
-    const verificationURLs = String.fromEnvironment('INITIATE_VERIFICATION_URLS');
+    const verificationURLs =
+        String.fromEnvironment('INITIATE_VERIFICATION_URLS');
     var verificationURLsList = verificationURLs.split(' ');
 
     for (int i = 0; i < issuanceURLsList.length; i++) {
       String didMethodType = didMethodTypesList[i];
       print('wallet DID Type : $didMethodType');
       print('wallet DID Key Type : $didKeyType');
-      var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[i], didKeyType);
+      var didDocData =
+          await walletSDKPlugin.createDID(didMethodTypesList[i], didKeyType);
       final didContent = didDocData.did;
       print('wallet DID : $didContent');
 
@@ -41,7 +43,8 @@ void main() async {
 
       var initializeResp = await walletSDKPlugin.initialize(issuanceURL, null);
       var initializeRespEncoded = json.encode(initializeResp!);
-      Map<String, dynamic> initializeRespJson = json.decode(initializeRespEncoded);
+      Map<String, dynamic> initializeRespJson =
+          json.decode(initializeRespEncoded);
       var requirePIN = initializeRespJson['pinRequired'];
       print('requirePIN: $requirePIN');
 
@@ -57,19 +60,24 @@ void main() async {
       String verificationURL = verificationURLsList[i];
       print('verificationURL : $verificationURL');
 
-      await walletSDKPlugin.processAuthorizationRequest(authorizationRequest: verificationURL);
+      await walletSDKPlugin.processAuthorizationRequest(
+          authorizationRequest: verificationURL);
 
-      print('getSubmissionRequirements');
-
-      final requirements = await walletSDKPlugin.getSubmissionRequirements(storedCredentials: [credential]);
+      final requirements = await walletSDKPlugin
+          .getSubmissionRequirements(storedCredentials: [credential]);
 
       print('getSubmissionRequirements finished');
 
       expect(requirements, hasLength(equals(1)));
       expect(requirements[0].inputDescriptors, hasLength(equals(1)));
-      expect(requirements[0].inputDescriptors[0].matchedVCsID, hasLength(equals(1)));
+      expect(requirements[0].inputDescriptors[0].matchedVCsID,
+          hasLength(equals(1)));
+      var customScopesList ={
+        'registration': jsonEncode({'email':'test@example.com'}),
+      };
 
-      await walletSDKPlugin.presentCredential(selectedCredentials: [credential]);
+      await walletSDKPlugin.presentCredential(
+          selectedCredentials: [credential], customScopeList: customScopesList);
     }
   });
 
@@ -122,8 +130,12 @@ void main() async {
     expect(matchedCreds[0], equals(credentials[0]));
     expect(matchedCreds[1], equals(credentials[1]));
     expect(matchedCreds[2], equals(credentials[2]));
+    var customScopesList ={
+      'registration': jsonEncode({'email':'test@example.com'}),
+      'testscope': jsonEncode({'data': 'testdata'}),
+    };
 
-    await walletSDKPlugin.presentCredential(selectedCredentials: matchedCreds);
+    await walletSDKPlugin.presentCredential(selectedCredentials: matchedCreds, customScopeList: customScopesList);
   });
 
   testWidgets('Testing openid4vc with the auth code flow', (tester) async {

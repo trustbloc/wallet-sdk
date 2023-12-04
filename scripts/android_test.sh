@@ -7,7 +7,7 @@
 
 cd test/integration
 INITIATE_ISSUANCE_URL="$(../../build/bin/integration-cli issuance bank_issuer)"
-INITIATE_VERIFICATION_URL="$(../../build/bin/integration-cli verification v_myprofile_jwt_verified_employee#withScope=registration)"
+INITIATE_VERIFICATION_URL="$(../../build/bin/integration-cli verification v_myprofile_jwt_verified_employee#withScope=registration+testscope)"
 INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW="$(../../build/bin/integration-cli auth-code-flow bank_issuer did_ion_issuer)"
 
 echo "INITIATE_ISSUANCE_URL:${INITIATE_ISSUANCE_URL}"

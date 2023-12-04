@@ -120,7 +120,7 @@ class IntegrationTest {
 
         // Presenting from selected credentials.
         vpInteraction.presentCredentialOpts(selectedCreds, PresentCredentialOpts().addScopeClaim(
-                "registration", """{"email":"test@example.com"}"""))
+                "registration", """{"email":"test@example.com"}""").addScopeClaim("testscope", """{"data": "testdata"}"""))
     }
 
     @Test
