@@ -69,6 +69,7 @@ type test struct {
 	expectedDisplayData *display.Data
 	claimData           map[string]interface{}
 	acknowledgeReject   bool
+	trustInfo           bool
 }
 
 func TestOpenID4CIFullFlow(t *testing.T) {
@@ -154,6 +155,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataBankIssuer),
 			expectedIssuerURI:   "http://localhost:8075/oidc/idp/bank_issuer/v1.0",
 			acknowledgeReject:   true,
+			trustInfo:           true,
 		},
 		{
 			issuerProfileID:     "did_ion_issuer",
@@ -263,6 +265,14 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 
 		issuerURI := interaction.IssuerURI()
 		require.Equal(t, tc.expectedIssuerURI, issuerURI)
+
+		if tc.trustInfo {
+			trustInfo, trErr := interaction.IssuerTrustInfo()
+			require.NoError(t, trErr)
+			require.NotNil(t, trustInfo)
+
+			require.Contains(t, trustInfo.Domain, "trustbloc.local:8078")
+		}
 
 		subID, err := verifiable.SubjectID(vc.VC.Contents().Subject)
 		require.NoError(t, err)

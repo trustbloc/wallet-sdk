@@ -23,6 +23,7 @@ import (
 
 	"github.com/trustbloc/vc-go/proof/defaults"
 
+	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
 	"github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
 
 	"github.com/trustbloc/wallet-sdk/pkg/common"
@@ -53,6 +54,19 @@ const (
 	// AskStatusRejected acknowledge issuer that client rejects credentials.
 	AskStatusRejected AskStatus = "rejected"
 )
+
+// IssuerTrustInfo represent issuer trust information.
+type IssuerTrustInfo struct {
+	DID                  string
+	Domain               string
+	CredentialsSupported []SupportedCredential
+}
+
+type basicTrustInfo struct {
+	DID         string
+	Domain      string
+	DomainValid bool
+}
 
 // This is a common object shared by both the IssuerInitiatedInteraction and WalletInitiatedInteraction objects.
 type interaction struct {
@@ -646,30 +660,72 @@ func processCredentialErrorResponse(statusCode int, respBytes []byte) error {
 	}
 }
 
-func (i *interaction) verifyIssuer() (string, error) {
+func (i *interaction) issuerFullTrustInfo() (*IssuerTrustInfo, error) {
+	trustInfo, err := i.issuerBasicTrustInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	supportedCredentials := make([]SupportedCredential, len(i.issuerMetadata.CredentialsSupported))
+
+	for j := 0; j < len(i.issuerMetadata.CredentialsSupported); j++ {
+		supportedCredentials[j] = SupportedCredential{
+			Format: i.issuerMetadata.CredentialsSupported[j].Format,
+			Types:  i.issuerMetadata.CredentialsSupported[j].Types,
+		}
+	}
+
+	return &IssuerTrustInfo{
+		DID:                  trustInfo.DID,
+		Domain:               trustInfo.Domain,
+		CredentialsSupported: supportedCredentials,
+	}, nil
+}
+
+func (i *interaction) issuerBasicTrustInfo() (*basicTrustInfo, error) {
 	err := i.populateIssuerMetadata("Verify issuer")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	jwtKID := i.issuerMetadata.GetJWTKID()
 
 	if jwtKID == nil {
-		return "", errors.New("issuer's metadata is not signed")
+		return nil,
+			errors.New("issuer's metadata is not signed")
 	}
 
 	jwtKIDSplit := strings.Split(*jwtKID, "#")
 
 	did := jwtKIDSplit[0]
 
-	// The first return parameter (a bool) is redundant with the error return. It's always false if there's an error
-	// and always true if there was no error. Thus, it provides no additional information and can be ignored.
-	_, serviceURL, err := wellknown.ValidateLinkedDomains(did, i.didResolver, i.httpClient)
+	valid, linkedDomain, err := wellknown.ValidateLinkedDomains(did, i.didResolver, i.httpClient)
+	if err != nil {
+		return nil, err
+	}
+
+	return &basicTrustInfo{
+		DID:         did,
+		Domain:      linkedDomain,
+		DomainValid: valid,
+	}, nil
+}
+
+func (i *interaction) verifyIssuer() (string, error) {
+	trustInfo, err := i.issuerBasicTrustInfo()
 	if err != nil {
 		return "", err
 	}
 
-	return serviceURL, nil
+	if !trustInfo.DomainValid {
+		return "", walleterror.NewExecutionError(
+			diderrors.Module,
+			diderrors.DomainAndDidVerificationCode,
+			diderrors.DomainAndDidVerificationFailed,
+			fmt.Errorf("DID service validation failed: %w", err))
+	}
+
+	return trustInfo.Domain, nil
 }
 
 func (i *interaction) requireAcknowledgment() (bool, error) {
