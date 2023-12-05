@@ -61,7 +61,6 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "credentialStatusVerifier":
             credentialStatusVerifier(arguments: arguments!,  result: result)
 
-
         case "serializeDisplayData":
             serializeDisplayData(arguments: arguments!,  result: result)
 
@@ -115,6 +114,13 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         
         case "createAuthorizationURLWalletInitiatedFlow":
             createAuthorizationURLWalletInitiatedFlow(arguments: arguments!, result: result)
+            
+        case "requireAcknowledgment":
+            requireAcknowledgment(result: result)
+        case "acknowledgeSuccess":
+            acknowledgeSuccess(result: result)
+        case "acknowledgeReject":
+            acknowledgeReject(result: result)
 
         default:
             print("No call method is found")
@@ -722,6 +728,59 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         
     }
     
+    public func requireAcknowledgment(result: @escaping FlutterResult){
+        guard let openID4CI = self.openID4CI else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while process requestCredential credential",
+                                             details: "openID4CI not initiated. Call authorize before this."))
+        }
+        
+        do {
+            let ackResp = try openID4CI.requireAcknowledgment()
+            result(ackResp.boolValue)
+        } catch let error as NSError {
+            return result(FlutterError.init(code: "Exception",
+                                      message: "error while accessing acknowlwdgement",
+                                      details: error.localizedDescription
+                                     ))
+        }
+        
+    }
+    
+    public func acknowledgeSuccess(result: @escaping FlutterResult) {
+        guard let openID4CI = self.openID4CI else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while process requestCredential credential",
+                                             details: "openID4CI not initiated. Call authorize before this."))
+        }
+        do {
+            let ackSuccessResp = try openID4CI.acknowledgeSuccess()
+            result(ackSuccessResp.boolValue)
+        } catch let error as NSError {
+            return result(FlutterError.init(code: "Exception",
+                                      message: "error while acknowledge Success",
+                                      details: error.localizedDescription
+                                     ))
+        }
+    }
+    
+    
+    public func acknowledgeReject(result: @escaping FlutterResult) {
+        guard let openID4CI = self.openID4CI else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while process requestCredential credential",
+                                             details: "openID4CI not initiated. Call authorize before this."))
+        }
+        do {
+            let ackRejectResp = try openID4CI.acknowledgeReject()
+            result(ackRejectResp.boolValue)
+        } catch let error as NSError {
+            return result(FlutterError.init(code: "Exception",
+                                      message: "error while acknowledge reject",
+                                      details: error.localizedDescription
+                                     ))
+        }
+    }
     
     public func requestCredentialWithAuth(redirectURIWithParams: String, result: @escaping FlutterResult){
         guard let openID4CI = self.openID4CI else{
