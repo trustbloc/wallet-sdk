@@ -123,4 +123,14 @@ class OpenID4CI constructor(
         return newInteraction.issuerMetadata()
     }
 
+    fun requireAcknowledgment(): Boolean {
+        return newInteraction.requireAcknowledgment()
+    }
+    fun acknowledgeSuccess(): Boolean {
+        return newInteraction.acknowledgeSuccess().equals(true)
+    }
+    fun acknowledgeReject(): Boolean {
+        return newInteraction.acknowledgeReject().equals(true)
+    }
+
 }

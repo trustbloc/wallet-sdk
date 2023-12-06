@@ -289,6 +289,34 @@ class WalletSDK extends WalletPlatform {
     }
   }
 
+  Future<String?> verifyIssuer() async {
+    try {
+      return await methodChannel.invokeMethod<String>('verifyIssuer');
+    } on PlatformException catch (error) {
+      debugPrint(error.toString());
+      if (error.code == errorCode) {
+        debugPrint(error.toString());
+        return error.details.toString();
+      }
+    }
+    return null;
+  }
+
+  Future<bool> requireAcknowledgment() async {
+    var ackResp = await methodChannel.invokeMethod<bool>('requireAcknowledgment');
+    return ackResp!;
+  }
+
+  Future<bool> acknowledgeSuccess() async {
+    var ackSuccessResp = await methodChannel.invokeMethod<bool>('acknowledgeSuccess');
+    return ackSuccessResp!;
+  }
+
+  Future<bool> acknowledgeReject() async {
+    var ackRejectResp = await methodChannel.invokeMethod<bool>('acknowledgeReject');
+    return ackRejectResp!;
+  }
+
   Future<bool> credentialStatusVerifier(String credential) async {
     try {
       await promiseToFuture(jsVerifyCredentialsStatus(credential));
