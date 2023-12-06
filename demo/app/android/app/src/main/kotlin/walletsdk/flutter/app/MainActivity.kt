@@ -341,6 +341,45 @@ class MainActivity : FlutterActivity() {
                         }
                     }
 
+                    "requireAcknowledgment" -> {
+                        try {
+                            val ackResp = requireAcknowledgment()
+                            result.success(ackResp)
+                        } catch (e: Exception) {
+                            result.error(
+                                "Exception",
+                                "error in require acknowlwdgement",
+                                e
+                            )
+                        }
+                    }
+
+                    "acknowledgeSuccess" -> {
+                        try {
+                            val ackSuccessResp = acknowledgeSuccess()
+                            result.success(ackSuccessResp)
+                        } catch (e: Exception) {
+                            result.error(
+                                "Exception",
+                                "error in acknowledge Success",
+                                e
+                            )
+                        }
+                    }
+
+                    "acknowledgeReject" -> {
+                        try {
+                            val ackRejectResp = acknowledgeReject()
+                            result.success(ackRejectResp)
+                        } catch (e: Exception) {
+                            result.error(
+                                "Exception",
+                                "error in acknowledge reject",
+                                e
+                            )
+                        }
+                    }
+
                 }
             }
     }
@@ -984,6 +1023,27 @@ class MainActivity : FlutterActivity() {
         }
 
         return arrayListOf(parseActivityList)
+    }
+
+    private fun requireAcknowledgment(): Boolean {
+        val openID4CI = this.openID4CI
+            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+
+        return openID4CI.requireAcknowledgment()
+    }
+
+    private fun acknowledgeSuccess(): Boolean {
+        val openID4CI = this.openID4CI
+            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+
+        return openID4CI.acknowledgeSuccess()
+    }
+
+    private fun acknowledgeReject(): Boolean {
+        val openID4CI = this.openID4CI
+            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+
+        return openID4CI.acknowledgeReject()
     }
 
 

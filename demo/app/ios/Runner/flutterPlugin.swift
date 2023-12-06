@@ -731,7 +731,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     public func requireAcknowledgment(result: @escaping FlutterResult){
         guard let openID4CI = self.openID4CI else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
-                                             message: "error while process requestCredential credential",
+                                             message: "error in require acknowlwdgement",
                                              details: "openID4CI not initiated. Call authorize before this."))
         }
         
@@ -740,7 +740,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             result(ackResp.boolValue)
         } catch let error as NSError {
             return result(FlutterError.init(code: "Exception",
-                                      message: "error while accessing acknowlwdgement",
+                                      message: "error in require acknowlwdgement",
                                       details: error.localizedDescription
                                      ))
         }
@@ -750,7 +750,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     public func acknowledgeSuccess(result: @escaping FlutterResult) {
         guard let openID4CI = self.openID4CI else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
-                                             message: "error while process requestCredential credential",
+                                             message: "error in acknowledge Success",
                                              details: "openID4CI not initiated. Call authorize before this."))
         }
         do {
@@ -758,7 +758,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             result(ackSuccessResp.boolValue)
         } catch let error as NSError {
             return result(FlutterError.init(code: "Exception",
-                                      message: "error while acknowledge Success",
+                                      message: "error in acknowledge Success",
                                       details: error.localizedDescription
                                      ))
         }
@@ -768,7 +768,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     public func acknowledgeReject(result: @escaping FlutterResult) {
         guard let openID4CI = self.openID4CI else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
-                                             message: "error while process requestCredential credential",
+                                             message: "error in acknowledge reject",
                                              details: "openID4CI not initiated. Call authorize before this."))
         }
         do {
@@ -776,7 +776,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             result(ackRejectResp.boolValue)
         } catch let error as NSError {
             return result(FlutterError.init(code: "Exception",
-                                      message: "error while acknowledge reject",
+                                      message: "error in acknowledge reject",
                                       details: error.localizedDescription
                                      ))
         }
