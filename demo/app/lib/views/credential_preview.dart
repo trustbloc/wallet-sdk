@@ -163,7 +163,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
                           onPressed: () async {
                             var ackResp = await WalletSDKPlugin.requireAcknowledgment();
                             if (ackResp == true) {
-                              await WalletSDKPlugin.acknowledgeSuccess();
+                              WalletSDKPlugin.acknowledgeSuccess();
                             }
                             _storageService.addCredential(
                                 CredentialDataObject('$userLoggedIn-${uuid.v1()}', widget.credentialData));
@@ -178,7 +178,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
                         onPressed: () async {
                           var ackResp = await WalletSDKPlugin.requireAcknowledgment();
                           if (ackResp == true) {
-                            await WalletSDKPlugin.acknowledgeReject();
+                            WalletSDKPlugin.acknowledgeReject();
                           }
                           _navigateToDashboard();
                         },
