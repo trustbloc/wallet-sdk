@@ -216,7 +216,6 @@ class MainActivity : FlutterActivity() {
                     "getIssuerMetaData" -> {
                         try {
                             val issuerMetadataResp = getIssuerMetaData()
-                            println("issuer-meta data resp")
                             result.success(issuerMetadataResp)
                         } catch (e: Exception) {
                             result.error("Exception", "Error while getting issuer Metadata", e)
@@ -356,8 +355,8 @@ class MainActivity : FlutterActivity() {
 
                     "acknowledgeSuccess" -> {
                         try {
-                            val ackSuccessResp = acknowledgeSuccess()
-                            result.success(ackSuccessResp)
+                            acknowledgeSuccess()
+                            result.success(null)
                         } catch (e: Exception) {
                             result.error(
                                 "Exception",
@@ -369,8 +368,8 @@ class MainActivity : FlutterActivity() {
 
                     "acknowledgeReject" -> {
                         try {
-                            val ackRejectResp = acknowledgeReject()
-                            result.success(ackRejectResp)
+                            acknowledgeReject()
+                            result.success(null)
                         } catch (e: Exception) {
                             result.error(
                                 "Exception",
@@ -1032,14 +1031,14 @@ class MainActivity : FlutterActivity() {
         return openID4CI.requireAcknowledgment()
     }
 
-    private fun acknowledgeSuccess(): Boolean {
+    private fun acknowledgeSuccess() {
         val openID4CI = this.openID4CI
             ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
         return openID4CI.acknowledgeSuccess()
     }
 
-    private fun acknowledgeReject(): Boolean {
+    private fun acknowledgeReject() {
         val openID4CI = this.openID4CI
             ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 

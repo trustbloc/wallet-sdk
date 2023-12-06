@@ -754,8 +754,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              details: "openID4CI not initiated. Call authorize before this."))
         }
         do {
-            let ackSuccessResp = try openID4CI.acknowledgeSuccess()
-            result(ackSuccessResp.boolValue)
+           try openID4CI.acknowledgeSuccess()
         } catch let error as NSError {
             return result(FlutterError.init(code: "Exception",
                                       message: "error in acknowledge Success",
@@ -772,8 +771,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              details: "openID4CI not initiated. Call authorize before this."))
         }
         do {
-            let ackRejectResp = try openID4CI.acknowledgeReject()
-            result(ackRejectResp.boolValue)
+           try openID4CI.acknowledgeReject()
         } catch let error as NSError {
             return result(FlutterError.init(code: "Exception",
                                       message: "error in acknowledge reject",

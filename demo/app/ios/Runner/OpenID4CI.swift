@@ -97,16 +97,12 @@ public class OpenID4CI {
         return ackResp
     }
     
-    func acknowledgeSuccess() throws -> ObjCBool{
-        var ackSuccess: ObjCBool = false
-        try initiatedInteraction.acknowledgeSuccess()
-        return ackSuccess
+    func acknowledgeSuccess() throws {
+       return try initiatedInteraction.acknowledgeSuccess()
     }
     
-    func acknowledgeReject() throws -> ObjCBool{
-        var ackReject: ObjCBool = false
-        try initiatedInteraction.acknowledgeReject()
-        return ackReject
+    func acknowledgeReject() throws {
+        return try initiatedInteraction.acknowledgeReject()
     }
     
     public func serializeDisplayData(issuerURI: String, vcCredentials: VerifiableCredentialsArray) -> String{

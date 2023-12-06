@@ -53,8 +53,11 @@ class JSVerifierDisplayData {}
 
 extension JSVerifierDisplayDataExt on JSVerifierDisplayData {
   external String get name;
+
   external String get did;
+
   external String get logoURI;
+
   external String get purpose;
 }
 
@@ -64,6 +67,7 @@ class JSWellKnownDIDConfig {}
 
 extension JSWellKnownDIDConfigExt on JSWellKnownDIDConfig {
   external bool get isValid;
+
   external String get serviceURL;
 }
 
@@ -126,9 +130,13 @@ class JSInputDescriptor {}
 
 extension JSInputDescriptorExt on JSInputDescriptor {
   external String get id;
+
   external String get name;
+
   external String get purpose;
+
   external List<String> get matchedVCsID;
+
   external List<dynamic> get matchedVCs;
 }
 
@@ -150,6 +158,7 @@ class JSIssuerMetadataLogo {}
 
 extension JSIssuerMetadataLogoExt on JSIssuerMetadataLogo {
   external String get alt_text;
+
   external String get url;
 }
 
@@ -159,10 +168,15 @@ class JSIssuerDisplayData {}
 
 extension JSIssuerDisplayDataExt on JSIssuerDisplayData {
   external String get name;
+
   external String get locale;
+
   external String get url;
+
   external JSIssuerMetadataLogo? get logo;
+
   external String? get text_color;
+
   external String? get background_color;
 }
 
@@ -172,9 +186,13 @@ class JSSupportedCredentialDisplayData {}
 
 extension JSSupportedCredentialDisplayDataExt on JSSupportedCredentialDisplayData {
   external String get name;
+
   external String get locale;
+
   external JSIssuerMetadataLogo? get logo;
+
   external String? get text_color;
+
   external String? get background_color;
 }
 
@@ -184,7 +202,9 @@ class JSIssuerMetadata {}
 
 extension JSIssuerMetadataExt on JSIssuerMetadata {
   external String get credentialIssuer;
+
   external List<dynamic> get supportedCredentials;
+
   external List<dynamic> get localizedIssuerDisplays;
 }
 
@@ -307,14 +327,22 @@ class WalletSDK extends WalletPlatform {
     return ackResp!;
   }
 
-  Future<bool> acknowledgeSuccess() async {
-    var ackSuccessResp = await methodChannel.invokeMethod<bool>('acknowledgeSuccess');
-    return ackSuccessResp!;
+  void acknowledgeSuccess() async {
+    try {
+      await methodChannel.invokeMethod<bool>('acknowledgeSuccess');
+    } on PlatformException catch (error) {
+      debugPrint(error.toString());
+      rethrow;
+    }
   }
 
-  Future<bool> acknowledgeReject() async {
-    var ackRejectResp = await methodChannel.invokeMethod<bool>('acknowledgeReject');
-    return ackRejectResp!;
+  void acknowledgeReject() async {
+    try {
+      await methodChannel.invokeMethod<bool>('acknowledgeReject');
+    } on PlatformException catch (error) {
+      debugPrint(error.toString());
+      rethrow;
+    }
   }
 
   Future<bool> credentialStatusVerifier(String credential) async {
@@ -465,7 +493,8 @@ class WalletSDK extends WalletPlatform {
     return VerifierDisplayData(name: data.name, did: data.did, logoURI: data.logoURI, purpose: data.purpose);
   }
 
-  Future<void> presentCredential({required List<String> selectedCredentials, Map<String, dynamic>? customScopeList}) async {
+  Future<void> presentCredential(
+      {required List<String> selectedCredentials, Map<String, dynamic>? customScopeList}) async {
     await promiseToFuture(jsPresentCredential(selectedCredentials));
   }
 

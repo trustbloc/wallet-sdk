@@ -92,14 +92,22 @@ class WalletSDK extends WalletPlatform {
     return ackResp!;
   }
 
-  Future<bool> acknowledgeSuccess() async {
-    var ackSuccessResp = await methodChannel.invokeMethod<bool>('acknowledgeSuccess');
-    return ackSuccessResp!;
+  void acknowledgeSuccess() async {
+    try {
+      await methodChannel.invokeMethod<bool>('acknowledgeSuccess');
+    } on PlatformException catch (error) {
+      debugPrint(error.toString());
+      rethrow;
+    }
   }
 
-  Future<bool> acknowledgeReject() async {
-    var ackRejectResp = await methodChannel.invokeMethod<bool>('acknowledgeReject');
-    return ackRejectResp!;
+  void acknowledgeReject() async {
+    try {
+      await methodChannel.invokeMethod<bool>('acknowledgeReject');
+    } on PlatformException catch (error) {
+      debugPrint(error.toString());
+      rethrow;
+    }
   }
 
   Future<WalletSDKError> parseWalletSDKError({required String localizedErrorMessage}) async {
