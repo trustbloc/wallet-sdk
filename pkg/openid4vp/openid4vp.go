@@ -34,6 +34,7 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
+	"github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
@@ -60,6 +61,13 @@ func (d *didResolverWrapper) Resolve(did string, _ ...vdrapi.DIDMethodOption) (*
 
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
+}
+
+// VerifierTrustInfo represent verifier trust information.
+type VerifierTrustInfo struct {
+	DID         string
+	Domain      string
+	DomainValid bool
 }
 
 // Interaction is used to help with OpenID4VP operations.
@@ -152,6 +160,25 @@ func (o *Interaction) VerifierDisplayData() *VerifierDisplayData {
 		Purpose: o.requestObject.Registration.ClientPurpose,
 		LogoURI: o.requestObject.Registration.ClientLogoURI,
 	}
+}
+
+// TrustInfo return verifier trust info.
+func (o *Interaction) TrustInfo() (*VerifierTrustInfo, error) {
+	// Verifier is issuer of request object.
+	verifier := o.requestObject.Issuer
+
+	verifierDID := strings.Split(verifier, "#")[0]
+
+	valid, linkedDomain, err := wellknown.ValidateLinkedDomains(verifierDID, o.didResolver, o.httpClient)
+	if err != nil {
+		return nil, err
+	}
+
+	return &VerifierTrustInfo{
+		DID:         verifierDID,
+		Domain:      linkedDomain,
+		DomainValid: valid,
+	}, nil
 }
 
 type presentOpts struct {
@@ -286,7 +313,7 @@ func verifyRequestObjectAndDecodeClaims(
 ) (*requestObject, error) {
 	requestObject := &requestObject{}
 
-	err := verifyTokenSignature(rawRequestObject, requestObject, signatureVerifier)
+	err := verifyTokenSignatureAndDecodeClaims(rawRequestObject, requestObject, signatureVerifier)
 	if err != nil {
 		return nil, err
 	}
@@ -294,7 +321,7 @@ func verifyRequestObjectAndDecodeClaims(
 	return requestObject, nil
 }
 
-func verifyTokenSignature(rawJwt string, claims interface{}, proofChecker jwt.ProofChecker) error {
+func verifyTokenSignatureAndDecodeClaims(rawJwt string, claims interface{}, proofChecker jwt.ProofChecker) error {
 	jsonWebToken, _, err := jwt.ParseAndCheckProof(rawJwt, proofChecker, true,
 		jwt.DecodeClaimsTo(claims),
 		jwt.WithIgnoreClaimsMapDecoding(true))

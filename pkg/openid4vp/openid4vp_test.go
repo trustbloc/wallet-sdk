@@ -22,6 +22,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/did-go/doc/did"
+	"github.com/trustbloc/did-go/doc/did/endpoint"
 	"github.com/trustbloc/kms-go/doc/jose"
 	"github.com/trustbloc/vc-go/presexch"
 	"github.com/trustbloc/vc-go/verifiable"
@@ -788,6 +789,53 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	})
 }
 
+func TestOpenID4VP_TrustInfo(t *testing.T) {
+	lddl := testutil.DocumentLoader(t)
+
+	t.Run("Success", func(t *testing.T) {
+		mockDoc := mockResolutionWithServices(t, mockDID)
+		httpClient := &mock.HTTPClientMock{
+			StatusCode: 200,
+		}
+
+		interaction, err := NewInteraction(
+			requestObjectJWT,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockDoc},
+			&cryptoMock{SignVal: []byte(testSignature)},
+			lddl,
+			WithHTTPClient(httpClient),
+		)
+		require.NoError(t, err)
+
+		info, err := interaction.TrustInfo()
+		require.NoError(t, err)
+		require.NotNil(t, info)
+		require.Equal(t, "mock-uri", info.Domain)
+	})
+
+	t.Run("Failure", func(t *testing.T) {
+		mockDoc := mockResolution(t, mockDID)
+		httpClient := &mock.HTTPClientMock{
+			StatusCode: 200,
+		}
+
+		interaction, err := NewInteraction(
+			requestObjectJWT,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockDoc},
+			&cryptoMock{SignVal: []byte(testSignature)},
+			lddl,
+			WithHTTPClient(httpClient),
+		)
+		require.NoError(t, err)
+
+		info, err := interaction.TrustInfo()
+		require.ErrorContains(t, err, "no Linked Domains services specified")
+		require.Nil(t, info)
+	})
+}
+
 func TestInteraction_Scope(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		interaction := &Interaction{requestObject: &requestObject{
@@ -860,6 +908,36 @@ func mockResolution(t *testing.T, mockDID string) *did.DocResolution {
 					VerificationMethod: *mockVM,
 				},
 			},
+		},
+	}
+
+	return docRes
+}
+
+func mockResolutionWithServices(t *testing.T, mockDID string) *did.DocResolution {
+	t.Helper()
+
+	edPub, _, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+
+	mockVM := did.NewVerificationMethodFromBytes(mockVMID, "Ed25519VerificationKey2018", mockDID, edPub)
+
+	docRes := &did.DocResolution{
+		DIDDocument: &did.Doc{
+			ID:      mockDID,
+			Context: []string{did.ContextV1},
+			VerificationMethod: []did.VerificationMethod{
+				*mockVM,
+			},
+			AssertionMethod: []did.Verification{
+				{
+					VerificationMethod: *mockVM,
+				},
+			},
+			Service: []did.Service{{
+				Type:            "LinkedDomains",
+				ServiceEndpoint: endpoint.NewDIDCommV1Endpoint("mock-uri"),
+			}},
 		},
 	}
 

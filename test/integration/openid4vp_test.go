@@ -82,6 +82,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		signingKeyType     string
 		matchedDisplayData *display.Data
 		customScopes       []customScope
+		trustInfo          bool
 	}
 
 	tests := []test{
@@ -92,12 +93,14 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			verifierProfileID:  "v_ldp_university_degree_sd_bbs",
 			matchedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeSD),
 			signingKeyType:     "ECDSAP256IEEEP1363", // Will result in a DI proof being added to the presentation
+			trustInfo:          true,
 		},
 		{
 			issuerProfileIDs:  []string{"university_degree_issuer"},
 			claimData:         []claimData{universityDegreeClaims},
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_ldp_university_degree",
+			trustInfo:         true,
 		},
 		{
 			issuerProfileIDs:  []string{"bank_issuer"},
@@ -221,6 +224,13 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		query, err := interaction.GetQuery()
 		require.NoError(t, err)
 		println("query", string(query))
+
+		if tc.trustInfo {
+			info, trustErr := interaction.TrustInfo()
+			require.NoError(t, trustErr)
+			require.NotNil(t, info)
+			require.Contains(t, info.Domain, "vcs.webhook.example.com")
+		}
 
 		displayData := interaction.VerifierDisplayData()
 		require.NoError(t, err)
