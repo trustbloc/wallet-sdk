@@ -78,8 +78,9 @@ func ValidateLinkedDomains(did string, resolver api.DIDResolver,
 	}
 
 	didBelongsToDomain := true
+	uri = strings.TrimSuffix(uri, "/")
 
-	verErr := client.VerifyDIDAndDomain(did, strings.TrimSuffix(uri, "/"))
+	verErr := client.VerifyDIDAndDomain(did, uri)
 	if verErr != nil {
 		didBelongsToDomain = false
 	}

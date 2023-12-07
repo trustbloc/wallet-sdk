@@ -1815,7 +1815,7 @@ func TestIssuerInitiatedInteraction_VerifyIssuer(t *testing.T) {
 		require.NotNil(t, interaction)
 
 		serviceURL, err := interaction.VerifyIssuer()
-		require.EqualError(t, err, "resolved DID document has no Linked Domains services specified")
+		require.ErrorContains(t, err, "DOMAIN_AND_DID_VERIFICATION_FAILED")
 		require.Empty(t, serviceURL)
 	})
 	t.Run("Metadata not signed", func(t *testing.T) {
@@ -1832,6 +1832,53 @@ func TestIssuerInitiatedInteraction_VerifyIssuer(t *testing.T) {
 		serviceURL, err := interaction.VerifyIssuer()
 		require.EqualError(t, err, "issuer's metadata is not signed")
 		require.Empty(t, serviceURL)
+	})
+}
+
+func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
+	t.Run("Failed to get issuer metadata", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t: t,
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false, true))
+
+		trustInfo, err := interaction.IssuerTrustInfo()
+		require.EqualError(t, err, "METADATA_FETCH_FAILED(OCI1-0004):failed to get issuer metadata: "+
+			"failed to parse the response from the issuer's OpenID Credential Issuer endpoint as JSON or "+
+			"as a JWT: unexpected end of JSON input\nJWT of compacted JWS form is supported only")
+		require.Nil(t, trustInfo)
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t:              t,
+			issuerMetadata: sampleSignedIssuerMetadata,
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		config := getTestClientConfig(t)
+
+		didResolver, err := resolver.NewDIDResolver()
+		require.NoError(t, err)
+
+		config.DIDResolver = didResolver
+
+		credentialOfferIssuanceURI := createCredentialOfferIssuanceURI(t, server.URL, false, true)
+
+		interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, config)
+		require.NoError(t, err)
+		require.NotNil(t, interaction)
+
+		trustInfo, err := interaction.IssuerTrustInfo()
+		require.NoError(t, err)
+		require.NotNil(t, trustInfo)
+		require.Contains(t, trustInfo.Domain, "trustbloc.local")
 	})
 }
 
