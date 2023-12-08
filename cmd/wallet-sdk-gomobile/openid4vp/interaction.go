@@ -34,6 +34,7 @@ type goAPIOpenID4VP interface {
 	PresentCredential(credentials []*afgoverifiable.Credential, customClaims openid4vp.CustomClaims) error
 	PresentCredentialUnsafe(credential *afgoverifiable.Credential, customClaims openid4vp.CustomClaims) error
 	VerifierDisplayData() *openid4vp.VerifierDisplayData
+	TrustInfo() (*openid4vp.VerifierTrustInfo, error)
 }
 
 // Interaction represents a single OpenID4VP interaction between a wallet and a verifier. The methods defined on this
@@ -138,6 +139,11 @@ func (o *Interaction) GetQuery() ([]byte, error) {
 // CustomScope returns vp integration scope.
 func (o *Interaction) CustomScope() *Scope {
 	return NewScope(o.goAPIOpenID4VP.CustomScope())
+}
+
+// TrustInfo return verifier trust info.
+func (o *Interaction) TrustInfo() (*openid4vp.VerifierTrustInfo, error) {
+	return o.goAPIOpenID4VP.TrustInfo()
 }
 
 // VerifierDisplayData returns display information about verifier.

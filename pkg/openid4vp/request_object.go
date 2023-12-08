@@ -11,6 +11,7 @@ import "github.com/trustbloc/vc-go/presexch"
 type requestObject struct {
 	JTI          string                    `json:"jti"`
 	IAT          int64                     `json:"iat"`
+	Issuer       string                    `json:"iss"`
 	ResponseType string                    `json:"response_type"` //nolint: tagliatelle
 	ResponseMode string                    `json:"response_mode"` //nolint: tagliatelle
 	Scope        string                    `json:"scope"`
