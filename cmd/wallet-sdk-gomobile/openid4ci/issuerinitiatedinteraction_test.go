@@ -133,7 +133,7 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 ) {
 	var err error
 
-	if m.headersToCheck != nil {
+	if m.headersToCheck != nil && request.URL.Path != "/ack_endpoint" {
 		for _, headerToCheck := range m.headersToCheck.GetAll() {
 			// Note: for these tests, we're assuming that there aren't multiple values under a single name/key.
 			value := request.Header.Get(headerToCheck.Name)
@@ -623,14 +623,26 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 	require.NoError(t, err)
 	require.NotNil(t, credentials)
 
-	equireAcknowledgment, err := interaction.RequireAcknowledgment()
+	requireAcknowledgment, err := interaction.RequireAcknowledgment()
 	require.NoError(t, err)
-	require.True(t, equireAcknowledgment)
+	require.True(t, requireAcknowledgment)
+
+	acknowledgment, err := interaction.Acknowledgment()
+	require.NotNil(t, acknowledgment)
+	require.NoError(t, err)
+
+	acknowledgmentData, err := acknowledgment.Serialize()
+	require.NotEmpty(t, acknowledgmentData)
+	require.NoError(t, err)
+
+	acknowledgmentRestored, err := openid4ci.NewAcknowledgment(acknowledgmentData)
+	require.NotEmpty(t, acknowledgmentRestored)
+	require.NoError(t, err)
 
 	if acknowledgeReject {
-		err = interaction.AcknowledgeReject()
+		err = acknowledgmentRestored.Reject()
 	} else {
-		err = interaction.AcknowledgeSuccess()
+		err = acknowledgmentRestored.Success()
 	}
 
 	require.NoError(t, err)
@@ -673,6 +685,11 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 	issuerMetadata, err := interaction.IssuerMetadata()
 	require.NoError(t, err)
 	require.NotNil(t, issuerMetadata)
+}
+
+func TestNewRequestedAcknowledgment(t *testing.T) {
+	_, err := openid4ci.NewAcknowledgment("[")
+	require.Error(t, err)
 }
 
 func createIssuerInitiatedInteraction(t *testing.T, kms *localkms.KMS, activityLogger api.ActivityLogger,

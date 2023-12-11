@@ -6,7 +6,10 @@ SPDX-License-Identifier: Apache-2.0
 
 package openid4ci
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 // CredentialOffer represents the Credential Offer object as defined in
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#section-4.1.1.
@@ -72,6 +75,13 @@ type preAuthTokenResponse struct {
 	RefreshToken    string `json:"refresh_token,omitempty"`
 	CNonce          string `json:"c_nonce,omitempty"`
 	CNonceExpiresIn int    `json:"c_nonce_expires_in,omitempty"`
+}
+
+type universalAuthToken struct {
+	AccessToken  string    `json:"access_token,omitempty"`
+	TokenType    string    `json:"token_type,omitempty"`
+	ExpiresAt    time.Time `json:"expires_at,omitempty"`
+	RefreshToken string    `json:"refresh_token,omitempty"`
 }
 
 type credentialRequest struct {

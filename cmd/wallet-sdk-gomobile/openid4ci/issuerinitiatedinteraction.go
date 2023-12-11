@@ -278,12 +278,15 @@ func (i *IssuerInitiatedInteraction) RequireAcknowledgment() (bool, error) {
 	return i.goAPIInteraction.RequireAcknowledgment()
 }
 
-// AcknowledgeSuccess acknowledges the issuer that the client accepted credentials.
-func (i *IssuerInitiatedInteraction) AcknowledgeSuccess() error {
-	return i.goAPIInteraction.AcknowledgeSuccess()
-}
+// Acknowledgment return not nil Acknowledgment if the issuer requires to be acknowledged that
+// the user accepts or rejects credentials.
+func (i *IssuerInitiatedInteraction) Acknowledgment() (*Acknowledgment, error) {
+	acknowledgment, err := i.goAPIInteraction.Acknowledgment()
+	if err != nil {
+		return nil, err
+	}
 
-// AcknowledgeReject acknowledges the issuer that the client rejected credentials.
-func (i *IssuerInitiatedInteraction) AcknowledgeReject() error {
-	return i.goAPIInteraction.AcknowledgeReject()
+	return &Acknowledgment{
+		acknowledgment: acknowledgment,
+	}, nil
 }

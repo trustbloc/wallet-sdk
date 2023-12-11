@@ -98,11 +98,11 @@ public class OpenID4CI {
     }
     
     func acknowledgeSuccess() throws {
-       return try initiatedInteraction.acknowledgeSuccess()
+       return try initiatedInteraction.acknowledgment().success()
     }
     
     func acknowledgeReject() throws {
-        return try initiatedInteraction.acknowledgeReject()
+        return try initiatedInteraction.acknowledgment().reject()
     }
     
     public func serializeDisplayData(issuerURI: String, vcCredentials: VerifiableCredentialsArray) -> String{

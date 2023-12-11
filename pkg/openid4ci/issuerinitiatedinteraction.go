@@ -65,7 +65,7 @@ type IssuerInitiatedInteraction struct {
 	preAuthorizedCodeGrantParams *PreAuthorizedCodeGrantParams
 	authorizationCodeGrantParams *AuthorizationCodeGrantParams
 
-	preAuthTokenResponse *preAuthTokenResponse
+	authToken *universalAuthToken
 }
 
 // NewIssuerInitiatedInteraction creates a new OpenID4CI IssuerInitiatedInteraction.
@@ -278,24 +278,15 @@ func (i *IssuerInitiatedInteraction) RequireAcknowledgment() (bool, error) {
 	return i.interaction.requireAcknowledgment()
 }
 
-// AcknowledgeSuccess acknowledge issuer that client accepts credentials.
-func (i *IssuerInitiatedInteraction) AcknowledgeSuccess() error {
-	var exernalAccessToken string
-	if i.preAuthTokenResponse != nil {
-		exernalAccessToken = i.preAuthTokenResponse.AccessToken
+// Acknowledgment return not nil Acknowledgment if the issuer requires to be acknowledged that
+// the user accepts or rejects credentials.
+func (i *IssuerInitiatedInteraction) Acknowledgment() (*Acknowledgment, error) {
+	authToken := i.interaction.authToken
+	if i.authToken != nil {
+		authToken = i.authToken
 	}
 
-	return i.interaction.acknowledgeIssuer(AskStatusSuccess, exernalAccessToken)
-}
-
-// AcknowledgeReject acknowledge issuer that client rejects credentials.
-func (i *IssuerInitiatedInteraction) AcknowledgeReject() error {
-	var exernalAccessToken string
-	if i.preAuthTokenResponse != nil {
-		exernalAccessToken = i.preAuthTokenResponse.AccessToken
-	}
-
-	return i.interaction.acknowledgeIssuer(AskStatusRejected, exernalAccessToken)
+	return i.interaction.requestedAcknowledgmentObj(authToken)
 }
 
 func (i *IssuerInitiatedInteraction) requestCredentialWithPreAuth(jwtSigner api.JWTSigner,
@@ -362,6 +353,11 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 		return nil, fmt.Errorf("failed to get token response: %w", err)
 	}
 
+	i.authToken = &universalAuthToken{
+		AccessToken: tokenResponse.AccessToken, TokenType: tokenResponse.TokenType,
+		ExpiresAt: tokenResponse.expiry(), RefreshToken: tokenResponse.RefreshToken,
+	}
+
 	proofJWT, err := i.interaction.createClaimsProof(tokenResponse.CNonce, signer)
 	if err != nil {
 		return nil, err
@@ -398,8 +394,6 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 
 		i.interaction.storeAcknowledgmentID(credentialResponse.AscID)
 	}
-
-	i.preAuthTokenResponse = tokenResponse
 
 	return credentialResponses, nil
 }
@@ -635,4 +629,12 @@ func signToken(claims interface{}, signer api.JWTSigner) (string, error) {
 	}
 
 	return tokenBytes, nil
+}
+
+func (e *preAuthTokenResponse) expiry() time.Time {
+	if v := e.ExpiresIn; v != 0 {
+		return time.Now().Add(time.Duration(v) * time.Second)
+	}
+
+	return time.Time{}
 }

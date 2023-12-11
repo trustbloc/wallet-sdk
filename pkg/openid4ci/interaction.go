@@ -80,7 +80,8 @@ type interaction struct {
 	issuerMetadata          *issuer.Metadata
 	openIDConfig            *OpenIDConfig
 	oAuth2Config            *oauth2.Config
-	authTokenResponse       *oauth2.Token
+	authTokenResponseNonce  interface{}
+	authToken               *universalAuthToken
 	httpClient              *http.Client
 	authCodeURLState        string
 	codeVerifier            string
@@ -88,7 +89,7 @@ type interaction struct {
 }
 
 type requestedAcknowledgment struct {
-	askIDs []string
+	ackIDs []string
 }
 
 func (i *interaction) createAuthorizationURL(clientID, redirectURI, format string, types []string, issuerState *string,
@@ -237,8 +238,17 @@ func (i *interaction) requestAccessToken(redirectURIWithAuthCode string) error {
 
 	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, i.httpClient)
 
-	i.authTokenResponse, err = i.oAuth2Config.Exchange(ctx, parsedURI.Query().Get("code"),
+	authTokenResponse, err := i.oAuth2Config.Exchange(ctx, parsedURI.Query().Get("code"),
 		oauth2.SetAuthURLParam("code_verifier", i.codeVerifier))
+
+	i.authToken = &universalAuthToken{
+		AccessToken:  authTokenResponse.AccessToken,
+		TokenType:    authTokenResponse.TokenType,
+		ExpiresAt:    authTokenResponse.Expiry,
+		RefreshToken: authTokenResponse.RefreshToken,
+	}
+
+	i.authTokenResponseNonce = authTokenResponse.Extra("c_nonce")
 
 	return err
 }
@@ -407,14 +417,14 @@ func (i *interaction) requestCredentialWithAuth(jwtSigner api.JWTSigner, credent
 func (i *interaction) getCredentialResponsesWithAuth(signer api.JWTSigner, credentialFormats []string,
 	credentialTypes [][]string,
 ) ([]CredentialResponse, error) {
-	proofJWT, err := i.createClaimsProof(i.authTokenResponse.Extra("c_nonce"), signer)
+	proofJWT, err := i.createClaimsProof(i.authTokenResponseNonce, signer)
 	if err != nil {
 		return nil, err
 	}
 
 	credentialResponses := make([]CredentialResponse, len(credentialTypes))
 
-	oAuthHTTPClient := i.createOAuthHTTPClient()
+	oAuthHTTPClient := createOAuthHTTPClient(i.oAuth2Config, i.authToken, i.httpClient)
 
 	for index := range credentialTypes {
 		request, err := i.createCredentialRequestWithoutAccessToken(proofJWT, credentialFormats[index],
@@ -475,8 +485,10 @@ func (i *interaction) createClaimsProof(nonce interface{}, signer api.JWTSigner)
 // createOAuthHTTPClient creates the OAuth2 client wrapper using the OAuth2 library.
 // Due to some peculiarities with the OAuth2 library, we need to do some things here to ensure our custom HTTP client
 // settings get preserved. Check the comments in the method below for more details.
-func (i *interaction) createOAuthHTTPClient() *http.Client {
-	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, i.httpClient)
+func createOAuthHTTPClient(
+	oAuth2Config *oauth2.Config, token *universalAuthToken, httpClient *http.Client,
+) *http.Client {
+	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, httpClient)
 
 	// The HTTP client below only retains the Transport, so we have to set the timeout again.
 	// The docs say that the returned client shouldn't be modified, but there doesn't seem to be a clear reason
@@ -485,8 +497,13 @@ func (i *interaction) createOAuthHTTPClient() *http.Client {
 	// won't be used for non-token-fetching requests, but this seems to be inaccurate (as of writing).
 	// Any additional headers injected in by the headerInjectionRoundTripper should be set as expected.
 	// See https://github.com/golang/oauth2/issues/324 for more info.
-	oAuthHTTPClient := i.oAuth2Config.Client(ctx, i.authTokenResponse)
-	oAuthHTTPClient.Timeout = i.httpClient.Timeout
+	oAuthHTTPClient := oAuth2Config.Client(ctx, &oauth2.Token{
+		AccessToken:  token.AccessToken,
+		TokenType:    token.TokenType,
+		RefreshToken: token.RefreshToken,
+		Expiry:       token.ExpiresAt,
+	})
+	oAuthHTTPClient.Timeout = httpClient.Timeout
 
 	return oAuthHTTPClient
 }
@@ -728,6 +745,24 @@ func (i *interaction) verifyIssuer() (string, error) {
 	return trustInfo.Domain, nil
 }
 
+func (i *interaction) requestedAcknowledgmentObj(authToken *universalAuthToken) (*Acknowledgment, error) {
+	require, err := i.requireAcknowledgment()
+	if err != nil {
+		return nil, err
+	}
+
+	if !require {
+		return nil, fmt.Errorf("issuer not support credential acknowledgement")
+	}
+
+	return &Acknowledgment{
+		AckIDs:                i.requestedAcknowledgment.ackIDs,
+		CredentialAckEndpoint: i.issuerMetadata.CredentialAckEndpoint,
+		IssuerURI:             i.issuerURI,
+		AuthToken:             authToken,
+	}, nil
+}
+
 func (i *interaction) requireAcknowledgment() (bool, error) {
 	if i.requestedAcknowledgment == nil {
 		return false, fmt.Errorf("no acknowledgment data: request credentials first")
@@ -741,73 +776,5 @@ func (i *interaction) storeAcknowledgmentID(id string) {
 		i.requestedAcknowledgment = &requestedAcknowledgment{}
 	}
 
-	i.requestedAcknowledgment.askIDs = append(i.requestedAcknowledgment.askIDs, id)
-}
-
-func (i *interaction) acknowledgeIssuer(status AskStatus, externalAccessToken string) error {
-	if i.requestedAcknowledgment == nil || i.issuerMetadata.CredentialAckEndpoint == "" {
-		return fmt.Errorf("issuer not support credential acknowledgement")
-	}
-
-	var ackRequest acknowledgementRequest
-
-	for _, ackID := range i.requestedAcknowledgment.askIDs {
-		ackRequest.Credentials = append(ackRequest.Credentials, credentialAcknowledgement{
-			AckID:            ackID,
-			Status:           string(status),
-			IssuerIdentifier: i.issuerURI,
-		})
-	}
-
-	return i.sendAcknowledgeRequest(externalAccessToken, ackRequest)
-}
-
-func (i *interaction) sendAcknowledgeRequest(
-	externalAccessToken string, acknowledgementRequest acknowledgementRequest,
-) error {
-	askEndpointURL := i.issuerMetadata.CredentialAckEndpoint
-
-	requestBytes, err := json.Marshal(acknowledgementRequest)
-	if err != nil {
-		return fmt.Errorf("fail to marshal acknowledgementRequest: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(context.Background(),
-		http.MethodPost, askEndpointURL, bytes.NewBuffer(requestBytes))
-	if err != nil {
-		return err
-	}
-
-	req.Header.Add("Content-Type", "application/json")
-
-	httpClient := i.httpClient
-
-	if externalAccessToken != "" {
-		req.Header.Add("Authorization", "Bearer "+externalAccessToken)
-	} else {
-		httpClient = i.createOAuthHTTPClient()
-	}
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		errClose := resp.Body.Close()
-		if errClose != nil {
-			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
-		}
-	}()
-
-	respBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != http.StatusNoContent {
-		return processCredentialErrorResponse(resp.StatusCode, respBytes)
-	}
-
-	return nil
+	i.requestedAcknowledgment.ackIDs = append(i.requestedAcknowledgment.ackIDs, id)
 }

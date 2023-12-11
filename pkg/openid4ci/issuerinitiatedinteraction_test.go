@@ -150,7 +150,13 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 			_, err = writer.Write(m.credentialResponse)
 		}
 	case "/ack_endpoint":
-		writer.WriteHeader(http.StatusNoContent)
+		statusCode := http.StatusNoContent
+
+		if m.httpStatusCode != 0 {
+			statusCode = m.httpStatusCode
+		}
+
+		writer.WriteHeader(statusCode)
 	}
 
 	require.NoError(m.t, err)
@@ -442,16 +448,20 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 						keyID: mockKeyID,
 					}, openid4ci.WithPIN("1234"))
 					require.NoError(t, err)
+					require.Len(t, credentials, 1)
+					require.NotEmpty(t, credentials[0])
 
 					metadata, err := interaction.IssuerMetadata()
 					require.NoError(t, err)
 					require.NotNil(t, metadata)
 
 					requireAcknowledgment, err := interaction.RequireAcknowledgment()
-					require.False(t, requireAcknowledgment)
 					require.NoError(t, err)
-					require.Len(t, credentials, 1)
-					require.NotEmpty(t, credentials[0])
+					require.False(t, requireAcknowledgment)
+
+					requestedAcknowledgment, err := interaction.Acknowledgment()
+					require.Nil(t, requestedAcknowledgment)
+					require.ErrorContains(t, err, "issuer not support credential acknowledgement")
 				})
 				t.Run("Token endpoint defined in the issuer's metadata", func(t *testing.T) {
 					issuerServerHandler := &mockIssuerServerHandler{
@@ -496,7 +506,6 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 					t:                  t,
 					credentialResponse: sampleCredentialResponseAsk,
 					openIDConfig:       &openid4ci.OpenIDConfig{},
-					httpStatusCode:     http.StatusOK,
 				}
 
 				server := httptest.NewServer(issuerServerHandler)
@@ -510,7 +519,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				for _, tc := range testCases {
 					interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false, true))
 
-					_, err := interaction.RequireAcknowledgment()
+					_, err := interaction.Acknowledgment()
 					require.ErrorContains(t, err, "no acknowledgment data: request credentials first")
 
 					credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
@@ -520,14 +529,14 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 					require.Len(t, credentials, 1)
 					require.NotEmpty(t, credentials[0])
 
-					requireAcknowledgment, err := interaction.RequireAcknowledgment()
+					requestedAcknowledgment, err := interaction.Acknowledgment()
 					require.NoError(t, err)
-					require.True(t, requireAcknowledgment)
+					require.NotNil(t, requestedAcknowledgment)
 
 					if !tc.reject {
-						err = interaction.AcknowledgeSuccess()
+						err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.AskStatusSuccess, &http.Client{})
 					} else {
-						err = interaction.AcknowledgeReject()
+						err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.AskStatusRejected, &http.Client{})
 					}
 					require.NoError(t, err)
 				}
@@ -713,8 +722,40 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, credentials, 1)
 			require.NotEmpty(t, credentials[0])
-			require.ErrorContains(t, interaction.AcknowledgeSuccess(),
-				"issuer not support credential acknowledgement")
+			_, err = interaction.Acknowledgment()
+
+			require.ErrorContains(t, err, "issuer not support credential acknowledgement")
+		})
+
+		t.Run("Fail to acknowledge issuer, status code not 204", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t:                  t,
+				credentialResponse: sampleCredentialResponse,
+				openIDConfig:       &openid4ci.OpenIDConfig{},
+				httpStatusCode:     http.StatusInternalServerError,
+			}
+
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential",`+
+				`"credential_ack_endpoint":"%s/ack_endpoint",`+
+				`"token_endpoint":"%s/oidc/token"}`, server.URL, server.URL, server.URL)
+
+			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false, true))
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			require.NoError(t, err)
+			require.Len(t, credentials, 1)
+			require.NotEmpty(t, credentials[0])
+
+			ack, err := interaction.Acknowledgment()
+			require.NoError(t, err)
+
+			err = ack.AcknowledgeIssuer(openid4ci.AskStatusSuccess, &http.Client{})
+			require.ErrorContains(t, err, "received status code [500]")
 		})
 
 		t.Run("Fail to get token response: invalid token request", func(t *testing.T) {
@@ -1447,8 +1488,11 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				require.Len(t, credentials, 1)
 				require.NotEmpty(t, credentials[0])
 
-				err = interaction.AcknowledgeSuccess()
+				requestedAcknowledgment, err := interaction.Acknowledgment()
 				require.NoError(t, err)
+
+				require.NoError(t, requestedAcknowledgment.AcknowledgeIssuer(
+					openid4ci.AskStatusSuccess, &http.Client{}))
 			})
 		})
 		t.Run("Authorization URL not created first", func(t *testing.T) {
