@@ -127,10 +127,10 @@ class OpenID4CI constructor(
         return newInteraction.requireAcknowledgment()
     }
     fun acknowledgeSuccess() {
-        return newInteraction.acknowledgeSuccess()
+        return newInteraction.acknowledgment().success()
     }
     fun acknowledgeReject() {
-        return newInteraction.acknowledgeReject()
+        return newInteraction.acknowledgment().reject()
     }
 
 }

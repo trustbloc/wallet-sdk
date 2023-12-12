@@ -243,12 +243,19 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, credentials)
 
-		requireAcknowledgment, err := interaction.RequireAcknowledgment()
-		require.True(t, requireAcknowledgment)
+		requestedAcknowledgment, err := interaction.Acknowledgment()
+		require.NotNil(t, requestedAcknowledgment)
+
+		requestedAcknowledgmentData, err := requestedAcknowledgment.Serialize()
+		require.NoError(t, err)
+
+		requestedAcknowledgmentRestored, err := openid4ci.NewAcknowledgment(requestedAcknowledgmentData)
+		require.NotNil(t, requestedAcknowledgmentRestored)
+
 		if tc.acknowledgeReject {
-			require.NoError(t, interaction.AcknowledgeReject())
+			require.NoError(t, requestedAcknowledgmentRestored.Reject())
 		} else {
-			require.NoError(t, interaction.AcknowledgeSuccess())
+			require.NoError(t, requestedAcknowledgmentRestored.Success())
 		}
 
 		vc := credentials.AtIndex(0)
@@ -379,9 +386,9 @@ func doAuthCodeFlowTest(t *testing.T, useDynamicClientRegistration bool) {
 	require.NotNil(t, credentials)
 	require.Equal(t, 1, credentials.Length())
 
-	requireAcknowledgment, err := interaction.RequireAcknowledgment()
-	require.True(t, requireAcknowledgment)
-	require.NoError(t, interaction.AcknowledgeSuccess())
+	requestedAcknowledgment, err := interaction.Acknowledgment()
+	require.NotNil(t, requestedAcknowledgment)
+	require.NoError(t, requestedAcknowledgment.Success())
 }
 
 func getRedirectURIWithAuthCode(t *testing.T, clientID string, interaction *openid4ci.IssuerInitiatedInteraction,
