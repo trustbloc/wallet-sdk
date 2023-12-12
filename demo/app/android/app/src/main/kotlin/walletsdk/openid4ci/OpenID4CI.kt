@@ -127,7 +127,9 @@ class OpenID4CI constructor(
         return newInteraction.requireAcknowledgment()
     }
     fun acknowledgeSuccess() {
-        return newInteraction.acknowledgment().success()
+        val serializedStateResp =  newInteraction.acknowledgment().serialize()
+        val acknowledgement = Acknowledgment(serializedStateResp)
+        return acknowledgement.success()
     }
     fun acknowledgeReject() {
         return newInteraction.acknowledgment().reject()
