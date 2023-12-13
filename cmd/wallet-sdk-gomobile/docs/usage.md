@@ -789,9 +789,17 @@ val credentials = interaction.requestCredentialWithPreAuth(didDocument.assertion
 
 val issuerURI = interaction.issuerURI() // Optional (but useful)
 
-interaction.requireAcknowledgment() // return true if the issuer requires acknowledgment that credentials are accepted or rejected by the user.
-interaction.acknowledgeSuccess() // acknowledgment issuer that the user accepted credentials.
-interaction.acknowledgeReject() // acknowledgment issuer that the user rejected credentials.
+// Issuance Acknowledgment
+interaction.requireAcknowledgment() // returns true, if the issuer requires acknowledgment that credentials are accepted or rejected by the user.
+interaction.acknowledgment() // get the Acknowledgment object, if issuer requires ack.
+
+// use this API to get the opaque string, which needs to be submitted to the Acknowledgment APIs
+val ackTkn = interaction.acknowledgment().serialize()
+
+val ack = Acknowledgment(ackTkn)
+
+ack.success() // user accepts the credential
+ack.reject() // user rejects the credential
 
 // Consider checking the activity log at some point after the interaction
 ```
@@ -841,9 +849,16 @@ let credentials = interaction.requestCredential(withPreAuth: didDocument.asserti
 
 let issuerURI = interaction.issuerURI() // Optional (but useful)
 
-interaction.requireAcknowledgment() // return true if the issuer requires acknowledgment that credentials are accepted or rejected by the user.
-try interaction.acknowledgeSuccess() // acknowledgment issuer that the user accepted credentials.
-try interaction.acknowledgeReject() // acknowledgment issuer that the user rejected credentials.
+// Issuance Acknowledgment
+interaction.requireAcknowledgment() // returns true, if the issuer requires acknowledgment that credentials are accepted or rejected by the user.
+
+// use this API to get the opaque string, which needs to be submitted to the Acknowledgment APIs
+let ackTkn = interaction.Acknowledgment().Serialize()
+
+let ack = Openid4ciNewAcknowledgment(ackTkn)
+
+try ack.success() // user accepts the credential
+try ack.reject() // user rejects the credential
 
 // Consider checking the activity log at some point after the interaction
 ```
