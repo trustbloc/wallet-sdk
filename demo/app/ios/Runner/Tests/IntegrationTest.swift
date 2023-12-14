@@ -62,9 +62,9 @@ class IntegrationTest: XCTestCase {
         let issuedCreds = try ciInteraction!.requestCredential(userDID!.assertionMethod())
         XCTAssertTrue(issuedCreds.length() > 0)
 
-        // TODO: please fix compilation errors here.
-        //XCTAssertTrue(try ciInteraction!.requireAcknowledgment())
-        //try ciInteraction!.acknowledgeSuccess()
+        let acknowledgmentData = try ciInteraction!.acknowledgment().serialize(nil)
+
+        try Openid4ciAcknowledgment(acknowledgmentData)!.success();
 
         //Presenting VCs
         let authorizationRequestURI = ProcessInfo.processInfo.environment["INITIATE_VERIFICATION_URL"]

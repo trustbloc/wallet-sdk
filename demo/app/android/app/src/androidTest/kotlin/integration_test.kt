@@ -76,8 +76,10 @@ class IntegrationTest {
 
         assertThat(ciInteraction.requireAcknowledgment()).isTrue()
 
-        ciInteraction.acknowledgment().success()
+        val acknowledgmentData = ciInteraction.acknowledgment().serialize()
 
+        Acknowledgment(acknowledgmentData).success()
+        
         //Presenting VCs
         val authorizationRequestURI = BuildConfig.INITIATE_VERIFICATION_URL
 
