@@ -104,6 +104,19 @@ class IntegrationTest: XCTestCase {
         // Pick first credential from matched creds
         selectedCreds.add(requirementDescriptor.matchedVCs!.atIndex(0))
 
+        // Check trust info
+        let trustInfo = try vpInteraction.trustInfo()
+        XCTAssertTrue(trustInfo.did != "")
+        XCTAssertTrue(trustInfo.domain != "")
+
+        // Credential trust info
+        let oneOfTheCreds = requirementDescriptor.matchedVCs!.atIndex(0)!
+        XCTAssertTrue(oneOfTheCreds.id_() != "")
+        XCTAssertTrue(oneOfTheCreds.types()!.length() > 0)
+        XCTAssertTrue(oneOfTheCreds.issuerID() != "")
+        XCTAssertTrue(oneOfTheCreds.issuanceDate() > 0)
+        XCTAssertTrue(oneOfTheCreds.expirationDate() > 0)
+
         // Presenting from selected credentials.
         try vpInteraction.presentCredentialOpts(
             selectedCreds,

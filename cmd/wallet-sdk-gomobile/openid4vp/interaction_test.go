@@ -318,6 +318,17 @@ func TestInteraction_TrustInfo(t *testing.T) {
 		require.Equal(t, "TestDID", info.DID)
 		require.Equal(t, "TestDomain", info.Domain)
 	})
+
+	t.Run("Failure", func(t *testing.T) {
+		instance := &Interaction{
+			goAPIOpenID4VP: &mockGoAPIInteraction{
+				VerifierTrustInfoErr: errors.New("trust info err"),
+			},
+		}
+
+		_, err := instance.TrustInfo()
+		require.ErrorContains(t, err, "trust info err")
+	})
 }
 
 type documentLoaderWrapper struct {
@@ -363,6 +374,7 @@ type mockGoAPIInteraction struct {
 	PresentCredentialUnsafeErr error
 	VerifierDisplayDataRes     *openid4vp.VerifierDisplayData
 	VerifierTrustInfo          *openid4vp.VerifierTrustInfo
+	VerifierTrustInfoErr       error
 }
 
 func (o *mockGoAPIInteraction) GetQuery() *presexch.PresentationDefinition {
@@ -386,7 +398,7 @@ func (o *mockGoAPIInteraction) VerifierDisplayData() *openid4vp.VerifierDisplayD
 }
 
 func (o *mockGoAPIInteraction) TrustInfo() (*openid4vp.VerifierTrustInfo, error) {
-	return o.VerifierTrustInfo, nil
+	return o.VerifierTrustInfo, o.VerifierTrustInfoErr
 }
 
 type mockDIDResolver struct {

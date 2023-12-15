@@ -120,6 +120,19 @@ class IntegrationTest {
         // Pick first credential from matched creds
         selectedCreds.add(requirementDescriptor.matchedVCs.atIndex(0))
 
+        // Check trust info
+        val trustInfo = vpInteraction.trustInfo()
+        assertThat(trustInfo.did).isNotEmpty()
+        assertThat(trustInfo.domain).isNotEmpty()
+
+        // Credential trust info
+        val oneOfTheCreds = requirementDescriptor.matchedVCs.atIndex(0)
+        assertThat(oneOfTheCreds.id()).isNotEmpty()
+        assertThat(oneOfTheCreds.types().length()).isGreaterThan(0)
+        assertThat(oneOfTheCreds.issuerID()).isNotEmpty()
+        assertThat(oneOfTheCreds.issuanceDate()).isGreaterThan(0)
+        assertThat(oneOfTheCreds.expirationDate()).isGreaterThan(0)
+
         // Presenting from selected credentials.
         vpInteraction.presentCredentialOpts(selectedCreds, PresentCredentialOpts().addScopeClaim(
                 "registration", """{"email":"test@example.com"}""").addScopeClaim("testscope", """{"data": "testdata"}"""))

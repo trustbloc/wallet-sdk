@@ -8,8 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package verifiable
 
 import (
-	"errors"
-
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -141,12 +139,12 @@ func rawTypesToStringArray(rawTypes interface{}) *api.StringArray {
 }
 
 // IssuanceDate returns this VC's issuance date as a Unix timestamp.
-func (v *Credential) IssuanceDate() (int64, error) {
+func (v *Credential) IssuanceDate() int64 {
 	if v.VC.Contents().Issued == nil {
-		return -1, errors.New("issuance date missing (invalid VC)")
+		return 0
 	}
 
-	return v.VC.Contents().Issued.Unix(), nil
+	return v.VC.Contents().Issued.Unix()
 }
 
 // HasExpirationDate returns whether this VC has an expiration date.
@@ -157,12 +155,12 @@ func (v *Credential) HasExpirationDate() bool {
 // ExpirationDate returns this VC's expiration date as a Unix timestamp.
 // HasExpirationDate should be called first to ensure this VC has an expiration date before calling this method.
 // This method returns an error if the VC has no expiration date.
-func (v *Credential) ExpirationDate() (int64, error) {
+func (v *Credential) ExpirationDate() int64 {
 	if v.VC.Contents().Expired == nil {
-		return -1, errors.New("VC has no expiration date")
+		return 0
 	}
 
-	return v.VC.Contents().Expired.Unix(), nil
+	return v.VC.Contents().Expired.Unix()
 }
 
 // Serialize returns a JSON representation of this VC.
