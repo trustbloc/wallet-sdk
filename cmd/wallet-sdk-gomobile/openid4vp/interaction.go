@@ -37,6 +37,13 @@ type goAPIOpenID4VP interface {
 	TrustInfo() (*openid4vp.VerifierTrustInfo, error)
 }
 
+// VerifierTrustInfo represent verifier trust information.
+type VerifierTrustInfo struct {
+	DID         string
+	Domain      string
+	DomainValid bool
+}
+
 // Interaction represents a single OpenID4VP interaction between a wallet and a verifier. The methods defined on this
 // object are used to help guide the calling code through the OpenID4VP flow.
 type Interaction struct {
@@ -142,8 +149,17 @@ func (o *Interaction) CustomScope() *Scope {
 }
 
 // TrustInfo return verifier trust info.
-func (o *Interaction) TrustInfo() (*openid4vp.VerifierTrustInfo, error) {
-	return o.goAPIOpenID4VP.TrustInfo()
+func (o *Interaction) TrustInfo() (*VerifierTrustInfo, error) {
+	info, err := o.goAPIOpenID4VP.TrustInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	return &VerifierTrustInfo{
+		DID:         info.DID,
+		Domain:      info.Domain,
+		DomainValid: info.DomainValid,
+	}, nil
 }
 
 // VerifierDisplayData returns display information about verifier.

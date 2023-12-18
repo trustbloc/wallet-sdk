@@ -47,15 +47,13 @@ func TestVerifiableCredential(t *testing.T) {
 		require.Equal(t, 1, typesFromClaims.Length())
 		require.Equal(t, "UniversityDegreeCredential", typesFromClaims.AtIndex(0))
 
-		issuanceDate, err := universityDegreeVC.IssuanceDate()
-		require.NoError(t, err)
+		issuanceDate := universityDegreeVC.IssuanceDate()
 		require.Equal(t, int64(1262373804), issuanceDate)
 
 		hasExpirationDate := universityDegreeVC.HasExpirationDate()
 		require.True(t, hasExpirationDate)
 
-		expirationDate, err := universityDegreeVC.ExpirationDate()
-		require.NoError(t, err)
+		expirationDate := universityDegreeVC.ExpirationDate()
 		require.Equal(t, int64(1577906604), expirationDate)
 
 		vcArray.Add(universityDegreeVC)
@@ -78,16 +76,14 @@ func TestVerifiableCredential(t *testing.T) {
 		require.Equal(t, 1, typesFromClaims.Length())
 		require.Equal(t, "DriversLicence", typesFromClaims.AtIndex(0))
 
-		issuanceDate, err = driversLicenceVC.IssuanceDate()
-		require.NoError(t, err)
+		issuanceDate = driversLicenceVC.IssuanceDate()
 		require.Equal(t, int64(1262375604), issuanceDate)
 
 		hasExpirationDate = driversLicenceVC.HasExpirationDate()
 		require.False(t, hasExpirationDate)
 
-		expirationDate, err = driversLicenceVC.ExpirationDate()
-		require.EqualError(t, err, "VC has no expiration date")
-		require.Equal(t, int64(-1), expirationDate)
+		expirationDate = driversLicenceVC.ExpirationDate()
+		require.Equal(t, int64(0), expirationDate)
 
 		vcArray.Add(driversLicenceVC)
 
@@ -108,9 +104,8 @@ func TestVerifiableCredential(t *testing.T) {
 
 		vcWrapper := verifiable.NewCredential(&invalidVC)
 
-		issuanceDate, err := vcWrapper.IssuanceDate()
-		require.EqualError(t, err, "issuance date missing (invalid VC)")
-		require.Equal(t, int64(-1), issuanceDate)
+		issuanceDate := vcWrapper.IssuanceDate()
+		require.Equal(t, int64(0), issuanceDate)
 	})
 }
 
