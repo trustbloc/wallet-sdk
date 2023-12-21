@@ -669,6 +669,11 @@ func processCredentialErrorResponse(statusCode int, respBytes []byte) error {
 			InvalidOrMissingProofErrorCode,
 			InvalidOrMissingProofError,
 			detailedErr)
+	case "expired_ack_id":
+		return walleterror.NewExecutionError(ErrorModule,
+			AcknowledgmentExpiredErrorCode,
+			AcknowledgmentExpiredError,
+			detailedErr)
 	default:
 		return walleterror.NewExecutionError(ErrorModule,
 			OtherCredentialRequestErrorCode,

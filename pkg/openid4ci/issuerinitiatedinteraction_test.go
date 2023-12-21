@@ -69,6 +69,7 @@ type mockIssuerServerHandler struct {
 	credentialRequestShouldGiveUnmarshallableResponse       bool
 	credentialResponse                                      []byte
 	httpStatusCode                                          int
+	ackRequestErrorResponse                                 string
 }
 
 //nolint:gocyclo // test file
@@ -154,6 +155,10 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 
 		if m.httpStatusCode != 0 {
 			statusCode = m.httpStatusCode
+		}
+
+		if m.ackRequestErrorResponse != "" {
+			_, err = writer.Write([]byte(m.ackRequestErrorResponse))
 		}
 
 		writer.WriteHeader(statusCode)
@@ -729,10 +734,11 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 
 		t.Run("Fail to acknowledge issuer, status code not 204", func(t *testing.T) {
 			issuerServerHandler := &mockIssuerServerHandler{
-				t:                  t,
-				credentialResponse: sampleCredentialResponse,
-				openIDConfig:       &openid4ci.OpenIDConfig{},
-				httpStatusCode:     http.StatusInternalServerError,
+				t:                       t,
+				credentialResponse:      sampleCredentialResponse,
+				openIDConfig:            &openid4ci.OpenIDConfig{},
+				httpStatusCode:          http.StatusInternalServerError,
+				ackRequestErrorResponse: "{\"error\":\"expired_ack_id\"}",
 			}
 
 			server := httptest.NewServer(issuerServerHandler)
@@ -755,7 +761,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			require.NoError(t, err)
 
 			err = ack.AcknowledgeIssuer(openid4ci.AskStatusSuccess, &http.Client{})
-			require.ErrorContains(t, err, "received status code [500]")
+			require.ErrorContains(t, err, "ACKNOWLEDGMENT_EXPIRED")
 		})
 
 		t.Run("Fail to get token response: invalid token request", func(t *testing.T) {
