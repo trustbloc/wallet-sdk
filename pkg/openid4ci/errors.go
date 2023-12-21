@@ -31,6 +31,7 @@ const (
 	InvalidOrMissingProofError                = "INVALID_OR_MISSING_PROOF"
 	UnsupportedIssuanceURISchemeError         = "UNSUPPORTED_ISSUANCE_URI_SCHEME"
 	NoTokenEndpointAvailableError             = "NO_TOKEN_ENDPOINT_AVAILABLE" //nolint:gosec //false positive
+	AcknowledgmentExpiredError                = "ACKNOWLEDGMENT_EXPIRED"
 )
 
 // Constants' names and reasons are obvious, so they do not require additional comments.
@@ -57,4 +58,5 @@ const (
 	InvalidOrMissingProofErrorCode           = 18
 	UnsupportedIssuanceURISchemeCode         = 19
 	NoTokenEndpointAvailableErrorCode        = 20
+	AcknowledgmentExpiredErrorCode           = 21
 )
