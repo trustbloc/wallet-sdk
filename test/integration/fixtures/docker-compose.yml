@@ -148,6 +148,23 @@ services:
     dns:
       - 127.0.0.1
 
+  mock-trust-registry.example.com:
+    container_name: mock-trust-registry.example.com
+    image: wallet-sdk/mock-trust-registry:latest
+    environment:
+      - LISTEN_ADDR=:8100
+      - RULES_FILE_PATH=/trust-registry/rules.json
+      - TLS_CERT_PATH=/etc/tls/ec-pubCert.pem
+      - TLS_KEY_PATH=/etc/tls/ec-key.pem
+      - ROOT_CA_CERTS_PATH=/etc/tls/ec-cacert.pem
+    ports:
+      - "8100:8100"
+    volumes:
+      - ./keys/tls:/etc/tls
+      - ./trust-registry:/trust-registry
+    networks:
+      - bdd_net
+
   mock-login-consent.example.com: # login/consent mock server for OIDC4CI issuance flow
     container_name: mock-login-consent.example.com
     image: wallet-sdk/mock-login-consent:latest
