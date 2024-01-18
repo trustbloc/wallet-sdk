@@ -12,10 +12,10 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.2
-	github.com/trustbloc/bbs-signature-go v1.0.1
-	github.com/trustbloc/did-go v1.1.0
-	github.com/trustbloc/kms-go v1.1.0
-	github.com/trustbloc/vc-go v1.1.0
+	github.com/trustbloc/bbs-signature-go v1.0.2-0.20240117165819-e99610e107f4
+	github.com/trustbloc/did-go v1.1.1-0.20240117181910-cb9c77016955
+	github.com/trustbloc/kms-go v1.1.1-0.20240117181216-c38a74431167
+	github.com/trustbloc/vc-go v1.1.1-0.20240117215645-435a3d03d1f0
 	golang.org/x/oauth2 v0.13.0
 )
 
@@ -54,20 +54,19 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	github.com/square/go-jose/v3 v3.0.0-20200630053402-0a67ce9b0693 // indirect
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8 // indirect
 	github.com/tidwall/gjson v1.14.3 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
-	github.com/trustbloc/sidetree-go v1.0.0 // indirect
+	github.com/trustbloc/sidetree-go v1.0.1-0.20240117181443-2f0d5acb92b7 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63 // indirect
 	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
