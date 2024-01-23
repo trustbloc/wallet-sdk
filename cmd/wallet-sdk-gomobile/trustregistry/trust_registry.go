@@ -8,13 +8,17 @@ SPDX-License-Identifier: Apache-2.0
 package trustregistry
 
 import (
+	"crypto/tls"
+	"net/http"
+
 	"github.com/trustbloc/wallet-sdk/pkg/trustregistry"
 )
 
 // RegistryConfig is config for trust registry API.
 type RegistryConfig struct {
-	EvaluateIssuanceURL     string
-	EvaluatePresentationURL string
+	EvaluateIssuanceURL        string
+	EvaluatePresentationURL    string
+	DisableHTTPClientTLSVerify bool
 }
 
 // Registry implements API for trust registry.
@@ -24,10 +28,25 @@ type Registry struct {
 
 // New creates new trust registry API.
 func New(config *RegistryConfig) *Registry {
+	var httpClient *http.Client
+	if config.DisableHTTPClientTLSVerify {
+		httpClient = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					//nolint:gosec // The ability to disable TLS is an option we provide that
+					// has to be explicitly set by the user. By default, we don't disable TLS.
+					// This option is only intended for testing purposes.
+					InsecureSkipVerify: true,
+				},
+			},
+		}
+	}
+
 	return &Registry{
 		impl: trustregistry.New(&trustregistry.RegistryConfig{
 			EvaluateIssuanceURL:     config.EvaluateIssuanceURL,
 			EvaluatePresentationURL: config.EvaluatePresentationURL,
+			HTTPClient:              httpClient,
 		}),
 	}
 }

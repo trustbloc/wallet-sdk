@@ -1,3 +1,4 @@
 {
-  "forbiddenDIDs": []
+  "forbiddenDIDs": [],
+  "forbiddenTypes": ["VerifiedEmployee"]
 }

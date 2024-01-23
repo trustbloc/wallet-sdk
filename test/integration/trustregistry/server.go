@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -24,7 +25,8 @@ type Config struct {
 }
 
 type Rules struct {
-	ForbiddenDIDs []string `json:"forbiddenDIDs"`
+	ForbiddenDIDs  []string `json:"forbiddenDIDs"`
+	ForbiddenTypes []string `json:"forbiddenTypes"`
 }
 
 func NewServer(c *Config) (*Server, error) {
@@ -80,16 +82,28 @@ func (s *Server) handleEvaluatePresentationRequest(w http.ResponseWriter, r *htt
 		return
 	}
 
-	if !slices.Contains(s.rules.ForbiddenDIDs, presentationRequest.VerifierDid) {
-		writeResponse(w, &trustregistry.EvaluationResult{Allowed: true})
+	for _, cred := range presentationRequest.CredentialClaims {
+		for _, credType := range cred.CredentialTypes {
+			if slices.Contains(s.rules.ForbiddenTypes, credType) {
+				writeResponse(w, &trustregistry.EvaluationResult{
+					ErrorCode:    "typeForbidden",
+					ErrorMessage: fmt.Sprintf("Interaction with given type %q is forbidden", credType),
+				})
 
+				return
+			}
+		}
+	}
+
+	if slices.Contains(s.rules.ForbiddenDIDs, presentationRequest.VerifierDid) {
+		writeResponse(w, &trustregistry.EvaluationResult{
+			ErrorCode:    "didForbidden",
+			ErrorMessage: "Interaction with given issuer is forbidden",
+		})
 		return
 	}
 
-	writeResponse(w, &trustregistry.EvaluationResult{
-		ErrorCode:    "didForbidden",
-		ErrorMessage: "Interaction with given issuer is forbidden",
-	})
+	writeResponse(w, &trustregistry.EvaluationResult{Allowed: true})
 }
 
 func writeResponse(w http.ResponseWriter, body interface{}) {

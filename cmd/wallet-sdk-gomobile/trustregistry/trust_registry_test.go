@@ -15,6 +15,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/trustregistry"
 	"github.com/trustbloc/wallet-sdk/pkg/trustregistry/testsupport"
 )
@@ -31,7 +32,8 @@ func TestRegistry_EvaluateIssuance(t *testing.T) {
 	defer server.Close()
 
 	registry := trustregistry.New(&trustregistry.RegistryConfig{
-		EvaluateIssuanceURL: server.URL + evaluateIssuanceURL,
+		EvaluateIssuanceURL:        server.URL + evaluateIssuanceURL,
+		DisableHTTPClientTLSVerify: true,
 	})
 
 	t.Run("Success", func(t *testing.T) {
@@ -89,9 +91,11 @@ func TestRegistry_EvaluatePresentation(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		result, err := registry.EvaluatePresentation((&trustregistry.PresentationRequest{
 			VerifierDID: "did:web:correct.com",
-		}).AddCredentialClaims((&trustregistry.CredentialClaimsToCheck{
-			CredentialID: "test_id",
-		}).AddType("TestType")))
+		}).AddCredentialClaims(trustregistry.NewCredentialClaimsToCheck(
+			"test_id",
+			api.NewStringArray().Append("TestType"),
+			"issuer_id", 0, 0).AddType("OtherType"),
+		))
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
