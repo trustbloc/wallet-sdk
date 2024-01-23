@@ -6,7 +6,11 @@ SPDX-License-Identifier: Apache-2.0
 
 package trustregistry
 
-import "time"
+import (
+	"time"
+
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+)
 
 // EvaluationResult result of policy evaluation.
 type EvaluationResult struct {
@@ -47,6 +51,20 @@ type CredentialClaimsToCheck struct {
 	IssuerID        string
 	IssuanceDate    time.Time
 	ExpirationDate  time.Time
+}
+
+// NewCredentialClaimsToCheck create new CredentialClaimsToCheck object.
+func NewCredentialClaimsToCheck(
+	credentialID string, credentialTypes *api.StringArray, issuerID string,
+	issuanceDate int64, expirationDate int64,
+) *CredentialClaimsToCheck {
+	return &CredentialClaimsToCheck{
+		CredentialID:    credentialID,
+		credentialTypes: credentialTypes.Strings,
+		IssuerID:        issuerID,
+		IssuanceDate:    time.Unix(issuanceDate, 0),
+		ExpirationDate:  time.Unix(expirationDate, 0),
+	}
 }
 
 // AddType adds credential type.

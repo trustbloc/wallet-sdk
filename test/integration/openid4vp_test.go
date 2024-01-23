@@ -22,6 +22,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4vp"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/trustregistry"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/helpers"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/metricslogger"
@@ -35,6 +36,12 @@ type claimData = map[string]interface{}
 var expectedUniversityDegreeSD string
 
 func TestOpenID4VPFullFlow(t *testing.T) {
+	trustRegistryAPI := trustregistry.New(&trustregistry.RegistryConfig{
+		EvaluateIssuanceURL:        "https://localhost:8100/wallet/interactions/issuance",
+		EvaluatePresentationURL:    "https://localhost:8100/wallet/interactions/presentation",
+		DisableHTTPClientTLSVerify: true,
+	})
+
 	driverLicenseClaims := claimData{
 		"birthdate":            "1990-01-01",
 		"document_number":      "123-456-789",
@@ -83,6 +90,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		matchedDisplayData *display.Data
 		customScopes       []customScope
 		trustInfo          bool
+		shouldBeForbidden  bool
 	}
 
 	tests := []test{
@@ -100,13 +108,14 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			claimData:         []claimData{universityDegreeClaims},
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_ldp_university_degree",
-			trustInfo:         true,
 		},
 		{
 			issuerProfileIDs:  []string{"bank_issuer"},
 			claimData:         []claimData{verifiableEmployeeClaims},
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_myprofile_jwt_verified_employee",
+			trustInfo:         true,
+			shouldBeForbidden: true,
 		},
 		{
 			issuerProfileIDs:  []string{"bank_issuer"},
@@ -225,13 +234,6 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		require.NoError(t, err)
 		println("query", string(query))
 
-		if tc.trustInfo {
-			info, trustErr := interaction.TrustInfo()
-			require.NoError(t, trustErr)
-			require.NotNil(t, info)
-			require.Contains(t, info.Domain, "vcs.webhook.example.com")
-		}
-
 		displayData := interaction.VerifierDisplayData()
 		require.NoError(t, err)
 		require.NotEmpty(t, displayData.DID)
@@ -262,6 +264,32 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		}
 
 		selectedCreds := verifiable.NewCredentialsArray()
+
+		if tc.trustInfo {
+			info, trustErr := interaction.TrustInfo()
+			require.NoError(t, trustErr)
+			require.NotNil(t, info)
+			require.Contains(t, info.Domain, "vcs.webhook.example.com")
+			presTrustInfo := &trustregistry.PresentationRequest{
+				VerifierDID:    info.DID,
+				VerifierDomain: info.Domain,
+			}
+
+			for ind := 0; ind < matchedVCs.Length(); ind++ {
+				cred := matchedVCs.AtIndex(ind)
+
+				presTrustInfo.AddCredentialClaims(trustregistry.NewCredentialClaimsToCheck(
+					cred.ID(),
+					cred.Types(),
+					cred.IssuerID(),
+					0, 0,
+				))
+			}
+
+			result, trustErr := trustRegistryAPI.EvaluatePresentation(presTrustInfo)
+			require.NoError(t, trustErr)
+			require.Equal(t, !tc.shouldBeForbidden, result.Allowed)
+		}
 
 		for ind := 0; ind < matchedVCs.Length(); ind++ {
 			vcID := matchedVCs.AtIndex(ind).ID()

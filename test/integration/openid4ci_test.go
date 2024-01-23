@@ -26,6 +26,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/oauth2"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/trustregistry"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/helpers"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/setup/oidc4ci"
@@ -93,6 +94,12 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 }
 
 func doPreAuthCodeFlowTest(t *testing.T) {
+	trustRegistryAPI := trustregistry.New(&trustregistry.RegistryConfig{
+		EvaluateIssuanceURL:        "https://localhost:8100/wallet/interactions/issuance",
+		EvaluatePresentationURL:    "https://localhost:8100/wallet/interactions/presentation",
+		DisableHTTPClientTLSVerify: true,
+	})
+
 	driverLicenseClaims := map[string]interface{}{
 		"birthdate":            "1990-01-01",
 		"document_number":      "123-456-789",
@@ -279,6 +286,14 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			require.NotNil(t, trustInfo)
 
 			require.Contains(t, trustInfo.Domain, "trustbloc.local:8078")
+
+			result, trustErr := trustRegistryAPI.EvaluateIssuance(&trustregistry.IssuanceRequest{
+				IssuerDID:    trustInfo.DID,
+				IssuerDomain: trustInfo.Domain,
+			})
+
+			require.NoError(t, trustErr)
+			require.Equal(t, true, result.Allowed)
 		}
 
 		subID, err := verifiable.SubjectID(vc.VC.Contents().Subject)
