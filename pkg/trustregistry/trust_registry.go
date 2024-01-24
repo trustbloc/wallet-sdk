@@ -71,7 +71,8 @@ func (r *Registry) EvaluateIssuance(request *IssuanceRequest) (*EvaluationResult
 		return nil, fmt.Errorf("fail to marshal issuanceRequest: %w", err)
 	}
 
-	responseBytes, err := req.Do(http.MethodPost, r.evaluateIssuanceURL, "", bytes.NewBuffer(requestBytes),
+	responseBytes, err := req.Do(http.MethodPost, r.evaluateIssuanceURL, "application/json",
+		bytes.NewBuffer(requestBytes),
 		fmt.Sprintf(evaluateIssuanceEventVIAGetReqEventText, r.evaluateIssuanceURL),
 		evaluateIssuanceEventText, nil,
 	)
@@ -98,7 +99,8 @@ func (r *Registry) EvaluatePresentation(request *PresentationRequest) (*Evaluati
 		return nil, fmt.Errorf("fail to marshal presentationRequest: %w", err)
 	}
 
-	responseBytes, err := req.Do(http.MethodPost, r.evaluatePresentationURL, "", bytes.NewBuffer(requestBytes),
+	responseBytes, err := req.Do(http.MethodPost, r.evaluatePresentationURL, "application/json",
+		bytes.NewBuffer(requestBytes),
 		fmt.Sprintf(evaluatePresentationEventVIAGetReqEventText, r.evaluatePresentationURL),
 		evaluatePresentationEventText, nil,
 	)
