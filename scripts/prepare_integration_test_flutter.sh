@@ -68,7 +68,7 @@ healthCheck() {
 }
 
 # healthcheck
-healthCheck did-resolver http://did-resolver.trustbloc.local:8072/healthcheck 200
+healthCheck did-resolver http://did-resolver.trustbloc.local:8072/healthcheck 200 180
 healthCheck vc-rest http://localhost:8075/version 200 180
 
 if [ $healthCheckFailed == 1 ]

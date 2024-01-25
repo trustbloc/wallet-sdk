@@ -113,7 +113,7 @@ jobs:
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   iOSFlutterIntegrationTest:
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -142,7 +142,7 @@ jobs:
           echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
-          brew install docker docker-compose
+          brew install docker docker-compose colima
           colima start
           export PATH=$PATH:$GOPATH/bin
           echo $PATH
@@ -166,7 +166,7 @@ jobs:
         run: make integration-test-flutter integration-test-ios
 
   AndroidFlutterIntegrationTest:
-    runs-on: macOS-12
+    runs-on: macos-13
     steps:
       - name: checkout
         uses: actions/checkout@v3
@@ -197,7 +197,7 @@ jobs:
           echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
-          brew install docker docker-compose
+          brew install docker docker-compose colima
           colima start
           export PATH=$PATH:$GOPATH/bin
           echo $PATH
