@@ -90,9 +90,6 @@ jobs:
           echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
           brew install docker docker-compose
-          brew remove --ignore-dependencies qemu
-          curl -o ./qemu.rb https://raw.githubusercontent.com/Homebrew/homebrew-core/dc0669eca9479e9eeb495397ba3a7480aaa45c2e/Formula/qemu.rb
-          brew install ./qemu.rb
           colima start
           export PATH=$PATH:$GOPATH/bin
           echo $PATH
@@ -150,12 +147,11 @@ jobs:
           echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
           brew install docker docker-compose
-          brew remove --ignore-dependencies qemu
-          curl -o ./qemu.rb https://raw.githubusercontent.com/Homebrew/homebrew-core/dc0669eca9479e9eeb495397ba3a7480aaa45c2e/Formula/qemu.rb
-          brew install ./qemu.rb
           colima start
           export PATH=$PATH:$GOPATH/bin
           echo $PATH
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
           make prepare-integration-test-flutter
       - name: Setup Flutter SDK
         uses: flutter-actions/setup-flutter@v2
