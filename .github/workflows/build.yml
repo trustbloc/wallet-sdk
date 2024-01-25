@@ -261,7 +261,7 @@ jobs:
       - id: store
         run: echo "version=${{ steps.bump_version.outputs.next-version }}" >> $GITHUB_OUTPUT
 
-  PublishIosSDKSnapshot:
+  BuildIosSDK:
     if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
     needs: GenerateVersion
     runs-on: macos-latest
@@ -310,50 +310,8 @@ jobs:
         run: |
           cd ./cmd/wallet-sdk-gomobile/bindings/ios
           zip -r -X walletsdk.xcframework.zip walletsdk.xcframework
-      - name: Clone walletsdk release repository
-        uses: actions/checkout@v2
-        with:
-          repository: trustbloc-cicd/wallet-sdk
-          path: ios
-          token: ${{ secrets.WALLET_SDK_CICD_PAT }}
-      - name: Build and commit walletsdk xcframework package
-        run: |
-          cp -r ./cmd/wallet-sdk-gomobile/bindings/ios/walletsdk.xcframework.zip ./ios/walletsdk.xcframework.zip
-          cd ios/
-          ls -lrt
-          echo "calculate new checksum"
-          NEW_CHECKSUM=$(swift package compute-checksum $FRAMEWORK_NAME.xcframework.zip)
-          echo "moduleName=$FRAMEWORK_NAME version=$NEW_VERSION checksum=$NEW_CHECKSUM"
-          echo "replace name module information in package manifest"
-          sed -E -i '' 's/let moduleName = ".+"/let moduleName = "'$FRAMEWORK_NAME\"/ Package.swift
-          echo "replace version information in package manifest"
-          sed -E -i '' 's/let version = ".+"/let version = "'$NEW_VERSION\"/ Package.swift
-          echo "replace checksum information in package manifest"
-          sed -E -i '' 's/let checksum = ".+"/let checksum = "'$NEW_CHECKSUM\"/ Package.swift
-          echo "Package.swift content file after update"
-          cat Package.swift
-          echo "git commit all without framework and push"
-          git status
-          git add Package.swift
-          git commit -m "New $FRAMEWORK_NAME version $NEW_VERSION"
-          git push
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FRAMEWORK_NAME: walletsdk
-          NEW_VERSION: '${{ env.NEW_VERSION }}'
-      - name: Tag and Release new version Swift package
-        uses: softprops/action-gh-release@v1
-        with:
-          draft: false
-          tag_name : ${{ env.NEW_VERSION }}
-          repository : trustbloc-cicd/wallet-sdk
-          files: |
-            ios/walletsdk.xcframework.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.WALLET_SDK_CICD_PAT }}
 
-  PublishAndroidSDKSnapshot:
+  BuildAndroidSDK:
     needs: GenerateVersion
     if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-22.04
@@ -383,29 +341,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: /home/runner/work/wallet-sdk/go
-      - name: Upload Android bindings to GitHub Actions Artifacts
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: android-binding
-          path: ./cmd/wallet-sdk-gomobile/bindings/android
-      - name: Publish
-        run: |
-          export USER=$USER
-          export TOKEN=$TOKEN
-          export ANDROID_GROUP_ID=dev.trustbloc
-          export ANDROID_ARTIFACT_ID=vc-wallet-sdk
-          export ANDROID_VERSION=${{ env.NEW_VERSION }}
-          export PROJECT_PKG_REPO=https://maven.pkg.github.com/trustbloc-cicd/snapshot
-          echo $ANDROID_VERSION
-          gradle publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          USER: ${{ secrets.CR_USER }}
-          TOKEN: ${{ secrets.CR_PAT }}
-          NEW_VERSION: '${{ env.NEW_VERSION }}'
 
-  PublishJSSDKSnapshot:
+  BuildJSSDK:
     needs: GenerateVersion
     if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-22.04
@@ -432,7 +369,7 @@ jobs:
           echo '//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}' > ~/.npmrc
           echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
 
-      - name: Generate bindings and publish to npm
+      - name: Generate bindings
         run: |
           export PATH=$PATH:$GOPATH/bin
           echo $PATH
@@ -446,15 +383,13 @@ jobs:
           pushd ../../
           make generate-js-bindings
           popd
-          
-          npm publish
         env:
           DOCKER_USER: ${{ secrets.CR_USER }}
           GITHUB_TOKEN: ${{ secrets.CR_PAT }}
           GOPATH: /home/runner/work/wallet-sdk/go
 
-  PublishDemoAppSnapshot:
-    needs: [ GenerateVersion, PublishJSSDKSnapshot ]
+  BuildDemoApp:
+    needs: [ GenerateVersion, BuildJSSDK ]
     if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-22.04
     timeout-minutes: 40
@@ -497,7 +432,7 @@ jobs:
           username: ${{ secrets.CR_USER }}
           password: ${{ secrets.CR_PAT }}
 
-      - name: Build and Push container image
+      - name: Build container image
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -506,6 +441,6 @@ jobs:
           build-args: |
             ALPINE_VER=3.18
             GO_VER=1.21
-          push: true
+          push: false
           tags: |
             ghcr.io/trustbloc-cicd/wallet-demo-app:${{ env.NEW_VERSION }}
