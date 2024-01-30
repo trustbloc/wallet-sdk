@@ -475,6 +475,31 @@ func TestIssuerInitiatedInteraction_VerifyIssuer(t *testing.T) {
 	})
 }
 
+func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
+	t.Run("Metadata not signed", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t:              t,
+			issuerMetadata: "{}",
+		}
+		server := httptest.NewServer(issuerServerHandler)
+
+		defer server.Close()
+
+		activityLogger := mem.NewActivityLogger()
+
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		interaction := createIssuerInitiatedInteraction(t, kms, activityLogger,
+			createCredentialOfferIssuanceURI(t, server.URL, false),
+			nil, true)
+
+		serviceURL, err := interaction.IssuerTrustInfo()
+		requireErrorContains(t, err, "issuer's metadata is not signed")
+		require.Empty(t, serviceURL)
+	})
+}
+
 // The IssuerInitiatedInteraction alias type (Interaction) should behave the same as the
 // IssuerInitiatedInteraction object, since it's just a wrapper for it.
 func TestIssuerInitiatedInteractionAlias(t *testing.T) {

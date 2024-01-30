@@ -13,8 +13,15 @@ import dev.trustbloc.wallet.sdk.localkms.KMS
 import dev.trustbloc.wallet.sdk.openid4ci.*
 import dev.trustbloc.wallet.sdk.otel.Otel
 import dev.trustbloc.wallet.sdk.stderr.MetricsLogger
+import dev.trustbloc.wallet.sdk.trustregistry.CredentialClaimsToCheck
+import dev.trustbloc.wallet.sdk.trustregistry.EvaluationResult
+import dev.trustbloc.wallet.sdk.trustregistry.IssuanceRequest
+import dev.trustbloc.wallet.sdk.trustregistry.PresentationRequest
+import dev.trustbloc.wallet.sdk.trustregistry.Registry
+import dev.trustbloc.wallet.sdk.trustregistry.RegistryConfig
 import dev.trustbloc.wallet.sdk.verifiable.Credential
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
+import java.lang.Exception
 
 class OpenID4CI constructor(
     private val requestURI: String,
@@ -81,6 +88,19 @@ class OpenID4CI constructor(
 
     fun issuerURI(): String {
         return newInteraction.issuerURI()
+    }
+
+    fun checkWithTrustRegistry(evaluateIssuanceURL: String): EvaluationResult {
+        val issuanceRequest = IssuanceRequest()
+
+        val trustInfo = newInteraction.issuerTrustInfo()
+        issuanceRequest.issuerDID = trustInfo.did
+        issuanceRequest.issuerDomain = trustInfo.domain
+
+        val config = RegistryConfig()
+        config.evaluateIssuanceURL = evaluateIssuanceURL
+
+        return Registry(config).evaluateIssuance(issuanceRequest)
     }
 
     fun requestCredential(didVerificationMethod: VerificationMethod, otp: String?): String? {

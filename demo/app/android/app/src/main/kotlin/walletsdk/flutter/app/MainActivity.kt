@@ -48,345 +48,373 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
-            .setMethodCallHandler { call, result ->
-                when (call.method) {
-                    "initSDK" -> {
-                        try {
-                            initSDK(call)
-                            result.success(null)
-                        } catch (e: Exception) {
-                            result.error("Exception", "Error while creating basic sdk services", e)
+                .setMethodCallHandler { call, result ->
+                    when (call.method) {
+                        "initSDK" -> {
+                            try {
+                                initSDK(call)
+                                result.success(null)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while creating basic sdk services", e)
+                            }
                         }
-                    }
-                    "getVersionDetails" -> {
-                        try {
-                            val walletSDKVersion = getVersionDetails()
-                            result.success(walletSDKVersion)
-                        } catch (e: Exception) {
-                            result.error("Exception", "Error while get wallet sdk version", e)
+
+                        "getVersionDetails" -> {
+                            try {
+                                val walletSDKVersion = getVersionDetails()
+                                result.success(walletSDKVersion)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while get wallet sdk version", e)
+                            }
                         }
-                    }
-                    "createDID" -> {
-                        try {
-                            val didCreated = createDID(call)
-                            result.success(didCreated)
-                        } catch (e: Exception) {
-                            result.error("Exception", "Error while creating did creator", e)
+
+                        "createDID" -> {
+                            try {
+                                val didCreated = createDID(call)
+                                result.success(didCreated)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while creating did creator", e)
+                            }
                         }
-                    }
-                    "initialize" -> {
-                        try {
-                            val userPinRequired = initialize(call)
-                            result.success(userPinRequired)
 
-                        } catch (e: Exception) {
-                            val err = Walleterror.parse(e.message)
-                            result.error(
-                                "Exception",
-                                "Error while initializing the interaction",
-                                "code: ${err.code}, error: ${err.category}, details: ${err.details}"
-                            )
+                        "initialize" -> {
+                            try {
+                                val userPinRequired = initialize(call)
+                                result.success(userPinRequired)
 
+                            } catch (e: Exception) {
+                                val err = Walleterror.parse(e.message)
+                                result.error(
+                                        "Exception",
+                                        "Error while initializing the interaction",
+                                        "code: ${err.code}, error: ${err.category}, details: ${err.details}"
+                                )
+
+                            }
                         }
-                    }
 
-                    "initializeWalletInitiatedFlow" -> {
-                        try {
-                            val supportedCredentials = initializeWalletInitiatedFlow(call)
-                            result.success(supportedCredentials)
-                        } catch (e: Exception) {
-                            val err = Walleterror.parse(e.message)
-                            result.error(
-                                "Exception",
-                                "Error while initializing wallet initiated flow",
-                                "code: ${err.code}, error: ${err.category}, details: ${err.details}"
-                            )
+                        "initializeWalletInitiatedFlow" -> {
+                            try {
+                                val supportedCredentials = initializeWalletInitiatedFlow(call)
+                                result.success(supportedCredentials)
+                            } catch (e: Exception) {
+                                val err = Walleterror.parse(e.message)
+                                result.error(
+                                        "Exception",
+                                        "Error while initializing wallet initiated flow",
+                                        "code: ${err.code}, error: ${err.category}, details: ${err.details}"
+                                )
 
+                            }
                         }
-                    }
 
-                    "createAuthorizationURLWalletInitiatedFlow" -> {
-                        try {
-                            val authorizationLink = createAuthorizationURLWalletInitiatedFlow(call)
-                            result.success(authorizationLink)
-                        } catch (e: Exception) {
-                            val err = Walleterror.parse(e.message)
-                            result.error(
-                                "Exception",
-                                "Error while creating authorization link",
-                                "code: ${err.code}, error: ${err.category}, details: ${err.details}"
-                            )
+                        "createAuthorizationURLWalletInitiatedFlow" -> {
+                            try {
+                                val authorizationLink = createAuthorizationURLWalletInitiatedFlow(call)
+                                result.success(authorizationLink)
+                            } catch (e: Exception) {
+                                val err = Walleterror.parse(e.message)
+                                result.error(
+                                        "Exception",
+                                        "Error while creating authorization link",
+                                        "code: ${err.code}, error: ${err.category}, details: ${err.details}"
+                                )
 
+                            }
                         }
-                    }
 
-                    "credentialStatusVerifier" -> {
-                        try {
-                            val credentialStatus = credentialStatusVerifier(call)
-                            result.success(credentialStatus)
-                        } catch (e: Exception) {
-                            result.error(
-                                "Exception",
-                                "Error while credential status verifier",
-                                e.localizedMessage
-                            )
+                        "credentialStatusVerifier" -> {
+                            try {
+                                val credentialStatus = credentialStatusVerifier(call)
+                                result.success(credentialStatus)
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "Error while credential status verifier",
+                                        e.localizedMessage
+                                )
+                            }
                         }
-                    }
-                    "requestCredential" -> {
-                        try {
-                            val credentialCreated = requestCredential(call)
-                            result.success(credentialCreated)
-                        } catch (e: Exception) {
-                            result.error(
-                                "Exception",
-                                "Error while requesting credential",
-                                e.localizedMessage
-                            )
+
+                        "evaluateIssuanceTrustInfo" -> {
+                            try {
+                                result.success(evaluateIssuanceTrustInfo(call))
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "Error while checkWithTrustRegistry",
+                                        e.localizedMessage
+                                )
+                            }
                         }
-                    }
 
-                    "requestCredentialWithAuth" -> {
-                        try {
-                            val credentialCreated = requestCredentialAuth(call)
-                            result.success(credentialCreated)
-                        } catch (e: Exception) {
-                            result.error(
-                                "Exception",
-                                "Error while requesting credential auth",
-                                e.localizedMessage
-                            )
+                        "evaluatePresentationTrustInfo" -> {
+                            try {
+                                result.success(evaluatePresentationTrustInfo(call))
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "Error while checkWithTrustRegistry",
+                                        e.localizedMessage
+                                )
+                            }
                         }
-                    }
 
-                    "requestCredentialWithWalletInitiatedFlow" -> {
-                        try {
-                            val credentialCreated = requestCredentialWithWalletInitiatedFlow(call)
-                            result.success(credentialCreated)
-                        } catch (e: Exception) {
-                            result.error(
-                                "Exception",
-                                "Error while requesting credential in wallet initiated flow",
-                                e.localizedMessage
-                            )
+                        "requestCredential" -> {
+                            try {
+                                val credentialCreated = requestCredential(call)
+                                result.success(credentialCreated)
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "Error while requesting credential",
+                                        e.localizedMessage
+                                )
+                            }
                         }
-                    }
 
-                    "serializeDisplayData" -> {
-                        try {
-                            val credentialDisplay = serializeDisplayData(call)
-                            result.success(credentialDisplay)
-
-                        } catch (e: Exception) {
-                            result.error("Exception", "Error while serializing display data", e)
+                        "requestCredentialWithAuth" -> {
+                            try {
+                                val credentialCreated = requestCredentialAuth(call)
+                                result.success(credentialCreated)
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "Error while requesting credential auth",
+                                        e.localizedMessage
+                                )
+                            }
                         }
-                    }
 
-                    "resolveCredentialDisplay" -> {
-                        try {
-                            val credentialDisplay = resolveCredentialDisplay(call)
-                            result.success(credentialDisplay)
-                        } catch (e: Exception) {
-                            result.error("Exception", "Error while resolving credential display", e)
+                        "requestCredentialWithWalletInitiatedFlow" -> {
+                            try {
+                                val credentialCreated = requestCredentialWithWalletInitiatedFlow(call)
+                                result.success(credentialCreated)
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "Error while requesting credential in wallet initiated flow",
+                                        e.localizedMessage
+                                )
+                            }
                         }
-                    }
 
-                    "processAuthorizationRequest" -> {
-                        try {
-                            val creds = processAuthorizationRequest(call, result)
+                        "serializeDisplayData" -> {
+                            try {
+                                val credentialDisplay = serializeDisplayData(call)
+                                result.success(credentialDisplay)
 
-                            result.success(creds)
-                        } catch (e: Exception) {
-                            result.error(
-                                "Exception",
-                                "Error while processing authorization request",
-                                e
-                            )
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while serializing display data", e)
+                            }
                         }
-                    }
 
-                    "issuerURI" -> {
-                        try {
-                            val issuerURIResp = issuerURI()
-                            result.success(issuerURIResp)
-                        } catch (e: Exception) {
-                            result.error("Exception", "Error while getting issuerURI", e)
+                        "resolveCredentialDisplay" -> {
+                            try {
+                                val credentialDisplay = resolveCredentialDisplay(call)
+                                result.success(credentialDisplay)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while resolving credential display", e)
+                            }
                         }
-                    }
 
-                    "getIssuerMetaData" -> {
-                        try {
-                            val issuerMetadataResp = getIssuerMetaData()
-                            result.success(issuerMetadataResp)
-                        } catch (e: Exception) {
-                            result.error("Exception", "Error while getting issuer Metadata", e)
+                        "processAuthorizationRequest" -> {
+                            try {
+                                val creds = processAuthorizationRequest(call, result)
+
+                                result.success(creds)
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "Error while processing authorization request",
+                                        e
+                                )
+                            }
                         }
-                    }
 
-                    "parseWalletSDKError" -> {
-                        try {
-                            val parsedWalletError = parseWalletSDKError(call)
-                            result.success(parsedWalletError)
-                        } catch (e: Exception) {
-                            result.error("Exception", "Error while parsing wallet sdk error", e)
+                        "issuerURI" -> {
+                            try {
+                                val issuerURIResp = issuerURI()
+                                result.success(issuerURIResp)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while getting issuerURI", e)
+                            }
                         }
-                    }
 
-                    "getIssuerID" -> {
-                        try {
-                            val issuerID = getIssuerID(call)
-                            result.success(issuerID)
-                        } catch (e: Exception) {
-                            result.error("Exception", "Error while getting issuer ID", e)
+                        "getIssuerMetaData" -> {
+                            try {
+                                val issuerMetadataResp = getIssuerMetaData()
+                                result.success(issuerMetadataResp)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while getting issuer Metadata", e)
+                            }
                         }
-                    }
 
-                    "wellKnownDidConfig" -> {
-                        try {
-                            val didValidateResultResp = wellKnownDidConfig(call)
-                            result.success(didValidateResultResp)
-                        } catch (e: Exception) {
-                            result.error(
-                                "Exception",
-                                "Error while getting well known did config",
-                                e
-                            )
+                        "parseWalletSDKError" -> {
+                            try {
+                                val parsedWalletError = parseWalletSDKError(call)
+                                result.success(parsedWalletError)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while parsing wallet sdk error", e)
+                            }
                         }
-                    }
 
-                    "activityLogger" -> {
-                        try {
-                            val activityLoggerResp = storeActivityLogger()
-                            result.success(activityLoggerResp)
-                        } catch (e: Exception) {
-                            result.error(
-                                "Exception",
-                                "Error while storing activity logger request",
-                                e
-                            )
+                        "getIssuerID" -> {
+                            try {
+                                val issuerID = getIssuerID(call)
+                                result.success(issuerID)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while getting issuer ID", e)
+                            }
                         }
-                    }
 
-                    "getCredID" -> {
-                        try {
-                            val credID = getCredID(call)
-                            result.success(credID)
-                        } catch (e: Exception) {
-                            result.error(
-                                "Exception",
-                                "Error while processing authorization request",
-                                e
-                            )
+                        "wellKnownDidConfig" -> {
+                            try {
+                                val didValidateResultResp = wellKnownDidConfig(call)
+                                result.success(didValidateResultResp)
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "Error while getting well known did config",
+                                        e
+                                )
+                            }
                         }
-                    }
 
-                    "parseActivities" -> {
-                        try {
-                            val credID = parseActivities(call)
-                            result.success(credID)
-                        } catch (e: Exception) {
-                            result.error("Exception", "Error while parsing activities", e)
+                        "activityLogger" -> {
+                            try {
+                                val activityLoggerResp = storeActivityLogger()
+                                result.success(activityLoggerResp)
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "Error while storing activity logger request",
+                                        e
+                                )
+                            }
                         }
-                    }
 
-                    "presentCredential" -> {
-                        try {
-                            presentCredential(call)
-                            result.success(null)
-                        } catch (e: Exception) {
-                            result.error(
-                                "Exception",
-                                "Error while processing authorization request",
-                                e
-                            )
+                        "getCredID" -> {
+                            try {
+                                val credID = getCredID(call)
+                                result.success(credID)
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "Error while processing authorization request",
+                                        e
+                                )
+                            }
                         }
-                    }
 
-                    "getCustomScope" -> {
-                        try {
-                            val customScopeList = getCustomScope()
-                            result.success(customScopeList)
-                        } catch (e: Exception) {
-                            result.error(
-                                "Exception",
-                                "Error while getting custom scope",
-                                e
-                            )
+                        "parseActivities" -> {
+                            try {
+                                val credID = parseActivities(call)
+                                result.success(credID)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while parsing activities", e)
+                            }
                         }
-                    }
 
-
-                    "getMatchedSubmissionRequirements" -> {
-                        try {
-                            result.success(getMatchedSubmissionRequirements(call))
-                        } catch (e: Exception) {
-                            result.error(
-                                "Exception",
-                                "Error while processing authorization request",
-                                e
-                            )
+                        "presentCredential" -> {
+                            try {
+                                presentCredential(call)
+                                result.success(null)
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "Error while processing authorization request",
+                                        e
+                                )
+                            }
                         }
-                    }
 
-                    "getVerifierDisplayData" -> {
-                        try {
-                            val verifierDisplayData = getVerifierDisplayData()
-                            result.success(verifierDisplayData)
-                        } catch (e: Exception) {
-                            result.error(
-                                "Exception",
-                                "Error while getting verifier display data",
-                                e
-                            )
+                        "getCustomScope" -> {
+                            try {
+                                val customScopeList = getCustomScope()
+                                result.success(customScopeList)
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "Error while getting custom scope",
+                                        e
+                                )
+                            }
                         }
-                    }
 
-                    "requireAcknowledgment" -> {
-                        try {
-                            val ackResp = requireAcknowledgment()
-                            result.success(ackResp)
-                        } catch (e: Exception) {
-                            result.error(
-                                "Exception",
-                                "error in require acknowlwdgement",
-                                e
-                            )
+
+                        "getMatchedSubmissionRequirements" -> {
+                            try {
+                                result.success(getMatchedSubmissionRequirements(call))
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "Error while processing authorization request",
+                                        e
+                                )
+                            }
                         }
-                    }
 
-                    "acknowledgeSuccess" -> {
-                        try {
-                            acknowledgeSuccess()
-                            result.success(null)
-                        } catch (e: Exception) {
-                            result.error(
-                                "Exception",
-                                "error in acknowledge Success",
-                                e
-                            )
+                        "getVerifierDisplayData" -> {
+                            try {
+                                val verifierDisplayData = getVerifierDisplayData()
+                                result.success(verifierDisplayData)
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "Error while getting verifier display data",
+                                        e
+                                )
+                            }
                         }
-                    }
 
-                    "acknowledgeReject" -> {
-                        try {
-                            acknowledgeReject()
-                            result.success(null)
-                        } catch (e: Exception) {
-                            result.error(
-                                "Exception",
-                                "error in acknowledge reject",
-                                e
-                            )
+                        "requireAcknowledgment" -> {
+                            try {
+                                val ackResp = requireAcknowledgment()
+                                result.success(ackResp)
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "error in require acknowlwdgement",
+                                        e
+                                )
+                            }
                         }
-                    }
 
+                        "acknowledgeSuccess" -> {
+                            try {
+                                acknowledgeSuccess()
+                                result.success(null)
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "error in acknowledge Success",
+                                        e
+                                )
+                            }
+                        }
+
+                        "acknowledgeReject" -> {
+                            try {
+                                acknowledgeReject()
+                                result.success(null)
+                            } catch (e: Exception) {
+                                result.error(
+                                        "Exception",
+                                        "error in acknowledge reject",
+                                        e
+                                )
+                            }
+                        }
+
+                    }
                 }
-            }
     }
 
     private fun initSDK(call: MethodCall) {
         val walletSDK = WalletSDK()
         val didResolverURI = call.argument<String>("didResolverURI")
-            ?: throw java.lang.Exception("didResolverURI params is missed")
+                ?: throw java.lang.Exception("didResolverURI params is missed")
         walletSDK.initSDK(KmsStore(context), didResolverURI)
         this.walletSDK = walletSDK;
     }
@@ -406,13 +434,13 @@ class MainActivity : FlutterActivity() {
      */
     private fun createDID(call: MethodCall): MutableMap<String, Any> {
         val walletSDK = this.walletSDK
-            ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
+                ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
 
         val didMethodType = call.argument<String>("didMethodType")
-            ?: throw java.lang.Exception("didMethodType params is missed")
+                ?: throw java.lang.Exception("didMethodType params is missed")
 
         val didKeyType = call.argument<String>("didKeyType")
-            ?: throw java.lang.Exception("didKeyType params is missed")
+                ?: throw java.lang.Exception("didKeyType params is missed")
 
         val doc = walletSDK.createDID(didMethodType, didKeyType)
         didDocResolution = doc
@@ -429,10 +457,10 @@ class MainActivity : FlutterActivity() {
      */
     private fun initialize(call: MethodCall): MutableMap<String, Any> {
         val walletSDK = this.walletSDK
-            ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
+                ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
 
         val requestURI = call.argument<String>("requestURI")
-            ?: throw java.lang.Exception("requestURI params is missed")
+                ?: throw java.lang.Exception("requestURI params is missed")
 
         val openID4CI = walletSDK.createOpenID4CIInteraction(requestURI)
 
@@ -447,7 +475,7 @@ class MainActivity : FlutterActivity() {
         }
         if (flowType == "auth-code-flow") {
             val authCodeArgs = call.argument<MutableMap<String, String>>("authCodeArgs")
-                ?: throw java.lang.Exception("authCodeArgs params is missed, Pass scopes, clientID and redirectURI as the arguments")
+                    ?: throw java.lang.Exception("authCodeArgs params is missed, Pass scopes, clientID and redirectURI as the arguments")
 
             var dynamicRegistrationSupported = openID4CI.dynamicRegistrationSupported()
             var clientID = authCodeArgs["clientID"].toString()
@@ -481,7 +509,7 @@ class MainActivity : FlutterActivity() {
                 }
 
                 var registrationResp =
-                    Oauth2.registerClient(dynamicRegistrationEndpoint, clientMetadata, null)
+                        Oauth2.registerClient(dynamicRegistrationEndpoint, clientMetadata, null)
                 clientID = registrationResp.clientID()
 
                 // Use the actual scopes registered by the authorization server,
@@ -489,10 +517,10 @@ class MainActivity : FlutterActivity() {
                 scopes = registrationResp.registeredMetadata().scopes()
             }
             authorizationLink = openID4CI.createAuthorizationURL(
-                clientID,
-                redirectURI,
-                oauthDiscoverableClientURI ?: "",
-                scopes,
+                    clientID,
+                    redirectURI,
+                    oauthDiscoverableClientURI ?: "",
+                    scopes,
             )
 
         }
@@ -507,13 +535,13 @@ class MainActivity : FlutterActivity() {
 
     private fun initializeWalletInitiatedFlow(call: MethodCall): MutableList<Any> {
         val walletSDK = this.walletSDK
-            ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
+                ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
 
         val issuerURI = call.argument<String>("issuerURI")
-            ?: throw java.lang.Exception("Missing issuerURI argument")
+                ?: throw java.lang.Exception("Missing issuerURI argument")
 
         val walletInitiatedOpenID4CI =
-            walletSDK.createOpenID4CIWalletInitiatedInteraction(issuerURI)
+                walletSDK.createOpenID4CIWalletInitiatedInteraction(issuerURI)
         this.walletInitiatedOpenID4CI = walletInitiatedOpenID4CI
         val supportedCredentials = walletInitiatedOpenID4CI.getSupportedCredentials()
 
@@ -522,25 +550,25 @@ class MainActivity : FlutterActivity() {
 
     private fun createAuthorizationURLWalletInitiatedFlow(call: MethodCall): String {
         val walletInitiatedOpenID4CI = this.walletInitiatedOpenID4CI
-            ?: throw java.lang.Exception("walletInitiatedOpenID4CI interaction is not initialized")
+                ?: throw java.lang.Exception("walletInitiatedOpenID4CI interaction is not initialized")
 
         val scopesFromArgs = call.argument<ArrayList<String>>("scopes")
-            ?: throw java.lang.Exception("Missing scopes argument")
+                ?: throw java.lang.Exception("Missing scopes argument")
 
         val credentialTypesFromArgs = call.argument<ArrayList<String>>("credentialTypes")
-            ?: throw java.lang.Exception("Missing credentialTypes argument")
+                ?: throw java.lang.Exception("Missing credentialTypes argument")
 
         val clientID = call.argument<String>("clientID")
-            ?: throw java.lang.Exception("Missing clientID argument")
+                ?: throw java.lang.Exception("Missing clientID argument")
 
         val redirectURI = call.argument<String>("redirectURI")
-            ?: throw java.lang.Exception("Missing redirectURI argument")
+                ?: throw java.lang.Exception("Missing redirectURI argument")
 
         val credentialFormat = call.argument<String>("credentialFormat")
-            ?: throw java.lang.Exception("Missing credentialFormat argument")
+                ?: throw java.lang.Exception("Missing credentialFormat argument")
 
         val issuerURI = call.argument<String>("issuerURI")
-            ?: throw java.lang.Exception("Missing issuerURI argument")
+                ?: throw java.lang.Exception("Missing issuerURI argument")
 
 
         var scopes = StringArray()
@@ -557,18 +585,18 @@ class MainActivity : FlutterActivity() {
         }
 
         return walletInitiatedOpenID4CI.createAuthorizationURLWalletInitiatedFlow(
-            scopes,
-            credentialFormat,
-            credentialTypes,
-            clientID,
-            redirectURI,
-            issuerURI
+                scopes,
+                credentialFormat,
+                credentialTypes,
+                clientID,
+                redirectURI,
+                issuerURI
         )
     }
 
     private fun getIssuerMetaData(): MutableList<Any> {
         val openID4CI = this.openID4CI
-            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
         val issuerMetaData = openID4CI.getIssuerMetadata()
         // credential issuer
@@ -587,7 +615,7 @@ class MainActivity : FlutterActivity() {
             localizedIssuerDisplay["url"] = localizedIssuerDisplays.atIndex(index).url()
             localizedIssuerDisplay["textColor"] = localizedIssuerDisplays.atIndex(index).textColor()
             localizedIssuerDisplay["backgroundColor"] =
-                localizedIssuerDisplays.atIndex(index).backgroundColor()
+                    localizedIssuerDisplays.atIndex(index).backgroundColor()
             if (localizedIssuerDisplays.atIndex(index).logo() != null) {
                 localizedIssuerDisplay["logo"] = localizedIssuerDisplays.atIndex(index).logo().url()
             } else {
@@ -630,16 +658,16 @@ class MainActivity : FlutterActivity() {
             for (i in 0 until (supportedCredentials.atIndex(index).localizedDisplays().length())) {
                 val localizedCredentialsDisplayResp: MutableMap<String, String> = mutableMapOf()
                 localizedCredentialsDisplayResp["name"] =
-                    supportedCredentials.atIndex(index).localizedDisplays().atIndex(i).name()
+                        supportedCredentials.atIndex(index).localizedDisplays().atIndex(i).name()
                 localizedCredentialsDisplayResp["locale"] =
-                    supportedCredentials.atIndex(index).localizedDisplays().atIndex(i).locale()
+                        supportedCredentials.atIndex(index).localizedDisplays().atIndex(i).locale()
                 localizedCredentialsDisplayResp["logo"] =
-                    supportedCredentials.atIndex(index).localizedDisplays().atIndex(i).logo().url()
+                        supportedCredentials.atIndex(index).localizedDisplays().atIndex(i).logo().url()
                 localizedCredentialsDisplayResp["textColor"] =
-                    supportedCredentials.atIndex(index).localizedDisplays().atIndex(i).textColor()
+                        supportedCredentials.atIndex(index).localizedDisplays().atIndex(i).textColor()
                 localizedCredentialsDisplayResp["backgroundColor"] =
-                    supportedCredentials.atIndex(index).localizedDisplays().atIndex(i)
-                        .backgroundColor()
+                        supportedCredentials.atIndex(index).localizedDisplays().atIndex(i)
+                                .backgroundColor()
 
                 localizedCredentialsDisplayRespList.addAll(listOf(localizedCredentialsDisplayResp))
             }
@@ -657,7 +685,7 @@ class MainActivity : FlutterActivity() {
 
     private fun issuerURI(): String {
         val openID4CI = this.openID4CI
-            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
         return openID4CI.issuerURI()
     }
@@ -672,10 +700,10 @@ class MainActivity : FlutterActivity() {
         val otp = call.argument<String>("otp") ?: throw java.lang.Exception("otp params is missed")
 
         val didDocResolution = this.didDocResolution
-            ?: throw java.lang.Exception("DID should be created first")
+                ?: throw java.lang.Exception("DID should be created first")
 
         val openID4CI = this.openID4CI
-            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
         return openID4CI.requestCredential(didDocResolution.assertionMethod(), otp)
     }
@@ -683,37 +711,37 @@ class MainActivity : FlutterActivity() {
 
     private fun requestCredentialAuth(call: MethodCall): String? {
         val redirectURI = call.argument<String>("redirectURIWithParams")
-            ?: throw java.lang.Exception("redirectURIWithParams is missed")
+                ?: throw java.lang.Exception("redirectURIWithParams is missed")
 
         val didDocResolution = this.didDocResolution
-            ?: throw java.lang.Exception("DID should be created first")
+                ?: throw java.lang.Exception("DID should be created first")
 
         val openID4CI = this.openID4CI
-            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
         return openID4CI.requestCredentialWithAuth(didDocResolution.assertionMethod(), redirectURI)
     }
 
     private fun requestCredentialWithWalletInitiatedFlow(call: MethodCall): String? {
         val redirectURI = call.argument<String>("redirectURIWithParams")
-            ?: throw java.lang.Exception("redirectURIWithParams is missed")
+                ?: throw java.lang.Exception("redirectURIWithParams is missed")
 
         val didDocResolution = this.didDocResolution
-            ?: throw java.lang.Exception("DID should be created first")
+                ?: throw java.lang.Exception("DID should be created first")
 
         val walletInitiatedOpenID4CI = this.walletInitiatedOpenID4CI
-            ?: throw java.lang.Exception("walletInitiatedOpenID4CI not initiated. Initialize wallet initiated flow before this.")
+                ?: throw java.lang.Exception("walletInitiatedOpenID4CI not initiated. Initialize wallet initiated flow before this.")
 
         return walletInitiatedOpenID4CI.requestCredentialWithWalletInitiatedFlow(
-            didDocResolution.assertionMethod(),
-            redirectURI
+                didDocResolution.assertionMethod(),
+                redirectURI
         ).serialize()
     }
 
 
     private fun parseWalletSDKError(call: MethodCall): MutableMap<String, String> {
         val localizedErrorMessage = call.argument<String>("localizedErrorMessage")
-            ?: throw java.lang.Exception("localizedErrorMessage is missing")
+                ?: throw java.lang.Exception("localizedErrorMessage is missing")
 
         val parsedError = Walleterror.parse(localizedErrorMessage)
         println("parsedError ->")
@@ -736,17 +764,17 @@ class MainActivity : FlutterActivity() {
      */
     private fun serializeDisplayData(call: MethodCall): String? {
         val issuerURI = call.argument<String>("uri")
-            ?: throw java.lang.Exception("issuerURI params is missed")
+                ?: throw java.lang.Exception("issuerURI params is missed")
         val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
-            ?: throw java.lang.Exception("vcCredentials params is missed")
+                ?: throw java.lang.Exception("vcCredentials params is missed")
 
         return Display.resolve(convertToVerifiableCredentialsArray(vcCredentials), issuerURI, null)
-            .serialize()
+                .serialize()
     }
 
     private fun resolveCredentialDisplay(call: MethodCall): MutableList<Any> {
         val resolvedCredentialDisplayData = call.argument<String>("resolvedCredentialDisplayData")
-            ?: throw java.lang.Exception("resolvedCredentialDisplayData params is missed")
+                ?: throw java.lang.Exception("resolvedCredentialDisplayData params is missed")
 
         val displayData = Display.parseData(resolvedCredentialDisplayData)
         val issuerDisplayData = displayData.issuerDisplay()
@@ -790,7 +818,7 @@ class MainActivity : FlutterActivity() {
      */
     private fun getCredID(call: MethodCall): String {
         val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
-            ?: throw java.lang.Exception("vcCredentials params is missed")
+                ?: throw java.lang.Exception("vcCredentials params is missed")
 
         val opts = Opts()
         opts.disableProofCheck()
@@ -806,7 +834,7 @@ class MainActivity : FlutterActivity() {
 
     private fun getIssuerID(call: MethodCall): String {
         val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
-            ?: throw java.lang.Exception("vcCredentials params is missed")
+                ?: throw java.lang.Exception("vcCredentials params is missed")
 
         val opts = Opts()
         opts.disableProofCheck()
@@ -820,10 +848,10 @@ class MainActivity : FlutterActivity() {
 
     private fun wellKnownDidConfig(call: MethodCall): MutableMap<String, Any> {
         val issuerID = call.argument<String>("issuerID")
-            ?: throw java.lang.Exception("issuer id is missing")
+                ?: throw java.lang.Exception("issuer id is missing")
 
         val walletSDK = this.walletSDK
-            ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
+                ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
 
         val validationResult = try {
             Did.validateLinkedDomains(issuerID, walletSDK.didResolver, null)
@@ -841,7 +869,7 @@ class MainActivity : FlutterActivity() {
 
     private fun getVerifierDisplayData(): MutableMap<String, Any> {
         val openID4VP = this.openID4VP
-            ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
+                ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
 
         val verifierDisplayDataResp = openID4VP.getVerifierDisplayData()
         val verifierDisplayData: MutableMap<String, Any> = mutableMapOf()
@@ -856,13 +884,13 @@ class MainActivity : FlutterActivity() {
     This method invoke processAuthorizationRequest defined in OpenID4Vp.kt file.
      */
     private fun processAuthorizationRequest(
-        call: MethodCall,
-        result: MethodChannel.Result
+            call: MethodCall,
+            result: MethodChannel.Result
     ): List<String> {
         val walletSDK = this.walletSDK
-            ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
+                ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
         val authorizationRequest = call.argument<String>("authorizationRequest")
-            ?: throw java.lang.Exception("authorizationRequest params is missed")
+                ?: throw java.lang.Exception("authorizationRequest params is missed")
         val storedCredentials = call.argument<ArrayList<String>>("storedCredentials")
 
         val openID4VP = walletSDK.createOpenID4VPInteraction()
@@ -875,10 +903,10 @@ class MainActivity : FlutterActivity() {
             //TODO remove this block after refactoring finished.
             processAuthorizationRequestVCs = convertToVerifiableCredentialsArray(storedCredentials)
             val matchedReq = openID4VP.getMatchedSubmissionRequirements(
-                convertToVerifiableCredentialsArray(storedCredentials)
+                    convertToVerifiableCredentialsArray(storedCredentials)
             )
             var resp = convertVerifiableCredentialsArray(
-                matchedReq.atIndex(0).descriptorAtIndex(0).matchedVCs
+                    matchedReq.atIndex(0).descriptorAtIndex(0).matchedVCs
             )
             if (resp.isEmpty()) {
                 var typeConstraint = matchedReq.atIndex(0).descriptorAtIndex(0).typeConstraint()
@@ -895,15 +923,15 @@ class MainActivity : FlutterActivity() {
                     }
 
                     result.error(
-                        "NATIVE_ERR",
-                        "No credentials conforming to the following schemas were found",
-                        "$schemaList"
+                            "NATIVE_ERR",
+                            "No credentials conforming to the following schemas were found",
+                            "$schemaList"
                     );
                 }
                 result.error(
-                    "NATIVE_ERR",
-                    "No credentials of type $typeConstraint were found",
-                    "Required credential $typeConstraint is missing from the wallet"
+                        "NATIVE_ERR",
+                        "No credentials of type $typeConstraint were found",
+                        "Required credential $typeConstraint is missing from the wallet"
                 );
             }
 
@@ -915,22 +943,41 @@ class MainActivity : FlutterActivity() {
 
     private fun getMatchedSubmissionRequirements(call: MethodCall): List<Any> {
         val openID4VP = this.openID4VP
-            ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
+                ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
         val storedCredentials = call.argument<ArrayList<String>>("storedCredentials")
-            ?: throw java.lang.Exception("storedCredentials params is missed")
+                ?: throw java.lang.Exception("storedCredentials params is missed")
 
         return convertSubmissionRequirementArray(
-            openID4VP.getMatchedSubmissionRequirements(
-                convertToVerifiableCredentialsArray(
-                    storedCredentials
+                openID4VP.getMatchedSubmissionRequirements(
+                        convertToVerifiableCredentialsArray(
+                                storedCredentials
+                        )
                 )
-            )
         )
+    }
+
+    private fun evaluateIssuanceTrustInfo(call: MethodCall): HashMap<String, Any> {
+        val evaluateIssuanceURL = call.argument<String>("evaluateIssuanceURL")
+                ?: throw java.lang.Exception("evaluateIssuanceURL params is missed")
+        val openID4CI = this.openID4CI
+                ?: throw java.lang.Exception("OpenID4CI not initiated. Call authorize before this.")
+
+        val result = openID4CI.checkWithTrustRegistry(evaluateIssuanceURL)
+        return hashMapOf("allowed" to result.allowed, "errorCode" to result.errorCode, "errorMessage" to result.errorMessage)
+    }
+    private fun evaluatePresentationTrustInfo(call: MethodCall): HashMap<String, Any> {
+        val evaluatePresentationURL = call.argument<String>("evaluatePresentationURL")
+                ?: throw java.lang.Exception("evaluatePresentationURL params is missed")
+        val openID4VP = this.openID4VP
+                ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
+
+        val result = openID4VP.checkWithTrustRegistry(evaluatePresentationURL)
+        return hashMapOf("allowed" to result.allowed, "errorCode" to result.errorCode, "errorMessage" to result.errorMessage)
     }
 
     private fun credentialStatusVerifier(call: MethodCall): Boolean {
         val credentials = call.argument<List<String>>("credentials")
-            ?: throw java.lang.Exception("credentials params is missed")
+                ?: throw java.lang.Exception("credentials params is missed")
 
         val statusVerifier = StatusVerifier(null)
         val credentialArray = convertToVerifiableCredentialsArray(credentials)
@@ -951,21 +998,21 @@ class MainActivity : FlutterActivity() {
         } else {
             //TODO: remove this after refactoring will be finished
             this.processAuthorizationRequestVCs
-                ?: throw java.lang.Exception("processAuthorizationRequest should be called first.")
+                    ?: throw java.lang.Exception("processAuthorizationRequest should be called first.")
         }
 
         val openID4VP = this.openID4VP
-            ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
+                ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
 
-        openID4VP.presentCredential(selectedCredentialsArray,customScopeList)
+        openID4VP.presentCredential(selectedCredentialsArray, customScopeList)
         this.openID4VP = null
     }
 
     private fun getCustomScope(): ArrayList<String> {
         val openID4VP = this.openID4VP
-            ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
+                ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
 
-      return openID4VP.getCustomScope()
+        return openID4VP.getCustomScope()
     }
 
     /**
@@ -973,7 +1020,7 @@ class MainActivity : FlutterActivity() {
      */
     private fun storeActivityLogger(): MutableList<Any> {
         val walletSDK = this.walletSDK
-            ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
+                ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
 
         val activityLogger = walletSDK.activityLogger
 
@@ -998,7 +1045,7 @@ class MainActivity : FlutterActivity() {
         val parseActivityList = HashMap<String, String>()
 
         val activities = call.argument<ArrayList<String>>("activities")
-            ?: throw java.lang.Exception("parameter activities is missing")
+                ?: throw java.lang.Exception("parameter activities is missing")
 
         for (activity in activities) {
             val activityObj = Api.parseActivity(activity)
@@ -1026,21 +1073,21 @@ class MainActivity : FlutterActivity() {
 
     private fun requireAcknowledgment(): Boolean {
         val openID4CI = this.openID4CI
-            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
         return openID4CI.requireAcknowledgment()
     }
 
     private fun acknowledgeSuccess() {
         val openID4CI = this.openID4CI
-            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
         return openID4CI.acknowledgeSuccess()
     }
 
     private fun acknowledgeReject() {
         val openID4CI = this.openID4CI
-            ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
+                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
         return openID4CI.acknowledgeReject()
     }

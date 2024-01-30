@@ -12,6 +12,7 @@ import dev.trustbloc.wallet.sdk.openid4vp.*
 import dev.trustbloc.wallet.sdk.otel.Otel
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import dev.trustbloc.wallet.sdk.stderr.MetricsLogger
+import dev.trustbloc.wallet.sdk.trustregistry.*
 import java.lang.Exception
 
 class OpenID4VP constructor(
@@ -22,10 +23,11 @@ class OpenID4VP constructor(
 
     private var initiatedInteraction: Interaction? = null
     private var vpQueryContent: ByteArray? = null
+    private var submissionRequirements: SubmissionRequirementArray? = null
 
     /**
      * ClientConfig contains various parameters for an OpenID4VP Interaction. ActivityLogger is optional, but if provided then activities will be logged there.
-      If not provided, then no activities will be logged.
+    If not provided, then no activities will be logged.
      * interaction is local variable to intiate Interaction representing a single OpenID4VP interaction between a wallet and a verifier.
      * The methods defined on this object are used to help guide the calling code through the OpenID4VP flow.
      */
@@ -50,13 +52,55 @@ class OpenID4VP constructor(
                 ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
 
 
-        return Inquirer(InquirerOpts().setDIDResolver(didResolver))
+        val requirements = Inquirer(InquirerOpts().setDIDResolver(didResolver))
                 .getSubmissionRequirements(vpQueryContent, storedCredentials)
+
+        submissionRequirements = requirements
+        return requirements
     }
+
+    fun checkWithTrustRegistry(evaluatePresentationURL: String): EvaluationResult {
+        val initiatedInteraction = this.initiatedInteraction
+                ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
+
+        val submissionRequirements = this.submissionRequirements
+                ?: throw Exception("Before you can call checkWithTrustRegistry, you need call getMatchedSubmissionRequirements first")
+
+        val presentationRequest = PresentationRequest()
+
+        for (rInd in 0 until submissionRequirements.len()) {
+            val requirement = submissionRequirements.atIndex(rInd)
+            for (dInd in 0 until requirement.descriptorLen()) {
+                val descriptor = requirement.descriptorAtIndex(dInd)
+                for (credInd in 0 until descriptor.matchedVCs.length()) {
+                    val cred = descriptor.matchedVCs.atIndex(credInd)
+
+                    val claimsToCheck = CredentialClaimsToCheck();
+                    claimsToCheck.credentialID = cred.id()
+                    claimsToCheck.issuerID = cred.issuerID()
+                    claimsToCheck.credentialTypes = cred.types()
+                    claimsToCheck.expirationDate = cred.expirationDate()
+                    claimsToCheck.issuanceDate = cred.issuanceDate()
+
+                    presentationRequest.addCredentialClaims(claimsToCheck)
+                }
+            }
+        }
+
+        val trustInfo = initiatedInteraction.trustInfo()
+        presentationRequest.verifierDID = trustInfo.did
+        presentationRequest.verifierDomain = trustInfo.domain
+
+        val config = RegistryConfig()
+        config.evaluatePresentationURL = evaluatePresentationURL
+
+        return Registry(config).evaluatePresentation(presentationRequest)
+    }
+
     /**
      * initiatedInteraction has PresentCredential method which presents credentials to redirect uri from request object.
      */
-    fun presentCredential(selectedCredentials: CredentialsArray, customScopes: MutableMap<String, Any>? ) {
+    fun presentCredential(selectedCredentials: CredentialsArray, customScopes: MutableMap<String, Any>?) {
         val initiatedInteraction = this.initiatedInteraction
                 ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
 
@@ -71,22 +115,22 @@ class OpenID4VP constructor(
 
     fun getCustomScope(): ArrayList<String> {
         val initiatedInteraction = this.initiatedInteraction
-            ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
+                ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
 
-      val customScopes =  initiatedInteraction.customScope()
+        val customScopes = initiatedInteraction.customScope()
         val customScopesList = ArrayList<String>()
         for (i in 0 until (customScopes.length())) {
-                if(customScopes.atIndex(i) != "openid"){
-                    customScopesList.add(customScopes.atIndex(i))
-                }
+            if (customScopes.atIndex(i) != "openid") {
+                customScopesList.add(customScopes.atIndex(i))
             }
+        }
 
-        return  customScopesList
+        return customScopesList
     }
 
     fun getVerifierDisplayData(): VerifierDisplayData {
         val initiatedInteraction = this.initiatedInteraction
-            ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
+                ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
 
         return initiatedInteraction.verifierDisplayData()
     }

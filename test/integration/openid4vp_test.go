@@ -36,7 +36,7 @@ type claimData = map[string]interface{}
 var expectedUniversityDegreeSD string
 
 func TestOpenID4VPFullFlow(t *testing.T) {
-	trustRegistryAPI := trustregistry.New(&trustregistry.RegistryConfig{
+	trustRegistryAPI := trustregistry.NewRegistry(&trustregistry.RegistryConfig{
 		EvaluateIssuanceURL:        "https://localhost:8100/wallet/interactions/issuance",
 		EvaluatePresentationURL:    "https://localhost:8100/wallet/interactions/presentation",
 		DisableHTTPClientTLSVerify: true,
@@ -278,7 +278,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			for ind := 0; ind < matchedVCs.Length(); ind++ {
 				cred := matchedVCs.AtIndex(ind)
 
-				presTrustInfo.AddCredentialClaims(trustregistry.NewCredentialClaimsToCheck(
+				presTrustInfo.AddCredentialClaims(trustregistry.LegacyNewCredentialClaimsToCheck(
 					cred.ID(),
 					cred.Types(),
 					cred.IssuerID(),

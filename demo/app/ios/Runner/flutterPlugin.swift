@@ -54,6 +54,12 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "requestCredentialWithWalletInitiatedFlow":
             let redirectURIWithParams = fetchArgsKeyValue(call, key: "redirectURIWithParams")
             requestCredentialWithWalletInitiatedFlow(redirectURIWithParams: redirectURIWithParams!, result: result)
+            
+        case "evaluateIssuanceTrustInfo":
+            evaluateIssuanceTrustInfo(arguments: arguments!, result: result)
+        
+        case "evaluatePresentationTrustInfo":
+            evaluatePresentationTrustInfo(arguments: arguments!, result: result)
 
         case "fetchDID":
             let didID = fetchArgsKeyValue(call, key: "didID")
@@ -831,6 +837,58 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         
     }
     
+    public func evaluateIssuanceTrustInfo(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
+        guard let evaluateIssuanceURL = arguments["evaluateIssuanceURL"] as? String else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while evaluateIssuanceTrustInfo",
+                                             details: "parameter evaluateIssuanceURL is missed"))
+        }
+        
+        do {
+            let res = try openID4CI?.checkWithTrustRegistry(evaluateIssuanceURL: evaluateIssuanceURL)
+            
+            var resDic :[String: Any] = [
+                "allowed":   res!.allowed,
+                "errorCode":   res!.errorCode,
+                "errorMessage":   res!.errorMessage,
+            ]
+            
+            result(resDic)
+            
+        } catch let error as NSError {
+             return result(FlutterError.init(code: "Exception",
+                                       message: "error while call evaluateIssuanceTrustInfo",
+                                             details: error.localizedDescription))
+            
+          }
+    }
+    
+    public func evaluatePresentationTrustInfo(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
+        guard let evaluatePresentationURL = arguments["evaluatePresentationURL"] as? String else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while evaluateIssuanceTrustInfo",
+                                             details: "parameter evaluatePresentationURL is missed"))
+        }
+        
+        do {
+            let res = try openID4VP?.checkWithTrustRegistry(evaluatePresentationURL: evaluatePresentationURL)
+            
+            var resDic :[String: Any] = [
+                "allowed":   res!.allowed,
+                "errorCode":   res!.errorCode,
+                "errorMessage":   res!.errorMessage,
+            ]
+            
+            result(resDic)
+            
+        } catch let error as NSError {
+             return result(FlutterError.init(code: "Exception",
+                                       message: "error while call evaluateIssuanceTrustInfo",
+                                             details: error.localizedDescription))
+            
+          }
+    }
+    
     /**
      * ResolveDisplay resolves display information for issued credentials based on an issuer's metadata, which is fetched
        using the issuer's (base) URI. The CredentialDisplays returns DisplayData object correspond to the VCs passed in and are in the
@@ -852,7 +910,13 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                  details: "parameter storedcredentials is missed"))
             }
             
-            let resolvedDisplayData = DisplayResolve(convertToVerifiableCredentialsArray(credentials: vcCredentials), issuerURI, nil, nil)
+            var resolveError: NSError?
+            let resolvedDisplayData = DisplayResolve(convertToVerifiableCredentialsArray(credentials: vcCredentials), issuerURI, nil, &resolveError)
+            if (resolveError != nil) {
+                return result(FlutterError.init(code: "Exception",
+                                          message: "error while resolving credential",
+                                                details: resolveError?.localizedDescription))
+            }
             let resolvedDisplayDataString = resolvedDisplayData!.serialize(nil)
         
             result(resolvedDisplayDataString)

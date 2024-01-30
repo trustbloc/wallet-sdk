@@ -546,3 +546,63 @@ class VerifierDisplayData {
 
 //</editor-fold>
 }
+
+class EvaluationResult {
+  bool allowed;
+  String errorCode;
+  String errorMessage;
+
+//<editor-fold desc="Data Methods">
+  EvaluationResult({
+    required this.allowed,
+    required this.errorCode,
+    required this.errorMessage,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EvaluationResult &&
+          runtimeType == other.runtimeType &&
+          allowed == other.allowed &&
+          errorCode == other.errorCode &&
+          errorMessage == other.errorMessage);
+
+  @override
+  int get hashCode => allowed.hashCode ^ errorCode.hashCode ^ errorMessage.hashCode;
+
+  @override
+  String toString() {
+    return 'EvaluationResult{ allowed: $allowed, errorCode: $errorCode, errorMessage: $errorMessage,}';
+  }
+
+  EvaluationResult copyWith({
+    bool? allowed,
+    String? errorCode,
+    String? errorMessage,
+  }) {
+    return EvaluationResult(
+      allowed: allowed ?? this.allowed,
+      errorCode: errorCode ?? this.errorCode,
+      errorMessage: errorMessage ?? this.errorMessage,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'allowed': allowed,
+      'errorCode': errorCode,
+      'errorMessage': errorMessage,
+    };
+  }
+
+  factory EvaluationResult.fromMap(Map<String, dynamic> map) {
+    return EvaluationResult(
+      allowed: map['allowed'] as bool,
+      errorCode: map['errorCode'] as String,
+      errorMessage: map['errorMessage'] as String,
+    );
+  }
+
+//</editor-fold>
+}

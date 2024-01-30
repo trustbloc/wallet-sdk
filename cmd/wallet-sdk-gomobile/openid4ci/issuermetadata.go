@@ -30,3 +30,9 @@ func (i *IssuerMetadata) SupportedCredentials() *SupportedCredentials {
 func (i *IssuerMetadata) LocalizedIssuerDisplays() *LocalizedIssuerDisplays {
 	return &LocalizedIssuerDisplays{localizedIssuerDisplays: i.issuerMetadata.LocalizedIssuerDisplays}
 }
+
+// IssuerTrustInfo represent issuer trust information.
+type IssuerTrustInfo struct {
+	DID    string
+	Domain string
+}
