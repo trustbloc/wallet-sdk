@@ -18,6 +18,7 @@ public class OpenID4VP {
     
     private var initiatedInteraction: Openid4vpInteraction?
     private var vpQueryContent: Data?
+    private var submissionRequirement: CredentialSubmissionRequirementArray?
     
     init (didResolver: ApiDIDResolverProtocol, crypto: ApiCryptoProtocol, activityLogger: ApiActivityLoggerProtocol) {
         self.didResolver = didResolver
@@ -52,7 +53,49 @@ public class OpenID4VP {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         }
         
-            return try CredentialNewInquirer(CredentialInquirerOpts()?.setDIDResolver(didResolver), nil)!.getSubmissionRequirements(vpQueryContent, credentials: storedCredentials)
+        submissionRequirement = try CredentialNewInquirer(CredentialInquirerOpts()?.setDIDResolver(didResolver), nil)!.getSubmissionRequirements(vpQueryContent, credentials: storedCredentials)
+        return submissionRequirement!
+    }
+    
+    func checkWithTrustRegistry(evaluatePresentationURL: String) throws -> TrustregistryEvaluationResult {
+        
+        guard let initiatedInteraction = self.initiatedInteraction else {
+            throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
+        }
+
+        guard let submissionRequirements = self.submissionRequirement else {
+            throw OpenID4VPError.runtimeError("Before you can call checkWithTrustRegistry, you need call getMatchedSubmissionRequirements first")
+        }
+     
+        let presentationRequest = TrustregistryPresentationRequest()
+
+        for rInd in 0..<submissionRequirements.len() {
+            let requirement = submissionRequirements.atIndex(rInd)!
+            for dInd in 0..<requirement.descriptorLen() {
+                let descriptor = requirement.descriptor(at: dInd)!
+                for credInd in 0..<descriptor.matchedVCs!.length() {
+                    let cred = descriptor.matchedVCs!.atIndex(credInd)!
+
+                    let claimsToCheck = TrustregistryCredentialClaimsToCheck();
+                    claimsToCheck.credentialID = cred.id_()
+                    claimsToCheck.issuerID = cred.issuerID()
+                    claimsToCheck.credentialTypes = cred.types()
+                    claimsToCheck.expirationDate = cred.expirationDate()
+                    claimsToCheck.issuanceDate = cred.issuanceDate()
+
+                    presentationRequest.addCredentialClaims(claimsToCheck)
+                }
+            }
+        }
+
+        let trustInfo = try initiatedInteraction.trustInfo()
+        presentationRequest.verifierDID = trustInfo.did
+        presentationRequest.verifierDomain = trustInfo.domain
+
+        let config = TrustregistryRegistryConfig()
+        config.evaluatePresentationURL = evaluatePresentationURL
+
+        return try TrustregistryRegistry(config)!.evaluatePresentation(presentationRequest)
     }
     
     /**

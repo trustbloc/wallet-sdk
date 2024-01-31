@@ -10,6 +10,7 @@ package trustregistry
 import (
 	"crypto/tls"
 	"net/http"
+	"time"
 
 	"github.com/trustbloc/wallet-sdk/pkg/trustregistry"
 )
@@ -26,8 +27,8 @@ type Registry struct {
 	impl *trustregistry.Registry
 }
 
-// New creates new trust registry API.
-func New(config *RegistryConfig) *Registry {
+// NewRegistry creates new trust registry API.
+func NewRegistry(config *RegistryConfig) *Registry {
 	var httpClient *http.Client
 	if config.DisableHTTPClientTLSVerify {
 		httpClient = &http.Client{
@@ -78,10 +79,10 @@ func (r *Registry) EvaluatePresentation(request *PresentationRequest) (*Evaluati
 	for _, claims := range request.credentialClaims {
 		credentialClaims = append(credentialClaims, trustregistry.CredentialClaimsToCheck{
 			CredentialID:    claims.CredentialID,
-			CredentialTypes: claims.credentialTypes,
+			CredentialTypes: claims.CredentialTypes.Strings,
 			IssuerID:        claims.IssuerID,
-			IssuanceDate:    claims.IssuanceDate,
-			ExpirationDate:  claims.ExpirationDate,
+			IssuanceDate:    time.Unix(claims.IssuanceDate, 0),
+			ExpirationDate:  time.Unix(claims.ExpirationDate, 0),
 		})
 	}
 

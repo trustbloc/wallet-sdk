@@ -7,8 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package trustregistry
 
 import (
-	"time"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )
 
@@ -47,29 +45,22 @@ func (p *PresentationRequest) AddCredentialClaims(c *CredentialClaimsToCheck) *P
 // that is sent to the trust registry API for evaluation.
 type CredentialClaimsToCheck struct {
 	CredentialID    string
-	credentialTypes []string
+	CredentialTypes *api.StringArray
 	IssuerID        string
-	IssuanceDate    time.Time
-	ExpirationDate  time.Time
+	IssuanceDate    int64
+	ExpirationDate  int64
 }
 
-// NewCredentialClaimsToCheck create new CredentialClaimsToCheck object.
-func NewCredentialClaimsToCheck(
+// LegacyNewCredentialClaimsToCheck create new CredentialClaimsToCheck object.
+func LegacyNewCredentialClaimsToCheck(
 	credentialID string, credentialTypes *api.StringArray, issuerID string,
 	issuanceDate int64, expirationDate int64,
 ) *CredentialClaimsToCheck {
 	return &CredentialClaimsToCheck{
 		CredentialID:    credentialID,
-		credentialTypes: credentialTypes.Strings,
+		CredentialTypes: credentialTypes,
 		IssuerID:        issuerID,
-		IssuanceDate:    time.Unix(issuanceDate, 0),
-		ExpirationDate:  time.Unix(expirationDate, 0),
+		IssuanceDate:    issuanceDate,
+		ExpirationDate:  expirationDate,
 	}
-}
-
-// AddType adds credential type.
-func (c *CredentialClaimsToCheck) AddType(t string) *CredentialClaimsToCheck {
-	c.credentialTypes = append(c.credentialTypes, t)
-
-	return c
 }

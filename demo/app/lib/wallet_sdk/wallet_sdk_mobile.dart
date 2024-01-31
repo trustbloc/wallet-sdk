@@ -213,6 +213,20 @@ class WalletSDK extends WalletPlatform {
         purpose: data['purpose'] as String);
   }
 
+  Future<EvaluationResult?> evaluateIssuanceTrustInfo() async {
+    var data = await methodChannel.invokeMethod('evaluateIssuanceTrustInfo', {
+      'evaluateIssuanceURL': const String.fromEnvironment('evaluateIssuanceURL')
+    });
+    return EvaluationResult.fromMap(data.cast<String, dynamic>());
+  }
+
+  Future<EvaluationResult?> evaluatePresentationTrustInfo() async {
+    var data = await methodChannel.invokeMethod('evaluatePresentationTrustInfo', {
+      'evaluatePresentationURL': const String.fromEnvironment('evaluatePresentationURL')
+    });
+    return EvaluationResult.fromMap(data);
+  }
+
   Future<void> presentCredential(
       {required List<String> selectedCredentials, Map<String, dynamic>? customScopeList}) async {
     try {

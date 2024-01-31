@@ -31,7 +31,7 @@ func TestRegistry_EvaluateIssuance(t *testing.T) {
 	server := httptest.NewServer(serverHandler)
 	defer server.Close()
 
-	registry := trustregistry.New(&trustregistry.RegistryConfig{
+	registry := trustregistry.NewRegistry(&trustregistry.RegistryConfig{
 		EvaluateIssuanceURL:        server.URL + evaluateIssuanceURL,
 		DisableHTTPClientTLSVerify: true,
 	})
@@ -58,7 +58,7 @@ func TestRegistry_EvaluateIssuance(t *testing.T) {
 	})
 
 	t.Run("Invalid server URI", func(t *testing.T) {
-		result, err := trustregistry.New(&trustregistry.RegistryConfig{
+		result, err := trustregistry.NewRegistry(&trustregistry.RegistryConfig{
 			EvaluateIssuanceURL: "http://invalid",
 		}).EvaluateIssuance(&trustregistry.IssuanceRequest{
 			IssuerDID: "did:web:forbidden.com",
@@ -69,7 +69,7 @@ func TestRegistry_EvaluateIssuance(t *testing.T) {
 	})
 
 	t.Run("Invalid server URI", func(t *testing.T) {
-		result, err := trustregistry.New(&trustregistry.RegistryConfig{
+		result, err := trustregistry.NewRegistry(&trustregistry.RegistryConfig{
 			EvaluateIssuanceURL: server.URL + "/invalid-json",
 		}).EvaluateIssuance(&trustregistry.IssuanceRequest{})
 
@@ -84,17 +84,17 @@ func TestRegistry_EvaluatePresentation(t *testing.T) {
 	server := httptest.NewServer(serverHandler)
 	defer server.Close()
 
-	registry := trustregistry.New(&trustregistry.RegistryConfig{
+	registry := trustregistry.NewRegistry(&trustregistry.RegistryConfig{
 		EvaluatePresentationURL: server.URL + evaluatePresentationURL,
 	})
 
 	t.Run("Success", func(t *testing.T) {
 		result, err := registry.EvaluatePresentation((&trustregistry.PresentationRequest{
 			VerifierDID: "did:web:correct.com",
-		}).AddCredentialClaims(trustregistry.NewCredentialClaimsToCheck(
+		}).AddCredentialClaims(trustregistry.LegacyNewCredentialClaimsToCheck(
 			"test_id",
 			api.NewStringArray().Append("TestType"),
-			"issuer_id", 0, 0).AddType("OtherType"),
+			"issuer_id", 0, 0),
 		))
 
 		require.NoError(t, err)
@@ -114,7 +114,7 @@ func TestRegistry_EvaluatePresentation(t *testing.T) {
 	})
 
 	t.Run("Invalid server URI", func(t *testing.T) {
-		result, err := trustregistry.New(&trustregistry.RegistryConfig{
+		result, err := trustregistry.NewRegistry(&trustregistry.RegistryConfig{
 			EvaluatePresentationURL: "http://invalid",
 		}).EvaluatePresentation(&trustregistry.PresentationRequest{
 			VerifierDID: "did:web:forbidden.com",
@@ -125,7 +125,7 @@ func TestRegistry_EvaluatePresentation(t *testing.T) {
 	})
 
 	t.Run("Invalid server URI", func(t *testing.T) {
-		result, err := trustregistry.New(&trustregistry.RegistryConfig{
+		result, err := trustregistry.NewRegistry(&trustregistry.RegistryConfig{
 			EvaluatePresentationURL: server.URL + "/invalid-json",
 		}).EvaluatePresentation(&trustregistry.PresentationRequest{})
 

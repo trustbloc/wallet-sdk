@@ -8,6 +8,7 @@ import 'dart:developer';
 
 import 'package:app/views/credential_shared.dart';
 import 'package:app/views/dashboard.dart';
+import 'package:app/wallet_sdk/wallet_sdk_model.dart';
 import 'package:app/widgets/credential_verified_information_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -44,6 +45,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
   late String verifierPurpose = '';
   late String serviceURL = '';
   bool verifiedDomain = true;
+  EvaluationResult? trustInfoEvaluationResult;
 
   @override
   void initState() {
@@ -59,6 +61,9 @@ class PresentationPreviewState extends State<PresentationPreview> {
         serviceURL = resp.serviceURL;
         verifiedDomain = resp.isValid;
       });
+
+      trustInfoEvaluationResult = await WalletSDKPlugin.evaluatePresentationTrustInfo();
+      setState(() {});
     });
   }
 
@@ -142,6 +147,21 @@ class PresentationPreviewState extends State<PresentationPreview> {
                             ],
                           )),
               ),
+              if (trustInfoEvaluationResult != null && trustInfoEvaluationResult!.allowed)
+                const Text('Trust info verified',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.lightGreen,
+                    )),
+              if (trustInfoEvaluationResult != null && !trustInfoEvaluationResult!.allowed)
+                Text('Trust info not verified:${trustInfoEvaluationResult!.errorCode}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.lightGreen,
+                    )),
+
               Text(verifierPurpose),
               CredentialCard(
                   credentialData: widget.credentialData, isDashboardWidget: false, isDetailArrowRequired: false),
@@ -160,32 +180,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
                         padding: EdgeInsets.fromLTRB(24, 0, 24, 0),
                       ),
                       PrimaryButton(
-                          onPressed: () async {
-                            final SharedPreferences pref = await prefs;
-                            Map<String, dynamic> customScopeConfigList = {};
-                            final ConfigService configService = ConfigService();
-                            WalletSDKPlugin.getCustomScope()
-                                .then((customScopeList) async {
-                                  customScopeConfigList = await configService.readCustomScopeConfig(customScopeList);
-                                })
-                                .whenComplete(() => WalletSDKPlugin.presentCredential(
-                                    selectedCredentials: [widget.credentialData.rawCredential],
-                                    customScopeList: customScopeConfigList))
-                                .onError((error, stackTrace) {
-                                  var errString = error.toString().replaceAll(r'\', '');
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => CustomError(
-                                              titleBar: 'Presentation Preview',
-                                              requestErrorTitleMsg: 'error while presenting credential',
-                                              requestErrorSubTitleMsg: errString)));
-                                });
-                            var activities = await WalletSDKPlugin.storeActivityLogger();
-                            var credID = pref.getString('credID');
-                            _storageService.addActivities(ActivityDataObj(credID!, activities));
-                            _navigateToCredentialShareSuccess(verifierName);
-                          },
+                          onPressed: _presentCredential,
                           width: double.infinity,
                           child: const Text('Share Credential', style: TextStyle(fontSize: 16, color: Colors.white))),
                       const Padding(
@@ -211,6 +206,33 @@ class PresentationPreviewState extends State<PresentationPreview> {
         ),
       ),
     );
+  }
+
+  void _presentCredential() async {
+    final SharedPreferences pref = await prefs;
+    Map<String, dynamic> customScopeConfigList = {};
+    final ConfigService configService = ConfigService();
+    WalletSDKPlugin.getCustomScope()
+        .then((customScopeList) async {
+      customScopeConfigList = await configService.readCustomScopeConfig(customScopeList);
+    })
+        .whenComplete(() => WalletSDKPlugin.presentCredential(
+        selectedCredentials: [widget.credentialData.rawCredential],
+        customScopeList: customScopeConfigList))
+        .onError((error, stackTrace) {
+      var errString = error.toString().replaceAll(r'\', '');
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => CustomError(
+                  titleBar: 'Presentation Preview',
+                  requestErrorTitleMsg: 'error while presenting credential',
+                  requestErrorSubTitleMsg: errString)));
+    });
+    var activities = await WalletSDKPlugin.storeActivityLogger();
+    var credID = pref.getString('credID');
+    _storageService.addActivities(ActivityDataObj(credID!, activities));
+    _navigateToCredentialShareSuccess(verifierName);
   }
 
   _navigateToDashboard() async {

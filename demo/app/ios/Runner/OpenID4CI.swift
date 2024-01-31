@@ -139,6 +139,19 @@ public class OpenID4CI {
         return endpoint
     }
     
+    public func checkWithTrustRegistry(evaluateIssuanceURL: String) throws -> TrustregistryEvaluationResult {
+        let issuanceRequest = TrustregistryIssuanceRequest()
+
+        let trustInfo = try initiatedInteraction.issuerTrustInfo()
+        issuanceRequest.issuerDID = trustInfo.did
+        issuanceRequest.issuerDomain = trustInfo.domain
+
+        let config = TrustregistryRegistryConfig()
+        config.evaluateIssuanceURL = evaluateIssuanceURL
+
+        return try TrustregistryRegistry(config)!.evaluateIssuance(issuanceRequest)
+    }
+    
     func getAuthorizationCodeGrantParams() throws -> Openid4ciAuthorizationCodeGrantParams {
         return  try initiatedInteraction.authorizationCodeGrantParams()
     }

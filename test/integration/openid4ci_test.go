@@ -94,7 +94,7 @@ func TestOpenID4CIFullFlow(t *testing.T) {
 }
 
 func doPreAuthCodeFlowTest(t *testing.T) {
-	trustRegistryAPI := trustregistry.New(&trustregistry.RegistryConfig{
+	trustRegistryAPI := trustregistry.NewRegistry(&trustregistry.RegistryConfig{
 		EvaluateIssuanceURL:        "https://localhost:8100/wallet/interactions/issuance",
 		EvaluatePresentationURL:    "https://localhost:8100/wallet/interactions/presentation",
 		DisableHTTPClientTLSVerify: true,

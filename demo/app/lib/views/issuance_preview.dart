@@ -9,6 +9,7 @@ import 'dart:developer';
 import 'package:app/main.dart';
 import 'package:app/views/dashboard.dart';
 import 'package:app/services/storage_service.dart';
+import 'package:app/wallet_sdk/wallet_sdk_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -42,41 +43,49 @@ class IssuancePreviewState extends State<IssuancePreview> {
   String textColor = '';
   String logoURL = '';
   String issuerLogoURL = '';
-  final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   List<String>? credentialTypes;
   String? issuerServiceURL;
+  EvaluationResult? trustInfoEvaluationResult;
 
   @override
   void initState() {
     super.initState();
-    prefs.then((value) {
-      credentialTypes = value.getStringList('credentialTypes');
-    }).whenComplete(
-      () => WalletSDKPlugin.getIssuerMetaData(credentialTypes!).then((response) {
-        setState(() {
-          credentialIssuer = response.first.credentialIssuer;
-          issuerDisplayName = response.first.localizedIssuerDisplays.first.name;
-          issuerDisplayURL = response.first.localizedIssuerDisplays.first.url;
-          final issuerLogo = response.first.localizedIssuerDisplays.first.logo;
-          if (issuerLogo != null) {
-            issuerLogoURL = issuerLogo;
-          }
-          credentialDisplayName = response.first.supportedCredentials.first.display.first.name;
-          final logo = response.first.supportedCredentials.first.display.first.logo;
-          if (logo != null) {
-            logoURL = logo;
-          }
-          backgroundColor =
-              '0xff${response.first.supportedCredentials.first.display.first.backgroundColor.toString().replaceAll('#', '')}';
-          textColor =
-              '0xff${response.first.supportedCredentials.first.display.first.textColor.toString().replaceAll('#', '')}';
-        });
-      })).whenComplete(() => WalletSDKPlugin.verifyIssuer().then((serviceURL) {
-            setState(() {
-              issuerServiceURL = serviceURL;
-            });
-          }),
-    );
+    _init();
+  }
+
+  void _init() async {
+    final prefs = await SharedPreferences.getInstance();
+    credentialTypes = prefs.getStringList('credentialTypes');
+
+    final trustInfoEvaluationResult = await WalletSDKPlugin.evaluateIssuanceTrustInfo();
+    setState(() {
+      this.trustInfoEvaluationResult = trustInfoEvaluationResult;
+    });
+
+    final issuerMetaData = await WalletSDKPlugin.getIssuerMetaData(credentialTypes!);
+    setState(() {
+      credentialIssuer = issuerMetaData.first.credentialIssuer;
+      issuerDisplayName = issuerMetaData.first.localizedIssuerDisplays.first.name;
+      issuerDisplayURL = issuerMetaData.first.localizedIssuerDisplays.first.url;
+      final issuerLogo = issuerMetaData.first.localizedIssuerDisplays.first.logo;
+      if (issuerLogo != null) {
+        issuerLogoURL = issuerLogo;
+      }
+      credentialDisplayName = issuerMetaData.first.supportedCredentials.first.display.first.name;
+      final logo = issuerMetaData.first.supportedCredentials.first.display.first.logo;
+      if (logo != null) {
+        logoURL = logo;
+      }
+      backgroundColor =
+          '0xff${issuerMetaData.first.supportedCredentials.first.display.first.backgroundColor.toString().replaceAll('#', '')}';
+      textColor =
+          '0xff${issuerMetaData.first.supportedCredentials.first.display.first.textColor.toString().replaceAll('#', '')}';
+    });
+
+    final serviceURL = await WalletSDKPlugin.verifyIssuer();
+    setState(() {
+      issuerServiceURL = serviceURL;
+    });
   }
 
   @override
@@ -118,16 +127,32 @@ class IssuancePreviewState extends State<IssuancePreview> {
             FittedBox(
               child: issuerServiceURL != null
                   ? const DomainVerificationComponent(
-                status: 'Verified',
-                imagePath:
-                'lib/assets/images/tick-checked.svg',
-              )
+                      status: 'Verified',
+                      imagePath: 'lib/assets/images/tick-checked.svg',
+                    )
                   : const DomainVerificationComponent(
-                status: 'Unverified',
-                imagePath: 'lib/assets/images/error_icon.svg',
-              ),
+                      status: 'Unverified',
+                      imagePath: 'lib/assets/images/error_icon.svg',
+                    ),
             ),
             const SizedBox(height: 4),
+            if (trustInfoEvaluationResult != null)
+              FittedBox(
+                child: trustInfoEvaluationResult!.allowed
+                    ? const DomainVerificationComponent(
+                        status: 'Trust info verified',
+                        imagePath: 'lib/assets/images/tick-checked.svg',
+                      )
+                    : Column(
+                        children: [
+                          const DomainVerificationComponent(
+                            status: 'Trust info not verified',
+                            imagePath: 'lib/assets/images/error_icon.svg',
+                          ),
+                          Text(trustInfoEvaluationResult!.errorCode)
+                        ],
+                      ),
+              ),
             SizedBox(
               height: 30,
               child: Text(

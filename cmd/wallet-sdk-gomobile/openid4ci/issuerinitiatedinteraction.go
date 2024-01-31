@@ -257,8 +257,16 @@ func (i *IssuerInitiatedInteraction) VerifyIssuer() (string, error) {
 }
 
 // IssuerTrustInfo returns issuer trust info like, did, domain, credential type, format.
-func (i *IssuerInitiatedInteraction) IssuerTrustInfo() (*openid4cigoapi.IssuerTrustInfo, error) {
-	return i.goAPIInteraction.IssuerTrustInfo()
+func (i *IssuerInitiatedInteraction) IssuerTrustInfo() (*IssuerTrustInfo, error) {
+	trustInfo, err := i.goAPIInteraction.IssuerTrustInfo()
+	if err != nil {
+		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
+	}
+
+	return &IssuerTrustInfo{
+		DID:    trustInfo.DID,
+		Domain: trustInfo.Domain,
+	}, nil
 }
 
 // OTelTraceID returns the OpenTelemetry trace ID.
