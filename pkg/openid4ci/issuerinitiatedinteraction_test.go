@@ -1880,7 +1880,7 @@ func TestIssuerInitiatedInteraction_VerifyIssuer(t *testing.T) {
 		interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false, true))
 
 		serviceURL, err := interaction.VerifyIssuer()
-		require.EqualError(t, err, "issuer's metadata is not signed")
+		require.ErrorContains(t, err, "DID service validation failed")
 		require.Empty(t, serviceURL)
 	})
 }

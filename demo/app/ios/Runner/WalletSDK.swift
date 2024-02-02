@@ -13,7 +13,7 @@ enum WalletSDKError: Error {
 
 class WalletSDK {
     private var kms:LocalkmsKMS?
-    private var didResolver: ApiDIDResolverProtocol?
+    public var didResolver: ApiDIDResolverProtocol?
     private var crypto: ApiCryptoProtocol?
     var activityLogger: MemActivityLogger?
 

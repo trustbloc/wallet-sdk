@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
 	"github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
 
@@ -166,7 +167,7 @@ func TestWalletInitiatedInteraction_VerifyIssuer(t *testing.T) {
 		require.NoError(t, err)
 
 		serviceURL, err := interaction.VerifyIssuer()
-		require.EqualError(t, err, "issuer's metadata is not signed")
+		require.ErrorContains(t, err, "DID service validation failed")
 		require.Empty(t, serviceURL)
 	})
 }

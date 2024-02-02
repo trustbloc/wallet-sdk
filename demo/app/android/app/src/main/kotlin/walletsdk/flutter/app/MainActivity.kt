@@ -415,6 +415,7 @@ class MainActivity : FlutterActivity() {
         val walletSDK = WalletSDK()
         val didResolverURI = call.argument<String>("didResolverURI")
                 ?: throw java.lang.Exception("didResolverURI params is missed")
+
         walletSDK.initSDK(KmsStore(context), didResolverURI)
         this.walletSDK = walletSDK;
     }
@@ -768,7 +769,10 @@ class MainActivity : FlutterActivity() {
         val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
                 ?: throw java.lang.Exception("vcCredentials params is missed")
 
-        return Display.resolve(convertToVerifiableCredentialsArray(vcCredentials), issuerURI, null)
+        val walletSDK = this.walletSDK
+                ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
+
+        return walletSDK.resolveCredentialsDisplayData(convertToVerifiableCredentialsArray(vcCredentials), issuerURI)
                 .serialize()
     }
 

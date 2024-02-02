@@ -20,7 +20,7 @@ type Metadata struct {
 	CredentialsSupported    []SupportedCredential    `json:"credentials_supported,omitempty"`
 	LocalizedIssuerDisplays []LocalizedIssuerDisplay `json:"display,omitempty"`
 	TokenEndpoint           string                   `json:"token_endpoint,omitempty"`
-	CredentialAckEndpoint   string                   `json:"credential_ack_endpoint"`
+	CredentialAckEndpoint   string                   `json:"credential_ack_endpoint,omitempty"`
 	jwtKID                  *string
 }
 

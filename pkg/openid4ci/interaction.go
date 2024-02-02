@@ -713,8 +713,7 @@ func (i *interaction) issuerBasicTrustInfo() (*basicTrustInfo, error) {
 	jwtKID := i.issuerMetadata.GetJWTKID()
 
 	if jwtKID == nil {
-		return nil,
-			errors.New("issuer's metadata is not signed")
+		return &basicTrustInfo{}, nil
 	}
 
 	jwtKIDSplit := strings.Split(*jwtKID, "#")
