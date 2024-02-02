@@ -1499,6 +1499,57 @@ interaction.PresentCredentialOpts(PresentCredentialOpts().addScopeClaim(
 
 ```
 
+###### Evaluate issuance trust info
+
+```kotlin
+val issuanceRequest = IssuanceRequest()
+
+val trustInfo = newInteraction.issuerTrustInfo()
+issuanceRequest.issuerDID = trustInfo.did
+issuanceRequest.issuerDomain = trustInfo.domain
+
+val config = RegistryConfig()
+config.evaluateIssuanceURL = evaluateIssuanceURL
+
+val evaluationResult = Registry(config).evaluateIssuance(issuanceRequest)
+```
+
+###### Evaluate presentation trust info
+
+```kotlin
+
+val presentationRequest = PresentationRequest()
+
+for (rInd in 0 until submissionRequirements.len()) {
+    val requirement = submissionRequirements.atIndex(rInd)
+    for (dInd in 0 until requirement.descriptorLen()) {
+        val descriptor = requirement.descriptorAtIndex(dInd)
+        for (credInd in 0 until descriptor.matchedVCs.length()) {
+            val cred = descriptor.matchedVCs.atIndex(credInd)
+
+            val claimsToCheck = CredentialClaimsToCheck();
+            claimsToCheck.credentialID = cred.id()
+            claimsToCheck.issuerID = cred.issuerID()
+            claimsToCheck.credentialTypes = cred.types()
+            claimsToCheck.expirationDate = cred.expirationDate()
+            claimsToCheck.issuanceDate = cred.issuanceDate()
+
+            presentationRequest.addCredentialClaims(claimsToCheck)
+        }
+    }
+}
+
+val trustInfo = initiatedInteraction.trustInfo()
+presentationRequest.verifierDID = trustInfo.did
+presentationRequest.verifierDomain = trustInfo.domain
+
+val config = RegistryConfig()
+config.evaluatePresentationURL = evaluatePresentationURL
+
+val evaluationResult = Registry(config).evaluatePresentation(presentationRequest)
+
+```
+
 #### Swift (iOS)
 
 ```swift
@@ -1558,6 +1609,56 @@ try interaction.presentCredentialOpts(
     selectedCreds,
     opts: Openid4vpNewPresentCredentialOpts()?.addScopeClaim(scope.atIndex(0), claimJSON:#"{"email":"test@example.com"}"#)     
 )
+
+```
+
+###### Evaluate issuance trust info
+
+```swift
+let issuanceRequest = TrustregistryIssuanceRequest()
+
+let trustInfo = try initiatedInteraction.issuerTrustInfo()
+issuanceRequest.issuerDID = trustInfo.did
+issuanceRequest.issuerDomain = trustInfo.domain
+
+let config = TrustregistryRegistryConfig()
+config.evaluateIssuanceURL = evaluateIssuanceURL
+
+let evaluationResult = try TrustregistryRegistry(config)!.evaluateIssuance(issuanceRequest)
+```
+
+###### Evaluate presentation trust info
+```swift
+
+let presentationRequest = TrustregistryPresentationRequest()
+
+for rInd in 0..<submissionRequirements.len() {
+    let requirement = submissionRequirements.atIndex(rInd)!
+    for dInd in 0..<requirement.descriptorLen() {
+        let descriptor = requirement.descriptor(at: dInd)!
+        for credInd in 0..<descriptor.matchedVCs!.length() {
+            let cred = descriptor.matchedVCs!.atIndex(credInd)!
+
+            let claimsToCheck = TrustregistryCredentialClaimsToCheck();
+            claimsToCheck.credentialID = cred.id_()
+            claimsToCheck.issuerID = cred.issuerID()
+            claimsToCheck.credentialTypes = cred.types()
+            claimsToCheck.expirationDate = cred.expirationDate()
+            claimsToCheck.issuanceDate = cred.issuanceDate()
+
+            presentationRequest.addCredentialClaims(claimsToCheck)
+        }
+    }
+}
+
+let trustInfo = try initiatedInteraction.trustInfo()
+presentationRequest.verifierDID = trustInfo.did
+presentationRequest.verifierDomain = trustInfo.domain
+
+let config = TrustregistryRegistryConfig()
+config.evaluatePresentationURL = evaluatePresentationURL
+
+let evaluationResult = try TrustregistryRegistry(config)!.evaluatePresentation(presentationRequest)
 
 ```
 
