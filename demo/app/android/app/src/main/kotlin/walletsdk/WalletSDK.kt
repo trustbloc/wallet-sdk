@@ -17,7 +17,9 @@ import dev.trustbloc.wallet.sdk.mem.ActivityLogger
 import walletsdk.openid4ci.OpenID4CI
 import walletsdk.openid4vp.OpenID4VP
 import dev.trustbloc.wallet.sdk.localkms.Store
+import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import walletsdk.openid4ci.WalletInitiatedOpenID4CI
+import dev.trustbloc.wallet.sdk.display.Display
 
 class WalletSDK {
     private var kms: KMS? = null
@@ -111,5 +113,14 @@ class WalletSDK {
             ?: throw java.lang.Exception("activity logger is not initialized, call initSDK()")
 
         return OpenID4VP(crypto, didResolver, activityLogger)
+    }
+
+    fun resolveCredentialsDisplayData(creds: CredentialsArray, issuerURI: String)
+        : dev.trustbloc.wallet.sdk.display.Data {
+        val didResolver = this.didResolver
+                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+
+        return Display.resolve(creds, issuerURI,
+                dev.trustbloc.wallet.sdk.display.Opts().setDIDResolver(didResolver))
     }
 }

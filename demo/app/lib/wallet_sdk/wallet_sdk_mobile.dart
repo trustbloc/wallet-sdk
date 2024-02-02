@@ -224,7 +224,7 @@ class WalletSDK extends WalletPlatform {
     var data = await methodChannel.invokeMethod('evaluatePresentationTrustInfo', {
       'evaluatePresentationURL': const String.fromEnvironment('evaluatePresentationURL')
     });
-    return EvaluationResult.fromMap(data);
+    return EvaluationResult.fromMap(data.cast<String, dynamic>());
   }
 
   Future<void> presentCredential(

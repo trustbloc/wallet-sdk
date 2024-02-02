@@ -470,7 +470,7 @@ func TestIssuerInitiatedInteraction_VerifyIssuer(t *testing.T) {
 			nil, true)
 
 		serviceURL, err := interaction.VerifyIssuer()
-		requireErrorContains(t, err, "issuer's metadata is not signed")
+		requireErrorContains(t, err, "DID service validation failed")
 		require.Empty(t, serviceURL)
 	})
 }
@@ -494,9 +494,9 @@ func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
 			createCredentialOfferIssuanceURI(t, server.URL, false),
 			nil, true)
 
-		serviceURL, err := interaction.IssuerTrustInfo()
-		requireErrorContains(t, err, "issuer's metadata is not signed")
-		require.Empty(t, serviceURL)
+		trustInfo, err := interaction.IssuerTrustInfo()
+		require.NoError(t, err)
+		require.Empty(t, trustInfo.DID)
 	})
 }
 

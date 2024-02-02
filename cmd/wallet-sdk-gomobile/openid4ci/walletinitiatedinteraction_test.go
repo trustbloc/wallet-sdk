@@ -174,7 +174,7 @@ func TestWalletInitiatedInteraction_VerifyIssuer(t *testing.T) {
 		require.NotNil(t, interaction)
 
 		serviceURL, err := interaction.VerifyIssuer()
-		requireErrorContains(t, err, "issuer's metadata is not signed")
+		requireErrorContains(t, err, "DID service validation failed")
 		require.Empty(t, serviceURL)
 	})
 }

@@ -910,8 +910,15 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                  details: "parameter storedcredentials is missed"))
             }
             
+            guard let walletSDK = self.walletSDK else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while process authorization request",
+                                                 details: "WalletSDK interaction is not initialized, call initSDK()"))
+            }
+            
             var resolveError: NSError?
-            let resolvedDisplayData = DisplayResolve(convertToVerifiableCredentialsArray(credentials: vcCredentials), issuerURI, nil, &resolveError)
+            let resolvedDisplayData = DisplayResolve(convertToVerifiableCredentialsArray(credentials: vcCredentials), issuerURI, 
+                                                     DisplayOpts()!.setDIDResolver(walletSDK.didResolver), &resolveError)
             if (resolveError != nil) {
                 return result(FlutterError.init(code: "Exception",
                                           message: "error while resolving credential",
