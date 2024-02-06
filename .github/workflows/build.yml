@@ -342,105 +342,105 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: /home/runner/work/wallet-sdk/go
 
-  BuildJSSDK:
-    needs: GenerateVersion
-    if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          lfs: true
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Derive the new version
-        run: |
-          echo "new version"
-          NEW_VER=${{ needs.GenerateVersion.outputs.version }}-snapshot-$(git rev-parse --short=7 HEAD)
-          echo "NEW_VERSION=$NEW_VER" >> $GITHUB_ENV
-          echo $NEW_VER
-      - name: Set npm authentication tokens
-        run: |
-          echo $PATH
-          echo ${{ github.workspace }}
-          echo '//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}' > ~/.npmrc
-          echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
-
-      - name: Generate bindings
-        run: |
-          export PATH=$PATH:$GOPATH/bin
-          echo $PATH
-          
-          cd ./cmd/wallet-sdk-js
-          sed -i 's/"version": "[0-9]\+\.[0-9]\+\.[0-9]\+"/"version": "${{ env.NEW_VERSION }}"/g' package.json
-          sed -i 's#"name": "@trustbloc/wallet-sdk"#"name": "@trustbloc-cicd/wallet-sdk-js"#g' package.json
-          sed -i 's#"url": "https://github.com/trustbloc/wallet-sdk.git",#"url": "https://github.com/trustbloc-cicd/snapshot.git"#g' package.json
-          sed -i '/"directory": "cmd\/wallet-sdk-js"/d' package.json
-          
-          pushd ../../
-          make generate-js-bindings
-          popd
-        env:
-          DOCKER_USER: ${{ secrets.CR_USER }}
-          GITHUB_TOKEN: ${{ secrets.CR_PAT }}
-          GOPATH: /home/runner/work/wallet-sdk/go
-
-  BuildDemoApp:
-    needs: [ GenerateVersion, BuildJSSDK ]
-    if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
-    runs-on: ubuntu-22.04
-    timeout-minutes: 40
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          lfs: true
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Derive the new version
-        run: |
-          echo "new version"
-          NEW_VER=${{ needs.GenerateVersion.outputs.version }}-snapshot-$(git rev-parse --short=7 HEAD)
-          echo "NEW_VERSION=$NEW_VER" >> $GITHUB_ENV
-          echo $NEW_VER
-
-      - name: Set npm authentication tokens
-        run: |
-          echo $PATH
-          echo ${{ github.workspace }}
-          echo '//npm.pkg.github.com/:_authToken=${{ secrets.CR_PAT }}' > ~/.npmrc
-          echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
-
-      - name: Install dependencies
-        run: |
-          pushd ./demo/app/web
-          npm install
-          popd
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Login to Github Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ secrets.CR_USER }}
-          password: ${{ secrets.CR_PAT }}
-
-      - name: Build container image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: ./images/demo/app/Dockerfile
-          platforms: linux/amd64
-          build-args: |
-            ALPINE_VER=3.18
-            GO_VER=1.21
-          push: false
-          tags: |
-            ghcr.io/trustbloc-cicd/wallet-demo-app:${{ env.NEW_VERSION }}
+#  BuildJSSDK:
+#    needs: GenerateVersion
+#    if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
+#    runs-on: ubuntu-22.04
+#    timeout-minutes: 10
+#    steps:
+#      - uses: actions/checkout@v3
+#        with:
+#          fetch-depth: 0
+#          lfs: true
+#      - name: Set up Go
+#        uses: actions/setup-go@v3
+#        with:
+#          go-version: ${{ env.GO_VERSION }}
+#      - name: Derive the new version
+#        run: |
+#          echo "new version"
+#          NEW_VER=${{ needs.GenerateVersion.outputs.version }}-snapshot-$(git rev-parse --short=7 HEAD)
+#          echo "NEW_VERSION=$NEW_VER" >> $GITHUB_ENV
+#          echo $NEW_VER
+#      - name: Set npm authentication tokens
+#        run: |
+#          echo $PATH
+#          echo ${{ github.workspace }}
+#          echo '//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}' > ~/.npmrc
+#          echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
+#
+#      - name: Generate bindings
+#        run: |
+#          export PATH=$PATH:$GOPATH/bin
+#          echo $PATH
+#
+#          cd ./cmd/wallet-sdk-js
+#          sed -i 's/"version": "[0-9]\+\.[0-9]\+\.[0-9]\+"/"version": "${{ env.NEW_VERSION }}"/g' package.json
+#          sed -i 's#"name": "@trustbloc/wallet-sdk"#"name": "@trustbloc-cicd/wallet-sdk-js"#g' package.json
+#          sed -i 's#"url": "https://github.com/trustbloc/wallet-sdk.git",#"url": "https://github.com/trustbloc-cicd/snapshot.git"#g' package.json
+#          sed -i '/"directory": "cmd\/wallet-sdk-js"/d' package.json
+#
+#          pushd ../../
+#          make generate-js-bindings
+#          popd
+#        env:
+#          DOCKER_USER: ${{ secrets.CR_USER }}
+#          GITHUB_TOKEN: ${{ secrets.CR_PAT }}
+#          GOPATH: /home/runner/work/wallet-sdk/go
+#
+#  BuildDemoApp:
+#    needs: [ GenerateVersion, BuildJSSDK ]
+#    if: github.event_name == 'push' && (github.repository == 'trustbloc/wallet-sdk' && github.ref == 'refs/heads/main')
+#    runs-on: ubuntu-22.04
+#    timeout-minutes: 40
+#    steps:
+#      - uses: actions/checkout@v3
+#        with:
+#          fetch-depth: 0
+#          lfs: true
+#      - name: Set up Go
+#        uses: actions/setup-go@v3
+#        with:
+#          go-version: ${{ env.GO_VERSION }}
+#      - name: Derive the new version
+#        run: |
+#          echo "new version"
+#          NEW_VER=${{ needs.GenerateVersion.outputs.version }}-snapshot-$(git rev-parse --short=7 HEAD)
+#          echo "NEW_VERSION=$NEW_VER" >> $GITHUB_ENV
+#          echo $NEW_VER
+#
+#      - name: Set npm authentication tokens
+#        run: |
+#          echo $PATH
+#          echo ${{ github.workspace }}
+#          echo '//npm.pkg.github.com/:_authToken=${{ secrets.CR_PAT }}' > ~/.npmrc
+#          echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
+#
+#      - name: Install dependencies
+#        run: |
+#          pushd ./demo/app/web
+#          npm install
+#          popd
+#
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v2
+#
+#      - name: Login to Github Container Registry
+#        uses: docker/login-action@v2
+#        with:
+#          registry: ghcr.io
+#          username: ${{ secrets.CR_USER }}
+#          password: ${{ secrets.CR_PAT }}
+#
+#      - name: Build container image
+#        uses: docker/build-push-action@v4
+#        with:
+#          context: .
+#          file: ./images/demo/app/Dockerfile
+#          platforms: linux/amd64
+#          build-args: |
+#            ALPINE_VER=3.18
+#            GO_VER=1.21
+#          push: false
+#          tags: |
+#            ghcr.io/trustbloc-cicd/wallet-demo-app:${{ env.NEW_VERSION }}
