@@ -263,9 +263,28 @@ func (i *IssuerInitiatedInteraction) IssuerTrustInfo() (*IssuerTrustInfo, error)
 		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
 
+	credentialType := ""
+	credentialFormat := ""
+
+	if len(trustInfo.CredentialsSupported) > 0 {
+		types := trustInfo.CredentialsSupported[0].Types
+
+		for _, t := range types {
+			if t != "VerifiableCredential" {
+				credentialType = t
+
+				break
+			}
+		}
+
+		credentialFormat = trustInfo.CredentialsSupported[0].Format
+	}
+
 	return &IssuerTrustInfo{
-		DID:    trustInfo.DID,
-		Domain: trustInfo.Domain,
+		DID:              trustInfo.DID,
+		Domain:           trustInfo.Domain,
+		CredentialType:   credentialType,
+		CredentialFormat: credentialFormat,
 	}, nil
 }
 

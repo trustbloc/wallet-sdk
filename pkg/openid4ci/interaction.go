@@ -682,18 +682,20 @@ func processCredentialErrorResponse(statusCode int, respBytes []byte) error {
 	}
 }
 
-func (i *interaction) issuerFullTrustInfo() (*IssuerTrustInfo, error) {
+func (i *interaction) issuerFullTrustInfo(
+	credentialTypes [][]string, credentialFormats []string,
+) (*IssuerTrustInfo, error) {
 	trustInfo, err := i.issuerBasicTrustInfo()
 	if err != nil {
 		return nil, err
 	}
 
-	supportedCredentials := make([]SupportedCredential, len(i.issuerMetadata.CredentialsSupported))
+	supportedCredentials := make([]SupportedCredential, len(credentialFormats))
 
-	for j := 0; j < len(i.issuerMetadata.CredentialsSupported); j++ {
+	for j := 0; j < len(credentialFormats); j++ {
 		supportedCredentials[j] = SupportedCredential{
-			Format: i.issuerMetadata.CredentialsSupported[j].Format,
-			Types:  i.issuerMetadata.CredentialsSupported[j].Types,
+			Format: credentialFormats[j],
+			Types:  credentialTypes[j],
 		}
 	}
 

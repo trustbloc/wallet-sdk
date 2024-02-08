@@ -96,6 +96,8 @@ class OpenID4CI constructor(
         val trustInfo = newInteraction.issuerTrustInfo()
         issuanceRequest.issuerDID = trustInfo.did
         issuanceRequest.issuerDomain = trustInfo.domain
+        issuanceRequest.credentialFormat = trustInfo.credentialFormat
+        issuanceRequest.credentialType = trustInfo.credentialType
 
         val config = RegistryConfig()
         config.evaluateIssuanceURL = evaluateIssuanceURL

@@ -479,7 +479,7 @@ func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
 	t.Run("Metadata not signed", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{
 			t:              t,
-			issuerMetadata: "{}",
+			issuerMetadata: `{}`,
 		}
 		server := httptest.NewServer(issuerServerHandler)
 
@@ -496,7 +496,8 @@ func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
 
 		trustInfo, err := interaction.IssuerTrustInfo()
 		require.NoError(t, err)
-		require.Empty(t, trustInfo.DID)
+		require.Equal(t, trustInfo.CredentialFormat, "jwt_vc_json")
+		require.Equal(t, trustInfo.CredentialType, "VerifiedEmployee")
 	})
 }
 

@@ -288,8 +288,10 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			require.Contains(t, trustInfo.Domain, "trustbloc.local:8078")
 
 			result, trustErr := trustRegistryAPI.EvaluateIssuance(&trustregistry.IssuanceRequest{
-				IssuerDID:    trustInfo.DID,
-				IssuerDomain: trustInfo.Domain,
+				IssuerDID:        trustInfo.DID,
+				IssuerDomain:     trustInfo.Domain,
+				CredentialType:   trustInfo.CredentialType,
+				CredentialFormat: trustInfo.CredentialFormat,
 			})
 
 			require.NoError(t, trustErr)
