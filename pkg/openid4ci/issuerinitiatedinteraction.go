@@ -269,7 +269,7 @@ func (i *IssuerInitiatedInteraction) VerifyIssuer() (string, error) {
 
 // IssuerTrustInfo returns issuer trust info like, did, domain, credential type, format.
 func (i *IssuerInitiatedInteraction) IssuerTrustInfo() (*IssuerTrustInfo, error) {
-	return i.interaction.issuerFullTrustInfo()
+	return i.interaction.issuerFullTrustInfo(i.credentialTypes, i.credentialFormats)
 }
 
 // RequireAcknowledgment if true indicates that the issuer requires to be acknowledged if

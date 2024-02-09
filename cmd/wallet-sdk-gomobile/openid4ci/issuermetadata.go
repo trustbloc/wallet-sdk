@@ -33,6 +33,8 @@ func (i *IssuerMetadata) LocalizedIssuerDisplays() *LocalizedIssuerDisplays {
 
 // IssuerTrustInfo represent issuer trust information.
 type IssuerTrustInfo struct {
-	DID    string
-	Domain string
+	DID              string
+	Domain           string
+	CredentialType   string
+	CredentialFormat string
 }
