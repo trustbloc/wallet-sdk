@@ -159,7 +159,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.lightGreen,
+                      color: Colors.red,
                     )),
 
               Text(verifierPurpose),
