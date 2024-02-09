@@ -1507,6 +1507,8 @@ val issuanceRequest = IssuanceRequest()
 val trustInfo = newInteraction.issuerTrustInfo()
 issuanceRequest.issuerDID = trustInfo.did
 issuanceRequest.issuerDomain = trustInfo.domain
+issuanceRequest.credentialFormat = trustInfo.credentialFormat
+issuanceRequest.credentialType = trustInfo.credentialType
 
 val config = RegistryConfig()
 config.evaluateIssuanceURL = evaluateIssuanceURL
@@ -1620,6 +1622,8 @@ let issuanceRequest = TrustregistryIssuanceRequest()
 let trustInfo = try initiatedInteraction.issuerTrustInfo()
 issuanceRequest.issuerDID = trustInfo.did
 issuanceRequest.issuerDomain = trustInfo.domain
+issuanceRequest.credentialFormat = trustInfo.credentialFormat
+issuanceRequest.credentialType = trustInfo.credentialType
 
 let config = TrustregistryRegistryConfig()
 config.evaluateIssuanceURL = evaluateIssuanceURL
