@@ -52,10 +52,6 @@ generate-android-bindings:
 generate-ios-bindings:
 	@GIT_REV="${GIT_REV}" NEW_VERSION="${NEW_VERSION}" BUILD_TIME="${BUILD_TIME}" make generate-ios-bindings -C ./cmd/wallet-sdk-gomobile
 
-.PHONY: generate-js-bindings
-generate-js-bindings:
-	@make generate-js-bindings -C ./cmd/wallet-sdk-js
-
 .PHONY: copy-android-bindings
 copy-android-bindings:
 	@mkdir -p "demo/app/android/app/libs" && cp -R cmd/wallet-sdk-gomobile/bindings/android/walletsdk.aar demo/app/android/app/libs
@@ -64,10 +60,6 @@ copy-android-bindings:
 copy-ios-bindings:
 	@rm -rf demo/app/ios/Runner/walletsdk.xcframework && cp -R cmd/wallet-sdk-gomobile/bindings/ios/walletsdk.xcframework demo/app/ios/Runner
 
-.PHONY: copy-js-bindings
-copy-js-bindings:
-	@rm -rf demo/app/web/node_modules && mkdir -p demo/app/web/node_modules/@trustbloc-cicd/wallet-sdk-js && cp -r cmd/wallet-sdk-js/dist demo/app/web/node_modules/@trustbloc-cicd/wallet-sdk-js/dist && cp cmd/wallet-sdk-js/dist/wallet-sdk.wasm demo/app/web
-
 .PHONY: demo-app-ios
 demo-app-ios:generate-ios-bindings copy-ios-bindings
 	@cd demo/app && flutter doctor  && flutter clean && npm install -g ios-sim && ios-sim start --devicetypeid "iPhone-14" && flutter devices && flutter run
@@ -75,18 +67,6 @@ demo-app-ios:generate-ios-bindings copy-ios-bindings
 .PHONY: demo-app-android
 demo-app-android: generate-android-bindings copy-android-bindings
 	@cd demo/app && flutter doctor && flutter clean && flutter run && flutter emulators --launch  Pixel_3a_API_33_arm64-v8a  && flutter run -d Pixel_3a_API_33_arm64-v8a
-
-.PHONY: demo-app-web-local
-demo-app-web-local: generate-js-bindings copy-js-bindings
-	@cd demo/app && flutter doctor && flutter clean && flutter run -d chrome --release
-
-.PHONY: demo-app-web
-demo-app-web:
-	@cd demo/app/web && rm -rf node_modules && npm i && flutter doctor && flutter clean && flutter run -d chrome --release
-
-.PHONY: build-demo-app-web-docker
-build-demo-app-web-docker:
-	@docker build -f ./images/demo/app/Dockerfile --no-cache -t $(DOCKER_OUTPUT_NS)/$(REPO_IMAGE_NAME)/wallet-demo-app:latest .
 
 .PHONY: sample-webhook
 sample-webhook:

@@ -21,11 +21,8 @@ The project contains the following source code components and build scripts for 
     - To jump straight to usage documentation, see [here](cmd/wallet-sdk-gomobile/docs/usage.md).
   - [Scripts to generate Android and iOS-compatible bindings](cmd/wallet-sdk-gomobile/README.md)
     - Allows the Go SDK to be used in an Android or iOS app.
-- EXPERIMENTAL: WebAssembly(WASM)/JavaScript(JS) SDK
-  - [Scripts to generate JavaScript/WebAssembly(WASM) bindings](cmd/wallet-sdk-js/README.md)
-    - Allows the Go SDK to be used in a Web Application. Refer SDK usage guide [here](cmd/wallet-sdk-js/docs/usage.md).
 
-The repo also has code to generate a [Reference iOS, Android or Web App](demo/app/) built using the [Flutter](https://flutter.dev/) framework.
+The repo also has code to generate a [Reference iOS and Android](demo/app/) built using the [Flutter](https://flutter.dev/) framework.
 
 ## Specifications
 
@@ -41,7 +38,6 @@ The TrustBloc Wallet SDK implements following specifications.
 
 ## Build/Run
 - [GoMobile Bindings (iOS/Android)](cmd/wallet-sdk-gomobile/README.md)
-- [JavaScript/WebAssembly(WASM) Bindings](cmd/wallet-sdk-js/README.md)
 - [Demo/Reference App](demo/app/README.md)
 
 ## Library/Package
@@ -81,20 +77,6 @@ The Wallet SDK iOS xcframework packages are distributed through Swift Package Ma
 [wallet-sdk tags](https://github.com/trustbloc/wallet-sdk/tags) with the suffix `-swift-pm` (e.g., `1.0.0-swift-pm`) for the
 latest releases.
 
-### Web
-The Wallet SDK JS package is distributed through npm. Please refer to 
-[wallet-sdk-js package](https://github.com/trustbloc-cicd/snapshot/pkgs/npm/wallet-sdk-js) for the latest snapshot releases.
-
-#### Web Config
-The distributed package contains the WASM build file (`wallet-sdk.wasm`) inside `node_modules/@trustbloc-cicd/wallet-sdk-js/dist`,
-which you may want to store in a different location within your project along with other assets.
-In such case, you need to provide the path to the location of the WASM build file through
-the `opts.assestPath` parameter when you create an Agent instance:
-```js
-const kmsDatabase = await CreateDB("test")
-agent = new Agent({assetsPath: "path-to-folder-with-wallet-sdk-wasm-file", didResolverURI:didResolverURI, kmsDatabase: kmsDatabase});
-await agent.initialize();
-```
 
 ## Project structure
 
