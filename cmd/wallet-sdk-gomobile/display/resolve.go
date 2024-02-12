@@ -12,6 +12,8 @@ import (
 
 	"github.com/trustbloc/vc-go/proof/defaults"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 
 	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
@@ -38,6 +40,19 @@ func Resolve(vcs *verifiable.CredentialsArray, issuerURI string, opts *Opts) (*D
 	}
 
 	return &Data{resolvedDisplayData: resolvedDisplayData}, nil
+}
+
+// ResolveCredentialOffer resolves display information for some offered credentials based on an issuer's metadata.
+// The CredentialDisplays in the returned ResolvedDisplayData object correspond to the offered credential types
+// passed in and are in the same order.
+func ResolveCredentialOffer(
+	issuerMetadata *openid4ci.IssuerMetadata, offeredTypes *api.StringArrayArray, preferredLocale string,
+) *Data {
+	resolvedDisplayData := goapicredentialschema.ResolveCredentialOffer(openid4ci.IssuerMetadataToGoImpl(issuerMetadata),
+		api.StringArrayArrayToGoArray(offeredTypes),
+		preferredLocale)
+
+	return &Data{resolvedDisplayData: resolvedDisplayData}
 }
 
 func generateGoAPIOpts(vcs *verifiable.CredentialsArray, issuerURI string,

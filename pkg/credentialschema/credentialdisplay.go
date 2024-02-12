@@ -42,7 +42,7 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 		var foundMatchingType bool
 
 		for i := range credentialsSupported {
-			if !haveMatchingTypes(&credentialsSupported[i], displayVC) {
+			if !haveMatchingTypes(&credentialsSupported[i], displayVC.Contents().Types) {
 				continue
 			}
 
@@ -72,10 +72,32 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 	return credentialDisplays, nil
 }
 
+func buildCredentialOfferingDisplays(offeringTypes [][]string, credentialsSupported []issuer.SupportedCredential,
+	preferredLocale string,
+) []CredentialDisplay {
+	var credentialDisplays []CredentialDisplay
+
+	for _, vcTypes := range offeringTypes {
+		for i := range credentialsSupported {
+			if !haveMatchingTypes(&credentialsSupported[i], vcTypes) {
+				continue
+			}
+
+			credentialDisplay := &CredentialDisplay{Overview: getOverviewDisplay(&credentialsSupported[i], preferredLocale)}
+
+			credentialDisplays = append(credentialDisplays, *credentialDisplay)
+
+			break
+		}
+	}
+
+	return credentialDisplays
+}
+
 // The VC is considered to be a match for the supportedCredential if the VC has at least one type that's the same as
 // the type specified by the supportCredential (excluding the "VerifiableCredential" type that all VCs have).
-func haveMatchingTypes(supportedCredential *issuer.SupportedCredential, vc *verifiable.Credential) bool {
-	for _, typeFromVC := range vc.Contents().Types {
+func haveMatchingTypes(supportedCredential *issuer.SupportedCredential, vcTypes []string) bool {
+	for _, typeFromVC := range vcTypes {
 		// We expect the types in the VC and SupportedCredential to always include VerifiableCredential,
 		// so we skip this case.
 		if strings.EqualFold(typeFromVC, "VerifiableCredential") {

@@ -444,7 +444,20 @@ func TestResolve(t *testing.T) { //nolint: gocognit // Test file
 	})
 }
 
-func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *credentialschema.ResolvedDisplayData) {
+func TestResolveCredentialOffer(t *testing.T) {
+	var issuerMetadata issuer.Metadata
+	err := json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
+	require.NoError(t, err)
+
+	t.Run("Success", func(t *testing.T) {
+		resolvedDisplayData := credentialschema.ResolveCredentialOffer(
+			&issuerMetadata, [][]string{{"UniversityDegreeCredential"}}, "")
+
+		checkSuccessCaseMatchedOverviewData(t, resolvedDisplayData)
+	})
+}
+
+func checkSuccessCaseMatchedOverviewData(t *testing.T, resolvedDisplayData *credentialschema.ResolvedDisplayData) {
 	t.Helper()
 
 	require.Equal(t, "Example University", resolvedDisplayData.IssuerDisplay.Name)
@@ -460,6 +473,12 @@ func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *crede
 		resolvedDisplayData.CredentialDisplays[0].Overview.Logo.AltText)
 	require.Equal(t, "#12107c", resolvedDisplayData.CredentialDisplays[0].Overview.BackgroundColor)
 	require.Equal(t, "#FFFFFF", resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
+}
+
+func checkSuccessCaseMatchedDisplayData(t *testing.T, resolvedDisplayData *credentialschema.ResolvedDisplayData) {
+	t.Helper()
+
+	checkSuccessCaseMatchedOverviewData(t, resolvedDisplayData)
 
 	expectedIDOrder := 0
 	expectedGivenNameOrder := 1

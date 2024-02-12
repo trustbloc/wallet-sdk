@@ -37,15 +37,15 @@ func ResolveDisplayData(t *testing.T, credentials *verifiable.CredentialsArray, 
 
 	displayData, err := display.Resolve(credentials, issuerURI, opts)
 	require.NoError(t, err)
-	checkResolvedDisplayData(t, displayData, expectedDisplayData)
+	CheckResolvedDisplayData(t, displayData, expectedDisplayData, true)
 
 	checkResolveMetricsEvent(t, metricsLogger, issuerProfileID)
 }
 
-// For now, this function assumes that the display data object has only a single credential display.
+// CheckResolvedDisplayData function assumes that the display data object has only a single credential display.
 // In the event we add a test case where there are multiple credential displays, then this function will need to be
 // updated accordingly.
-func checkResolvedDisplayData(t *testing.T, actualDisplayData, expectedDisplayData *display.Data) {
+func CheckResolvedDisplayData(t *testing.T, actualDisplayData, expectedDisplayData *display.Data, checkClaims bool) {
 	t.Helper()
 
 	checkIssuerDisplay(t, actualDisplayData.IssuerDisplay(), expectedDisplayData.IssuerDisplay())
@@ -55,7 +55,7 @@ func checkResolvedDisplayData(t *testing.T, actualDisplayData, expectedDisplayDa
 	actualCredentialDisplay := actualDisplayData.CredentialDisplayAtIndex(0)
 	expectedCredentialDisplay := expectedDisplayData.CredentialDisplayAtIndex(0)
 
-	checkCredentialDisplay(t, actualCredentialDisplay, expectedCredentialDisplay)
+	checkCredentialDisplay(t, actualCredentialDisplay, expectedCredentialDisplay, checkClaims)
 }
 
 func checkResolveMetricsEvent(t *testing.T, metricsLogger *metricslogger.MetricsLogger, issuerProfileID string) {

@@ -9,12 +9,15 @@ package display_test
 
 import (
 	_ "embed"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
+	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 
 	"github.com/stretchr/testify/require"
 
@@ -200,6 +203,23 @@ func TestResolve(t *testing.T) {
 	})
 }
 
+func TestResolveCredentialOffer(t *testing.T) {
+	metadata := &issuer.Metadata{}
+
+	require.NoError(t, json.Unmarshal(sampleIssuerMetadata, metadata))
+
+	resolvedDisplayData := display.ResolveCredentialOffer(
+		openid4ci.IssuerMetadataFromGoImpl(metadata), api.NewStringArrayArray().Add(
+			api.NewStringArray().Append("UniversityDegreeCredential")), "")
+
+	checkIssuerDisplay(t, resolvedDisplayData.IssuerDisplay())
+
+	require.Equal(t, 1, resolvedDisplayData.CredentialDisplaysLength())
+
+	credentialDisplay := resolvedDisplayData.CredentialDisplayAtIndex(0)
+	checkCredentialOverview(t, credentialDisplay)
+}
+
 func checkResolvedDisplayData(t *testing.T, resolvedDisplayData *display.Data) {
 	t.Helper()
 
@@ -221,6 +241,16 @@ func checkIssuerDisplay(t *testing.T, issuerDisplay *display.IssuerDisplay) {
 func checkCredentialDisplay(t *testing.T, credentialDisplay *display.CredentialDisplay) {
 	t.Helper()
 
+	checkCredentialOverview(t, credentialDisplay)
+
+	require.Equal(t, 6, credentialDisplay.ClaimsLength())
+
+	checkClaims(t, credentialDisplay)
+}
+
+func checkCredentialOverview(t *testing.T, credentialDisplay *display.CredentialDisplay) {
+	t.Helper()
+
 	credentialOverview := credentialDisplay.Overview()
 	require.Equal(t, "University Credential", credentialOverview.Name())
 	require.Equal(t, "en-US", credentialOverview.Locale())
@@ -228,10 +258,6 @@ func checkCredentialDisplay(t *testing.T, credentialDisplay *display.CredentialD
 	require.Equal(t, "a square logo of a university", credentialOverview.Logo().AltText())
 	require.Equal(t, "#12107c", credentialOverview.BackgroundColor())
 	require.Equal(t, "#FFFFFF", credentialOverview.TextColor())
-
-	require.Equal(t, 6, credentialDisplay.ClaimsLength())
-
-	checkClaims(t, credentialDisplay)
 }
 
 func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { //nolint:gocyclo // Test file

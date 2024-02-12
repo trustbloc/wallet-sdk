@@ -234,6 +234,11 @@ func (i *IssuerInitiatedInteraction) DynamicClientRegistrationEndpoint() (string
 	return endpoint, nil
 }
 
+// OfferedCredentialsTypes returns types of offered credentials.
+func (i *IssuerInitiatedInteraction) OfferedCredentialsTypes() *api.StringArrayArray {
+	return api.StringArrayArrayFromGoArray(i.goAPIInteraction.OfferedCredentialsTypes())
+}
+
 // IssuerMetadata returns the issuer's metadata.
 func (i *IssuerInitiatedInteraction) IssuerMetadata() (*IssuerMetadata, error) {
 	goAPIIssuerMetadata, err := i.goAPIInteraction.IssuerMetadata()

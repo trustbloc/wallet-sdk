@@ -115,7 +115,7 @@ func (h *CITestHelper) CheckMetricsLoggerAfterOpenID4CIFlow(t *testing.T, issuer
 	checkInteractionInstantiationMetricsEvent(t, h.MetricsLogger.Events[0])
 
 	checkFetchIssuerMetadataMetricsEvent(t, h.MetricsLogger.Events[1],
-		"Request credential(s) from issuer", issuerProfileID)
+		"Get issuer metadata", issuerProfileID)
 
 	checkFetchOpenIDConfigMetricsEvent(t, h.MetricsLogger.Events[2], issuerProfileID)
 
@@ -135,7 +135,8 @@ func checkIssuerDisplay(t *testing.T, actualIssuerDisplay, expectedIssuerDisplay
 	require.Equal(t, expectedIssuerDisplay.Locale(), actualIssuerDisplay.Locale())
 }
 
-func checkCredentialDisplay(t *testing.T, actualCredentialDisplay, expectedCredentialDisplay *display.CredentialDisplay) {
+func checkCredentialDisplay(t *testing.T, actualCredentialDisplay,
+	expectedCredentialDisplay *display.CredentialDisplay, checkClaims bool) {
 	t.Helper()
 
 	actualCredentialOverview := actualCredentialDisplay.Overview()
@@ -147,6 +148,10 @@ func checkCredentialDisplay(t *testing.T, actualCredentialDisplay, expectedCrede
 	require.Equal(t, expectedCredentialOverview.Logo().AltText(), actualCredentialOverview.Logo().AltText())
 	require.Equal(t, expectedCredentialOverview.BackgroundColor(), actualCredentialOverview.BackgroundColor())
 	require.Equal(t, expectedCredentialOverview.TextColor(), actualCredentialOverview.TextColor())
+
+	if !checkClaims {
+		return
+	}
 
 	require.Equal(t, expectedCredentialDisplay.ClaimsLength(), actualCredentialDisplay.ClaimsLength())
 
