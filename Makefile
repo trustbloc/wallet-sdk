@@ -113,7 +113,10 @@ integration-test-wasm: build-integration-cli mock-login-consent-docker mock-trus
 	@scripts/wasm_test.sh
 
 .PHONY: prepare-integration-test-flutter
-prepare-integration-test-flutter: build-integration-cli mock-login-consent-docker mock-trust-registry-docker build-krakend-plugin generate-test-keys
+prepare-integration-test-flutter: build-integration-cli mock-login-consent-docker mock-trust-registry-docker build-krakend-plugin generate-test-keys start-integration-env-flutter
+
+.PHONY: start-integration-env-flutter
+start-integration-env-flutter:
 	@scripts/prepare_integration_test_flutter.sh
 
 .PHONY: integration-test-flutter
