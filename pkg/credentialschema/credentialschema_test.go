@@ -139,7 +139,8 @@ func TestResolve(t *testing.T) { //nolint: gocognit // Test file
 				err = json.Unmarshal(sampleIssuerMetadata, &metadata)
 				require.NoError(t, err)
 
-				metadata.CredentialsSupported[0].Types[1] = "SomeOtherType"
+				metadata.CredentialConfigurationsSupported["UniversityDegreeCredential_jwt_vc_json-ld_v1"].
+					CredentialDefinition.Type[1] = "SomeOtherType"
 
 				resolvedDisplayData, errResolve := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
@@ -430,7 +431,8 @@ func TestResolve(t *testing.T) { //nolint: gocognit // Test file
 		err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
 		require.NoError(t, err)
 
-		issuerMetadata.CredentialsSupported[0].CredentialSubject["sensitive_id"] = &issuer.Claim{
+		credentialConf := issuerMetadata.CredentialConfigurationsSupported["UniversityDegreeCredential_jwt_vc_json-ld_v1"]
+		credentialConf.CredentialDefinition.CredentialSubject["sensitive_id"] = &issuer.Claim{
 			LocalizedClaimDisplays: []issuer.LocalizedClaimDisplay{{}},
 			Mask:                   "regex(()",
 		}

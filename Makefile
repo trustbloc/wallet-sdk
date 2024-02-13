@@ -12,6 +12,7 @@ else
 endif
 
 ALPINE_VER ?= 3.18
+GO_ALPINE_VER ?= 3.18
 GO_VER ?= 1.21
 
 NEW_VERSION ?= $(shell git describe --tags --always `git rev-list --tags --max-count=1`)-SNAPSHOT-$(shell git rev-parse --short=7 HEAD)
@@ -20,11 +21,15 @@ BUILD_TIME ?= $(shell date)
 
 # Namespace for the images
 DOCKER_OUTPUT_NS         ?= ghcr.io
+VC_REST_IMAGE_NAME       ?= trustbloc-cicd/vc-server
 REPO_IMAGE_NAME          ?= trustbloc
+GOPROXY 				 ?= https://proxy.golang.org
 
 export TERM := xterm-256color
 
 ANDROID_EMULATOR_NAME ?= WalletSDKDeviceEmulator
+
+VCS_COMMIT ?= 977063efde1950edc11e14bfe37f370f540c76a7
 
 .PHONY: all
 all: checks unit-test integration-test
@@ -97,6 +102,16 @@ build-krakend-plugin: clean
 		-w /opt/workspace/wallet-sdk/test/integration/krakend-plugins/http-client-no-redirect \
 		devopsfaith/krakend-plugin-builder:2.1.3 \
 		go build -buildmode=plugin -o /opt/workspace/wallet-sdk/test/integration/fixtures/krakend-config/plugins/http-client-no-redirect.so .
+
+.PHONY: vc-rest-docker
+vc-rest-docker:
+	@echo "Building vc rest docker image"
+	@VCS_COMMIT=$(VCS_COMMIT) scripts/build_vcs.sh
+	@docker build -f ./images/vc-rest/Dockerfile --no-cache -t $(DOCKER_OUTPUT_NS)/$(VC_REST_IMAGE_NAME):latest \
+	--build-arg GO_VER=$(GO_VER) \
+	--build-arg GO_PROXY=$(GOPROXY) \
+	--build-arg GO_ALPINE_VER=$(GO_ALPINE_VER) \
+	--build-arg ALPINE_VER=$(ALPINE_VER) .
 
 .PHONY: integration-test
 integration-test: mock-login-consent-docker mock-trust-registry-docker generate-test-keys

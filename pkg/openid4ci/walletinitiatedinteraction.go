@@ -71,13 +71,14 @@ func (i *WalletInitiatedInteraction) SupportedCredentials() ([]SupportedCredenti
 		return nil, err
 	}
 
-	supportedCredentials := make([]SupportedCredential, len(i.interaction.issuerMetadata.CredentialsSupported))
+	credentialConf := i.interaction.issuerMetadata.CredentialConfigurationsSupported
+	supportedCredentials := make([]SupportedCredential, 0, len(credentialConf))
 
-	for j := 0; j < len(i.interaction.issuerMetadata.CredentialsSupported); j++ {
-		supportedCredentials[j] = SupportedCredential{
-			Format: i.interaction.issuerMetadata.CredentialsSupported[j].Format,
-			Types:  i.interaction.issuerMetadata.CredentialsSupported[j].Types,
-		}
+	for _, credentialConfiguration := range credentialConf {
+		supportedCredentials = append(supportedCredentials, SupportedCredential{
+			Format: credentialConfiguration.Format,
+			Types:  credentialConfiguration.CredentialDefinition.Type,
+		})
 	}
 
 	return supportedCredentials, nil
