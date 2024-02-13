@@ -31,6 +31,16 @@ func (i *IssuerMetadata) LocalizedIssuerDisplays() *LocalizedIssuerDisplays {
 	return &LocalizedIssuerDisplays{localizedIssuerDisplays: i.issuerMetadata.LocalizedIssuerDisplays}
 }
 
+// IssuerMetadataToGoImpl unwrap original issuer.Metadata from IssuerMetadata wrapper.
+func IssuerMetadataToGoImpl(wrapped *IssuerMetadata) *issuer.Metadata {
+	return wrapped.issuerMetadata
+}
+
+// IssuerMetadataFromGoImpl wrap original issuer.Metadata into IssuerMetadata wrapper.
+func IssuerMetadataFromGoImpl(goAPIIssuerMetadata *issuer.Metadata) *IssuerMetadata {
+	return &IssuerMetadata{issuerMetadata: goAPIIssuerMetadata}
+}
+
 // IssuerTrustInfo represent issuer trust information.
 type IssuerTrustInfo struct {
 	DID              string

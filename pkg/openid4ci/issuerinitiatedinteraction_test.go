@@ -449,6 +449,10 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 
 					interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false, true))
 
+					offeredCredentialsTypes := interaction.OfferedCredentialsTypes()
+					require.Len(t, offeredCredentialsTypes, 1)
+					require.Contains(t, offeredCredentialsTypes[0], "VerifiedEmployee")
+
 					credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 						keyID: mockKeyID,
 					}, openid4ci.WithPIN("1234"))

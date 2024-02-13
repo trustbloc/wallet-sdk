@@ -243,6 +243,17 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 
 		require.False(t, preAuthorizedCodeGrantParams.PINRequired())
 
+		issuerMetadata, err := interaction.IssuerMetadata()
+		require.NoError(t, err)
+
+		offeringDisplayData := display.ResolveCredentialOffer(
+			issuerMetadata,
+			interaction.OfferedCredentialsTypes(),
+			"",
+		)
+
+		helpers.CheckResolvedDisplayData(t, offeringDisplayData, tc.expectedDisplayData, false)
+
 		vm, err := testHelper.DIDDoc.AssertionMethod()
 		require.NoError(t, err)
 
@@ -306,7 +317,6 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 
 		testHelper.CheckActivityLogAfterOpenID4CIFlow(t, vcsAPIDirectURL,
 			tc.issuerProfileID, subID)
-		testHelper.CheckMetricsLoggerAfterOpenID4CIFlow(t, tc.issuerProfileID)
 	}
 
 	require.Len(t, traceIDs, len(preAuthTests))

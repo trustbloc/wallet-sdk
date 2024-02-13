@@ -42,3 +42,56 @@ func (s *StringArray) AtIndex(index int) string {
 
 	return s.Strings[index]
 }
+
+// StringArrayArray represents an array of StringArray.
+type StringArrayArray struct {
+	stringArrays []*StringArray
+}
+
+// NewStringArrayArray creates new StringArrayArray.
+func NewStringArrayArray() *StringArrayArray {
+	return &StringArrayArray{}
+}
+
+// Add adds new item to underlying array.
+func (a *StringArrayArray) Add(cred *StringArray) *StringArrayArray {
+	a.stringArrays = append(a.stringArrays, cred)
+
+	return a
+}
+
+// Length returns the number of StringArrays contained within this StringArrayArray.
+func (a *StringArrayArray) Length() int {
+	return len(a.stringArrays)
+}
+
+// AtIndex returns the StringArray at the given index.
+// If the index passed in is out of bounds, then nil is returned.
+func (a *StringArrayArray) AtIndex(index int) *StringArray {
+	maxIndex := len(a.stringArrays) - 1
+	if index > maxIndex || index < 0 {
+		return nil
+	}
+
+	return a.stringArrays[index]
+}
+
+// StringArrayArrayToGoArray converts StringArrayArray to [][]string.
+func StringArrayArrayToGoArray(arrayArray *StringArrayArray) [][]string {
+	var result [][]string
+	for _, arr := range arrayArray.stringArrays {
+		result = append(result, arr.Strings)
+	}
+
+	return result
+}
+
+// StringArrayArrayFromGoArray converts [][]string to StringArrayArray.
+func StringArrayArrayFromGoArray(arrayArray [][]string) *StringArrayArray {
+	result := NewStringArrayArray()
+	for _, arr := range arrayArray {
+		result.Add(&StringArray{Strings: arr})
+	}
+
+	return result
+}

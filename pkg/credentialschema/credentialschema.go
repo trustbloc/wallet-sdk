@@ -7,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 // Package credentialschema contains a function that can be used to resolve display values per the OpenID4CI spec.
 package credentialschema
 
+import "github.com/trustbloc/wallet-sdk/pkg/models/issuer"
+
 // Resolve resolves display information for some issued credentials based on an issuer's metadata.
 // The CredentialDisplays in the returned ResolvedDisplayData object correspond to the VCs passed in and are in the
 // same order.
@@ -34,4 +36,19 @@ func Resolve(opts ...ResolveOpt) (*ResolvedDisplayData, error) {
 		IssuerDisplay:      issuerOverview,
 		CredentialDisplays: credentialDisplays,
 	}, nil
+}
+
+// ResolveCredentialOffer resolves display information for some offered credentials based on an issuer's metadata.
+// The CredentialDisplays in the returned ResolvedDisplayData object correspond to the offered credential types
+// passed in and are in the same order.
+func ResolveCredentialOffer(
+	metadata *issuer.Metadata, offeredCredentialTypes [][]string, preferredLocale string,
+) *ResolvedDisplayData {
+	issuerOverview := getIssuerDisplay(metadata.LocalizedIssuerDisplays, preferredLocale)
+
+	return &ResolvedDisplayData{
+		IssuerDisplay: issuerOverview,
+		CredentialDisplays: buildCredentialOfferingDisplays(offeredCredentialTypes,
+			metadata.CredentialsSupported, preferredLocale),
+	}
 }

@@ -30,6 +30,7 @@ import (
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
+	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 	goapiopenid4ci "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
 
@@ -597,6 +598,12 @@ func TestIssuerInitiatedInteractionAlias(t *testing.T) {
 	require.NotNil(t, issuerMetadata)
 }
 
+func TestIssuerMetadataFromToGoImpl(t *testing.T) {
+	goImpl := &issuer.Metadata{}
+	restored := openid4ci.IssuerMetadataToGoImpl(openid4ci.IssuerMetadataFromGoImpl(goImpl))
+	require.Equal(t, goImpl, restored)
+}
+
 func doRequestCredentialTest(t *testing.T, additionalHeaders *api.Headers,
 	disableTLSVerification bool,
 ) {
@@ -634,6 +641,10 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 		createCredentialOfferIssuanceURI(t, server.URL, false),
 		additionalHeaders,
 		disableTLSVerification)
+
+	offeringTypes := api.StringArrayArrayToGoArray(interaction.OfferedCredentialsTypes())
+	require.Len(t, offeringTypes, 1)
+	require.Contains(t, offeringTypes[0], "VerifiedEmployee")
 
 	keyHandle, err := kms.Create(arieskms.ED25519)
 	require.NoError(t, err)
