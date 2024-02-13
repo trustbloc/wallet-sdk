@@ -11,10 +11,10 @@ FROM golang:${GO_VER}-alpine${ALPINE_VER} as builder
 
 RUN apk update && apk add git && apk add ca-certificates
 RUN adduser -D -g '' appuser
-COPY . $GOPATH/src/github.com/trustbloc/wallet-sdk/test/integration/loginconsent/
-WORKDIR $GOPATH/src/github.com/trustbloc/wallet-sdk/test/integration/loginconsent/
+COPY . $GOPATH/src/github.com/trustbloc/wallet-sdk/
+WORKDIR $GOPATH/src/github.com/trustbloc/wallet-sdk/
 
-RUN CGO_ENABLED=0 go build -o /usr/bin/mock-login-consent
+RUN cd test/integration/loginconsent/ && CGO_ENABLED=0 go build -o /usr/bin/mock-login-consent
 
 FROM scratch
 

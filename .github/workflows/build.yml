@@ -67,8 +67,8 @@ jobs:
           CODECOV_UPLOAD_TOKEN: ${{ secrets.CODECOV_UPLOAD_TOKEN }}
 
   SDKIntegrationTest:
-    runs-on: ubuntu-20.04
-    timeout-minutes: 30
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Set up Go
@@ -86,8 +86,55 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  BuildMockLoginConsentServer:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Build docker images for test server
+        run: |
+          docker build -f ./images/mocks/loginconsent/Dockerfile --no-cache -t wallet-sdk/mock-login-consent:latest \
+          --build-arg GO_VER=1.21 \
+          --build-arg ALPINE_VER=3.18 .
+      - name: Save docker image as tar
+        run: |
+          docker save --output /tmp/mock-login-consent.tar wallet-sdk/mock-login-consent
+      - name: Upload image to artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mock-login-consent
+          path: /tmp/mock-login-consent.tar
+
+  BuilMockTrustRegistryServer:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Build docker images for test server
+        run: |
+          docker build -f ./images/mocks/trustregistry/Dockerfile --no-cache -t wallet-sdk/mock-trust-registry:latest \
+          --build-arg GO_VER=1.21 \
+          --build-arg ALPINE_VER=3.18 .
+      - name: Save docker image as tar
+        run: |
+          docker save --output /tmp/mock-trust-registry.tar wallet-sdk/mock-trust-registry
+      - name: Upload image to artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mock-trust-registry
+          path: /tmp/mock-trust-registry.tar
+
   iOSFlutterIntegrationTest:
     runs-on: macos-12
+    needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -118,9 +165,17 @@ jobs:
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
           brew install docker docker-compose
           colima start
-      - name: Build docker images for test servers
+      - name: Download artifacts (Docker images) from previous workflows
+        uses: actions/download-artifact@v4
+      - name: Load mock-login-consent server
         run: |
-          make build-integration-cli mock-login-consent-docker mock-trust-registry-docker build-krakend-plugin generate-test-keys
+          docker load --input mock-login-consent/mock-login-consent.tar
+      - name: Load mock test registry server
+        run: |
+          docker load --input mock-trust-registry/mock-trust-registry.tar
+      - name: Generate test cli and keys
+        run: |
+          make build-integration-cli generate-test-keys
       - name: Setup env for integration test
         run: |
           make start-integration-env-flutter
@@ -141,9 +196,15 @@ jobs:
           rm -rf demo/app/ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json
       - name: Run tests on Simulator
         run: make integration-test-flutter integration-test-ios
+      - name: Docker container status output
+        if: always()
+        run: |
+          docker images
+          docker ps -a
 
   AndroidFlutterIntegrationTest:
-    runs-on: macOS-12
+    runs-on: macos-12
+    needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer ]
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -176,9 +237,17 @@ jobs:
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
           brew install docker docker-compose
           colima start
-      - name: Build docker images for test servers
+      - name: Download artifacts (Docker images) from previous workflows
+        uses: actions/download-artifact@v4
+      - name: Load mock-login-consent server
         run: |
-          make build-integration-cli mock-login-consent-docker mock-trust-registry-docker build-krakend-plugin generate-test-keys
+          docker load --input mock-login-consent/mock-login-consent.tar
+      - name: Load mock test registry server
+        run: |
+          docker load --input mock-trust-registry/mock-trust-registry.tar
+      - name: Generate test cli and keys
+        run: |
+          make build-integration-cli generate-test-keys
       - name: Setup env for integration test
         run: |
           make start-integration-env-flutter
@@ -197,7 +266,7 @@ jobs:
         run: |
           cd demo/app
           flutter build apk --debug
-      - name: Run tests on Emulator
+      - name: Run flutter and android tests on Emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 32
@@ -206,3 +275,8 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: adb reverse tcp:8075 tcp:8075 && adb reverse tcp:8072 tcp:8072 && adb reverse tcp:9229 tcp:9229 && make integration-test-flutter integration-test-android
+      - name: Docker container status output
+        if: always()
+        run: |
+          docker images
+          docker ps -a
