@@ -12,11 +12,12 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"golang.org/x/oauth2/clientcredentials"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
+
+	"github.com/google/uuid"
+	"golang.org/x/oauth2/clientcredentials"
 
 	"golang.org/x/oauth2"
 
@@ -202,7 +203,7 @@ func InitiateAuthCodeIssuance() (string, error) {
 		return "", err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("expected resp status OK but got %d", resp.StatusCode)
+		return "", fmt.Errorf("expected resp status OK but got %d : resp=%s", resp.StatusCode, string(b))
 	}
 
 	println("response %s", string(b))

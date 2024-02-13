@@ -43,8 +43,8 @@ healthCheck() {
 
 	until [ $n -ge $maxAttempts ]
 	do
-	  docker-compose -f docker-compose.yml logs --no-color >& docker-compose.log
-    cat ./docker-compose.log
+
+    docker ps -a
 
 	  response=$(curl -H 'Cache-Control: no-cache' -o /dev/null -s -w "%{http_code}" "$2")
 	  echo "running health check : httpResponseCode=$response"
@@ -68,8 +68,8 @@ healthCheck() {
 }
 
 # healthcheck
-healthCheck did-resolver http://did-resolver.trustbloc.local:8072/healthcheck 200 180
 healthCheck vc-rest http://localhost:8075/version 200 180
+healthCheck did-resolver http://did-resolver.trustbloc.local:8072/healthcheck 200 180
 
 if [ $healthCheckFailed == 1 ]
 then
