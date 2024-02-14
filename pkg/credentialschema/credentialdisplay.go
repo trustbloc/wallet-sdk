@@ -22,7 +22,9 @@ var (
 	errClaimValueNotFoundInVC error
 )
 
-func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported []issuer.SupportedCredential,
+func buildCredentialDisplays(
+	vcs []*verifiable.Credential,
+	credentialConfigurationsSupported map[issuer.CredentialConfigurationID]*issuer.CredentialConfigurationSupported,
 	preferredLocale, maskingString string,
 ) ([]CredentialDisplay, error) {
 	var credentialDisplays []CredentialDisplay
@@ -41,12 +43,12 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 
 		var foundMatchingType bool
 
-		for i := range credentialsSupported {
-			if !haveMatchingTypes(&credentialsSupported[i], displayVC.Contents().Types) {
+		for _, credentialConfigurationSupported := range credentialConfigurationsSupported {
+			if !haveMatchingTypes(credentialConfigurationSupported, displayVC.Contents().Types) {
 				continue
 			}
 
-			credentialDisplay, err := buildCredentialDisplay(&credentialsSupported[i], subject, preferredLocale,
+			credentialDisplay, err := buildCredentialDisplay(credentialConfigurationSupported, subject, preferredLocale,
 				maskingString)
 			if err != nil {
 				return nil, err
@@ -72,18 +74,19 @@ func buildCredentialDisplays(vcs []*verifiable.Credential, credentialsSupported 
 	return credentialDisplays, nil
 }
 
-func buildCredentialOfferingDisplays(offeringTypes [][]string, credentialsSupported []issuer.SupportedCredential,
+func buildCredentialOfferingDisplays(offeringTypes [][]string,
+	credentialConfigurationsSupported map[issuer.CredentialConfigurationID]*issuer.CredentialConfigurationSupported,
 	preferredLocale string,
 ) []CredentialDisplay {
 	var credentialDisplays []CredentialDisplay
 
 	for _, vcTypes := range offeringTypes {
-		for i := range credentialsSupported {
-			if !haveMatchingTypes(&credentialsSupported[i], vcTypes) {
+		for _, credentialConfiguration := range credentialConfigurationsSupported {
+			if !haveMatchingTypes(credentialConfiguration, vcTypes) {
 				continue
 			}
 
-			credentialDisplay := &CredentialDisplay{Overview: getOverviewDisplay(&credentialsSupported[i], preferredLocale)}
+			credentialDisplay := &CredentialDisplay{Overview: getOverviewDisplay(credentialConfiguration, preferredLocale)}
 
 			credentialDisplays = append(credentialDisplays, *credentialDisplay)
 
@@ -96,7 +99,7 @@ func buildCredentialOfferingDisplays(offeringTypes [][]string, credentialsSuppor
 
 // The VC is considered to be a match for the supportedCredential if the VC has at least one type that's the same as
 // the type specified by the supportCredential (excluding the "VerifiableCredential" type that all VCs have).
-func haveMatchingTypes(supportedCredential *issuer.SupportedCredential, vcTypes []string) bool {
+func haveMatchingTypes(credentialConfSupported *issuer.CredentialConfigurationSupported, vcTypes []string) bool {
 	for _, typeFromVC := range vcTypes {
 		// We expect the types in the VC and SupportedCredential to always include VerifiableCredential,
 		// so we skip this case.
@@ -104,7 +107,7 @@ func haveMatchingTypes(supportedCredential *issuer.SupportedCredential, vcTypes 
 			continue
 		}
 
-		for _, typeFromSupportedCredential := range supportedCredential.Types {
+		for _, typeFromSupportedCredential := range credentialConfSupported.CredentialDefinition.Type {
 			if strings.EqualFold(typeFromVC, typeFromSupportedCredential) {
 				return true
 			}
@@ -114,15 +117,17 @@ func haveMatchingTypes(supportedCredential *issuer.SupportedCredential, vcTypes 
 	return false
 }
 
-func buildCredentialDisplay(supportedCredential *issuer.SupportedCredential, subject *verifiable.Subject,
+func buildCredentialDisplay(
+	credentialConfigurationSupported *issuer.CredentialConfigurationSupported,
+	subject *verifiable.Subject,
 	preferredLocale, maskingString string,
 ) (*CredentialDisplay, error) {
-	resolvedClaims, err := resolveClaims(supportedCredential, subject, preferredLocale, maskingString)
+	resolvedClaims, err := resolveClaims(credentialConfigurationSupported, subject, preferredLocale, maskingString)
 	if err != nil {
 		return nil, err
 	}
 
-	overview := *getOverviewDisplay(supportedCredential, preferredLocale)
+	overview := *getOverviewDisplay(credentialConfigurationSupported, preferredLocale)
 
 	return &CredentialDisplay{Overview: &overview, Claims: resolvedClaims}, nil
 }
@@ -164,12 +169,14 @@ func getSubject(vc *verifiable.Credential) (*verifiable.Subject, error) {
 	return &credentialSubjects[0], nil
 }
 
-func resolveClaims(supportedCredential *issuer.SupportedCredential, credentialSubject *verifiable.Subject,
+func resolveClaims(
+	credentialConfigurationSupported *issuer.CredentialConfigurationSupported,
+	credentialSubject *verifiable.Subject,
 	preferredLocale, maskingString string,
 ) ([]ResolvedClaim, error) {
 	var resolvedClaims []ResolvedClaim
 
-	for fieldName, claim := range supportedCredential.CredentialSubject {
+	for fieldName, claim := range credentialConfigurationSupported.CredentialDefinition.CredentialSubject {
 		resolvedClaim, err := resolveClaim(fieldName, claim, credentialSubject, preferredLocale, maskingString)
 		if err != nil && !errors.Is(err, errNoClaimDisplays) && !errors.Is(err, errClaimValueNotFoundInVC) {
 			return nil, err
@@ -307,20 +314,27 @@ func findMatchingClaimValueInMap(claims map[string]interface{}, fieldName string
 	return nil
 }
 
-func getOverviewDisplay(supportedCredential *issuer.SupportedCredential,
+func getOverviewDisplay(
+	credentialConfigurationSupported *issuer.CredentialConfigurationSupported,
 	preferredLocale string,
 ) *CredentialOverview {
 	if preferredLocale == "" {
-		return issuerCredentialDisplayToResolvedCredentialOverview(&supportedCredential.LocalizedCredentialDisplays[0])
+		return issuerCredentialDisplayToResolvedCredentialOverview(
+			&credentialConfigurationSupported.LocalizedCredentialDisplays[0],
+		)
 	}
 
-	for i := range supportedCredential.LocalizedCredentialDisplays {
-		if strings.EqualFold(preferredLocale, supportedCredential.LocalizedCredentialDisplays[i].Locale) {
-			return issuerCredentialDisplayToResolvedCredentialOverview(&supportedCredential.LocalizedCredentialDisplays[i])
+	for i := range credentialConfigurationSupported.LocalizedCredentialDisplays {
+		if strings.EqualFold(preferredLocale, credentialConfigurationSupported.LocalizedCredentialDisplays[i].Locale) {
+			return issuerCredentialDisplayToResolvedCredentialOverview(
+				&credentialConfigurationSupported.LocalizedCredentialDisplays[i],
+			)
 		}
 	}
 
-	return issuerCredentialDisplayToResolvedCredentialOverview(&supportedCredential.LocalizedCredentialDisplays[0])
+	return issuerCredentialDisplayToResolvedCredentialOverview(
+		&credentialConfigurationSupported.LocalizedCredentialDisplays[0],
+	)
 }
 
 func issuerCredentialDisplayToResolvedCredentialOverview(

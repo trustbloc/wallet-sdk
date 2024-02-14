@@ -53,121 +53,122 @@
           }
         ],
         "credentialMetadata": {
-          "credentials_supported": [
-            {
-              "id": "VerifiedEmployee",
+          "credential_configurations_supported": {
+            "VerifiedEmployee_jwt_vc_json_v1": {
               "format": "jwt_vc_json",
-              "types":[
-                "VerifiableCredential",
-                "VerifiedEmployee"
-              ],
-              "cryptographic_binding_methods_supported":[
-                "did"
-              ],
-              "cryptographic_suites_supported":[
-                "Ed25519Signature2018"
-              ],
-              "credentialSubject":{
-                "displayName":{
-                  "display":[
-                    {
-                      "locale":"en-US",
-                      "name":"Employee"
-                    }
-                  ],
-                  "value_type":"string",
-                  "order": 0
-                },
-                "givenName":{
-                  "display":[
-                    {
-                      "locale":"en-US",
-                      "name":"Given Name"
-                    }
-                  ],
-                  "value_type":"string",
-                  "order": 1
-                },
-                "jobTitle":{
-                  "display":[
-                    {
-                      "locale":"en-US",
-                      "name":"Job Title"
-                    }
-                  ],
-                  "value_type":"string",
-                  "order": 2
-                },
-                "mail":{
-                  "display":[
-                    {
-                      "locale":"en-US",
-                      "name":"Mail"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "photo":{
-                  "display":[
-                    {
-                      "name":"Photo"
-                    }
-                  ],
-                  "value_type":"image"
-                },
-                "preferredLanguage":{
-                  "display":[
-                    {
-                      "locale":"en-US",
-                      "name":"Preferred Language"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "surname":{
-                  "display":[
-                    {
-                      "locale":"en-US",
-                      "name":"Surname"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "sensitiveID":{
-                  "display":[
-                    {
-                      "name":"Sensitive ID",
-                      "locale":"en-US"
-                    }
-                  ],
-                  "value_type":"string",
-                  "mask":"regex(^(.*).{4}$)"
-                },
-                "reallySensitiveID":{
-                  "display":[
-                    {
-                      "name":"Really Sensitive ID",
-                      "locale":"en-US"
-                    }
-                  ],
-                  "value_type":"string",
-                  "mask":"regex((.*))"
+              "credential_definition": {
+                "type": [
+                  "VerifiableCredential",
+                  "VerifiedEmployee"
+                ],
+                "credentialSubject": {
+                  "displayName": {
+                    "display": [
+                      {
+                        "locale": "en-US",
+                        "name": "Employee"
+                      }
+                    ],
+                    "value_type": "string",
+                    "order": 0
+                  },
+                  "givenName": {
+                    "display": [
+                      {
+                        "locale": "en-US",
+                        "name": "Given Name"
+                      }
+                    ],
+                    "value_type": "string",
+                    "order": 1
+                  },
+                  "jobTitle": {
+                    "display": [
+                      {
+                        "locale": "en-US",
+                        "name": "Job Title"
+                      }
+                    ],
+                    "value_type": "string",
+                    "order": 2
+                  },
+                  "mail": {
+                    "display": [
+                      {
+                        "locale": "en-US",
+                        "name": "Mail"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "photo": {
+                    "display": [
+                      {
+                        "name": "Photo"
+                      }
+                    ],
+                    "value_type": "image"
+                  },
+                  "preferredLanguage": {
+                    "display": [
+                      {
+                        "locale": "en-US",
+                        "name": "Preferred Language"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "surname": {
+                    "display": [
+                      {
+                        "locale": "en-US",
+                        "name": "Surname"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "sensitiveID": {
+                    "display": [
+                      {
+                        "name": "Sensitive ID",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string",
+                    "mask": "regex(^(.*).{4}$)"
+                  },
+                  "reallySensitiveID": {
+                    "display": [
+                      {
+                        "name": "Really Sensitive ID",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string",
+                    "mask": "regex((.*))"
+                  }
                 }
               },
-              "display":[
+              "cryptographic_binding_methods_supported": [
+                "did"
+              ],
+              "cryptographic_suites_supported": [
+                "Ed25519Signature2018"
+              ],
+              "display": [
                 {
-                  "background_color":"#12107c",
-                  "locale":"en-US",
-                  "logo":{
-                    "alt_text":"a square logo of an employee verification",
-                    "url":"https://example.com/public/logo.png"
+                  "background_color": "#12107c",
+                  "locale": "en-US",
+                  "logo": {
+                    "alt_text": "a square logo of an employee verification",
+                    "url": "https://example.com/public/logo.png"
                   },
-                  "name":"Verified Employee",
-                  "text_color":"#FFFFFF"
+                  "name": "Verified Employee",
+                  "text_color": "#FFFFFF"
                 }
               ]
             }
-          ]
+          }
         }
       },
       "createDID": true
@@ -221,18 +222,138 @@
           }
         ],
         "credentialMetadata": {
-          "credentials_supported": [
-            {
-              "id": "DriversLicense",
+          "credential_configurations_supported": {
+            "DriversLicense_jwt_vc_json_v1": {
               "format": "jwt_vc_json",
-              "types":[
-                "VerifiableCredential",
-                "DriversLicense"
-              ],
-              "cryptographic_binding_methods_supported":[
+              "credential_definition": {
+                "type": [
+                  "VerifiableCredential",
+                  "DriversLicense"
+                ],
+                "credentialSubject": {
+                  "birthdate": {
+                    "display": [
+                      {
+                        "name": "Birth Date",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "document_number": {
+                    "display": [
+                      {
+                        "name": "Document Number",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "driving_privileges": {
+                    "display": [
+                      {
+                        "name": "Driving Privileges",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "expiry_date": {
+                    "display": [
+                      {
+                        "name": "Expiry Date",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "family_name": {
+                    "display": [
+                      {
+                        "name": "Family Name",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "given_name": {
+                    "display": [
+                      {
+                        "name": "Given Name",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "issue_date": {
+                    "display": [
+                      {
+                        "name": "Issue Date",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "issuing_authority": {
+                    "display": [
+                      {
+                        "name": "Issuing Authority",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "issuing_country": {
+                    "display": [
+                      {
+                        "name": "Issuing Country",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "resident_address": {
+                    "display": [
+                      {
+                        "name": "Resident Address",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "resident_city": {
+                    "display": [
+                      {
+                        "name": "Resident City",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "resident_postal_code": {
+                    "display": [
+                      {
+                        "name": "Resident Postal Code",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "resident_province": {
+                    "display": [
+                      {
+                        "name": "Resident Province",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  }
+                }
+              },
+              "cryptographic_binding_methods_supported": [
                 "did"
               ],
-              "cryptographic_suites_supported":[
+              "cryptographic_suites_supported": [
                 "Ed25519Signature2018"
               ],
               "display": [
@@ -246,128 +367,9 @@
                   "background_color": "#12107c",
                   "text_color": "#FFFFFF"
                 }
-              ],
-              "credentialSubject": {
-                "birthdate": {
-                  "display": [
-                    {
-                      "name": "Birth Date",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "document_number": {
-                  "display": [
-                    {
-                      "name": "Document Number",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "driving_privileges": {
-                  "display": [
-                    {
-                      "name": "Driving Privileges",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "expiry_date": {
-                  "display": [
-                    {
-                      "name": "Expiry Date",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "family_name": {
-                  "display": [
-                    {
-                      "name": "Family Name",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "given_name": {
-                  "display": [
-                    {
-                      "name": "Given Name",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "issue_date": {
-                  "display": [
-                    {
-                      "name": "Issue Date",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "issuing_authority": {
-                  "display": [
-                    {
-                      "name": "Issuing Authority",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "issuing_country": {
-                  "display": [
-                    {
-                      "name": "Issuing Country",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "resident_address": {
-                  "display": [
-                    {
-                      "name": "Resident Address",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "resident_city": {
-                  "display": [
-                    {
-                      "name": "Resident City",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "resident_postal_code": {
-                  "display": [
-                    {
-                      "name": "Resident Postal Code",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "resident_province": {
-                  "display": [
-                    {
-                      "name": "Resident Province",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                }
-              }
+              ]
             }
-          ]
+          }
         }
       },
       "createDID": true
@@ -425,18 +427,106 @@
           }
         ],
         "credentialMetadata": {
-          "credentials_supported": [
-            {
-              "id": "VerifiedEmployee",
+          "credential_configurations_supported": {
+            "VerifiedEmployee_jwt_vc_json_v1": {
               "format": "jwt_vc_json",
-              "types":[
-                "VerifiableCredential",
-                "VerifiedEmployee"
-              ],
-              "cryptographic_binding_methods_supported":[
+              "credential_definition": {
+                "type": [
+                  "VerifiableCredential",
+                  "VerifiedEmployee"
+                ],
+                "credentialSubject": {
+                  "displayName": {
+                    "display": [
+                      {
+                        "name": "Employee",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string",
+                    "order": 0
+                  },
+                  "givenName": {
+                    "display": [
+                      {
+                        "name": "Given Name",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string",
+                    "order": 1
+                  },
+                  "jobTitle": {
+                    "display": [
+                      {
+                        "name": "Job Title",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string",
+                    "order": 2
+                  },
+                  "surname": {
+                    "display": [
+                      {
+                        "name": "Surname",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "preferredLanguage": {
+                    "display": [
+                      {
+                        "name": "Preferred Language",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "mail": {
+                    "display": [
+                      {
+                        "name": "Mail",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "photo": {
+                    "display": [
+                      {
+                        "name": "Photo"
+                      }
+                    ],
+                    "value_type": "image"
+                  },
+                  "sensitiveID": {
+                    "display": [
+                      {
+                        "name": "Sensitive ID",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string",
+                    "mask": "regex(^(.*).{4}$)"
+                  },
+                  "reallySensitiveID": {
+                    "display": [
+                      {
+                        "name": "Really Sensitive ID",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string",
+                    "mask": "regex((.*))"
+                  }
+                }
+              },
+              "cryptographic_binding_methods_supported": [
                 "did"
               ],
-              "cryptographic_suites_supported":[
+              "cryptographic_suites_supported": [
                 "Ed25519Signature2018"
               ],
               "display": [
@@ -450,96 +540,9 @@
                   "background_color": "#12107c",
                   "text_color": "#FFFFFF"
                 }
-              ],
-              "credentialSubject": {
-                "displayName": {
-                  "display": [
-                    {
-                      "name": "Employee",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string",
-                  "order":0
-                },
-                "givenName": {
-                  "display": [
-                    {
-                      "name": "Given Name",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string",
-                  "order":1
-                },
-                "jobTitle": {
-                  "display": [
-                    {
-                      "name": "Job Title",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string",
-                  "order":2
-                },
-                "surname": {
-                  "display": [
-                    {
-                      "name": "Surname",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "preferredLanguage": {
-                  "display": [
-                    {
-                      "name": "Preferred Language",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "mail": {
-                  "display": [
-                    {
-                      "name": "Mail",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "photo": {
-                  "display": [
-                    {
-                      "name": "Photo"
-                    }
-                  ],
-                  "value_type":"image"
-                },
-                "sensitiveID":{
-                  "display":[
-                    {
-                      "name":"Sensitive ID",
-                      "locale":"en-US"
-                    }
-                  ],
-                  "value_type":"string",
-                  "mask":"regex(^(.*).{4}$)"
-                },
-                "reallySensitiveID":{
-                  "display":[
-                    {
-                      "name":"Really Sensitive ID",
-                      "locale":"en-US"
-                    }
-                  ],
-                  "value_type":"string",
-                  "mask":"regex((.*))"
-                }
-              }
+              ]
             }
-          ]
+          }
         }
       },
       "createDID": true,
@@ -598,18 +601,65 @@
           }
         ],
         "credentialMetadata": {
-          "credentials_supported": [
-            {
-              "id": "UniversityDegreeCredential",
+          "credential_configurations_supported": {
+            "UniversityDegreeCredential_ldp_vc_v1": {
               "format": "ldp_vc",
-              "types":[
-                "VerifiableCredential",
-                "UniversityDegreeCredential"
-              ],
-              "cryptographic_binding_methods_supported":[
+              "credential_definition": {
+                "type": [
+                  "VerifiableCredential",
+                  "UniversityDegreeCredential"
+                ],
+                "credentialSubject": {
+                  "familyName": {
+                    "display": [
+                      {
+                        "name": "Family Name",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "givenName": {
+                    "display": [
+                      {
+                        "name": "Given Name",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "degree": {
+                    "display": [
+                      {
+                        "name": "Degree",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "photo": {
+                    "display": [
+                      {
+                        "name": "Photo"
+                      }
+                    ],
+                    "value_type": "image"
+                  },
+                  "degreeSchool": {
+                    "display": [
+                      {
+                        "name": "Degree School",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  }
+                }
+              },
+              "cryptographic_binding_methods_supported": [
                 "did"
               ],
-              "cryptographic_suites_supported":[
+              "cryptographic_suites_supported": [
                 "Ed25519Signature2018"
               ],
               "display": [
@@ -623,55 +673,9 @@
                   "background_color": "#12107c",
                   "text_color": "#FFFFFF"
                 }
-              ],
-              "credentialSubject": {
-                "familyName": {
-                  "display": [
-                    {
-                      "name": "Family Name",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "givenName": {
-                  "display": [
-                    {
-                      "name": "Given Name",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "degree": {
-                  "display": [
-                    {
-                      "name": "Degree",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "photo":{
-                  "display":[
-                    {
-                      "name":"Photo"
-                    }
-                  ],
-                  "value_type":"image"
-                },
-                "degreeSchool": {
-                  "display": [
-                    {
-                      "name": "Degree School",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                }
-              }
+              ]
             }
-          ]
+          }
         }
       },
       "createDID": true
@@ -729,18 +733,65 @@
           }
         ],
         "credentialMetadata": {
-          "credentials_supported": [
-            {
-              "id": "UniversityDegreeCredential",
+          "credential_configurations_supported": {
+            "UniversityDegreeCredential_ldp_vc_v1": {
               "format": "ldp_vc",
-              "types":[
-                "VerifiableCredential",
-                "UniversityDegreeCredential"
-              ],
-              "cryptographic_binding_methods_supported":[
+              "credential_definition": {
+                "type": [
+                  "VerifiableCredential",
+                  "UniversityDegreeCredential"
+                ],
+                "credentialSubject": {
+                  "familyName": {
+                    "display": [
+                      {
+                        "name": "Family Name",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "givenName": {
+                    "display": [
+                      {
+                        "name": "Given Name",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "photo": {
+                    "display": [
+                      {
+                        "name": "Photo"
+                      }
+                    ],
+                    "value_type": "image"
+                  },
+                  "degree": {
+                    "display": [
+                      {
+                        "name": "Degree",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "degreeSchool": {
+                    "display": [
+                      {
+                        "name": "Degree School",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  }
+                }
+              },
+              "cryptographic_binding_methods_supported": [
                 "did"
               ],
-              "cryptographic_suites_supported":[
+              "cryptographic_suites_supported": [
                 "Ed25519Signature2018"
               ],
               "display": [
@@ -754,55 +805,9 @@
                   "background_color": "#12107c",
                   "text_color": "#FFFFFF"
                 }
-              ],
-              "credentialSubject": {
-                "familyName": {
-                  "display": [
-                    {
-                      "name": "Family Name",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "givenName": {
-                  "display": [
-                    {
-                      "name": "Given Name",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "photo":{
-                  "display":[
-                    {
-                      "name":"Photo"
-                    }
-                  ],
-                  "value_type":"image"
-                },
-                "degree": {
-                  "display": [
-                    {
-                      "name": "Degree",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "degreeSchool": {
-                  "display": [
-                    {
-                      "name": "Degree School",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                }
-              }
+              ]
             }
-          ]
+          }
         }
       },
       "createDID": true
@@ -856,18 +861,83 @@
           }
         ],
         "credentialMetadata": {
-          "credentials_supported": [
-            {
-              "id": "VerifiedEmployee",
+          "credential_configurations_supported": {
+            "VerifiedEmployee_jwt_vc_json_v1": {
               "format": "jwt_vc_json",
-              "types":[
-                "VerifiableCredential",
-                "VerifiedEmployee"
-              ],
-              "cryptographic_binding_methods_supported":[
+              "credential_definition": {
+                "type": [
+                  "VerifiableCredential",
+                  "VerifiedEmployee"
+                ],
+                "credentialSubject": {
+                  "displayName": {
+                    "display": [
+                      {
+                        "name": "Employee",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "givenName": {
+                    "display": [
+                      {
+                        "name": "Given Name",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "jobTitle": {
+                    "display": [
+                      {
+                        "name": "Job Title",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "surname": {
+                    "display": [
+                      {
+                        "name": "Surname",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "preferredLanguage": {
+                    "display": [
+                      {
+                        "name": "Preferred Language",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "mail": {
+                    "display": [
+                      {
+                        "name": "Mail",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "photo": {
+                    "display": [
+                      {
+                        "name": "Photo"
+                      }
+                    ],
+                    "value_type": "image"
+                  }
+                }
+              },
+              "cryptographic_binding_methods_supported": [
                 "did"
               ],
-              "cryptographic_suites_supported":[
+              "cryptographic_suites_supported": [
                 "Ed25519Signature2018"
               ],
               "display": [
@@ -881,73 +951,9 @@
                   "background_color": "#12107c",
                   "text_color": "#FFFFFF"
                 }
-              ],
-              "credentialSubject": {
-                "displayName": {
-                  "display": [
-                    {
-                      "name": "Employee",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "givenName": {
-                  "display": [
-                    {
-                      "name": "Given Name",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "jobTitle": {
-                  "display": [
-                    {
-                      "name": "Job Title",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "surname": {
-                  "display": [
-                    {
-                      "name": "Surname",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "preferredLanguage": {
-                  "display": [
-                    {
-                      "name": "Preferred Language",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "mail": {
-                  "display": [
-                    {
-                      "name": "Mail",
-                      "locale": "en-US"
-                    }
-                  ],
-                  "value_type":"string"
-                },
-                "photo": {
-                  "display": [
-                    {
-                      "name": "Photo"
-                    }
-                  ],
-                  "value_type":"image"
-                }
-              }
+              ]
             }
-          ]
+          }
         }
       },
       "createDID": true
@@ -1103,7 +1109,7 @@
                 "name": "Degree",
                 "purpose": "We can only hire with university degree.",
                 "constraints": {
-                  "limit_disclosure":"required",
+                  "limit_disclosure": "required",
                   "fields": [
                     {
                       "path": [
@@ -1203,7 +1209,7 @@
                       "path": [
                         "$.credentialSubject.jobTitle",
                         "$.vc.credentialSubject.jobTitle"
-                        ],
+                      ],
                       "purpose": "We can only hire software developers.",
                       "filter": {
                         "type": "string",
@@ -1383,29 +1389,29 @@
                   }
                 ],
                 "constraints": {
-                  "limit_disclosure":"required",
-                  "fields":[
+                  "limit_disclosure": "required",
+                  "fields": [
                     {
                       "id": "issuer-name",
-                      "path":[
+                      "path": [
                         "$.issuer.name",
                         "$.vc.issuer.name"
                       ],
-                      "purpose":"The claim must be from one of the specified issuers",
-                      "filter":{
-                        "type":"string",
-                        "pattern":"Bank Issuer"
+                      "purpose": "The claim must be from one of the specified issuers",
+                      "filter": {
+                        "type": "string",
+                        "pattern": "Bank Issuer"
                       }
                     },
                     {
                       "id": "job-title",
-                      "path":[
+                      "path": [
                         "$.credentialSubject.jobTitle",
                         "$.vc.credentialSubject.jobTitle",
                         "$.jobTitle"
                       ],
-                      "filter":{
-                        "type":"string"
+                      "filter": {
+                        "type": "string"
                       }
                     }
                   ]

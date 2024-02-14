@@ -77,7 +77,8 @@ func TestGet(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, issuerMetadata)
 
-			displayNameClaim, exists := issuerMetadata.CredentialsSupported[0].CredentialSubject["displayName"]
+			credentialConf := issuerMetadata.CredentialConfigurationsSupported["VerifiedEmployee_ldp_vc_v1"]
+			displayNameClaim, exists := credentialConf.CredentialDefinition.CredentialSubject["displayName"]
 			require.True(t, exists)
 
 			require.NotNil(t, displayNameClaim.Order)
@@ -86,7 +87,7 @@ func TestGet(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, 3, order)
 
-			jobTitleClaim, exists := issuerMetadata.CredentialsSupported[0].CredentialSubject["jobTitle"]
+			jobTitleClaim, exists := credentialConf.CredentialDefinition.CredentialSubject["jobTitle"]
 			require.True(t, exists)
 
 			require.Nil(t, jobTitleClaim.Order)
@@ -123,7 +124,10 @@ func TestGet(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, issuerMetadata)
 
-			displayNameClaim, exists := issuerMetadata.CredentialsSupported[0].CredentialSubject["displayName"]
+			credentialConf := issuerMetadata.CredentialConfigurationsSupported["VerifiedEmployee_ldp_vc_v1"]
+			credentialDefinition := credentialConf.CredentialDefinition
+
+			displayNameClaim, exists := credentialDefinition.CredentialSubject["displayName"]
 			require.True(t, exists)
 
 			require.NotNil(t, displayNameClaim.Order)
@@ -132,7 +136,7 @@ func TestGet(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, 3, order)
 
-			jobTitleClaim, exists := issuerMetadata.CredentialsSupported[0].CredentialSubject["jobTitle"]
+			jobTitleClaim, exists := credentialDefinition.CredentialSubject["jobTitle"]
 			require.True(t, exists)
 
 			require.Nil(t, jobTitleClaim.Order)
@@ -162,7 +166,7 @@ func TestGet(t *testing.T) {
 		require.Nil(t, issuerMetadata)
 	})
 	t.Run("Missing signature verifier", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{issuerMetadata: "invalid"}
+		issuerServerHandler := &mockIssuerServerHandler{issuerMetadata: `{"signed_metadata": "a.b"}`}
 		server := httptest.NewServer(issuerServerHandler)
 
 		defer server.Close()
@@ -185,7 +189,7 @@ func TestGet(t *testing.T) {
 		require.Nil(t, issuerMetadata)
 	})
 	t.Run("Fail to parse", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{}
+		issuerServerHandler := &mockIssuerServerHandler{issuerMetadata: `{"signed_metadata": "a.b"}`}
 		server := httptest.NewServer(issuerServerHandler)
 
 		defer server.Close()
@@ -193,7 +197,7 @@ func TestGet(t *testing.T) {
 		issuerMetadata, err := issuermetadata.Get(server.URL, http.DefaultClient, nil,
 			"", &mockVerifier{})
 		require.EqualError(t, err, "failed to parse the response from the issuer's OpenID Credential "+
-			"Issuer endpoint as JSON or as a JWT: unexpected end of JSON input\nJWT of compacted JWS form is "+
+			"Issuer endpoint as JSON or as a JWT: JWT of compacted JWS form is "+
 			"supported only")
 		require.Nil(t, issuerMetadata)
 	})
