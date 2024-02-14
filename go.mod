@@ -13,9 +13,10 @@ require (
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.2
 	github.com/trustbloc/bbs-signature-go v1.0.2-0.20240117165819-e99610e107f4
-	github.com/trustbloc/did-go v1.1.1-0.20240117181910-cb9c77016955
+	github.com/trustbloc/did-go v1.1.1-0.20240214160354-aa500e57d8bd
 	github.com/trustbloc/kms-go v1.1.1-0.20240117181216-c38a74431167
-	github.com/trustbloc/vc-go v1.1.1-0.20240131142342-c5e522292848
+	github.com/trustbloc/sidetree-go v1.0.1-0.20240214161133-6f4f189798e4
+	github.com/trustbloc/vc-go v1.1.1-0.20240214161923-e4b84a59fc02
 	golang.org/x/oauth2 v0.13.0
 )
 
@@ -60,7 +61,6 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
-	github.com/trustbloc/sidetree-go v1.0.1-0.20240117181443-2f0d5acb92b7 // indirect
 	github.com/veraison/go-cose v1.1.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect

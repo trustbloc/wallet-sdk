@@ -12,10 +12,10 @@ import (
 	"fmt"
 
 	"github.com/trustbloc/did-go/doc/did"
-	longform "github.com/trustbloc/did-go/method/sidetreelongform"
 	vdrapi "github.com/trustbloc/did-go/vdr/api"
 	jwktype "github.com/trustbloc/kms-go/doc/jose/jwk"
 	"github.com/trustbloc/kms-go/spi/kms"
+	longform "github.com/trustbloc/sidetree-go/pkg/vdr/sidetreelongform"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
