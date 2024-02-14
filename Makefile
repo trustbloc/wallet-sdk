@@ -90,14 +90,6 @@ mock-trust-registry-docker:
 	--build-arg ALPINE_VER=$(GO_ALPINE_VER) \
 	--build-arg GO_IMAGE=$(GO_IMAGE) .
 
-.PHONY: build-krakend-plugin
-build-krakend-plugin: clean
-	@docker run -i --platform linux/amd64 --rm \
-		-v $(abspath .):/opt/workspace/wallet-sdk \
-		-w /opt/workspace/wallet-sdk/test/integration/krakend-plugins/http-client-no-redirect \
-		devopsfaith/krakend-plugin-builder:2.1.3 \
-		go build -buildmode=plugin -o /opt/workspace/wallet-sdk/test/integration/fixtures/krakend-config/plugins/http-client-no-redirect.so .
-
 .PHONY: integration-test
 integration-test: mock-login-consent-docker mock-trust-registry-docker generate-test-keys
 	@cd test/integration && go mod tidy && ENABLE_COMPOSITION=true go test -count=1 -v -cover . -p 1 -timeout=10m -race
@@ -108,12 +100,8 @@ build-integration-cli:
 	@mkdir -p ./build/bin
 	@cd test/integration/cli && go build -o ../../../build/bin/integration-cli main.go
 
-.PHONY: integration-test-wasm
-integration-test-wasm: build-integration-cli mock-login-consent-docker mock-trust-registry-docker build-krakend-plugin generate-test-keys
-	@scripts/wasm_test.sh
-
 .PHONY: prepare-integration-test-flutter
-prepare-integration-test-flutter: build-integration-cli mock-login-consent-docker mock-trust-registry-docker build-krakend-plugin generate-test-keys start-integration-env-flutter
+prepare-integration-test-flutter: build-integration-cli mock-login-consent-docker mock-trust-registry-docker generate-test-keys start-integration-env-flutter
 
 .PHONY: start-integration-env-flutter
 start-integration-env-flutter:
