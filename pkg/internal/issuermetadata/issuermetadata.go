@@ -61,18 +61,22 @@ func responseBytesToIssuerMetadataObject(responseBytes []byte,
 
 	// First, try parsing directly as JSON.
 	err := json.Unmarshal(responseBytes, &metadata)
-	if err == nil {
-		return &metadata, nil
+	if err != nil {
+		return nil, fmt.Errorf("decode metadata: %w", err)
 	}
 
-	return issuerMetadataObjectFromJWT(responseBytes, signatureVerifier, err)
+	if len(metadata.SignedMetadata) > 0 {
+		return issuerMetadataObjectFromJWT(metadata.SignedMetadata, signatureVerifier, err)
+	}
+
+	return &metadata, nil
 }
 
 // errUnmarshal is the error that happened when the response bytes couldn't be unmarshalled into the issuer metadata
 // struct directly. It's passed here so that it can be included in the error message in case the response
 // is also not a JWT. This gives the caller additional information that can help them to more easily debug the cause
 // of the parsing failure.
-func issuerMetadataObjectFromJWT(responseBytes []byte, signatureVerifier jwt.ProofChecker,
+func issuerMetadataObjectFromJWT(signedMetadata string, signatureVerifier jwt.ProofChecker,
 	errUnmarshal error,
 ) (*issuer.Metadata, error) {
 	var metadata issuer.Metadata
@@ -84,7 +88,7 @@ func issuerMetadataObjectFromJWT(responseBytes []byte, signatureVerifier jwt.Pro
 		return nil, errors.New("missing signature verifier")
 	}
 
-	jsonWebToken, _, errParseJWT := jwt.ParseAndCheckProof(string(responseBytes), signatureVerifier, false)
+	jsonWebToken, _, errParseJWT := jwt.ParseAndCheckProof(signedMetadata, signatureVerifier, false)
 	if errParseJWT != nil {
 		return nil, fmt.Errorf("failed to parse the response from the issuer's OpenID Credential Issuer "+
 			"endpoint as JSON or as a JWT: %w", errors.Join(errUnmarshal, errParseJWT))
