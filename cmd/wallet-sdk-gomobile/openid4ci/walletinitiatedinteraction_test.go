@@ -33,11 +33,29 @@ func TestWalletInitiatedInteraction_Flow(t *testing.T) {
 		TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
 	}
 
-	issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential",`+
-		`"credential_issuer":"https://server.example.com",`+
-		`"credentials_supported":[{"format":"jwt_vc_json","types":["VerifiableCredential",`+
-		`"UniversityDegreeCredential"]},{"format":"ldp_vc","types":["VerifiableCredential",`+
-		`"DriversLicenseCredential"]}]}`, server.URL)
+	issuerServerHandler.issuerMetadata = fmt.Sprintf(`{
+  "credential_endpoint": "%s/credential",
+  "credential_configurations_supported": {
+    "PermanentResidentCard_jwt_vc_json-ld_v1": {
+      "credential_definition": {
+        "type": [
+          "VerifiableCredential",
+          "PermanentResidentCard"
+        ]
+      },
+      "format": "jwt_vc_json-ld"
+    },
+    "DriversLicenseCredential_ldp_vc_v1": {
+      "credential_definition": {
+        "type": [
+          "VerifiableCredential",
+          "DriversLicenseCredential"
+        ]
+      },
+      "format": "ldp_vc"
+    }
+  }
+}`, server.URL)
 
 	defer server.Close()
 
@@ -59,18 +77,22 @@ func TestWalletInitiatedInteraction_Flow(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, issuerMetadata)
 
-	supportedCredentials := issuerMetadata.SupportedCredentials()
+	supportedCredentials := issuerMetadata.CredentialConfigurationsSupported()
 	require.Equal(t, 2, supportedCredentials.Length())
 
-	require.Equal(t, "jwt_vc_json", supportedCredentials.AtIndex(0).Format())
-	require.Equal(t, 2, supportedCredentials.AtIndex(0).Types().Length())
-	require.Equal(t, "VerifiableCredential", supportedCredentials.AtIndex(0).Types().AtIndex(0))
-	require.Equal(t, "UniversityDegreeCredential", supportedCredentials.AtIndex(0).Types().AtIndex(1))
+	prc := supportedCredentials.CredentialConfigurationSupported("PermanentResidentCard_jwt_vc_json-ld_v1")
 
-	require.Equal(t, "ldp_vc", supportedCredentials.AtIndex(1).Format())
-	require.Equal(t, 2, supportedCredentials.AtIndex(1).Types().Length())
-	require.Equal(t, "VerifiableCredential", supportedCredentials.AtIndex(1).Types().AtIndex(0))
-	require.Equal(t, "DriversLicenseCredential", supportedCredentials.AtIndex(1).Types().AtIndex(1))
+	require.Equal(t, "jwt_vc_json-ld", prc.Format())
+	require.Equal(t, 2, prc.Types().Length())
+	require.Equal(t, "VerifiableCredential", prc.Types().AtIndex(0))
+	require.Equal(t, "PermanentResidentCard", prc.Types().AtIndex(1))
+
+	dlc := supportedCredentials.CredentialConfigurationSupported("DriversLicenseCredential_ldp_vc_v1")
+
+	require.Equal(t, "ldp_vc", dlc.Format())
+	require.Equal(t, 2, dlc.Types().Length())
+	require.Equal(t, "VerifiableCredential", dlc.Types().AtIndex(0))
+	require.Equal(t, "DriversLicenseCredential", dlc.Types().AtIndex(1))
 
 	dynamicClientRegistrationSupported, err := interaction.DynamicClientRegistrationSupported()
 	require.NoError(t, err)

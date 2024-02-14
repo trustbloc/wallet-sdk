@@ -65,24 +65,24 @@ func TestIssuerMetadata(t *testing.T) {
 
 	require.Nil(t, localizedIssuerDisplays.AtIndex(2))
 
-	supportedCredentials := issuerMetadata.SupportedCredentials()
-	require.NotNil(t, supportedCredentials)
-	require.Equal(t, 1, supportedCredentials.Length())
+	credentialConfigurationsSupported := issuerMetadata.CredentialConfigurationsSupported()
+	require.NotNil(t, credentialConfigurationsSupported)
+	require.Equal(t, 1, credentialConfigurationsSupported.Length())
 
-	supportedCredential := supportedCredentials.AtIndex(0)
-	require.NotNil(t, supportedCredential)
-	require.Equal(t, "jwt_vc_json", supportedCredential.Format())
-	require.Equal(t, "UniversityDegreeCredential", supportedCredential.ID())
+	credentialConfigurationSupported := credentialConfigurationsSupported.
+		CredentialConfigurationSupported("PermanentResidentCard_jwt_vc_json-ld_v1")
+	require.NotNil(t, credentialConfigurationSupported)
+	require.Equal(t, "jwt_vc_json-ld", credentialConfigurationSupported.Format())
 
-	types := supportedCredential.Types()
+	types := credentialConfigurationSupported.Types()
 	require.NotNil(t, types)
 	require.Equal(t, 2, types.Length())
 	require.Equal(t, "VerifiableCredential", types.AtIndex(0))
-	require.Equal(t, "UniversityDegreeCredential", types.AtIndex(1))
+	require.Equal(t, "PermanentResidentCard", types.AtIndex(1))
 
-	require.Nil(t, supportedCredentials.AtIndex(1))
+	require.Nil(t, credentialConfigurationsSupported.CredentialConfigurationSupported(""))
 
-	localizedDisplays := supportedCredential.LocalizedDisplays()
+	localizedDisplays := credentialConfigurationSupported.LocalizedDisplays()
 	require.NotNil(t, localizedDisplays)
 	require.Equal(t, 1, localizedDisplays.Length())
 

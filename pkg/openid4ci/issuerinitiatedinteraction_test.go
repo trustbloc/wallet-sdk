@@ -1832,7 +1832,8 @@ func TestIssuerInitiatedInteraction_IssuerURI(t *testing.T) {
 func TestIssuerInitiatedInteraction_VerifyIssuer(t *testing.T) {
 	t.Run("Failed to get issuer metadata", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{
-			t: t,
+			t:              t,
+			issuerMetadata: `{"signed_metadata": "a.b"}`,
 		}
 
 		server := httptest.NewServer(issuerServerHandler)
@@ -1843,7 +1844,7 @@ func TestIssuerInitiatedInteraction_VerifyIssuer(t *testing.T) {
 		serviceURL, err := interaction.VerifyIssuer()
 		require.EqualError(t, err, "METADATA_FETCH_FAILED(OCI1-0004):failed to get issuer metadata: "+
 			"failed to parse the response from the issuer's OpenID Credential Issuer endpoint as JSON or "+
-			"as a JWT: unexpected end of JSON input\nJWT of compacted JWS form is supported only")
+			"as a JWT: JWT of compacted JWS form is supported only")
 		require.Empty(t, serviceURL)
 	})
 	t.Run("Resolved DID document has no Linked Domains services specified", func(t *testing.T) {
@@ -1892,7 +1893,8 @@ func TestIssuerInitiatedInteraction_VerifyIssuer(t *testing.T) {
 func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
 	t.Run("Failed to get issuer metadata", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{
-			t: t,
+			t:              t,
+			issuerMetadata: `{"signed_metadata": "a.b"}`,
 		}
 
 		server := httptest.NewServer(issuerServerHandler)
@@ -1903,7 +1905,7 @@ func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
 		trustInfo, err := interaction.IssuerTrustInfo()
 		require.EqualError(t, err, "METADATA_FETCH_FAILED(OCI1-0004):failed to get issuer metadata: "+
 			"failed to parse the response from the issuer's OpenID Credential Issuer endpoint as JSON or "+
-			"as a JWT: unexpected end of JSON input\nJWT of compacted JWS form is supported only")
+			"as a JWT: JWT of compacted JWS form is supported only")
 		require.Nil(t, trustInfo)
 	})
 
