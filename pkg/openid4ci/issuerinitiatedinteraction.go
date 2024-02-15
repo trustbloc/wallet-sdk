@@ -409,7 +409,7 @@ func (i *IssuerInitiatedInteraction) getPreAuthTokenResponse(pin, tokenEndpoint 
 	params.Add("pre-authorized_code", i.preAuthorizedCodeGrantParams.preAuthorizedCode)
 
 	if pin != "" {
-		params.Add("user_pin", pin)
+		params.Add("tx_code", pin)
 	}
 
 	paramsReader := strings.NewReader(params.Encode())
