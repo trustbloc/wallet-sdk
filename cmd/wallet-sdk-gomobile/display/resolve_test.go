@@ -236,6 +236,11 @@ func checkIssuerDisplay(t *testing.T, issuerDisplay *display.IssuerDisplay) {
 
 	require.Equal(t, "Example University", issuerDisplay.Name())
 	require.Equal(t, "en-US", issuerDisplay.Locale())
+	require.Equal(t, "en-US", issuerDisplay.Locale())
+	require.Equal(t, "https://server.example.com", issuerDisplay.URL())
+	require.Equal(t, "https://exampleuniversity.com/public/logo.png", issuerDisplay.Logo().URL())
+	require.Equal(t, "#12107c", issuerDisplay.BackgroundColor())
+	require.Equal(t, "#FFFFFF", issuerDisplay.TextColor())
 }
 
 func checkCredentialDisplay(t *testing.T, credentialDisplay *display.CredentialDisplay) {

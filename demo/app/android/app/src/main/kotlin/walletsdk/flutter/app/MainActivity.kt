@@ -201,7 +201,7 @@ class MainActivity : FlutterActivity() {
 
                         "serializeDisplayData" -> {
                             try {
-                                val credentialDisplay = serializeDisplayData(call)
+                                val credentialDisplay = resolveDisplayData(call)
                                 result.success(credentialDisplay)
 
                             } catch (e: Exception) {
@@ -209,9 +209,9 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
-                        "resolveCredentialDisplay" -> {
+                        "parseCredentialDisplay" -> {
                             try {
-                                val credentialDisplay = resolveCredentialDisplay(call)
+                                val credentialDisplay = parseCredentialDisplay(call)
                                 result.success(credentialDisplay)
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while resolving credential display", e)
@@ -241,10 +241,9 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
-                        "getIssuerMetaData" -> {
+                        "getCredentialOfferDisplayData" -> {
                             try {
-                                val issuerMetadataResp = getIssuerMetaData()
-                                result.success(issuerMetadataResp)
+                                result.success(getCredentialOfferDisplayData())
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while getting issuer Metadata", e)
                             }
@@ -595,54 +594,6 @@ class MainActivity : FlutterActivity() {
         )
     }
 
-    private fun getIssuerMetaData(): MutableList<Any> {
-        val openID4CI = this.openID4CI
-                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
-
-        val issuerMetaData = openID4CI.getIssuerMetadata()
-        // credential issuer
-        val credIssuer = issuerMetaData.credentialIssuer()
-        // supported Credentials list
-        val supportedCredentials = issuerMetaData.supportedCredentials()
-        var supportedCredentialsList = getSupportedCredentialsList(supportedCredentials)
-
-        // localized issuer displays data
-        var localizedIssuerDisplays = issuerMetaData.localizedIssuerDisplays()
-        val localizedIssuerDisplayList = mutableListOf<Any>()
-        for (index in 0 until (localizedIssuerDisplays.length())) {
-            val localizedIssuerDisplay: MutableMap<String, Any> = mutableMapOf()
-            localizedIssuerDisplay["name"] = localizedIssuerDisplays.atIndex(index).name()
-            localizedIssuerDisplay["locale"] = localizedIssuerDisplays.atIndex(index).locale()
-            localizedIssuerDisplay["url"] = localizedIssuerDisplays.atIndex(index).url()
-            localizedIssuerDisplay["textColor"] = localizedIssuerDisplays.atIndex(index).textColor()
-            localizedIssuerDisplay["backgroundColor"] =
-                    localizedIssuerDisplays.atIndex(index).backgroundColor()
-            if (localizedIssuerDisplays.atIndex(index).logo() != null) {
-                localizedIssuerDisplay["logo"] = localizedIssuerDisplays.atIndex(index).logo().url()
-            } else {
-                localizedIssuerDisplay["logo"] = ""
-            }
-
-
-            localizedIssuerDisplayList.addAll(listOf(localizedIssuerDisplay))
-        }
-
-        val issuerMetaDataRespList = mutableListOf<Any>()
-        val issuerMetaDataResp: MutableMap<String, Any> = mutableMapOf()
-
-        issuerMetaDataResp["credentialIssuer"] = credIssuer
-        issuerMetaDataResp["supportedCredentials"] = supportedCredentialsList
-        issuerMetaDataResp["localizedIssuerDisplays"] = localizedIssuerDisplayList
-
-
-        issuerMetaDataRespList.addAll(listOf(issuerMetaDataResp))
-
-        print(" issuerMetaDataRespList $issuerMetaDataRespList")
-
-
-        return issuerMetaDataRespList
-    }
-
     private fun getSupportedCredentialsList(supportedCredentials: SupportedCredentials): MutableList<Any> {
         val supportedCredentialsList = mutableListOf<Any>()
 
@@ -763,7 +714,7 @@ class MainActivity : FlutterActivity() {
     same order. This method requires one or more VCs and the issuer's base URI.
     IssuerURI and array of credentials  are parsed using VcParse to be passed to resolveDisplay which returns the resolved Display Data
      */
-    private fun serializeDisplayData(call: MethodCall): String? {
+    private fun resolveDisplayData(call: MethodCall): String? {
         val issuerURI = call.argument<String>("uri")
                 ?: throw java.lang.Exception("issuerURI params is missed")
         val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
@@ -776,17 +727,45 @@ class MainActivity : FlutterActivity() {
                 .serialize()
     }
 
-    private fun resolveCredentialDisplay(call: MethodCall): MutableList<Any> {
-        val resolvedCredentialDisplayData = call.argument<String>("resolvedCredentialDisplayData")
-                ?: throw java.lang.Exception("resolvedCredentialDisplayData params is missed")
+    private fun getCredentialOfferDisplayData(): MutableMap<String, Any> {
+        val openID4CI = this.openID4CI
+                ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
-        val displayData = Display.parseData(resolvedCredentialDisplayData)
-        val issuerDisplayData = displayData.issuerDisplay()
+        val displayData = openID4CI.getCredentialOfferDisplayData()
+        // credential issuer
+        val issuerDisplay = displayData.issuerDisplay();
+
+
+        val localizedIssuerDisplay: MutableMap<String, Any> = mutableMapOf()
+
+        localizedIssuerDisplay["name"] = issuerDisplay.name()
+        localizedIssuerDisplay["locale"] = issuerDisplay.locale()
+        localizedIssuerDisplay["url"] = issuerDisplay.url()
+        localizedIssuerDisplay["textColor"] = issuerDisplay.textColor()
+        localizedIssuerDisplay["backgroundColor"] = issuerDisplay.backgroundColor()
+
+        if (issuerDisplay.logo() != null) {
+            localizedIssuerDisplay["logo"] = issuerDisplay.logo().url()
+        } else {
+            localizedIssuerDisplay["logo"] = ""
+        }
+
+        val issuerMetaDataResp: MutableMap<String, Any> = mutableMapOf()
+
+        issuerMetaDataResp["localizedIssuerDisplay"] = localizedIssuerDisplay
+        issuerMetaDataResp["offeredCredentials"] = serializeCredentialsDisplayData(displayData)
+
+
+        return issuerMetaDataResp
+    }
+
+    private fun serializeCredentialsDisplayData(displayData: dev.trustbloc.wallet.sdk.display.Data): MutableList<Any> {
+
         val resolvedCredDisplayList = mutableListOf<Any>()
-        val claimList = mutableListOf<Any>()
-
         for (i in 0 until (displayData.credentialDisplaysLength())) {
             val credentialDisplay = displayData.credentialDisplayAtIndex(i)
+            val claimList = mutableListOf<Any>()
+
             for (i in 0 until credentialDisplay.claimsLength()) {
                 val claim = credentialDisplay.claimAtIndex(i)
                 val claims: MutableMap<String, Any> = mutableMapOf()
@@ -810,11 +789,20 @@ class MainActivity : FlutterActivity() {
             resolveDisplayResp["logo"] = overview.logo().url()
             resolveDisplayResp["textColor"] = overview.textColor()
             resolveDisplayResp["backgroundColor"] = overview.backgroundColor()
-            resolveDisplayResp["issuerName"] = issuerDisplayData.name()
+            resolveDisplayResp["issuerName"] = displayData.issuerDisplay().name()
 
             resolvedCredDisplayList.addAll(listOf(resolveDisplayResp))
         }
         return resolvedCredDisplayList
+    }
+
+    private fun parseCredentialDisplay(call: MethodCall): MutableList<Any> {
+        val resolvedCredentialDisplayData = call.argument<String>("resolvedCredentialDisplayData")
+                ?: throw java.lang.Exception("resolvedCredentialDisplayData params is missed")
+
+        val displayData = Display.parseData(resolvedCredentialDisplayData)
+
+        return serializeCredentialsDisplayData(displayData)
     }
 
     /**
@@ -969,6 +957,7 @@ class MainActivity : FlutterActivity() {
         val result = openID4CI.checkWithTrustRegistry(evaluateIssuanceURL)
         return hashMapOf("allowed" to result.allowed, "errorCode" to result.errorCode, "errorMessage" to result.errorMessage)
     }
+
     private fun evaluatePresentationTrustInfo(call: MethodCall): HashMap<String, Any> {
         val evaluatePresentationURL = call.argument<String>("evaluatePresentationURL")
                 ?: throw java.lang.Exception("evaluatePresentationURL params is missed")

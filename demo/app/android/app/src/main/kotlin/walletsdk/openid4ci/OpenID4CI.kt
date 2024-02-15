@@ -24,11 +24,11 @@ import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import java.lang.Exception
 
 class OpenID4CI constructor(
-    private val requestURI: String,
-    private val crypto: Crypto,
-    private val didResolver: DIDResolver,
-    private val activityLogger: ActivityLogger,
-    private val kms: KMS,
+        private val requestURI: String,
+        private val crypto: Crypto,
+        private val didResolver: DIDResolver,
+        private val activityLogger: ActivityLogger,
+        private val kms: KMS,
 ) {
     private var newInteraction: IssuerInitiatedInteraction
 
@@ -57,10 +57,10 @@ class OpenID4CI constructor(
     }
 
     fun createAuthorizationURL(
-        clientID: String,
-        redirectURI: String,
-        oauthDiscoverableClientURI: String,
-        scopes: StringArray
+            clientID: String,
+            redirectURI: String,
+            oauthDiscoverableClientURI: String,
+            scopes: StringArray
     ): String {
         val opts = CreateAuthorizationURLOpts()
 
@@ -73,9 +73,9 @@ class OpenID4CI constructor(
         }
 
         return newInteraction.createAuthorizationURL(
-            clientID,
-            redirectURI,
-            opts,
+                clientID,
+                redirectURI,
+                opts,
         )
     }
 
@@ -105,6 +105,13 @@ class OpenID4CI constructor(
         return Registry(config).evaluateIssuance(issuanceRequest)
     }
 
+    fun getCredentialOfferDisplayData(): dev.trustbloc.wallet.sdk.display.Data {
+        return Display.resolveCredentialOffer(
+                newInteraction.issuerMetadata(),
+                newInteraction.offeredCredentialsTypes(), ""
+        )
+    }
+
     fun requestCredential(didVerificationMethod: VerificationMethod, otp: String?): String? {
         val opts = RequestCredentialWithPreAuthOpts().setPIN(otp)
         val credsArr = newInteraction.requestCredentialWithPreAuth(didVerificationMethod, opts)
@@ -118,13 +125,13 @@ class OpenID4CI constructor(
 
     @SuppressLint("SuspiciousIndentation")
     fun requestCredentialWithAuth(
-        didVerificationMethod: VerificationMethod,
-        redirectURIWithParams: String
+            didVerificationMethod: VerificationMethod,
+            redirectURIWithParams: String
     ): String? {
         var credentials = newInteraction.requestCredentialWithAuth(
-            didVerificationMethod,
-            redirectURIWithParams,
-            null
+                didVerificationMethod,
+                redirectURIWithParams,
+                null
         )
         return credentials.atIndex(0).serialize();
     }
@@ -148,11 +155,13 @@ class OpenID4CI constructor(
     fun requireAcknowledgment(): Boolean {
         return newInteraction.requireAcknowledgment()
     }
+
     fun acknowledgeSuccess() {
-        val serializedStateResp =  newInteraction.acknowledgment().serialize()
+        val serializedStateResp = newInteraction.acknowledgment().serialize()
         val acknowledgement = Acknowledgment(serializedStateResp)
         return acknowledgement.success()
     }
+
     fun acknowledgeReject() {
         return newInteraction.acknowledgment().reject()
     }

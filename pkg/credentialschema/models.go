@@ -14,8 +14,12 @@ type ResolvedDisplayData struct {
 
 // ResolvedIssuerDisplay represents display information about the issuer of some credential(s).
 type ResolvedIssuerDisplay struct {
-	Name   string `json:"name,omitempty"`
-	Locale string `json:"locale,omitempty"`
+	Name            string `json:"name,omitempty"`
+	Locale          string `json:"locale,omitempty"`
+	URL             string `json:"url,omitempty"`
+	Logo            *Logo  `json:"logo,omitempty"`
+	BackgroundColor string `json:"background_color,omitempty"`
+	TextColor       string `json:"text_color,omitempty"`
 }
 
 // CredentialDisplay represents display data for a credential.

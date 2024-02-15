@@ -331,14 +331,19 @@ func issuerCredentialDisplayToResolvedCredentialOverview(
 		Locale:          issuerCredentialOverview.Locale,
 		BackgroundColor: issuerCredentialOverview.BackgroundColor,
 		TextColor:       issuerCredentialOverview.TextColor,
-	}
-
-	if issuerCredentialOverview.Logo != nil {
-		resolvedCredentialOverview.Logo = &Logo{
-			URL:     issuerCredentialOverview.Logo.URL,
-			AltText: issuerCredentialOverview.Logo.AltText,
-		}
+		Logo:            convertLogo(issuerCredentialOverview.Logo),
 	}
 
 	return resolvedCredentialOverview
+}
+
+func convertLogo(logo *issuer.Logo) *Logo {
+	if logo != nil {
+		return &Logo{
+			URL:     logo.URL,
+			AltText: logo.AltText,
+		}
+	}
+
+	return nil
 }
