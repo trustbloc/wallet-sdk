@@ -19,7 +19,7 @@ docker pull aholovko/cognito-local:0.2.2
 docker images
 (source .env && docker-compose -f docker-compose.yml up --force-recreate -d)
 
-sleep 180
+sleep 120
 
 echo "running healthcheck..."
 
@@ -46,7 +46,7 @@ healthCheck() {
 
     docker ps -a
 
-	  response=$(curl -H 'Cache-Control: no-cache' -o /dev/null -s -w "%{http_code}" "$2")
+	  response=$(curl -H 'Cache-Control: no-cache' -o response.txt -s -w "%{http_code}" "$2")
 	  echo "running health check : httpResponseCode=$response"
 
 	  if [ "$response" == "$3" ]
