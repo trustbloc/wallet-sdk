@@ -9,6 +9,8 @@ package openid4ci
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
 // CredentialOffer represents the Credential Offer object as defined in
@@ -32,11 +34,32 @@ type AuthorizeResult struct {
 	UserPINRequired               bool
 }
 
+// authorizationDetails is a model to convey the details about the Credentials the Client wants to obtain.
 type authorizationDetails struct {
-	Type      string   `json:"type,omitempty"`
+	// REQUIRED when Format parameter is not present.
+	// String specifying a unique identifier of the Credential being described in the
+	// credential_configurations_supported map in the Credential Issuer Metadata.
+	// The referenced object in the credential_configurations_supported map conveys the details,
+	// such as the format, for issuance of the requested Credential.
+	// It MUST NOT be present if format parameter is present.
+	CredentialConfigurationID string `json:"credential_configuration_id,omitempty"`
+
+	// Object containing the detailed description of the credential type.
+	CredentialDefinition *issuer.CredentialDefinition `json:"credential_definition,omitempty"`
+
+	// REQUIRED when CredentialConfigurationID parameter is not present.
+	// String identifying the format of the Credential the Wallet needs.
+	// This Credential format identifier determines further claims in the authorization details object needed
+	// to identify the Credential type in the requested format.
+	// It MUST NOT be present if credential_configuration_id parameter is present.
+	Format string `json:"format,omitempty"`
+
+	// An array of strings that allows a client to specify the location of the resource server(s)
+	// allowing the Authorization Server to mint audience restricted access tokens.
 	Locations []string `json:"locations,omitempty"`
-	Types     []string `json:"types,omitempty"`
-	Format    string   `json:"format,omitempty"`
+
+	// String that determines the authorization details type. MUST be set to "openid_credential" for OIDC4VC.
+	Type string `json:"type"`
 }
 
 // OpenIDConfig represents an issuer's OpenID configuration.

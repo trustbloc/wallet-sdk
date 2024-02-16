@@ -400,9 +400,9 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 			authorizationURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI")
 			require.NoError(t, err)
 			require.Contains(t, authorizationURL, authorizationServerURL+
-				"?authorization_details=%7B%22type%22%3A%22openid_credential%22%2C%22locations"+
-				"%22%3A%5B%22%22%5D%2C%22types%22%3A%5B%22VerifiableCredential%22%2C%22VerifiedEmployee%22%5D%2C%22"+
-				"format%22%3A%22jwt_vc_json%22%7D&client_id=clientID")
+				"?authorization_details=%7B%22credential_definition%22%3A%7B%22type%22%3A%5B%22VerifiableCredential"+
+				"%22%2C%22VerifiedEmployee%22%5D%7D%2C%22format%22%3A%22jwt_vc_json%22%2C%22locations%22%3A%5B%22%2"+
+				"2%5D%2C%22type%22%3A%22openid_credential%22%7D&client_id=clientID")
 		})
 		t.Run("Using the OAuth Discoverable Client ID Scheme", func(t *testing.T) {
 			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true, true))
@@ -411,9 +411,9 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 				openid4ci.WithOAuthDiscoverableClientIDScheme())
 			require.NoError(t, err)
 			require.Contains(t, authorizationURL, authorizationServerURL+
-				"?authorization_details=%7B%22type%22%3A%22openid_credential%22%2C%22locations"+
-				"%22%3A%5B%22%22%5D%2C%22types%22%3A%5B%22VerifiableCredential%22%2C%22VerifiedEmployee%22%5D%2C%22"+
-				"format%22%3A%22jwt_vc_json%22%7D&client_id=clientID")
+				"?authorization_details=%7B%22credential_definition%22%3A%7B%22type%22%3A%5B%22VerifiableCredential"+
+				"%22%2C%22VerifiedEmployee%22%5D%7D%2C%22format%22%3A%22jwt_vc_json%22%2C%22locations%22%3A%5B%22%2"+
+				"2%5D%2C%22type%22%3A%22openid_credential%22%7D&client_id=clientID")
 		})
 	})
 	t.Run("Fail to get issuer metadata", func(t *testing.T) {
