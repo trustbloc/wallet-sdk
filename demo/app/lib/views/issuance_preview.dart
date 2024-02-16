@@ -18,34 +18,29 @@ import 'package:app/widgets/primary_button.dart';
 
 import 'package:app/models/activity_data_object.dart';
 import 'package:app/models/credential_data.dart';
-import 'package:app/wallet_sdk/wallet_sdk.dart';
 import 'package:app/widgets/domain_verification_component.dart';
 import 'credential_preview.dart';
 import 'handle_redirect_uri.dart';
 import 'otp.dart';
 
 class IssuancePreview extends StatefulWidget {
-  bool? authorizeResultPinRequired;
-  Uri? uri;
+  final bool? authorizeResultPinRequired;
+  final Uri? uri;
 
-  IssuancePreview({this.authorizeResultPinRequired, this.uri, Key? key}) : super(key: key);
+  const IssuancePreview({this.authorizeResultPinRequired, this.uri, Key? key}) : super(key: key);
 
   @override
   State<IssuancePreview> createState() => IssuancePreviewState();
 }
 
+Color _convertColor(String color) {
+  return Color(int.parse('0xff${color.replaceAll('#', '')}'));
+}
+
 class IssuancePreviewState extends State<IssuancePreview> {
-  String issuerDisplayName = '';
-  String credentialIssuer = '';
-  String credentialDisplayName = '';
-  String backgroundColor = '';
-  String issuerDisplayURL = '';
-  String textColor = '';
-  String logoURL = '';
-  String issuerLogoURL = '';
-  List<String>? credentialTypes;
   String? issuerServiceURL;
   EvaluationResult? trustInfoEvaluationResult;
+  CredentialOfferDisplayData? offerDisplayData;
 
   @override
   void initState() {
@@ -54,32 +49,14 @@ class IssuancePreviewState extends State<IssuancePreview> {
   }
 
   void _init() async {
-    final prefs = await SharedPreferences.getInstance();
-    credentialTypes = prefs.getStringList('credentialTypes');
-
     final trustInfoEvaluationResult = await WalletSDKPlugin.evaluateIssuanceTrustInfo();
     setState(() {
       this.trustInfoEvaluationResult = trustInfoEvaluationResult;
     });
 
-    final issuerMetaData = await WalletSDKPlugin.getIssuerMetaData(credentialTypes!);
+    final offerDisplayData = await WalletSDKPlugin.getCredentialOfferDisplayData();
     setState(() {
-      credentialIssuer = issuerMetaData.first.credentialIssuer;
-      issuerDisplayName = issuerMetaData.first.localizedIssuerDisplays.first.name;
-      issuerDisplayURL = issuerMetaData.first.localizedIssuerDisplays.first.url;
-      final issuerLogo = issuerMetaData.first.localizedIssuerDisplays.first.logo;
-      if (issuerLogo != null) {
-        issuerLogoURL = issuerLogo;
-      }
-      credentialDisplayName = issuerMetaData.first.supportedCredentials.first.display.first.name;
-      final logo = issuerMetaData.first.supportedCredentials.first.display.first.logo;
-      if (logo != null) {
-        logoURL = logo;
-      }
-      backgroundColor =
-          '0xff${issuerMetaData.first.supportedCredentials.first.display.first.backgroundColor.toString().replaceAll('#', '')}';
-      textColor =
-          '0xff${issuerMetaData.first.supportedCredentials.first.display.first.textColor.toString().replaceAll('#', '')}';
+      this.offerDisplayData = offerDisplayData;
     });
 
     final serviceURL = await WalletSDKPlugin.verifyIssuer();
@@ -90,167 +67,178 @@ class IssuancePreviewState extends State<IssuancePreview> {
 
   @override
   Widget build(BuildContext context) {
+    final offerDisplayData = this.offerDisplayData;
+
     return Scaffold(
       appBar: const CustomTitleAppBar(
         pageTitle: 'Issuance Preview',
         addCloseIcon: true,
         height: 60,
       ),
-      body: Container(
-        padding: const EdgeInsets.fromLTRB(24, 40, 16, 24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            const SizedBox(height: 50),
-            const SizedBox(
-              child: Text(
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, color: Colors.black),
-                  'Add this credential ?'),
-            ),
-            const SizedBox(height: 30),
-            CachedNetworkImage(
-              imageUrl: issuerLogoURL,
-              placeholder: (context, url) => const CircularProgressIndicator(),
-              errorWidget: (context, url, error) => Image.asset('lib/assets/images/logoIcon.png', fit: BoxFit.cover),
-              width: 60,
-              height: 80,
-              fit: BoxFit.fitWidth,
-            ),
-            SizedBox(
-              height: 30,
-              child: Text(
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 18, color: Color(0xff190C21), fontWeight: FontWeight.bold),
-                  issuerDisplayName),
-            ),
-            FittedBox(
-              child: issuerServiceURL != null
-                  ? const DomainVerificationComponent(
-                      status: 'Verified',
-                      imagePath: 'lib/assets/images/tick-checked.svg',
-                    )
-                  : const DomainVerificationComponent(
-                      status: 'Unverified',
-                      imagePath: 'lib/assets/images/error_icon.svg',
-                    ),
-            ),
-            const SizedBox(height: 4),
-            if (trustInfoEvaluationResult != null)
-              FittedBox(
-                child: trustInfoEvaluationResult!.allowed
-                    ? const DomainVerificationComponent(
-                        status: 'Trust info verified',
-                        imagePath: 'lib/assets/images/tick-checked.svg',
-                      )
-                    : Column(
-                        children: [
-                          const DomainVerificationComponent(
-                            status: 'Trust info not verified',
-                            imagePath: 'lib/assets/images/error_icon.svg',
-                          ),
-                          Text(trustInfoEvaluationResult!.errorCode)
-                        ],
-                      ),
-              ),
-            SizedBox(
-              height: 30,
-              child: Text(
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 12, color: Color(0xff190C21), fontWeight: FontWeight.normal),
-                  issuerDisplayURL),
-            ),
-            const SizedBox(height: 20),
-            Container(
-                height: 80,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                    color: backgroundColor.isNotEmpty ? Color(int.parse(backgroundColor)) : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [BoxShadow(offset: const Offset(3, 3), color: Colors.grey.shade300, blurRadius: 5)]),
-                child: ListTile(
-                  title: Text(
-                    credentialDisplayName,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: textColor.isNotEmpty ? Color(int.parse(textColor)) : const Color(0xff190C21),
-                    ),
-                    textAlign: TextAlign.start,
+      body: offerDisplayData == null
+          ? const Center(child: CircularProgressIndicator())
+          : Container(
+              padding: const EdgeInsets.fromLTRB(24, 40, 16, 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 50),
+                  const SizedBox(
+                    child: Text(
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 18, color: Colors.black),
+                        'Add this credential ?'),
                   ),
-                  subtitle: Text(
-                    credentialIssuer,
-                    style: TextStyle(
-                      fontSize: 6,
-                      fontWeight: FontWeight.bold,
-                      color: textColor.isNotEmpty ? Color(int.parse(textColor)) : const Color(0xff190C21),
-                    ),
-                    textAlign: TextAlign.start,
-                  ),
-                  leading: CachedNetworkImage(
-                    imageUrl: logoURL,
+                  const SizedBox(height: 30),
+                  CachedNetworkImage(
+                    imageUrl: offerDisplayData.issuer.logo ?? '',
                     placeholder: (context, url) => const CircularProgressIndicator(),
                     errorWidget: (context, url, error) =>
-                        Image.asset('lib/assets/images/genericCredential.png', fit: BoxFit.contain),
+                        Image.asset('lib/assets/images/logoIcon.png', fit: BoxFit.cover),
                     width: 60,
-                    height: 60,
-                    fit: BoxFit.contain,
+                    height: 80,
+                    fit: BoxFit.fitWidth,
                   ),
-                )),
-            Expanded(
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  height: 150,
-                  padding: const EdgeInsets.all(16),
-                  alignment: Alignment.topCenter,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xffDBD7DC),
-                      width: 0.5,
+                  SizedBox(
+                    height: 30,
+                    child: Text(
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 18, color: Color(0xff190C21), fontWeight: FontWeight.bold),
+                        offerDisplayData.issuer.name),
+                  ),
+                  FittedBox(
+                    child: issuerServiceURL != null
+                        ? const DomainVerificationComponent(
+                            status: 'Verified',
+                            imagePath: 'lib/assets/images/tick-checked.svg',
+                          )
+                        : const DomainVerificationComponent(
+                            status: 'Unverified',
+                            imagePath: 'lib/assets/images/error_icon.svg',
+                          ),
+                  ),
+                  const SizedBox(height: 4),
+                  if (trustInfoEvaluationResult != null)
+                    FittedBox(
+                      child: trustInfoEvaluationResult!.allowed
+                          ? const DomainVerificationComponent(
+                              status: 'Trust info verified',
+                              imagePath: 'lib/assets/images/tick-checked.svg',
+                            )
+                          : Column(
+                              children: [
+                                const DomainVerificationComponent(
+                                  status: 'Trust info not verified',
+                                  imagePath: 'lib/assets/images/error_icon.svg',
+                                ),
+                                Text(trustInfoEvaluationResult!.errorCode)
+                              ],
+                            ),
+                    ),
+                  SizedBox(
+                    height: 30,
+                    child: Text(
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 12, color: Color(0xff190C21), fontWeight: FontWeight.normal),
+                        offerDisplayData.issuer.url),
+                  ),
+                  const SizedBox(height: 20),
+                  for (final cred in offerDisplayData.offeredCredentials)
+                    Container(
+                        height: 80,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                            color: cred.backgroundColor.isNotEmpty ? _convertColor(cred.backgroundColor) : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(offset: const Offset(3, 3), color: Colors.grey.shade300, blurRadius: 5)
+                            ]),
+                        child: ListTile(
+                          title: Text(
+                            cred.overviewName,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  cred.textColor.isNotEmpty ? _convertColor(cred.textColor) : const Color(0xff190C21),
+                            ),
+                            textAlign: TextAlign.start,
+                          ),
+                          subtitle: Text(
+                            offerDisplayData.issuer.name,
+                            style: TextStyle(
+                              fontSize: 6,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  cred.textColor.isNotEmpty ? _convertColor(cred.textColor) : const Color(0xff190C21),
+                            ),
+                            textAlign: TextAlign.start,
+                          ),
+                          leading: CachedNetworkImage(
+                            imageUrl: cred.logo ?? '',
+                            placeholder: (context, url) => const CircularProgressIndicator(),
+                            errorWidget: (context, url, error) =>
+                                Image.asset('lib/assets/images/genericCredential.png', fit: BoxFit.contain),
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.contain,
+                          ),
+                        )),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        height: 150,
+                        padding: const EdgeInsets.all(16),
+                        alignment: Alignment.topCenter,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xffDBD7DC),
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.fromLTRB(24, 0, 24, 0),
+                            ),
+                            PrimaryButton(
+                                onPressed: () async {
+                                  if (widget.authorizeResultPinRequired == true) {
+                                    navigateToOTPScreen(context);
+                                  } else if (widget.uri != null) {
+                                    navigateToAuthFlow(context, widget.uri!);
+                                  } else {
+                                    navigateToWithoutPinFlow(context);
+                                  }
+                                },
+                                width: double.infinity,
+                                child:
+                                    const Text('Add to Wallet', style: TextStyle(fontSize: 16, color: Colors.white))),
+                            const Padding(
+                              padding: EdgeInsets.fromLTRB(24, 0, 24, 8),
+                            ),
+                            PrimaryButton(
+                              onPressed: () {
+                                _navigateToDashboard();
+                              },
+                              width: double.infinity,
+                              gradient: const LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [Color(0xffFFFFFF), Color(0xffFFFFFF)]),
+                              child: const Text('Cancel', style: TextStyle(fontSize: 16, color: Color(0xff6C6D7C))),
+                            ),
+                          ],
+                        ),
+                      ), //last one
                     ),
                   ),
-                  child: Column(
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(24, 0, 24, 0),
-                      ),
-                      PrimaryButton(
-                          onPressed: () async {
-                            if (widget.authorizeResultPinRequired == true) {
-                              navigateToOTPScreen(context);
-                            } else if (widget.uri != null) {
-                              navigateToAuthFlow(context, widget.uri!);
-                            } else {
-                              navigateToWithoutPinFlow(context);
-                            }
-                          },
-                          width: double.infinity,
-                          child: const Text('Add to Wallet', style: TextStyle(fontSize: 16, color: Colors.white))),
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(24, 0, 24, 8),
-                      ),
-                      PrimaryButton(
-                        onPressed: () {
-                          _navigateToDashboard();
-                        },
-                        width: double.infinity,
-                        gradient: const LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Color(0xffFFFFFF), Color(0xffFFFFFF)]),
-                        child: const Text('Cancel', style: TextStyle(fontSize: 16, color: Color(0xff6C6D7C))),
-                      ),
-                    ],
-                  ),
-                ), //last one
+                ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -275,7 +263,6 @@ class IssuancePreviewState extends State<IssuancePreview> {
 
   Future<CredentialData> fetchPreviewScreenDetails() async {
     final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
-    var WalletSDKPlugin = WalletSDK();
     final StorageService storageService = StorageService();
     final SharedPreferences pref = await prefs;
 

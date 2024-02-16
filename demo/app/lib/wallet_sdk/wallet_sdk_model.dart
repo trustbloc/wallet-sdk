@@ -132,48 +132,33 @@ class CreateDID {
   }
 }
 
-class IssuerMetaData {
-  final String credentialIssuer;
-  final List<SupportedCredentials> supportedCredentials;
-  final List<IssuerDisplayData> localizedIssuerDisplays;
+class CredentialOfferDisplayData {
+  final List<CredentialDisplayData> offeredCredentials;
+  final IssuerDisplayData issuer;
 
-  const IssuerMetaData({
-    required this.credentialIssuer,
-    required this.supportedCredentials,
-    required this.localizedIssuerDisplays,
+  const CredentialOfferDisplayData({
+    required this.issuer,
+    required this.offeredCredentials,
   });
 
   @override
   String toString() {
-    return 'IssuerMetaData{ credentialIssuer: $credentialIssuer, supportedCredentials: $supportedCredentials, localizedIssuerDisplays: $localizedIssuerDisplays}';
+    return 'IssuerMetaData{ localizedIssuerDisplay: $issuer, offeredCredentials: $offeredCredentials}';
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'credentialIssuer': credentialIssuer,
-      'supportedCredentials': supportedCredentials,
-      'localizedIssuerDisplays': localizedIssuerDisplays
+      'localizedIssuerDisplay': issuer,
+      'offeredCredentials': offeredCredentials,
     };
   }
 
-  factory IssuerMetaData.fromJson(Map<String, dynamic> json) {
-    return IssuerMetaData(
-      credentialIssuer: json['credentialIssuer'],
-      supportedCredentials: json['supportedCredentials'],
-      localizedIssuerDisplays: json['localizedIssuerDisplays'],
-    );
-  }
-
-  factory IssuerMetaData.fromMap(Map<String, dynamic> map) {
-    return IssuerMetaData(
-      credentialIssuer: map['credentialIssuer'] as String,
-      supportedCredentials: (map['supportedCredentials'] as List<dynamic>)
-          .map((obj) => SupportedCredentials.fromMap(obj.cast<String, dynamic>()))
-          .toList(),
-      localizedIssuerDisplays: (map['localizedIssuerDisplays'] as List<dynamic>)
-          .map((obj) => IssuerDisplayData.fromMap(obj.cast<String, dynamic>()))
-          .toList(),
-    );
+  factory CredentialOfferDisplayData.fromMap(Map<String, dynamic> map) {
+    return CredentialOfferDisplayData(
+        offeredCredentials: (map['offeredCredentials'] as List<dynamic>)
+            .map((obj) => CredentialDisplayData.fromMap(obj.cast<String, dynamic>()))
+            .toList(),
+        issuer: IssuerDisplayData.fromMap(map['localizedIssuerDisplay'].cast<String, dynamic>()));
   }
 }
 
@@ -392,7 +377,7 @@ class CredentialDisplayData {
   }
 
   factory CredentialDisplayData.fromMap(Map<String, dynamic> map) {
-    List<dynamic> claims = map['claims'];
+    List<dynamic> claims = map['claims'] ?? [];
 
     return CredentialDisplayData(
         issuerName: map['issuerName'] as String,

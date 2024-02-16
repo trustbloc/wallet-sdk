@@ -67,11 +67,13 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "credentialStatusVerifier":
             credentialStatusVerifier(arguments: arguments!,  result: result)
 
+        case "getCredentialOfferDisplayData":
+            getCredentialOfferDisplayData(result: result)
         case "serializeDisplayData":
             serializeDisplayData(arguments: arguments!,  result: result)
 
-        case "resolveCredentialDisplay":
-            resolveCredentialDisplay(arguments: arguments!, result: result)
+        case "parseCredentialDisplay":
+            parseCredentialDisplay(arguments: arguments!, result: result)
 
         case "getVersionDetails":
            getVersionDetails(result:result)
@@ -474,7 +476,63 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
 
         
     }
-    
+
+    public func getCredentialOfferDisplayData(result: @escaping FlutterResult) {
+        guard let openID4CI = self.openID4CI else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while getting issuer meta data",
+                                             details: "openID4CI not initiated. Call authorize before this."))
+        }
+
+        do {
+            let displayData = try openID4CI.getCredentialOfferDisplayData()
+            let issuerDisplay = displayData.issuerDisplay()!;
+
+            var offeredCredentials = serializeCredentialsDisplayData(displayData: displayData)
+
+            let localizedIssuerDisplay :[String:Any] = [
+                "name":  issuerDisplay.name(),
+                "locale": issuerDisplay.locale(),
+                "url":   issuerDisplay.url(),
+                "logo":  issuerDisplay.logo()?.url() ?? "",
+                "textColor": issuerDisplay.textColor(),
+                "backgroundColor": issuerDisplay.backgroundColor()
+            ]
+
+            let issuerMetaDataResp:[String:Any] = [
+                "offeredCredentials" : offeredCredentials,
+                "localizedIssuerDisplay":localizedIssuerDisplay
+            ]
+
+            print(issuerMetaDataResp)
+            result(issuerMetaDataResp)
+
+        } catch let error as NSError {
+            result(FlutterError.init(code: "NATIVE_ERR",
+                                     message: "error while getting issuer meta data",
+                                     details: error.localizedDescription))
+        }
+
+    }
+
+    public func serializeCredentialsDisplayData(displayData: DisplayData) -> [Any] {
+     var localizedCredentialsDisplayRespList: [Any] = []
+            for i in 0..<(displayData.credentialDisplaysLength()){
+                let localizedCredentialsDisplayResp :[String:Any] = [
+                    "issuerName": displayData.issuerDisplay()!.name(),
+                    "overviewName":  displayData.credentialDisplay(at: i)!.overview()!.name(),
+                    "locale": displayData.credentialDisplay(at: i)!.overview()!.locale(),
+                    "logo": displayData.credentialDisplay(at: i)!.overview()!.logo()?.url() ?? "",
+                    "textColor": displayData.credentialDisplay(at: i)!.overview()!.textColor(),
+                    "backgroundColor": displayData.credentialDisplay(at: i)!.overview()!.backgroundColor()
+                ]
+                localizedCredentialsDisplayRespList.append(localizedCredentialsDisplayResp)
+            }
+
+
+        return localizedCredentialsDisplayRespList
+    }
+
     public func getIssuerMetaData(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
         guard let openID4CI = self.openID4CI else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
@@ -950,12 +1008,12 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     }
     
     
-    public func resolveCredentialDisplay(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
+    public func parseCredentialDisplay(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
 
         
         guard let resolvedCredentialDisplayData = arguments["resolvedCredentialDisplayData"] as? String else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
-                                             message: "error while resolveCredentialDisplay",
+                                             message: "error while parseCredentialDisplay",
                                              details: "parameter resolvedCredentialDisplayData is missed"))
         }
         let displayData = DisplayParseData(resolvedCredentialDisplayData, nil)

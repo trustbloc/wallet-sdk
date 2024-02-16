@@ -168,7 +168,7 @@ class WalletSDK extends WalletPlatform {
 
   Future<List<CredentialDisplayData>> parseCredentialDisplayData(String resolvedCredentialDisplayData) async {
     List<dynamic> renderedCredDisplay = await methodChannel.invokeMethod(
-        'resolveCredentialDisplay', <String, dynamic>{'resolvedCredentialDisplayData': resolvedCredentialDisplayData});
+        'resolveCredentialDisplay', <String, dynamic>{'parseCredentialDisplay': resolvedCredentialDisplayData});
     return renderedCredDisplay.map((d) => CredentialDisplayData.fromMap(d.cast<String, dynamic>())).toList();
   }
 
@@ -214,16 +214,14 @@ class WalletSDK extends WalletPlatform {
   }
 
   Future<EvaluationResult?> evaluateIssuanceTrustInfo() async {
-    var data = await methodChannel.invokeMethod('evaluateIssuanceTrustInfo', {
-      'evaluateIssuanceURL': const String.fromEnvironment('evaluateIssuanceURL')
-    });
+    var data = await methodChannel.invokeMethod(
+        'evaluateIssuanceTrustInfo', {'evaluateIssuanceURL': const String.fromEnvironment('evaluateIssuanceURL')});
     return EvaluationResult.fromMap(data.cast<String, dynamic>());
   }
 
   Future<EvaluationResult?> evaluatePresentationTrustInfo() async {
-    var data = await methodChannel.invokeMethod('evaluatePresentationTrustInfo', {
-      'evaluatePresentationURL': const String.fromEnvironment('evaluatePresentationURL')
-    });
+    var data = await methodChannel.invokeMethod('evaluatePresentationTrustInfo',
+        {'evaluatePresentationURL': const String.fromEnvironment('evaluatePresentationURL')});
     return EvaluationResult.fromMap(data.cast<String, dynamic>());
   }
 
@@ -272,10 +270,9 @@ class WalletSDK extends WalletPlatform {
     return null;
   }
 
-  Future<List<IssuerMetaData>> getIssuerMetaData(List<String> credentialTypes) async {
-    List<dynamic> getIssuerMetaDataResp =
-        await methodChannel.invokeMethod('getIssuerMetaData', <String, dynamic>{'credentialTypes': credentialTypes});
-    return getIssuerMetaDataResp.map((d) => IssuerMetaData.fromMap(d.cast<String, dynamic>())).toList();
+  Future<CredentialOfferDisplayData> getCredentialOfferDisplayData() async {
+    final offerDisplayData = await methodChannel.invokeMethod('getCredentialOfferDisplayData');
+    return CredentialOfferDisplayData.fromMap(offerDisplayData.cast<String, dynamic>());
   }
 
   Future<String?> getCredID(List<String> credentials) async {

@@ -79,6 +79,15 @@ public class OpenID4CI {
     func issuerURI()-> String {
         return initiatedInteraction.issuerURI()
     }
+
+    func getCredentialOfferDisplayData() throws -> DisplayData {
+        let issuerMetadata = try initiatedInteraction.issuerMetadata()
+
+        return DisplayResolveCredentialOffer(
+                issuerMetadata,
+                initiatedInteraction.offeredCredentialsTypes(), ""
+        )!
+    }
     
     func requestCredentialWithAuth(didVerificationMethod: ApiVerificationMethod, redirectURIWithParams: String) throws -> VerifiableCredential {
         let credentials = try initiatedInteraction.requestCredential(withAuth: didVerificationMethod, redirectURIWithAuthCode: redirectURIWithParams, opts: nil)

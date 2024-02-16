@@ -95,6 +95,31 @@ func (d *IssuerDisplay) Locale() string {
 	return d.issuerDisplay.Locale
 }
 
+// URL returns this IssuerDisplay's URL.
+func (d *IssuerDisplay) URL() string {
+	return d.issuerDisplay.URL
+}
+
+// Logo returns this IssuerDisplay's logo.
+// If it has no logo, then nil/null is returned instead.
+func (d *IssuerDisplay) Logo() *Logo {
+	if d.issuerDisplay.Logo == nil {
+		return nil
+	}
+
+	return &Logo{logo: d.issuerDisplay.Logo}
+}
+
+// BackgroundColor returns this LocalizedIssuerDisplay's background color.
+func (d *IssuerDisplay) BackgroundColor() string {
+	return d.issuerDisplay.BackgroundColor
+}
+
+// TextColor returns this IssuerDisplay's text color.
+func (d *IssuerDisplay) TextColor() string {
+	return d.issuerDisplay.TextColor
+}
+
 // CredentialDisplay represents display data for a credential.
 // Display data for specific claims (e.g. first name, date of birth, etc.) are in the CredentialSubject objects.
 type CredentialDisplay struct {
