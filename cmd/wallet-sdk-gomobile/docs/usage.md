@@ -10,6 +10,24 @@ For the sake of readability, the following is omitted in most code examples:
 * Nullable type checks (in Kotlin examples)
 * Optionals unwrapping (in Swift examples)
 
+## TOC
+- [General API Patterns](#general-api-patterns)
+- [Error Handling](#error-handling)
+- [API Package](#api-package)
+- [Parsing Credentials](#parsing-credentials)
+- [In-Memory Credential Storage](#in-memory-credential-storage)
+- [KMS](#local-kms)
+- [Decentralized Identifier (DID) Creator](#decentralized-identifier-did-creator)
+- [Decentralized Identifier (DID) Resolver](#decentralized-identifier-did-resolver)
+- [DID Service Validation](#did-service-validation)
+- [OpenID Credential Issuance (OpenID4VCI)](#openid-credential-issuance-openid4vci)
+- [Credential Display API](#credential-display-api)
+- [Credential Status](#credential-status)
+- [OpenID Credential Presentation (OpenID4VP)](#openid-credential-presentation-openid4vp)
+- [Trust Evaluation](#trust-evaluation)
+- [Metrics](#metrics)
+
+
 ## General API Patterns
 
 ### Function Arguments
@@ -42,15 +60,29 @@ or be plural nouns (e.g. `SupportedCredentials`).
 These objects will have the following methods:
 * `length()`: Returns the number of elements in the array.
 * `atIndex(index)`: Returns the element at the given `index`. If `index` is out of bounds, then null/nil/an empty value
-is returned instead.
+  is returned instead.
 
 Additionally, some array object types may also support being created directly by the caller (so that they can be used as
 a function argument), in which case they will also have constructors and the following method:
 * `append(arg)`: appends `arg` to the array. It also returns a reference to the array object to allow for
-chaining together multiple `append` calls.
+  chaining together multiple `append` calls.
 
 In subsequent sections of this documentation, any reference to "arrays" refer to the "array-like" objects that are
 described above.
+
+### LD Document Loading
+
+Several APIs allow for an LD document loader to be specified via the `setDocumentLoader` method on their respective
+`Opts` objects.
+If no custom LD document loader is specified (or is null/nil), then network-based document loading will be used instead.
+For performance and/or security reasons, you may wish to implement a custom LD document loader that uses
+preloaded local contexts.
+
+### Network Call Timeout
+
+By default, REST calls in Wallet-SDK have a timeout of 30 seconds. This can be overridden by passing in a
+custom timeout via the `setHTTPTimeoutNanoseconds` method, which, if available, will be on the API's `Opts` object.
+Passing in 0 will disable timeouts.
 
 ## Error Handling
 
@@ -61,15 +93,15 @@ Errors have five fields:
 
 * Category: A short descriptor of the general category of error. This will always be a pre-defined string.
 * Code: A short alphanumeric code that is used to broadly group various related errors.
-This contains the Category descriptor.
+  This contains the Category descriptor.
 * Details: The full, raw error message. Any lower-level details about the precise cause of the error will be captured
-here.
+  here.
 * Message: A short message describing the error that occurred. Only present in certain cases. It will be blank in all
-others.
+  others.
 * TraceID: ID of Open Telemetry root trace. Can be used to trace API calls. Only present on errors return from certain
-APIs. It will be blank if there is no trace ID available.
+  APIs. It will be blank if there is no trace ID available.
 
-### Examples
+### Code Examples
 
 #### Kotlin (Android)
 
@@ -109,20 +141,7 @@ Implementations of these interfaces can be done in on the mobile side and inject
 A few examples of when you might want to do this:
 * Implementing platform-specific crypto functionality (perhaps leveraging device-specific security chips)
 * Implement a custom LD document loader that uses preloaded local contexts for performance and/or security reasons.
-See [LD Document Loading](#ld-document-loading) for more information.
-
-### KeyWriter and KeyReader
-
-The KeyWriter and KeyReader interfaces appear in various places across Wallet-SDK.
-
-The `KeyWriter` interface has a single method called `create` defined on it which accepts a `keyType` argument.
-Wallet-SDK expects that `KeyWriter` implementations also store the keys they create for later retrieval.
-
-The `KeyReader` interface has a single method called `exportPubKey` defined on it which accepts a `keyID` argument.
-Wallet-SDK expects this method to return the public key associated with the given `keyID` argument.
-
-If either one of these behaviours is not implemented, then certain Wallet-SDK functionality will not work as expected:
-* DID creation, credential issuance, and credential presentation will fail since keys won't be found
+  See [LD Document Loading](#ld-document-loading) for more information.
 
 
 ### Verifiable Credentials
@@ -130,14 +149,14 @@ If either one of these behaviours is not implemented, then certain Wallet-SDK fu
 Verifiable Credential objects are present throughout Wallet-SDK. They have a number of useful methods:
 
 * `serialize()`: Returns a serialized representation of this VC. This is useful for storing VCs in a persistent
-database. To convert the serialized representation back into a `Credential` object,
-see [Parsing Credentials](#parsing-credentials).
+  database. To convert the serialized representation back into a `Credential` object,
+  see [Parsing Credentials](#parsing-credentials).
 * `id()`: Returns this VC's ID.
 * `issuerID()`: Returns the ID of this VC's issuer (typically a DID).
 * `name()`: Returns this VC's name.
-If the VC doesn't provide a name (or the name is not a string), then an empty string is returned.
+  If the VC doesn't provide a name (or the name is not a string), then an empty string is returned.
 * `types()`: Returns the types of this VC. At a minimum, one of the types will be "VerifiableCredential".
-There may be additional more specific credential types as well.
+  There may be additional more specific credential types as well.
 * `claimTypes()`: Returns the types specified in the claims of this VC. If none are found, then null/nil is returned.
 * `issuanceDate()`: Returns this VC's issuance date as a Unix timestamp.
 * `expirationDate()`: Returns this VC's expiration date as a Unix timestamp.
@@ -149,13 +168,13 @@ Serialized credentials cannot be used directly in Wallet-SDK. Instead, they must
 The `parseCredential` function is located in the `Verifiable` package. It has a few optional arguments that can be
 passed in via the methods available on the `Opts` object:
 * `disableProofCheck`: Disables the proof check operation when parsing the VC. The proof check can be an expensive
-operation - in certain scenarios, it may be appropriate to disable the check. By default, proofs are checked.
+  operation - in certain scenarios, it may be appropriate to disable the check. By default, proofs are checked.
 * `setDocumentLoader`: Specifies a JSON-LD document loader to use when parsing the VC. If none is specified, then a
-network-based loader will be used.
+  network-based loader will be used.
 
 Passing in `null`/`nil` will cause all default options to be used.
 
-### Examples
+### Code Examples
 
 #### Kotlin (Android)
 
@@ -198,19 +217,6 @@ let opts = VerifiableNewOpts()?.disableProofCheck()
 let vc = VerifiableParseCredential("Serialized VC goes here", opts, &error)
 ```
 
-## LD Document Loading
-
-Several APIs allow for an LD document loader to be specified via the `setDocumentLoader` method on their respective
-`Opts` objects.
-If no custom LD document loader is specified (or is null/nil), then network-based document loading will be used instead.
-For performance and/or security reasons, you may wish to implement a custom LD document loader that uses
-preloaded local contexts.
-
-## Network Call Timeout
-
-By default, REST calls in Wallet-SDK have a timeout of 30 seconds. This can be overridden by passing in a
-custom timeout via the `setHTTPTimeoutNanoseconds` method, which, if available, will be on the API's `Opts` object.
-Passing in 0 will disable timeouts.
 
 ## In-Memory Credential Storage
 
@@ -219,7 +225,7 @@ in memory and also satisfy the `Reader` interface (in the `Credential` package).
 it's generally only suitable for testing purposes. You will probably want to create your own implementation in your
 mobile code that uses platform-specific storage.
 
-### Examples
+### Code Examples
 
 #### Kotlin (Android)
 
@@ -272,7 +278,7 @@ you'll want to inject in your own persistent implementation at some point.
 Note that regardless of what storage implementation you use, private keys may intermittently reside in local memory
 when using local KMS, so keep this limitation in mind.
 
-### Examples
+### Code Examples
 
 #### Kotlin (Android)
 
@@ -301,7 +307,7 @@ let jwk1 = kms.create(LocalkmsKeyTypeED25519)
 let jwk2 = kms.create(LocalkmsKeyTypeP384)
 ```
 
-## DID Creation
+## Decentralized Identifier (DID) Creator
 
 Wallet-SDK provides support for creating `key`, `jwk`, or `ion` (longform) DIDs.
 
@@ -310,7 +316,7 @@ To create a DID, call the corresponding `create` function with a key of your cho
 Note: currently, in order to create a DID in Wallet-SDK, you must use a key created by a [local KMS](#local-kms)
 instance, which will be in a `JWK` object.
 
-### Examples
+### Code Examples
 
 The examples below show the full process of creating a DID, including the creation of a LocalKMS
 instance (using in-memory storage) and a key. Each example shows how to create `key`, `jwk`, or `ion` (longform) DIDs.
@@ -376,14 +382,14 @@ let didDocument3 = DidionCreateLongForm(jwk3, &didIONCreateError)
 | CREATE_DID_JWK_FAILED(DID1-0002)  | Failed to create a key during DID creation. Check your KeyWriter implementation.                          |
 | UNSUPPORTED_DID_METHOD(DID0-0003) | The DID method specified in the `create` call is unsupported. Only `key`, `ion`, and `jwk` are supported. |
 
-## DID Resolver
+## Decentralized Identifier (DID) Resolver
 
 A DID resolver can be used to resolve DIDs.
 
 A resolver can be created with an optional resolver server URI, which will only be used for resolving DIDs that
 require a remote resolver server.
 
-### Examples
+### Code Examples
 
 #### Kotlin (Android)
 
@@ -440,11 +446,15 @@ let didDocument = didResolver.resolve("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2Qt
 
 ## DID Service Validation
 
+SDK provides an API to validate the domain from the DID Document using
+[DIF Well Known DID Configuration](https://identity.foundation/.well-known/resources/did-configuration/). This can be
+useful to validate the Issuer and Verifier DID to their domains.
+
 Note the following limitations:
 * The DID document associated with the DID you want to check must specify only a single service.
 * If there are multiple URLs for a given service, only the first will be checked.
 
-### Examples
+### Code Examples
 
 #### Kotlin (Android)
 
@@ -466,10 +476,11 @@ let didResolver = DidNewResolver(nil)
 let validationResult = ValidateLinkedDomains("YourDIDHere", didResolver)
 ```
 
-## OpenID4CI
+## OpenID Credential Issuance (OpenID4VCI)
 
 The OpenID4CI package contains an API that can be used by a [holder](https://www.w3.org/TR/vc-data-model/#dfn-holders)
-to go through the [OpenID4CI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html) flow.
+to go through the [OpenID for Verifiable Credential Issuance (OpenID4CI)](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html)
+flow.
 
 The way you use the API differs somewhat depending on whether you're doing an issuer-initiated or wallet-initiated
 issuance flow. In an issuer-initiated flow, the issuer has already provided a credential offer, while in a wallet-initiated
@@ -509,12 +520,12 @@ The following methods (options) are available:
 * `disableOpenTelemetry`: Disables the sending of OpenTelemetry headers. By default, they are sent during REST calls
   to the issuer and during OAuth2-related calls (if applicable).
 * `addHeader`: Allows you to set an additional header to be sent during REST calls to the issuer and during
-OAuth2-related calls (if applicable).
+  OAuth2-related calls (if applicable).
 * `addHeaders`: Like `addHeader`, but allows you to specify multiple headers at once.
 * `disableHTTPClientTLSVerify`: Disables TLS verification for HTTPS calls. **This should
   be used for testing purposes only**.
 * `disableVCProofChecks`: Disables proof checks for Verifiable Credentials received from the issuer. **This should
-be used for testing purposes only**.
+  be used for testing purposes only**.
 
 If you're okay with all defaults being used, you can simply pass in `null`/`nil` in as the `InteractionOpts` argument.
 
@@ -533,7 +544,7 @@ If you are using an `IssuerInitiatedInteraction`, then you should first check an
 they support before proceeding. You can do this by checking the issuer's capabilities, which you can do by using the
 relevant methods on the `Interaction` object::
 * `preAuthorizedCodeGrantTypeSupported`: Indicates whether the issuer supports the pre-authorized code grant type. If it
- does, then you can proceed with the [pre-authorized code flow](#pre-authorized-code-flow).
+  does, then you can proceed with the [pre-authorized code flow](#pre-authorized-code-flow).
 * `authorizationCodeGrantTypeSupported`: Indicates whether the issuer supports the authorization code grant type. If it
   does, then you can proceed with the [authorization code flow](#authorization-code-flow).
 
@@ -554,10 +565,10 @@ offer and can't be overridden.
 To begin the Authorization Code flow, you need to create an authorization URL. To do this, call the
 `createAuthorizationURL` method on the`Interaction` object. You need to provide the following parameters:
 * Client ID: This is a value that's specific to your application and/or issuer. See [Client ID](#client-id) for more
-information about this parameter.
-[Dynamic Client Registration](#dynamic-client-registration), .
+  information about this parameter.
+  [Dynamic Client Registration](#dynamic-client-registration), .
 * Redirect URI: The URI that you want the service to redirect to after authorization is complete.
-You will likely want this to be some sort of deep link to your app. More information on this can be found further below.
+  You will likely want this to be some sort of deep link to your app. More information on this can be found further below.
 
 Additionally, if you're using a `WalletInitiatedInteraction` object, then there are two additional required
 parameters:
@@ -587,7 +598,7 @@ which is described below.
 If you're using an `IssuerInitiatedInteraction` object, then there are two methods available to request credentials.
 Which one you use will depend on your flow:
 * `requestCredentialWithPreAuth`: Use this only if you're using the pre-authorized code flow. If a PIN is required,
-pass it in using the `setPIN` method on the `RequestCredentialWithPreAuthOpts` object.
+  pass it in using the `setPIN` method on the `RequestCredentialWithPreAuthOpts` object.
 * `requestCredentialWithAuth`: Use this only if you're using the Authorization Code flow. This version of the method
   will require the redirect URI (that has additional query parameters) that you got before.
 
@@ -606,9 +617,9 @@ The `IssuerMetadata` object has the following methods on it:
 
 * `credentialIssuer()`: Returns the issuer's identifier.
 * `localizedIssuerDisplays()`: Returns the [LocalizedIssuerDisplays](#LocalizedIssuerDisplays) object, which contains
-display information for the issuer.
+  display information for the issuer.
 * `supportedCredentials()`: Returns the [SupportedCredentials](#SupportedCredentials) object, which contains technical
-and display data about the credential types that this issuer can issue.
+  and display data about the credential types that this issuer can issue.
 
 #### LocalizedIssuerDisplays
 
@@ -636,15 +647,15 @@ Each element (`SupportedCredential`) in the array corresponds to a different cre
 The methods on a `SupportedCredential` are:
 
 * `localizedDisplays()`: Returns the [LocalizedCredentialDisplays](#LocalizedCredentialDisplays) object, which contains
-display info for this credential type.
+  display info for this credential type.
 
 The next three methods return lower-level technical data that aren't intended for displaying to an end-user in most
 cases, but they may be useful for other Wallet-SDK APIs:
 * `id()`: The credential's ID.
 * `format()`: The credential format.
 * `types()`: The credential's types array. This is the low-level `types` array that appears in the actual issued
-Verifiable Credential object. Not to be confused with the general idea of a credential "type" (e.g. A university degree,
-driver's license, etc).
+  Verifiable Credential object. Not to be confused with the general idea of a credential "type" (e.g. A university degree,
+  driver's license, etc).
 
 Note: while unexpected, if the issuer doesn't specify any credential types at all, then the `length()` method on the
 `SupportedCredentials` object will return 0.
@@ -742,7 +753,7 @@ At any point during an interaction flow, you can call `verifyIssuer()` on your i
 service URL if the issuer was verified. An error means that either the issuer failed the verification check, or
 something went wrong during the process (and so a verification status could not be determined).
 
-### Examples
+### Code Examples
 
 The following examples show how to use the APIs to go through the OpenID4CI flow using the iOS and Android bindings.
 They use in-memory key storage and the Tink crypto library.
@@ -1105,7 +1116,7 @@ let credentials = interaction.requestCredential(vm: didDocument.assertionMethod(
 | UNSUPPORTED_CREDENTIAL_FORMAT(OCI1-0016)     | In the wallet-initiated flow, an unsupported credential format was specified.                                                                                                                                                                                                                                                                                                                                                                       |
 | UNSUPPORTED_CREDENTIAL_TYPE(OCI1-0017)       | In the wallet-initiated flow, an unsupported credential type was specified.                                                                                                                                                                                                                                                                                                                                                                         |
 
-## Credential Display Data
+## Credential Display API
 
 After completing the `RequestCredential` step of the OpenID4CI flow, you will have your issued Verifiable Credential
 objects. These objects contain the data needed for various wallet operations, but they don't tell you how you can
@@ -1122,14 +1133,14 @@ the `resolveDisplay` function. See the [Options](#options) section for more info
 Display data objects can be serialized using the `serialize()` method (useful for storage) and parsed from serialized
 form back into display data objects using the `parseDisplayData()` function.
 
-## Options
+### Options
 
 The `resolveDisplay` function has a number of different options available. For a full list of available options, check
 the associated `Opts` object. This section will highlight some especially notable ones:
 
 ### Set DID Resolver
 
-If the issuer makes use of signed issuer metadata, then you'll need to pass in a DID resolver using the 
+If the issuer makes use of signed issuer metadata, then you'll need to pass in a DID resolver using the
 `setDIDResolver(didResolver)` option. Otherwise, the`resolveDisplay` call will fail.
 
 ### Set Masking String
@@ -1182,7 +1193,7 @@ The structure of the display data object is as follows:
 
 * The root object.
 * Contains display information for the issuer and each of the credentials passed in to the `resolveDisplay`
-function.
+  function.
 * Can be serialized using the `serialize()` method and parsed using the `parseDisplayData()` function.
 * The `issuerDisplay()` method returns the `IssuerDisplay` object.
 * Use the `credentialDisplaysLength()` and `credentialDisplayAtIndex()` methods to iterate over the `CredentialDisplay`
@@ -1216,24 +1227,24 @@ function.
 
 * Describes display information for a specific claim within a credential.
 * Has `label()`, `rawID()`, `valueType()`, `value()`, `rawValue()`, `isMasked()`, `hasOrder()`, `order()`,
-`pattern()`, and `locale()` methods.
+  `pattern()`, and `locale()` methods.
 * For example, if the UI were to display "Given Name: Alice", then `label()` would correspond to "Given Name" while
   `value()` would correspond to "Alice".
 * Display order data is optional and will only exist if the issuer provided it. Use the `hasOrder()` method
-to determine if there is a specified order before attempting to retrieve the order, since `order()` will return an
-error/throw an exception if the claim has no order information. If you've ensured that the claim has an order
-(by using `hadOrder()`), then you can safely ignore the error/exception from the `order()` method.
+  to determine if there is a specified order before attempting to retrieve the order, since `order()` will return an
+  error/throw an exception if the claim has no order information. If you've ensured that the claim has an order
+  (by using `hadOrder()`), then you can safely ignore the error/exception from the `order()` method.
 * `IsMasked()` indicates whether this claim's value is masked. If this method returns true, then the `value()` method
-will return the masked value while the `rawValue()` method will return the unmasked version.
+  will return the masked value while the `rawValue()` method will return the unmasked version.
 * `rawValue()` returns the raw display value for this claim without any formatting.
-For example, if this claim is masked, this method will return the unmasked version.
-If no special formatting was applied to the display value, then this method will be equivalent to calling Value.
+  For example, if this claim is masked, this method will return the unmasked version.
+  If no special formatting was applied to the display value, then this method will be equivalent to calling Value.
 * `rawID()` returns the claim's ID, which is the raw field name (key) from the VC associated with this claim.
-It's not localized or formatted for display.
+  It's not localized or formatted for display.
 * `valueType()` returns the value type for this claim - when it's "image", then you should expect the value data to be
-formatted using the [data URL scheme](https://www.rfc-editor.org/rfc/rfc2397).
+  formatted using the [data URL scheme](https://www.rfc-editor.org/rfc/rfc2397).
 
-### Resolve Display Examples
+### Code Examples
 
 The following examples show how the `ResolveDisplay` function can be used. The function requires you to pass in
 one or more VCs and the issuer URI.
@@ -1312,7 +1323,7 @@ By default, `StatusVerifier` only supports status APIs that fetch status metadat
 status endpoint. If you need to also support status APIs that use DID-URL resolution, create a `StatusVerifier`
 using the `NewStatusVerifierWithDIDResolver` constructor.
 
-### Examples
+### Code Examples
 
 #### Kotlin
 
@@ -1402,39 +1413,40 @@ do {
 }
 ```
 
-## OpenID4VP
+## OpenID Credential Presentation (OpenID4VP)
 
 The OpenID4VP package contains an API that can be used by a [holder](https://www.w3.org/TR/vc-data-model/#dfn-holders)
-to go through the [OpenID4VP](https://openid.net/specs/openid-connect-4-verifiable-presentations-1_0-ID1.html) flow.
+to go through the [OpenID Connect for Verifiable Presentations](https://openid.net/specs/openid-connect-4-verifiable-presentations-1_0-ID1.html) flow.
 
 The general pattern is as follows:
 
 1. Create a new `Args` object. An `Args` contains the following mandatory
-parameters:
-   * An authorization request URI obtained from a verifier (e.g. via a QR code).
-   * A crypto implementation.
-   * A DID resolver.
+   parameters:
+    * An authorization request URI obtained from a verifier (e.g. via a QR code).
+    * A crypto implementation.
+    * A DID resolver.
 2. (optional) Create an `opts` object. To set optional arguments, use the supplied methods available
    on the `Opts` object. For example:
-   * `setActivityLogger`: Used to log credential activities.
-   * `addHeaders`: Allows you to set additional headers to be sent to the issuer.
+    * `setActivityLogger`: Used to log credential activities.
+    * `addHeaders`: Allows you to set additional headers to be sent to the issuer.
 
    Options can be chained together if you wish (e.g. `newOpts().setActivityLogger(...).setHeaders(...)`).
 3. Create a new `Interaction` object using your `Args` and`Opts` objects.
-If none of the optional arguments are needed, then a nil `Opts` can be passed in instead.
-The `Interaction` object is a stateful object and is meant to be used for a single instance of an OpenID4VP flow and
-then discarded.
+   If none of the optional arguments are needed, then a nil `Opts` can be passed in instead.
+   The `Interaction` object is a stateful object and is meant to be used for a single instance of an OpenID4VP flow and
+   then discarded.
 4. Get the query by calling the `GetQuery` method on the `Interaction`.
-5. Select the credentials that match the query from the previous step.
-6. Determine the key ID you want to use for signing (e.g. from one of the user's DID docs).
-7. Call the `PresentCredential` method on the `Interaction` object with the selected credentials.
+5. Call `inquirer.getSubmissionRequirements()` by passing the query and saved credentials.
+6. Select the credentials that match the query from the previous step.
+7. Determine the key ID you want to use for signing (e.g. from one of the user's DID docs).
+8. Call the `PresentCredential` method on the `Interaction` object with the selected credentials.
 
 In certain use cases, you might want the user to be able to provide a credential
 even if no credential matches the requirements. In that case, you can call the
 `PresentCredentialUnsafe` method on the `Interaction` object instead of step 7,
 passing in a single credential instead of a credential array.
 
-### Examples
+### Code Examples
 
 The following examples show how to use the APIs to go through the OpenID4VP flow using the iOS and Android bindings.
 They use in-memory key storage and the Tink crypto library.
@@ -1499,58 +1511,6 @@ interaction.PresentCredentialOpts(PresentCredentialOpts().addScopeClaim(
 
 ```
 
-###### Evaluate issuance trust info
-
-```kotlin
-val issuanceRequest = IssuanceRequest()
-
-val trustInfo = newInteraction.issuerTrustInfo()
-issuanceRequest.issuerDID = trustInfo.did
-issuanceRequest.issuerDomain = trustInfo.domain
-issuanceRequest.credentialFormat = trustInfo.credentialFormat
-issuanceRequest.credentialType = trustInfo.credentialType
-
-val config = RegistryConfig()
-config.evaluateIssuanceURL = evaluateIssuanceURL
-
-val evaluationResult = Registry(config).evaluateIssuance(issuanceRequest)
-```
-
-###### Evaluate presentation trust info
-
-```kotlin
-
-val presentationRequest = PresentationRequest()
-
-for (rInd in 0 until submissionRequirements.len()) {
-    val requirement = submissionRequirements.atIndex(rInd)
-    for (dInd in 0 until requirement.descriptorLen()) {
-        val descriptor = requirement.descriptorAtIndex(dInd)
-        for (credInd in 0 until descriptor.matchedVCs.length()) {
-            val cred = descriptor.matchedVCs.atIndex(credInd)
-
-            val claimsToCheck = CredentialClaimsToCheck();
-            claimsToCheck.credentialID = cred.id()
-            claimsToCheck.issuerID = cred.issuerID()
-            claimsToCheck.credentialTypes = cred.types()
-            claimsToCheck.expirationDate = cred.expirationDate()
-            claimsToCheck.issuanceDate = cred.issuanceDate()
-
-            presentationRequest.addCredentialClaims(claimsToCheck)
-        }
-    }
-}
-
-val trustInfo = initiatedInteraction.trustInfo()
-presentationRequest.verifierDID = trustInfo.did
-presentationRequest.verifierDomain = trustInfo.domain
-
-val config = RegistryConfig()
-config.evaluatePresentationURL = evaluatePresentationURL
-
-val evaluationResult = Registry(config).evaluatePresentation(presentationRequest)
-
-```
 
 #### Swift (iOS)
 
@@ -1614,7 +1574,38 @@ try interaction.presentCredentialOpts(
 
 ```
 
-###### Evaluate issuance trust info
+
+### Error Codes & Troubleshooting Tips
+
+| Error                                             | Possible Reasons                                                                                                                                                                                                                                                                                                                                                               |
+|---------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| INVALID_AUTHORIZATION_REQUEST(OVP1-0000)          | The authorization request is a URI but specifies a scheme other than "openid-vc".<br/><br/>The authorization request is a URI and is missing the request_uri parameter.<br/><br/>The request object's signature is invalid.<br/><br/>The request object is malformed.<br/><br/>Wallet-SDK does not support the format/type of the authorization request and/or request object. |
+| REQUEST_OBJECT_FETCH_FAILED(OVP1-0001)            | The authorization request is a URI and the request URI endpoint that it specifies cannot be reached.                                                                                                                                                                                                                                                                           |
+| FAIL_TO_GET_MATCH_REQUIREMENTS_RESULTS(CRQ0-0004) | Invalid presentation definition received from the verifier.                                                                                                                                                                                                                                                                                                                    |
+| CREATE_AUTHORIZED_RESPONSE(OVP1-0002)             | No credentials provided in the `presentCredential` method call.                                                                                                                                                                                                                                                                                                                |
+| SEND_AUTHORIZED_RESPONSE(OVP1-0003)               | The verifier server rejected your credentials (couldn't be verified, wrong type, etc).<br/><br/>The verifier server is down or incorrectly configured.                                                                                                                                                                                                                         |
+
+## Trust Evaluation
+### Issuance trust evaluation
+
+#### Kotlin
+
+```Kotlin
+val issuanceRequest = IssuanceRequest()
+
+val trustInfo = newInteraction.issuerTrustInfo()
+issuanceRequest.issuerDID = trustInfo.did
+issuanceRequest.issuerDomain = trustInfo.domain
+issuanceRequest.credentialFormat = trustInfo.credentialFormat
+issuanceRequest.credentialType = trustInfo.credentialType
+
+val config = RegistryConfig()
+config.evaluateIssuanceURL = evaluateIssuanceURL
+
+val evaluationResult = Registry(config).evaluateIssuance(issuanceRequest)
+```
+
+#### Swift
 
 ```swift
 let issuanceRequest = TrustregistryIssuanceRequest()
@@ -1631,7 +1622,43 @@ config.evaluateIssuanceURL = evaluateIssuanceURL
 let evaluationResult = try TrustregistryRegistry(config)!.evaluateIssuance(issuanceRequest)
 ```
 
-###### Evaluate presentation trust info
+### Presentation trust evaluation
+#### Kotlin
+
+```kotlin
+
+val presentationRequest = PresentationRequest()
+
+for (rInd in 0 until submissionRequirements.len()) {
+    val requirement = submissionRequirements.atIndex(rInd)
+    for (dInd in 0 until requirement.descriptorLen()) {
+        val descriptor = requirement.descriptorAtIndex(dInd)
+        for (credInd in 0 until descriptor.matchedVCs.length()) {
+            val cred = descriptor.matchedVCs.atIndex(credInd)
+
+            val claimsToCheck = CredentialClaimsToCheck();
+            claimsToCheck.credentialID = cred.id()
+            claimsToCheck.issuerID = cred.issuerID()
+            claimsToCheck.credentialTypes = cred.types()
+            claimsToCheck.expirationDate = cred.expirationDate()
+            claimsToCheck.issuanceDate = cred.issuanceDate()
+
+            presentationRequest.addCredentialClaims(claimsToCheck)
+        }
+    }
+}
+
+val trustInfo = initiatedInteraction.trustInfo()
+presentationRequest.verifierDID = trustInfo.did
+presentationRequest.verifierDomain = trustInfo.domain
+
+val config = RegistryConfig()
+config.evaluatePresentationURL = evaluatePresentationURL
+
+val evaluationResult = Registry(config).evaluatePresentation(presentationRequest)
+
+```
+#### Swift
 ```swift
 
 let presentationRequest = TrustregistryPresentationRequest()
@@ -1666,16 +1693,6 @@ let evaluationResult = try TrustregistryRegistry(config)!.evaluatePresentation(p
 
 ```
 
-### Error Codes & Troubleshooting Tips
-
-| Error                                             | Possible Reasons                                                                                                                                                                                                                                                                                                                                                               |
-|---------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| INVALID_AUTHORIZATION_REQUEST(OVP1-0000)          | The authorization request is a URI but specifies a scheme other than "openid-vc".<br/><br/>The authorization request is a URI and is missing the request_uri parameter.<br/><br/>The request object's signature is invalid.<br/><br/>The request object is malformed.<br/><br/>Wallet-SDK does not support the format/type of the authorization request and/or request object. |
-| REQUEST_OBJECT_FETCH_FAILED(OVP1-0001)            | The authorization request is a URI and the request URI endpoint that it specifies cannot be reached.                                                                                                                                                                                                                                                                           |
-| FAIL_TO_GET_MATCH_REQUIREMENTS_RESULTS(CRQ0-0004) | Invalid presentation definition received from the verifier.                                                                                                                                                                                                                                                                                                                    |
-| CREATE_AUTHORIZED_RESPONSE(OVP1-0002)             | No credentials provided in the `presentCredential` method call.                                                                                                                                                                                                                                                                                                                |
-| SEND_AUTHORIZED_RESPONSE(OVP1-0003)               | The verifier server rejected your credentials (couldn't be verified, wrong type, etc).<br/><br/>The verifier server is down or incorrectly configured.                                                                                                                                                                                                                         |
-
 ## Metrics
 
 Certain Wallet-SDK functionality is able to report back performance metrics to the caller.
@@ -1693,8 +1710,8 @@ The object that gets logged when a metrics event occurs is as follows:
 
 * Event: The name of the event that occurred.
 * Parent event: The name of the event that encompasses this event. Some longer Wallet-SDK operations log a larger event
-that captures the overall time of the method, and during that method some sub-events are also logged. If the parent
-event info is empty, then this event is a "root" event. Sub-events always have a duration that is <= the duration of the parent event.
+  that captures the overall time of the method, and during that method some sub-events are also logged. If the parent
+  event info is empty, then this event is a "root" event. Sub-events always have a duration that is <= the duration of the parent event.
 * Duration: How long the event/operation took.
 
 Example metrics event:
@@ -1716,6 +1733,6 @@ Note: performance numbers given below are illustrative only and are not intended
  Fetch credential (POST)                  (event)                      ------(28.87ms)
  Parsing and checking proof               (event)                            ------------------------------ (5.10s)
 ```
-                              
+
 Note that the sum of all sub-event durations may not add up to the duration of the parent event, as not every possible operation during the parent event will be timed.
 Generally, short/trivial operations are not tracked.
