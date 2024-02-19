@@ -92,7 +92,7 @@
           "locale": "en-US",
           "logo": {
             "alt_text": "a square logo of an employee verification",
-            "url": "https://example.com/public/logo.png"
+            "uri": "https://example.com/public/logo.png"
           },
           "name": "Verified Employee",
           "text_color": "#FFFFFF"

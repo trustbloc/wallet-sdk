@@ -9,6 +9,7 @@ package openid4ci_test
 import (
 	_ "embed"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -21,12 +22,13 @@ var sampleIssuerMetadata string
 
 func TestIssuerMetadata(t *testing.T) {
 	issuerServerHandler := &mockIssuerServerHandler{
-		t:              t,
-		issuerMetadata: sampleIssuerMetadata,
+		t: t,
 	}
-	server := httptest.NewServer(issuerServerHandler)
 
+	server := httptest.NewServer(issuerServerHandler)
 	defer server.Close()
+
+	issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
 
 	requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
 
@@ -43,7 +45,7 @@ func TestIssuerMetadata(t *testing.T) {
 	require.NoError(t, err)
 
 	credentialIssuer := issuerMetadata.CredentialIssuer()
-	require.Equal(t, "https://server.example.com", credentialIssuer)
+	require.Equal(t, server.URL, credentialIssuer)
 
 	localizedIssuerDisplays := issuerMetadata.LocalizedIssuerDisplays()
 	require.NotNil(t, localizedIssuerDisplays)

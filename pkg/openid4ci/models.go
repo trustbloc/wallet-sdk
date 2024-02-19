@@ -14,17 +14,11 @@ import (
 )
 
 // CredentialOffer represents the Credential Offer object as defined in
-// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#section-4.1.1.
+// https://openid.github.io/OpenID4VCI/openid-4-verifiable-credential-issuance-wg-draft.html#section-4.1.1.
 type CredentialOffer struct {
-	CredentialIssuer string                            `json:"credential_issuer,omitempty"`
-	Credentials      []Credentials                     `json:"credentials,omitempty"`
-	Grants           map[string]map[string]interface{} `json:"grants,omitempty"`
-}
-
-// Credentials represents the credential format and types in a Credential Offer.
-type Credentials struct {
-	Format string   `json:"format,omitempty"`
-	Types  []string `json:"types,omitempty"`
+	CredentialIssuer           string                            `json:"credential_issuer,omitempty"`
+	CredentialConfigurationIDs []string                          `json:"credential_configuration_ids"`
+	Grants                     map[string]map[string]interface{} `json:"grants,omitempty"`
 }
 
 // AuthorizeResult is the object returned from the Client.Authorize method.

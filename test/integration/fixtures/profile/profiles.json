@@ -161,7 +161,7 @@
                   "locale": "en-US",
                   "logo": {
                     "alt_text": "a square logo of an employee verification",
-                    "url": "https://example.com/public/logo.png"
+                    "uri": "https://example.com/public/logo.png"
                   },
                   "name": "Verified Employee",
                   "text_color": "#FFFFFF"
@@ -361,7 +361,7 @@
                   "name": "Driver's License",
                   "locale": "en-US",
                   "logo": {
-                    "url": "https://example.com/public/logo.png",
+                    "uri": "https://example.com/public/logo.png",
                     "alt_text": "a square logo of a driver's license verification"
                   },
                   "background_color": "#12107c",
@@ -534,7 +534,7 @@
                   "name": "Verified Employee",
                   "locale": "en-US",
                   "logo": {
-                    "url": "https://example.com/public/logo.png",
+                    "uri": "https://example.com/public/logo.png",
                     "alt_text": "a square logo of an employee verification"
                   },
                   "background_color": "#12107c",
@@ -667,7 +667,7 @@
                   "name": "University Degree Credential",
                   "locale": "en-US",
                   "logo": {
-                    "url": "https://example.com/public/logo.png",
+                    "uri": "https://example.com/public/logo.png",
                     "alt_text": "a square logo of a degree verification"
                   },
                   "background_color": "#12107c",
@@ -799,7 +799,7 @@
                   "name": "University Degree Credential",
                   "locale": "en-US",
                   "logo": {
-                    "url": "https://example.com/public/logo.png",
+                    "uri": "https://example.com/public/logo.png",
                     "alt_text": "a square logo of a degree verification"
                   },
                   "background_color": "#12107c",
@@ -945,7 +945,7 @@
                   "name": "Verified Employee",
                   "locale": "en-US",
                   "logo": {
-                    "url": "https://example.com/public/logo.png",
+                    "uri": "https://example.com/public/logo.png",
                     "alt_text": "a square logo of an employee verification"
                   },
                   "background_color": "#12107c",

@@ -29,7 +29,7 @@ export TERM := xterm-256color
 
 ANDROID_EMULATOR_NAME ?= WalletSDKDeviceEmulator
 
-VCS_COMMIT ?= 977063efde1950edc11e14bfe37f370f540c76a7
+VCS_COMMIT ?= 85f957d9f6554679b3fff86828d4e97ae556d05d
 
 .PHONY: all
 all: checks unit-test integration-test
@@ -106,7 +106,7 @@ vc-rest-docker:
 	--build-arg ALPINE_VER=$(ALPINE_VER) .
 
 .PHONY: integration-test
-integration-test: mock-login-consent-docker mock-trust-registry-docker generate-test-keys
+integration-test: mock-login-consent-docker mock-trust-registry-docker vc-rest-docker generate-test-keys
 	@cd test/integration && go mod tidy && ENABLE_COMPOSITION=true go test -count=1 -v -cover . -p 1 -timeout=10m -race
 
 .PHONY: build-integration-cli
