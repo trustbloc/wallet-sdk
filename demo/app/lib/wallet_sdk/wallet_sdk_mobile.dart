@@ -168,7 +168,7 @@ class WalletSDK extends WalletPlatform {
 
   Future<List<CredentialDisplayData>> parseCredentialDisplayData(String resolvedCredentialDisplayData) async {
     List<dynamic> renderedCredDisplay = await methodChannel.invokeMethod(
-        'resolveCredentialDisplay', <String, dynamic>{'parseCredentialDisplay': resolvedCredentialDisplayData});
+        'parseCredentialDisplay', <String, dynamic>{'resolvedCredentialDisplayData': resolvedCredentialDisplayData});
     return renderedCredDisplay.map((d) => CredentialDisplayData.fromMap(d.cast<String, dynamic>())).toList();
   }
 
