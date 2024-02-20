@@ -6,18 +6,17 @@ SPDX-License-Identifier: Apache-2.0
 
 package walletsdk.openid4ci
 
-import dev.trustbloc.wallet.sdk.api.*
-import dev.trustbloc.wallet.sdk.did.CreateOpts
-import dev.trustbloc.wallet.sdk.did.Creator
-import dev.trustbloc.wallet.sdk.did.Resolver
-import dev.trustbloc.wallet.sdk.did.ResolverOpts
-import dev.trustbloc.wallet.sdk.localkms.KMS
-import dev.trustbloc.wallet.sdk.localkms.Localkms
-import dev.trustbloc.wallet.sdk.localkms.Store
-import dev.trustbloc.wallet.sdk.openid4ci.*
+import dev.trustbloc.wallet.sdk.api.Crypto
+import dev.trustbloc.wallet.sdk.api.DIDResolver
+import dev.trustbloc.wallet.sdk.api.StringArray
+import dev.trustbloc.wallet.sdk.api.VerificationMethod
+import dev.trustbloc.wallet.sdk.openid4ci.CreateAuthorizationURLOpts
+import dev.trustbloc.wallet.sdk.openid4ci.InteractionOpts
+import dev.trustbloc.wallet.sdk.openid4ci.SupportedCredentials
+import dev.trustbloc.wallet.sdk.openid4ci.WalletInitiatedInteraction
+import dev.trustbloc.wallet.sdk.openid4ci.WalletInitiatedInteractionArgs
 import dev.trustbloc.wallet.sdk.otel.Otel
 import dev.trustbloc.wallet.sdk.verifiable.Credential
-import walletsdk.openid4vp.OpenID4VP
 
 
 class WalletInitiatedOpenID4CI constructor(

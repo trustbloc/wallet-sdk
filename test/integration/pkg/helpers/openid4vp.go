@@ -115,7 +115,7 @@ func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, is
 		vm, err := h.DIDDoc.AssertionMethod()
 		require.NoError(t, err)
 
-		result, err := interaction.RequestCredential(vm)
+		result, err := interaction.RequestCredentialWithPreAuth(vm, nil)
 		require.NoError(t, err)
 		require.NotEmpty(t, result)
 

@@ -1,8 +1,8 @@
 /*
-Copyright Gen Digital Inc. All Rights Reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
+ Copyright Gen Digital Inc. All Rights Reserved.
+ 
+ SPDX-License-Identifier: Apache-2.0
+ */
 
 import Foundation
 import Walletsdk
@@ -18,9 +18,9 @@ public class WalletInitiatedOpenID4CI {
     init (issuerURI: String, didResolver: ApiDIDResolverProtocol, crypto: ApiCryptoProtocol) {
         self.didResolver = didResolver
         self.crypto = crypto
-
+        
         let trace = OtelNewTrace(nil)
-
+        
         let args = Openid4ciNewWalletInitiatedInteractionArgs(issuerURI, self.crypto, self.didResolver)
         
         let opts = Openid4ciNewInteractionOpts()
@@ -48,9 +48,9 @@ public class WalletInitiatedOpenID4CI {
         if let actualError = createAuthURLError {
             print("error from create authorization URL Wallet Initiated Flow",  actualError.localizedDescription)
             throw actualError
-       }
-
+        }
+        
         return authorizationLink
     }
-
+    
 }

@@ -10,7 +10,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import dev.trustbloc.wallet.sdk.localkms.Result
 import dev.trustbloc.wallet.sdk.localkms.Store
-import java.util.*
+import java.util.Base64
 
 
 class KmsStore(context: Context) : Store {

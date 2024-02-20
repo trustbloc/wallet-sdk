@@ -10,23 +10,29 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import dev.trustbloc.wallet.BuildConfig
 import dev.trustbloc.wallet.sdk.api.StringArray
-import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import dev.trustbloc.wallet.sdk.credential.Inquirer
 import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.did.ResolverOpts
 import dev.trustbloc.wallet.sdk.didion.Didion
 import dev.trustbloc.wallet.sdk.localkms.Localkms
 import dev.trustbloc.wallet.sdk.oauth2.Oauth2
-import dev.trustbloc.wallet.sdk.openid4ci.*
+import dev.trustbloc.wallet.sdk.openid4ci.Acknowledgment
+import dev.trustbloc.wallet.sdk.openid4ci.CreateAuthorizationURLOpts
+import dev.trustbloc.wallet.sdk.openid4ci.InteractionOpts
+import dev.trustbloc.wallet.sdk.openid4ci.IssuerInitiatedInteraction
+import dev.trustbloc.wallet.sdk.openid4ci.IssuerInitiatedInteractionArgs
+import dev.trustbloc.wallet.sdk.openid4ci.RequestCredentialWithPreAuthOpts
 import dev.trustbloc.wallet.sdk.openid4vp.PresentCredentialOpts
-import dev.trustbloc.wallet.sdk.openid4vp.Interaction as VPInteraction
-import dev.trustbloc.wallet.sdk.version.Version
 import dev.trustbloc.wallet.sdk.otel.Otel
-import okhttp3.*
+import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
+import dev.trustbloc.wallet.sdk.version.Version
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.junit.Before
 import org.junit.Test
 import walletsdk.kmsStorage.KmsStore
 import java.net.URI
+import dev.trustbloc.wallet.sdk.openid4vp.Interaction as VPInteraction
 
 
 @SmallTest
@@ -71,7 +77,9 @@ class IntegrationTest {
         val pinRequired = ciInteraction.preAuthorizedCodeGrantParams().pinRequired()
         assertThat(pinRequired).isFalse()
 
-        val issuedCreds = ciInteraction.requestCredential(userDID.assertionMethod())
+        val opts = RequestCredentialWithPreAuthOpts()
+        val issuedCreds = ciInteraction.requestCredentialWithPreAuth(userDID.assertionMethod(), opts)
+
         assertThat(issuedCreds.length()).isGreaterThan(0)
 
         assertThat(ciInteraction.requireAcknowledgment()).isTrue()

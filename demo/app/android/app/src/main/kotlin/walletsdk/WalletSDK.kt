@@ -6,20 +6,23 @@ SPDX-License-Identifier: Apache-2.0
 
 package walletsdk
 
-import dev.trustbloc.wallet.sdk.api.*
-import dev.trustbloc.wallet.sdk.did.*
+import dev.trustbloc.wallet.sdk.api.Crypto
+import dev.trustbloc.wallet.sdk.api.DIDDocResolution
+import dev.trustbloc.wallet.sdk.api.DIDResolver
+import dev.trustbloc.wallet.sdk.did.Resolver
+import dev.trustbloc.wallet.sdk.did.ResolverOpts
 import dev.trustbloc.wallet.sdk.didion.Didion
 import dev.trustbloc.wallet.sdk.didjwk.Didjwk
 import dev.trustbloc.wallet.sdk.didkey.Didkey
+import dev.trustbloc.wallet.sdk.display.Display
 import dev.trustbloc.wallet.sdk.localkms.KMS
 import dev.trustbloc.wallet.sdk.localkms.Localkms
-import dev.trustbloc.wallet.sdk.mem.ActivityLogger
-import walletsdk.openid4ci.OpenID4CI
-import walletsdk.openid4vp.OpenID4VP
 import dev.trustbloc.wallet.sdk.localkms.Store
+import dev.trustbloc.wallet.sdk.mem.ActivityLogger
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
+import walletsdk.openid4ci.OpenID4CI
 import walletsdk.openid4ci.WalletInitiatedOpenID4CI
-import dev.trustbloc.wallet.sdk.display.Display
+import walletsdk.openid4vp.OpenID4VP
 
 class WalletSDK {
     private var kms: KMS? = null

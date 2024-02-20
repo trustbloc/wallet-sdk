@@ -6,14 +6,25 @@ SPDX-License-Identifier: Apache-2.0
 
 package walletsdk.openid4vp
 
-import dev.trustbloc.wallet.sdk.api.*
-import dev.trustbloc.wallet.sdk.credential.*
-import dev.trustbloc.wallet.sdk.openid4vp.*
+import dev.trustbloc.wallet.sdk.api.ActivityLogger
+import dev.trustbloc.wallet.sdk.api.Crypto
+import dev.trustbloc.wallet.sdk.api.DIDResolver
+import dev.trustbloc.wallet.sdk.credential.Inquirer
+import dev.trustbloc.wallet.sdk.credential.InquirerOpts
+import dev.trustbloc.wallet.sdk.credential.SubmissionRequirementArray
+import dev.trustbloc.wallet.sdk.openid4vp.Args
+import dev.trustbloc.wallet.sdk.openid4vp.Interaction
+import dev.trustbloc.wallet.sdk.openid4vp.Opts
+import dev.trustbloc.wallet.sdk.openid4vp.PresentCredentialOpts
+import dev.trustbloc.wallet.sdk.openid4vp.VerifierDisplayData
 import dev.trustbloc.wallet.sdk.otel.Otel
-import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import dev.trustbloc.wallet.sdk.stderr.MetricsLogger
-import dev.trustbloc.wallet.sdk.trustregistry.*
-import java.lang.Exception
+import dev.trustbloc.wallet.sdk.trustregistry.CredentialClaimsToCheck
+import dev.trustbloc.wallet.sdk.trustregistry.EvaluationResult
+import dev.trustbloc.wallet.sdk.trustregistry.PresentationRequest
+import dev.trustbloc.wallet.sdk.trustregistry.Registry
+import dev.trustbloc.wallet.sdk.trustregistry.RegistryConfig
+import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
 class OpenID4VP constructor(
         private val crypto: Crypto,

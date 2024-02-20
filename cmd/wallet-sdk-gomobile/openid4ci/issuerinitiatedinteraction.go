@@ -143,27 +143,6 @@ func (i *IssuerInitiatedInteraction) RequestCredentialWithAuth(vm *api.Verificat
 	return toGomobileCredentials(credentials), nil
 }
 
-// RequestCredential is equivalent to calling the RequestCredentialWithPreAuth method with no PIN set.
-//
-// Deprecated: This method exists only to prevent existing code from breaking. It will be removed in a future version
-// as the method name can be confusing.
-func (i *IssuerInitiatedInteraction) RequestCredential(
-	vm *api.VerificationMethod,
-) (*verifiable.CredentialsArray, error) {
-	return i.RequestCredentialWithPreAuth(vm, nil)
-}
-
-// RequestCredentialWithPIN is equivalent to calling the RequestCredentialWithPreAuth method with a PIN set.
-//
-// Deprecated: This method exists only to prevent existing code from breaking. It will be removed in a future version
-// as the method name can be confusing and the lack of an options object means it's not possible to easily add new
-// options in the future without breaking existing code.
-func (i *IssuerInitiatedInteraction) RequestCredentialWithPIN(
-	vm *api.VerificationMethod, pin string,
-) (*verifiable.CredentialsArray, error) {
-	return i.RequestCredentialWithPreAuth(vm, NewRequestCredentialWithPreAuthOpts().SetPIN(pin))
-}
-
 // IssuerURI returns the issuer's URI from the initiation request. It's useful to store this somewhere in case
 // there's a later need to refresh credential display data using the latest display information from the issuer.
 func (i *IssuerInitiatedInteraction) IssuerURI() string {

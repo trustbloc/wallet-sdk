@@ -31,7 +31,6 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	sdkapi "github.com/trustbloc/wallet-sdk/pkg/api"
@@ -82,9 +81,6 @@ func TestCredentialAPI(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			createDIDOptionalArgs := did.NewCreateOpts()
-			createDIDOptionalArgs.SetMetricsLogger(stderr.NewMetricsLogger())
-
 			var didDoc *api.DIDDocResolution
 
 			switch tc.didMethod {

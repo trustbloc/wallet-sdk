@@ -5,6 +5,7 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+// Package did contains functionality related to DIDs.
 package did
 
 import (
