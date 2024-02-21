@@ -9,7 +9,7 @@
         "name":"Driver's License",
         "locale":"en-US",
         "logo":{
-          "url":"https://example.com/public/logo.png",
+          "uri":"https://example.com/public/logo.png",
           "alt_text": "a square logo of a driver's license verification"
         },
         "background_color":"#12107c",
