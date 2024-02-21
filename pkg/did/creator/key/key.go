@@ -19,25 +19,6 @@ import (
 // ErrorModule is the error module name used for errors relating to did:key creation.
 const ErrorModule = "DIDKEY"
 
-// Creator is used for creating did:key DID Documents.
-type Creator struct {
-	vdr *key.VDR
-}
-
-// NewCreator returns a new did:key document Creator.
-// Deprecated: The standalone Create function should be used instead.
-func NewCreator() *Creator {
-	return &Creator{vdr: key.New()}
-}
-
-// Create creates a new did:key document using the given verification method.
-// Deprecated: The standalone Create function should be used instead.
-func (d *Creator) Create(vm *did.VerificationMethod) (*did.DocResolution, error) {
-	didDocArgument := &did.Doc{VerificationMethod: []did.VerificationMethod{*vm}}
-
-	return d.vdr.Create(didDocArgument)
-}
-
 // Create creates a new did:key document using the given verification method.
 func Create(jwk *jwktype.JWK) (*did.DocResolution, error) {
 	if jwk == nil {

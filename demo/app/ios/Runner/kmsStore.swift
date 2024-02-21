@@ -1,8 +1,8 @@
 /*
-Copyright Gen Digital Inc. All Rights Reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
+ Copyright Gen Digital Inc. All Rights Reserved.
+ 
+ SPDX-License-Identifier: Apache-2.0
+ */
 
 import UIKit
 import Walletsdk
@@ -14,7 +14,7 @@ public class kmsStore: NSObject, LocalkmsStoreProtocol{
         UserDefaults.standard.set(key, forKey: keysetID!)
         return
     }
-
+    
     public func get(_ keysetID: String?) throws -> LocalkmsResult {
         let localResult = LocalkmsResult.init()
         let keyVal = UserDefaults.standard.data(forKey: keysetID!)
@@ -31,5 +31,5 @@ public class kmsStore: NSObject, LocalkmsStoreProtocol{
         UserDefaults.standard.removeObject(forKey: keysetID!)
         return
     }
-
+    
 }

@@ -28,7 +28,6 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
-	"github.com/trustbloc/wallet-sdk/pkg/did/creator"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 	goapiopenid4ci "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
@@ -272,7 +271,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 
 		verificationMethod := &api.VerificationMethod{
 			ID:   mockKeyID,
-			Type: creator.JSONWebKey2020,
+			Type: "JsonWebKey2020",
 			Key:  models.VerificationKey{JSONWebKey: keyHandle.JWK},
 		}
 
@@ -281,76 +280,6 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, credentials)
-	})
-	t.Run("Fail to sign", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{t: t}
-		server := httptest.NewServer(issuerServerHandler)
-
-		defer server.Close()
-
-		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
-		require.NoError(t, err)
-
-		requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
-
-		interactionRequiredArgs, interactionOptionalArgs := getTestArgs(t, requestURI, kms, nil, nil, false)
-
-		// Setting this for test coverage purposes. Actual testing of metrics logger functionality is handled
-		// in the integration tests.
-		interactionOptionalArgs.SetMetricsLogger(nil)
-
-		interaction, err := openid4ci.NewIssuerInitiatedInteraction(interactionRequiredArgs, interactionOptionalArgs)
-		require.NoError(t, err)
-
-		verificationMethod := &api.VerificationMethod{
-			ID: "did:example:12345#testId", Type: "Invalid",
-		}
-
-		credentials, err := interaction.RequestCredential(verificationMethod)
-		requireErrorContains(t, err, "UNSUPPORTED_ALGORITHM")
-		require.Nil(t, credentials)
-	})
-	t.Run("Missing user PIN", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{
-			t:                  t,
-			credentialResponse: sampleCredentialResponse,
-		}
-		server := httptest.NewServer(issuerServerHandler)
-
-		issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
-			TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
-		}
-
-		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential",`+
-			`"credential_issuer":"https://server.example.com"}`, server.URL)
-
-		defer server.Close()
-
-		activityLogger := mem.NewActivityLogger()
-
-		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
-		require.NoError(t, err)
-
-		interaction := createIssuerInitiatedInteraction(t, kms, activityLogger,
-			createCredentialOfferIssuanceURI(t, server.URL, false),
-			nil, false)
-
-		keyHandle, err := kms.Create(arieskms.ED25519)
-		require.NoError(t, err)
-
-		pkBytes, err := keyHandle.JWK.PublicKeyBytes()
-		require.NoError(t, err)
-
-		verificationMethod := &api.VerificationMethod{
-			ID:   "did:example:12345#testId",
-			Type: "Ed25519VerificationKey2018",
-			Key:  models.VerificationKey{Raw: pkBytes},
-		}
-
-		credentials, err := interaction.RequestCredential(verificationMethod)
-		requireErrorContains(t, err, "the credential offer requires a user PIN, but none was provided")
-
-		require.Nil(t, credentials)
 	})
 	t.Run("Authorization code flow - authorization URL must be created first", func(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
@@ -536,11 +465,11 @@ func TestIssuerInitiatedInteractionAlias(t *testing.T) {
 	pkBytes, err := keyHandle.JWK.PublicKeyBytes()
 	require.NoError(t, err)
 
-	credentials, err := interaction.RequestCredentialWithPIN(&api.VerificationMethod{
+	credentials, err := interaction.RequestCredentialWithPreAuth(&api.VerificationMethod{
 		ID:   "did:example:12345#testId",
 		Type: "Ed25519VerificationKey2018",
 		Key:  models.VerificationKey{Raw: pkBytes},
-	}, "1234")
+	}, openid4ci.NewRequestCredentialWithPreAuthOpts().SetPIN("1234"))
 	require.NoError(t, err)
 	require.NotNil(t, credentials)
 
@@ -554,10 +483,6 @@ func TestIssuerInitiatedInteractionAlias(t *testing.T) {
 	require.Empty(t, authURL)
 
 	credentials, err = interaction.RequestCredentialWithPreAuth(nil, nil)
-	requireErrorContains(t, err, "verification method must be provided")
-	require.Nil(t, credentials)
-
-	credentials, err = interaction.RequestCredential(nil)
 	requireErrorContains(t, err, "verification method must be provided")
 	require.Nil(t, credentials)
 
@@ -652,11 +577,11 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 	pkBytes, err := keyHandle.JWK.PublicKeyBytes()
 	require.NoError(t, err)
 
-	credentials, err := interaction.RequestCredentialWithPIN(&api.VerificationMethod{
+	credentials, err := interaction.RequestCredentialWithPreAuth(&api.VerificationMethod{
 		ID:   "did:example:12345#testId",
 		Type: "Ed25519VerificationKey2018",
 		Key:  models.VerificationKey{Raw: pkBytes},
-	}, "1234")
+	}, openid4ci.NewRequestCredentialWithPreAuthOpts().SetPIN("1234"))
 	require.NoError(t, err)
 	require.NotNil(t, credentials)
 
@@ -747,13 +672,13 @@ func createIssuerInitiatedInteraction(t *testing.T, kms *localkms.KMS, activityL
 func createIssuedInitiatedInteractionAlias(t *testing.T, kms *localkms.KMS,
 	activityLogger api.ActivityLogger, requestURI string,
 	additionalHeaders *api.Headers, disableTLSVerification bool,
-) *openid4ci.Interaction {
+) *openid4ci.IssuerInitiatedInteraction {
 	t.Helper()
 
 	requiredArgs, opts := getTestArgsAlias(t, requestURI, kms, activityLogger, additionalHeaders,
 		disableTLSVerification)
 
-	interaction, err := openid4ci.NewInteraction(requiredArgs, opts)
+	interaction, err := openid4ci.NewIssuerInitiatedInteraction(requiredArgs, opts)
 	require.NoError(t, err)
 	require.NotNil(t, interaction)
 
@@ -799,7 +724,7 @@ func getTestArgs(t *testing.T, initiateIssuanceURI string, kms *localkms.KMS,
 func getTestArgsAlias(t *testing.T, initiateIssuanceURI string, kms *localkms.KMS,
 	activityLogger api.ActivityLogger, additionalHeaders *api.Headers,
 	disableTLSVerification bool,
-) (*openid4ci.InteractionArgs, *openid4ci.InteractionOpts) {
+) (*openid4ci.IssuerInitiatedInteractionArgs, *openid4ci.InteractionOpts) {
 	t.Helper()
 
 	resolver := &mockResolver{keyWriter: kms}
@@ -823,7 +748,7 @@ func getTestArgsAlias(t *testing.T, initiateIssuanceURI string, kms *localkms.KM
 		opts.DisableHTTPClientTLSVerify()
 	}
 
-	requiredArgs := openid4ci.NewInteractionArgs(initiateIssuanceURI, kms.GetCrypto(), resolver)
+	requiredArgs := openid4ci.NewIssuerInitiatedInteractionArgs(initiateIssuanceURI, kms.GetCrypto(), resolver)
 
 	return requiredArgs, opts
 }

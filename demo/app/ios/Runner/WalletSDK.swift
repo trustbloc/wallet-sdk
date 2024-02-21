@@ -1,8 +1,8 @@
 /*
-Copyright Gen Digital Inc. All Rights Reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
+ Copyright Gen Digital Inc. All Rights Reserved.
+ 
+ SPDX-License-Identifier: Apache-2.0
+ */
 
 import Foundation
 import Walletsdk
@@ -16,9 +16,9 @@ class WalletSDK {
     public var didResolver: ApiDIDResolverProtocol?
     private var crypto: ApiCryptoProtocol?
     var activityLogger: MemActivityLogger?
-
-
-
+    
+    
+    
     func initSDK(kmsStore: LocalkmsStoreProtocol, didResolverURI: String) {
         kms = LocalkmsNewKMS(kmsStore, nil)
         
@@ -29,7 +29,7 @@ class WalletSDK {
         crypto = kms!.getCrypto()
         activityLogger = MemActivityLogger()
     }
-
+    
     func createDID(didMethodType: String, didKeyType: String) throws -> ApiDIDDocResolution {
         let jwk = try self.kms!.create(didKeyType)
         
@@ -64,7 +64,7 @@ class WalletSDK {
         
         return doc!
     }
-
+    
     func createOpenID4CIInteraction(requestURI: String) throws -> OpenID4CI {
         guard let crypto = self.crypto else {
             throw WalletSDKError.runtimeError("SDK is not initialized, call initSDK()")
@@ -90,10 +90,10 @@ class WalletSDK {
         guard let didResolver = self.didResolver else {
             throw WalletSDKError.runtimeError("SDK is not initialized, call initSDK()")
         }
-         
+        
         return WalletInitiatedOpenID4CI(issuerURI: issuerURI, didResolver: didResolver, crypto: crypto)
     }
-
+    
     func createOpenID4VPInteraction() throws -> OpenID4VP {
         guard let crypto = self.crypto else {
             throw WalletSDKError.runtimeError("crypto is not initialized, call initSDK()")

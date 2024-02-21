@@ -215,13 +215,13 @@ class WalletSDK extends WalletPlatform {
 
   Future<EvaluationResult?> evaluateIssuanceTrustInfo() async {
     var data = await methodChannel.invokeMethod(
-        'evaluateIssuanceTrustInfo', {'evaluateIssuanceURL': const String.fromEnvironment('evaluateIssuanceURL')});
+        'evaluateIssuanceTrustInfo', {'evaluateIssuanceURL': 'https://krakend-k8s-dev3.dev.dts-dsa.com/trustregistry/wallet/interactions/issuance'});
     return EvaluationResult.fromMap(data.cast<String, dynamic>());
   }
 
   Future<EvaluationResult?> evaluatePresentationTrustInfo() async {
     var data = await methodChannel.invokeMethod('evaluatePresentationTrustInfo',
-        {'evaluatePresentationURL': const String.fromEnvironment('evaluatePresentationURL')});
+        {'evaluatePresentationURL': 'https://krakend-k8s-dev3.dev.dts-dsa.com/trustregistry/wallet/interactions/presentation'});
     return EvaluationResult.fromMap(data.cast<String, dynamic>());
   }
 

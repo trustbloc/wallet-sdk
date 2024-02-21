@@ -18,7 +18,7 @@ require (
 	github.com/trustbloc/logutil-go v1.0.0-rc1
 	github.com/trustbloc/vc-go v1.1.1-0.20240214161923-e4b84a59fc02
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
-	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile v0.0.0-20230102235937-82237ea9dde3
+	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile v0.0.0-20240216160256-08361daeddd7
 	go.uber.org/zap v1.23.0
 	golang.org/x/oauth2 v0.13.0
 )

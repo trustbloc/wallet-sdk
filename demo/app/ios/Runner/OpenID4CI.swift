@@ -1,8 +1,8 @@
 /*
-Copyright Gen Digital Inc. All Rights Reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
+ Copyright Gen Digital Inc. All Rights Reserved.
+ 
+ SPDX-License-Identifier: Apache-2.0
+ */
 
 import Foundation
 import Walletsdk
@@ -20,11 +20,11 @@ public class OpenID4CI {
         self.crypto = crypto
         self.activityLogger = activityLogger
         self.kms = kms
-
+        
         let trace = OtelNewTrace(nil)
         
         let args = Openid4ciNewIssuerInitiatedInteractionArgs(requestURI, crypto, didResolver)
-
+        
         let opts = Openid4ciNewInteractionOpts()
         opts!.setActivityLogger(activityLogger)
         opts!.add(trace!.traceHeader())
@@ -35,7 +35,7 @@ public class OpenID4CI {
         let interaction = Openid4ciNewIssuerInitiatedInteraction(args, opts, &error)
         if let actualError = error {
             throw actualError
-       }
+        }
         
         self.initiatedInteraction = interaction!
     }
@@ -46,13 +46,13 @@ public class OpenID4CI {
             return "auth-code-flow"
         }
         if ((initiatedInteraction.preAuthorizedCodeGrantTypeSupported())){
-           return "preauth-code-flow"
+            return "preauth-code-flow"
         }
         return ""
     }
     
     func createAuthorizationURL(clientID: String, redirectURI: String, oauthDiscoverableClientURI: String,  scopes:ApiStringArray) throws  -> String {
-      var error: NSError?
+        var error: NSError?
         let opts = Openid4ciNewCreateAuthorizationURLOpts()
         if (scopes.length() != 0) {
             opts!.setScopes(scopes)
@@ -61,31 +61,31 @@ public class OpenID4CI {
         if (oauthDiscoverableClientURI != "") {
             opts!.useOAuthDiscoverableClientIDScheme()
         }
-  
-    
+        
+        
         let authorizationLink =  initiatedInteraction.createAuthorizationURL(clientID, redirectURI: redirectURI, opts: opts, error: &error)
         if let actualError = error {
             print("error while creating authorization link", error!.localizedDescription)
             throw actualError
-       }
-    
-      return authorizationLink
+        }
+        
+        return authorizationLink
     }
     
     func pinRequired() throws -> Bool {
-       return try initiatedInteraction.preAuthorizedCodeGrantParams().pinRequired()
+        return try initiatedInteraction.preAuthorizedCodeGrantParams().pinRequired()
     }
-
+    
     func issuerURI()-> String {
         return initiatedInteraction.issuerURI()
     }
-
+    
     func getCredentialOfferDisplayData() throws -> DisplayData {
         let issuerMetadata = try initiatedInteraction.issuerMetadata()
-
+        
         return DisplayResolveCredentialOffer(
-                issuerMetadata,
-                initiatedInteraction.offeredCredentialsTypes(), ""
+            issuerMetadata,
+            initiatedInteraction.offeredCredentialsTypes(), ""
         )!
     }
     
@@ -112,15 +112,15 @@ public class OpenID4CI {
         if let actualError = error {
             print("error from acknowledge success",  actualError.localizedDescription)
             throw actualError
-       }
+        }
         
         let acknowledgement = try Openid4ciNewAcknowledgment(serializedStateResp, &error)
         if let actualError = error {
             print("error from new acknowledgement",  actualError.localizedDescription)
             throw actualError
-       }
+        }
         
-      try acknowledgement?.success()
+        try acknowledgement?.success()
     }
     
     func acknowledgeReject() throws {
@@ -128,7 +128,7 @@ public class OpenID4CI {
     }
     
     public func serializeDisplayData(issuerURI: String, vcCredentials: VerifiableCredentialsArray) -> String{
-       let resolvedDisplayData = DisplayResolve(vcCredentials, issuerURI, nil, nil)
+        let resolvedDisplayData = DisplayResolve(vcCredentials, issuerURI, nil, nil)
         return resolvedDisplayData!.serialize(nil)
     }
     
@@ -144,23 +144,23 @@ public class OpenID4CI {
         if let actualError = error {
             print("error from dynamic registration endpoint",  actualError.localizedDescription)
             throw actualError
-       }
+        }
         return endpoint
     }
     
     public func checkWithTrustRegistry(evaluateIssuanceURL: String) throws -> TrustregistryEvaluationResult {
         let issuanceRequest = TrustregistryIssuanceRequest()
-
+        
         let trustInfo = try initiatedInteraction.issuerTrustInfo()
         issuanceRequest.issuerDID = trustInfo.did
         issuanceRequest.issuerDomain = trustInfo.domain
         issuanceRequest.credentialFormat = trustInfo.credentialFormat
         issuanceRequest.credentialType = trustInfo.credentialType
-
-
+        
+        
         let config = TrustregistryRegistryConfig()
         config.evaluateIssuanceURL = evaluateIssuanceURL
-
+        
         return try TrustregistryRegistry(config)!.evaluateIssuance(issuanceRequest)
     }
     
@@ -169,7 +169,7 @@ public class OpenID4CI {
     }
     
     func getIssuerMetadata() throws -> Openid4ciIssuerMetadata {
-       return try initiatedInteraction.issuerMetadata()
+        return try initiatedInteraction.issuerMetadata()
     }
     
     func verifyIssuer() throws -> String {
@@ -178,9 +178,9 @@ public class OpenID4CI {
         if let actualError = error {
             print("error from verify issuer",  actualError.localizedDescription)
             throw actualError
-       }
-       return issuerServiceURL
+        }
+        return issuerServiceURL
     }
-       
-        
+    
+    
 }

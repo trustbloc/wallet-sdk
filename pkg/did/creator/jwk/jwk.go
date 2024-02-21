@@ -9,7 +9,6 @@ package jwk
 
 import (
 	"errors"
-	"fmt"
 
 	jwktype "github.com/trustbloc/kms-go/doc/jose/jwk"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
@@ -20,33 +19,6 @@ import (
 
 // ErrorModule is the error module name used for errors relating to did:jwk creation.
 const ErrorModule = "DIDJWK"
-
-// Creator creates did:jwk DID Documents.
-type Creator struct {
-	vdr *jwkvdr.VDR
-}
-
-// NewCreator initializes a did:jwk DID creator.
-// Deprecated: The standalone Create function should be used instead.
-func NewCreator() *Creator {
-	return &Creator{
-		vdr: jwkvdr.New(),
-	}
-}
-
-// Create creates a did:jwk DID Doc from a given JWK.
-func (creator *Creator) Create(vm *did.VerificationMethod) (*did.DocResolution, error) {
-	docRes, err := creator.vdr.Create(&did.Doc{
-		VerificationMethod: []did.VerificationMethod{
-			*vm,
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("creating did:jwk DID Document: %w", err)
-	}
-
-	return docRes, nil
-}
 
 // Create creates a new did:key document using the given verification method.
 func Create(jwk *jwktype.JWK) (*did.DocResolution, error) {
