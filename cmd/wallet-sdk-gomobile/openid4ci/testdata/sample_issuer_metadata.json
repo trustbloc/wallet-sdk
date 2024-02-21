@@ -1,6 +1,6 @@
 {
-  "authorization_endpoint": "https://web.url.com/oidc/authorize",
-  "credential_ack_endpoint": "https://web.url.com/oidc/acknowledgement",
+  "authorization_endpoint": "[SERVER_URL]/oidc/authorize",
+  "credential_ack_endpoint": "[SERVER_URL]/oidc/ack_endpoint",
   "credential_configurations_supported": {
     "PermanentResidentCard_jwt_vc_json-ld_v1": {
       "credential_definition": {
@@ -29,7 +29,7 @@
           "name": "University Credential",
           "locale": "en-US",
           "logo": {
-            "url": "https://exampleuniversity.com/public/degree_logo.png",
+            "uri": "https://exampleuniversity.com/public/degree_logo.png",
             "alt_text": "a square logo of an Example University degree"
           },
           "background_color": "#12107c",
@@ -52,8 +52,8 @@
       ]
     }
   },
-  "credential_endpoint": "https://web.url.com/oidc/credential",
-  "credential_issuer": "https://server.example.com",
+  "credential_endpoint": "[SERVER_URL]/oidc/credential",
+  "credential_issuer": "[SERVER_URL]",
   "credential_response_encryption": {
     "alg_values_supported": [
       "RSA1_5",
@@ -73,7 +73,7 @@
       "name": "Example University",
       "url": "https://server.example.com",
       "logo": {
-        "url": "https://exampleuniversity.com/public/logo.png",
+        "uri": "https://exampleuniversity.com/public/logo.png",
         "alt_text": "a square logo of a university"
       },
       "background_color": "#12107c",
@@ -88,10 +88,11 @@
     }
   ],
   "pre-authorized_grant_anonymous_access_supported": true,
+  "registration_endpoint": "[SERVER_URL]/oidc/bank_issuer/v1.0/register",
   "response_types_supported": [
     "code"
   ],
-  "token_endpoint": "https://web.url.com/oidc/token",
+  "token_endpoint": "[SERVER_URL]/oidc/token",
   "token_endpoint_auth_methods_supported": [
     "client_secret_basic",
     "client_secret_post",

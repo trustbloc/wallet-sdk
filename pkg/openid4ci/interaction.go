@@ -153,7 +153,7 @@ func (i *interaction) instantiateCodeVerifier() error {
 func (i *interaction) generateAuthorizationDetails(format string, types []string) ([]byte, error) {
 	// TODO: Add support for requesting multiple credentials at once (by sending an array).
 	// Currently we always use the first credential type specified in the offer.
-	authorizationDetailsDTO := &authorizationDetails{
+	authorizationDetailsDTO := authorizationDetails{
 		CredentialConfigurationID: "",
 		CredentialDefinition: &issuer.CredentialDefinition{
 			Context:           nil,
@@ -169,7 +169,7 @@ func (i *interaction) generateAuthorizationDetails(format string, types []string
 		authorizationDetailsDTO.Locations = []string{i.issuerMetadata.CredentialIssuer}
 	}
 
-	authorizationDetailsBytes, err := json.Marshal(authorizationDetailsDTO)
+	authorizationDetailsBytes, err := json.Marshal([]authorizationDetails{authorizationDetailsDTO})
 	if err != nil {
 		return nil, err
 	}
@@ -246,6 +246,9 @@ func (i *interaction) requestAccessToken(redirectURIWithAuthCode string) error {
 
 	authTokenResponse, err := i.oAuth2Config.Exchange(ctx, parsedURI.Query().Get("code"),
 		oauth2.SetAuthURLParam("code_verifier", i.codeVerifier))
+	if err != nil {
+		return err
+	}
 
 	i.authToken = &universalAuthToken{
 		AccessToken:  authTokenResponse.AccessToken,
@@ -256,7 +259,7 @@ func (i *interaction) requestAccessToken(redirectURIWithAuthCode string) error {
 
 	i.authTokenResponseNonce = authTokenResponse.Extra("c_nonce")
 
-	return err
+	return nil
 }
 
 func (i *interaction) getTokenEndpoint() (string, error) {

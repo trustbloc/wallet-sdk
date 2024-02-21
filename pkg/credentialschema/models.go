@@ -53,6 +53,6 @@ type ResolvedClaim struct {
 
 // Logo represents display information for a logo.
 type Logo struct {
-	URL     string `json:"url,omitempty"`
+	URL     string `json:"uri,omitempty"`
 	AltText string `json:"alt_text,omitempty"`
 }

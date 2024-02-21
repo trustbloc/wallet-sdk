@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -27,37 +28,15 @@ func TestWalletInitiatedInteraction_Flow(t *testing.T) {
 		t:                  t,
 		credentialResponse: sampleCredentialResponse,
 	}
+
 	server := httptest.NewServer(issuerServerHandler)
+	defer server.Close()
+
+	issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
 
 	issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
 		TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
 	}
-
-	issuerServerHandler.issuerMetadata = fmt.Sprintf(`{
-  "credential_endpoint": "%s/credential",
-  "credential_configurations_supported": {
-    "PermanentResidentCard_jwt_vc_json-ld_v1": {
-      "credential_definition": {
-        "type": [
-          "VerifiableCredential",
-          "PermanentResidentCard"
-        ]
-      },
-      "format": "jwt_vc_json-ld"
-    },
-    "DriversLicenseCredential_ldp_vc_v1": {
-      "credential_definition": {
-        "type": [
-          "VerifiableCredential",
-          "DriversLicenseCredential"
-        ]
-      },
-      "format": "ldp_vc"
-    }
-  }
-}`, server.URL)
-
-	defer server.Close()
 
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
@@ -78,7 +57,7 @@ func TestWalletInitiatedInteraction_Flow(t *testing.T) {
 	require.NotNil(t, issuerMetadata)
 
 	supportedCredentials := issuerMetadata.CredentialConfigurationsSupported()
-	require.Equal(t, 2, supportedCredentials.Length())
+	require.Equal(t, 1, supportedCredentials.Length())
 
 	prc := supportedCredentials.CredentialConfigurationSupported("PermanentResidentCard_jwt_vc_json-ld_v1")
 
@@ -86,13 +65,6 @@ func TestWalletInitiatedInteraction_Flow(t *testing.T) {
 	require.Equal(t, 2, prc.Types().Length())
 	require.Equal(t, "VerifiableCredential", prc.Types().AtIndex(0))
 	require.Equal(t, "PermanentResidentCard", prc.Types().AtIndex(1))
-
-	dlc := supportedCredentials.CredentialConfigurationSupported("DriversLicenseCredential_ldp_vc_v1")
-
-	require.Equal(t, "ldp_vc", dlc.Format())
-	require.Equal(t, 2, dlc.Types().Length())
-	require.Equal(t, "VerifiableCredential", dlc.Types().AtIndex(0))
-	require.Equal(t, "DriversLicenseCredential", dlc.Types().AtIndex(1))
 
 	dynamicClientRegistrationSupported, err := interaction.DynamicClientRegistrationSupported()
 	require.NoError(t, err)

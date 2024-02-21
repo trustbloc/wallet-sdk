@@ -9,7 +9,7 @@
         "name": "University Degree Credential",
         "locale": "en-US",
         "logo": {
-          "url": "https://example.com/public/logo.png",
+          "uri": "https://example.com/public/logo.png",
           "alt_text": "a square logo of a degree verification"
         },
         "background_color": "#12107c",

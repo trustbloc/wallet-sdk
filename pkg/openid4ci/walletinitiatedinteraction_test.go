@@ -9,6 +9,7 @@ package openid4ci_test
 import (
 	"fmt"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -30,8 +31,7 @@ func TestWalletInitiatedInteractionFlow(t *testing.T) {
 			TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
 		}
 
-		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential"}`,
-			server.URL)
+		issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
 
 		config := getTestClientConfig(t)
 
@@ -77,8 +77,7 @@ func TestWalletInitiatedInteractionFlow(t *testing.T) {
 		server := httptest.NewServer(issuerServerHandler)
 		defer server.Close()
 
-		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential",`+
-			`"token_endpoint":"%s/oidc/token"}`, server.URL, server.URL)
+		issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
 
 		config := getTestClientConfig(t)
 

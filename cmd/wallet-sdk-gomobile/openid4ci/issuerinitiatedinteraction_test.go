@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -45,18 +46,29 @@ var (
 const (
 	sampleTokenResponse = `{"access_token":"eyJhbGciOiJSUzI1NiIsInR5cCI6Ikp..sHQ",` +
 		`"token_type":"bearer","expires_in":86400,"c_nonce":"tZignsnFbp","c_nonce_expires_in":86400}`
-	mockDID = "did:test:foo"
 
+	mockDID   = "did:test:foo"
 	mockKeyID = "did:test:foo#abcd"
+
+	serverURLPlaceholder = "[SERVER_URL]"
 )
 
 func TestNewInteraction(t *testing.T) {
+	issuerServerHandler := &mockIssuerServerHandler{
+		t: t,
+	}
+
+	server := httptest.NewServer(issuerServerHandler)
+	defer server.Close()
+
+	issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
 	t.Run("Success", func(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
 		i := createIssuerInitiatedInteraction(t, kms, nil,
-			createCredentialOfferIssuanceURI(t, "example.com", false),
+			createCredentialOfferIssuanceURI(t, server.URL, false),
 			nil, false)
 		require.NotEmpty(t, i.OTelTraceID())
 	})
@@ -70,7 +82,7 @@ func TestNewInteraction(t *testing.T) {
 		opts := openid4ci.NewInteractionOpts()
 		opts.DisableOpenTelemetry()
 
-		requiredArgs := openid4ci.NewIssuerInitiatedInteractionArgs(createCredentialOfferIssuanceURI(t, "example.com", false),
+		requiredArgs := openid4ci.NewIssuerInitiatedInteractionArgs(createCredentialOfferIssuanceURI(t, server.URL, false),
 			kms.GetCrypto(), resolver)
 
 		interaction, err := openid4ci.NewIssuerInitiatedInteraction(requiredArgs, opts)
@@ -86,7 +98,7 @@ func TestNewInteraction(t *testing.T) {
 
 		resolver := &mockResolver{keyWriter: kms}
 
-		requiredArgs := openid4ci.NewIssuerInitiatedInteractionArgs(createCredentialOfferIssuanceURI(t, "example.com", false),
+		requiredArgs := openid4ci.NewIssuerInitiatedInteractionArgs(createCredentialOfferIssuanceURI(t, server.URL, false),
 			kms.GetCrypto(), resolver)
 
 		interaction, err := openid4ci.NewIssuerInitiatedInteraction(requiredArgs, nil)
@@ -100,7 +112,7 @@ func TestNewInteraction(t *testing.T) {
 
 		resolver := &mockResolver{keyWriter: kms}
 
-		requiredArgs := openid4ci.NewIssuerInitiatedInteractionArgs(createCredentialOfferIssuanceURI(t, "example.com", false),
+		requiredArgs := openid4ci.NewIssuerInitiatedInteractionArgs(createCredentialOfferIssuanceURI(t, server.URL, false),
 			kms.GetCrypto(), resolver)
 		opts := openid4ci.NewInteractionOpts()
 		opts.SetHTTPTimeoutNanoseconds((10 * time.Second).Nanoseconds())
@@ -127,6 +139,7 @@ type mockIssuerServerHandler struct {
 	credentialRequestShouldGiveUnmarshallableResponse bool
 	credentialResponse                                []byte
 	headersToCheck                                    *api.Headers
+	openIDConfigurationShouldFail                     bool
 }
 
 func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint: gocyclo // test file
@@ -134,7 +147,7 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 ) {
 	var err error
 
-	if m.headersToCheck != nil && request.URL.Path != "/ack_endpoint" {
+	if m.headersToCheck != nil && request.URL.Path != "/oidc/ack_endpoint" {
 		for _, headerToCheck := range m.headersToCheck.GetAll() {
 			// Note: for these tests, we're assuming that there aren't multiple values under a single name/key.
 			value := request.Header.Get(headerToCheck.Name)
@@ -144,14 +157,20 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 
 	switch request.URL.Path {
 	case "/.well-known/openid-configuration":
-		var openIDConfigBytes []byte
+		switch {
+		case m.openIDConfigurationShouldFail:
+			writer.WriteHeader(http.StatusInternalServerError)
+			_, err = writer.Write([]byte("test failure"))
+		default:
+			var b []byte
 
-		openIDConfigBytes, err = json.Marshal(m.openIDConfig)
-		if err != nil {
-			break
+			b, err = json.Marshal(m.openIDConfig)
+			if err != nil {
+				break
+			}
+
+			_, err = writer.Write(b)
 		}
-
-		_, err = writer.Write(openIDConfigBytes)
 	case "/.well-known/openid-credential-issuer":
 		_, err = writer.Write([]byte(m.issuerMetadata))
 	case "/oidc/token":
@@ -165,7 +184,7 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 			writer.Header().Set("Content-Type", "application/json")
 			_, err = writer.Write([]byte(sampleTokenResponse))
 		}
-	case "/credential":
+	case "/oidc/credential":
 		switch {
 		case m.credentialRequestShouldFail:
 			writer.WriteHeader(http.StatusInternalServerError)
@@ -175,7 +194,7 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 		default:
 			_, err = writer.Write(m.credentialResponse)
 		}
-	case "/ack_endpoint":
+	case "/oidc/ack_endpoint":
 		writer.WriteHeader(http.StatusNoContent)
 	}
 
@@ -183,12 +202,21 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 }
 
 func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
+	issuerServerHandler := &mockIssuerServerHandler{
+		t: t,
+	}
+
+	server := httptest.NewServer(issuerServerHandler)
+	defer server.Close()
+
+	issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
 	t.Run("Issuer does not support the authorization code grant type", func(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
 		interaction := createIssuerInitiatedInteraction(t, kms, nil,
-			createCredentialOfferIssuanceURI(t, "example.com", false),
+			createCredentialOfferIssuanceURI(t, server.URL, false),
 			nil, false)
 
 		opts := openid4ci.NewCreateAuthorizationURLOpts().UseOAuthDiscoverableClientIDScheme()
@@ -202,7 +230,7 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", true),
+		interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, server.URL, true),
 			nil, false)
 
 		createAuthorizationURLOpts := openid4ci.NewCreateAuthorizationURLOpts().SetIssuerState("IssuerState")
@@ -218,6 +246,16 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 }
 
 func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
+	issuerServerHandler := &mockIssuerServerHandler{
+		t:                  t,
+		credentialResponse: sampleCredentialResponse,
+	}
+
+	server := httptest.NewServer(issuerServerHandler)
+	defer server.Close()
+
+	issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
 	t.Run("Success", func(t *testing.T) {
 		t.Run("Without additional headers, TLS verification enabled", func(t *testing.T) {
 			doRequestCredentialTest(t, nil, false)
@@ -242,21 +280,6 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		})
 	})
 	t.Run("Success with jwk public key", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{
-			t:                  t,
-			credentialResponse: sampleCredentialResponse,
-		}
-		server := httptest.NewServer(issuerServerHandler)
-
-		issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
-			TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
-		}
-
-		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential",`+
-			`"credential_issuer":"https://server.example.com"}`, server.URL)
-
-		defer server.Close()
-
 		requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
 
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
@@ -283,11 +306,6 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		require.NotNil(t, credentials)
 	})
 	t.Run("Fail to sign", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{t: t}
-		server := httptest.NewServer(issuerServerHandler)
-
-		defer server.Close()
-
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
@@ -311,21 +329,6 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		require.Nil(t, credentials)
 	})
 	t.Run("Missing user PIN", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{
-			t:                  t,
-			credentialResponse: sampleCredentialResponse,
-		}
-		server := httptest.NewServer(issuerServerHandler)
-
-		issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
-			TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
-		}
-
-		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential",`+
-			`"credential_issuer":"https://server.example.com"}`, server.URL)
-
-		defer server.Close()
-
 		activityLogger := mem.NewActivityLogger()
 
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
@@ -357,7 +360,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		require.NoError(t, err)
 
 		interaction := createIssuerInitiatedInteraction(t, kms, nil,
-			createCredentialOfferIssuanceURI(t, "example.com", true),
+			createCredentialOfferIssuanceURI(t, server.URL, true),
 			nil, false)
 
 		keyHandle, err := kms.Create(arieskms.ED25519)
@@ -380,10 +383,19 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 }
 
 func TestIssuerInitiatedInteraction_GrantTypes(t *testing.T) {
+	issuerServerHandler := &mockIssuerServerHandler{
+		t: t,
+	}
+
+	server := httptest.NewServer(issuerServerHandler)
+	defer server.Close()
+
+	issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
-	interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", false),
+	interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, server.URL, false),
 		nil, false)
 
 	require.True(t, interaction.PreAuthorizedCodeGrantTypeSupported())
@@ -401,7 +413,7 @@ func TestIssuerInitiatedInteraction_GrantTypes(t *testing.T) {
 	requireErrorContains(t, err, "issuer does not support the authorization code grant")
 	require.Nil(t, authorizationCodeGrantParams)
 
-	interaction = createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", true),
+	interaction = createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, server.URL, true),
 		nil, false)
 
 	require.True(t, interaction.AuthorizationCodeGrantTypeSupported())
@@ -418,48 +430,97 @@ func TestIssuerInitiatedInteraction_GrantTypes(t *testing.T) {
 }
 
 func TestIssuerInitiatedInteraction_DynamicClientRegistration(t *testing.T) {
-	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
-	require.NoError(t, err)
+	t.Run("Success", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t: t,
+		}
 
-	interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, "example.com", false),
-		nil, false)
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
 
-	supported, err := interaction.DynamicClientRegistrationSupported()
-	requireErrorContains(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED")
-	requireErrorContains(t, err, "failed to fetch issuer's OpenID configuration: openid configuration endpoint: Get")
-	require.False(t, supported)
+		issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
 
-	endpoint, err := interaction.DynamicClientRegistrationEndpoint()
-	requireErrorContains(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED")
-	requireErrorContains(t, err, "failed to fetch issuer's OpenID configuration: openid configuration endpoint: Get ")
-	require.Empty(t, endpoint)
+		registrationEndpoint := fmt.Sprintf("%s/oidc/bank_issuer/v1.0/register", server.URL)
+
+		issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
+			RegistrationEndpoint: &registrationEndpoint,
+		}
+
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, server.URL, false),
+			nil, false)
+
+		supported, err := interaction.DynamicClientRegistrationSupported()
+		require.NoError(t, err)
+		require.True(t, supported)
+	})
+
+	t.Run("Fail to check if dynamic client registration is supported", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t:                             t,
+			openIDConfigurationShouldFail: true,
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
+		registrationEndpoint := "invalid url"
+
+		issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
+			RegistrationEndpoint: &registrationEndpoint,
+		}
+
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, server.URL, false),
+			nil, false)
+
+		supported, err := interaction.DynamicClientRegistrationSupported()
+		requireErrorContains(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED")
+		require.False(t, supported)
+	})
 }
 
 func TestIssuerInitiatedInteraction_IssuerMetadata(t *testing.T) {
-	t.Run("Failed to get issuer metadata", func(t *testing.T) {
+	t.Run("Successfully get issuer metadata", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{
+			t: t,
+		}
+
+		server := httptest.NewServer(issuerServerHandler)
+		defer server.Close()
+
+		issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
 		i := createIssuerInitiatedInteraction(t, kms, nil,
-			createCredentialOfferIssuanceURI(t, "example.com", false),
+			createCredentialOfferIssuanceURI(t, server.URL, false),
 			nil, false)
 		require.NotEmpty(t, i.OTelTraceID())
 
 		issuerMetadata, err := i.IssuerMetadata()
-		requireErrorContains(t, err, "METADATA_FETCH_FAILED")
-		require.Nil(t, issuerMetadata)
+		require.NoError(t, err)
+		require.NotNil(t, issuerMetadata)
 	})
 }
 
 func TestIssuerInitiatedInteraction_VerifyIssuer(t *testing.T) {
 	t.Run("Metadata not signed", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{
-			t:              t,
-			issuerMetadata: "{}",
+			t: t,
 		}
-		server := httptest.NewServer(issuerServerHandler)
 
+		server := httptest.NewServer(issuerServerHandler)
 		defer server.Close()
+
+		issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
 
 		activityLogger := mem.NewActivityLogger()
 
@@ -479,10 +540,11 @@ func TestIssuerInitiatedInteraction_VerifyIssuer(t *testing.T) {
 func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
 	t.Run("Metadata not signed", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{
-			t:              t,
-			issuerMetadata: `{}`,
+			t: t,
 		}
 		server := httptest.NewServer(issuerServerHandler)
+
+		issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
 
 		defer server.Close()
 
@@ -497,8 +559,8 @@ func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
 
 		trustInfo, err := interaction.IssuerTrustInfo()
 		require.NoError(t, err)
-		require.Equal(t, trustInfo.CredentialFormat, "jwt_vc_json")
-		require.Equal(t, trustInfo.CredentialType, "VerifiedEmployee")
+		require.Equal(t, "jwt_vc_json-ld", trustInfo.CredentialFormat)
+		require.Equal(t, "PermanentResidentCard", trustInfo.CredentialType)
 	})
 }
 
@@ -509,16 +571,15 @@ func TestIssuerInitiatedInteractionAlias(t *testing.T) {
 		t:                  t,
 		credentialResponse: sampleCredentialResponse,
 	}
+
 	server := httptest.NewServer(issuerServerHandler)
+	defer server.Close()
+
+	issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
 
 	issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
 		TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
 	}
-
-	issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential",`+
-		`"credential_issuer":"https://server.example.com"}`, server.URL)
-
-	defer server.Close()
 
 	activityLogger := mem.NewActivityLogger()
 
@@ -620,17 +681,15 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 		credentialResponse: sampleCredentialResponse,
 		headersToCheck:     additionalHeaders,
 	}
+
 	server := httptest.NewServer(issuerServerHandler)
+	defer server.Close()
+
+	issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
 
 	issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
 		TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
 	}
-
-	issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential",`+
-		`"credential_ack_endpoint":"%s/ack_endpoint",`+
-		`"credential_issuer":"https://server.example.com"}`, server.URL, server.URL)
-
-	defer server.Close()
 
 	activityLogger := mem.NewActivityLogger()
 
@@ -644,7 +703,7 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 
 	offeringTypes := api.StringArrayArrayToGoArray(interaction.OfferedCredentialsTypes())
 	require.Len(t, offeringTypes, 1)
-	require.Contains(t, offeringTypes[0], "VerifiedEmployee")
+	require.Contains(t, offeringTypes[0], "PermanentResidentCard")
 
 	keyHandle, err := kms.Create(arieskms.ED25519)
 	require.NoError(t, err)
@@ -692,7 +751,7 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 	require.NotEmpty(t, activity.ID)
 	require.Equal(t, goapi.LogTypeCredentialActivity, activity.Type())
 	require.NotEmpty(t, activity.UnixTimestamp())
-	require.Equal(t, "https://server.example.com", activity.Client())
+	require.Equal(t, server.URL, activity.Client())
 	require.Equal(t, "oidc-issuance", activity.Operation())
 	require.Equal(t, goapi.ActivityLogStatusSuccess, activity.Status())
 
