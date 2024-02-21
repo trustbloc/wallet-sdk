@@ -29,7 +29,7 @@ export TERM := xterm-256color
 
 ANDROID_EMULATOR_NAME ?= WalletSDKDeviceEmulator
 
-VCS_COMMIT ?= 85f957d9f6554679b3fff86828d4e97ae556d05d
+VCS_COMMIT ?= 3eafabe27767fe7aa6055afe81634ba12a60db94
 
 .PHONY: all
 all: checks unit-test integration-test

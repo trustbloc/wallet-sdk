@@ -177,7 +177,8 @@ func resolveClaims(
 	var resolvedClaims []ResolvedClaim
 
 	for fieldName, claim := range credentialConfigurationSupported.CredentialDefinition.CredentialSubject {
-		resolvedClaim, err := resolveClaim(fieldName, claim, credentialSubject, preferredLocale, maskingString)
+		resolvedClaim, err := resolveClaim(
+			fieldName, claim, credentialSubject, credentialConfigurationSupported, preferredLocale, maskingString)
 		if err != nil && !errors.Is(err, errNoClaimDisplays) && !errors.Is(err, errClaimValueNotFoundInVC) {
 			return nil, err
 		}
@@ -190,7 +191,11 @@ func resolveClaims(
 	return resolvedClaims, nil
 }
 
-func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *verifiable.Subject,
+func resolveClaim(
+	fieldName string,
+	claim *issuer.Claim,
+	credentialSubject *verifiable.Subject,
+	credentialConfigurationSupported *issuer.CredentialConfigurationSupported,
 	preferredLocale, maskingString string,
 ) (*ResolvedClaim, error) {
 	if len(claim.LocalizedClaimDisplays) == 0 {
@@ -219,12 +224,8 @@ func resolveClaim(fieldName string, claim *issuer.Claim, credentialSubject *veri
 
 	var order *int
 
-	if claim.Order != nil {
-		orderAsInt, err := claim.OrderAsInt()
-		if err != nil {
-			return nil, err
-		}
-
+	orderAsInt, err := credentialConfigurationSupported.ClaimOrderAsInt(fieldName)
+	if err == nil {
 		order = &orderAsInt
 	}
 
