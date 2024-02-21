@@ -27,13 +27,13 @@ import (
 var (
 	//go:embed testdata/sample_issuer_metadata.json
 	sampleIssuerMetadataJSON string
-	//go:embed testdata/sample_issuer_metadata.jwt
+	//go:embed testdata/sample_issuer_metadata.jwt.json
 	sampleIssuerMetadataJWT string
-	//go:embed testdata/sample_issuer_metadata_with_order.jwt
+	//go:embed testdata/sample_issuer_metadata_with_order.jwt.json
 	// Note that this sample is not properly signed - it exists just to test our handling of
 	// the optional order field when received inside a JWT.
 	sampleIssuerMetadataWithOrderJWT string
-	//go:embed testdata/sample_jwt_without_issuer_metadata.jwt
+	//go:embed testdata/sample_jwt_without_issuer_metadata.jwt.json
 	// This is the sample JWT taken directly from JWT.io.
 	sampleJWTWithoutIssuerMetadata string
 )
@@ -78,22 +78,18 @@ func TestGet(t *testing.T) {
 			require.NotNil(t, issuerMetadata)
 
 			credentialConf := issuerMetadata.CredentialConfigurationsSupported["VerifiedEmployee_ldp_vc_v1"]
-			displayNameClaim, exists := credentialConf.CredentialDefinition.CredentialSubject["displayName"]
+			_, exists := credentialConf.CredentialDefinition.CredentialSubject["displayName"]
 			require.True(t, exists)
 
-			require.NotNil(t, displayNameClaim.Order)
-
-			order, err := displayNameClaim.OrderAsInt()
+			order, err := credentialConf.ClaimOrderAsInt("displayName")
 			require.NoError(t, err)
 			require.Equal(t, 3, order)
 
-			jobTitleClaim, exists := credentialConf.CredentialDefinition.CredentialSubject["jobTitle"]
+			_, exists = credentialConf.CredentialDefinition.CredentialSubject["jobTitle"]
 			require.True(t, exists)
 
-			require.Nil(t, jobTitleClaim.Order)
-
-			order, err = jobTitleClaim.OrderAsInt()
-			require.EqualError(t, err, "order is nil or an unsupported type")
+			order, err = credentialConf.ClaimOrderAsInt("jobTitle")
+			require.EqualError(t, err, "order is not specified")
 			require.Equal(t, -1, order)
 		})
 		t.Run("Parsing from JWT", func(t *testing.T) {
@@ -127,22 +123,18 @@ func TestGet(t *testing.T) {
 			credentialConf := issuerMetadata.CredentialConfigurationsSupported["VerifiedEmployee_ldp_vc_v1"]
 			credentialDefinition := credentialConf.CredentialDefinition
 
-			displayNameClaim, exists := credentialDefinition.CredentialSubject["displayName"]
+			_, exists := credentialDefinition.CredentialSubject["displayName"]
 			require.True(t, exists)
 
-			require.NotNil(t, displayNameClaim.Order)
-
-			order, err := displayNameClaim.OrderAsInt()
+			order, err := credentialConf.ClaimOrderAsInt("displayName")
 			require.NoError(t, err)
-			require.Equal(t, 3, order)
+			require.Equal(t, 0, order)
 
-			jobTitleClaim, exists := credentialDefinition.CredentialSubject["jobTitle"]
+			_, exists = credentialDefinition.CredentialSubject["jobTitle"]
 			require.True(t, exists)
 
-			require.Nil(t, jobTitleClaim.Order)
-
-			order, err = jobTitleClaim.OrderAsInt()
-			require.EqualError(t, err, "order is nil or an unsupported type")
+			order, err = credentialConf.ClaimOrderAsInt("jobTitle")
+			require.EqualError(t, err, "order is not specified")
 			require.Equal(t, -1, order)
 		})
 	})
