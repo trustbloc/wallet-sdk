@@ -33,6 +33,12 @@
         }
       ],
       "format": "ldp_vc",
+      "order": [
+        "",
+        "",
+        "",
+        "displayName"
+      ],
       "credential_definition": {
         "credentialSubject": {
           "displayName": {
@@ -41,8 +47,7 @@
                 "locale": "en-US",
                 "name": "Employee"
               }
-            ],
-            "order": 3
+            ]
           },
           "givenName": {
             "display": [

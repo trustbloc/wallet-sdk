@@ -9,7 +9,6 @@ package issuer
 
 import (
 	"errors"
-	"strconv"
 )
 
 // CredentialConfigurationID is an alias for type "string" introduced to simplify understanding of the specification.
@@ -136,6 +135,17 @@ type CredentialConfigurationSupported struct {
 	Vct string `json:"vct,omitempty"`
 }
 
+// ClaimOrderAsInt returns this Claim's order value as an integer.
+func (c *CredentialConfigurationSupported) ClaimOrderAsInt(claimName string) (int, error) {
+	for i, cn := range c.Order {
+		if cn == claimName {
+			return i, nil
+		}
+	}
+
+	return -1, errors.New("order is not specified")
+}
+
 // CredentialDefinition containing the detailed description of the credential type.
 type CredentialDefinition struct {
 	// For ldp_vc only. Array as defined in https://www.w3.org/TR/vc-data-model/#contexts.
@@ -196,34 +206,8 @@ type LocalizedCredentialDisplay struct {
 type Claim struct {
 	LocalizedClaimDisplays []LocalizedClaimDisplay `json:"display,omitempty"`
 	ValueType              string                  `json:"value_type,omitempty"`
-	Order                  interface{}             `json:"order,omitempty"`
 	Pattern                string                  `json:"pattern,omitempty"`
 	Mask                   string                  `json:"mask,omitempty"`
-}
-
-// OrderAsInt returns this Claim's Order value as an integer.
-func (c *Claim) OrderAsInt() (int, error) {
-	// If this issuer metadata was sent by the server as JSON, then it should unmarshal into a float64.
-	orderAsFloat64, ok := c.Order.(float64)
-	if ok {
-		return int(orderAsFloat64), nil
-	}
-
-	// If it was sent as a JWT, then it'll be a string.
-	orderAsString, ok := c.Order.(string)
-	if ok {
-		orderAsInt, err := strconv.Atoi(orderAsString)
-		if err != nil {
-			return -1, err
-		}
-
-		return orderAsInt, nil
-	}
-
-	// Other types aren't expected currently, so return an error.
-	// If we do expect another type in the future, then we'll need to add support for it to this method.
-
-	return -1, errors.New("order is nil or an unsupported type")
 }
 
 // Logo represents display information for a logo.

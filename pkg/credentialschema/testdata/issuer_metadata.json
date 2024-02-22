@@ -15,6 +15,11 @@
   "credential_configurations_supported": {
     "UniversityDegreeCredential_jwt_vc_json-ld_v1": {
       "format": "jwt_vc_json",
+      "order": [
+        "id",
+        "given_name",
+        "surname"
+      ],
       "credential_definition": {
         "credentialSubject": {
           "id": {
@@ -24,8 +29,7 @@
                 "locale": "en-US"
               }
             ],
-            "value_type": "string",
-            "order": 0
+            "value_type": "string"
           },
           "given_name": {
             "display": [
@@ -34,8 +38,7 @@
                 "locale": "en-US"
               }
             ],
-            "value_type": "string",
-            "order": 1
+            "value_type": "string"
           },
           "surname": {
             "display": [
@@ -44,8 +47,7 @@
                 "locale": "en-US"
               }
             ],
-            "value_type": "string",
-            "order": 2
+            "value_type": "string"
           },
           "gpa": {
             "display": [

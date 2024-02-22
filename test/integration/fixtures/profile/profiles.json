@@ -56,6 +56,11 @@
           "credential_configurations_supported": {
             "VerifiedEmployee_jwt_vc_json_v1": {
               "format": "jwt_vc_json",
+              "order": [
+                "displayName",
+                "givenName",
+                "jobTitle"
+              ],
               "credential_definition": {
                 "type": [
                   "VerifiableCredential",
@@ -69,8 +74,7 @@
                         "name": "Employee"
                       }
                     ],
-                    "value_type": "string",
-                    "order": 0
+                    "value_type": "string"
                   },
                   "givenName": {
                     "display": [
@@ -79,8 +83,7 @@
                         "name": "Given Name"
                       }
                     ],
-                    "value_type": "string",
-                    "order": 1
+                    "value_type": "string"
                   },
                   "jobTitle": {
                     "display": [
@@ -89,8 +92,7 @@
                         "name": "Job Title"
                       }
                     ],
-                    "value_type": "string",
-                    "order": 2
+                    "value_type": "string"
                   },
                   "mail": {
                     "display": [
@@ -430,6 +432,11 @@
           "credential_configurations_supported": {
             "VerifiedEmployee_jwt_vc_json_v1": {
               "format": "jwt_vc_json",
+              "order": [
+                "displayName",
+                "givenName",
+                "jobTitle"
+              ],
               "credential_definition": {
                 "type": [
                   "VerifiableCredential",
@@ -443,8 +450,7 @@
                         "locale": "en-US"
                       }
                     ],
-                    "value_type": "string",
-                    "order": 0
+                    "value_type": "string"
                   },
                   "givenName": {
                     "display": [
@@ -453,8 +459,7 @@
                         "locale": "en-US"
                       }
                     ],
-                    "value_type": "string",
-                    "order": 1
+                    "value_type": "string"
                   },
                   "jobTitle": {
                     "display": [
@@ -463,8 +468,7 @@
                         "locale": "en-US"
                       }
                     ],
-                    "value_type": "string",
-                    "order": 2
+                    "value_type": "string"
                   },
                   "surname": {
                     "display": [
