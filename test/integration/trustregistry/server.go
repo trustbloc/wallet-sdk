@@ -45,6 +45,9 @@ func NewServer(c *Config) (*Server, error) {
 	router.HandleFunc("/wallet/interactions/issuance", server.handleEvaluateIssuanceRequest).Methods(http.MethodPost)
 	router.HandleFunc("/wallet/interactions/presentation", server.handleEvaluatePresentationRequest).Methods(http.MethodPost)
 
+	router.HandleFunc("/issuer/policies/{policyID}/{policyVersion}/interactions/issuance", server.evaluateIssuerIssuancePolicy).Methods(http.MethodPost)
+	router.HandleFunc("/verifier/policies/{policyID}/{policyVersion}/interactions/presentation", server.evaluateVerifierPresentationPolicy).Methods(http.MethodPost)
+
 	return server, nil
 }
 
@@ -106,6 +109,93 @@ func (s *Server) handleEvaluatePresentationRequest(w http.ResponseWriter, r *htt
 	writeResponse(w, &trustregistry.EvaluationResult{Allowed: true})
 }
 
+func (s *Server) evaluateIssuerIssuancePolicy(w http.ResponseWriter, r *http.Request) {
+	var request IssuerIssuanceRequest
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		writeResponseWithStatus(
+			w, http.StatusBadRequest, fmt.Sprintf("decode issuance policy request: %s", err.Error()))
+
+		return
+	}
+
+	if request.IssuerDID == "" {
+		writeResponseWithStatus(
+			w, http.StatusBadRequest, "issuer did is empty")
+
+		return
+	}
+
+	if request.AttestationVC == nil || len(*request.AttestationVC) == 0 {
+		writeResponseWithStatus(
+			w, http.StatusBadRequest, "no attestation vc supplied")
+
+		return
+	}
+
+	log.Printf("handling request: %s with payload %v", r.URL.String(), request)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	response := &PolicyEvaluationResponse{
+		Allowed: true,
+	}
+
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Printf("failed to write response: %s", err.Error())
+	}
+}
+
+func (s *Server) evaluateVerifierPresentationPolicy(w http.ResponseWriter, r *http.Request) {
+	var request VerifierPresentationRequest
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		writeResponseWithStatus(
+			w, http.StatusBadRequest, fmt.Sprintf("decode presentation policy request: %s", err.Error()))
+
+		return
+	}
+
+	if request.VerifierDID == "" {
+		writeResponseWithStatus(
+			w, http.StatusBadRequest, "verifier did is empty")
+
+		return
+	}
+
+	if request.CredentialMetadata == nil || len(request.CredentialMetadata) == 0 {
+		writeResponseWithStatus(
+			w, http.StatusBadRequest, "no credential metadata supplied")
+
+		return
+	}
+
+	if request.AttestationVC == nil || len(*request.AttestationVC) == 0 {
+		writeResponseWithStatus(
+			w, http.StatusBadRequest, "no attestation vc supplied")
+
+		return
+	}
+
+	log.Printf("handling request: %s with payload %v", r.URL.String(), request)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	response := &PolicyEvaluationResponse{
+		Allowed: true,
+	}
+
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Printf("failed to write response: %s", err.Error())
+	}
+}
+
 func writeResponse(w http.ResponseWriter, body interface{}) {
 	bytes, err := json.Marshal(body)
 	if err != nil {
@@ -122,6 +212,19 @@ func writeResponse(w http.ResponseWriter, body interface{}) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// writeResponse writes interface value to response
+func writeResponseWithStatus(
+	rw http.ResponseWriter,
+	status int,
+	msg string,
+) {
+	log.Printf("[%d]   %s", status, msg)
+
+	rw.WriteHeader(status)
+
+	_, _ = rw.Write([]byte(msg))
 }
 
 func readRules(filePath string) (*Rules, error) {

@@ -90,8 +90,17 @@ mock-trust-registry-docker:
 	--build-arg ALPINE_VER=$(GO_ALPINE_VER) \
 	--build-arg GO_IMAGE=$(GO_IMAGE) .
 
+.PHONY: mock-attestation-docker
+mock-attestation-docker:
+	@echo "Building mock attestation server"
+	@docker build -f ./images/mocks/attestation/Dockerfile --no-cache -t  wallet-sdk/mock-attestation:latest \
+	--build-arg GO_VER=$(GO_VER) \
+	--build-arg ALPINE_VER=$(GO_ALPINE_VER) \
+	--build-arg GO_PROXY=$(GOPROXY) \
+	--build-arg GO_IMAGE=$(GO_IMAGE) .
+
 .PHONY: integration-test
-integration-test: mock-login-consent-docker mock-trust-registry-docker generate-test-keys
+integration-test: mock-login-consent-docker mock-trust-registry-docker mock-attestation-docker generate-test-keys
 	@cd test/integration && go mod tidy && ENABLE_COMPOSITION=true go test -count=1 -v -cover . -p 1 -timeout=10m -race
 
 .PHONY: build-integration-cli
@@ -101,7 +110,7 @@ build-integration-cli:
 	@cd test/integration/cli && go build -o ../../../build/bin/integration-cli main.go
 
 .PHONY: prepare-integration-test-flutter
-prepare-integration-test-flutter: build-integration-cli mock-login-consent-docker mock-trust-registry-docker generate-test-keys start-integration-env-flutter
+prepare-integration-test-flutter: build-integration-cli mock-login-consent-docker mock-trust-registry-docker mock-attestation-docker generate-test-keys start-integration-env-flutter
 
 .PHONY: start-integration-env-flutter
 start-integration-env-flutter:

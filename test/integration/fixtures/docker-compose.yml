@@ -165,6 +165,22 @@ services:
     networks:
       - bdd_net
 
+  mock-attestation.trustbloc.local: # mock for Attestation Service
+    container_name: mock-attestation.trustbloc.local
+    image: wallet-sdk/mock-attestation:latest
+    environment:
+      - LISTEN_ADDR=:8097
+      - TLS_CERT_PATH=/etc/tls/ec-pubCert.pem
+      - TLS_KEY_PATH=/etc/tls/ec-key.pem
+      - ROOT_CA_CERTS_PATH=/etc/tls/ec-cacert.pem
+      - ATTESTATION_PROFILE=drivers_license_issuer
+    ports:
+      - "8097:8097"
+    volumes:
+      - ./keys/tls:/etc/tls
+    networks:
+      - bdd_net
+
   mock-login-consent.example.com: # login/consent mock server for OIDC4CI issuance flow
     container_name: mock-login-consent.example.com
     image: wallet-sdk/mock-login-consent:latest
