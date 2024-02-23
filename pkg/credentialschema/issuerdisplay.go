@@ -18,14 +18,7 @@ func getIssuerDisplay(issuerDisplays []issuer.LocalizedIssuerDisplay, locale str
 	}
 
 	if locale == "" {
-		return &ResolvedIssuerDisplay{
-			Name:            issuerDisplays[0].Name,
-			Locale:          issuerDisplays[0].Locale,
-			URL:             issuerDisplays[0].URL,
-			Logo:            convertLogo(issuerDisplays[0].Logo),
-			BackgroundColor: issuerDisplays[0].BackgroundColor,
-			TextColor:       issuerDisplays[0].TextColor,
-		}
+		locale = "en-US"
 	}
 
 	for _, issuerDisplay := range issuerDisplays {
