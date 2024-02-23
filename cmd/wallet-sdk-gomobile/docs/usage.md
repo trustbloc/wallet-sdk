@@ -605,32 +605,26 @@ Which one you use will depend on your flow:
 Regardless of which of the two methods you use, if the call succeeds, it will return your issued credentials.
 These can then be used in other Wallet-SDK APIs or [serialized for storage](#verifiable-credentials).
 
-### Issuer Metadata
 
-Depending on your use case, you may want to check the issuer's metadata. To do this, call the `issuerMetadata` method
-which will return an `IssuerMetadata` object. Note that some of the methods available on this object and its nested
-sub-objects, can return null/nil/an empty value if the issuer does not supply the corresponding data in its metadata.
-You should ensure that these situations are handled accordingly. Read this section carefully to see which methods may
-return null/nil/an empty value.
+### Issuer and Credential Preview API
+The issuer metadata provided human-readable issuer and credential details. Use following API to get the
+preview details from the credential offer.
 
-The `IssuerMetadata` object has the following methods on it:
+```kotlin
+previewData = Display.resolveCredentialOffer(issuanceInteraction.issuerMetadata(),issuanceInteraction.offeredCredentialsTypes(), "locale" )
+```
 
-* `credentialIssuer()`: Returns the issuer's identifier.
-* `localizedIssuerDisplays()`: Returns the [LocalizedIssuerDisplays](#LocalizedIssuerDisplays) object, which contains
-  display information for the issuer.
-* `supportedCredentials()`: Returns the [SupportedCredentials](#SupportedCredentials) object, which contains technical
-  and display data about the credential types that this issuer can issue.
+```swift
+previewData = DisplayResolveCredentialOffer(issuanceInteraction.issuerMetadata(),issuanceInteraction.offeredCredentialsTypes(), "locale" )
+```
 
-#### LocalizedIssuerDisplays
+Note: If the locale is empty, then SDK will default to `en-US`. 
 
-The `LocalizedIssuerDisplays` object contains display information for the issuer. This is optional data; the issuer
-may not provide any display information. If the issuer doesn't provide any display information at all, then the
-`length()` method on the `LocalizedIssuerDisplays` object will return 0.
-Each element (`LocalizedIssuerDisplay`) in the array corresponds to a different locale and has methods on it that return
-various pieces of display information. Note that this display information is all optional, and so any of these methods
-may return null/nil/an empty value if the issuer doesn't provide it.
+#### IssuerDisplay
 
-The methods on a `LocalizedIssuerDisplay` are:
+The `IssuerDisplay` object contains display information for the issuer. 
+
+The methods on a `IssuerDisplay` are:
 
 * `locale()`: The locale for this `LocalizedIssuerDisplay`.
 * `name()`: The issuer's name.
@@ -639,43 +633,20 @@ The methods on a `LocalizedIssuerDisplay` are:
 * `backgroundColor()`: The issuer's background color value.
 * `textColor()`: The issuer's text color value.
 
-#### SupportedCredentials
+##### CredentialDisplays
 
-The `SupportedCredentials` object contains information about the credential types that the issuer can issue.
-Each element (`SupportedCredential`) in the array corresponds to a different credential type.
+The `CredentialDisplays` object contains display information for a credential type. Check the `credentialDisplaysLength()` 
+method on the returned object to find number of credential as part of issuance flow and use `credentialDisplayAtIndex(index)`
+to get the credential display object.
 
-The methods on a `SupportedCredential` are:
+The methods on a `CredentialDisplay` are:
 
-* `localizedDisplays()`: Returns the [LocalizedCredentialDisplays](#LocalizedCredentialDisplays) object, which contains
-  display info for this credential type.
-
-The next three methods return lower-level technical data that aren't intended for displaying to an end-user in most
-cases, but they may be useful for other Wallet-SDK APIs:
-* `id()`: The credential's ID.
-* `format()`: The credential format.
-* `types()`: The credential's types array. This is the low-level `types` array that appears in the actual issued
-  Verifiable Credential object. Not to be confused with the general idea of a credential "type" (e.g. A university degree,
-  driver's license, etc).
-
-Note: while unexpected, if the issuer doesn't specify any credential types at all, then the `length()` method on the
-`SupportedCredentials` object will return 0.
-
-##### LocalizedCredentialDisplays
-
-The `LocalizedCredentialDisplays` object contains display information for a credential type. This is optional data;
-the issuer may not provide any display information. If the issuer doesn't provide any display information at all, then
-the`length()` method on the `LocalizedCredentialDisplays` object will return 0.
-Each element (`LocalizedCredentialDisplay`) in the array corresponds to a different locale and has methods on it that return
-various pieces of display information. Note that this display information is all optional, and so any of these methods
-may return null/nil/an empty value if the issuer doesn't provide it.
-
-The methods on a `LocalizedCredentialDisplay` are:
-
-* `locale()`: The locale for this `LocalizedCredentialDisplay`.
+* `locale()`: The locale for this `CredentialDisplay`.
 * `name()`: The credential's name.
 * `logo()`: The credential's logo.
 * `backgroundColor()`: The credential's background color value.
 * `textColor()`: The credential's text color value.
+
 
 ### Client ID
 
@@ -1203,7 +1174,7 @@ The structure of the display data object is as follows:
 
 * Describes display information about the issuer.
 * Can be serialized using the `serialize()` method and parsed using the `parseIssuerDisplay()` function.
-* Has `name()` and `locale()` methods.
+* Has `name()`, `locale()`, `URL()`, `Logo()`, `BackgroundColor()` and `TextColor()` methods.
 
 #### `CredentialDisplay`
 
