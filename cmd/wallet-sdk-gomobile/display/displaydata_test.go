@@ -17,7 +17,7 @@ import (
 
 const (
 	sampleIssuerDisplay = `{"name":"Example University","locale":"en-US", "url": "https://server.example.com",
-		"logo": {"url": "https://exampleuniversity.com/public/logo.png"}, 
+		"logo": {"uri": "https://exampleuniversity.com/public/logo.png"}, 
 		"background_color": "#12107c", "text_color": "#FFFFFF"}`
 
 	sampleCredentialDisplay = `{"overview":{"name":"University Credential","locale":"en-US","logo":{` +
