@@ -20,10 +20,10 @@ func (i *IssuerMetadata) CredentialIssuer() string {
 	return i.issuerMetadata.CredentialIssuer
 }
 
-// CredentialConfigurationsSupported returns an object that can be used to determine the types of
+// SupportedCredentials returns an object that can be used to determine the types of
 // credentials that the issuer supports issuance of.
-func (i *IssuerMetadata) CredentialConfigurationsSupported() *CredentialConfigurationsSupported {
-	return &CredentialConfigurationsSupported{credentialConfigurations: i.issuerMetadata.CredentialConfigurationsSupported}
+func (i *IssuerMetadata) SupportedCredentials() *SupportedCredentials {
+	return &SupportedCredentials{credentialConfigurations: i.issuerMetadata.CredentialConfigurationsSupported}
 }
 
 // LocalizedIssuerDisplays returns an object that contains display information for the issuer in various locales.

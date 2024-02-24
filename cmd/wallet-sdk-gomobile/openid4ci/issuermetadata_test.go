@@ -67,7 +67,7 @@ func TestIssuerMetadata(t *testing.T) {
 
 	require.Nil(t, localizedIssuerDisplays.AtIndex(2))
 
-	credentialConfigurationsSupported := issuerMetadata.CredentialConfigurationsSupported()
+	credentialConfigurationsSupported := issuerMetadata.SupportedCredentials()
 	require.NotNil(t, credentialConfigurationsSupported)
 	require.Equal(t, 1, credentialConfigurationsSupported.Length())
 
