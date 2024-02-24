@@ -56,7 +56,7 @@ func TestWalletInitiatedInteraction_Flow(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, issuerMetadata)
 
-	supportedCredentials := issuerMetadata.CredentialConfigurationsSupported()
+	supportedCredentials := issuerMetadata.SupportedCredentials()
 	require.Equal(t, 1, supportedCredentials.Length())
 
 	prc := supportedCredentials.CredentialConfigurationSupported("PermanentResidentCard_jwt_vc_json-ld_v1")

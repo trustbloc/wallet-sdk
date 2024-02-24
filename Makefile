@@ -95,18 +95,8 @@ mock-trust-registry-docker:
 	--build-arg ALPINE_VER=$(GO_ALPINE_VER) \
 	--build-arg GO_IMAGE=$(GO_IMAGE) .
 
-.PHONY: vc-rest-docker
-vc-rest-docker:
-	@echo "Building vc rest docker image"
-	@VCS_COMMIT=$(VCS_COMMIT) scripts/build_vcs.sh
-	@docker build -f ./images/vc-rest/Dockerfile --no-cache -t $(DOCKER_OUTPUT_NS)/$(VC_REST_IMAGE_NAME):latest \
-	--build-arg GO_VER=$(GO_VER) \
-	--build-arg GO_PROXY=$(GOPROXY) \
-	--build-arg GO_ALPINE_VER=$(GO_ALPINE_VER) \
-	--build-arg ALPINE_VER=$(ALPINE_VER) .
-
 .PHONY: integration-test
-integration-test: mock-login-consent-docker mock-trust-registry-docker vc-rest-docker generate-test-keys
+integration-test: mock-login-consent-docker mock-trust-registry-docker generate-test-keys
 	@cd test/integration && go mod tidy && ENABLE_COMPOSITION=true go test -count=1 -v -cover . -p 1 -timeout=10m -race
 
 .PHONY: build-integration-cli
