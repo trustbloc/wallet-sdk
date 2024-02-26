@@ -38,7 +38,15 @@ func TestRegistry_EvaluateIssuance(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		result, err := registry.EvaluateIssuance(&trustregistry.IssuanceRequest{
-			IssuerDID: "did:web:correct.com",
+			IssuerDID:    "did:web:correct.com",
+			IssuerDomain: "correct.com",
+			CredentialOffers: []*trustregistry.CredentialOffer{
+				{
+					CredentialType:             "VerifiedDocument",
+					CredentialFormat:           "jwt",
+					ClientAttestationRequested: true,
+				},
+			},
 		})
 
 		require.NoError(t, err)

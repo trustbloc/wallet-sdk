@@ -15,13 +15,18 @@ type EvaluationResult struct {
 	ErrorMessage string `json:"errorMessage,omitempty"`
 }
 
-// IssuanceRequest  contains data about the issuance request, that is sent to the trust registry API for evaluation.
-type IssuanceRequest struct {
-	IssuerDID                  string `json:"issuer_did"`
-	IssuerDomain               string `json:"issuer_domain"`
+// CredentialOffer contains data related to a credential type being offered in an issuance request.
+type CredentialOffer struct {
 	CredentialType             string `json:"credential_type"`
 	CredentialFormat           string `json:"credential_format"`
 	ClientAttestationRequested bool   `json:"client_attestation_requested"`
+}
+
+// IssuanceRequest  contains data about the issuance request, that is sent to the trust registry API for evaluation.
+type IssuanceRequest struct {
+	IssuerDID        string            `json:"issuer_did"`
+	IssuerDomain     string            `json:"issuer_domain"`
+	CredentialOffers []CredentialOffer `json:"credential_offers"`
 }
 
 // PresentationRequest contains data about the presentation request,

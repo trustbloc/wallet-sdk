@@ -17,13 +17,18 @@ type EvaluationResult struct {
 	ErrorMessage string
 }
 
-// IssuanceRequest  contains data about the issuance request, that is sent to the trust registry API for evaluation.
-type IssuanceRequest struct {
-	IssuerDID                  string
-	IssuerDomain               string
+// CredentialOffer contains data related to a credential type being offered in an issuance request.
+type CredentialOffer struct {
 	CredentialType             string
 	CredentialFormat           string
 	ClientAttestationRequested bool
+}
+
+// IssuanceRequest  contains data about the issuance request, that is sent to the trust registry API for evaluation.
+type IssuanceRequest struct {
+	IssuerDID        string
+	IssuerDomain     string
+	CredentialOffers []*CredentialOffer
 }
 
 // PresentationRequest contains data about the presentation request,
