@@ -90,11 +90,8 @@ getCredentialType(String qrCodeURL) async {
 
 persistCredentialType(credentialsQuery) async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
-  final value = credentialsQuery['credentials'];
-  for (var val in value) {
-    var types = val['types'];
-    prefs.setStringList('credentialTypes', List<String>.from(types));
-  }
+  var types = credentialsQuery['credential_configuration_ids'];
+  prefs.setStringList('credentialTypes', List<String>.from(types));
 }
 
 parseCredentialOfferUri(String qrCodeURL) async {
