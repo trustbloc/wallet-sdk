@@ -70,6 +70,7 @@ func TestIssuerMetadata(t *testing.T) {
 	credentialConfigurationsSupported := issuerMetadata.SupportedCredentials()
 	require.NotNil(t, credentialConfigurationsSupported)
 	require.Equal(t, 1, credentialConfigurationsSupported.Length())
+	require.NotNil(t, credentialConfigurationsSupported.AtIndex(0))
 
 	credentialConfigurationSupported := credentialConfigurationsSupported.
 		CredentialConfigurationSupported("PermanentResidentCard_jwt_vc_json-ld_v1")

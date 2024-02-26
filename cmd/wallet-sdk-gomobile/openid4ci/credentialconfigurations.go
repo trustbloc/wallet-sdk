@@ -14,11 +14,28 @@ import (
 // SupportedCredentials represents the credentials (types and formats) that an issuer can issue.
 type SupportedCredentials struct {
 	credentialConfigurations map[issuer.CredentialConfigurationID]*issuer.CredentialConfigurationSupported
+	// credentialConfigurationsList added for backward compatability with iOS and Android integration test code.
+	// Deprecated.
+	// Use credentialConfigurations instead.
+	credentialConfigurationsList []*issuer.CredentialConfigurationSupported
 }
 
 // Length returns the number of SupportedCredentials contained within this object.
 func (s *SupportedCredentials) Length() int {
 	return len(s.credentialConfigurations)
+}
+
+// AtIndex returns the SupportedCredential at the given index.
+// If the index passed in is out of bounds, then nil is returned.
+// Deprecated.
+// Use CredentialConfigurationSupported instead.
+func (s *SupportedCredentials) AtIndex(index int) *SupportedCredential {
+	maxIndex := len(s.credentialConfigurationsList) - 1
+	if index > maxIndex || index < 0 {
+		return nil
+	}
+
+	return &SupportedCredential{credentialConfigurationSupported: s.credentialConfigurationsList[index]}
 }
 
 // CredentialConfigurationSupported returns the SupportedCredential by given credentialConfigurationID.
