@@ -14,7 +14,7 @@ import (
 // SupportedCredentials represents the credentials (types and formats) that an issuer can issue.
 type SupportedCredentials struct {
 	credentialConfigurations map[issuer.CredentialConfigurationID]*issuer.CredentialConfigurationSupported
-	// credentialConfigurationsList added for backward compatability with iOS and Android integration test code.
+	// credentialConfigurationsList added for backward compatibility with iOS and Android integration test code.
 	// Deprecated.
 	// Use credentialConfigurations instead.
 	credentialConfigurationsList []*issuer.CredentialConfigurationSupported
