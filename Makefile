@@ -21,15 +21,11 @@ BUILD_TIME ?= $(shell date)
 
 # Namespace for the images
 DOCKER_OUTPUT_NS         ?= ghcr.io
-VC_REST_IMAGE_NAME       ?= trustbloc-cicd/vc-server
 REPO_IMAGE_NAME          ?= trustbloc
-GOPROXY 				 ?= https://proxy.golang.org
 
 export TERM := xterm-256color
 
 ANDROID_EMULATOR_NAME ?= WalletSDKDeviceEmulator
-
-VCS_COMMIT ?= 3eafabe27767fe7aa6055afe81634ba12a60db94
 
 .PHONY: all
 all: checks unit-test integration-test
