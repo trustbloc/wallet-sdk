@@ -9,6 +9,7 @@ package httprequest
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -87,6 +88,22 @@ func (r *Request) Do(method, endpointURL, contentType string, body io.Reader,
 	}
 
 	return respBytes, nil
+}
+
+// DoAndParse executes the request in the background context and reads the response body.
+// If a status other than 200 is received from the endpoint, then errorResponseHandler is called to generate the
+// error that gets returned. If errorResponseHandler is nil, then a generic error response handler will be used.
+func (r *Request) DoAndParse(method, endpointURL, contentType string, body io.Reader,
+	event, parentEvent string, errorResponseHandler func(statusCode int, responseBody []byte) error,
+	response interface{},
+) error {
+	respBytes, err := r.Do(method, endpointURL, contentType, body,
+		event, parentEvent, errorResponseHandler)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(respBytes, response)
 }
 
 func genericErrorResponseHandler(statusCode int, respBytes []byte) error {
