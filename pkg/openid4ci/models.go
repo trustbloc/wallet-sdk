@@ -56,14 +56,6 @@ type authorizationDetails struct {
 	Type string `json:"type"`
 }
 
-// OpenIDConfig represents an issuer's OpenID configuration.
-type OpenIDConfig struct {
-	AuthorizationEndpoint  string   `json:"authorization_endpoint,omitempty"`
-	ResponseTypesSupported []string `json:"response_types_supported,omitempty"`
-	TokenEndpoint          string   `json:"token_endpoint,omitempty"`
-	RegistrationEndpoint   *string  `json:"registration_endpoint,omitempty"`
-}
-
 // CredentialResponse is the object returned from the Client.Callback method.
 // It contains the issued credential and the credential's format.
 type CredentialResponse struct {

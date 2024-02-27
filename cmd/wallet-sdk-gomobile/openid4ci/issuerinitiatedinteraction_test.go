@@ -130,7 +130,6 @@ func TestNewInteraction(t *testing.T) {
 
 type mockIssuerServerHandler struct {
 	t                                                 *testing.T
-	openIDConfig                                      *goapiopenid4ci.OpenIDConfig
 	issuerMetadata                                    string
 	tokenRequestShouldFail                            bool
 	tokenRequestShouldGiveUnmarshallableResponse      bool
@@ -138,7 +137,6 @@ type mockIssuerServerHandler struct {
 	credentialRequestShouldGiveUnmarshallableResponse bool
 	credentialResponse                                []byte
 	headersToCheck                                    *api.Headers
-	openIDConfigurationShouldFail                     bool
 }
 
 func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint: gocyclo // test file
@@ -155,21 +153,6 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 	}
 
 	switch request.URL.Path {
-	case "/.well-known/openid-configuration":
-		switch {
-		case m.openIDConfigurationShouldFail:
-			writer.WriteHeader(http.StatusInternalServerError)
-			_, err = writer.Write([]byte("test failure"))
-		default:
-			var b []byte
-
-			b, err = json.Marshal(m.openIDConfig)
-			if err != nil {
-				break
-			}
-
-			_, err = writer.Write(b)
-		}
 	case "/.well-known/openid-credential-issuer":
 		_, err = writer.Write([]byte(m.issuerMetadata))
 	case "/oidc/token":
@@ -389,12 +372,6 @@ func TestIssuerInitiatedInteraction_DynamicClientRegistration(t *testing.T) {
 
 		issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
 
-		registrationEndpoint := fmt.Sprintf("%s/oidc/bank_issuer/v1.0/register", server.URL)
-
-		issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
-			RegistrationEndpoint: &registrationEndpoint,
-		}
-
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
@@ -404,34 +381,6 @@ func TestIssuerInitiatedInteraction_DynamicClientRegistration(t *testing.T) {
 		supported, err := interaction.DynamicClientRegistrationSupported()
 		require.NoError(t, err)
 		require.True(t, supported)
-	})
-
-	t.Run("Fail to check if dynamic client registration is supported", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{
-			t:                             t,
-			openIDConfigurationShouldFail: true,
-		}
-
-		server := httptest.NewServer(issuerServerHandler)
-		defer server.Close()
-
-		issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
-
-		registrationEndpoint := "invalid url"
-
-		issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
-			RegistrationEndpoint: &registrationEndpoint,
-		}
-
-		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
-		require.NoError(t, err)
-
-		interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, server.URL, false),
-			nil, false)
-
-		supported, err := interaction.DynamicClientRegistrationSupported()
-		requireErrorContains(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED")
-		require.False(t, supported)
 	})
 }
 
@@ -524,11 +473,11 @@ func TestIssuerInitiatedInteractionAlias(t *testing.T) {
 	server := httptest.NewServer(issuerServerHandler)
 	defer server.Close()
 
-	issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+	metadata := strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
 
-	issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
-		TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
-	}
+	issuerServerHandler.issuerMetadata = modifyCredentialMetadata(t, metadata, func(m *issuer.Metadata) {
+		m.RegistrationEndpoint = nil
+	})
 
 	activityLogger := mem.NewActivityLogger()
 
@@ -631,10 +580,6 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 	defer server.Close()
 
 	issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
-
-	issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
-		TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
-	}
 
 	activityLogger := mem.NewActivityLogger()
 
@@ -964,4 +909,19 @@ func createSampleCredentialOffer(t *testing.T, includeAuthCodeGrant bool) *goapi
 	}
 
 	return &credentialOffer
+}
+
+func modifyCredentialMetadata(t *testing.T, metadata string, modifyFunc func(m *issuer.Metadata)) string {
+	t.Helper()
+
+	var m *issuer.Metadata
+	err := json.Unmarshal([]byte(metadata), &m)
+	require.NoError(t, err)
+
+	modifyFunc(m)
+
+	b, err := json.Marshal(m)
+	require.NoError(t, err)
+
+	return string(b)
 }

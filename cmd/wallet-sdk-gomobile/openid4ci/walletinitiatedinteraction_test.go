@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package openid4ci_test
 
 import (
-	"fmt"
 	"net/http/httptest"
 	"net/url"
 	"strings"
@@ -20,7 +19,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
-	goapiopenid4ci "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
+	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
 func TestWalletInitiatedInteraction_Flow(t *testing.T) {
@@ -32,11 +31,10 @@ func TestWalletInitiatedInteraction_Flow(t *testing.T) {
 	server := httptest.NewServer(issuerServerHandler)
 	defer server.Close()
 
-	issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
-
-	issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
-		TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
-	}
+	metadata := strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+	issuerServerHandler.issuerMetadata = modifyCredentialMetadata(t, metadata, func(m *issuer.Metadata) {
+		m.RegistrationEndpoint = nil
+	})
 
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
@@ -122,7 +120,7 @@ func TestWalletInitiatedInteraction_DynamicClientRegistrationSupported_Failure(t
 	require.NotNil(t, interaction)
 
 	supported, err := interaction.DynamicClientRegistrationSupported()
-	requireErrorContains(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED")
+	requireErrorContains(t, err, "METADATA_FETCH_FAILED")
 	require.False(t, supported)
 }
 

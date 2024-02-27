@@ -14,70 +14,25 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 	"github.com/trustbloc/wallet-sdk/pkg/openid4ci"
 )
 
 func TestWalletInitiatedInteractionFlow(t *testing.T) {
-	t.Run("Token endpoint defined in the OpenID configuration", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{
-			t:                  t,
-			credentialResponse: sampleCredentialResponse,
-		}
-
-		server := httptest.NewServer(issuerServerHandler)
-		defer server.Close()
-
-		issuerServerHandler.openIDConfig = &openid4ci.OpenIDConfig{
-			TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
-		}
-
-		issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
-
-		config := getTestClientConfig(t)
-
-		interaction, err := openid4ci.NewWalletInitiatedInteraction(server.URL, config)
-		require.NoError(t, err)
-
-		supportedCredentials, err := interaction.SupportedCredentials()
-		require.NoError(t, err)
-		require.NotNil(t, supportedCredentials)
-
-		dynamicClientRegistrationSupported, err := interaction.DynamicClientRegistrationSupported()
-		require.NoError(t, err)
-		require.False(t, dynamicClientRegistrationSupported)
-
-		dynamicClientRegistrationEndpoint, err := interaction.DynamicClientRegistrationEndpoint()
-		require.EqualError(t, err,
-			"INVALID_SDK_USAGE(OCI3-0000):issuer does not support dynamic client registration")
-		require.Empty(t, dynamicClientRegistrationEndpoint)
-
-		types := []string{"VerifiableCredential", "VerifiedEmployee"}
-
-		// Needed to create the OAuth2 config object.
-		authURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI",
-			"jwt_vc_json", types, openid4ci.WithIssuerState("issuerState"))
-		require.NoError(t, err)
-
-		redirectURIWithParams := "redirectURI?code=1234&state=" + getStateFromAuthURL(t, authURL)
-
-		credentials, err := interaction.RequestCredential(&jwtSignerMock{
-			keyID: mockKeyID,
-		}, redirectURIWithParams)
-		require.NoError(t, err)
-		require.Len(t, credentials, 1)
-		require.NotEmpty(t, credentials[0])
-	})
 	t.Run("Token endpoint defined in the issuer's metadata", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{
 			t:                  t,
 			credentialResponse: sampleCredentialResponse,
-			openIDConfig:       &openid4ci.OpenIDConfig{},
 		}
 
 		server := httptest.NewServer(issuerServerHandler)
 		defer server.Close()
 
-		issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+		issuerMetadata := strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
+		issuerServerHandler.issuerMetadata = modifyCredentialMetadata(t, issuerMetadata, func(m *issuer.Metadata) {
+			m.RegistrationEndpoint = nil
+		})
 
 		config := getTestClientConfig(t)
 

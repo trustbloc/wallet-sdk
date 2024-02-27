@@ -40,8 +40,7 @@ const (
 	fetchCredOfferViaGETReqEventText = "Fetch credential offer via an HTTP GET request to %s"
 
 	//nolint:gosec //false positive
-	requestCredentialEventText          = "Request credential(s) from issuer"
-	fetchOpenIDConfigViaGETReqEventText = "Fetch issuer's OpenID configuration via an HTTP GET request to %s"
+	requestCredentialEventText = "Request credential(s) from issuer"
 	//nolint:gosec //false positive
 	fetchTokenViaPOSTReqEventText = "Fetch token via an HTTP POST request to %s"
 	//nolint:gosec //false positive

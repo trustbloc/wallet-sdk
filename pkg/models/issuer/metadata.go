@@ -71,7 +71,7 @@ type Metadata struct {
 	PreAuthorizedGrantAnonymousAccessSupported *bool `json:"pre-authorized_grant_anonymous_access_supported,omitempty"`
 
 	// URL of the OP's Dynamic Client Registration Endpoint.
-	RegistrationEndpoint string `json:"registration_endpoint,omitempty"`
+	RegistrationEndpoint *string `json:"registration_endpoint,omitempty"`
 
 	// JSON array containing a list of the OAuth 2.0 response_type values that this OP supports.
 	ResponseTypesSupported []string `json:"response_types_supported,omitempty"`
