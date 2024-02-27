@@ -67,9 +67,24 @@ type OpenIDConfig struct {
 // CredentialResponse is the object returned from the Client.Callback method.
 // It contains the issued credential and the credential's format.
 type CredentialResponse struct {
-	Credential interface{} `json:"credential,omitempty"` // Optional for deferred credential flow.
-	Format     string      `json:"format,omitempty"`
-	AscID      string      `json:"ack_id"`
+	// OPTIONAL. Contains issued Credential.
+	// It MUST be present when transaction_id is not returned.
+	// It MAY be a string or an object, depending on the Credential format.
+	Credential interface{} `json:"credential,omitempty"`
+	// OPTIONAL. String identifying a Deferred Issuance transaction.
+	// This claim is contained in the response if the Credential Issuer was unable to immediately issue the Credential.
+	TransactionID string `json:"transaction_id"`
+	// OPTIONAL. String containing a nonce to be used to create a proof of possession of key material
+	// when requesting a Credential.
+	CNonce string `json:"c_nonce"`
+	// OPTIONAL. Number denoting the lifetime in seconds of the c_nonce.
+	CNonceExpiresIn int `json:"c_nonce_expires_in"`
+	// OPTIONAL. String identifying an issued Credential that the Wallet includes in the Notification Request.
+	NotificationID string `json:"notification_id"`
+
+	// Deprecated.
+	// Use NotificationID instead.
+	AscID string `json:"ack_id"`
 }
 
 // SerializeToCredentialsBytes serializes underlying credential to proper bytes representation depending on
