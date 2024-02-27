@@ -93,6 +93,7 @@ func issuerMetadataObjectFromJWT(signedMetadata string, signatureVerifier jwt.Pr
 	}
 
 	var metadata issuer.Metadata
+
 	err := json.Unmarshal(payload, &metadata)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal the marshalled issuer metadata JSON into an "+
