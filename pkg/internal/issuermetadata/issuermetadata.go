@@ -79,8 +79,6 @@ func responseBytesToIssuerMetadataObject(responseBytes []byte,
 func issuerMetadataObjectFromJWT(signedMetadata string, signatureVerifier jwt.ProofChecker,
 	errUnmarshal error,
 ) (*issuer.Metadata, error) {
-	var metadata issuer.Metadata
-
 	// Try to parse it as a JWT.
 	// But first, make sure a signature verifier was passed in. If it wasn't, then the jwt.Parse call below will
 	// panic.
@@ -88,25 +86,14 @@ func issuerMetadataObjectFromJWT(signedMetadata string, signatureVerifier jwt.Pr
 		return nil, errors.New("missing signature verifier")
 	}
 
-	jsonWebToken, _, errParseJWT := jwt.ParseAndCheckProof(signedMetadata, signatureVerifier, false)
+	jsonWebToken, payload, errParseJWT := jwt.ParseAndCheckProof(signedMetadata, signatureVerifier, false)
 	if errParseJWT != nil {
 		return nil, fmt.Errorf("failed to parse the response from the issuer's OpenID Credential Issuer "+
 			"endpoint as JSON or as a JWT: %w", errors.Join(errUnmarshal, errParseJWT))
 	}
 
-	embeddedIssuerMetadata, exists := jsonWebToken.Payload["well_known_openid_issuer_configuration"]
-	if !exists {
-		return nil, errors.New("issuer's OpenID configuration endpoint returned a JWT, but no issuer " +
-			"metadata was detected (well_known_openid_issuer_configuration field is missing)")
-	}
-
-	issuerMetadataJSON, err := json.Marshal(embeddedIssuerMetadata)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal issuer metadata embedded within the "+
-			"JWT into JSON: %w", err)
-	}
-
-	err = json.Unmarshal(issuerMetadataJSON, &metadata)
+	var metadata issuer.Metadata
+	err := json.Unmarshal(payload, &metadata)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal the marshalled issuer metadata JSON into an "+
 			"issuer metadata object OpenID configuration endpoint: %w", err)

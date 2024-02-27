@@ -193,18 +193,6 @@ func TestGet(t *testing.T) {
 			"supported only")
 		require.Nil(t, issuerMetadata)
 	})
-	t.Run("No issuer metadata in JWT", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{issuerMetadata: sampleJWTWithoutIssuerMetadata}
-		server := httptest.NewServer(issuerServerHandler)
-
-		defer server.Close()
-
-		issuerMetadata, err := issuermetadata.Get(server.URL, http.DefaultClient, nil,
-			"", &mockVerifier{})
-		require.EqualError(t, err, "issuer's OpenID configuration endpoint returned a JWT, but no "+
-			"issuer metadata was detected (well_known_openid_issuer_configuration field is missing)")
-		require.Nil(t, issuerMetadata)
-	})
 }
 
 type mockVerifier struct{}

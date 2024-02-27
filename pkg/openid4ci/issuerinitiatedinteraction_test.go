@@ -2069,8 +2069,7 @@ func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
 
 		claims := map[string]interface{}{}
 
-		data := fmt.Sprintf(`{"well_known_openid_issuer_configuration": %s}`, sampleIssuerMetadata)
-		err = json.Unmarshal([]byte(data), &claims)
+		err = json.Unmarshal([]byte(sampleIssuerMetadata), &claims)
 		require.NoError(t, err)
 
 		token, err := jwt.NewSigned(claims, jwt.SignParameters{
