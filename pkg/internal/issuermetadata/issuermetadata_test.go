@@ -193,6 +193,17 @@ func TestGet(t *testing.T) {
 			"supported only")
 		require.Nil(t, issuerMetadata)
 	})
+	t.Run("No issuer metadata in JWT", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{issuerMetadata: sampleJWTWithoutIssuerMetadata}
+		server := httptest.NewServer(issuerServerHandler)
+
+		defer server.Close()
+
+		issuerMetadata, err := issuermetadata.Get(server.URL, http.DefaultClient, nil,
+			"", &mockVerifier{})
+		require.NoError(t, err)
+		require.NotNil(t, issuerMetadata)
+	})
 }
 
 type mockVerifier struct{}
