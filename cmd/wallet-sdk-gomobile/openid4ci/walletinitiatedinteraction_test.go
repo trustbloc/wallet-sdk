@@ -7,9 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package openid4ci_test
 
 import (
-	"fmt"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -19,7 +19,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
-	goapiopenid4ci "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
+	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
 func TestWalletInitiatedInteraction_Flow(t *testing.T) {
@@ -27,19 +27,14 @@ func TestWalletInitiatedInteraction_Flow(t *testing.T) {
 		t:                  t,
 		credentialResponse: sampleCredentialResponse,
 	}
+
 	server := httptest.NewServer(issuerServerHandler)
-
-	issuerServerHandler.openIDConfig = &goapiopenid4ci.OpenIDConfig{
-		TokenEndpoint: fmt.Sprintf("%s/oidc/token", server.URL),
-	}
-
-	issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"credential_endpoint":"%s/credential",`+
-		`"credential_issuer":"https://server.example.com",`+
-		`"credentials_supported":[{"format":"jwt_vc_json","types":["VerifiableCredential",`+
-		`"UniversityDegreeCredential"]},{"format":"ldp_vc","types":["VerifiableCredential",`+
-		`"DriversLicenseCredential"]}]}`, server.URL)
-
 	defer server.Close()
+
+	metadata := strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+	issuerServerHandler.issuerMetadata = modifyCredentialMetadata(t, metadata, func(m *issuer.Metadata) {
+		m.RegistrationEndpoint = nil
+	})
 
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
@@ -60,17 +55,15 @@ func TestWalletInitiatedInteraction_Flow(t *testing.T) {
 	require.NotNil(t, issuerMetadata)
 
 	supportedCredentials := issuerMetadata.SupportedCredentials()
-	require.Equal(t, 2, supportedCredentials.Length())
+	require.Equal(t, 1, supportedCredentials.Length())
+	require.NotNil(t, supportedCredentials.AtIndex(0))
 
-	require.Equal(t, "jwt_vc_json", supportedCredentials.AtIndex(0).Format())
-	require.Equal(t, 2, supportedCredentials.AtIndex(0).Types().Length())
-	require.Equal(t, "VerifiableCredential", supportedCredentials.AtIndex(0).Types().AtIndex(0))
-	require.Equal(t, "UniversityDegreeCredential", supportedCredentials.AtIndex(0).Types().AtIndex(1))
+	prc := supportedCredentials.CredentialConfigurationSupported("PermanentResidentCard_jwt_vc_json-ld_v1")
 
-	require.Equal(t, "ldp_vc", supportedCredentials.AtIndex(1).Format())
-	require.Equal(t, 2, supportedCredentials.AtIndex(1).Types().Length())
-	require.Equal(t, "VerifiableCredential", supportedCredentials.AtIndex(1).Types().AtIndex(0))
-	require.Equal(t, "DriversLicenseCredential", supportedCredentials.AtIndex(1).Types().AtIndex(1))
+	require.Equal(t, "jwt_vc_json-ld", prc.Format())
+	require.Equal(t, 2, prc.Types().Length())
+	require.Equal(t, "VerifiableCredential", prc.Types().AtIndex(0))
+	require.Equal(t, "PermanentResidentCard", prc.Types().AtIndex(1))
 
 	dynamicClientRegistrationSupported, err := interaction.DynamicClientRegistrationSupported()
 	require.NoError(t, err)
@@ -127,7 +120,7 @@ func TestWalletInitiatedInteraction_DynamicClientRegistrationSupported_Failure(t
 	require.NotNil(t, interaction)
 
 	supported, err := interaction.DynamicClientRegistrationSupported()
-	requireErrorContains(t, err, "ISSUER_OPENID_CONFIG_FETCH_FAILED")
+	requireErrorContains(t, err, "METADATA_FETCH_FAILED")
 	require.False(t, supported)
 }
 

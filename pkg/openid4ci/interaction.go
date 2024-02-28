@@ -38,22 +38,11 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
-	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 const getIssuerMetadataEventText = "Get issuer metadata"
-
-// AskStatus used to acknowledge issuer that client accepts or rejects credentials.
-type AskStatus string
-
-const (
-	// AskStatusSuccess acknowledge issuer that client accepts credentials.
-	AskStatusSuccess AskStatus = "success"
-	// AskStatusRejected acknowledge issuer that client rejects credentials.
-	AskStatusRejected AskStatus = "rejected"
-)
 
 // IssuerTrustInfo represent issuer trust information.
 type IssuerTrustInfo struct {
@@ -78,7 +67,6 @@ type interaction struct {
 	disableVCProofChecks    bool
 	documentLoader          ld.DocumentLoader
 	issuerMetadata          *issuer.Metadata
-	openIDConfig            *OpenIDConfig
 	oAuth2Config            *oauth2.Config
 	authTokenResponseNonce  interface{}
 	authToken               *universalAuthToken
@@ -153,17 +141,23 @@ func (i *interaction) instantiateCodeVerifier() error {
 func (i *interaction) generateAuthorizationDetails(format string, types []string) ([]byte, error) {
 	// TODO: Add support for requesting multiple credentials at once (by sending an array).
 	// Currently we always use the first credential type specified in the offer.
-	authorizationDetails := &authorizationDetails{
-		Type:   "openid_credential",
-		Types:  types,
-		Format: format,
+	authorizationDetailsDTO := authorizationDetails{
+		CredentialConfigurationID: "",
+		CredentialDefinition: &issuer.CredentialDefinition{
+			Context:           nil,
+			CredentialSubject: nil,
+			Type:              types,
+		},
+		Format:    format,
+		Locations: nil,
+		Type:      "openid_credential",
 	}
 
 	if i.issuerMetadata.AuthorizationServer != "" {
-		authorizationDetails.Locations = []string{i.issuerMetadata.CredentialIssuer}
+		authorizationDetailsDTO.Locations = []string{i.issuerMetadata.CredentialIssuer}
 	}
 
-	authorizationDetailsBytes, err := json.Marshal(authorizationDetails)
+	authorizationDetailsBytes, err := json.Marshal([]authorizationDetails{authorizationDetailsDTO})
 	if err != nil {
 		return nil, err
 	}
@@ -240,6 +234,9 @@ func (i *interaction) requestAccessToken(redirectURIWithAuthCode string) error {
 
 	authTokenResponse, err := i.oAuth2Config.Exchange(ctx, parsedURI.Query().Get("code"),
 		oauth2.SetAuthURLParam("code_verifier", i.codeVerifier))
+	if err != nil {
+		return err
+	}
 
 	i.authToken = &universalAuthToken{
 		AccessToken:  authTokenResponse.AccessToken,
@@ -250,32 +247,10 @@ func (i *interaction) requestAccessToken(redirectURIWithAuthCode string) error {
 
 	i.authTokenResponseNonce = authTokenResponse.Extra("c_nonce")
 
-	return err
+	return nil
 }
 
 func (i *interaction) getTokenEndpoint() (string, error) {
-	var err error
-
-	i.openIDConfig, err = i.getOpenIDConfig()
-	if err != nil {
-		// Fall back to the issuer metadata. See if it defines the token endpoint instead.
-		if i.issuerMetadata.TokenEndpoint == "" {
-			return "", walleterror.NewExecutionError(
-				ErrorModule,
-				NoTokenEndpointAvailableErrorCode,
-				NoTokenEndpointAvailableError,
-				fmt.Errorf("no token endpoint available. An OpenID configuration couldn't be fetched, and "+
-					"the issuer's metadata doesn't specify a token endpoint. "+
-					"OpenID configuration fetch error: %w", err))
-		}
-
-		return i.issuerMetadata.TokenEndpoint, nil
-	}
-
-	if i.openIDConfig.TokenEndpoint != "" {
-		return i.openIDConfig.TokenEndpoint, nil
-	}
-
 	if i.issuerMetadata.TokenEndpoint != "" {
 		return i.issuerMetadata.TokenEndpoint, nil
 	}
@@ -284,70 +259,30 @@ func (i *interaction) getTokenEndpoint() (string, error) {
 		ErrorModule,
 		NoTokenEndpointAvailableErrorCode,
 		NoTokenEndpointAvailableError,
-		errors.New("no token endpoint available. Neither the OpenID configuration nor the issuer's "+
-			"metadata specify one"))
+		errors.New("no token endpoint specified in issuer's metadata"))
 }
 
 func (i *interaction) dynamicClientRegistrationSupported() (bool, error) {
-	var err error
-
-	i.openIDConfig, err = i.getOpenIDConfig()
+	err := i.populateIssuerMetadata("Dynamic client registration supported")
 	if err != nil {
-		return false, walleterror.NewExecutionError(
-			ErrorModule,
-			IssuerOpenIDConfigFetchFailedCode,
-			IssuerOpenIDConfigFetchFailedError,
-			fmt.Errorf("failed to fetch issuer's OpenID configuration: %w", err))
+		return false, err
 	}
 
-	return i.openIDConfig.RegistrationEndpoint != nil, nil
+	return i.issuerMetadata.RegistrationEndpoint != nil, nil
 }
 
 func (i *interaction) dynamicClientRegistrationEndpoint() (string, error) {
-	var err error
-
-	i.openIDConfig, err = i.getOpenIDConfig()
+	err := i.populateIssuerMetadata("Dynamic client registration endpoint")
 	if err != nil {
-		return "", walleterror.NewExecutionError(
-			ErrorModule,
-			IssuerOpenIDConfigFetchFailedCode,
-			IssuerOpenIDConfigFetchFailedError,
-			fmt.Errorf("failed to fetch issuer's OpenID configuration: %w", err))
+		return "", err
 	}
 
-	if i.openIDConfig.RegistrationEndpoint == nil {
+	if i.issuerMetadata.RegistrationEndpoint == nil {
 		return "", walleterror.NewInvalidSDKUsageError(ErrorModule,
 			errors.New("issuer does not support dynamic client registration"))
 	}
 
-	return *i.openIDConfig.RegistrationEndpoint, nil
-}
-
-// getOpenIDConfig fetches the OpenID configuration from the issuer. If the OpenID configuration has already been
-// fetched before, then it's returned without making an additional call.
-func (i *interaction) getOpenIDConfig() (*OpenIDConfig, error) {
-	if i.openIDConfig != nil {
-		return i.openIDConfig, nil
-	}
-
-	openIDConfigEndpoint := strings.TrimSuffix(i.issuerURI, "/") + "/.well-known/openid-configuration"
-
-	responseBytes, err := httprequest.New(i.httpClient, i.metricsLogger).Do(
-		http.MethodGet, openIDConfigEndpoint, "", nil,
-		fmt.Sprintf(fetchOpenIDConfigViaGETReqEventText, openIDConfigEndpoint), requestCredentialEventText, nil)
-	if err != nil {
-		return nil, fmt.Errorf("openid configuration endpoint: %w", err)
-	}
-
-	var config OpenIDConfig
-
-	err = json.Unmarshal(responseBytes, &config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response from the issuer's "+
-			"OpenID configuration endpoint: %w", err)
-	}
-
-	return &config, nil
+	return *i.issuerMetadata.RegistrationEndpoint, nil
 }
 
 // If the issuer's metadata has not been fetched before in this interaction's lifespan, then this method fetches the
@@ -763,7 +698,7 @@ func (i *interaction) requestedAcknowledgmentObj(authToken *universalAuthToken) 
 
 	return &Acknowledgment{
 		AckIDs:                i.requestedAcknowledgment.ackIDs,
-		CredentialAckEndpoint: i.issuerMetadata.CredentialAckEndpoint,
+		CredentialAckEndpoint: i.issuerMetadata.NotificationEndpoint,
 		IssuerURI:             i.issuerURI,
 		AuthToken:             authToken,
 	}, nil
@@ -774,7 +709,7 @@ func (i *interaction) requireAcknowledgment() (bool, error) {
 		return false, fmt.Errorf("no acknowledgment data: request credentials first")
 	}
 
-	return i.requestedAcknowledgment != nil && i.issuerMetadata.CredentialAckEndpoint != "", nil
+	return i.requestedAcknowledgment != nil && i.issuerMetadata.NotificationEndpoint != "", nil
 }
 
 func (i *interaction) storeAcknowledgmentID(id string) {

@@ -11,12 +11,19 @@ import "errors"
 // PreAuthorizedCodeGrantParams represents an issuer's pre-authorized code grant parameters.
 type PreAuthorizedCodeGrantParams struct {
 	preAuthorizedCode string
-	userPINRequired   bool
+	txCode            *TxCode
+}
+
+// TxCode is a code intended to bind the pre-authorized code to a certain transaction to prevent replay attack.
+type TxCode struct {
+	inputMode   string
+	length      int
+	description string
 }
 
 // PINRequired indicates whether the issuer requires a PIN.
 func (p *PreAuthorizedCodeGrantParams) PINRequired() bool {
-	return p.userPINRequired
+	return p.txCode != nil
 }
 
 // AuthorizationCodeGrantParams represents an issuer's authorization code grant parameters.
@@ -69,19 +76,37 @@ func processPreAuthorizedCodeGrantParams(rawParams map[string]interface{}) (*Pre
 		return nil, errors.New("pre-authorized_code field value is not a bool")
 	}
 
-	var userPINRequired bool
+	var txCode *TxCode
 
-	userPINRequiredUntyped, exists := rawParams["user_pin_required"]
-	if exists { // userPINRequired is supposed to default to false if user_pin_required isn't specified.
-		var ok bool
+	txCodeUntyped, exists := rawParams["tx_code"]
+	if exists {
+		var m map[string]interface{}
 
-		userPINRequired, ok = userPINRequiredUntyped.(bool)
-		if !ok {
-			return nil, errors.New("user-pin-required field value is not a bool")
+		if m, ok = txCodeUntyped.(map[string]interface{}); !ok {
+			return nil, errors.New("tx_code is not a valid json object")
+		}
+
+		txCode = &TxCode{}
+
+		var (
+			inputMode, description string
+			length                 float64
+		)
+
+		if inputMode, ok = m["input_mode"].(string); ok {
+			txCode.inputMode = inputMode
+		}
+
+		if length, ok = m["length"].(float64); ok {
+			txCode.length = int(length)
+		}
+
+		if description, ok = m["description"].(string); ok {
+			txCode.description = description
 		}
 	}
 
-	return &PreAuthorizedCodeGrantParams{preAuthorizedCode: preAuthorizedCode, userPINRequired: userPINRequired}, nil
+	return &PreAuthorizedCodeGrantParams{preAuthorizedCode: preAuthorizedCode, txCode: txCode}, nil
 }
 
 func processAuthorizationCodeGrantParams(rawParams map[string]interface{}) (*AuthorizationCodeGrantParams, error) {

@@ -11,9 +11,9 @@ package openid4ci
 const (
 	ErrorModule                               = "OCI"
 	InvalidIssuanceURIError                   = "INVALID_ISSUANCE_URI"
-	InvalidCredentialOfferError               = "INVALID_CREDENTIAL_OFFER" //nolint:gosec //false positive
+	InvalidCredentialOfferError               = "INVALID_CREDENTIAL_OFFER"            //nolint:gosec //false positive
+	InvalidCredentialConfigurationIDError     = "INVALID_CREDENTIAL_CONFIGURATION_ID" //nolint:gosec //false positive
 	UnsupportedCredentialTypeInOfferError     = "UNSUPPORTED_CREDENTIAL_TYPE_IN_OFFER"
-	IssuerOpenIDConfigFetchFailedError        = "ISSUER_OPENID_CONFIG_FETCH_FAILED"
 	MetadataFetchFailedError                  = "METADATA_FETCH_FAILED"
 	JWTSigningFailedError                     = "JWT_SIGNING_FAILED"
 	KeyIDMissingDIDPartError                  = "KEY_ID_MISSING_DID_PART"
@@ -59,4 +59,5 @@ const (
 	UnsupportedIssuanceURISchemeCode         = 19
 	NoTokenEndpointAvailableErrorCode        = 20
 	AcknowledgmentExpiredErrorCode           = 21
+	InvalidCredentialConfigurationIDCode     = 22
 )

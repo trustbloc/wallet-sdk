@@ -1,0 +1,187 @@
+{
+  "authorization_endpoint": "[SERVER_URL]/oidc/authorize",
+  "notification_endpoint": "[SERVER_URL]/oidc/ack_endpoint",
+  "credential_configurations_supported": {
+    "credential_configuration_id_1": {
+      "claims": null,
+      "credential_definition": {
+        "@context": null,
+        "credentialSubject": {
+          "displayName": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Employee"
+              }
+            ],
+            "mandatory": false,
+            "mask": "",
+            "order": "0",
+            "pattern": "",
+            "value_type": "string"
+          },
+          "givenName": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Given Name"
+              }
+            ],
+            "mandatory": false,
+            "mask": "",
+            "order": "1",
+            "pattern": "",
+            "value_type": "string"
+          },
+          "jobTitle": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Job Title"
+              }
+            ],
+            "mandatory": false,
+            "mask": "",
+            "order": "2",
+            "pattern": "",
+            "value_type": "string"
+          },
+          "mail": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Mail"
+              }
+            ],
+            "mandatory": false,
+            "mask": "",
+            "order": "0",
+            "pattern": "",
+            "value_type": "string"
+          },
+          "photo": {
+            "display": [
+              {
+                "locale": "",
+                "name": "Photo"
+              }
+            ],
+            "mandatory": false,
+            "mask": "",
+            "order": "0",
+            "pattern": "",
+            "value_type": "image"
+          },
+          "preferredLanguage": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Preferred Language"
+              }
+            ],
+            "mandatory": false,
+            "mask": "",
+            "order": "0",
+            "pattern": "",
+            "value_type": "string"
+          },
+          "reallySensitiveID": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Really Sensitive ID"
+              }
+            ],
+            "mandatory": false,
+            "mask": "regex((.*))",
+            "order": "0",
+            "pattern": "",
+            "value_type": "string"
+          },
+          "sensitiveID": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Sensitive ID"
+              }
+            ],
+            "mandatory": false,
+            "mask": "regex(^(.*).{4}$)",
+            "order": "0",
+            "pattern": "",
+            "value_type": "string"
+          },
+          "surname": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Surname"
+              }
+            ],
+            "mandatory": false,
+            "mask": "",
+            "order": "0",
+            "pattern": "",
+            "value_type": "string"
+          }
+        },
+        "type": [
+          "VerifiableCredential",
+          "VerifiedEmployee"
+        ]
+      },
+      "cryptographic_binding_methods_supported": [
+        "ion"
+      ],
+      "cryptographic_suites_supported": [
+        "ED25519"
+      ],
+      "display": [
+        {
+          "background_color": "#12107c",
+          "locale": "en-US",
+          "logo": {
+            "alt_text": "a square logo of an employee verification",
+            "uri": "https://example.com/public/logo.png"
+          },
+          "name": "Verified Employee",
+          "text_color": "#FFFFFF",
+          "url": ""
+        }
+      ],
+      "doctype": "",
+      "format": "jwt_vc_json",
+      "order": null,
+      "proof_types": [
+        "jwt"
+      ],
+      "scope": "",
+      "vct": ""
+    }
+  },
+  "credential_endpoint": "[SERVER_URL]/oidc/credential",
+  "credential_issuer": "http://localhost:8075/issuer/bank_issuer/v1.0",
+  "display": [
+    {
+      "locale": "en-US",
+      "name": "Bank Issuer",
+      "url": "http://vc-rest-echo.trustbloc.local:8075"
+    }
+  ],
+  "grant_types_supported": [
+    "authorization_code"
+  ],
+  "pre-authorized_grant_anonymous_access_supported": true,
+  "registration_endpoint": "[SERVER_URL]/oidc/bank_issuer/v1.0/register",
+  "response_types_supported": [
+    "code"
+  ],
+  "scopes_supported": [
+    "openid",
+    "profile"
+  ],
+  "token_endpoint": "[SERVER_URL]/oidc/token",
+  "token_endpoint_auth_methods_supported": [
+    "none"
+  ]
+}

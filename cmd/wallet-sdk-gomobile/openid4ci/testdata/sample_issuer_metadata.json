@@ -1,123 +1,103 @@
 {
-  "credential_issuer":"https://server.example.com",
-  "authorization_server":"https://server.example.com/oidc/authorize",
-  "credential_endpoint":"https://server.example.com/oidc/credential",
-  "display":[
-    {
-      "locale":"en-US",
-      "name":"Example University",
-      "url": "https://server.example.com",
-      "logo":{
-        "url":"https://exampleuniversity.com/public/logo.png",
-        "alt_text":"a square logo of a university"
+  "authorization_endpoint": "[SERVER_URL]/oidc/authorize",
+  "notification_endpoint": "[SERVER_URL]/oidc/ack_endpoint",
+  "credential_configurations_supported": {
+    "PermanentResidentCard_jwt_vc_json-ld_v1": {
+      "credential_definition": {
+        "@context": [
+          "http://localhost:4566/doc-store/df7cf304-fdd0-41d3-bbce-01681691c258/v1.0"
+        ],
+        "credentialSubject": {
+          "last_name": {
+            "mandatory": false,
+            "value_type": "string",
+            "display": [
+              {
+                "name": "some-text",
+                "locale": "en-US"
+              }
+            ]
+          }
+        },
+        "type": [
+          "VerifiableCredential",
+          "PermanentResidentCard"
+        ]
       },
-      "background_color":"#12107c",
-      "text_color":"#FFFFFF"
-    },
-    {
-      "name":"サンプル大学",
-      "locale":"jp-JA",
-      "url": "https://server.example.com",
-      "background_color":"#12107c",
-      "text_color":"#FFFFFF"
-    }
-  ],
-  "credentials_supported":[
-    {
-      "id": "UniversityDegreeCredential",
-      "format":"jwt_vc_json",
-      "types":[
-        "VerifiableCredential",
-        "UniversityDegreeCredential"
-      ],
-      "credentialSubject":{
-        "id":{
-          "display":[
-            {
-              "name":"ID",
-              "locale":"en-US"
-            }
-          ],
-          "value_type":"string",
-          "order":0
-        },
-        "given_name":{
-          "display":[
-            {
-              "name":"Given Name",
-              "locale":"en-US"
-            }
-          ],
-          "value_type":"string",
-          "order":1
-        },
-        "surname":{
-          "display":[
-            {
-              "name":"Surname",
-              "locale":"en-US"
-            }
-          ],
-          "value_type":"string",
-          "order":2
-        },
-        "gpa":{
-          "display":[
-            {
-              "name":"GPA",
-              "locale":"en-US"
-            }
-          ],
-          "value_type":"number"
-        },
-        "sensitive_id":{
-          "display":[
-            {
-              "name":"Sensitive ID",
-              "locale":"en-US"
-            }
-          ],
-          "value_type":"string",
-          "mask":"regex(^(.*).{4}$)"
-        },
-        "really_sensitive_id":{
-          "display":[
-            {
-              "name":"Really Sensitive ID",
-              "locale":"en-US"
-            }
-          ],
-          "value_type":"string",
-          "mask":"regex((.*))"
-        },
-        "chemistry":{
-          "display":[
-            {
-              "name":"Chemistry Final Grade",
-              "locale":"en-US"
-            }
-          ],
-          "value_type":"number"
-        }
-      },
-      "cryptographic_binding_methods_supported":[
-        "ion"
-      ],
-      "cryptographic_suites_supported":[
-        "ECDSASecp256k1DER"
-      ],
-      "display":[
+      "display": [
         {
-          "name":"University Credential",
-          "locale":"en-US",
-          "logo":{
-            "url":"https://exampleuniversity.com/public/degree_logo.png",
-            "alt_text":"a square logo of an Example University degree"
+          "name": "University Credential",
+          "locale": "en-US",
+          "logo": {
+            "uri": "https://exampleuniversity.com/public/degree_logo.png",
+            "alt_text": "a square logo of an Example University degree"
           },
-          "background_color":"#12107c",
-          "text_color":"#FFFFFF"
+          "background_color": "#12107c",
+          "text_color": "#FFFFFF"
         }
+      ],
+      "format": "jwt_vc_json-ld",
+      "scope": "JSONLD_schema_scope1",
+      "order": [
+        "last_name"
+      ],
+      "cryptographic_binding_methods_supported": [
+        "web"
+      ],
+      "cryptographic_suites_supported": [
+        "ECDSAP256DER"
+      ],
+      "proof_types": [
+        "jwt"
       ]
     }
+  },
+  "credential_endpoint": "[SERVER_URL]/oidc/credential",
+  "credential_issuer": "[SERVER_URL]",
+  "credential_response_encryption": {
+    "alg_values_supported": [
+      "RSA1_5",
+      "RSA-OAEP",
+      "RSA-OAEP-256"
+    ],
+    "enc_values_supported": [
+      "A128CBC-HS256",
+      "A192CBC-HS384",
+      "A256CBC-HS512"
+    ],
+    "encryption_required": false
+  },
+  "display": [
+    {
+      "locale": "en-US",
+      "name": "Example University",
+      "url": "https://server.example.com",
+      "logo": {
+        "uri": "https://exampleuniversity.com/public/logo.png",
+        "alt_text": "a square logo of a university"
+      },
+      "background_color": "#12107c",
+      "text_color": "#FFFFFF"
+    },
+    {
+      "name": "サンプル大学",
+      "locale": "jp-JA",
+      "url": "https://server.example.com",
+      "background_color": "#12107c",
+      "text_color": "#FFFFFF"
+    }
+  ],
+  "pre-authorized_grant_anonymous_access_supported": true,
+  "registration_endpoint": "[SERVER_URL]/oidc/bank_issuer/v1.0/register",
+  "response_types_supported": [
+    "code"
+  ],
+  "token_endpoint": "[SERVER_URL]/oidc/token",
+  "token_endpoint_auth_methods_supported": [
+    "client_secret_basic",
+    "client_secret_post",
+    "attest_jwt_client_auth",
+    "none"
   ]
 }
+

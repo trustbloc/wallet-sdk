@@ -1,103 +1,104 @@
 {
-  "authorization_server":"http://localhost:8075/oidc/authorize",
-  "credential_endpoint":"http://localhost:8075/oidc/credential",
-  "display":[
+  "authorization_server": "http://localhost:8075/oidc/authorize",
+  "credential_endpoint": "http://localhost:8075/oidc/credential",
+  "display": [
     {
-      "locale":"en-US",
-      "name":"Bank Issuer"
+      "locale": "en-US",
+      "name": "Bank Issuer"
     }
   ],
-  "credentials_supported":[
-    {
-      "id": "VerifiedEmployee",
+  "credential_configurations_supported": {
+    "VerifiedEmployee_jwt_vc_json_v1": {
       "format": "jwt_vc_json",
-      "types":[
-        "VerifiableCredential",
-        "VerifiedEmployee"
-      ],
-      "credentialSubject":{
-        "displayName":{
-          "display":[
-            {
-              "locale":"en-US",
-              "name":"Employee"
-            }
-          ],
-          "value_type":"string"
+      "credential_definition": {
+        "credentialSubject": {
+          "displayName": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Employee"
+              }
+            ],
+            "value_type": "string"
+          },
+          "givenName": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Given Name"
+              }
+            ],
+            "value_type": "string"
+          },
+          "jobTitle": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Job Title"
+              }
+            ],
+            "value_type": "string"
+          },
+          "mail": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Mail"
+              }
+            ],
+            "value_type": "string"
+          },
+          "photo": {
+            "display": [
+              {
+                "name": "Photo"
+              }
+            ],
+            "value_type": "image"
+          },
+          "preferredLanguage": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Preferred Language"
+              }
+            ],
+            "value_type": "string"
+          },
+          "surname": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Surname"
+              }
+            ],
+            "value_type": "string"
+          }
         },
-        "givenName":{
-          "display":[
-            {
-              "locale":"en-US",
-              "name":"Given Name"
-            }
-          ],
-          "value_type":"string"
-        },
-        "jobTitle":{
-          "display":[
-            {
-              "locale":"en-US",
-              "name":"Job Title"
-            }
-          ],
-          "value_type":"string"
-        },
-        "mail":{
-          "display":[
-            {
-              "locale":"en-US",
-              "name":"Mail"
-            }
-          ],
-          "value_type":"string"
-        },
-        "photo":{
-          "display":[
-            {
-              "name":"Photo"
-            }
-          ],
-          "value_type":"image"
-        },
-        "preferredLanguage":{
-          "display":[
-            {
-              "locale":"en-US",
-              "name":"Preferred Language"
-            }
-          ],
-          "value_type":"string"
-        },
-        "surname":{
-          "display":[
-            {
-              "locale":"en-US",
-              "name":"Surname"
-            }
-          ],
-          "value_type":"string"
-        }
+        "type": [
+          "VerifiableCredential",
+          "VerifiedEmployee"
+        ]
       },
-      "cryptographic_binding_methods_supported":[
+      "cryptographic_binding_methods_supported": [
         "orb"
       ],
-      "cryptographic_suites_supported":[
+      "cryptographic_suites_supported": [
         "ECDSASecp256k1DER"
       ],
-      "display":[
+      "display": [
         {
-          "background_color":"#12107c",
-          "locale":"en-US",
-          "logo":{
-            "alt_text":"a square logo of an employee verification",
-            "url":"https://example.com/public/logo.png"
+          "background_color": "#12107c",
+          "locale": "en-US",
+          "logo": {
+            "alt_text": "a square logo of an employee verification",
+            "uri": "https://example.com/public/logo.png"
           },
-          "name":"Verified Employee",
-          "text_color":"#FFFFFF"
+          "name": "Verified Employee",
+          "text_color": "#FFFFFF"
         }
       ]
     }
-  ],
-  "credential_issuer":"http://localhost:8075/bank_issuer_jwtsd"
+  },
+  "credential_issuer": "http://localhost:8075/bank_issuer_jwtsd"
 }

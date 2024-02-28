@@ -1,113 +1,116 @@
 {
-  "credential_issuer":"https://server.example.com",
-  "authorization_server":"https://server.example.com/oidc/authorize",
-  "credential_endpoint":"https://server.example.com/oidc/credential",
-  "display":[
+  "credential_issuer": "https://server.example.com",
+  "authorization_server": "https://server.example.com/oidc/authorize",
+  "credential_endpoint": "https://server.example.com/oidc/credential",
+  "display": [
     {
-      "locale":"en-US",
-      "name":"Example University"
+      "locale": "en-US",
+      "name": "Example University"
     },
     {
-      "name":"サンプル大学",
-      "locale":"jp-JA"
+      "name": "サンプル大学",
+      "locale": "jp-JA"
     }
   ],
-  "credentials_supported":[
-    {
-      "id": "UniversityDegreeCredential",
-      "format":"jwt_vc_json",
-      "types":[
-        "VerifiableCredential",
-        "UniversityDegreeCredential"
+  "credential_configurations_supported": {
+    "UniversityDegreeCredential_jwt_vc_json-ld_v1": {
+      "format": "jwt_vc_json",
+      "order": [
+        "id",
+        "given_name",
+        "surname"
       ],
-      "credentialSubject":{
-        "id":{
-          "display":[
-            {
-              "name":"ID",
-              "locale":"en-US"
-            }
-          ],
-          "value_type":"string",
-          "order":0
+      "credential_definition": {
+        "credentialSubject": {
+          "id": {
+            "display": [
+              {
+                "name": "ID",
+                "locale": "en-US"
+              }
+            ],
+            "value_type": "string"
+          },
+          "given_name": {
+            "display": [
+              {
+                "name": "Given Name",
+                "locale": "en-US"
+              }
+            ],
+            "value_type": "string"
+          },
+          "surname": {
+            "display": [
+              {
+                "name": "Surname",
+                "locale": "en-US"
+              }
+            ],
+            "value_type": "string"
+          },
+          "gpa": {
+            "display": [
+              {
+                "name": "GPA",
+                "locale": "en-US"
+              }
+            ],
+            "value_type": "number"
+          },
+          "sensitive_id": {
+            "display": [
+              {
+                "name": "Sensitive ID",
+                "locale": "en-US"
+              }
+            ],
+            "value_type": "string",
+            "mask": "regex(^(.*).{4}$)"
+          },
+          "really_sensitive_id": {
+            "display": [
+              {
+                "name": "Really Sensitive ID",
+                "locale": "en-US"
+              }
+            ],
+            "value_type": "string",
+            "mask": "regex((.*))"
+          },
+          "chemistry": {
+            "display": [
+              {
+                "name": "Chemistry Final Grade",
+                "locale": "en-US"
+              }
+            ],
+            "value_type": "number"
+          }
         },
-        "given_name":{
-          "display":[
-            {
-              "name":"Given Name",
-              "locale":"en-US"
-            }
-          ],
-          "value_type":"string",
-          "order":1
-        },
-        "surname":{
-          "display":[
-            {
-              "name":"Surname",
-              "locale":"en-US"
-            }
-          ],
-          "value_type":"string",
-          "order":2
-        },
-        "gpa":{
-          "display":[
-            {
-              "name":"GPA",
-              "locale":"en-US"
-            }
-          ],
-          "value_type":"number"
-        },
-        "sensitive_id":{
-          "display":[
-            {
-              "name":"Sensitive ID",
-              "locale":"en-US"
-            }
-          ],
-          "value_type":"string",
-          "mask":"regex(^(.*).{4}$)"
-        },
-        "really_sensitive_id":{
-          "display":[
-            {
-              "name":"Really Sensitive ID",
-              "locale":"en-US"
-            }
-          ],
-          "value_type":"string",
-          "mask":"regex((.*))"
-        },
-        "chemistry":{
-          "display":[
-            {
-              "name":"Chemistry Final Grade",
-              "locale":"en-US"
-            }
-          ],
-          "value_type":"number"
-        }
+        "type": [
+          "VerifiableCredential",
+          "UniversityDegreeCredential"
+        ]
       },
-      "cryptographic_binding_methods_supported":[
+      "cryptographic_binding_methods_supported": [
         "ion"
       ],
-      "cryptographic_suites_supported":[
+      "cryptographic_suites_supported": [
         "ECDSASecp256k1DER"
       ],
-      "display":[
+      "display": [
         {
-          "name":"University Credential",
-          "locale":"en-US",
-          "logo":{
-            "url":"https://exampleuniversity.com/public/logo.png",
-            "alt_text":"a square logo of a university"
+          "name": "University Credential",
+          "locale": "en-US",
+          "logo": {
+            "uri": "https://exampleuniversity.com/public/logo.png",
+            "alt_text": "a square logo of a university"
           },
-          "background_color":"#12107c",
-          "text_color":"#FFFFFF"
+          "background_color": "#12107c",
+          "text_color": "#FFFFFF"
         }
       ]
     }
-  ]
+  }
 }

@@ -24,7 +24,7 @@ func Resolve(opts ...ResolveOpt) (*ResolvedDisplayData, error) {
 		maskingString = &defaultMaskingString
 	}
 
-	credentialDisplays, err := buildCredentialDisplays(vcs, metadata.CredentialsSupported, preferredLocale,
+	credentialDisplays, err := buildCredentialDisplays(vcs, metadata.CredentialConfigurationsSupported, preferredLocale,
 		*maskingString)
 	if err != nil {
 		return nil, err
@@ -49,6 +49,6 @@ func ResolveCredentialOffer(
 	return &ResolvedDisplayData{
 		IssuerDisplay: issuerOverview,
 		CredentialDisplays: buildCredentialOfferingDisplays(offeredCredentialTypes,
-			metadata.CredentialsSupported, preferredLocale),
+			metadata.CredentialConfigurationsSupported, preferredLocale),
 	}
 }

@@ -9,6 +9,7 @@ package openid4ci_test
 import (
 	_ "embed"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -21,12 +22,13 @@ var sampleIssuerMetadata string
 
 func TestIssuerMetadata(t *testing.T) {
 	issuerServerHandler := &mockIssuerServerHandler{
-		t:              t,
-		issuerMetadata: sampleIssuerMetadata,
+		t: t,
 	}
-	server := httptest.NewServer(issuerServerHandler)
 
+	server := httptest.NewServer(issuerServerHandler)
 	defer server.Close()
+
+	issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
 
 	requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
 
@@ -43,7 +45,7 @@ func TestIssuerMetadata(t *testing.T) {
 	require.NoError(t, err)
 
 	credentialIssuer := issuerMetadata.CredentialIssuer()
-	require.Equal(t, "https://server.example.com", credentialIssuer)
+	require.Equal(t, server.URL, credentialIssuer)
 
 	localizedIssuerDisplays := issuerMetadata.LocalizedIssuerDisplays()
 	require.NotNil(t, localizedIssuerDisplays)
@@ -65,24 +67,25 @@ func TestIssuerMetadata(t *testing.T) {
 
 	require.Nil(t, localizedIssuerDisplays.AtIndex(2))
 
-	supportedCredentials := issuerMetadata.SupportedCredentials()
-	require.NotNil(t, supportedCredentials)
-	require.Equal(t, 1, supportedCredentials.Length())
+	credentialConfigurationsSupported := issuerMetadata.SupportedCredentials()
+	require.NotNil(t, credentialConfigurationsSupported)
+	require.Equal(t, 1, credentialConfigurationsSupported.Length())
+	require.NotNil(t, credentialConfigurationsSupported.AtIndex(0))
 
-	supportedCredential := supportedCredentials.AtIndex(0)
-	require.NotNil(t, supportedCredential)
-	require.Equal(t, "jwt_vc_json", supportedCredential.Format())
-	require.Equal(t, "UniversityDegreeCredential", supportedCredential.ID())
+	credentialConfigurationSupported := credentialConfigurationsSupported.
+		CredentialConfigurationSupported("PermanentResidentCard_jwt_vc_json-ld_v1")
+	require.NotNil(t, credentialConfigurationSupported)
+	require.Equal(t, "jwt_vc_json-ld", credentialConfigurationSupported.Format())
 
-	types := supportedCredential.Types()
+	types := credentialConfigurationSupported.Types()
 	require.NotNil(t, types)
 	require.Equal(t, 2, types.Length())
 	require.Equal(t, "VerifiableCredential", types.AtIndex(0))
-	require.Equal(t, "UniversityDegreeCredential", types.AtIndex(1))
+	require.Equal(t, "PermanentResidentCard", types.AtIndex(1))
 
-	require.Nil(t, supportedCredentials.AtIndex(1))
+	require.Nil(t, credentialConfigurationsSupported.CredentialConfigurationSupported(""))
 
-	localizedDisplays := supportedCredential.LocalizedDisplays()
+	localizedDisplays := credentialConfigurationSupported.LocalizedDisplays()
 	require.NotNil(t, localizedDisplays)
 	require.Equal(t, 1, localizedDisplays.Length())
 

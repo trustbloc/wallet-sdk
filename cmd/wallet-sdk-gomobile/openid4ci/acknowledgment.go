@@ -37,10 +37,10 @@ func (a *Acknowledgment) Serialize() (string, error) {
 
 // Success acknowledge issuer that client accepts credentials.
 func (a *Acknowledgment) Success() error {
-	return a.acknowledgment.AcknowledgeIssuer(openid4cigoapi.AskStatusSuccess, &http.Client{})
+	return a.acknowledgment.AcknowledgeIssuer(openid4cigoapi.EventStatusCredentialAccepted, &http.Client{})
 }
 
 // Reject acknowledge issuer that client rejects credentials.
 func (a *Acknowledgment) Reject() error {
-	return a.acknowledgment.AcknowledgeIssuer(openid4cigoapi.AskStatusRejected, &http.Client{})
+	return a.acknowledgment.AcknowledgeIssuer(openid4cigoapi.EventStatusCredentialFailure, &http.Client{})
 }

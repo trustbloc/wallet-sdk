@@ -1,101 +1,107 @@
 {
-  "credential_issuer":"https://server.example.com",
-  "authorization_server":"https://server.example.com/oidc/authorize",
-  "credential_endpoint":"https://server.example.com/oidc/credential",
-  "display":[
+  "credential_issuer": "https://server.example.com",
+  "authorization_server": "https://server.example.com/oidc/authorize",
+  "credential_endpoint": "https://server.example.com/oidc/credential",
+  "display": [
     {
-      "locale":"en-US",
-      "name":"Example University"
+      "locale": "en-US",
+      "name": "Example University"
     },
     {
-      "name":"サンプル大学",
-      "locale":"jp-JA"
+      "name": "サンプル大学",
+      "locale": "jp-JA"
     }
   ],
-  "credentials_supported":[
-    {
-      "credentialSubject":{
-        "displayName":{
-          "display":[
-            {
-              "locale":"en-US",
-              "name":"Employee"
-            }
-          ],
-          "order":3
-        },
-        "givenName":{
-          "display":[
-            {
-              "locale":"en-US",
-              "name":"Given Name"
-            }
-          ]
-        },
-        "jobTitle":{
-          "display":[
-            {
-              "locale":"en-US",
-              "name":"Job Title"
-            }
-          ]
-        },
-        "mail":{
-          "display":[
-            {
-              "locale":"en-US",
-              "name":"Mail"
-            }
-          ]
-        },
-        "photo":{
-          "display":[
-            {
-              "name":"Photo"
-            }
-          ]
-        },
-        "preferredLanguage":{
-          "display":[
-            {
-              "locale":"en-US",
-              "name":"Preferred Language"
-            }
-          ]
-        },
-        "surname":{
-          "display":[
-            {
-              "locale":"en-US",
-              "name":"Surname"
-            }
-          ]
-        }
-      },
-      "cryptographic_binding_methods_supported":[
+  "credential_configurations_supported": {
+    "VerifiedEmployee_ldp_vc_v1": {
+      "cryptographic_binding_methods_supported": [
         "jwk"
       ],
-      "cryptographic_suites_supported":[
+      "cryptographic_suites_supported": [
         "ECDSAP256DER"
       ],
-      "display":[
+      "display": [
         {
-          "background_color":"#12107c",
-          "locale":"en-US",
-          "logo":{
-            "alt_text":"a square logo of a employee verification",
-            "url":"https://example.com/public/logo.png"
+          "background_color": "#12107c",
+          "locale": "en-US",
+          "logo": {
+            "alt_text": "a square logo of a employee verification",
+            "url": "https://example.com/public/logo.png"
           },
-          "name":"Verified Employee",
-          "text_color":"#FFFFFF"
+          "name": "Verified Employee",
+          "text_color": "#FFFFFF"
         }
       ],
-      "format":"ldp_vc",
-      "id":"VerifiedEmployee_LDP",
-      "types":[
-        "VerifiableCredential",
-        "VerifiedEmployee"
-      ]
+      "format": "ldp_vc",
+      "order": [
+        "",
+        "",
+        "",
+        "displayName"
+      ],
+      "credential_definition": {
+        "credentialSubject": {
+          "displayName": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Employee"
+              }
+            ]
+          },
+          "givenName": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Given Name"
+              }
+            ]
+          },
+          "jobTitle": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Job Title"
+              }
+            ]
+          },
+          "mail": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Mail"
+              }
+            ]
+          },
+          "photo": {
+            "display": [
+              {
+                "name": "Photo"
+              }
+            ]
+          },
+          "preferredLanguage": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Preferred Language"
+              }
+            ]
+          },
+          "surname": {
+            "display": [
+              {
+                "locale": "en-US",
+                "name": "Surname"
+              }
+            ]
+          }
+        },
+        "type": [
+          "VerifiableCredential",
+          "VerifiedEmployee"
+        ]
+      }
     }
-  ]
+  }
 }

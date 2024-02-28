@@ -40,8 +40,7 @@ const (
 	fetchCredOfferViaGETReqEventText = "Fetch credential offer via an HTTP GET request to %s"
 
 	//nolint:gosec //false positive
-	requestCredentialEventText          = "Request credential(s) from issuer"
-	fetchOpenIDConfigViaGETReqEventText = "Fetch issuer's OpenID configuration via an HTTP GET request to %s"
+	requestCredentialEventText = "Request credential(s) from issuer"
 	//nolint:gosec //false positive
 	fetchTokenViaPOSTReqEventText = "Fetch token via an HTTP POST request to %s"
 	//nolint:gosec //false positive
@@ -70,7 +69,8 @@ type IssuerInitiatedInteraction struct {
 
 // NewIssuerInitiatedInteraction creates a new OpenID4CI IssuerInitiatedInteraction.
 // If no ActivityLogger is provided (via the ClientConfig object), then no activity logging will take place.
-func NewIssuerInitiatedInteraction(initiateIssuanceURI string,
+func NewIssuerInitiatedInteraction(
+	initiateIssuanceURI string,
 	config *ClientConfig,
 ) (*IssuerInitiatedInteraction, error) {
 	timeStartNewInteraction := time.Now()
@@ -87,6 +87,21 @@ func NewIssuerInitiatedInteraction(initiateIssuanceURI string,
 		return nil, err
 	}
 
+	issuerInteraction := &interaction{
+		issuerURI:            credentialOffer.CredentialIssuer,
+		didResolver:          config.DIDResolver,
+		activityLogger:       config.ActivityLogger,
+		metricsLogger:        config.MetricsLogger,
+		disableVCProofChecks: config.DisableVCProofChecks,
+		documentLoader:       config.DocumentLoader,
+		httpClient:           config.HTTPClient,
+	}
+
+	err = issuerInteraction.populateIssuerMetadata(getIssuerMetadataEventText)
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO https://github.com/trustbloc/wallet-sdk/issues/457 Add support for determining
 	// grant types when no grants are specified.
 	// See https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#section-4.1.1 for more info.
@@ -95,29 +110,25 @@ func NewIssuerInitiatedInteraction(initiateIssuanceURI string,
 		return nil, err
 	}
 
-	credentialTypes, credentialFormats, err := determineCredentialTypesAndFormats(credentialOffer)
+	credentialTypes, credentialFormats, err := determineCredentialTypesAndFormats(credentialOffer,
+		issuerInteraction.issuerMetadata)
 	if err != nil {
 		return nil, err
 	}
 
 	return &IssuerInitiatedInteraction{
-			interaction: &interaction{
-				issuerURI:            credentialOffer.CredentialIssuer,
-				didResolver:          config.DIDResolver,
-				activityLogger:       config.ActivityLogger,
-				metricsLogger:        config.MetricsLogger,
-				disableVCProofChecks: config.DisableVCProofChecks,
-				documentLoader:       config.DocumentLoader,
-				httpClient:           config.HTTPClient,
-			},
+			interaction:                  issuerInteraction,
 			preAuthorizedCodeGrantParams: preAuthorizedCodeGrantParams,
 			authorizationCodeGrantParams: authorizationCodeGrantParams,
 			credentialTypes:              credentialTypes,
 			credentialFormats:            credentialFormats,
-		}, config.MetricsLogger.Log(&api.MetricsEvent{
-			Event:    newInteractionEventText,
-			Duration: time.Since(timeStartNewInteraction),
-		})
+		},
+		config.MetricsLogger.Log(
+			&api.MetricsEvent{
+				Event:    newInteractionEventText,
+				Duration: time.Since(timeStartNewInteraction),
+			},
+		)
 }
 
 // CreateAuthorizationURL creates an authorization URL that can be opened in a browser to proceed to the login page.
@@ -409,7 +420,7 @@ func (i *IssuerInitiatedInteraction) getPreAuthTokenResponse(pin, tokenEndpoint 
 	params.Add("pre-authorized_code", i.preAuthorizedCodeGrantParams.preAuthorizedCode)
 
 	if pin != "" {
-		params.Add("user_pin", pin)
+		params.Add("tx_code", pin)
 	}
 
 	paramsReader := strings.NewReader(params.Encode())
@@ -565,30 +576,45 @@ func getCredentialOfferJSONFromCredentialOfferURI(credentialOfferURI string,
 	return responseBytes, nil
 }
 
-func determineCredentialTypesAndFormats(credentialOffer *CredentialOffer) ([][]string, []string, error) {
-	// TODO Add support for credential offer objects that contain a credentials field with JSON strings instead.
-	// See https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-11.html#section-4.1.1 for more info.
-	credentialTypes := make([][]string, len(credentialOffer.Credentials))
-	credentialFormats := make([]string, len(credentialOffer.Credentials))
+func determineCredentialTypesAndFormats(
+	credentialOffer *CredentialOffer,
+	issuerMetadata *issuer.Metadata,
+) ([][]string, []string, error) {
+	types := make([][]string, len(credentialOffer.CredentialConfigurationIDs))
+	formats := make([]string, len(credentialOffer.CredentialConfigurationIDs))
 
-	for i := 0; i < len(credentialOffer.Credentials); i++ {
-		if credentialOffer.Credentials[i].Format != jwtVCJSONCredentialFormat &&
-			credentialOffer.Credentials[i].Format != jwtVCJSONLDCredentialFormat &&
-			credentialOffer.Credentials[i].Format != ldpVCCredentialFormat {
+	for i := 0; i < len(credentialOffer.CredentialConfigurationIDs); i++ {
+		id := credentialOffer.CredentialConfigurationIDs[i]
+
+		configuration, ok := issuerMetadata.CredentialConfigurationsSupported[id]
+		if !ok {
+			return nil, nil, walleterror.NewValidationError(
+				ErrorModule,
+				InvalidCredentialConfigurationIDCode,
+				InvalidCredentialConfigurationIDError,
+				fmt.Errorf("invalid credential configuration ID (%s) in credential offer", id),
+			)
+		}
+
+		types[i] = configuration.CredentialDefinition.Type
+
+		if configuration.Format != jwtVCJSONCredentialFormat &&
+			configuration.Format != jwtVCJSONLDCredentialFormat &&
+			configuration.Format != ldpVCCredentialFormat {
 			return nil, nil, walleterror.NewValidationError(
 				ErrorModule,
 				UnsupportedCredentialTypeInOfferCode,
 				UnsupportedCredentialTypeInOfferError,
 				fmt.Errorf("unsupported credential type (%s) in credential offer at index %d of "+
-					"credentials object (must be jwt_vc_json or jwt_vc_json-ld)",
-					credentialOffer.Credentials[i].Format, i))
+					"credential_configurations_supported (must be jwt_vc_json or jwt_vc_json-ld)",
+					configuration.Format, i),
+			)
 		}
 
-		credentialTypes[i] = credentialOffer.Credentials[i].Types
-		credentialFormats[i] = credentialOffer.Credentials[i].Format
+		formats[i] = configuration.Format
 	}
 
-	return credentialTypes, credentialFormats, nil
+	return types, formats, nil
 }
 
 func validateSignerKeyID(jwtSigner api.JWTSigner) error {
@@ -620,8 +646,7 @@ func getSubjectIDs(vcs []*verifiable.Credential) []string {
 
 func signToken(claims interface{}, signer api.JWTSigner) (string, error) {
 	headers := jose.Headers{}
-	// TODO: Send "typ" header.
-	// headers["typ"] = "openid4vci-proof+jwt"
+	headers["typ"] = "openid4vci-proof+jwt"
 
 	token, err := jwt.NewSigned(claims, jwt.SignParameters{AdditionalHeaders: headers}, signer)
 	if err != nil {

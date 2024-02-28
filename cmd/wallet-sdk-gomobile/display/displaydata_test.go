@@ -17,11 +17,11 @@ import (
 
 const (
 	sampleIssuerDisplay = `{"name":"Example University","locale":"en-US", "url": "https://server.example.com",
-		"logo": {"url": "https://exampleuniversity.com/public/logo.png"}, 
+		"logo": {"uri": "https://exampleuniversity.com/public/logo.png"}, 
 		"background_color": "#12107c", "text_color": "#FFFFFF"}`
 
 	sampleCredentialDisplay = `{"overview":{"name":"University Credential","locale":"en-US","logo":{` +
-		`"url":"https://exampleuniversity.com/public/logo.png","alt_text":"a square logo of a university"},` +
+		`"uri":"https://exampleuniversity.com/public/logo.png","alt_text":"a square logo of a university"},` +
 		`"background_color":"#12107c","text_color":"#FFFFFF"},"claims":[` +
 		`{"raw_id":"id","label":"ID","value_type":"string","order":0,"raw_value":"1234","locale":"en-US"},` +
 		`{"raw_id":"given_name","label":"Given Name","value_type":"string","order":1,"raw_value":"Alice","locale":"en-US"},` +

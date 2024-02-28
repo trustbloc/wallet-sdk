@@ -27,13 +27,13 @@ import (
 var (
 	//go:embed testdata/sample_issuer_metadata.json
 	sampleIssuerMetadataJSON string
-	//go:embed testdata/sample_issuer_metadata.jwt
+	//go:embed testdata/sample_issuer_metadata.jwt.json
 	sampleIssuerMetadataJWT string
-	//go:embed testdata/sample_issuer_metadata_with_order.jwt
+	//go:embed testdata/sample_issuer_metadata_with_order.jwt.json
 	// Note that this sample is not properly signed - it exists just to test our handling of
 	// the optional order field when received inside a JWT.
 	sampleIssuerMetadataWithOrderJWT string
-	//go:embed testdata/sample_jwt_without_issuer_metadata.jwt
+	//go:embed testdata/sample_jwt_without_issuer_metadata.jwt.json
 	// This is the sample JWT taken directly from JWT.io.
 	sampleJWTWithoutIssuerMetadata string
 )
@@ -77,22 +77,19 @@ func TestGet(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, issuerMetadata)
 
-			displayNameClaim, exists := issuerMetadata.CredentialsSupported[0].CredentialSubject["displayName"]
+			credentialConf := issuerMetadata.CredentialConfigurationsSupported["VerifiedEmployee_ldp_vc_v1"]
+			_, exists := credentialConf.CredentialDefinition.CredentialSubject["displayName"]
 			require.True(t, exists)
 
-			require.NotNil(t, displayNameClaim.Order)
-
-			order, err := displayNameClaim.OrderAsInt()
+			order, err := credentialConf.ClaimOrderAsInt("displayName")
 			require.NoError(t, err)
 			require.Equal(t, 3, order)
 
-			jobTitleClaim, exists := issuerMetadata.CredentialsSupported[0].CredentialSubject["jobTitle"]
+			_, exists = credentialConf.CredentialDefinition.CredentialSubject["jobTitle"]
 			require.True(t, exists)
 
-			require.Nil(t, jobTitleClaim.Order)
-
-			order, err = jobTitleClaim.OrderAsInt()
-			require.EqualError(t, err, "order is nil or an unsupported type")
+			order, err = credentialConf.ClaimOrderAsInt("jobTitle")
+			require.EqualError(t, err, "order is not specified")
 			require.Equal(t, -1, order)
 		})
 		t.Run("Parsing from JWT", func(t *testing.T) {
@@ -123,22 +120,21 @@ func TestGet(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, issuerMetadata)
 
-			displayNameClaim, exists := issuerMetadata.CredentialsSupported[0].CredentialSubject["displayName"]
+			credentialConf := issuerMetadata.CredentialConfigurationsSupported["VerifiedEmployee_ldp_vc_v1"]
+			credentialDefinition := credentialConf.CredentialDefinition
+
+			_, exists := credentialDefinition.CredentialSubject["displayName"]
 			require.True(t, exists)
 
-			require.NotNil(t, displayNameClaim.Order)
-
-			order, err := displayNameClaim.OrderAsInt()
+			order, err := credentialConf.ClaimOrderAsInt("displayName")
 			require.NoError(t, err)
-			require.Equal(t, 3, order)
+			require.Equal(t, 0, order)
 
-			jobTitleClaim, exists := issuerMetadata.CredentialsSupported[0].CredentialSubject["jobTitle"]
+			_, exists = credentialDefinition.CredentialSubject["jobTitle"]
 			require.True(t, exists)
 
-			require.Nil(t, jobTitleClaim.Order)
-
-			order, err = jobTitleClaim.OrderAsInt()
-			require.EqualError(t, err, "order is nil or an unsupported type")
+			order, err = credentialConf.ClaimOrderAsInt("jobTitle")
+			require.EqualError(t, err, "order is not specified")
 			require.Equal(t, -1, order)
 		})
 	})
@@ -162,7 +158,7 @@ func TestGet(t *testing.T) {
 		require.Nil(t, issuerMetadata)
 	})
 	t.Run("Missing signature verifier", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{issuerMetadata: "invalid"}
+		issuerServerHandler := &mockIssuerServerHandler{issuerMetadata: `{"signed_metadata": "a.b"}`}
 		server := httptest.NewServer(issuerServerHandler)
 
 		defer server.Close()
@@ -185,7 +181,7 @@ func TestGet(t *testing.T) {
 		require.Nil(t, issuerMetadata)
 	})
 	t.Run("Fail to parse", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{}
+		issuerServerHandler := &mockIssuerServerHandler{issuerMetadata: `{"signed_metadata": "a.b"}`}
 		server := httptest.NewServer(issuerServerHandler)
 
 		defer server.Close()
@@ -193,7 +189,7 @@ func TestGet(t *testing.T) {
 		issuerMetadata, err := issuermetadata.Get(server.URL, http.DefaultClient, nil,
 			"", &mockVerifier{})
 		require.EqualError(t, err, "failed to parse the response from the issuer's OpenID Credential "+
-			"Issuer endpoint as JSON or as a JWT: unexpected end of JSON input\nJWT of compacted JWS form is "+
+			"Issuer endpoint as JSON or as a JWT: JWT of compacted JWS form is "+
 			"supported only")
 		require.Nil(t, issuerMetadata)
 	})
@@ -205,9 +201,8 @@ func TestGet(t *testing.T) {
 
 		issuerMetadata, err := issuermetadata.Get(server.URL, http.DefaultClient, nil,
 			"", &mockVerifier{})
-		require.EqualError(t, err, "issuer's OpenID configuration endpoint returned a JWT, but no "+
-			"issuer metadata was detected (well_known_openid_issuer_configuration field is missing)")
-		require.Nil(t, issuerMetadata)
+		require.NoError(t, err)
+		require.NotNil(t, issuerMetadata)
 	})
 }
 
