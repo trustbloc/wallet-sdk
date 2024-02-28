@@ -9,6 +9,7 @@ package mock
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,11 +17,12 @@ import (
 
 // HTTPClientMock used to mock http client in tests.
 type HTTPClientMock struct {
-	Response         string
-	StatusCode       int
-	Err              error
-	ExpectedEndpoint string
-	SentBody         []byte
+	Response            string
+	StatusCode          int
+	Err                 error
+	ExpectedEndpoint    string
+	SentBody            []byte
+	SentBodyUnMarshaled interface{}
 }
 
 // Do mocks call to http client Do function.
@@ -36,6 +38,12 @@ func (c *HTTPClientMock) Do(req *http.Request) (*http.Response, error) {
 		}
 
 		c.SentBody = respBytes
+		if c.SentBodyUnMarshaled != nil {
+			err = json.Unmarshal(respBytes, c.SentBodyUnMarshaled)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	if c.Err != nil {

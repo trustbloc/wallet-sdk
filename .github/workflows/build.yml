@@ -132,9 +132,32 @@ jobs:
           name: mock-trust-registry
           path: /tmp/mock-trust-registry.tar
 
+  BuilMockAttestationServer:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Build docker images for test server
+        run: |
+          docker build -f ./images/mocks/attestation/Dockerfile --no-cache -t wallet-sdk/mock-attestation:latest \
+          --build-arg GO_VER=1.21 \
+          --build-arg ALPINE_VER=3.18 .
+      - name: Save docker image as tar
+        run: |
+          docker save --output /tmp/mock-attestation.tar wallet-sdk/mock-attestation
+      - name: Upload image to artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mock-attestation
+          path: /tmp/mock-attestation.tar
+
   iOSFlutterIntegrationTest:
     runs-on: macos-12
-    needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer ]
+    needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -173,6 +196,9 @@ jobs:
       - name: Load mock test registry server
         run: |
           docker load --input mock-trust-registry/mock-trust-registry.tar
+      - name: Load mock attestation server
+        run: |
+          docker load --input mock-attestation/mock-attestation.tar
       - name: Generate test cli and keys
         run: |
           make build-integration-cli generate-test-keys
@@ -204,7 +230,7 @@ jobs:
 
   AndroidFlutterIntegrationTest:
     runs-on: macos-12
-    needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer ]
+    needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer ]
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -243,6 +269,9 @@ jobs:
       - name: Load mock test registry server
         run: |
           docker load --input mock-trust-registry/mock-trust-registry.tar
+      - name: Load mock attestation server
+        run: |
+          docker load --input mock-attestation/mock-attestation.tar
       - name: Generate test cli and keys
         run: |
           make build-integration-cli generate-test-keys
