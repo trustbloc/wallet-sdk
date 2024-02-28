@@ -312,7 +312,7 @@ func TestNewIssuerInitiatedInteraction(t *testing.T) {
 
 		issuerServerHandler.issuerMetadata = strings.ReplaceAll(`{
 		  "authorization_endpoint": "[SERVER_URL]/oidc/authorize",
-		  "credential_ack_endpoint": "[SERVER_URL]/oidc/ack_endpoint",
+		  "notification_endpoint": "[SERVER_URL]/oidc/ack_endpoint",
 		  "credential_configurations_supported": {
 			"unsupported_configuration_id": {
 			  "credential_definition": {
@@ -550,7 +550,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 					defer server.Close()
 
 					issuerMetadata := modifyCredentialMetadata(t, sampleIssuerMetadata, func(m *issuer.Metadata) {
-						m.CredentialAckEndpoint = ""
+						m.NotificationEndpoint = ""
 					})
 
 					issuerServerHandler.issuerMetadata = strings.ReplaceAll(issuerMetadata, serverURLPlaceholder, server.URL)
@@ -645,9 +645,9 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 					require.NotNil(t, requestedAcknowledgment)
 
 					if !tc.reject {
-						err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.AskStatusSuccess, &http.Client{})
+						err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.EventStatusCredentialAccepted, &http.Client{})
 					} else {
-						err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.AskStatusRejected, &http.Client{})
+						err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.EventStatusCredentialFailure, &http.Client{})
 					}
 					require.NoError(t, err)
 				}
@@ -825,7 +825,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			issuerMetadata := strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
 
 			issuerServerHandler.issuerMetadata = modifyCredentialMetadata(t, issuerMetadata, func(m *issuer.Metadata) {
-				m.CredentialAckEndpoint = ""
+				m.NotificationEndpoint = ""
 			})
 
 			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false, true))
@@ -866,7 +866,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			ack, err := interaction.Acknowledgment()
 			require.NoError(t, err)
 
-			err = ack.AcknowledgeIssuer(openid4ci.AskStatusSuccess, &http.Client{})
+			err = ack.AcknowledgeIssuer(openid4ci.EventStatusCredentialAccepted, &http.Client{})
 			require.ErrorContains(t, err, "ACKNOWLEDGMENT_EXPIRED")
 		})
 
@@ -1454,7 +1454,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				require.NoError(t, err)
 
 				require.NoError(t, requestedAcknowledgment.AcknowledgeIssuer(
-					openid4ci.AskStatusSuccess, &http.Client{}))
+					openid4ci.EventStatusCredentialAccepted, &http.Client{}))
 			})
 		})
 		t.Run("Issuer does not support the authorization code grant type", func(t *testing.T) {

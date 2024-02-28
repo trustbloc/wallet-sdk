@@ -13,6 +13,19 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
+// EventStatus used to acknowledge issuer that client accepts or rejects credentials.
+type EventStatus string
+
+const (
+	// EventStatusCredentialAccepted is to be used when the Credential was successfully stored in the Wallet,
+	// with or without user action.
+	EventStatusCredentialAccepted EventStatus = "credential_accepted" //nolint:gosec,nolintlint
+	// EventStatusCredentialFailure acknowledge issuer that client rejects credentials.
+	EventStatusCredentialFailure EventStatus = "credential_failure" //nolint:gosec,nolintlint
+	// EventStatusCredentialDeleted is to be used when the unsuccessful Credential issuance was caused by a user action.
+	EventStatusCredentialDeleted EventStatus = "credential_deleted" //nolint:gosec,nolintlint
+)
+
 // CredentialOffer represents the Credential Offer object as defined in
 // https://openid.github.io/OpenID4VCI/openid-4-verifiable-credential-issuance-wg-draft.html#section-4.1.1.
 type CredentialOffer struct {
@@ -72,11 +85,7 @@ type CredentialResponse struct {
 	// OPTIONAL. Number denoting the lifetime in seconds of the c_nonce.
 	CNonceExpiresIn int `json:"c_nonce_expires_in"`
 	// OPTIONAL. String identifying an issued Credential that the Wallet includes in the Notification Request.
-	NotificationID string `json:"notification_id"`
-
-	// Deprecated.
-	// Use NotificationID instead.
-	AscID string `json:"ack_id"`
+	AscID string `json:"notification_id"`
 }
 
 // SerializeToCredentialsBytes serializes underlying credential to proper bytes representation depending on
@@ -130,7 +139,24 @@ type acknowledgementRequest struct {
 }
 
 type credentialAcknowledgement struct {
-	AckID            string `json:"ack_id"`
-	Status           string `json:"status"`
+	// String received in the Credential Response or the Batch Credential Response.
+	NotificationID string `json:"notification_id"`
+
+	// Type of the notification event.
+	// It MUST be a case-sensitive string whose value is either `credential_accepted`, `credential_failure`,
+	// or `credential_deleted`.
+	//
+	//  `credential_accepted` is to be used when the Credential was successfully stored in the Wallet,
+	// with or without user action.
+	//  `credential_deleted` is to be used when the unsuccessful Credential issuance was caused by a user action.
+	//
+	// In all other unsuccessful cases, `credential_failure` is to be used.
+	Event EventStatus `json:"event"`
+
+	// Human-readable ASCII text providing additional information, used to assist the Credential Issuer
+	// developer in understanding the event that occurred.
+	EventDescription *string `json:"event_description,omitempty"`
+
+	// Additional field that out of the spec.
 	IssuerIdentifier string `json:"issuer_identifier"`
 }

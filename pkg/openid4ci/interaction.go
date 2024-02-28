@@ -44,16 +44,6 @@ import (
 
 const getIssuerMetadataEventText = "Get issuer metadata"
 
-// AskStatus used to acknowledge issuer that client accepts or rejects credentials.
-type AskStatus string
-
-const (
-	// AskStatusSuccess acknowledge issuer that client accepts credentials.
-	AskStatusSuccess AskStatus = "success"
-	// AskStatusRejected acknowledge issuer that client rejects credentials.
-	AskStatusRejected AskStatus = "rejected"
-)
-
 // IssuerTrustInfo represent issuer trust information.
 type IssuerTrustInfo struct {
 	DID                  string
@@ -708,7 +698,7 @@ func (i *interaction) requestedAcknowledgmentObj(authToken *universalAuthToken) 
 
 	return &Acknowledgment{
 		AckIDs:                i.requestedAcknowledgment.ackIDs,
-		CredentialAckEndpoint: i.issuerMetadata.CredentialAckEndpoint,
+		CredentialAckEndpoint: i.issuerMetadata.NotificationEndpoint,
 		IssuerURI:             i.issuerURI,
 		AuthToken:             authToken,
 	}, nil
@@ -719,7 +709,7 @@ func (i *interaction) requireAcknowledgment() (bool, error) {
 		return false, fmt.Errorf("no acknowledgment data: request credentials first")
 	}
 
-	return i.requestedAcknowledgment != nil && i.issuerMetadata.CredentialAckEndpoint != "", nil
+	return i.requestedAcknowledgment != nil && i.issuerMetadata.NotificationEndpoint != "", nil
 }
 
 func (i *interaction) storeAcknowledgmentID(id string) {

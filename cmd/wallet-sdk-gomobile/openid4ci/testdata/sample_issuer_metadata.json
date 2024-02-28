@@ -1,6 +1,6 @@
 {
   "authorization_endpoint": "[SERVER_URL]/oidc/authorize",
-  "credential_ack_endpoint": "[SERVER_URL]/oidc/ack_endpoint",
+  "notification_endpoint": "[SERVER_URL]/oidc/ack_endpoint",
   "credential_configurations_supported": {
     "PermanentResidentCard_jwt_vc_json-ld_v1": {
       "credential_definition": {

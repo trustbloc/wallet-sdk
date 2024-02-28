@@ -21,14 +21,15 @@ type Acknowledgment struct {
 
 // AcknowledgeIssuer acknowledge issuer that client accepts or rejects credentials.
 func (a *Acknowledgment) AcknowledgeIssuer(
-	status AskStatus, httpClient *http.Client,
+	eventStatus EventStatus, httpClient *http.Client,
 ) error {
 	var ackRequest acknowledgementRequest
 
 	for _, ackID := range a.AckIDs {
 		ackRequest.Credentials = append(ackRequest.Credentials, credentialAcknowledgement{
-			AckID:            ackID,
-			Status:           string(status),
+			NotificationID:   ackID,
+			Event:            eventStatus,
+			EventDescription: nil,
 			IssuerIdentifier: a.IssuerURI,
 		})
 	}
