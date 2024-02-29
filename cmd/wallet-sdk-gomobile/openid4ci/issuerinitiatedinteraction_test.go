@@ -457,8 +457,8 @@ func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
 
 		trustInfo, err := interaction.IssuerTrustInfo()
 		require.NoError(t, err)
-		require.Equal(t, "jwt_vc_json-ld", trustInfo.CredentialFormat)
-		require.Equal(t, "PermanentResidentCard", trustInfo.CredentialType)
+		require.Equal(t, "jwt_vc_json-ld", trustInfo.CredentialOffers[0].CredentialFormat)
+		require.Equal(t, "PermanentResidentCard", trustInfo.CredentialOffers[0].CredentialType)
 	})
 }
 

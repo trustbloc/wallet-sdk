@@ -55,11 +55,9 @@ func NewRegistry(config *RegistryConfig) *Registry {
 // EvaluateIssuance evaluate is issuance request by calling trust registry.
 func (r *Registry) EvaluateIssuance(request *IssuanceRequest) (*EvaluationResult, error) {
 	result, err := r.impl.EvaluateIssuance(&trustregistry.IssuanceRequest{
-		IssuerDID:                  request.IssuerDID,
-		IssuerDomain:               request.IssuerDomain,
-		CredentialType:             request.CredentialType,
-		CredentialFormat:           request.CredentialFormat,
-		ClientAttestationRequested: request.ClientAttestationRequested,
+		IssuerDID:        request.IssuerDID,
+		IssuerDomain:     request.IssuerDomain,
+		CredentialOffers: toCredentialOffersRequest(request.credentialOffers),
 	})
 	if err != nil {
 		return nil, err
@@ -100,4 +98,18 @@ func (r *Registry) EvaluatePresentation(request *PresentationRequest) (*Evaluati
 		ErrorCode:    result.ErrorCode,
 		ErrorMessage: result.ErrorMessage,
 	}, nil
+}
+
+func toCredentialOffersRequest(offers []*CredentialOffer) []trustregistry.CredentialOffer {
+	req := make([]trustregistry.CredentialOffer, len(offers))
+
+	for i, offer := range offers {
+		req[i] = trustregistry.CredentialOffer{
+			CredentialType:             offer.CredentialType,
+			CredentialFormat:           offer.CredentialFormat,
+			ClientAttestationRequested: offer.ClientAttestationRequested,
+		}
+	}
+
+	return req
 }
