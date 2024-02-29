@@ -20,6 +20,7 @@ import (
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/attestation"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
@@ -71,6 +72,7 @@ type test struct {
 	claimData           map[string]interface{}
 	acknowledgeReject   bool
 	trustInfo           bool
+	attestationURL      string
 }
 
 func TestOpenID4CIFullFlow(t *testing.T) {
@@ -144,6 +146,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			claimData:           universityDegreeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeIssuer),
 			expectedIssuerURI:   "http://localhost:8075/oidc/idp/university_degree_issuer_bbs/v1.0",
+			attestationURL:      "https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/",
 		},
 		{
 			issuerProfileID:     "bank_issuer_jwtsd",
@@ -256,6 +259,21 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 
 		vm, err := testHelper.DIDDoc.AssertionMethod()
 		require.NoError(t, err)
+
+		if tc.attestationURL != "" {
+			attClient, err := attestation.NewClient(
+				attestation.NewCreateClientArgs(tc.attestationURL, testHelper.KMS.GetCrypto()).
+					DisableHTTPClientTLSVerify())
+			require.NoError(t, err)
+
+			attestationVC, err := attClient.GetAttestationVC(vm, attestation.NewAttestRequest().
+				AddAssertion("wallet_authentication").AddWalletAuthentication("wallet_id", didID).
+				AddWalletMetadata("wallet_name", "int-test"),
+			)
+
+			require.NoError(t, err)
+			require.NotNil(t, attestationVC)
+		}
 
 		credentials, err := interaction.RequestCredentialWithPreAuth(vm, nil)
 		require.NoError(t, err)

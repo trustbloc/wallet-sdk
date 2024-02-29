@@ -14,18 +14,7 @@ import (
 
 func main() {
 	serveCertPath := os.Getenv("TLS_CERT_PATH")
-	if serveCertPath == "" {
-		log.Fatalf("TLS_CERT_PATH is required")
-
-		return
-	}
-
 	serveKeyPath := os.Getenv("TLS_KEY_PATH")
-	if serveKeyPath == "" {
-		log.Fatalf("TLS_KEY_PATH is required")
-
-		return
-	}
 
 	listenAddr := os.Getenv("LISTEN_ADDR")
 	if listenAddr == "" {
@@ -33,19 +22,22 @@ func main() {
 
 		return
 	}
+	log.Printf("Listening on %s", listenAddr)
 
-	attestationProfile := os.Getenv("ATTESTATION_PROFILE")
-	if attestationProfile == "" {
-		log.Fatalf("ATTESTATION_PROFILE is required")
+	srv := newServer(&serverConfig{})
+
+	if serveCertPath == "" || serveKeyPath == "" {
+		log.Fatal(http.ListenAndServe(
+			listenAddr,
+			srv,
+		))
 
 		return
 	}
 
-	log.Printf("Listening on %s", listenAddr)
-
 	log.Fatal(http.ListenAndServeTLS(
 		listenAddr,
 		serveCertPath, serveKeyPath,
-		newServer(&serverConfig{attestationProfile: attestationProfile}),
+		srv,
 	))
 }
