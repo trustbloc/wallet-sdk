@@ -17,6 +17,7 @@ import dev.trustbloc.wallet.sdk.trustregistry.EvaluationResult
 import dev.trustbloc.wallet.sdk.trustregistry.IssuanceRequest
 import dev.trustbloc.wallet.sdk.trustregistry.Registry
 import dev.trustbloc.wallet.sdk.trustregistry.RegistryConfig
+import dev.trustbloc.wallet.sdk.trustregistry.CredentialOffer
 
 class OpenID4CI constructor(
         private val requestURI: String,
@@ -91,8 +92,16 @@ class OpenID4CI constructor(
         val trustInfo = newInteraction.issuerTrustInfo()
         issuanceRequest.issuerDID = trustInfo.did
         issuanceRequest.issuerDomain = trustInfo.domain
-        issuanceRequest.credentialFormat = trustInfo.credentialFormat
-        issuanceRequest.credentialType = trustInfo.credentialType
+
+        for (rInd in 0 until trustInfo.offerLength() ) {
+            val offer = trustInfo.offerAtIndex(rInd)
+
+            val credentialOffer = CredentialOffer();
+            credentialOffer.credentialFormat = offer.credentialFormat
+            credentialOffer.credentialType =offer.credentialFormat
+
+            issuanceRequest.addCredentialOffers(credentialOffer)
+        }
 
         val config = RegistryConfig()
         config.evaluateIssuanceURL = evaluateIssuanceURL

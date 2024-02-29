@@ -54,6 +54,22 @@ func IssuerMetadataFromGoImpl(goAPIIssuerMetadata *issuer.Metadata) *IssuerMetad
 type IssuerTrustInfo struct {
 	DID              string
 	Domain           string
-	CredentialType   string
-	CredentialFormat string
+	CredentialOffers []*CredentialOffer
+}
+
+// CredentialOffer contains data related to a credential type being offered in an issuance request.
+type CredentialOffer struct {
+	CredentialType             string
+	CredentialFormat           string
+	ClientAttestationRequested bool
+}
+
+// OfferLength returns the number offers.
+func (i *IssuerTrustInfo) OfferLength() int {
+	return len(i.CredentialOffers)
+}
+
+// OfferAtIndex returns offer by index.
+func (i *IssuerTrustInfo) OfferAtIndex(index int) *CredentialOffer {
+	return i.CredentialOffers[index]
 }

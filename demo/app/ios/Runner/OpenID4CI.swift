@@ -154,10 +154,17 @@ public class OpenID4CI {
         let trustInfo = try initiatedInteraction.issuerTrustInfo()
         issuanceRequest.issuerDID = trustInfo.did
         issuanceRequest.issuerDomain = trustInfo.domain
-        issuanceRequest.credentialFormat = trustInfo.credentialFormat
-        issuanceRequest.credentialType = trustInfo.credentialType
-        
-        
+
+        for rInd in 0..<trustInfo.offerLength() {
+            let offer = trustInfo.offer(at:rInd)!
+
+            let credentialOffer = TrustregistryCredentialOffer();
+            credentialOffer.credentialFormat = offer.credentialFormat
+            credentialOffer.credentialType = offer.credentialType
+
+            issuanceRequest.addCredentialOffers(credentialOffer)
+        }
+
         let config = TrustregistryRegistryConfig()
         config.evaluateIssuanceURL = evaluateIssuanceURL
         
