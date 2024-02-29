@@ -7,12 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -23,11 +21,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	tlsutils "github.com/trustbloc/cmdutil-go/pkg/utils/tls"
+	"github.com/trustbloc/did-go/doc/did"
 	utiltime "github.com/trustbloc/did-go/doc/util/time"
+	"github.com/trustbloc/kms-go/spi/kms"
 	"github.com/trustbloc/vc-go/jwt"
+	"github.com/trustbloc/vc-go/proof/testsupport"
 	"github.com/trustbloc/vc-go/verifiable"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/clientcredentials"
+	"github.com/trustbloc/wallet-sdk/pkg/api"
+	didion "github.com/trustbloc/wallet-sdk/pkg/did/creator/ion"
+	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 )
 
 const (
@@ -44,37 +46,54 @@ type sessionMetadata struct {
 }
 
 type serverConfig struct {
-	attestationProfile string
 }
 
 type server struct {
-	router     *mux.Router
-	httpClient *http.Client
-	sessions   sync.Map // sessionID -> sessionMetadata
-	config     *serverConfig
+	router        *mux.Router
+	httpClient    *http.Client
+	sessions      sync.Map // sessionID -> sessionMetadata
+	config        *serverConfig
+	cryptoProfile *cryptoProfile
 }
 
 func newServer(config *serverConfig) *server {
 	router := mux.NewRouter()
 
-	rootCAs, err := tlsutils.GetCertPool(false, []string{os.Getenv("ROOT_CA_CERTS_PATH")})
-	if err != nil {
-		panic(err)
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+
+	customCAs := os.Getenv("ROOT_CA_CERTS_PATH")
+
+	if customCAs != "" {
+		rootCAs, err := tlsutils.GetCertPool(false, []string{customCAs})
+		if err != nil {
+			panic(err)
+		}
+
+		tlsConfig = &tls.Config{
+			InsecureSkipVerify: true,
+			RootCAs:            rootCAs,
+			MinVersion:         tls.VersionTLS12,
+		}
 	}
 
 	httpClient := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				RootCAs:    rootCAs,
-				MinVersion: tls.VersionTLS12,
-			},
+			TLSClientConfig: tlsConfig,
 		},
 	}
 
+	cryptoProfile, err := createDID()
+	if err != nil {
+		log.Fatalf("ATTESTATION_PROFILE is required")
+	}
+
 	srv := &server{
-		router:     router,
-		httpClient: httpClient,
-		config:     config,
+		router:        router,
+		httpClient:    httpClient,
+		config:        config,
+		cryptoProfile: cryptoProfile,
 	}
 
 	router.HandleFunc("/profiles/profileID/profileVersion/wallet/attestation/init", srv.evaluateWalletAttestationInitRequest).Methods(http.MethodPost)
@@ -107,7 +126,7 @@ func (s *server) evaluateWalletAttestationInitRequest(w http.ResponseWriter, r *
 		return
 	}
 
-	if !reflect.DeepEqual(request.WalletMetadata, map[string]interface{}{"wallet_name": "wallet-cli"}) {
+	if !reflect.DeepEqual(request.WalletMetadata, map[string]interface{}{"wallet_name": "int-test"}) {
 		s.writeResponse(
 			w, http.StatusBadRequest, "walletMetadata field is invalid")
 
@@ -287,72 +306,20 @@ func (s *server) attestationVC(ctx context.Context, walletDID string) (string, e
 		return "", fmt.Errorf("get jwt claims: %w", err)
 	}
 
-	unsecuredJWT, err := claims.MarshalUnsecuredJWT()
+	jwsAlgo, err := verifiable.KeyTypeToJWSAlgo(kms.ED25519Type)
+	if err != nil {
+		return "", err
+	}
+
+	jws, err := claims.MarshalJWSString(jwsAlgo, testsupport.NewProofCreator(&signerWithEmbeddedKey{
+		crypto: s.cryptoProfile.crypto,
+		kid:    s.cryptoProfile.kid,
+	}), s.cryptoProfile.kid)
 	if err != nil {
 		return "", fmt.Errorf("marshal unsecured jwt: %w", err)
 	}
 
-	issueCredentialData := &IssueCredentialData{
-		Credential: unsecuredJWT,
-	}
-
-	body, err := json.Marshal(issueCredentialData)
-	if err != nil {
-		return "", fmt.Errorf("marshal issue credential request: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf(issueCredentialURLTpl, s.config.attestationProfile), bytes.NewReader(body))
-	if err != nil {
-		return "", fmt.Errorf("create request: %w", err)
-	}
-
-	req.Header.Add("Content-Type", "application/json")
-
-	token, err := s.issueAccessToken(ctx)
-	if err != nil {
-		return "", fmt.Errorf("issue access token: %w", err)
-	}
-
-	req.Header.Add("Authorization", "Bearer "+token)
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("send request: %w", err)
-	}
-
-	defer resp.Body.Close()
-
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("read response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status code: %d; response: %s", resp.StatusCode, string(b))
-	}
-
-	return string(b), nil
-}
-
-func (s *server) issueAccessToken(ctx context.Context) (string, error) {
-	conf := clientcredentials.Config{
-		TokenURL:     oidcProviderURL + "/oauth2/token",
-		ClientID:     oidcProviderUsername,
-		ClientSecret: oidcProviderPassword,
-		Scopes:       []string{"org_admin"},
-		AuthStyle:    oauth2.AuthStyleInHeader,
-	}
-
-	ctx = context.WithValue(ctx, oauth2.HTTPClient, s.httpClient)
-
-	token, err := conf.Token(ctx)
-	if err != nil {
-		return "", fmt.Errorf("get access token: %w", err)
-	}
-
-	fmt.Printf("token: %v\n", token)
-
-	return token.Extra("id_token").(string), nil
+	return jws, nil
 }
 
 // writeResponse writes interface value to response
@@ -366,4 +333,42 @@ func (s *server) writeResponse(
 	rw.WriteHeader(status)
 
 	_, _ = rw.Write([]byte(msg))
+}
+
+type signerWithEmbeddedKey struct {
+	crypto api.Crypto
+	kid    string
+}
+
+func (s *signerWithEmbeddedKey) Sign(data []byte) ([]byte, error) {
+	return s.crypto.Sign(data, s.kid)
+}
+
+type cryptoProfile struct {
+	crypto api.Crypto
+	kid    string
+	did    *did.DocResolution
+}
+
+func createDID() (*cryptoProfile, error) {
+	localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: localkms.NewMemKMSStore()})
+	if err != nil {
+		return nil, fmt.Errorf("create new local KMS: %w", err)
+	}
+
+	kid, jwk, err := localKMS.Create(kms.ED25519Type)
+	if err != nil {
+		return nil, fmt.Errorf("create key: %w", err)
+	}
+
+	didDoc, err := didion.CreateLongForm(jwk)
+	if err != nil {
+		return nil, fmt.Errorf("create did: %w", err)
+	}
+
+	return &cryptoProfile{
+		crypto: localKMS.GetCrypto(),
+		kid:    kid,
+		did:    didDoc,
+	}, nil
 }

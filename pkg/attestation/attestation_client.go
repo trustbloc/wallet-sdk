@@ -73,7 +73,7 @@ func NewClient(config *ClientConfig) *Client {
 	return &Client{
 		api:            servAPI,
 		documentLoader: config.DocumentLoader,
-		attestationURL: config.AttestationURL,
+		attestationURL: strings.TrimRight(config.AttestationURL, "/"),
 	}
 }
 
