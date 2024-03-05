@@ -146,7 +146,6 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			claimData:           universityDegreeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeIssuer),
 			expectedIssuerURI:   "http://localhost:8075/oidc/idp/university_degree_issuer_bbs/v1.0",
-			attestationURL:      "https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/",
 		},
 		{
 			issuerProfileID:     "bank_issuer_jwtsd",
@@ -158,14 +157,15 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			walletKeyType:       localkms.KeyTypeP384,
 		},
 		{
-			issuerProfileID:     "bank_issuer",
+			issuerProfileID:     "bank_issuer_attest",
 			issuerDIDMethod:     "ion",
 			walletDIDMethod:     "ion",
 			claimData:           verifiableEmployeeClaims,
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataBankIssuer),
-			expectedIssuerURI:   "http://localhost:8075/oidc/idp/bank_issuer/v1.0",
+			expectedIssuerURI:   "http://localhost:8075/oidc/idp/bank_issuer_attest/v1.0",
 			acknowledgeReject:   true,
 			trustInfo:           true,
+			attestationURL:      "https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/",
 		},
 		{
 			issuerProfileID:     "did_ion_issuer",
@@ -260,6 +260,8 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		vm, err := testHelper.DIDDoc.AssertionMethod()
 		require.NoError(t, err)
 
+		opt := openid4ci.NewRequestCredentialWithPreAuthOpts()
+
 		if tc.attestationURL != "" {
 			attClient, err := attestation.NewClient(
 				attestation.NewCreateClientArgs(tc.attestationURL, testHelper.KMS.GetCrypto()).
@@ -271,11 +273,16 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 				AddWalletMetadata("wallet_name", "int-test"),
 			)
 
+			attestationVCString, err := attestationVC.Serialize()
+			require.NoError(t, err)
+
+			opt.SetAttestationVC(vm, attestationVCString)
+
 			require.NoError(t, err)
 			require.NotNil(t, attestationVC)
 		}
 
-		credentials, err := interaction.RequestCredentialWithPreAuth(vm, nil)
+		credentials, err := interaction.RequestCredentialWithPreAuth(vm, opt)
 		require.NoError(t, err)
 		require.NotNil(t, credentials)
 

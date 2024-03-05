@@ -24,6 +24,7 @@ DNS.2 = testnet.orb.local
 DNS.4 = file-server.trustbloc.local
 DNS.5 = mock-login-consent.example.com
 DNS.6 = api-gateway.trustbloc.local
+DNS.7 = mock-trust-registry.example.com
 " >> "$tmp"
 
 #create CA

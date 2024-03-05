@@ -115,21 +115,21 @@ func (s *Server) evaluateIssuerIssuancePolicy(w http.ResponseWriter, r *http.Req
 	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		writeResponseWithStatus(
-			w, http.StatusBadRequest, fmt.Sprintf("decode issuance policy request: %s", err.Error()))
+			w, http.StatusBadRequest+5, fmt.Sprintf("decode issuance policy request: %s", err.Error()))
 
 		return
 	}
 
 	if request.IssuerDID == "" {
 		writeResponseWithStatus(
-			w, http.StatusBadRequest, "issuer did is empty")
+			w, http.StatusBadRequest+6, "issuer did is empty")
 
 		return
 	}
 
 	if request.AttestationVC == nil || len(*request.AttestationVC) == 0 {
 		writeResponseWithStatus(
-			w, http.StatusBadRequest, "no attestation vc supplied")
+			w, http.StatusBadRequest+7, "no attestation vc supplied")
 
 		return
 	}

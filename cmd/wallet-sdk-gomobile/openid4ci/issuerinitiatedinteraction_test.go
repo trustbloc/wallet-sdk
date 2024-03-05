@@ -287,6 +287,34 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, credentials)
 	})
+
+	t.Run("attestation invalid VC", func(t *testing.T) {
+		requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
+
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		interactionRequiredArgs, interactionOptionalArgs := getTestArgs(t, requestURI, kms, nil, nil, false)
+
+		interaction, err := openid4ci.NewIssuerInitiatedInteraction(interactionRequiredArgs, interactionOptionalArgs)
+		require.NoError(t, err)
+
+		keyHandle, err := kms.Create(arieskms.ED25519)
+		require.NoError(t, err)
+
+		verificationMethod := &api.VerificationMethod{
+			ID:   mockKeyID,
+			Type: "JsonWebKey2020",
+			Key:  models.VerificationKey{JSONWebKey: keyHandle.JWK},
+		}
+
+		_, err = interaction.RequestCredentialWithPreAuth(verificationMethod,
+			openid4ci.NewRequestCredentialWithPreAuthOpts().SetPIN("1234").
+				SetAttestationVC(verificationMethod, "invalidVC"))
+
+		require.Error(t, err)
+	})
+
 	t.Run("Authorization code flow - authorization URL must be created first", func(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)

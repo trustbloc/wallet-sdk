@@ -17,6 +17,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/piprate/json-gold/ld"
+
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 
 	"github.com/google/uuid"
@@ -49,6 +51,7 @@ const (
 
 	preAuthorizedGrantType     = "urn:ietf:params:oauth:grant-type:pre-authorized_code"
 	authorizationCodeGrantType = "authorization_code"
+	attestJWTClientAuthType    = "attest_jwt_client_auth"
 )
 
 // IssuerInitiatedInteraction represents a single issuer-instantiated OpenID4CI interaction between a wallet and an
@@ -176,7 +179,7 @@ func (i *IssuerInitiatedInteraction) RequestCredentialWithPreAuth(jwtSigner api.
 			errors.New("issuer does not support the pre-authorized code grant"))
 	}
 
-	return i.requestCredentialWithPreAuth(jwtSigner, processedOpts.pin)
+	return i.requestCredentialWithPreAuth(jwtSigner, processedOpts)
 }
 
 // RequestCredentialWithAuth requests credential(s) from the issuer. This method can only be used for the
@@ -306,7 +309,7 @@ func (i *IssuerInitiatedInteraction) Acknowledgment() (*Acknowledgment, error) {
 }
 
 func (i *IssuerInitiatedInteraction) requestCredentialWithPreAuth(jwtSigner api.JWTSigner,
-	pin string,
+	opts *requestCredentialWithPreAuthOpts,
 ) ([]*verifiable.Credential, error) {
 	timeStartRequestCredential := time.Now()
 
@@ -315,7 +318,17 @@ func (i *IssuerInitiatedInteraction) requestCredentialWithPreAuth(jwtSigner api.
 		return nil, err
 	}
 
-	credentialResponses, err := i.getCredentialResponsesWithPreAuth(pin, jwtSigner)
+	var attestationVP string
+
+	if opts.attestationVC != "" {
+		attestationVP, err = createAttestationVP(
+			opts.attestationVC, opts.attestationVPSigner, i.interaction.documentLoader)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	credentialResponses, err := i.getCredentialResponsesWithPreAuth(opts.pin, jwtSigner, attestationVP)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get credential response: %w", err)
 	}
@@ -352,7 +365,7 @@ func (i *IssuerInitiatedInteraction) requestCredentialWithPreAuth(jwtSigner api.
 }
 
 func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
-	pin string, signer api.JWTSigner,
+	pin string, signer api.JWTSigner, attestationVP string,
 ) ([]CredentialResponse, error) {
 	err := i.interaction.populateIssuerMetadata(requestCredentialEventText)
 	if err != nil {
@@ -364,7 +377,7 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 		return nil, err
 	}
 
-	tokenResponse, err := i.getPreAuthTokenResponse(pin, tokenEndpoint)
+	tokenResponse, err := i.getPreAuthTokenResponse(pin, tokenEndpoint, attestationVP)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get token response: %w", err)
 	}
@@ -414,13 +427,20 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 	return credentialResponses, nil
 }
 
-func (i *IssuerInitiatedInteraction) getPreAuthTokenResponse(pin, tokenEndpoint string) (*preAuthTokenResponse, error) {
+func (i *IssuerInitiatedInteraction) getPreAuthTokenResponse(
+	pin, tokenEndpoint, attestationVP string,
+) (*preAuthTokenResponse, error) {
 	params := url.Values{}
 	params.Add("grant_type", preAuthorizedGrantType)
 	params.Add("pre-authorized_code", i.preAuthorizedCodeGrantParams.preAuthorizedCode)
 
 	if pin != "" {
 		params.Add("tx_code", pin)
+	}
+
+	if attestationVP != "" {
+		params.Add("client_assertion_type", attestJWTClientAuthType)
+		params.Add("client_assertion", attestationVP)
 	}
 
 	paramsReader := strings.NewReader(params.Encode())
@@ -642,6 +662,33 @@ func getSubjectIDs(vcs []*verifiable.Credential) []string {
 	}
 
 	return subjectIDs
+}
+
+func createAttestationVP(
+	attestationVCData string,
+	attestationVPSigner api.JWTSigner,
+	documentLoader ld.DocumentLoader,
+) (string, error) {
+	attestationVC, err := verifiable.ParseCredential([]byte(attestationVCData),
+		verifiable.WithDisabledProofCheck(),
+		verifiable.WithJSONLDDocumentLoader(documentLoader))
+	if err != nil {
+		return "", err
+	}
+
+	attestationVP, err := verifiable.NewPresentation(verifiable.WithCredentials(attestationVC))
+	if err != nil {
+		return "", err
+	}
+
+	attestationVP.ID = uuid.New().String()
+
+	claims, err := attestationVP.JWTClaims([]string{}, false)
+	if err != nil {
+		return "", err
+	}
+
+	return signToken(claims, attestationVPSigner)
 }
 
 func signToken(claims interface{}, signer api.JWTSigner) (string, error) {

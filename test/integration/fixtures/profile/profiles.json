@@ -378,6 +378,190 @@
     },
     {
       "issuer": {
+        "id": "bank_issuer_attest",
+        "version": "v1.0",
+        "groupID": "group_bank_issuer_attest",
+        "name": "Bank Issuer",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
+        "url": "http://vc-rest-echo.trustbloc.local:8075",
+        "webHook": "https://demo-issuer.trustbloc.local:8078/verify/openid4ci/webhook",
+        "active": true,
+        "checks": {
+          "policy": {
+            "policyUrl": "https://mock-trust-registry.example.com:8100/issuer/policies/i_myprofile_jwt_client_attestation/v1.latest/interactions/issuance"
+          },
+          "clientAttestationCheck": {
+            "enabled": true
+          }
+        },
+        "vcConfig": {
+          "signingAlgorithm": "JsonWebSignature2020",
+          "signatureRepresentation": 0,
+          "keyType": "ED25519",
+          "format": "jwt",
+          "didMethod": "ion",
+          "status": {
+            "type": "StatusList2021Entry"
+          }
+        },
+        "oidcConfig": {
+          "client_id": "7d4u50e7w6nfq8tfayhzplgjf",
+          "client_secret_handle": "282ks4fkuqfosus5k0x30abnv",
+          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration",
+          "scopes_supported": [
+            "openid",
+            "profile"
+          ],
+          "grant_types_supported": [
+            "authorization_code"
+          ],
+          "response_types_supported": [
+            "code"
+          ],
+          "token_endpoint_auth_methods_supported": [
+            "none"
+          ],
+          "enable_dynamic_client_registration": true,
+          "pre-authorized_grant_anonymous_access_supported": true,
+          "signed_issuer_metadata_supported": true
+        },
+        "credentialTemplates": [
+          {
+            "contexts": [
+              "https://www.w3.org/2018/credentials/v1",
+              "https://www.w3.org/2018/credentials/examples/v1"
+            ],
+            "type": "VerifiedEmployee",
+            "id": "templateID",
+            "issuer": "did:ion:bank_issuer"
+          }
+        ],
+        "credentialMetadata": {
+          "credential_configurations_supported": {
+            "VerifiedEmployee_jwt_vc_json_v1": {
+              "format": "jwt_vc_json",
+              "order": [
+                "displayName",
+                "givenName",
+                "jobTitle"
+              ],
+              "credential_definition": {
+                "type": [
+                  "VerifiableCredential",
+                  "VerifiedEmployee"
+                ],
+                "credentialSubject": {
+                  "displayName": {
+                    "display": [
+                      {
+                        "name": "Employee",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "givenName": {
+                    "display": [
+                      {
+                        "name": "Given Name",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "jobTitle": {
+                    "display": [
+                      {
+                        "name": "Job Title",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "surname": {
+                    "display": [
+                      {
+                        "name": "Surname",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "preferredLanguage": {
+                    "display": [
+                      {
+                        "name": "Preferred Language",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "mail": {
+                    "display": [
+                      {
+                        "name": "Mail",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "photo": {
+                    "display": [
+                      {
+                        "name": "Photo"
+                      }
+                    ],
+                    "value_type": "image"
+                  },
+                  "sensitiveID": {
+                    "display": [
+                      {
+                        "name": "Sensitive ID",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string",
+                    "mask": "regex(^(.*).{4}$)"
+                  },
+                  "reallySensitiveID": {
+                    "display": [
+                      {
+                        "name": "Really Sensitive ID",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string",
+                    "mask": "regex((.*))"
+                  }
+                }
+              },
+              "cryptographic_binding_methods_supported": [
+                "did"
+              ],
+              "cryptographic_suites_supported": [
+                "Ed25519Signature2018"
+              ],
+              "display": [
+                {
+                  "name": "Verified Employee",
+                  "locale": "en-US",
+                  "logo": {
+                    "uri": "https://example.com/public/logo.png",
+                    "alt_text": "a square logo of an employee verification"
+                  },
+                  "background_color": "#12107c",
+                  "text_color": "#FFFFFF"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "createDID": true,
+      "didDomain": "https://localhost:8075"
+    },
+    {
+      "issuer": {
         "id": "bank_issuer",
         "version": "v1.0",
         "groupID": "group_bank_issuer",
