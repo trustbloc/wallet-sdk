@@ -6,8 +6,12 @@ SPDX-License-Identifier: Apache-2.0
 
 package openid4ci
 
+import "github.com/trustbloc/wallet-sdk/pkg/api"
+
 type requestCredentialWithPreAuthOpts struct {
-	pin string
+	pin                 string
+	attestationVPSigner api.JWTSigner
+	attestationVC       string
 }
 
 // RequestCredentialWithPreAuthOpt is an option for the RequestCredentialWithPreAuth method.
@@ -18,6 +22,15 @@ type RequestCredentialWithPreAuthOpt func(opts *requestCredentialWithPreAuthOpts
 func WithPIN(pin string) RequestCredentialWithPreAuthOpt {
 	return func(opts *requestCredentialWithPreAuthOpts) {
 		opts.pin = pin
+	}
+}
+
+// WithAttestationVC is an option for the RequestCredentialWithPreAuth method that allows you to specify
+// attestation VC, which may be required by the issuer.
+func WithAttestationVC(attestationVPSigner api.JWTSigner, attestationVC string) RequestCredentialWithPreAuthOpt {
+	return func(opts *requestCredentialWithPreAuthOpts) {
+		opts.attestationVC = attestationVC
+		opts.attestationVPSigner = attestationVPSigner
 	}
 }
 

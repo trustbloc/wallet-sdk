@@ -111,7 +111,18 @@ func (i *IssuerInitiatedInteraction) RequestCredentialWithPreAuth(
 		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
 
-	credentials, err := i.goAPIInteraction.RequestCredentialWithPreAuth(signer, openid4cigoapi.WithPIN(opts.pin))
+	goOpts := []openid4cigoapi.RequestCredentialWithPreAuthOpt{openid4cigoapi.WithPIN(opts.pin)}
+
+	if opts.attestationVM != nil {
+		attestationSigner, attErr := createSigner(opts.attestationVM, i.crypto)
+		if attErr != nil {
+			return nil, wrapper.ToMobileErrorWithTrace(attErr, i.oTel)
+		}
+
+		goOpts = append(goOpts, openid4cigoapi.WithAttestationVC(attestationSigner, opts.attestationVC))
+	}
+
+	credentials, err := i.goAPIInteraction.RequestCredentialWithPreAuth(signer, goOpts...)
 	if err != nil {
 		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}

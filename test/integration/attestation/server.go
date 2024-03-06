@@ -27,6 +27,7 @@ import (
 	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/vc-go/proof/testsupport"
 	"github.com/trustbloc/vc-go/verifiable"
+
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	didion "github.com/trustbloc/wallet-sdk/pkg/did/creator/ion"
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
@@ -278,7 +279,7 @@ func (s *server) attestationVC(ctx context.Context, walletDID string) (string, e
 			},
 		},
 		Issuer: &verifiable.Issuer{
-			ID: walletDID,
+			ID: s.cryptoProfile.did.DIDDocument.ID,
 		},
 		Issued: &utiltime.TimeWrapper{
 			Time: time.Now(),
@@ -306,7 +307,7 @@ func (s *server) attestationVC(ctx context.Context, walletDID string) (string, e
 	jws, err := claims.MarshalJWSString(jwsAlgo, testsupport.NewProofCreator(&signerWithEmbeddedKey{
 		crypto: s.cryptoProfile.crypto,
 		kid:    s.cryptoProfile.kid,
-	}), s.cryptoProfile.kid)
+	}), s.cryptoProfile.did.DIDDocument.VerificationMethod[0].ID)
 	if err != nil {
 		return "", fmt.Errorf("marshal unsecured jwt: %w", err)
 	}

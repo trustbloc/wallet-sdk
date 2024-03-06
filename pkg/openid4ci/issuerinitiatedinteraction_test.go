@@ -60,6 +60,9 @@ var (
 
 	//go:embed testdata/sample_issuer_metadata.json
 	sampleIssuerMetadata string
+
+	//go:embed testdata/sample_cred.jwt
+	sampleCredJWT string
 )
 
 type mockIssuerServerHandler struct {
@@ -740,6 +743,56 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				"the credential offer requires a user PIN, but none was provided")
 			require.Nil(t, credentials)
 		})
+
+		t.Run("attestation VC", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t:                  t,
+				credentialResponse: sampleCredentialResponse,
+				httpStatusCode:     http.StatusCreated,
+			}
+
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
+			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false, true))
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"), openid4ci.WithAttestationVC(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, sampleCredJWT))
+
+			require.NoError(t, err)
+			require.NotNil(t, credentials)
+		})
+
+		t.Run("Invalid attestation VC", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t:                  t,
+				credentialResponse: sampleCredentialResponse,
+				httpStatusCode:     http.StatusCreated,
+			}
+
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
+			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false, true))
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"), openid4ci.WithAttestationVC(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, "{}"))
+
+			testutil.RequireErrorContains(t, err,
+				"credential type of unknown structure")
+			require.Nil(t, credentials)
+		})
+
 		t.Run("No token endpoint available - neither the OpenID configuration nor the issuer's metadata "+
 			"specify one", func(t *testing.T) {
 			issuerServerHandler := &mockIssuerServerHandler{
