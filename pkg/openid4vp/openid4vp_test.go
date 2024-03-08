@@ -29,8 +29,10 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/mock"
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
+	"github.com/trustbloc/wallet-sdk/pkg/models"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
@@ -46,6 +48,9 @@ var (
 
 	//go:embed test_data/verifier_did.data
 	verifierDID string
+
+	//go:embed test_data/attestation_cred.jwt
+	attestationCredJWT string
 )
 
 const (
@@ -346,6 +351,66 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NotNil(t, query)
 
 		err = interaction.PresentCredentialUnsafe(singleCred[0], CustomClaims{})
+		require.NoError(t, err)
+	})
+
+	t.Run("Success - with opts", func(t *testing.T) {
+		httpClient := &mock.HTTPClientMock{
+			StatusCode: 200,
+		}
+
+		crypto := &cryptoMock{SignVal: []byte(testSignature)}
+
+		interaction, err := NewInteraction(
+			requestObjectJWT,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockDoc},
+			crypto,
+			lddl,
+			WithHTTPClient(httpClient),
+		)
+		require.NoError(t, err)
+
+		verificationMethod := mockDoc.DIDDocument.VerificationMethod[0]
+
+		attestationSigner, err := common.NewJWSSigner(models.VerificationMethodFromDoc(&verificationMethod), crypto)
+		require.NoError(t, err)
+
+		query := interaction.GetQuery()
+		require.NotNil(t, query)
+
+		err = interaction.PresentCredential(singleCred, CustomClaims{},
+			WithAttestationVC(attestationSigner, attestationCredJWT))
+		require.NoError(t, err)
+	})
+
+	t.Run("Success - with opts, multi cred", func(t *testing.T) {
+		httpClient := &mock.HTTPClientMock{
+			StatusCode: 200,
+		}
+
+		crypto := &cryptoMock{SignVal: []byte(testSignature)}
+
+		interaction, err := NewInteraction(
+			requestObjectJWT,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockDoc},
+			crypto,
+			lddl,
+			WithHTTPClient(httpClient),
+		)
+		require.NoError(t, err)
+
+		verificationMethod := mockDoc.DIDDocument.VerificationMethod[0]
+
+		attestationSigner, err := common.NewJWSSigner(models.VerificationMethodFromDoc(&verificationMethod), crypto)
+		require.NoError(t, err)
+
+		query := interaction.GetQuery()
+		require.NotNil(t, query)
+
+		err = interaction.PresentCredential(credentials, CustomClaims{},
+			WithAttestationVC(attestationSigner, attestationCredJWT))
 		require.NoError(t, err)
 	})
 

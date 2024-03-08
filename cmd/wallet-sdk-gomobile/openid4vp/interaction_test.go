@@ -161,6 +161,12 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 	singleCredential := credentials.AtIndex(0)
 
+	verificationMethod := &api.VerificationMethod{
+		ID:   "did:example:12345#testId",
+		Type: "Ed25519VerificationKey2018",
+		Key:  models.VerificationKey{Raw: mockKey},
+	}
+
 	makeInteraction := func() *Interaction {
 		return &Interaction{
 			crypto:           &mockCrypto{},
@@ -168,18 +174,18 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			goAPIOpenID4VP: &mockGoAPIInteraction{
 				PresentCredentialErr: nil,
 			},
-			didResolver: &mockDIDResolver{ResolveDocBytes: mockResolution(t, &api.VerificationMethod{
-				ID:   "did:example:12345#testId",
-				Type: "Ed25519VerificationKey2018",
-				Key:  models.VerificationKey{Raw: mockKey},
-			})},
+			didResolver: &mockDIDResolver{ResolveDocBytes: mockResolution(t, verificationMethod)},
 		}
 	}
 
 	t.Run("Success", func(t *testing.T) {
 		instance := makeInteraction()
 
-		err := instance.PresentCredential(credentials)
+		query, err := instance.GetQuery()
+		require.NotNil(t, query)
+		require.NoError(t, err)
+
+		err = instance.PresentCredential(credentials)
 		require.NoError(t, err)
 	})
 
@@ -187,7 +193,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		instance := makeInteraction()
 
 		err := instance.PresentCredentialOpts(credentials, NewPresentCredentialOpts().
-			AddScopeClaim("claim1", `{"key" : "val"}`))
+			AddScopeClaim("claim1", `{"key" : "val"}`).
+			SetAttestationVC(verificationMethod, "invalidVC"))
 		require.NoError(t, err)
 	})
 
@@ -385,7 +392,11 @@ func (o *mockGoAPIInteraction) CustomScope() []string {
 	return o.ScopeResult
 }
 
-func (o *mockGoAPIInteraction) PresentCredential([]*afgoverifiable.Credential, openid4vp.CustomClaims) error {
+func (o *mockGoAPIInteraction) PresentCredential(
+	[]*afgoverifiable.Credential,
+	openid4vp.CustomClaims,
+	...openid4vp.PresentOpt,
+) error {
 	return o.PresentCredentialErr
 }
 

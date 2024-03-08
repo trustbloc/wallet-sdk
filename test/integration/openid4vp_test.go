@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/attestation"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
@@ -91,6 +92,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		customScopes       []customScope
 		trustInfo          bool
 		shouldBeForbidden  bool
+		attestationURL     string
 	}
 
 	tests := []test{
@@ -140,7 +142,8 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			issuerProfileIDs:  []string{"drivers_license_issuer"},
 			claimData:         []claimData{driverLicenseClaims},
 			walletDIDMethod:   "ion",
-			verifierProfileID: "v_myprofile_jwt_drivers_license",
+			verifierProfileID: "v_myprofile_jwt_attestation",
+			attestationURL:    "https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/",
 		},
 		{
 			issuerProfileIDs:  []string{"bank_issuer", "drivers_license_issuer"},
@@ -314,6 +317,32 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		for _, scope := range tc.customScopes {
 			presentOps.AddScopeClaim(scope.name, scope.customClaims)
 		}
+		if tc.attestationURL != "" {
+			vm, err := testHelper.DIDDoc.AssertionMethod()
+			require.NoError(t, err)
+
+			didID, err := testHelper.DIDDoc.ID()
+			require.NoError(t, err)
+
+			attClient, err := attestation.NewClient(
+				attestation.NewCreateClientArgs(tc.attestationURL, testHelper.KMS.GetCrypto()).
+					DisableHTTPClientTLSVerify())
+			require.NoError(t, err)
+
+			attestationVC, err := attClient.GetAttestationVC(vm, attestation.NewAttestRequest().
+				AddAssertion("wallet_authentication").AddWalletAuthentication("wallet_id", didID).
+				AddWalletMetadata("wallet_name", "int-test"),
+			)
+
+			attestationVCString, err := attestationVC.Serialize()
+			require.NoError(t, err)
+
+			presentOps.SetAttestationVC(vm, attestationVCString)
+
+			require.NoError(t, err)
+			require.NotNil(t, attestationVC)
+		}
+
 		err = interaction.PresentCredentialOpts(selectedCreds, presentOps)
 		require.NoError(t, err)
 

@@ -20,16 +20,17 @@ type CustomClaims struct {
 }
 
 type idTokenClaims struct {
-	VPToken idTokenVPToken         `json:"_vp_token"`        //nolint: tagliatelle
-	Scope   map[string]interface{} `json:"_scope,omitempty"` //nolint: tagliatelle
-	Nonce   string                 `json:"nonce"`
-	Exp     int64                  `json:"exp"`
-	Iss     string                 `json:"iss"`
-	Sub     string                 `json:"sub"`
-	Aud     string                 `json:"aud"`
-	Nbf     int64                  `json:"nbf"`
-	Iat     int64                  `json:"iat"`
-	Jti     string                 `json:"jti"`
+	VPToken       idTokenVPToken         `json:"_vp_token"`        //nolint: tagliatelle
+	Scope         map[string]interface{} `json:"_scope,omitempty"` //nolint: tagliatelle
+	AttestationVP string                 `json:"_attestation_vp"`
+	Nonce         string                 `json:"nonce"`
+	Exp           int64                  `json:"exp"`
+	Iss           string                 `json:"iss"`
+	Sub           string                 `json:"sub"`
+	Aud           string                 `json:"aud"`
+	Nbf           int64                  `json:"nbf"`
+	Iat           int64                  `json:"iat"`
+	Jti           string                 `json:"jti"`
 }
 
 type vpTokenClaims struct {

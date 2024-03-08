@@ -109,6 +109,9 @@ func NewPresentCredentialOpts() *PresentCredentialOpts {
 // PresentCredentialOpts contains options for present credential operation.
 type PresentCredentialOpts struct {
 	scopeClaims map[string]string
+
+	attestationVM *api.VerificationMethod
+	attestationVC string
 }
 
 // AddScopeClaim adds scope claim with given name.
@@ -118,6 +121,17 @@ func (o *PresentCredentialOpts) AddScopeClaim(claimName, claimJSON string) *Pres
 	}
 
 	o.scopeClaims[claimName] = claimJSON
+
+	return o
+}
+
+// SetAttestationVC is an option for the RequestCredentialWithPreAuth method that allows you to specify
+// attestation VC, which may be required by the verifier.
+func (o *PresentCredentialOpts) SetAttestationVC(
+	vm *api.VerificationMethod, vc string,
+) *PresentCredentialOpts {
+	o.attestationVM = vm
+	o.attestationVC = vc
 
 	return o
 }
