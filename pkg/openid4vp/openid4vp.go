@@ -184,14 +184,43 @@ func (o *Interaction) TrustInfo() (*VerifierTrustInfo, error) {
 type presentOpts struct {
 	ignoreConstraints bool
 	signer            wrapperapi.KMSCryptoSigner
+
+	attestationVPSigner api.JWTSigner
+	attestationVC       string
+}
+
+// PresentOpt is an option for the RequestCredentialWithPreAuth method.
+type PresentOpt func(opts *presentOpts)
+
+// WithAttestationVC is an option for the RequestCredentialWithPreAuth method that allows you to specify
+// attestation VC, which may be required by the verifier.
+func WithAttestationVC(
+	attestationVPSigner api.JWTSigner, vc string,
+) PresentOpt {
+	return func(opts *presentOpts) {
+		opts.attestationVPSigner = attestationVPSigner
+		opts.attestationVC = vc
+	}
 }
 
 // PresentCredential presents credentials to redirect uri from request object.
-func (o *Interaction) PresentCredential(credentials []*verifiable.Credential, customClaims CustomClaims) error {
+func (o *Interaction) PresentCredential(
+	credentials []*verifiable.Credential,
+	customClaims CustomClaims,
+	opts ...PresentOpt,
+) error {
+	resolveOpts := &presentOpts{signer: o.signer}
+
+	for _, opt := range opts {
+		if opt != nil {
+			opt(resolveOpts)
+		}
+	}
+
 	return o.presentCredentials(
 		credentials,
 		customClaims,
-		&presentOpts{signer: o.signer},
+		resolveOpts,
 	)
 }
 
@@ -355,7 +384,7 @@ func createAuthorizedResponse(
 	default:
 		return createAuthorizedResponseMultiCred(credentials, requestObject, customClaims,
 			didResolver, crypto, documentLoader,
-			opts.signer)
+			opts.signer, opts)
 	}
 }
 
@@ -431,7 +460,16 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 
 	presentation.CustomFields["presentation_submission"] = nil
 
-	idTokenJWS, err := createIDToken(requestObject, presentationSubmission, did, customClaims, jwtSigner)
+	var attestationVP string
+	if opts != nil && opts.attestationVC != "" {
+		attestationVP, err = createAttestationVP(
+			opts.attestationVC, opts.attestationVPSigner, documentLoader)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	idTokenJWS, err := createIDToken(requestObject, presentationSubmission, did, customClaims, jwtSigner, attestationVP)
 	if err != nil {
 		return nil, err
 	}
@@ -463,6 +501,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
 	signer wrapperapi.KMSCryptoSigner,
+	opts *presentOpts,
 ) (*authorizedResponse, error) {
 	pd := requestObject.Claims.VPToken.PresentationDefinition
 
@@ -549,8 +588,17 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 		return nil, err
 	}
 
+	var attestationVP string
+	if opts.attestationVC != "" {
+		attestationVP, err = createAttestationVP(
+			opts.attestationVC, opts.attestationVPSigner, documentLoader)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	idTokenJWS, err := createIDToken(requestObject, submission, idTokenSigningDID,
-		customClaims, signers[idTokenSigningDID])
+		customClaims, signers[idTokenSigningDID], attestationVP)
 	if err != nil {
 		return nil, err
 	}
@@ -595,20 +643,22 @@ func createIDToken(
 	signingDID string,
 	customClaims CustomClaims,
 	signer api.JWTSigner,
+	attestationVP string,
 ) (string, error) {
 	idToken := &idTokenClaims{
 		VPToken: idTokenVPToken{
 			PresentationSubmission: submission,
 		},
-		Scope: customClaims.ScopeClaims,
-		Nonce: req.Nonce,
-		Exp:   time.Now().Unix() + tokenLiveTimeSec,
-		Iss:   "https://self-issued.me/v2/openid-vc",
-		Sub:   signingDID,
-		Aud:   req.ClientID,
-		Nbf:   time.Now().Unix(),
-		Iat:   time.Now().Unix(),
-		Jti:   uuid.NewString(),
+		Scope:         customClaims.ScopeClaims,
+		AttestationVP: attestationVP,
+		Nonce:         req.Nonce,
+		Exp:           time.Now().Unix() + tokenLiveTimeSec,
+		Iss:           "https://self-issued.me/v2/openid-vc",
+		Sub:           signingDID,
+		Aud:           req.ClientID,
+		Nbf:           time.Now().Unix(),
+		Iat:           time.Now().Unix(),
+		Jti:           uuid.NewString(),
 	}
 
 	idTokenJWS, err := signToken(idToken, signer)
@@ -617,6 +667,33 @@ func createIDToken(
 	}
 
 	return idTokenJWS, nil
+}
+
+func createAttestationVP(
+	attestationVCData string,
+	attestationVPSigner api.JWTSigner,
+	documentLoader ld.DocumentLoader,
+) (string, error) {
+	attestationVC, err := verifiable.ParseCredential([]byte(attestationVCData),
+		verifiable.WithDisabledProofCheck(),
+		verifiable.WithJSONLDDocumentLoader(documentLoader))
+	if err != nil {
+		return "", err
+	}
+
+	attestationVP, err := verifiable.NewPresentation(verifiable.WithCredentials(attestationVC))
+	if err != nil {
+		return "", err
+	}
+
+	attestationVP.ID = uuid.New().String()
+
+	claims, err := attestationVP.JWTClaims([]string{}, false)
+	if err != nil {
+		return "", err
+	}
+
+	return signToken(claims, attestationVPSigner)
 }
 
 func signToken(claims interface{}, signer api.JWTSigner) (string, error) {

@@ -1535,6 +1535,72 @@
     },
     {
       "verifier": {
+        "id": "v_myprofile_jwt_attestation",
+        "version": "v1.0",
+        "name": "v_myprofile_jwt_attestation",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
+        "url": "https://test-verifier.com",
+        "active": true,
+        "webHook": "",
+        "checks": {
+          "policy": {
+            "policyUrl": "https://mock-trust-registry.example.com:8100/verifier/policies/i_myprofile_jwt_client_attestation/v1.latest/interactions/presentation"
+          },
+          "clientAttestationCheck": {
+            "enabled": true
+          },
+          "credential": {
+            "format": [
+              "jwt"
+            ],
+            "proof": true,
+            "status": true
+          },
+          "presentation": {
+            "format": [
+              "jwt"
+            ],
+            "vcSubject": true,
+            "proof": true
+          }
+        },
+        "oidcConfig": {
+          "roSigningAlgorithm": "Ed25519Signature2018",
+          "keyType": "ED25519",
+          "didMethod": "ion"
+        },
+        "presentationDefinitions": [
+          {
+            "id": "32f54163-7166-48f1-93d8-ff217bdb0654",
+            "input_descriptors": [
+              {
+                "id": "DriversLicense",
+                "constraints": {
+                  "fields": [
+                    {
+                      "path": [
+                        "$.type",
+                        "$.vc.type"
+                      ],
+                      "filter": {
+                        "type": "array",
+                        "contains": {
+                          "type": "string",
+                          "const": "DriversLicense"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "createDID": true
+    },
+    {
+      "verifier": {
         "id": "v_myprofile_sdjwt",
         "version": "v1.0",
         "name": "v_myprofile_sdjwt",

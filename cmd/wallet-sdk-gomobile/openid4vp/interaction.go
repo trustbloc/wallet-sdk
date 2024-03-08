@@ -31,7 +31,11 @@ import (
 type goAPIOpenID4VP interface {
 	GetQuery() *presexch.PresentationDefinition
 	CustomScope() []string
-	PresentCredential(credentials []*afgoverifiable.Credential, customClaims openid4vp.CustomClaims) error
+	PresentCredential(
+		credentials []*afgoverifiable.Credential,
+		customClaims openid4vp.CustomClaims,
+		opts ...openid4vp.PresentOpt,
+	) error
 	PresentCredentialUnsafe(credential *afgoverifiable.Credential, customClaims openid4vp.CustomClaims) error
 	VerifierDisplayData() *openid4vp.VerifierDisplayData
 	TrustInfo() (*openid4vp.VerifierTrustInfo, error)
@@ -194,7 +198,18 @@ func (o *Interaction) PresentCredentialOpts(
 		return err
 	}
 
-	return wrapper.ToMobileErrorWithTrace(o.goAPIOpenID4VP.PresentCredential(vcs, claims), o.oTel)
+	var presentOpts []openid4vp.PresentOpt
+
+	if opts != nil && opts.attestationVM != nil {
+		attestationSigner, attErr := common.NewJWSSigner(opts.attestationVM.ToSDKVerificationMethod(), o.crypto)
+		if attErr != nil {
+			return wrapper.ToMobileErrorWithTrace(attErr, o.oTel)
+		}
+
+		presentOpts = append(presentOpts, openid4vp.WithAttestationVC(attestationSigner, opts.attestationVC))
+	}
+
+	return wrapper.ToMobileErrorWithTrace(o.goAPIOpenID4VP.PresentCredential(vcs, claims, presentOpts...), o.oTel)
 }
 
 // PresentCredentialUnsafe presents a single credential to redirect uri from
