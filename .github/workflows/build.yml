@@ -303,7 +303,7 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: adb reverse tcp:8075 tcp:8075 && adb reverse tcp:8072 tcp:8072 && adb reverse tcp:9229 tcp:9229 && make integration-test-flutter integration-test-android
+          script: adb reverse tcp:8075 tcp:8075 && adb reverse tcp:8072 tcp:8072 && adb reverse tcp:9229 tcp:9229 && adb reverse tcp:8097 tcp:8097 && make integration-test-flutter integration-test-android
       - name: Docker container status output
         if: always()
         run: |

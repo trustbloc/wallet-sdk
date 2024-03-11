@@ -106,4 +106,22 @@ class WalletSDK {
         }
         return OpenID4VP(didResolver: didResolver, crypto: crypto, activityLogger: activityLogger)
     }
+
+    func getAttestationVC(didVerificationMethod: ApiVerificationMethod, attestationURL: String, disableTLSVerify: Bool, authenticationMethod: String) throws -> String {
+        let opts = AttestationNewCreateClientArgs(attestationURL, crypto)!
+        if (disableTLSVerify) {
+            opts.disableHTTPClientTLSVerify()
+        }
+
+        let attestClient = AttestationNewClient(opts, nil)!
+
+        let request = AttestationNewAttestRequest()!
+        request.addAssertion("wallet_authentication")
+        request.addWalletAuthentication("wallet_id", value: authenticationMethod)
+        request.addWalletMetadata("wallet_name", value:"Trustbloc Wallet")
+
+        let attestationVC = try attestClient.getAttestationVC(didVerificationMethod, attestationRequest: request)
+
+        return try attestationVC.serialize()
+    }
 }

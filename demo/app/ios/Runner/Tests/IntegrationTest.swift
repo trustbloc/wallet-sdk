@@ -58,8 +58,17 @@ class IntegrationTest: XCTestCase {
         
         let pinRequired = try ciInteraction!.preAuthorizedCodeGrantParams().pinRequired()
         XCTAssertFalse(pinRequired)
-        
-        let preAuthOpts = Openid4ciRequestCredentialWithPreAuthOpts()!.setPIN("")
+
+        let attClient = AttestationNewClient(
+          AttestationNewCreateClientArgs("https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/", crypto)?.disableHTTPClientTLSVerify(),
+          nil
+        )!
+
+        let attestationVC = try attClient.getAttestationVC(userDID!.assertionMethod(), attestationRequest: AttestationNewAttestRequest()!.addAssertion("wallet_authentication")!.addWalletAuthentication("wallet_id", value:userDID!.id_(nil))!.addWalletMetadata("wallet_name", value:"int-test"))
+
+        let preAuthOpts = Openid4ciRequestCredentialWithPreAuthOpts()!.setPIN("")!
+        preAuthOpts.setAttestationVC(userDID!.assertionMethod(), vc: try attestationVC.serialize())
+
         let issuedCreds  = try ciInteraction!.requestCredential(withPreAuth: userDID!.assertionMethod(), opts: preAuthOpts)
         XCTAssertTrue(issuedCreds.length() > 0)
         
@@ -121,7 +130,7 @@ class IntegrationTest: XCTestCase {
         // Presenting from selected credentials.
         try vpInteraction.presentCredentialOpts(
             selectedCreds,
-            opts: Openid4vpNewPresentCredentialOpts()?.addScopeClaim("registration", claimJSON:#"{"email":"test@example.com"}"#)?.addScopeClaim("testscope", claimJSON: #"{"data": "testdata"}"#)
+            opts: Openid4vpNewPresentCredentialOpts()!.addScopeClaim("registration", claimJSON:#"{"email":"test@example.com"}"#)!.addScopeClaim("testscope", claimJSON: #"{"data": "testdata"}"#)!.setAttestationVC(userDID!.assertionMethod(), vc: try attestationVC.serialize())
         )
     }
     

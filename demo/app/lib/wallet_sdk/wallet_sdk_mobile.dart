@@ -76,10 +76,12 @@ class WalletSDK extends WalletPlatform {
     }
   }
 
-  Future<String> requestCredential(String userPinEntered) async {
+  Future<String> requestCredential(String userPinEntered, {String? attestationVC}) async {
     try {
-      var credentialResponse =
-          await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{'otp': userPinEntered});
+      var credentialResponse = await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{
+        'otp': userPinEntered,
+        'attestationVC': attestationVC,
+      });
       return credentialResponse!;
     } on PlatformException catch (error) {
       debugPrint(error.toString());
@@ -191,6 +193,16 @@ class WalletSDK extends WalletPlatform {
         .toList();
   }
 
+  Future<String> getAttestationVC(
+      {required String attestationURL, bool disableTLSVerify = false, required String authenticationMethod}) async {
+    var attestationVC = await methodChannel.invokeMethod<String>('getAttestationVC', <String, dynamic>{
+      'attestationURL': attestationURL,
+      'disableTLSVerify': disableTLSVerify,
+      'authenticationMethod': authenticationMethod
+    });
+    return attestationVC!;
+  }
+
   Future<Map<Object?, Object?>?> getVersionDetails() async {
     var versionDetailResp = await methodChannel.invokeMethod('getVersionDetails');
     log('getVersionDetails in the app, $versionDetailResp');
@@ -226,10 +238,13 @@ class WalletSDK extends WalletPlatform {
   }
 
   Future<void> presentCredential(
-      {required List<String> selectedCredentials, Map<String, dynamic>? customScopeList}) async {
+      {required List<String> selectedCredentials, Map<String, dynamic>? customScopeList, String? attestationVC}) async {
     try {
-      return await methodChannel.invokeMethod('presentCredential',
-          <String, dynamic>{'selectedCredentials': selectedCredentials, 'customScopeList': customScopeList});
+      return await methodChannel.invokeMethod('presentCredential', <String, dynamic>{
+        'selectedCredentials': selectedCredentials,
+        'customScopeList': customScopeList,
+        'attestationVC': attestationVC,
+      });
     } on PlatformException catch (error) {
       debugPrint(error.toString());
       rethrow;

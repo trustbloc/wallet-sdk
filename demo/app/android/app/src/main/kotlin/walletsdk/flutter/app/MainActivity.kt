@@ -406,6 +406,16 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
+                        "getAttestationVC" -> {
+                            try {
+                                val cred = getAttestationVC(call)
+                                result.success(cred)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while getting attestation vc", e)
+                            }
+
+                        }
+
                     }
                 }
     }
@@ -651,13 +661,16 @@ class MainActivity : FlutterActivity() {
     private fun requestCredential(call: MethodCall): String? {
         val otp = call.argument<String>("otp") ?: throw java.lang.Exception("otp params is missed")
 
+        val attestationVC = call.argument<String>("attestationVC")
+
         val didDocResolution = this.didDocResolution
                 ?: throw java.lang.Exception("DID should be created first")
 
         val openID4CI = this.openID4CI
                 ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
-        return openID4CI.requestCredential(didDocResolution.assertionMethod(), otp)
+
+        return openID4CI.requestCredential(didDocResolution.assertionMethod(), otp, attestationVC)
     }
 
 
@@ -984,6 +997,7 @@ class MainActivity : FlutterActivity() {
 
 
     private fun presentCredential(call: MethodCall) {
+        val attestationVC = call.argument<String>("attestationVC")
         val selectedCredentials = call.argument<ArrayList<String>>("selectedCredentials")
         val customScopeList = call.argument<MutableMap<String, Any>>("customScopeList")
         val selectedCredentialsArray = if (selectedCredentials != null) {
@@ -997,8 +1011,26 @@ class MainActivity : FlutterActivity() {
         val openID4VP = this.openID4VP
                 ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
 
-        openID4VP.presentCredential(selectedCredentialsArray, customScopeList)
+        openID4VP.presentCredential(selectedCredentialsArray, customScopeList, didDocResolution?.assertionMethod(), attestationVC)
         this.openID4VP = null
+    }
+
+    private fun getAttestationVC(call: MethodCall) : String {
+        val sdk = this.walletSDK ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
+        val attestationURL = call.argument<String>("attestationURL")
+                ?: throw java.lang.Exception("attestationURL params is missed")
+
+        val disableTLSVerify = call.argument<Boolean>("disableTLSVerify")
+                ?: throw java.lang.Exception("disableTLSVerify params is missed")
+
+        val authenticationMethod = call.argument<String>("authenticationMethod")
+                ?: throw java.lang.Exception("authenticationMethod params is missed")
+
+
+        val didDocResolution = this.didDocResolution
+                ?: throw java.lang.Exception("DID should be created first")
+
+        return sdk.getAttestationVC(didDocResolution.assertionMethod(), attestationURL, disableTLSVerify, authenticationMethod)
     }
 
     private fun getCustomScope(): ArrayList<String> {

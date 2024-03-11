@@ -101,7 +101,8 @@ public class OpenID4VP {
     /**
      * initiatedInteraction has PresentCredential method which presents credentials to redirect uri from request object.
      */
-    func presentCredential(selectedCredentials: VerifiableCredentialsArray, customScopes: Dictionary<String, Any>) throws {
+    func presentCredential(selectedCredentials: VerifiableCredentialsArray, customScopes: Dictionary<String, Any>,
+        didVerificationMethod: ApiVerificationMethod?, attestationVC: String?) throws {
         //         guard let vpQueryContent = self.vpQueryContent else {
         //             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
         //         }
@@ -110,7 +111,10 @@ public class OpenID4VP {
         }
         
         let opts = Openid4vpNewPresentCredentialOpts()
-        
+
+        if (attestationVC != nil && didVerificationMethod != nil) {
+          preAuthOpts.setAttestationVC(didVerificationMethod, vc: attestationVC)
+        }
         
         for scope in customScopes {
             opts?.addScopeClaim(scope.key, claimJSON: scope.value as? String)

@@ -10,6 +10,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import dev.trustbloc.wallet.BuildConfig
 import dev.trustbloc.wallet.sdk.api.StringArray
+import dev.trustbloc.wallet.sdk.attestation.Attestation
 import dev.trustbloc.wallet.sdk.credential.Inquirer
 import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.did.ResolverOpts
@@ -26,6 +27,7 @@ import dev.trustbloc.wallet.sdk.openid4vp.PresentCredentialOpts
 import dev.trustbloc.wallet.sdk.otel.Otel
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import dev.trustbloc.wallet.sdk.version.Version
+import dev.trustbloc.wallet.sdk.api.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.junit.Before
@@ -67,6 +69,18 @@ class IntegrationTest {
         // Issue VCs
         val requestURI = BuildConfig.INITIATE_ISSUANCE_URL
 
+        val attestClient = Attestation.newClient(Attestation.newCreateClientArgs(
+                "https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/",
+                crypto,
+        ).disableHTTPClientTLSVerify())
+
+        val attestationVC = attestClient.getAttestationVC(
+                userDID.assertionMethod(),
+                Attestation.newAttestRequest()
+                        .addAssertion("wallet_authentication")
+                        .addWalletAuthentication("wallet_id", userDID.id())
+                        .addWalletMetadata("wallet_name", "int-test"))
+
         val requiredOpenID4CIArgs = IssuerInitiatedInteractionArgs(requestURI, crypto, didResolver)
 
         val ciOpts = InteractionOpts()
@@ -78,6 +92,8 @@ class IntegrationTest {
         assertThat(pinRequired).isFalse()
 
         val opts = RequestCredentialWithPreAuthOpts()
+        opts.setAttestationVC(userDID.assertionMethod(), attestationVC.serialize())
+
         val issuedCreds = ciInteraction.requestCredentialWithPreAuth(userDID.assertionMethod(), opts)
 
         assertThat(issuedCreds.length()).isGreaterThan(0)
@@ -87,7 +103,7 @@ class IntegrationTest {
         val acknowledgmentData = ciInteraction.acknowledgment().serialize()
 
         Acknowledgment(acknowledgmentData).success()
-        
+
         //Presenting VCs
         val authorizationRequestURI = BuildConfig.INITIATE_VERIFICATION_URL
 
@@ -143,7 +159,8 @@ class IntegrationTest {
 
         // Presenting from selected credentials.
         vpInteraction.presentCredentialOpts(selectedCreds, PresentCredentialOpts().addScopeClaim(
-                "registration", """{"email":"test@example.com"}""").addScopeClaim("testscope", """{"data": "testdata"}"""))
+                "registration", """{"email":"test@example.com"}""").addScopeClaim("testscope", """{"data": "testdata"}""")
+                .setAttestationVC(userDID.assertionMethod(), attestationVC.serialize()))
     }
 
     @Test
