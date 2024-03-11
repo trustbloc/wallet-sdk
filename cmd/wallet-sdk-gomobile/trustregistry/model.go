@@ -12,9 +12,20 @@ import (
 
 // EvaluationResult result of policy evaluation.
 type EvaluationResult struct {
-	Allowed      bool
-	ErrorCode    string
-	ErrorMessage string
+	Allowed              bool
+	ErrorCode            string
+	ErrorMessage         string
+	attestationsRequired []string
+}
+
+// RequestedAttestationLength returns the number attestation requested.
+func (e *EvaluationResult) RequestedAttestationLength() int {
+	return len(e.attestationsRequired)
+}
+
+// RequestedAttestationAtIndex returns requested attestation by index.
+func (e *EvaluationResult) RequestedAttestationAtIndex(index int) string {
+	return e.attestationsRequired[index]
 }
 
 // CredentialOffer contains data related to a credential type being offered in an issuance request.

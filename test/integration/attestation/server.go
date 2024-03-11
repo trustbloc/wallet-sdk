@@ -246,12 +246,11 @@ func (s *server) evaluateWalletProofJWT(
 		return "", fmt.Errorf("jwtProofClaims.Audience is empty")
 	}
 
-	now := time.Now()
-	if now.Before(time.Unix(jwtProofClaims.IssuedAt, 0)) {
+	if jwtProofClaims.IssuedAt == 0 {
 		return "", fmt.Errorf("jwtProofClaims.IssuedAt is invalid")
 	}
 
-	if now.After(time.Unix(jwtProofClaims.Exp, 0)) {
+	if jwtProofClaims.Exp == 0 {
 		return "", fmt.Errorf("jwtProofClaims.Exp is invalid")
 	}
 

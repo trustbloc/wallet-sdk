@@ -1541,7 +1541,7 @@
         "organizationID": "f13d1va9lp403pb9lyj89vk55",
         "url": "https://test-verifier.com",
         "active": true,
-        "webHook": "",
+        "webHook": "http://vcs.webhook.example.com:8180",
         "checks": {
           "policy": {
             "policyUrl": "https://mock-trust-registry.example.com:8100/verifier/policies/i_myprofile_jwt_client_attestation/v1.latest/interactions/presentation"

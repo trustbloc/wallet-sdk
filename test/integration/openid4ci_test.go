@@ -72,7 +72,6 @@ type test struct {
 	claimData           map[string]interface{}
 	acknowledgeReject   bool
 	trustInfo           bool
-	attestationURL      string
 }
 
 func TestOpenID4CIFullFlow(t *testing.T) {
@@ -165,7 +164,6 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			expectedIssuerURI:   "http://localhost:8075/oidc/idp/bank_issuer_attest/v1.0",
 			acknowledgeReject:   true,
 			trustInfo:           true,
-			attestationURL:      "https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/",
 		},
 		{
 			issuerProfileID:     "did_ion_issuer",
@@ -262,24 +260,56 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 
 		opt := openid4ci.NewRequestCredentialWithPreAuthOpts()
 
-		if tc.attestationURL != "" {
-			attClient, err := attestation.NewClient(
-				attestation.NewCreateClientArgs(tc.attestationURL, testHelper.KMS.GetCrypto()).
-					DisableHTTPClientTLSVerify())
-			require.NoError(t, err)
+		if tc.trustInfo {
+			trustInfo, trErr := interaction.IssuerTrustInfo()
+			require.NoError(t, trErr)
+			require.NotNil(t, trustInfo)
 
-			attestationVC, err := attClient.GetAttestationVC(vm, attestation.NewAttestRequest().
-				AddAssertion("wallet_authentication").AddWalletAuthentication("wallet_id", didID).
-				AddWalletMetadata("wallet_name", "int-test"),
-			)
+			require.Contains(t, trustInfo.Domain, "trustbloc.local:8078")
 
-			attestationVCString, err := attestationVC.Serialize()
-			require.NoError(t, err)
+			req := &trustregistry.IssuanceRequest{
+				IssuerDID:    trustInfo.DID,
+				IssuerDomain: trustInfo.Domain,
+			}
 
-			opt.SetAttestationVC(vm, attestationVCString)
+			for _, offer := range trustInfo.CredentialOffers {
+				req.AddCredentialOffers(&trustregistry.CredentialOffer{
+					CredentialType:             offer.CredentialType,
+					CredentialFormat:           offer.CredentialFormat,
+					ClientAttestationRequested: false,
+				})
+			}
 
-			require.NoError(t, err)
-			require.NotNil(t, attestationVC)
+			result, trustErr := trustRegistryAPI.EvaluateIssuance(req)
+
+			require.NoError(t, trustErr)
+			require.Equal(t, true, result.Allowed)
+
+			for i := 0; i < result.RequestedAttestationLength(); i++ {
+				if result.RequestedAttestationAtIndex(i) == "wallet_authentication" {
+					attClient, err := attestation.NewClient(
+						attestation.NewCreateClientArgs(attestationURL, testHelper.KMS.GetCrypto()).
+							DisableHTTPClientTLSVerify())
+					require.NoError(t, err)
+
+					attestationVC, err := attClient.GetAttestationVC(vm, attestation.NewAttestRequest().
+						AddAssertion("wallet_authentication").
+						AddWalletAuthentication("wallet_id", didID).
+						AddWalletMetadata("wallet_name", "int-test"),
+					)
+					require.NoError(t, err)
+
+					attestationVCString, err := attestationVC.Serialize()
+					require.NoError(t, err)
+
+					opt.SetAttestationVC(vm, attestationVCString)
+
+					require.NoError(t, err)
+					require.NotNil(t, attestationVC)
+
+					println("attestationVC=", attestationVC)
+				}
+			}
 		}
 
 		credentials, err := interaction.RequestCredentialWithPreAuth(vm, opt)
@@ -315,32 +345,6 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 
 		issuerURI := interaction.IssuerURI()
 		require.Equal(t, tc.expectedIssuerURI, issuerURI)
-
-		if tc.trustInfo {
-			trustInfo, trErr := interaction.IssuerTrustInfo()
-			require.NoError(t, trErr)
-			require.NotNil(t, trustInfo)
-
-			require.Contains(t, trustInfo.Domain, "trustbloc.local:8078")
-
-			req := &trustregistry.IssuanceRequest{
-				IssuerDID:    trustInfo.DID,
-				IssuerDomain: trustInfo.Domain,
-			}
-
-			for _, offer := range trustInfo.CredentialOffers {
-				req.AddCredentialOffers(&trustregistry.CredentialOffer{
-					CredentialType:             offer.CredentialType,
-					CredentialFormat:           offer.CredentialFormat,
-					ClientAttestationRequested: false,
-				})
-			}
-
-			result, trustErr := trustRegistryAPI.EvaluateIssuance(req)
-
-			require.NoError(t, trustErr)
-			require.Equal(t, true, result.Allowed)
-		}
 
 		subID, err := verifiable.SubjectID(vc.VC.Contents().Subject)
 		require.NoError(t, err)

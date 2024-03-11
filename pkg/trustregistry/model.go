@@ -10,9 +10,15 @@ import "time"
 
 // EvaluationResult result of policy evaluation.
 type EvaluationResult struct {
-	Allowed      bool   `json:"allowed,omitempty"`
-	ErrorCode    string `json:"errorCode,omitempty"`
-	ErrorMessage string `json:"errorMessage,omitempty"`
+	Allowed      bool            `json:"allowed,omitempty"`
+	ErrorCode    string          `json:"errorCode,omitempty"`
+	ErrorMessage string          `json:"errorMessage,omitempty"`
+	Data         *EvaluationData `json:"payload,omitempty"`
+}
+
+// EvaluationData data from policy evaluation.
+type EvaluationData struct {
+	AttestationsRequired []string `json:"attestations_required,omitempty"`
 }
 
 // CredentialOffer contains data related to a credential type being offered in an issuance request.

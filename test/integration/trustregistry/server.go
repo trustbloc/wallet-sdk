@@ -65,7 +65,12 @@ func (s *Server) handleEvaluateIssuanceRequest(w http.ResponseWriter, r *http.Re
 	}
 
 	if !slices.Contains(s.rules.ForbiddenDIDs, issuanceRequest.IssuerDID) {
-		writeResponse(w, &trustregistry.EvaluationResult{Allowed: true})
+		writeResponse(w, &trustregistry.EvaluationResult{
+			Allowed: true,
+			Data: &trustregistry.EvaluationData{
+				AttestationsRequired: []string{"wallet_authentication"},
+			},
+		})
 
 		return
 	}
@@ -106,7 +111,12 @@ func (s *Server) handleEvaluatePresentationRequest(w http.ResponseWriter, r *htt
 		return
 	}
 
-	writeResponse(w, &trustregistry.EvaluationResult{Allowed: true})
+	writeResponse(w, &trustregistry.EvaluationResult{
+		Allowed: true,
+		Data: &trustregistry.EvaluationData{
+			AttestationsRequired: []string{"wallet_authentication"},
+		},
+	})
 }
 
 func (s *Server) evaluateIssuerIssuancePolicy(w http.ResponseWriter, r *http.Request) {
