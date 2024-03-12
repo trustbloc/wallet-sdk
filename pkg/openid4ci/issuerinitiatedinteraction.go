@@ -308,6 +308,7 @@ func (i *IssuerInitiatedInteraction) Acknowledgment() (*Acknowledgment, error) {
 	return i.interaction.requestedAcknowledgmentObj(authToken)
 }
 
+//nolint:funlen
 func (i *IssuerInitiatedInteraction) requestCredentialWithPreAuth(jwtSigner api.JWTSigner,
 	opts *requestCredentialWithPreAuthOpts,
 ) ([]*verifiable.Credential, error) {
@@ -318,11 +319,29 @@ func (i *IssuerInitiatedInteraction) requestCredentialWithPreAuth(jwtSigner api.
 		return nil, err
 	}
 
+	err = i.interaction.populateIssuerMetadata(requestCredentialEventText)
+	if err != nil {
+		return nil, err
+	}
+
 	var attestationVP string
 
 	if opts.attestationVC != "" {
+		var issuerDID string
+
+		jwtKID := i.interaction.issuerMetadata.GetJWTKID()
+
+		if jwtKID != nil {
+			issuerDID = strings.Split(*jwtKID, "#")[0]
+		}
+
 		attestationVP, err = createAttestationVP(
-			opts.attestationVC, opts.attestationVPSigner, i.interaction.documentLoader)
+			opts.attestationVC,
+			opts.attestationVPSigner,
+			i.interaction.documentLoader,
+			issuerDID,
+			i.preAuthorizedCodeGrantParams.preAuthorizedCode,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -367,11 +386,6 @@ func (i *IssuerInitiatedInteraction) requestCredentialWithPreAuth(jwtSigner api.
 func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 	pin string, signer api.JWTSigner, attestationVP string,
 ) ([]CredentialResponse, error) {
-	err := i.interaction.populateIssuerMetadata(requestCredentialEventText)
-	if err != nil {
-		return nil, err
-	}
-
 	tokenEndpoint, err := i.interaction.getTokenEndpoint()
 	if err != nil {
 		return nil, err
@@ -668,6 +682,8 @@ func createAttestationVP(
 	attestationVCData string,
 	attestationVPSigner api.JWTSigner,
 	documentLoader ld.DocumentLoader,
+	issuerDID,
+	nonce string,
 ) (string, error) {
 	attestationVC, err := verifiable.ParseCredential([]byte(attestationVCData),
 		verifiable.WithDisabledProofCheck(),
@@ -683,7 +699,13 @@ func createAttestationVP(
 
 	attestationVP.ID = uuid.New().String()
 
-	claims, err := attestationVP.JWTClaims([]string{}, false)
+	if nonce != "" {
+		attestationVP.CustomFields = map[string]interface{}{
+			"nonce": nonce,
+		}
+	}
+
+	claims, err := attestationVP.JWTClaims([]string{issuerDID}, false)
 	if err != nil {
 		return "", err
 	}

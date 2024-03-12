@@ -20,20 +20,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/trustbloc/vc-go/jwt"
-
-	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
-
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/did-go/doc/did"
 	"github.com/trustbloc/did-go/doc/did/endpoint"
 	"github.com/trustbloc/kms-go/doc/jose"
 	"github.com/trustbloc/kms-go/doc/jose/jwk"
 	arieskms "github.com/trustbloc/kms-go/spi/kms"
+	"github.com/trustbloc/vc-go/jwt"
 
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
+	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
 	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
@@ -754,9 +752,27 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
-			issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+			localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: localkms.NewMemKMSStore()})
+			require.NoError(t, err)
 
-			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false, true))
+			_, publicKey, err := localKMS.Create(arieskms.ED25519Type)
+			require.NoError(t, err)
+
+			networkDocumentLoaderHTTPTimeout := time.Second * 10
+
+			config := &openid4ci.ClientConfig{
+				DIDResolver:                      &mockResolver{keyWriter: localKMS, pubJWK: publicKey},
+				DisableVCProofChecks:             true,
+				NetworkDocumentLoaderHTTPTimeout: &networkDocumentLoaderHTTPTimeout,
+			}
+
+			issuerServerHandler.issuerMetadata = createSignedMetadata(t, localKMS, publicKey, server.URL)
+
+			credentialOfferIssuanceURI := createCredentialOfferIssuanceURI(t, server.URL, false, true)
+
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, config)
+			require.NoError(t, err)
+			require.NotNil(t, interaction)
 
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
@@ -1841,42 +1857,21 @@ func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
 		server := httptest.NewServer(issuerServerHandler)
 		defer server.Close()
 
-		config := getTestClientConfig(t)
-
 		localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: localkms.NewMemKMSStore()})
 		require.NoError(t, err)
 
 		_, publicKey, err := localKMS.Create(arieskms.ED25519Type)
 		require.NoError(t, err)
 
-		didResolver := &mockResolver{keyWriter: localKMS, pubJWK: publicKey}
+		networkDocumentLoaderHTTPTimeout := time.Second * 10
 
-		config.DIDResolver = didResolver
+		config := &openid4ci.ClientConfig{
+			DIDResolver:                      &mockResolver{keyWriter: localKMS, pubJWK: publicKey},
+			DisableVCProofChecks:             true,
+			NetworkDocumentLoaderHTTPTimeout: &networkDocumentLoaderHTTPTimeout,
+		}
 
-		didDocResolution, err := didResolver.Resolve("")
-		require.NoError(t, err)
-
-		verificationMethod := didDocResolution.DIDDocument.VerificationMethod[0]
-
-		signer, err := common.NewJWSSigner(models.VerificationMethodFromDoc(&verificationMethod), localKMS.GetCrypto())
-		require.NoError(t, err)
-
-		claims := map[string]interface{}{}
-
-		err = json.Unmarshal([]byte(sampleIssuerMetadata), &claims)
-		require.NoError(t, err)
-
-		token, err := jwt.NewSigned(claims, jwt.SignParameters{
-			KeyID:             publicKey.KeyID,
-			JWTAlg:            "",
-			AdditionalHeaders: nil,
-		}, signer)
-		require.NoError(t, err)
-
-		tokenSerialised, err := token.Serialize(false)
-		require.NoError(t, err)
-
-		issuerServerHandler.issuerMetadata = fmt.Sprintf(`{"signed_metadata": %q}`, tokenSerialised)
+		issuerServerHandler.issuerMetadata = createSignedMetadata(t, localKMS, publicKey, server.URL)
 
 		credentialOfferIssuanceURI := createCredentialOfferIssuanceURI(t, server.URL, false, true)
 
@@ -1918,6 +1913,37 @@ func getTestClientConfig(t *testing.T) *openid4ci.ClientConfig {
 		DisableVCProofChecks:             true,
 		NetworkDocumentLoaderHTTPTimeout: &networkDocumentLoaderHTTPTimeout,
 	}
+}
+
+func createSignedMetadata(t *testing.T, localKMS *localkms.LocalKMS, publicKey *jwk.JWK, serverURL string) string {
+	t.Helper()
+
+	didResolver := &mockResolver{keyWriter: localKMS, pubJWK: publicKey}
+
+	didDocResolution, err := didResolver.Resolve("")
+	require.NoError(t, err)
+
+	verificationMethod := didDocResolution.DIDDocument.VerificationMethod[0]
+
+	signer, err := common.NewJWSSigner(models.VerificationMethodFromDoc(&verificationMethod), localKMS.GetCrypto())
+	require.NoError(t, err)
+
+	claims := map[string]interface{}{}
+
+	err = json.Unmarshal([]byte(strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, serverURL)), &claims)
+	require.NoError(t, err)
+
+	token, err := jwt.NewSigned(claims, jwt.SignParameters{
+		KeyID:             publicKey.KeyID,
+		JWTAlg:            "",
+		AdditionalHeaders: nil,
+	}, signer)
+	require.NoError(t, err)
+
+	tokenSerialised, err := token.Serialize(false)
+	require.NoError(t, err)
+
+	return fmt.Sprintf(`{"signed_metadata": %q}`, tokenSerialised)
 }
 
 type mockTransport struct {
