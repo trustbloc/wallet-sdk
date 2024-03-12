@@ -92,7 +92,6 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		customScopes       []customScope
 		trustInfo          bool
 		shouldBeForbidden  bool
-		attestationURL     string
 	}
 
 	tests := []test{
@@ -143,7 +142,7 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			claimData:         []claimData{driverLicenseClaims},
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_myprofile_jwt_attestation",
-			attestationURL:    "https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/",
+			trustInfo:         true,
 		},
 		{
 			issuerProfileIDs:  []string{"bank_issuer", "drivers_license_issuer"},
@@ -268,6 +267,8 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		selectedCreds := verifiable.NewCredentialsArray()
 
+		presentOps := openid4vp.NewPresentCredentialOpts()
+
 		if tc.trustInfo {
 			info, trustErr := interaction.TrustInfo()
 			require.NoError(t, trustErr)
@@ -292,6 +293,39 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			result, trustErr := trustRegistryAPI.EvaluatePresentation(presTrustInfo)
 			require.NoError(t, trustErr)
 			require.Equal(t, !tc.shouldBeForbidden, result.Allowed)
+
+			for i := 0; i < result.RequestedAttestationLength(); i++ {
+				if result.RequestedAttestationAtIndex(i) == "wallet_authentication" {
+					vm, err := testHelper.DIDDoc.AssertionMethod()
+					require.NoError(t, err)
+
+					didID, err := testHelper.DIDDoc.ID()
+					require.NoError(t, err)
+
+					attClient, err := attestation.NewClient(
+						attestation.NewCreateClientArgs(attestationURL, testHelper.KMS.GetCrypto()).
+							DisableHTTPClientTLSVerify())
+					require.NoError(t, err)
+
+					attestationVC, err := attClient.GetAttestationVC(vm, attestation.NewAttestRequest().
+						AddAssertion("wallet_authentication").
+						AddWalletAuthentication("wallet_id", didID).
+						AddWalletMetadata("wallet_name", "int-test"),
+					)
+					require.NoError(t, err)
+
+					attestationVCString, err := attestationVC.Serialize()
+					require.NoError(t, err)
+
+					presentOps.SetAttestationVC(vm, attestationVCString)
+
+					require.NoError(t, err)
+					require.NotNil(t, attestationVC)
+
+					println("attestationVC=", attestationVC)
+
+				}
+			}
 		}
 
 		for ind := 0; ind < matchedVCs.Length(); ind++ {
@@ -313,34 +347,8 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 		require.Equal(t, serializedIssuedVC, serializedMatchedVC)
 
-		presentOps := openid4vp.NewPresentCredentialOpts()
 		for _, scope := range tc.customScopes {
 			presentOps.AddScopeClaim(scope.name, scope.customClaims)
-		}
-		if tc.attestationURL != "" {
-			vm, err := testHelper.DIDDoc.AssertionMethod()
-			require.NoError(t, err)
-
-			didID, err := testHelper.DIDDoc.ID()
-			require.NoError(t, err)
-
-			attClient, err := attestation.NewClient(
-				attestation.NewCreateClientArgs(tc.attestationURL, testHelper.KMS.GetCrypto()).
-					DisableHTTPClientTLSVerify())
-			require.NoError(t, err)
-
-			attestationVC, err := attClient.GetAttestationVC(vm, attestation.NewAttestRequest().
-				AddAssertion("wallet_authentication").AddWalletAuthentication("wallet_id", didID).
-				AddWalletMetadata("wallet_name", "int-test"),
-			)
-
-			attestationVCString, err := attestationVC.Serialize()
-			require.NoError(t, err)
-
-			presentOps.SetAttestationVC(vm, attestationVCString)
-
-			require.NoError(t, err)
-			require.NotNil(t, attestationVC)
 		}
 
 		err = interaction.PresentCredentialOpts(selectedCreds, presentOps)

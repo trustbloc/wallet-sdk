@@ -26,6 +26,7 @@ const (
 	caCertPath      = "fixtures/keys/tls/ec-cacert.pem"
 	vcsAPIDirectURL = "http://localhost:8075"
 	didResolverURL  = "http://did-resolver.trustbloc.local:8072/1.0/identifiers"
+	attestationURL  = "https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/"
 )
 
 var logger = log.New("wallet-sdk-integration-test")

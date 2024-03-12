@@ -63,10 +63,16 @@ func (r *Registry) EvaluateIssuance(request *IssuanceRequest) (*EvaluationResult
 		return nil, err
 	}
 
+	var attestationsRequired []string
+	if result.Data != nil {
+		attestationsRequired = result.Data.AttestationsRequired
+	}
+
 	return &EvaluationResult{
-		Allowed:      result.Allowed,
-		ErrorCode:    result.ErrorCode,
-		ErrorMessage: result.ErrorMessage,
+		Allowed:              result.Allowed,
+		ErrorCode:            result.ErrorCode,
+		ErrorMessage:         result.ErrorMessage,
+		attestationsRequired: attestationsRequired,
 	}, nil
 }
 
@@ -93,10 +99,16 @@ func (r *Registry) EvaluatePresentation(request *PresentationRequest) (*Evaluati
 		return nil, err
 	}
 
+	var attestationsRequired []string
+	if result.Data != nil {
+		attestationsRequired = result.Data.AttestationsRequired
+	}
+
 	return &EvaluationResult{
-		Allowed:      result.Allowed,
-		ErrorCode:    result.ErrorCode,
-		ErrorMessage: result.ErrorMessage,
+		Allowed:              result.Allowed,
+		ErrorCode:            result.ErrorCode,
+		ErrorMessage:         result.ErrorMessage,
+		attestationsRequired: attestationsRequired,
 	}, nil
 }
 
