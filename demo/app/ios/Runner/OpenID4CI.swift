@@ -98,7 +98,7 @@ public class OpenID4CI {
         let opts = Openid4ciRequestCredentialWithPreAuthOpts()!.setPIN(otp)!
 
         if(attestationVC != nil) {
-            preAuthOpts.setAttestationVC(didVerificationMethod, vc: attestationVC)
+            opts.setAttestationVC(didVerificationMethod, vc: attestationVC)
         }
 
         let credentials  = try initiatedInteraction.requestCredential(withPreAuth: didVerificationMethod, opts: opts)

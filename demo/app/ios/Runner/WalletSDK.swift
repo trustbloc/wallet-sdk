@@ -117,11 +117,11 @@ class WalletSDK {
 
         let request = AttestationNewAttestRequest()!
         request.addAssertion("wallet_authentication")
-        request.addWalletAuthentication("wallet_id", value: authenticationMethod)
+        request.addWalletAuthentication("authentication_method", value: authenticationMethod)
         request.addWalletMetadata("wallet_name", value:"Trustbloc Wallet")
 
         let attestationVC = try attestClient.getAttestationVC(didVerificationMethod, attestationRequest: request)
 
-        return try attestationVC.serialize()
+        return try attestationVC.serialize(nil)
     }
 }

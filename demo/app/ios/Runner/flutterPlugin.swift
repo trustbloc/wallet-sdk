@@ -40,8 +40,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             initializeWalletInitiatedFlow(arguments: arguments!, result: result)
             
         case "requestCredential":
-            let otp = fetchArgsKeyValue(call, key: "otp")
-            requestCredential(otp: otp!, result: result)
+
+            requestCredential(arguments: arguments!, result: result)
             
         case "parseWalletSDKError":
             let localizedErrorMessage = fetchArgsKeyValue(call, key: "localizedErrorMessage")
@@ -341,7 +341,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                  details: "parameter attestationURL is missed"))
             }
 
-            guard let disableTLSVerify = arguments["disableTLSVerify"] as? String else{
+            guard let disableTLSVerify = arguments["disableTLSVerify"] as? Bool else{
                 return  result(FlutterError.init(code: "NATIVE_ERR",
                                                  message: "error while create did operation",
                                                  details: "parameter disableTLSVerify is missed"))
@@ -359,8 +359,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                  details: "Did document not initialized"))
             }
 
-            let attestationVC = walletSDK.getAttestationVC(
-                didVerificationMethod: didDocResolution.assertionMethod()!,
+            let attestationVC = try walletSDK.getAttestationVC(
+                didVerificationMethod: try didDocResolution.assertionMethod(),
                 attestationURL: attestationURL,
                 disableTLSVerify: disableTLSVerify,
                 authenticationMethod: authenticationMethod)
@@ -819,7 +819,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
      Openid4ciNewCredentialRequestOpt.
      If flow doesnt not require pin than Credential Request Opts will have empty string otp and sdk will return credential Data based on empty otp.
      */
-    public func requestCredential(otp: String, result: @escaping FlutterResult){
+    public func requestCredential(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
+       let otp = arguments["otp"] as? String
+
         guard let openID4CI = self.openID4CI else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
                                              message: "error while process requestCredential credential",
@@ -835,7 +837,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         let attestationVC = arguments["attestationVC"] as? String
         
         do {
-            let credentialCreated = try openID4CI.requestCredential(didVerificationMethod: didDocResolution.assertionMethod(), otp: otp, attestationVC: attestationVC)
+            let credentialCreated = try openID4CI.requestCredential(didVerificationMethod: didDocResolution.assertionMethod(), otp: otp!, attestationVC: attestationVC)
             result(credentialCreated.serialize(nil))
         } catch let error as NSError{
             return result(FlutterError.init(code: "Exception",
