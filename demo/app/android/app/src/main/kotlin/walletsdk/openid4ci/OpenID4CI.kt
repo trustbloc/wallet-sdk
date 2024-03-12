@@ -116,8 +116,13 @@ class OpenID4CI constructor(
         )
     }
 
-    fun requestCredential(didVerificationMethod: VerificationMethod, otp: String?): String? {
+    fun requestCredential(didVerificationMethod: VerificationMethod, otp: String?, attestationVC: String?): String? {
         val opts = RequestCredentialWithPreAuthOpts().setPIN(otp)
+
+        if (attestationVC != null) {
+            opts.setAttestationVC(didVerificationMethod, attestationVC)
+        }
+
         val credsArr = newInteraction.requestCredentialWithPreAuth(didVerificationMethod, opts)
 
         if (credsArr.length() != 0L) {

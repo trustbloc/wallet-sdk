@@ -35,7 +35,6 @@ import (
 
 type sessionMetadata struct {
 	challenge string
-	walletDID string
 }
 
 type serverConfig struct {
@@ -119,21 +118,6 @@ func (s *server) evaluateWalletAttestationInitRequest(w http.ResponseWriter, r *
 		return
 	}
 
-	if !reflect.DeepEqual(request.WalletMetadata, map[string]interface{}{"wallet_name": "int-test"}) {
-		s.writeResponse(
-			w, http.StatusBadRequest, "walletMetadata field is invalid")
-
-		return
-	}
-
-	walletDID, ok := request.WalletAuthentication["wallet_id"].(string)
-	if len(request.WalletAuthentication) != 1 || !ok || walletDID == "" {
-		s.writeResponse(
-			w, http.StatusBadRequest, "walletAuthentication field is invalid")
-
-		return
-	}
-
 	sessionID, challenge := uuid.NewString(), uuid.NewString()
 
 	response := &AttestWalletInitResponse{
@@ -143,7 +127,6 @@ func (s *server) evaluateWalletAttestationInitRequest(w http.ResponseWriter, r *
 
 	s.sessions.Store(sessionID, sessionMetadata{
 		challenge: challenge,
-		walletDID: walletDID,
 	})
 
 	go func() {
@@ -236,10 +219,6 @@ func (s *server) evaluateWalletProofJWT(
 
 	if !ok {
 		return "", fmt.Errorf("session %s is unknown", sessionID)
-	}
-
-	if jwtProofClaims.Issuer != sessionData.walletDID {
-		return "", fmt.Errorf("jwtProofClaims.Issuer is invalid, got: %s, want: %s", jwtProofClaims.Issuer, sessionData.walletDID)
 	}
 
 	if jwtProofClaims.Audience == "" {

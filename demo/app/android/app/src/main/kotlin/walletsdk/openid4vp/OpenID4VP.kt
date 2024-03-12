@@ -25,6 +25,7 @@ import dev.trustbloc.wallet.sdk.trustregistry.PresentationRequest
 import dev.trustbloc.wallet.sdk.trustregistry.Registry
 import dev.trustbloc.wallet.sdk.trustregistry.RegistryConfig
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
+import dev.trustbloc.wallet.sdk.api.VerificationMethod
 
 class OpenID4VP constructor(
         private val crypto: Crypto,
@@ -111,7 +112,11 @@ class OpenID4VP constructor(
     /**
      * initiatedInteraction has PresentCredential method which presents credentials to redirect uri from request object.
      */
-    fun presentCredential(selectedCredentials: CredentialsArray, customScopes: MutableMap<String, Any>?) {
+    fun presentCredential(selectedCredentials: CredentialsArray,
+                          customScopes: MutableMap<String, Any>?,
+                          didVerificationMethod: VerificationMethod?,
+                          attestationVC: String?
+                          ) {
         val initiatedInteraction = this.initiatedInteraction
                 ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
 
@@ -121,6 +126,11 @@ class OpenID4VP constructor(
                 opts?.addScopeClaim(scope.key, scope.value.toString())
             }
         }
+
+        if (attestationVC != null && didVerificationMethod != null) {
+            opts.setAttestationVC(didVerificationMethod, attestationVC)
+        }
+
         initiatedInteraction.presentCredentialOpts(selectedCredentials, opts)
     }
 

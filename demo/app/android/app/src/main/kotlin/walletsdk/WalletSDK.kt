@@ -23,6 +23,8 @@ import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import walletsdk.openid4ci.OpenID4CI
 import walletsdk.openid4ci.WalletInitiatedOpenID4CI
 import walletsdk.openid4vp.OpenID4VP
+import dev.trustbloc.wallet.sdk.attestation.Attestation
+import dev.trustbloc.wallet.sdk.api.VerificationMethod
 
 class WalletSDK {
     private var kms: KMS? = null
@@ -125,5 +127,26 @@ class WalletSDK {
 
         return Display.resolve(creds, issuerURI,
                 dev.trustbloc.wallet.sdk.display.Opts().setDIDResolver(didResolver))
+    }
+
+    fun getAttestationVC(didVerificationMethod: VerificationMethod, attestationURL: String, disableTLSVerify: Boolean, authenticationMethod: String): String {
+            val opts = Attestation.newCreateClientArgs(
+                                    attestationURL,
+                                    crypto,
+                            );
+            if (disableTLSVerify) {
+                opts.disableHTTPClientTLSVerify()
+            }
+
+            val attestClient = Attestation.newClient(opts)
+
+            val attestationVC = attestClient.getAttestationVC(
+                    didVerificationMethod,
+                    Attestation.newAttestRequest()
+                            .addAssertion("wallet_authentication")
+                            .addWalletAuthentication("authentication_method", authenticationMethod)
+                            .addWalletMetadata("wallet_name", "Trustbloc Wallet"))
+        
+        return attestationVC.serialize()
     }
 }

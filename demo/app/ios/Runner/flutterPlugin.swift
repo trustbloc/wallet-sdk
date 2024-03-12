@@ -40,8 +40,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             initializeWalletInitiatedFlow(arguments: arguments!, result: result)
             
         case "requestCredential":
-            let otp = fetchArgsKeyValue(call, key: "otp")
-            requestCredential(otp: otp!, result: result)
+
+            requestCredential(arguments: arguments!, result: result)
             
         case "parseWalletSDKError":
             let localizedErrorMessage = fetchArgsKeyValue(call, key: "localizedErrorMessage")
@@ -129,6 +129,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             acknowledgeSuccess(result: result)
         case "acknowledgeReject":
             acknowledgeReject(result: result)
+
+        case "getAttestationVC":
+            getAttestationVC(arguments: arguments!, result: result)
             
         default:
             print("No call method is found", call.method)
@@ -296,6 +299,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             }
             
             let selectedCredentials = arguments["selectedCredentials"] as? Array<String>
+            let attestationVC = arguments["attestationVC"] as? String
             let customScopeList = arguments["customScopeList"] as? Dictionary<String, Any> ?? [String: Any]()
             
             let selectedCredentialsArray: VerifiableCredentialsArray?
@@ -312,9 +316,57 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             }
             
             try openID4VP.presentCredential(
-                selectedCredentials: selectedCredentialsArray!, customScopes: customScopeList)
+                selectedCredentials: selectedCredentialsArray!, customScopes: customScopeList,
+                didVerificationMethod: didDocResolution?.assertionMethod(), attestationVC:attestationVC)
             result(true);
             
+        }  catch let error as NSError{
+            result(FlutterError.init(code: "NATIVE_ERR",
+                                     message: "error while processing present credential",
+                                     details: error.localizedDescription))
+        }
+    }
+
+    public func getAttestationVC(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
+        do {
+            guard let walletSDK = self.walletSDK else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while creating did",
+                                                 details: "WalletSDK interaction is not initialized, call initSDK()"))
+            }
+
+            guard let attestationURL = arguments["attestationURL"] as? String else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while create did operation",
+                                                 details: "parameter attestationURL is missed"))
+            }
+
+            guard let disableTLSVerify = arguments["disableTLSVerify"] as? Bool else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while create did operation",
+                                                 details: "parameter disableTLSVerify is missed"))
+            }
+
+            guard let authenticationMethod = arguments["attestationURL"] as? String else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while create did operation",
+                                                 details: "parameter authenticationMethod is missed"))
+            }
+
+            guard let didDocResolution = self.didDocResolution else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while process requestCredential credential",
+                                                 details: "Did document not initialized"))
+            }
+
+            let attestationVC = try walletSDK.getAttestationVC(
+                didVerificationMethod: try didDocResolution.assertionMethod(),
+                attestationURL: attestationURL,
+                disableTLSVerify: disableTLSVerify,
+                authenticationMethod: authenticationMethod)
+
+            result(attestationVC);
+
         }  catch let error as NSError{
             result(FlutterError.init(code: "NATIVE_ERR",
                                      message: "error while processing present credential",
@@ -767,7 +819,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
      Openid4ciNewCredentialRequestOpt.
      If flow doesnt not require pin than Credential Request Opts will have empty string otp and sdk will return credential Data based on empty otp.
      */
-    public func requestCredential(otp: String, result: @escaping FlutterResult){
+    public func requestCredential(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
+       let otp = arguments["otp"] as? String
+
         guard let openID4CI = self.openID4CI else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
                                              message: "error while process requestCredential credential",
@@ -779,9 +833,11 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              message: "error while process requestCredential credential",
                                              details: "Did document not initialized"))
         }
+
+        let attestationVC = arguments["attestationVC"] as? String
         
         do {
-            let credentialCreated = try openID4CI.requestCredential(didVerificationMethod: didDocResolution.assertionMethod(), otp: otp)
+            let credentialCreated = try openID4CI.requestCredential(didVerificationMethod: didDocResolution.assertionMethod(), otp: otp!, attestationVC: attestationVC)
             result(credentialCreated.serialize(nil))
         } catch let error as NSError{
             return result(FlutterError.init(code: "Exception",
