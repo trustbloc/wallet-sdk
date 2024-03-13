@@ -25,6 +25,7 @@ For the sake of readability, the following is omitted in most code examples:
 - [Credential Status](#credential-status)
 - [OpenID Credential Presentation (OpenID4VP)](#openid-credential-presentation-openid4vp)
 - [Trust Evaluation](#trust-evaluation)
+- [Attestation](#attestation)
 - [Metrics](#metrics)
 
 
@@ -1567,13 +1568,29 @@ val issuanceRequest = IssuanceRequest()
 val trustInfo = newInteraction.issuerTrustInfo()
 issuanceRequest.issuerDID = trustInfo.did
 issuanceRequest.issuerDomain = trustInfo.domain
-issuanceRequest.credentialFormat = trustInfo.credentialFormat
-issuanceRequest.credentialType = trustInfo.credentialType
+for (rInd in 0 until trustInfo.offerLength() ) {
+    val offer = trustInfo.offerAtIndex(rInd)
+
+    val credentialOffer = CredentialOffer();
+    credentialOffer.credentialFormat = offer.credentialFormat
+    credentialOffer.credentialType =offer.credentialFormat
+
+    issuanceRequest.addCredentialOffers(credentialOffer)
+}
 
 val config = RegistryConfig()
 config.evaluateIssuanceURL = evaluateIssuanceURL
 
 val evaluationResult = Registry(config).evaluateIssuance(issuanceRequest)
+
+// check if the txn is allowed
+evaluationResult!.allowed 
+
+// Get the requested attestations
+for (rInd in 0 until evaluationResult.requestedAttestationLength() ) {
+    val attValue = evaluationResult.requestedAttestationAtIndex(rInd)
+    print(attValue)
+}
 ```
 
 #### Swift
@@ -1584,13 +1601,29 @@ let issuanceRequest = TrustregistryIssuanceRequest()
 let trustInfo = try initiatedInteraction.issuerTrustInfo()
 issuanceRequest.issuerDID = trustInfo.did
 issuanceRequest.issuerDomain = trustInfo.domain
-issuanceRequest.credentialFormat = trustInfo.credentialFormat
-issuanceRequest.credentialType = trustInfo.credentialType
+for rInd in 0..<trustInfo.offerLength() {
+    let offer = trustInfo.offer(at:rInd)!
+
+    let credentialOffer = TrustregistryCredentialOffer();
+    credentialOffer.credentialFormat = offer.credentialFormat
+    credentialOffer.credentialType = offer.credentialType
+
+    issuanceRequest.addCredentialOffers(credentialOffer)
+}
 
 let config = TrustregistryRegistryConfig()
 config.evaluateIssuanceURL = evaluateIssuanceURL
 
 let evaluationResult = try TrustregistryRegistry(config)!.evaluateIssuance(issuanceRequest)
+
+// check if the txn is allowed
+evaluationResult!.allowed 
+
+// Get the requested attestations
+for rInd in 0..<evaluationResult!.requestedAttestationLength() {
+    let attValue = evaluationResult!.requestedAttestation(at:rInd)
+    print(attValue)
+}
 ```
 
 ### Presentation trust evaluation
@@ -1628,6 +1661,14 @@ config.evaluatePresentationURL = evaluatePresentationURL
 
 val evaluationResult = Registry(config).evaluatePresentation(presentationRequest)
 
+// check if the txn is allowed
+evaluationResult!.allowed 
+
+// Get the requested attestations
+for (rInd in 0 until evaluationResult.requestedAttestationLength() ) {
+    val attValue = evaluationResult.requestedAttestationAtIndex(rInd)
+    print(attValue)
+}
 ```
 #### Swift
 ```swift
@@ -1662,6 +1703,51 @@ config.evaluatePresentationURL = evaluatePresentationURL
 
 let evaluationResult = try TrustregistryRegistry(config)!.evaluatePresentation(presentationRequest)
 
+// check if the txn is allowed
+evaluationResult!.allowed 
+
+// Get the requested attestations
+for rInd in 0..<evaluationResult!.requestedAttestationLength() {
+    let attValue = evaluationResult!.requestedAttestation(at:rInd)
+    print(attValue)
+}
+```
+## Attestation
+
+### Kotlin
+
+```Kotlin
+// create a DID
+val attestDID = Didion.createLongForm(jwk)
+
+// create attestation client
+val attestClient = Attestation.newClient(Attestation.newCreateClientArgs("<URL>",crypto))
+
+// generate attestation VC
+val attestationVC = attestClient.getAttestationVC(
+                attestDID.assertionMethod(),
+                Attestation.newAttestRequest()
+                        .addAssertion("wallet_authentication")
+                        .addWalletAuthentication("authentication_method", "system_biometry")
+                        .addWalletMetadata("wallet_name", "Mi Wallet"))
+                        .addWalletMetadata("wallet_version", "2.0"))
+
+// use this attestation VC with issuance or presentation flows.
+```
+
+### Swift
+
+```swift
+// create a DID
+let attestDID = DidionCreateLongForm(jwk, &error)
+
+// create attestation client
+let attClient = AttestationNewClient(AttestationNewCreateClientArgs("<URL>", crypto),nil)!
+
+// generate attestation VC
+let attestationVC = try attClient.getAttestationVC(attestDID!.assertionMethod(), attestationRequest: AttestationNewAttestRequest()!.addAssertion("wallet_authentication")!.addWalletAuthentication("authentication_method", value:"system_biometry")!.addWalletMetadata("wallet_name", value:"Mi Wallet")!.addWalletMetadata("wallet_version", value:"2.0"))
+
+// use this attestation VC with issuance or presentation flows.
 ```
 
 ## Metrics
