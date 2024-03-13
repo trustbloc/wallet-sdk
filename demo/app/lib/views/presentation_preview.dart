@@ -26,6 +26,8 @@ import 'package:app/views/custom_error.dart';
 
 import 'package:app/services/config_service.dart';
 
+import '../services/attestation.dart';
+
 class PresentationPreview extends StatefulWidget {
   final CredentialData credentialData;
 
@@ -212,12 +214,14 @@ class PresentationPreviewState extends State<PresentationPreview> {
     final SharedPreferences pref = await prefs;
     Map<String, dynamic> customScopeConfigList = {};
     final ConfigService configService = ConfigService();
+    final attestationVC = await AttestationService.returnAttestationVCIfEnabled();
     WalletSDKPlugin.getCustomScope()
         .then((customScopeList) async {
       customScopeConfigList = await configService.readCustomScopeConfig(customScopeList);
     })
         .whenComplete(() => WalletSDKPlugin.presentCredential(
         selectedCredentials: [widget.credentialData.rawCredential],
+        attestationVC: attestationVC,
         customScopeList: customScopeConfigList))
         .onError((error, stackTrace) {
       var errString = error.toString().replaceAll(r'\', '');

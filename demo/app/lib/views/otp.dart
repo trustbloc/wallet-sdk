@@ -16,6 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app/widgets/primary_button.dart';
 import 'package:app/widgets/primary_input_field.dart';
 import 'package:app/wallet_sdk/wallet_sdk.dart';
+import '../services/attestation.dart';
 import '../widgets/loading_overlay.dart';
 import 'credential_preview.dart';
 import 'package:app/views/dashboard.dart';
@@ -191,7 +192,8 @@ class _OTPPage extends State<OTP> {
                                   await _createDid();
                                   pref.setString('userDID', userDIDId);
                                   pref.setString('userDIDDoc', userDIDDoc);
-                                  credentials = await WalletSDKPlugin.requestCredential(_otp!);
+                                  credentials = await WalletSDKPlugin.requestCredential(_otp!,
+                                    attestationVC :await AttestationService.returnAttestationVCIfEnabled(),);
                                   String? issuerURI = await WalletSDKPlugin.issuerURI();
                                   serializeDisplayData =
                                       await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);

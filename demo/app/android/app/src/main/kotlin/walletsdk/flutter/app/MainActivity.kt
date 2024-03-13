@@ -43,6 +43,7 @@ class MainActivity : FlutterActivity() {
     // TODO: remove next three variables after refactoring finished.
     private var processAuthorizationRequestVCs: CredentialsArray? = null
     private var didDocResolution: DIDDocResolution? = null
+    private var attestationDID: DIDDocResolution? = null
 
     @Override
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -663,14 +664,14 @@ class MainActivity : FlutterActivity() {
 
         val attestationVC = call.argument<String>("attestationVC")
 
-        val didDocResolution = this.didDocResolution
+        val attestationDID = this.attestationDID
                 ?: throw java.lang.Exception("DID should be created first")
 
         val openID4CI = this.openID4CI
                 ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
 
-        return openID4CI.requestCredential(didDocResolution.assertionMethod(), otp, attestationVC)
+        return openID4CI.requestCredential(attestationDID.assertionMethod(), otp, attestationVC)
     }
 
 
@@ -1011,12 +1012,13 @@ class MainActivity : FlutterActivity() {
         val openID4VP = this.openID4VP
                 ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
 
-        openID4VP.presentCredential(selectedCredentialsArray, customScopeList, didDocResolution?.assertionMethod(), attestationVC)
+        openID4VP.presentCredential(selectedCredentialsArray, customScopeList, attestationDID?.assertionMethod(), attestationVC)
         this.openID4VP = null
     }
 
-    private fun getAttestationVC(call: MethodCall) : String {
-        val sdk = this.walletSDK ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
+    private fun getAttestationVC(call: MethodCall): String {
+        val sdk = this.walletSDK
+                ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
         val attestationURL = call.argument<String>("attestationURL")
                 ?: throw java.lang.Exception("attestationURL params is missed")
 
@@ -1026,11 +1028,11 @@ class MainActivity : FlutterActivity() {
         val authenticationMethod = call.argument<String>("authenticationMethod")
                 ?: throw java.lang.Exception("authenticationMethod params is missed")
 
+        if (attestationDID == null) {
+            attestationDID = sdk.createDID("ion", "ED25519")
+        }
 
-        val didDocResolution = this.didDocResolution
-                ?: throw java.lang.Exception("DID should be created first")
-
-        return sdk.getAttestationVC(didDocResolution.assertionMethod(), attestationURL, disableTLSVerify, authenticationMethod)
+        return sdk.getAttestationVC(attestationDID!!.assertionMethod (), attestationURL, disableTLSVerify, authenticationMethod)
     }
 
     private fun getCustomScope(): ArrayList<String> {
