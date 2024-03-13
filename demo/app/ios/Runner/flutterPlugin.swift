@@ -25,6 +25,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     // TODO: remove next three variables after refactoring finished.
     private var processAuthorizationRequestVCs: VerifiableCredentialsArray?
     private var didDocResolution: ApiDIDDocResolution?
+
+    private var attestationDID: ApiDIDDocResolution?
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         let arguments = call.arguments as? Dictionary<String, Any>
@@ -317,7 +319,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             
             try openID4VP.presentCredential(
                 selectedCredentials: selectedCredentialsArray!, customScopes: customScopeList,
-                didVerificationMethod: didDocResolution?.assertionMethod(), attestationVC:attestationVC)
+                didVerificationMethod: attestationDID?.assertionMethod(), attestationVC:attestationVC)
             result(true);
             
         }  catch let error as NSError{
@@ -353,14 +355,12 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                  details: "parameter authenticationMethod is missed"))
             }
 
-            guard let didDocResolution = self.didDocResolution else{
-                return  result(FlutterError.init(code: "NATIVE_ERR",
-                                                 message: "error while process requestCredential credential",
-                                                 details: "Did document not initialized"))
+            if (attestationDID == nil) {
+                attestationDID = try walletSDK.createDID(didMethodType: "ion", didKeyType: "ED25519")
             }
 
             let attestationVC = try walletSDK.getAttestationVC(
-                didVerificationMethod: try didDocResolution.assertionMethod(),
+                didVerificationMethod: try attestationDID!.assertionMethod(),
                 attestationURL: attestationURL,
                 disableTLSVerify: disableTLSVerify,
                 authenticationMethod: authenticationMethod)
@@ -828,7 +828,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              details: "openID4CI not initiated. Call authorize before this."))
         }
         
-        guard let didDocResolution = self.didDocResolution else{
+        guard let attestationDID = self.attestationDID else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
                                              message: "error while process requestCredential credential",
                                              details: "Did document not initialized"))
@@ -837,7 +837,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         let attestationVC = arguments["attestationVC"] as? String
         
         do {
-            let credentialCreated = try openID4CI.requestCredential(didVerificationMethod: didDocResolution.assertionMethod(), otp: otp!, attestationVC: attestationVC)
+            let credentialCreated = try openID4CI.requestCredential(didVerificationMethod: attestationDID.assertionMethod(), otp: otp!, attestationVC: attestationVC)
             result(credentialCreated.serialize(nil))
         } catch let error as NSError{
             return result(FlutterError.init(code: "Exception",

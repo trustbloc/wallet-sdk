@@ -19,6 +19,7 @@ import 'package:app/widgets/primary_button.dart';
 import 'package:app/models/activity_data_object.dart';
 import 'package:app/models/credential_data.dart';
 import 'package:app/widgets/domain_verification_component.dart';
+import '../services/attestation.dart';
 import 'credential_preview.dart';
 import 'handle_redirect_uri.dart';
 import 'otp.dart';
@@ -280,7 +281,10 @@ class IssuancePreviewState extends State<IssuancePreview> {
     pref.setString('userDID', didID);
     pref.setString('userDIDDoc', didDoc);
 
-    String? credentials = await WalletSDKPlugin.requestCredential('');
+    String? credentials = await WalletSDKPlugin.requestCredential(
+      '',
+      attestationVC: await AttestationService.returnAttestationVCIfEnabled(),
+    );
     String? issuerURL = await WalletSDKPlugin.issuerURI();
     String? resolvedCredentialDisplay = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURL!);
     log('resolvedCredentialDisplay $resolvedCredentialDisplay');

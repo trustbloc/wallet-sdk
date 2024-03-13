@@ -20,6 +20,8 @@ import 'package:app/widgets/credential_card.dart';
 import 'package:app/views/custom_error.dart';
 import 'dart:developer';
 
+import '../services/attestation.dart';
+
 class PresentationPreviewMultiCredCheck extends StatefulWidget {
   final List<CredentialData> credentialData;
   final String? infoData;
@@ -231,6 +233,7 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                             final SharedPreferences pref = await prefs;
                             try {
                               await WalletSDKPlugin.presentCredential(
+                                  attestationVC :await AttestationService.returnAttestationVCIfEnabled(),
                                   selectedCredentials: multipleSelected.cast<String>());
                             } catch (error) {
                               log(error.toString());
@@ -246,6 +249,7 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                                 return;
                               } else {
                                 await WalletSDKPlugin.presentCredential(
+                                    attestationVC :await AttestationService.returnAttestationVCIfEnabled(),
                                     selectedCredentials: multipleSelected.cast<String>());
                               }
                             }
