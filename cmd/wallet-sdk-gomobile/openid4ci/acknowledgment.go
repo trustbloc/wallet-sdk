@@ -44,3 +44,8 @@ func (a *Acknowledgment) Success() error {
 func (a *Acknowledgment) Reject() error {
 	return a.acknowledgment.AcknowledgeIssuer(openid4cigoapi.EventStatusCredentialFailure, &http.Client{})
 }
+
+// RejectWithCode sends rejection message to issuer with a reject code.
+func (a *Acknowledgment) RejectWithCode(code string) error {
+	return a.acknowledgment.AcknowledgeIssuer(openid4cigoapi.EventStatus(code), &http.Client{})
+}

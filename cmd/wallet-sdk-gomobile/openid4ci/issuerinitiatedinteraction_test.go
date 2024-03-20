@@ -258,7 +258,10 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			doRequestCredentialTest(t, nil, true)
 		})
 		t.Run("Acknowledge reject", func(t *testing.T) {
-			doRequestCredentialTestExt(t, nil, false, true)
+			doRequestCredentialTestExt(t, nil, false, true, "")
+		})
+		t.Run("Acknowledge reject with code", func(t *testing.T) {
+			doRequestCredentialTestExt(t, nil, false, true, "tc_declined")
 		})
 	})
 	t.Run("Success with jwk public key", func(t *testing.T) {
@@ -591,12 +594,12 @@ func doRequestCredentialTest(t *testing.T, additionalHeaders *api.Headers,
 	disableTLSVerification bool,
 ) {
 	t.Helper()
-	doRequestCredentialTestExt(t, additionalHeaders, disableTLSVerification, false)
+	doRequestCredentialTestExt(t, additionalHeaders, disableTLSVerification, false, "")
 }
 
 //nolint:thelper // Not a test helper function
 func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
-	disableTLSVerification bool, acknowledgeReject bool,
+	disableTLSVerification bool, acknowledgeReject bool, rejectCode string,
 ) {
 	issuerServerHandler := &mockIssuerServerHandler{
 		t:                  t,
@@ -654,7 +657,11 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 	require.NoError(t, err)
 
 	if acknowledgeReject {
-		err = acknowledgmentRestored.Reject()
+		if rejectCode != "" {
+			err = acknowledgmentRestored.RejectWithCode(rejectCode)
+		} else {
+			err = acknowledgmentRestored.Reject()
+		}
 	} else {
 		err = acknowledgmentRestored.Success()
 	}
