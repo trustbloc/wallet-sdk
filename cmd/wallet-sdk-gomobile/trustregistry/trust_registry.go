@@ -100,15 +100,20 @@ func (r *Registry) EvaluatePresentation(request *PresentationRequest) (*Evaluati
 	}
 
 	var attestationsRequired []string
+
+	var multipleCredentialAllowed bool
+
 	if result.Data != nil {
 		attestationsRequired = result.Data.AttestationsRequired
+		multipleCredentialAllowed = result.Data.MultipleCredentialAllowed
 	}
 
 	return &EvaluationResult{
-		Allowed:              result.Allowed,
-		ErrorCode:            result.ErrorCode,
-		ErrorMessage:         result.ErrorMessage,
-		attestationsRequired: attestationsRequired,
+		Allowed:                   result.Allowed,
+		ErrorCode:                 result.ErrorCode,
+		ErrorMessage:              result.ErrorMessage,
+		attestationsRequired:      attestationsRequired,
+		MultipleCredentialAllowed: multipleCredentialAllowed,
 	}, nil
 }
 

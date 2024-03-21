@@ -18,7 +18,8 @@ type EvaluationResult struct {
 
 // EvaluationData data from policy evaluation.
 type EvaluationData struct {
-	AttestationsRequired []string `json:"attestations_required,omitempty"`
+	AttestationsRequired      []string `json:"attestations_required,omitempty"`
+	MultipleCredentialAllowed bool     `json:"multiple_credentials_allowed,omitempty"`
 }
 
 // CredentialOffer contains data related to a credential type being offered in an issuance request.
