@@ -12,10 +12,11 @@ import (
 
 // EvaluationResult result of policy evaluation.
 type EvaluationResult struct {
-	Allowed              bool
-	ErrorCode            string
-	ErrorMessage         string
-	attestationsRequired []string
+	Allowed                   bool
+	ErrorCode                 string
+	ErrorMessage              string
+	MultipleCredentialAllowed bool
+	attestationsRequired      []string
 }
 
 // RequestedAttestationLength returns the number attestation requested.
