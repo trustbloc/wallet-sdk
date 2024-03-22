@@ -50,7 +50,7 @@ func CheckResolvedDisplayData(t *testing.T, actualDisplayData, expectedDisplayDa
 
 	checkIssuerDisplay(t, actualDisplayData.IssuerDisplay(), expectedDisplayData.IssuerDisplay())
 
-	require.Equal(t, 1, actualDisplayData.CredentialDisplaysLength())
+	require.Equal(t, expectedDisplayData.CredentialDisplaysLength(), actualDisplayData.CredentialDisplaysLength())
 
 	actualCredentialDisplay := actualDisplayData.CredentialDisplayAtIndex(0)
 	expectedCredentialDisplay := expectedDisplayData.CredentialDisplayAtIndex(0)

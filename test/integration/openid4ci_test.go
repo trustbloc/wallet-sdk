@@ -54,6 +54,9 @@ var (
 
 	//go:embed expecteddisplaydata/university_degree_issuer.json
 	expectedUniversityDegreeIssuer string
+
+	//go:embed expecteddisplaydata/university_degree_multi.json
+	expectedUniversityDegreeMulti string
 )
 
 const (
@@ -69,9 +72,13 @@ type test struct {
 	walletKeyType       string
 	expectedIssuerURI   string
 	expectedDisplayData *display.Data
-	claimData           map[string]interface{}
+	claims              []*claimEntry
 	acknowledgeReject   bool
 	trustInfo           bool
+}
+
+type claimEntry struct {
+	Data map[string]interface{}
 }
 
 func TestOpenID4CIFullFlow(t *testing.T) {
@@ -137,57 +144,92 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		"photo":        "binary data",
 	}
 
+	universityDegreeClaims2 := map[string]interface{}{
+		"familyName":   "John Doe",
+		"givenName":    "John",
+		"degree":       "MS",
+		"degreeSchool": "Stanford",
+		"photo":        "binary data",
+	}
+
 	preAuthTests := []test{
 		{
-			issuerProfileID:     "university_degree_issuer_bbs",
-			issuerDIDMethod:     "key",
-			walletDIDMethod:     "ion",
-			claimData:           universityDegreeClaims,
+			issuerProfileID: "university_degree_issuer_bbs",
+			issuerDIDMethod: "key",
+			walletDIDMethod: "ion",
+			claims: []*claimEntry{
+				{
+					Data: universityDegreeClaims,
+				},
+			},
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeIssuer),
 			expectedIssuerURI:   "http://localhost:8075/oidc/idp/university_degree_issuer_bbs/v1.0",
 		},
 		{
-			issuerProfileID:     "bank_issuer_jwtsd",
-			issuerDIDMethod:     "ion",
-			walletDIDMethod:     "jwk",
-			expectedIssuerURI:   "http://localhost:8075/oidc/idp/bank_issuer_jwtsd/v1.0",
-			claimData:           verifiableEmployeeClaims,
+			issuerProfileID:   "bank_issuer_jwtsd",
+			issuerDIDMethod:   "ion",
+			walletDIDMethod:   "jwk",
+			expectedIssuerURI: "http://localhost:8075/oidc/idp/bank_issuer_jwtsd/v1.0",
+			claims: []*claimEntry{
+				{
+					Data: verifiableEmployeeClaims,
+				},
+			},
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataBankIssuer),
 			walletKeyType:       localkms.KeyTypeP384,
 		},
 		{
-			issuerProfileID:     "bank_issuer_attest",
-			issuerDIDMethod:     "ion",
-			walletDIDMethod:     "ion",
-			claimData:           verifiableEmployeeClaims,
+			issuerProfileID: "bank_issuer_attest",
+			issuerDIDMethod: "ion",
+			walletDIDMethod: "ion",
+			claims: []*claimEntry{
+				{
+					Data: verifiableEmployeeClaims,
+				},
+			},
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataBankIssuer),
 			expectedIssuerURI:   "http://localhost:8075/oidc/idp/bank_issuer_attest/v1.0",
 			acknowledgeReject:   true,
 			trustInfo:           true,
 		},
 		{
-			issuerProfileID:     "did_ion_issuer",
-			issuerDIDMethod:     "ion",
-			walletDIDMethod:     "key",
-			claimData:           verifiableEmployeeClaims,
+			issuerProfileID: "did_ion_issuer",
+			issuerDIDMethod: "ion",
+			walletDIDMethod: "key",
+			claims: []*claimEntry{
+				{
+					Data: verifiableEmployeeClaims,
+				},
+			},
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataDIDION),
 			expectedIssuerURI:   "http://localhost:8075/oidc/idp/did_ion_issuer/v1.0",
 			acknowledgeReject:   true,
 		},
 		{
-			issuerProfileID:     "drivers_license_issuer",
-			issuerDIDMethod:     "ion",
-			walletDIDMethod:     "ion",
-			claimData:           driverLicenseClaims,
+			issuerProfileID: "drivers_license_issuer",
+			issuerDIDMethod: "ion",
+			walletDIDMethod: "ion",
+			claims: []*claimEntry{
+				{
+					Data: driverLicenseClaims,
+				},
+			},
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedDisplayDataDriversLicenseIssuer),
 			expectedIssuerURI:   "http://localhost:8075/oidc/idp/drivers_license_issuer/v1.0",
 		},
 		{
-			issuerProfileID:     "university_degree_issuer",
-			issuerDIDMethod:     "ion",
-			walletDIDMethod:     "ion",
-			claimData:           universityDegreeClaims,
-			expectedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeIssuer),
+			issuerProfileID: "university_degree_issuer",
+			issuerDIDMethod: "ion",
+			walletDIDMethod: "ion",
+			claims: []*claimEntry{
+				{
+					Data: universityDegreeClaims,
+				},
+				{
+					Data: universityDegreeClaims2,
+				},
+			},
+			expectedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeMulti),
 			expectedIssuerURI:   "http://localhost:8075/oidc/idp/university_degree_issuer/v1.0",
 		},
 	}
@@ -207,13 +249,17 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		fmt.Println(fmt.Sprintf("running tests with issuerProfileID=%s issuerDIDMethod=%s walletDIDMethod=%s",
 			tc.issuerProfileID, tc.issuerDIDMethod, tc.walletDIDMethod))
 
-		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(tc.issuerProfileID,
-			[]oidc4ci.CredentialConfiguration{
-				{
-					ClaimData: tc.claimData,
+		credentialConfigs := make([]oidc4ci.CredentialConfiguration, 0)
+
+		for _, c := range tc.claims {
+			credentialConfigs = append(credentialConfigs,
+				oidc4ci.CredentialConfiguration{
+					ClaimData: c.Data,
 				},
-			},
-		)
+			)
+		}
+
+		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(tc.issuerProfileID, credentialConfigs)
 		require.NoError(t, err)
 
 		println(offerCredentialURL)

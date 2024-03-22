@@ -56,6 +56,9 @@ var (
 	//go:embed testdata/sample_credential_response_ask.json
 	sampleCredentialResponseAsk []byte
 
+	//go:embed testdata/sample_credential_response_batch.json
+	sampleCredentialResponseBatch []byte
+
 	//go:embed testdata/sample_issuer_metadata.json
 	sampleIssuerMetadata string
 
@@ -75,7 +78,9 @@ type mockIssuerServerHandler struct {
 	credentialRequestShouldFail                             bool
 	credentialRequestErrorResponse                          string
 	credentialRequestShouldGiveUnmarshallableResponse       bool
+	batchCredentialRequestShouldFail                        bool
 	credentialResponse                                      []byte
+	batchCredentialResponse                                 []byte
 	httpStatusCode                                          int
 	ackRequestErrorResponse                                 string
 }
@@ -140,6 +145,15 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 			_, err = writer.Write([]byte("invalid"))
 		default:
 			_, err = writer.Write(m.credentialResponse)
+		}
+	case "/oidc/batch_credential":
+		switch {
+		case m.batchCredentialRequestShouldFail:
+			writer.WriteHeader(http.StatusInternalServerError)
+
+			_, err = writer.Write([]byte("test failure"))
+		default:
+			_, err = writer.Write(m.batchCredentialResponse)
 		}
 	case "/oidc/ack_endpoint":
 		statusCode := http.StatusNoContent
@@ -601,6 +615,39 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 					require.NoError(t, err)
 					require.Len(t, credentials, 1)
 					require.NotEmpty(t, credentials[0])
+				})
+				t.Run("Batch credential endpoint", func(t *testing.T) {
+					issuerServerHandler := &mockIssuerServerHandler{
+						t:                       t,
+						batchCredentialResponse: sampleCredentialResponseBatch,
+						httpStatusCode:          http.StatusOK,
+					}
+
+					server := httptest.NewServer(issuerServerHandler)
+					defer server.Close()
+
+					issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
+					credentialOffer := createSampleCredentialOffer(t, false, false)
+					credentialOffer.CredentialIssuer = server.URL
+
+					credentialOffer.CredentialConfigurationIDs = append(credentialOffer.CredentialConfigurationIDs,
+						"credential_configuration_id_1")
+
+					b, err := json.Marshal(credentialOffer)
+					require.NoError(t, err)
+
+					credentialOfferURI := "openid-credential-offer://?credential_offer=" + url.QueryEscape(string(b))
+
+					interaction := newIssuerInitiatedInteraction(t, credentialOfferURI)
+
+					credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+						keyID: mockKeyID,
+					}, openid4ci.WithPIN("1234"))
+					require.NoError(t, err)
+					require.Len(t, credentials, 2)
+					require.NotEmpty(t, credentials[0])
+					require.NotEmpty(t, credentials[1])
 				})
 			})
 			t.Run("Issuer require acknowledgment", func(t *testing.T) {
@@ -1379,6 +1426,68 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			require.Contains(t, err.Error(), "failed to get credential "+
 				"response: failed to log event (Event=Fetch credential 1 of 1 via an HTTP POST request to "+
 				"http://127.0.0.1:")
+			require.Nil(t, credentials)
+		})
+		t.Run("Fail to get credential response when using batch endpoint", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t:                                t,
+				batchCredentialRequestShouldFail: true,
+				httpStatusCode:                   http.StatusOK,
+			}
+
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
+			credentialOffer := createSampleCredentialOffer(t, false, false)
+			credentialOffer.CredentialIssuer = server.URL
+
+			credentialOffer.CredentialConfigurationIDs = append(credentialOffer.CredentialConfigurationIDs,
+				"credential_configuration_id_1")
+
+			b, err := json.Marshal(credentialOffer)
+			require.NoError(t, err)
+
+			credentialOfferURI := "openid-credential-offer://?credential_offer=" + url.QueryEscape(string(b))
+
+			interaction := newIssuerInitiatedInteraction(t, credentialOfferURI)
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			require.Contains(t, err.Error(), "failed to get credential response")
+			require.Nil(t, credentials)
+		})
+		t.Run("Fail to unmarshal credential response from batch credential endpoint", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t:                       t,
+				batchCredentialResponse: []byte("invalid response"),
+				httpStatusCode:          http.StatusOK,
+			}
+
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
+			credentialOffer := createSampleCredentialOffer(t, false, false)
+			credentialOffer.CredentialIssuer = server.URL
+
+			credentialOffer.CredentialConfigurationIDs = append(credentialOffer.CredentialConfigurationIDs,
+				"credential_configuration_id_1")
+
+			b, err := json.Marshal(credentialOffer)
+			require.NoError(t, err)
+
+			credentialOfferURI := "openid-credential-offer://?credential_offer=" + url.QueryEscape(string(b))
+
+			interaction := newIssuerInitiatedInteraction(t, credentialOfferURI)
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			require.Contains(t, err.Error(), "failed to get credential response")
 			require.Nil(t, credentials)
 		})
 	})

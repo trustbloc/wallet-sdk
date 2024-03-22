@@ -1,0 +1,104 @@
+{
+  "issuer_display": {
+    "name": "University Degree Issuer",
+    "locale": "en-US"
+  },
+  "credential_displays": [
+    {
+      "overview": {
+        "name": "University Degree Credential",
+        "locale": "en-US",
+        "logo": {
+          "uri": "https://example.com/public/logo.png",
+          "alt_text": "a square logo of a degree verification"
+        },
+        "background_color": "#12107c",
+        "text_color": "#FFFFFF"
+      },
+      "claims": [
+        {
+          "raw_id": "familyName",
+          "label": "Family Name",
+          "value_type": "string",
+          "raw_value": "John Doe",
+          "locale": "en-US"
+        },
+        {
+          "raw_id": "givenName",
+          "label": "Given Name",
+          "value_type": "string",
+          "raw_value": "John",
+          "locale": "en-US"
+        },
+        {
+          "raw_id": "degree",
+          "label": "Degree",
+          "value_type": "string",
+          "raw_value": "MIT",
+          "locale": "en-US"
+        },
+        {
+          "raw_id": "degreeSchool",
+          "label": "Degree School",
+          "value_type": "string",
+          "raw_value": "MIT school",
+          "locale": "en-US"
+        },
+        {
+          "raw_id": "photo",
+          "label": "Photo",
+          "value_type": "image",
+          "raw_value": "binary data"
+        }
+      ]
+    },
+    {
+      "overview": {
+        "name": "University Degree Credential",
+        "locale": "en-US",
+        "logo": {
+          "uri": "https://example.com/public/logo.png",
+          "alt_text": "a square logo of a degree verification"
+        },
+        "background_color": "#12107c",
+        "text_color": "#FFFFFF"
+      },
+      "claims": [
+        {
+          "raw_id": "familyName",
+          "label": "Family Name",
+          "value_type": "string",
+          "raw_value": "John Doe",
+          "locale": "en-US"
+        },
+        {
+          "raw_id": "givenName",
+          "label": "Given Name",
+          "value_type": "string",
+          "raw_value": "John",
+          "locale": "en-US"
+        },
+        {
+          "raw_id": "degree",
+          "label": "Degree",
+          "value_type": "string",
+          "raw_value": "MS",
+          "locale": "en-US"
+        },
+        {
+          "raw_id": "degreeSchool",
+          "label": "Degree School",
+          "value_type": "string",
+          "raw_value": "Stanford",
+          "locale": "en-US"
+        },
+        {
+          "raw_id": "photo",
+          "label": "Photo",
+          "value_type": "image",
+          "raw_value": "binary data"
+        }
+      ]
+    }
+  ]
+}

@@ -9,6 +9,8 @@ SPDX-License-Identifier: Apache-2.0
 package openid4ci
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,17 +19,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/piprate/json-gold/ld"
-
-	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
-
 	"github.com/google/uuid"
+	"github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/kms-go/doc/jose"
 	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
+	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
@@ -406,6 +406,10 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 		return nil, err
 	}
 
+	if len(i.credentialTypes) > 1 && i.interaction.issuerMetadata.BatchCredentialEndpoint != "" {
+		return i.getCredentialResponsesBatch(proofJWT, tokenResponse)
+	}
+
 	credentialResponses := make([]CredentialResponse, len(i.credentialTypes))
 
 	for index := range i.credentialTypes {
@@ -436,6 +440,78 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 		credentialResponses[index] = credentialResponse
 
 		i.interaction.storeAcknowledgmentID(credentialResponse.AscID)
+	}
+
+	return credentialResponses, nil
+}
+
+//nolint:funlen
+func (i *IssuerInitiatedInteraction) getCredentialResponsesBatch(
+	proofJWT string,
+	tokenResponse *preAuthTokenResponse,
+) ([]CredentialResponse, error) {
+	numberOfCredentials := len(i.credentialTypes)
+	credentialResponses := make([]CredentialResponse, numberOfCredentials)
+
+	batchCredentialReq := &batchCredentialRequest{
+		CredentialRequests: make([]credentialRequest, numberOfCredentials),
+	}
+
+	for index := range i.credentialTypes {
+		batchCredentialReq.CredentialRequests[index] = credentialRequest{
+			CredentialDefinition: &credentialDefinition{
+				Type: i.credentialTypes[index],
+			},
+			Format: i.credentialFormats[index],
+			Proof: proof{
+				ProofType: "jwt",
+				JWT:       proofJWT,
+			},
+		}
+	}
+
+	b, err := json.Marshal(batchCredentialReq)
+	if err != nil {
+		return nil, err
+	}
+
+	request, err := http.NewRequestWithContext(context.Background(),
+		http.MethodPost,
+		i.interaction.issuerMetadata.BatchCredentialEndpoint,
+		bytes.NewReader(b),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Authorization", "Bearer "+tokenResponse.AccessToken)
+
+	fetchCredentialResponseEventText := fmt.Sprintf(fetchCredentialViaGETReqEventText, numberOfCredentials,
+		numberOfCredentials, i.interaction.issuerMetadata.BatchCredentialEndpoint)
+
+	b, err = i.interaction.getRawCredentialResponse(request, fetchCredentialResponseEventText, i.interaction.httpClient)
+	if err != nil {
+		return nil, err
+	}
+
+	var response batchCredentialResponse
+
+	err = json.Unmarshal(b, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	for index, credentialResp := range response.CredentialResponses {
+		credentialResponses[index] = CredentialResponse{
+			Credential:      credentialResp.Credential,
+			TransactionID:   credentialResp.TransactionID,
+			CNonce:          *response.CNonce,
+			CNonceExpiresIn: *response.CNonceExpiresIn,
+			AscID:           credentialResp.AscID,
+		}
+
+		i.interaction.storeAcknowledgmentID(credentialResp.AscID)
 	}
 
 	return credentialResponses, nil

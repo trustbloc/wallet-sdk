@@ -160,6 +160,7 @@
     }
   },
   "credential_endpoint": "[SERVER_URL]/oidc/credential",
+  "batch_credential_endpoint": "[SERVER_URL]/oidc/batch_credential",
   "credential_issuer": "http://localhost:8075/issuer/bank_issuer/v1.0",
   "display": [
     {
