@@ -105,7 +105,13 @@ func initiatePreAuthorizedIssuance(issuerProfileIDs []string) {
 				claims = driverLicenseClaims
 			}
 
-			offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i], claims)
+			offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i],
+				[]oidc4ci.CredentialConfiguration{
+					{
+						ClaimData: claims,
+					},
+				},
+			)
 			if err == nil {
 				initiateIssuanceURLs = append(initiateIssuanceURLs, offerCredentialURL)
 				break

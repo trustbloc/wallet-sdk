@@ -86,7 +86,13 @@ func (h *VPTestHelper) IssueCredentials(t *testing.T, vcsAPIDirectURL string, is
 	issuerInfo := map[string]IssuerInfo{}
 
 	for i := 0; i < len(issuerProfileIDs); i++ {
-		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i], claimData[i])
+		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(issuerProfileIDs[i],
+			[]oidc4ci.CredentialConfiguration{
+				{
+					ClaimData: claimData[i],
+				},
+			},
+		)
 		require.NoError(t, err)
 
 		opts := did.NewResolverOpts()
