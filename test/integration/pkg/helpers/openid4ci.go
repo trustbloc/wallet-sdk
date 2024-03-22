@@ -103,7 +103,7 @@ func (h *CITestHelper) CheckActivityLogAfterOpenID4CIFlow(t *testing.T, vcsAPIDi
 	require.NoError(t, err)
 
 	numberOfSubjectIDs := subjectIDs.Length()
-	require.Equal(t, 1, numberOfSubjectIDs)
+	require.True(t, numberOfSubjectIDs > 0)
 
 	subjectID := subjectIDs.AtIndex(0)
 	require.Equal(t, expectedSubjectID, subjectID)

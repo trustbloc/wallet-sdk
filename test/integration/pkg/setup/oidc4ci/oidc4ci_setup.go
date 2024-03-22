@@ -52,9 +52,10 @@ type initiateIssuanceCredentialConfiguration struct {
 }
 
 type composeOIDC4CICredential struct {
-	Credential     *map[string]interface{} `json:"credential,omitempty"`
-	IdTemplate     *string                 `json:"id_template"`
-	OverrideIssuer *bool                   `json:"override_issuer"`
+	Credential         *map[string]interface{} `json:"credential,omitempty"`
+	IdTemplate         *string                 `json:"id_template"`
+	OverrideIssuer     *bool                   `json:"override_issuer"`
+	OverrideSubjectDid *bool                   `json:"override_subject_did"`
 }
 
 type initiateOIDC4CIRequest struct {

@@ -101,6 +101,12 @@ func (r *CredentialResponse) SerializeToCredentialsBytes() ([]byte, error) {
 	}
 }
 
+type batchCredentialResponse struct {
+	CNonce              *string              `json:"c_nonce,omitempty"`
+	CNonceExpiresIn     *int                 `json:"c_nonce_expires_in,omitempty"`
+	CredentialResponses []CredentialResponse `json:"credential_responses"`
+}
+
 type preAuthTokenResponse struct {
 	AccessToken     string `json:"access_token,omitempty"`
 	TokenType       string `json:"token_type,omitempty"`
@@ -134,6 +140,10 @@ type proof struct {
 	JWT             string `json:"jwt,omitempty"`
 	CNonce          string `json:"c_nonce,omitempty"`
 	CNonceExpiresIn int    `json:"c_nonce_expires_in,omitempty"`
+}
+
+type batchCredentialRequest struct {
+	CredentialRequests []credentialRequest `json:"credential_requests"`
 }
 
 type errorResponse struct {
