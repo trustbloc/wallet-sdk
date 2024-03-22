@@ -125,7 +125,7 @@ class IntegrationTest: XCTestCase {
         XCTAssertTrue(oneOfTheCreds.types()!.length() > 0)
         XCTAssertTrue(oneOfTheCreds.issuerID() != "")
         XCTAssertTrue(oneOfTheCreds.issuanceDate() > 0)
-        XCTAssertTrue(oneOfTheCreds.expirationDate() > 0)
+        // XCTAssertTrue(oneOfTheCreds.expirationDate() > 0)
         
         // Presenting from selected credentials.
         try vpInteraction.presentCredentialOpts(

@@ -207,7 +207,13 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		fmt.Println(fmt.Sprintf("running tests with issuerProfileID=%s issuerDIDMethod=%s walletDIDMethod=%s",
 			tc.issuerProfileID, tc.issuerDIDMethod, tc.walletDIDMethod))
 
-		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(tc.issuerProfileID, tc.claimData)
+		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(tc.issuerProfileID,
+			[]oidc4ci.CredentialConfiguration{
+				{
+					ClaimData: tc.claimData,
+				},
+			},
+		)
 		require.NoError(t, err)
 
 		println(offerCredentialURL)

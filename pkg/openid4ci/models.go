@@ -118,9 +118,15 @@ type universalAuthToken struct {
 }
 
 type credentialRequest struct {
-	Types  []string `json:"types,omitempty"`
-	Format string   `json:"format,omitempty"`
-	Proof  proof    `json:"proof,omitempty"`
+	CredentialDefinition *credentialDefinition `json:"credential_definition,omitempty"`
+	Format               string                `json:"format,omitempty"`
+	Proof                proof                 `json:"proof,omitempty"`
+}
+
+type credentialDefinition struct {
+	Context           *[]string               `json:"@context,omitempty"`
+	CredentialSubject *map[string]interface{} `json:"credentialSubject,omitempty"`
+	Type              []string                `json:"type"`
 }
 
 type proof struct {

@@ -449,7 +449,9 @@ func (i *interaction) createCredentialRequestWithoutAccessToken(proofJWT, creden
 	credentialTypes []string,
 ) (*http.Request, error) {
 	credentialReq := &credentialRequest{
-		Types:  credentialTypes,
+		CredentialDefinition: &credentialDefinition{
+			Type: credentialTypes,
+		},
 		Format: credentialFormat,
 		Proof: proof{
 			ProofType: "jwt",

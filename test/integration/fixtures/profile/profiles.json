@@ -32,7 +32,8 @@
             "profile"
           ],
           "grant_types_supported": [
-            "authorization_code"
+            "authorization_code",
+            "urn:ietf:params:oauth:grant-type:pre-authorized_code"
           ],
           "response_types_supported": [
             "code"
@@ -203,7 +204,8 @@
             "profile"
           ],
           "grant_types_supported": [
-            "authorization_code"
+            "authorization_code",
+            "urn:ietf:params:oauth:grant-type:pre-authorized_code"
           ],
           "response_types_supported": [
             "code"
@@ -413,7 +415,8 @@
             "profile"
           ],
           "grant_types_supported": [
-            "authorization_code"
+            "authorization_code",
+            "urn:ietf:params:oauth:grant-type:pre-authorized_code"
           ],
           "response_types_supported": [
             "code"
@@ -589,7 +592,8 @@
             "profile"
           ],
           "grant_types_supported": [
-            "authorization_code"
+            "authorization_code",
+            "urn:ietf:params:oauth:grant-type:pre-authorized_code"
           ],
           "response_types_supported": [
             "code"
@@ -764,7 +768,8 @@
             "profile"
           ],
           "grant_types_supported": [
-            "authorization_code"
+            "authorization_code",
+            "urn:ietf:params:oauth:grant-type:pre-authorized_code"
           ],
           "response_types_supported": [
             "code"
@@ -896,7 +901,8 @@
             "profile"
           ],
           "grant_types_supported": [
-            "authorization_code"
+            "authorization_code",
+            "urn:ietf:params:oauth:grant-type:pre-authorized_code"
           ],
           "response_types_supported": [
             "code"
@@ -1028,7 +1034,8 @@
             "profile"
           ],
           "grant_types_supported": [
-            "authorization_code"
+            "authorization_code",
+            "urn:ietf:params:oauth:grant-type:pre-authorized_code"
           ],
           "response_types_supported": [
             "code"

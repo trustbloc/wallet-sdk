@@ -15,11 +15,11 @@ import (
 	"io"
 	"net/http"
 	"net/http/cookiejar"
+	"time"
 
 	"github.com/google/uuid"
-	"golang.org/x/oauth2/clientcredentials"
-
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/httprequest"
 	"github.com/trustbloc/wallet-sdk/test/integration/pkg/oauth"
@@ -36,19 +36,37 @@ const (
 	organizationID  = "f13d1va9lp403pb9lyj89vk55"
 
 	vcsAPIGateway = "https://api-gateway.trustbloc.local:5566"
+
+	preAuthorizedCodeGrantType = "urn:ietf:params:oauth:grant-type:pre-authorized_code"
+	authorizationCodeGrantType = "authorization_code"
 )
 
+type initiateIssuanceCredentialConfiguration struct {
+	ClaimData             map[string]interface{}    `json:"claim_data,omitempty"`
+	ClaimEndpoint         string                    `json:"claim_endpoint,omitempty"`
+	CredentialTemplateId  string                    `json:"credential_template_id,omitempty"`
+	CredentialName        string                    `json:"credential_name,omitempty"`
+	CredentialDescription string                    `json:"credential_description,omitempty"`
+	CredentialExpiresAt   time.Time                 `json:"credential_expires_at,omitempty"`
+	Compose               *composeOIDC4CICredential `json:"compose,omitempty"`
+}
+
+type composeOIDC4CICredential struct {
+	Credential     *map[string]interface{} `json:"credential,omitempty"`
+	IdTemplate     *string                 `json:"id_template"`
+	OverrideIssuer *bool                   `json:"override_issuer"`
+}
+
 type initiateOIDC4CIRequest struct {
-	ClaimData                 *map[string]interface{} `json:"claim_data,omitempty"`
-	ClaimEndpoint             string                  `json:"claim_endpoint,omitempty"`
-	ClientInitiateIssuanceUrl string                  `json:"client_initiate_issuance_url,omitempty"`
-	ClientWellknown           string                  `json:"client_wellknown,omitempty"`
-	CredentialTemplateId      string                  `json:"credential_template_id,omitempty"`
-	GrantType                 string                  `json:"grant_type,omitempty"`
-	OpState                   string                  `json:"op_state,omitempty"`
-	ResponseType              string                  `json:"response_type,omitempty"`
-	Scope                     []string                `json:"scope,omitempty"`
-	UserPinRequired           *bool                   `json:"user_pin_required,omitempty"`
+	ClientInitiateIssuanceUrl string   `json:"client_initiate_issuance_url,omitempty"`
+	ClientWellknown           string   `json:"client_wellknown,omitempty"`
+	GrantType                 string   `json:"grant_type,omitempty"`
+	OpState                   string   `json:"op_state,omitempty"`
+	ResponseType              string   `json:"response_type,omitempty"`
+	Scope                     []string `json:"scope,omitempty"`
+	UserPinRequired           bool     `json:"user_pin_required,omitempty"`
+
+	CredentialConfiguration []initiateIssuanceCredentialConfiguration `json:"credential_configuration,omitempty"`
 }
 
 type initiateOIDC4CIResponse struct {
@@ -114,14 +132,33 @@ func (s *Setup) registerPublicClient() error {
 	return nil
 }
 
-func (s *Setup) InitiatePreAuthorizedIssuance(issuerProfileID string, claimData map[string]interface{}) (string, error) {
+type CredentialConfiguration struct {
+	ClaimData            map[string]interface{}
+	ClaimEndpoint        string `json:"claim_endpoint,omitempty"`
+	CredentialTemplateId string
+}
+
+func (s *Setup) InitiatePreAuthorizedIssuance(
+	issuerProfileID string,
+	credentialConfigurations []CredentialConfiguration,
+) (string, error) {
 	issuanceURL := fmt.Sprintf(offerCredentialURLFormat, s.apiURL, issuerProfileID)
 
+	configuration := make([]initiateIssuanceCredentialConfiguration, 0)
+
+	for _, c := range credentialConfigurations {
+		configuration = append(configuration,
+			initiateIssuanceCredentialConfiguration{
+				ClaimData:            c.ClaimData,
+				CredentialTemplateId: c.CredentialTemplateId,
+			},
+		)
+	}
+
 	reqBody, err := json.Marshal(&initiateOIDC4CIRequest{
-		ClaimData:            &claimData,
-		CredentialTemplateId: "templateID",
-		GrantType:            "authorization_code",
-		Scope:                []string{"openid", "profile"},
+		CredentialConfiguration: configuration,
+		GrantType:               preAuthorizedCodeGrantType,
+		Scope:                   []string{"openid", "profile"},
 	})
 	if err != nil {
 		return "", err
@@ -169,12 +206,16 @@ func InitiateAuthCodeIssuance() (string, error) {
 		"bank_issuer")
 
 	reqBody, err := json.Marshal(&initiateOIDC4CIRequest{
-		CredentialTemplateId: "templateID",
-		GrantType:            "authorization_code",
-		OpState:              uuid.New().String(),
-		ResponseType:         "code",
-		Scope:                []string{"openid", "profile"},
-		ClaimEndpoint:        claimDataURL,
+		CredentialConfiguration: []initiateIssuanceCredentialConfiguration{
+			{
+				CredentialTemplateId: "templateID",
+				ClaimEndpoint:        claimDataURL,
+			},
+		},
+		GrantType:    authorizationCodeGrantType,
+		OpState:      uuid.New().String(),
+		ResponseType: "code",
+		Scope:        []string{"openid", "profile"},
 	})
 
 	if err != nil {
