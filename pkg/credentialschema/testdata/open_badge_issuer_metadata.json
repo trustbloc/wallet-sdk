@@ -1,0 +1,94 @@
+{
+  "credential_issuer":"https://server.example.com",
+  "authorization_server":"https://server.example.com/oidc/authorize",
+  "credential_endpoint":"https://server.example.com/oidc/credential",
+  "display":[
+    {
+      "name":"OpenBadge Issuer",
+      "locale":"en-US",
+      "logo":{
+        "alt_text":"OpenBadge Issuer Logo",
+        "uri":"https://example.com/logo"
+      },
+      "background_color":"#FFF",
+      "text_color":"#000000",
+      "url":"https://www.openbadgeissuer.org/"
+    }
+  ],
+  "credential_configurations_supported":{
+    "AchievementCredential":{
+      "format":"jwt_vc_json-ld",
+      "cryptographic_binding_methods_supported":[
+        "did:web"
+      ],
+      "credential_signing_alg_values_supported":[
+        "RS256"
+      ],
+      "@context":[
+        "https://www.w3.org/2018/credentials/v1"
+      ],
+      "order": [
+        "$.achievement.fieldOfStudy",
+        "$.achievement.specialization",
+        "$.source.name",
+        "$.identifier[0].identityHash"
+      ],
+      "credential_definition":{
+        "type":[
+          "VerifiableCredential",
+          "AchievementCredential"
+        ],
+        "credentialSubject":{
+          "$.achievement.fieldOfStudy":{
+            "value_type":"string",
+            "display":[
+              {
+                "name":"Field(s) of Study",
+                "locale":"en-US"
+              }
+            ]
+          },
+          "$.achievement.specialization":{
+            "value_type":"string",
+            "display":[
+              {
+                "name":"Specialization(s)",
+                "locale":"en-US"
+              }
+            ]
+          },
+          "$.source.name":{
+            "value_type":"string",
+            "display":[
+              {
+                "name":"Educational Institution",
+                "locale":"en-US"
+              }
+            ]
+          },
+          "$.identifier[0].identityHash":{
+            "value_type":"string",
+            "display":[
+              {
+                "name":"Awarded to",
+                "locale":"en-US"
+              }
+            ]
+          }
+        }
+      },
+      "display":[
+        {
+          "name":"Degree Credential",
+          "locale":"en-US",
+          "logo":{
+            "url":"https://example.com/public/logo.png",
+            "alt_text":"a square logo of a university"
+          },
+          "background_color":"#FFF",
+          "text_color":"#000000"
+        }
+      ]
+    }
+  }
+}
