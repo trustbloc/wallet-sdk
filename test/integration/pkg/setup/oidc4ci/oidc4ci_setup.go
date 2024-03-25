@@ -47,7 +47,7 @@ type initiateIssuanceCredentialConfiguration struct {
 	CredentialTemplateId  string                    `json:"credential_template_id,omitempty"`
 	CredentialName        string                    `json:"credential_name,omitempty"`
 	CredentialDescription string                    `json:"credential_description,omitempty"`
-	CredentialExpiresAt   time.Time                 `json:"credential_expires_at,omitempty"`
+	CredentialExpiresAt   *time.Time                `json:"credential_expires_at,omitempty"`
 	Compose               *composeOIDC4CICredential `json:"compose,omitempty"`
 }
 

@@ -368,6 +368,16 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, credentials)
 
+		for i := 0; i < credentials.Length(); i++ {
+			cred := credentials.AtIndex(i)
+
+			require.NotEmpty(t, cred.ID())
+			require.NotEmpty(t, cred.IssuerID())
+			require.NotEmpty(t, cred.Types())
+			require.True(t, cred.IssuanceDate() > 0)
+			require.True(t, cred.ExpirationDate() > 0)
+		}
+
 		requestedAcknowledgment, err := interaction.Acknowledgment()
 		require.NotNil(t, requestedAcknowledgment)
 
