@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/PaesslerAG/jsonpath"
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
@@ -285,17 +286,33 @@ func getMatchingClaimValue(credentialSubject *verifiable.Subject, fieldName stri
 		return credentialSubject.ID
 	}
 
-	value, exists := credentialSubject.CustomFields[fieldName]
-	if exists {
-		return value
-	}
+	if strings.HasPrefix(fieldName, "$.") {
+		value := findMatchingClaimUsingJSONPath(credentialSubject.CustomFields, fieldName)
+		if value != nil {
+			return value
+		}
+	} else {
+		value, exists := credentialSubject.CustomFields[fieldName]
+		if exists {
+			return value
+		}
 
-	value = findMatchingClaimValueInMap(credentialSubject.CustomFields, fieldName)
-	if value != nil {
-		return value
+		value = findMatchingClaimValueInMap(credentialSubject.CustomFields, fieldName)
+		if value != nil {
+			return value
+		}
 	}
 
 	return nil
+}
+
+func findMatchingClaimUsingJSONPath(claims map[string]interface{}, fieldName string) interface{} {
+	value, err := jsonpath.Get(fieldName, claims)
+	if err != nil {
+		return nil
+	}
+
+	return value
 }
 
 // If nil is returned, then no matching claim was found.

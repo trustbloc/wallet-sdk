@@ -39,6 +39,12 @@ var (
 	//go:embed testdata/credential_university_degree.jsonld
 	credentialUniversityDegree []byte
 
+	//go:embed testdata/open_badge_vc.jsonld
+	openBadgeVC []byte
+
+	//go:embed testdata/open_badge_issuer_metadata.json
+	openBadgeMetadata []byte
+
 	//go:embed testdata/unsupported_credential_multiple_subjects.jsonld
 	unsupportedCredentialMultipleSubjects []byte
 
@@ -443,6 +449,26 @@ func TestResolve(t *testing.T) { //nolint: gocognit // Test file
 			credentialschema.WithIssuerMetadata(&issuerMetadata))
 		require.EqualError(t, errResolve, "error parsing regexp: missing closing ): `(`")
 		require.Nil(t, resolvedDisplayData)
+	})
+}
+
+func TestResolveMetadataWithJsonPath(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		credential, err := verifiable.ParseCredential(openBadgeVC,
+			verifiable.WithCredDisableValidation(),
+			verifiable.WithDisabledProofCheck())
+		require.NoError(t, err)
+
+		var issuerMetadata issuer.Metadata
+
+		err = json.Unmarshal(openBadgeMetadata, &issuerMetadata)
+		require.NoError(t, err)
+
+		resolvedDisplayData, errResolve := credentialschema.Resolve(
+			credentialschema.WithCredentials([]*verifiable.Credential{credential}),
+			credentialschema.WithIssuerMetadata(&issuerMetadata))
+		require.NoError(t, errResolve)
+		require.Equal(t, len(resolvedDisplayData.CredentialDisplays[0].Claims), 4)
 	})
 }
 
