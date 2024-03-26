@@ -10,9 +10,9 @@ import 'package:app/widgets/common_title_appbar.dart';
 import 'package:app/widgets/success_card.dart';
 
 class CredentialAdded extends StatefulWidget {
-  CredentialData credentialData;
+  final List<CredentialData> credentialData;
 
-  CredentialAdded({required this.credentialData, Key? key}) : super(key: key);
+  const CredentialAdded({required this.credentialData, Key? key}) : super(key: key);
 
   @override
   State<CredentialAdded> createState() => CredentialAddedPage();
@@ -30,7 +30,7 @@ class CredentialAddedPage extends State<CredentialAdded> {
         backgroundColor: const Color(0xffF4F1F5),
         body: Center(
           child: SuccessCard(
-            credentialData: [widget.credentialData],
+            credentialDatas: widget.credentialData,
             verifierName: '',
             subTitle: 'Credential has been added to your wallet',
           ),

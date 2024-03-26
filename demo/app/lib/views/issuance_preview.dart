@@ -259,10 +259,10 @@ class IssuancePreviewState extends State<IssuancePreview> {
   void navigateToWithoutPinFlow(BuildContext context) async {
     var credentialData = await fetchPreviewScreenDetails();
 
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialData: credentialData)));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialsData: credentialData)));
   }
 
-  Future<CredentialData> fetchPreviewScreenDetails() async {
+  Future<List<CredentialData>> fetchPreviewScreenDetails() async {
     final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
     final StorageService storageService = StorageService();
     final SharedPreferences pref = await prefs;
@@ -281,26 +281,33 @@ class IssuancePreviewState extends State<IssuancePreview> {
     pref.setString('userDID', didID);
     pref.setString('userDIDDoc', didDoc);
 
-    String? credentials = await WalletSDKPlugin.requestCredential(
+    final credentials = await WalletSDKPlugin.requestCredential(
       '',
       attestationVC: await AttestationService.returnAttestationVCIfEnabled(),
     );
-    String? issuerURL = await WalletSDKPlugin.issuerURI();
-    String? resolvedCredentialDisplay = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURL!);
-    log('resolvedCredentialDisplay $resolvedCredentialDisplay');
+    final issuerURL = await WalletSDKPlugin.issuerURI();
+    final resolvedCredentialsDisplay = await WalletSDKPlugin.resolveDisplayData(credentials.map((e) => e.content).toList(), issuerURL!);
 
     var activities = await WalletSDKPlugin.storeActivityLogger();
 
-    var credID = await WalletSDKPlugin.getCredID([credentials]);
+    final result = <CredentialData>[];
 
-    log('activities and credID handle open id  -$activities and $credID');
-    storageService.addActivities(ActivityDataObj(credID!, activities));
+    for (int i = 0; i < credentials.length; ++i) {
+      var credential = credentials[i].content;
+      var credID = credentials[i].id;
 
-    return CredentialData(
-        rawCredential: credentials,
-        issuerURL: issuerURL,
-        credentialDisplayData: resolvedCredentialDisplay!,
-        credentialDID: didID,
-        credID: credID);
+      log('activities and credID handle open id  -$activities and $credID');
+      storageService.addActivities(ActivityDataObj(credID, activities));
+
+      result.add(CredentialData(
+          rawCredential: credential,
+          issuerURL: issuerURL,
+          credentialDisplayData: resolvedCredentialsDisplay.credentialsDisplay[i],
+          issuerDisplayData: resolvedCredentialsDisplay.issuerDisplay,
+          credentialDID: didID,
+          credID: credID));
+    }
+
+    return result;
   }
 }

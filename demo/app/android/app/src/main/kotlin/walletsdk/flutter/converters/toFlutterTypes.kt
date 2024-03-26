@@ -9,16 +9,31 @@ package walletsdk.flutter.converters
 import dev.trustbloc.wallet.sdk.credential.InputDescriptor
 import dev.trustbloc.wallet.sdk.credential.SubmissionRequirement
 import dev.trustbloc.wallet.sdk.credential.SubmissionRequirementArray
+import dev.trustbloc.wallet.sdk.display.Data
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
-fun convertVerifiableCredentialsArray(arr: CredentialsArray): List<String> {
+public fun convertVerifiableCredentialsArray(arr: CredentialsArray): List<String> {
     return List(arr.length().toInt()
     ) { i: Int ->
         arr.atIndex(i.toLong()).serialize()
     }
 }
 
-fun convertSubmissionRequirementArray(requirements: SubmissionRequirementArray): List<HashMap<String, Any>> {
+public fun convertVerifiableCredentialsWithIdArray(arr: CredentialsArray): List<HashMap<String, String>> {
+    return List(arr.length().toInt()
+    ) { i: Int ->
+        hashMapOf("id" to arr.atIndex(i.toLong()).id(), "content" to arr.atIndex(i.toLong()).serialize())
+    }
+}
+
+public fun convertCredentialsDisplayDataArray(arr: Data): List<String> {
+    return List(arr.credentialDisplaysLength().toInt()
+    ) { i: Int ->
+        arr.credentialDisplayAtIndex(i.toLong()).serialize()
+    }
+}
+
+public fun convertSubmissionRequirementArray(requirements: SubmissionRequirementArray): List<HashMap<String, Any>> {
     return List(requirements.len().toInt()
     ) { i: Int ->
         convertSubmissionRequirement(requirements.atIndex(i.toLong()))

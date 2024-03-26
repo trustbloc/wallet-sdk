@@ -20,9 +20,9 @@ import 'package:app/widgets/credential_card.dart';
 import 'package:app/widgets/primary_button.dart';
 
 class CredentialPreview extends StatefulWidget {
-  final CredentialData credentialData;
+  final List<CredentialData> credentialsData;
 
-  const CredentialPreview({super.key, required this.credentialData});
+  const CredentialPreview({super.key, required this.credentialsData});
 
   @override
   State<CredentialPreview> createState() => CredentialPreviewState();
@@ -40,15 +40,15 @@ class CredentialPreviewState extends State<CredentialPreview> {
   @override
   void initState() {
     super.initState();
-    WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then((response) {
+    WalletSDKPlugin.parseIssuerDisplay(widget.credentialsData[0].issuerDisplayData).then((response) {
       setState(() {
-        if (response.first.issuerName.isNotEmpty) {
-          issuerDisplayData = response.first.issuerName;
+        if (response.name.isNotEmpty) {
+          issuerDisplayData = response.name;
         }
       });
     });
 
-    WalletSDKPlugin.getIssuerID([widget.credentialData.rawCredential]).then((response) {
+    WalletSDKPlugin.getIssuerID([...widget.credentialsData.map((e) => e.rawCredential)]).then((response) {
       setState(() {
         issuerID = response!;
       });
@@ -137,8 +137,12 @@ class CredentialPreviewState extends State<CredentialPreview> {
                   style: TextStyle(fontSize: 18, color: Colors.black),
                   'wants to issue the credential'),
             ),
-            CredentialCard(
-                credentialData: widget.credentialData, isDashboardWidget: false, isDetailArrowRequired: false),
+            for (var credentialData in widget.credentialsData)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: CredentialCard(
+                    credentialData: credentialData, isDashboardWidget: false, isDetailArrowRequired: false),
+              ),
             Expanded(
               child: Align(
                 alignment: Alignment.bottomCenter,
@@ -165,8 +169,11 @@ class CredentialPreviewState extends State<CredentialPreview> {
                             if (ackResp == true) {
                               WalletSDKPlugin.acknowledgeSuccess();
                             }
-                            _storageService.addCredential(
-                                CredentialDataObject('$userLoggedIn-${uuid.v1()}', widget.credentialData));
+                            for (var credentialData in widget.credentialsData) {
+                              await _storageService
+                                  .addCredential(CredentialDataObject('$userLoggedIn-${uuid.v1()}', credentialData));
+                            }
+
                             _navigateToCredentialAdded();
                           },
                           width: double.infinity,
@@ -202,7 +209,7 @@ class CredentialPreviewState extends State<CredentialPreview> {
 
   _navigateToCredentialAdded() async {
     Navigator.push(
-        context, MaterialPageRoute(builder: (context) => CredentialAdded(credentialData: widget.credentialData)));
+        context, MaterialPageRoute(builder: (context) => CredentialAdded(credentialData: widget.credentialsData)));
   }
 
   _navigateToDashboard() async {

@@ -50,21 +50,16 @@ void main() async {
           disableTLSVerify: true,
           authenticationMethod: 'system_biometry');
 
-      final credential = await walletSDKPlugin.requestCredential('', attestationVC: attestationVC);
-      debugPrint('content: $credential');
-      for (final p in credential.split('.')) {
-        print('----');
-        print(p);
-      }
+      final credentials = (await walletSDKPlugin.requestCredential('', attestationVC: attestationVC)).map((e) => e.content).toList();
 
-      expect(credential, hasLength(greaterThan(0)));
+      expect(credentials, hasLength(greaterThan(0)));
 
       String verificationURL = verificationURLsList[i];
       print('verificationURL : $verificationURL');
 
       await walletSDKPlugin.processAuthorizationRequest(authorizationRequest: verificationURL);
 
-      final requirements = await walletSDKPlugin.getSubmissionRequirements(storedCredentials: [credential]);
+      final requirements = await walletSDKPlugin.getSubmissionRequirements(storedCredentials: credentials);
 
       print('getSubmissionRequirements finished');
 
@@ -76,7 +71,7 @@ void main() async {
       };
 
       await walletSDKPlugin.presentCredential(
-          selectedCredentials: [credential], customScopeList: customScopesList, attestationVC: attestationVC);
+          selectedCredentials: credentials, customScopeList: customScopesList, attestationVC: attestationVC);
     }
   });
 
@@ -106,11 +101,11 @@ void main() async {
       var requirePIN = initializeRespJson['pinRequired'];
       print('requirePIN: $requirePIN');
 
-      final credential = await walletSDKPlugin.requestCredential('');
+      final requestdCreds = await walletSDKPlugin.requestCredential('');
 
-      expect(credential, hasLength(greaterThan(0)));
+      expect(requestdCreds, hasLength(greaterThan(0)));
 
-      credentials.add(credential);
+      credentials.addAll(requestdCreds.map((e) => e.content).toList());
     }
     print('issued credentials: $credentials');
 

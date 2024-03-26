@@ -40,10 +40,10 @@ class _CredentialCardState extends State<CredentialCard> {
   void initState() {
     WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then((response) {
       setState(() {
-          credentialDisplayName = response.first.overviewName;
-          logoURL = response.first.logo;
-          backgroundColor = '0xff${response.first.backgroundColor.toString().replaceAll('#', '')}';
-          textColor = '0xff${response.first.textColor.toString().replaceAll('#', '')}';
+          credentialDisplayName = response.overviewName;
+          logoURL = response.logo;
+          backgroundColor = '0xff${response.backgroundColor.toString().replaceAll('#', '')}';
+          textColor = '0xff${response.textColor.toString().replaceAll('#', '')}';
       });
     });
     super.initState();

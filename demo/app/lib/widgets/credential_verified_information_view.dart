@@ -28,8 +28,8 @@ class CredentialVerifiedState extends State<CredentialVerifiedInformation> {
     });
     WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then((response) {
       setState(() {
-        if(response.first.claims.isNotEmpty){
-        credentialClaimsData = response.first.claims;
+        if(response.claims.isNotEmpty){
+        credentialClaimsData = response.claims;
 
         credentialClaimsData.sort((a, b) {
           final aOrder = a.order ?? -1;
