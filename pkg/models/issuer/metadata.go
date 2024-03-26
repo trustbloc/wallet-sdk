@@ -101,9 +101,8 @@ type CredentialConfigurationSupported struct {
 	// who possesses the Credential.
 	CryptographicBindingMethodsSupported []string `json:"cryptographic_binding_methods_supported,omitempty"`
 
-	// Array of case-sensitive strings that identify the cryptographic suites
-	// that are supported for the cryptographic_binding_methods_supported.
-	CryptographicSuitesSupported []string `json:"cryptographic_suites_supported,omitempty"`
+	// Array of case-sensitive strings that identify the algorithms that the Issuer uses to sign the issued Credential.
+	CredentialSigningAlgValuesSupported []string `json:"credential_signing_alg_values_supported,omitempty"`
 
 	// An array of objects, where each object contains the display properties of the
 	// supported credential for a certain language.
@@ -120,9 +119,8 @@ type CredentialConfigurationSupported struct {
 	// Array of the claim name values that lists them in the order they should be displayed by the Wallet.
 	Order []string `json:"order,omitempty"`
 
-	// A JSON array of case-sensitive strings, each representing proof_type that the Credential Issuer supports.
-	// If omitted, the default value is jwt.
-	ProofTypes []string `json:"proof_types,omitempty"`
+	// Object that describes specifics of the key proof(s) that the Credential Issuer supports.
+	ProofTypesSupported map[string]ProofTypeSupported `json:"proof_types_supported,omitempty"`
 
 	// A JSON string identifying the scope value that this Credential Issuer supports for this particular credential.
 	Scope string `json:"scope,omitempty"`
@@ -173,6 +171,12 @@ type CredentialResponseEncryptionSupported struct {
 	// every Credential Response and therefore the Wallet MUST provide encryption keys in the Credential Request.
 	// If the value is false, the Wallet MAY choose whether it provides encryption keys or not.
 	EncryptionRequired bool `json:"encryption_required"`
+}
+
+// ProofTypeSupported contains metadata about the proof type that the Credential Issuer supports.
+type ProofTypeSupported struct {
+	// Array of case-sensitive strings that identify the algorithms that the Issuer supports for this proof type.
+	ProofSigningAlgValuesSupported []string `json:"proof_signing_alg_values_supported"`
 }
 
 // GetJWTKID returns the jwtKID field. This is exposed via this method instead of with an exported field because

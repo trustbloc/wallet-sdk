@@ -133,7 +133,7 @@
       "cryptographic_binding_methods_supported": [
         "ion"
       ],
-      "cryptographic_suites_supported": [
+      "credential_signing_alg_values_supported": [
         "ED25519"
       ],
       "display": [
@@ -152,9 +152,13 @@
       "doctype": "",
       "format": "jwt_vc_json",
       "order": null,
-      "proof_types": [
-        "jwt"
-      ],
+      "proof_types_supported": {
+        "jwt": {
+          "proof_signing_alg_values_supported": [
+            "ED25519"
+          ]
+        }
+      },
       "scope": "",
       "vct": ""
     }
