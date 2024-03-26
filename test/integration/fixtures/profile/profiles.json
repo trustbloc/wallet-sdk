@@ -155,7 +155,7 @@
               "cryptographic_binding_methods_supported": [
                 "did"
               ],
-              "cryptographic_suites_supported": [
+              "credential_signing_alg_values_supported": [
                 "Ed25519Signature2018"
               ],
               "display": [
@@ -357,7 +357,7 @@
               "cryptographic_binding_methods_supported": [
                 "did"
               ],
-              "cryptographic_suites_supported": [
+              "credential_signing_alg_values_supported": [
                 "Ed25519Signature2018"
               ],
               "display": [
@@ -541,7 +541,7 @@
               "cryptographic_binding_methods_supported": [
                 "did"
               ],
-              "cryptographic_suites_supported": [
+              "credential_signing_alg_values_supported": [
                 "Ed25519Signature2018"
               ],
               "display": [
@@ -718,7 +718,7 @@
               "cryptographic_binding_methods_supported": [
                 "did"
               ],
-              "cryptographic_suites_supported": [
+              "credential_signing_alg_values_supported": [
                 "Ed25519Signature2018"
               ],
               "display": [
@@ -852,7 +852,7 @@
               "cryptographic_binding_methods_supported": [
                 "did"
               ],
-              "cryptographic_suites_supported": [
+              "credential_signing_alg_values_supported": [
                 "Ed25519Signature2018"
               ],
               "display": [
@@ -985,7 +985,7 @@
               "cryptographic_binding_methods_supported": [
                 "did"
               ],
-              "cryptographic_suites_supported": [
+              "credential_signing_alg_values_supported": [
                 "Ed25519Signature2018"
               ],
               "display": [
@@ -1132,7 +1132,7 @@
               "cryptographic_binding_methods_supported": [
                 "did"
               ],
-              "cryptographic_suites_supported": [
+              "credential_signing_alg_values_supported": [
                 "Ed25519Signature2018"
               ],
               "display": [

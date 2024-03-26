@@ -44,12 +44,16 @@
       "cryptographic_binding_methods_supported": [
         "web"
       ],
-      "cryptographic_suites_supported": [
+      "credential_signing_alg_values_supported": [
         "ECDSAP256DER"
       ],
-      "proof_types": [
-        "jwt"
-      ]
+      "proof_types_supported": {
+        "jwt": {
+          "proof_signing_alg_values_supported": [
+            "ECDSAP256DER"
+          ]
+        }
+      }
     }
   },
   "credential_endpoint": "[SERVER_URL]/oidc/credential",

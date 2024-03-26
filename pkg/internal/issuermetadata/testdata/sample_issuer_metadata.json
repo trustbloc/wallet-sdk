@@ -17,7 +17,7 @@
       "cryptographic_binding_methods_supported": [
         "jwk"
       ],
-      "cryptographic_suites_supported": [
+      "credential_signing_alg_values_supported": [
         "ECDSAP256DER"
       ],
       "display": [

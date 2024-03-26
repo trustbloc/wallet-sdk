@@ -340,7 +340,7 @@ func TestNewIssuerInitiatedInteraction(t *testing.T) {
 			  "cryptographic_binding_methods_supported": [
 				"ion"
 			  ],
-			  "cryptographic_suites_supported": [
+			  "credential_signing_alg_values_supported": [
 				"ED25519"
 			  ],
 			  "display": [
@@ -357,9 +357,13 @@ func TestNewIssuerInitiatedInteraction(t *testing.T) {
 				}
 			  ],
 			  "format": "jwt_vc_json_unsupported",
-			  "proof_types": [
-				"jwt"
-			  ]
+			  "proof_types_supported": {
+				"jwt": {
+				  "proof_signing_alg_values_supported": [
+					"ED25519"
+				  ]
+				}
+			  }
 			}
 		  },
 		  "credential_endpoint": "[SERVER_URL]/oidc/credential",
