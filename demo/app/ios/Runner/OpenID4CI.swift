@@ -94,7 +94,7 @@ public class OpenID4CI {
         return credentials.atIndex(0)!;
     }
     
-    func requestCredential(didVerificationMethod: ApiVerificationMethod, otp: String, attestationVC: String?) throws -> VerifiableCredential{
+    func requestCredentials(didVerificationMethod: ApiVerificationMethod, otp: String, attestationVC: String?) throws -> Array<Dictionary<String, Any>> {
         let opts = Openid4ciRequestCredentialWithPreAuthOpts()!.setPIN(otp)!
 
         if(attestationVC != nil) {
@@ -102,7 +102,7 @@ public class OpenID4CI {
         }
 
         let credentials  = try initiatedInteraction.requestCredential(withPreAuth: didVerificationMethod, opts: opts)
-        return credentials.atIndex(0)!;
+        return convertVerifiableCredentialsWithIdArray(arr:credentials);
     }
     
     func requireAcknowledgment() throws -> ObjCBool{

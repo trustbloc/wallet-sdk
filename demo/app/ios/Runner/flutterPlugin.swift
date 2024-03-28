@@ -41,9 +41,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         case "initializeWalletInitiatedFlow":
             initializeWalletInitiatedFlow(arguments: arguments!, result: result)
             
-        case "requestCredential":
+        case "requestCredentials":
 
-            requestCredential(arguments: arguments!, result: result)
+            requestCredentials(arguments: arguments!, result: result)
             
         case "parseWalletSDKError":
             let localizedErrorMessage = fetchArgsKeyValue(call, key: "localizedErrorMessage")
@@ -71,11 +71,14 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             
         case "getCredentialOfferDisplayData":
             getCredentialOfferDisplayData(result: result)
-        case "serializeDisplayData":
-            serializeDisplayData(arguments: arguments!,  result: result)
+        case "resolveDisplayData":
+            resolveDisplayData(arguments: arguments!,  result: result)
             
         case "parseCredentialDisplay":
             parseCredentialDisplay(arguments: arguments!, result: result)
+            
+        case "parseIssuerDisplay":
+            parseIssuerDisplay(arguments: arguments!, result: result)
             
         case "getVersionDetails":
             getVersionDetails(result:result)
@@ -819,7 +822,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
      Openid4ciNewCredentialRequestOpt.
      If flow doesnt not require pin than Credential Request Opts will have empty string otp and sdk will return credential Data based on empty otp.
      */
-    public func requestCredential(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
+    public func requestCredentials(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
        let otp = arguments["otp"] as? String
 
         guard let openID4CI = self.openID4CI else{
@@ -837,8 +840,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         let attestationVC = arguments["attestationVC"] as? String
         
         do {
-            let credentialCreated = try openID4CI.requestCredential(didVerificationMethod: attestationDID.assertionMethod(), otp: otp!, attestationVC: attestationVC)
-            result(credentialCreated.serialize(nil))
+            let credentialCreated = try openID4CI.requestCredentials(didVerificationMethod: attestationDID.assertionMethod(), otp: otp!, attestationVC: attestationVC)
+            result(credentialCreated)
         } catch let error as NSError{
             return result(FlutterError.init(code: "Exception",
                                             message: "error while requesting credential",
@@ -1010,7 +1013,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
      IssuerURI and array of credentials  are parsed using VcparseParse to be passed to Openid4ciResolveDisplay which returns the resolved Display Data
      */
     
-    public func serializeDisplayData(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
+    public func resolveDisplayData(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
         do {
             guard let issuerURI = arguments["uri"] as? String else{
                 return  result(FlutterError.init(code: "NATIVE_ERR",
@@ -1038,9 +1041,13 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                 message: "error while resolving credential",
                                                 details: resolveError?.localizedDescription))
             }
-            let resolvedDisplayDataString = resolvedDisplayData!.serialize(nil)
             
-            result(resolvedDisplayDataString)
+            let serialized : [String: Any] = [
+                "credentialsDisplay" : convertCredentialsDisplayDataArray(arr: resolvedDisplayData!),
+                "issuerDisplay": resolvedDisplayData!.issuerDisplay()!.serialize(nil)
+            ]
+            
+            result(serialized)
         } catch let error as NSError {
             let parsedError = WalleterrorParse(error.localizedDescription)
             return result(FlutterError.init(code: "Exception",
@@ -1072,57 +1079,67 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              message: "error while parseCredentialDisplay",
                                              details: "parameter resolvedCredentialDisplayData is missed"))
         }
-        let displayData = DisplayParseData(resolvedCredentialDisplayData, nil)
-        let issuerDisplayData = displayData?.issuerDisplay()
-        
-        var resolvedCredDisplayList : [Any] = []
+        let credentialDisplay = DisplayParseCredentialDisplay(resolvedCredentialDisplayData, nil)!
+      
         var claimList:[Any] = []
-        
-        if(displayData!.credentialDisplaysLength() != 0){
-            for i in 0...((displayData!.credentialDisplaysLength())-1){
-                let credentialDisplay = displayData!.credentialDisplay(at: i)!
-                if(credentialDisplay.claimsLength() != 0){
-                    for i in 0...(credentialDisplay.claimsLength())-1{
-                        let claim = credentialDisplay.claim(at: i)!
-                        var claims : [String: Any] = [:]
-                        if claim.isMasked(){
-                            claims["value"] = claim.value()
-                            claims["rawValue"] = claim.rawValue()
-                        }
-                        var order: Int = -1
-                        if claim.hasOrder() {
-                            do {
-                                try claim.order(&order)
-                                claims["order"] = order
-                            } catch let err as NSError {
-                                print("Error: \(err)")
-                            }
-                        }
-                        claims["rawValue"] = claim.rawValue()
-                        claims["valueType"] = claim.valueType()
-                        claims["label"] = claim.label()
-                        claimList.append(claims)
+        if(credentialDisplay.claimsLength() != 0){
+            for i in 0...(credentialDisplay.claimsLength())-1{
+                let claim = credentialDisplay.claim(at: i)!
+                var claims : [String: Any] = [:]
+                if claim.isMasked(){
+                    claims["value"] = claim.value()
+                    claims["rawValue"] = claim.rawValue()
+                }
+                var order: Int = -1
+                if claim.hasOrder() {
+                    do {
+                        try claim.order(&order)
+                        claims["order"] = order
+                    } catch let err as NSError {
+                        print("Error: \(err)")
                     }
                 }
-                
-                let overview = credentialDisplay.overview()
-                let logo = overview?.logo()
-                
-                var resolveDisplayResp : [String: Any] = [:]
-                resolveDisplayResp["claims"] = claimList
-                resolveDisplayResp["overviewName"] = overview?.name()
-                resolveDisplayResp["logo"] = logo?.url()
-                resolveDisplayResp["textColor"] = overview?.textColor()
-                resolveDisplayResp["backgroundColor"] = overview?.backgroundColor()
-                resolveDisplayResp["issuerName"] =  issuerDisplayData?.name()
-                
-                
-                resolvedCredDisplayList.append(resolveDisplayResp)
+                claims["rawValue"] = claim.rawValue()
+                claims["valueType"] = claim.valueType()
+                claims["label"] = claim.label()
+                claimList.append(claims)
             }
         }
         
+        let overview = credentialDisplay.overview()
+        let logo = overview?.logo()
         
-        result(resolvedCredDisplayList)
+        var resolveDisplayResp : [String: Any] = [:]
+        resolveDisplayResp["claims"] = claimList
+        resolveDisplayResp["overviewName"] = overview?.name()
+        resolveDisplayResp["logo"] = logo?.url()
+        resolveDisplayResp["textColor"] = overview?.textColor()
+        resolveDisplayResp["backgroundColor"] = overview?.backgroundColor()
+        
+        result(resolveDisplayResp)
+    }
+    
+    public func parseIssuerDisplay(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
+        guard let issuerDisplayData = arguments["issuerDisplayData"] as? String else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error while parseIssuerDisplay",
+                                             details: "parameter issuerDisplayData is missed"))
+        }
+        
+        let issuerDisplay = DisplayParseIssuerDisplay(issuerDisplayData, nil)
+        
+        let serialized = [
+            "name" : issuerDisplay?.name(),
+            "locale" : issuerDisplay?.locale(),
+            "url" : issuerDisplay?.url(),
+            "textColor" : issuerDisplay?.textColor(),
+            "backgroundColor" : issuerDisplay?.backgroundColor(),
+            "logo" : issuerDisplay?.logo()?.url(),
+            
+        ];
+        
+        result(serialized)
+       
     }
     
     public func credentialStatusVerifier(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
