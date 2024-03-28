@@ -185,29 +185,44 @@ class _OTPPage extends State<OTP> {
                                   _isLoading = true;
                                 });
 
-                                String? credentials;
-                                String? serializeDisplayData;
                                 try {
                                   final SharedPreferences pref = await prefs;
                                   await _createDid();
                                   pref.setString('userDID', userDIDId);
                                   pref.setString('userDIDDoc', userDIDDoc);
-                                  credentials = await WalletSDKPlugin.requestCredential(_otp!,
-                                    attestationVC :await AttestationService.returnAttestationVCIfEnabled(),);
+                                  final credentials = await WalletSDKPlugin.requestCredential(
+                                    _otp!,
+                                    attestationVC: await AttestationService.returnAttestationVCIfEnabled(),
+                                  );
+
                                   String? issuerURI = await WalletSDKPlugin.issuerURI();
-                                  serializeDisplayData =
-                                      await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
-                                  log('serializeDisplayData otp-> $serializeDisplayData');
+                                  final resolvedCredentialsDisplay = await WalletSDKPlugin.resolveDisplayData(
+                                      credentials.map((e) => e.content).toList(), issuerURI!);
+                                  log('serializeDisplayData otp-> $resolvedCredentialsDisplay');
                                   var activities = await WalletSDKPlugin.storeActivityLogger();
-                                  var credID = await WalletSDKPlugin.getCredID([credentials]);
-                                  log('activities and credID -$activities and $credID');
-                                  _storageService.addActivities(ActivityDataObj(credID!, activities));
-                                  pref.setString('credID', credID);
+
+                                  final result = <CredentialData>[];
+                                  for (int i = 0; i < credentials.length; ++i) {
+                                    var credential = credentials[i].content;
+                                    var credID = credentials[i].id;
+
+                                    log('activities and credID -$activities and $credID');
+                                    _storageService.addActivities(ActivityDataObj(credID!, activities));
+                                    pref.setString('credID', credID);
+
+                                    result.add(CredentialData(
+                                        rawCredential: credential,
+                                        issuerURL: issuerURI,
+                                        credentialDisplayData: resolvedCredentialsDisplay.credentialsDisplay[i],
+                                        issuerDisplayData: resolvedCredentialsDisplay.issuerDisplay,
+                                        credentialDID: userDIDId,
+                                        credID: credID));
+                                  }
                                   setState(() {
                                     _isLoading = false;
                                   });
-                                  _navigateToCredPreviewScreen(
-                                      credentials, issuerURI, serializeDisplayData!, userDIDId, credID);
+
+                                  _navigateToCredPreviewScreen(result);
                                 } catch (err) {
                                   String errorMessage = err.toString();
                                   log('errorMessage-> $errorMessage');
@@ -268,18 +283,12 @@ class _OTPPage extends State<OTP> {
         ));
   }
 
-  _navigateToCredPreviewScreen(
-      String credentialResp, String issuerURI, String credentialDisplayData, String didID, String credID) async {
+  _navigateToCredPreviewScreen(List<CredentialData> credentialsData) async {
     Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) => CredentialPreview(
-                  credentialData: CredentialData(
-                      rawCredential: credentialResp,
-                      issuerURL: issuerURI,
-                      credentialDisplayData: credentialDisplayData,
-                      credentialDID: didID,
-                      credID: credID),
+                  credentialsData: credentialsData,
                 )));
   }
 

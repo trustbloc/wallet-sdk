@@ -29,8 +29,8 @@ class CredentialMetaDataCardState extends State<CredentialMetaDataCard> {
     super.initState();
     WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then((response) {
       setState(() {
-        if(response.first.claims.isNotEmpty){
-        credentialClaimsData = response.first.claims;
+        if(response.claims.isNotEmpty){
+        credentialClaimsData = response.claims;
         isLoading = false;
       }});
     });

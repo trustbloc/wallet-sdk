@@ -76,13 +76,14 @@ class WalletSDK extends WalletPlatform {
     }
   }
 
-  Future<String> requestCredential(String userPinEntered, {String? attestationVC}) async {
+  Future<List<CredentialWithId>> requestCredential(String userPinEntered, {String? attestationVC}) async {
     try {
-      var credentialResponse = await methodChannel.invokeMethod<String>('requestCredential', <String, dynamic>{
+      List<dynamic> credentialResponse = await methodChannel.invokeMethod('requestCredentials', <String, dynamic>{
         'otp': userPinEntered,
         'attestationVC': attestationVC,
       });
-      return credentialResponse!;
+
+      return credentialResponse.map((e) => CredentialWithId.fromMap(e.cast<String, dynamic>())).toList();
     } on PlatformException catch (error) {
       debugPrint(error.toString());
       rethrow;
@@ -162,16 +163,23 @@ class WalletSDK extends WalletPlatform {
     return issuerURI;
   }
 
-  Future<String?> serializeDisplayData(List<String> credentials, String issuerURI) async {
-    final credentialResponse = await methodChannel.invokeMethod<String>(
-        'serializeDisplayData', <String, dynamic>{'vcCredentials': credentials, 'uri': issuerURI});
-    return credentialResponse;
+  Future<CredentialsDisplayData> resolveDisplayData(List<String> credentials, String issuerURI) async {
+    final credentialResponse = await methodChannel
+        .invokeMethod('resolveDisplayData', <String, dynamic>{'vcCredentials': credentials, 'uri': issuerURI});
+
+    return CredentialsDisplayData.fromMap(credentialResponse.cast<String, dynamic>());
   }
 
-  Future<List<CredentialDisplayData>> parseCredentialDisplayData(String resolvedCredentialDisplayData) async {
-    List<dynamic> renderedCredDisplay = await methodChannel.invokeMethod(
+  Future<CredentialDisplayData> parseCredentialDisplayData(String resolvedCredentialDisplayData) async {
+    final renderedCredDisplay = await methodChannel.invokeMethod(
         'parseCredentialDisplay', <String, dynamic>{'resolvedCredentialDisplayData': resolvedCredentialDisplayData});
-    return renderedCredDisplay.map((d) => CredentialDisplayData.fromMap(d.cast<String, dynamic>())).toList();
+    return CredentialDisplayData.fromMap(renderedCredDisplay.cast<String, dynamic>());
+  }
+
+  Future<IssuerDisplayData> parseIssuerDisplay(String issuerDisplayData) async {
+    var issuerDisplay = await methodChannel.invokeMethod(
+        'parseIssuerDisplay', <String, dynamic>{'issuerDisplayData': issuerDisplayData});
+    return IssuerDisplayData.fromMap(issuerDisplay.cast<String, dynamic>());
   }
 
   Future<List<String>> processAuthorizationRequest(

@@ -18,6 +18,8 @@ import dev.trustbloc.wallet.sdk.trustregistry.IssuanceRequest
 import dev.trustbloc.wallet.sdk.trustregistry.Registry
 import dev.trustbloc.wallet.sdk.trustregistry.RegistryConfig
 import dev.trustbloc.wallet.sdk.trustregistry.CredentialOffer
+import walletsdk.flutter.converters.convertVerifiableCredentialsArray
+import walletsdk.flutter.converters.convertVerifiableCredentialsWithIdArray
 
 class OpenID4CI constructor(
         private val requestURI: String,
@@ -116,20 +118,17 @@ class OpenID4CI constructor(
         )
     }
 
-    fun requestCredential(didVerificationMethod: VerificationMethod, otp: String?, attestationVC: String?): String? {
+    fun requestCredentials(didVerificationMethod: VerificationMethod, otp: String?,
+                           attestationVC: String?, attestationVM: VerificationMethod?): List<HashMap<String, String>> {
         val opts = RequestCredentialWithPreAuthOpts().setPIN(otp)
 
-        if (attestationVC != null) {
-            opts.setAttestationVC(didVerificationMethod, attestationVC)
+        if (attestationVC != null && attestationVM != null) {
+            opts.setAttestationVC(attestationVM, attestationVC)
         }
 
         val credsArr = newInteraction.requestCredentialWithPreAuth(didVerificationMethod, opts)
 
-        if (credsArr.length() != 0L) {
-            return credsArr.atIndex(0).serialize()
-        }
-
-        return null
+        return convertVerifiableCredentialsWithIdArray(credsArr)
     }
 
     @SuppressLint("SuspiciousIndentation")

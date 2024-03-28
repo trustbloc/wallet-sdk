@@ -24,9 +24,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import walletsdk.WalletSDK
-import walletsdk.flutter.converters.convertSubmissionRequirementArray
-import walletsdk.flutter.converters.convertToVerifiableCredentialsArray
-import walletsdk.flutter.converters.convertVerifiableCredentialsArray
+import walletsdk.flutter.converters.*
 import walletsdk.kmsStorage.KmsStore
 import walletsdk.openid4ci.OpenID4CI
 import walletsdk.openid4ci.WalletInitiatedOpenID4CI
@@ -161,10 +159,10 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
-                        "requestCredential" -> {
+                        "requestCredentials" -> {
                             try {
-                                val credentialCreated = requestCredential(call)
-                                result.success(credentialCreated)
+                                val credentialsCreated = requestCredentials(call)
+                                result.success(credentialsCreated)
                             } catch (e: Exception) {
                                 result.error(
                                         "Exception",
@@ -200,10 +198,10 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
-                        "serializeDisplayData" -> {
+                        "resolveDisplayData" -> {
                             try {
-                                val credentialDisplay = resolveDisplayData(call)
-                                result.success(credentialDisplay)
+                                val credentialsDisplay = resolveDisplayData(call)
+                                result.success(credentialsDisplay)
 
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while serializing display data", e)
@@ -216,6 +214,15 @@ class MainActivity : FlutterActivity() {
                                 result.success(credentialDisplay)
                             } catch (e: Exception) {
                                 result.error("Exception", "Error while resolving credential display", e)
+                            }
+                        }
+
+                        "parseIssuerDisplay" -> {
+                            try {
+                                val issuerDisplay = parseIssuerDisplay(call)
+                                result.success(issuerDisplay)
+                            } catch (e: Exception) {
+                                result.error("Exception", "Error while resolving issuer display", e)
                             }
                         }
 
@@ -659,19 +666,25 @@ class MainActivity : FlutterActivity() {
     Here if the pin required is true in the authorize method, then user need to enter OTP which is intercepted to create CredentialRequest Object using
     CredentialRequestOpts.If flow doesnt not require pin than Credential Request Opts will have empty string otp and sdk will return credential Data based on empty otp.
      */
-    private fun requestCredential(call: MethodCall): String? {
+    private fun requestCredentials(call: MethodCall): List<HashMap<String, String>> {
         val otp = call.argument<String>("otp") ?: throw java.lang.Exception("otp params is missed")
 
         val attestationVC = call.argument<String>("attestationVC")
 
-        val attestationDID = this.attestationDID
+        if (attestationVC != null && attestationDID == null) {
+            throw java.lang.Exception("AttestationDID should be created first")
+        }
+
+        val didDocResolution = this.didDocResolution
                 ?: throw java.lang.Exception("DID should be created first")
+
 
         val openID4CI = this.openID4CI
                 ?: throw java.lang.Exception("openID4CI not initiated. Call authorize before this.")
 
 
-        return openID4CI.requestCredential(attestationDID.assertionMethod(), otp, attestationVC)
+        return openID4CI.requestCredentials(didDocResolution.assertionMethod(), otp,
+                attestationVC, attestationDID?.assertionMethod())
     }
 
 
@@ -728,7 +741,7 @@ class MainActivity : FlutterActivity() {
     same order. This method requires one or more VCs and the issuer's base URI.
     IssuerURI and array of credentials  are parsed using VcParse to be passed to resolveDisplay which returns the resolved Display Data
      */
-    private fun resolveDisplayData(call: MethodCall): String? {
+    private fun resolveDisplayData(call: MethodCall): MutableMap<String, Any> {
         val issuerURI = call.argument<String>("uri")
                 ?: throw java.lang.Exception("issuerURI params is missed")
         val vcCredentials = call.argument<ArrayList<String>>("vcCredentials")
@@ -737,8 +750,16 @@ class MainActivity : FlutterActivity() {
         val walletSDK = this.walletSDK
                 ?: throw java.lang.Exception("walletSDK not initiated. Call initSDK().")
 
-        return walletSDK.resolveCredentialsDisplayData(convertToVerifiableCredentialsArray(vcCredentials), issuerURI)
-                .serialize()
+
+        val displayData = walletSDK.resolveCredentialsDisplayData(convertToVerifiableCredentialsArray(vcCredentials), issuerURI)
+
+
+        val credsDisplayData: MutableMap<String, Any> = mutableMapOf()
+
+        credsDisplayData["credentialsDisplay"] = convertCredentialsDisplayDataArray(displayData)
+        credsDisplayData["issuerDisplay"] = displayData.issuerDisplay().serialize()
+
+        return credsDisplayData
     }
 
     private fun getCredentialOfferDisplayData(): MutableMap<String, Any> {
@@ -778,31 +799,9 @@ class MainActivity : FlutterActivity() {
         val resolvedCredDisplayList = mutableListOf<Any>()
         for (i in 0 until (displayData.credentialDisplaysLength())) {
             val credentialDisplay = displayData.credentialDisplayAtIndex(i)
-            val claimList = mutableListOf<Any>()
 
-            for (i in 0 until credentialDisplay.claimsLength()) {
-                val claim = credentialDisplay.claimAtIndex(i)
-                val claims: MutableMap<String, Any> = mutableMapOf()
-                if (claim.isMasked) {
-                    claims["value"] = claim.value()
-                    claims["rawValue"] = claim.rawValue()
-                }
-                if (claim.hasOrder()) {
-                    val order = claim.order()
-                    claims["order"] = order
-                }
-                claims["rawValue"] = claim.rawValue()
-                claims["valueType"] = claim.valueType()
-                claims["label"] = claim.label()
-                claimList.addAll(listOf(claims))
-            }
-            var overview = credentialDisplay.overview()
-            var resolveDisplayResp: MutableMap<String, Any> = mutableMapOf()
-            resolveDisplayResp["claims"] = claimList
-            resolveDisplayResp["overviewName"] = overview.name()
-            resolveDisplayResp["logo"] = overview.logo().url()
-            resolveDisplayResp["textColor"] = overview.textColor()
-            resolveDisplayResp["backgroundColor"] = overview.backgroundColor()
+            val resolveDisplayResp: MutableMap<String, Any> = serializeCredentialDisplayData(credentialDisplay)
+
             resolveDisplayResp["issuerName"] = displayData.issuerDisplay().name()
 
             resolvedCredDisplayList.addAll(listOf(resolveDisplayResp))
@@ -810,13 +809,67 @@ class MainActivity : FlutterActivity() {
         return resolvedCredDisplayList
     }
 
-    private fun parseCredentialDisplay(call: MethodCall): MutableList<Any> {
+    private fun serializeCredentialDisplayData(credentialDisplay: dev.trustbloc.wallet.sdk.display.CredentialDisplay): MutableMap<String, Any> {
+        val claimList = mutableListOf<Any>()
+
+        for (i in 0 until credentialDisplay.claimsLength()) {
+            val claim = credentialDisplay.claimAtIndex(i)
+            val claims: MutableMap<String, Any> = mutableMapOf()
+            if (claim.isMasked) {
+                claims["value"] = claim.value()
+                claims["rawValue"] = claim.rawValue()
+            }
+            if (claim.hasOrder()) {
+                val order = claim.order()
+                claims["order"] = order
+            }
+            claims["rawValue"] = claim.rawValue()
+            claims["valueType"] = claim.valueType()
+            claims["label"] = claim.label()
+            claimList.addAll(listOf(claims))
+        }
+        var overview = credentialDisplay.overview()
+        var resolveDisplayResp: MutableMap<String, Any> = mutableMapOf()
+        resolveDisplayResp["claims"] = claimList
+        resolveDisplayResp["overviewName"] = overview.name()
+        resolveDisplayResp["logo"] = overview.logo().url()
+        resolveDisplayResp["textColor"] = overview.textColor()
+        resolveDisplayResp["backgroundColor"] = overview.backgroundColor()
+
+
+        return resolveDisplayResp
+    }
+
+    private fun parseCredentialDisplay(call: MethodCall): MutableMap<String, Any> {
         val resolvedCredentialDisplayData = call.argument<String>("resolvedCredentialDisplayData")
                 ?: throw java.lang.Exception("resolvedCredentialDisplayData params is missed")
 
-        val displayData = Display.parseData(resolvedCredentialDisplayData)
+        val displayData = Display.parseCredentialDisplay(resolvedCredentialDisplayData)
 
-        return serializeCredentialsDisplayData(displayData)
+        return serializeCredentialDisplayData(displayData)
+    }
+
+    private fun parseIssuerDisplay(call: MethodCall): MutableMap<String, Any> {
+        val issuerDisplayData = call.argument<String>("issuerDisplayData")
+                ?: throw java.lang.Exception("displayData params is missed")
+
+        val issuerDisplay = Display.parseIssuerDisplay(issuerDisplayData)
+
+        val localizedIssuerDisplay: MutableMap<String, Any> = mutableMapOf()
+
+        localizedIssuerDisplay["name"] = issuerDisplay.name()
+        localizedIssuerDisplay["locale"] = issuerDisplay.locale()
+        localizedIssuerDisplay["url"] = issuerDisplay.url()
+        localizedIssuerDisplay["textColor"] = issuerDisplay.textColor()
+        localizedIssuerDisplay["backgroundColor"] = issuerDisplay.backgroundColor()
+
+        if (issuerDisplay.logo() != null) {
+            localizedIssuerDisplay["logo"] = issuerDisplay.logo().url()
+        } else {
+            localizedIssuerDisplay["logo"] = ""
+        }
+
+        return localizedIssuerDisplay
     }
 
     /**
@@ -1032,7 +1085,7 @@ class MainActivity : FlutterActivity() {
             attestationDID = sdk.createDID("ion", "ED25519")
         }
 
-        return sdk.getAttestationVC(attestationDID!!.assertionMethod (), attestationURL, disableTLSVerify, authenticationMethod)
+        return sdk.getAttestationVC(attestationDID!!.assertionMethod(), attestationURL, disableTLSVerify, authenticationMethod)
     }
 
     private fun getCustomScope(): ArrayList<String> {

@@ -304,7 +304,6 @@ class WalletSDKError {
 }
 
 class CredentialDisplayData {
-  final String issuerName;
   final String overviewName;
   final String logo;
   final String backgroundColor;
@@ -313,7 +312,6 @@ class CredentialDisplayData {
 
 //<editor-fold desc="Data Methods">
   const CredentialDisplayData({
-    required this.issuerName,
     required this.overviewName,
     required this.logo,
     required this.backgroundColor,
@@ -326,7 +324,6 @@ class CredentialDisplayData {
       identical(this, other) ||
       (other is CredentialDisplayData &&
           runtimeType == other.runtimeType &&
-          issuerName == other.issuerName &&
           overviewName == other.overviewName &&
           logo == other.logo &&
           backgroundColor == other.backgroundColor &&
@@ -335,7 +332,6 @@ class CredentialDisplayData {
 
   @override
   int get hashCode =>
-      issuerName.hashCode ^
       overviewName.hashCode ^
       logo.hashCode ^
       backgroundColor.hashCode ^
@@ -344,7 +340,7 @@ class CredentialDisplayData {
 
   @override
   String toString() {
-    return 'CredentialDisplayData{ issuerName: $issuerName, overviewName: $overviewName, logo: $logo, backgroundColor: $backgroundColor, textColor: $textColor,}';
+    return 'CredentialDisplayData{ overviewName: $overviewName, logo: $logo, backgroundColor: $backgroundColor, textColor: $textColor,}';
   }
 
   CredentialDisplayData copyWith({
@@ -356,7 +352,6 @@ class CredentialDisplayData {
     List<CredentialDisplayClaim>? claims,
   }) {
     return CredentialDisplayData(
-      issuerName: issuerName ?? this.issuerName,
       overviewName: overviewName ?? this.overviewName,
       logo: logo ?? this.logo,
       backgroundColor: backgroundColor ?? this.backgroundColor,
@@ -367,7 +362,6 @@ class CredentialDisplayData {
 
   Map<String, dynamic> toMap() {
     return {
-      'issuerName': issuerName,
       'overviewName': overviewName,
       'logo': logo,
       'backgroundColor': backgroundColor,
@@ -380,7 +374,6 @@ class CredentialDisplayData {
     List<dynamic> claims = map['claims'] ?? [];
 
     return CredentialDisplayData(
-        issuerName: map['issuerName'] as String,
         overviewName: map['overviewName'] as String,
         logo: map['logo'] as String,
         backgroundColor: map['backgroundColor'] as String,
@@ -530,6 +523,54 @@ class VerifierDisplayData {
   }
 
 //</editor-fold>
+}
+
+class CredentialWithId {
+  final String id;
+  final String content;
+
+  const CredentialWithId({
+    required this.id,
+    required this.content,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'content': content,
+    };
+  }
+
+  factory CredentialWithId.fromMap(Map<String, dynamic> map) {
+    return CredentialWithId(
+      id: map['id'] as String,
+      content: map['content'] as String,
+    );
+  }
+}
+
+class CredentialsDisplayData {
+  final List<String> credentialsDisplay;
+  final String issuerDisplay;
+
+  const CredentialsDisplayData({
+    required this.credentialsDisplay,
+    required this.issuerDisplay,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'credentialsDisplay': credentialsDisplay,
+      'issuerDisplay': issuerDisplay,
+    };
+  }
+
+  factory CredentialsDisplayData.fromMap(Map<String, dynamic> map) {
+    return CredentialsDisplayData(
+      credentialsDisplay: map['credentialsDisplay']?.cast<String>(),
+      issuerDisplay: map['issuerDisplay'] as String,
+    );
+  }
 }
 
 class EvaluationResult {

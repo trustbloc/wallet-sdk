@@ -74,54 +74,55 @@ class WalletSDK {
 
     fun createOpenID4CIInteraction(requestURI: String): OpenID4CI {
         val didResolver = this.didResolver
-            ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
         val crypto = this.crypto
-            ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
         val activityLogger = this.activityLogger
-            ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
         val kms =
-            this.kms ?: throw java.lang.Exception("Local kms is not initialized, call initSDK()")
+                this.kms
+                        ?: throw java.lang.Exception("Local kms is not initialized, call initSDK()")
         return OpenID4CI(
-            requestURI,
-            crypto,
-            didResolver,
-            activityLogger,
-            kms
+                requestURI,
+                crypto,
+                didResolver,
+                activityLogger,
+                kms
         )
     }
 
     fun createOpenID4CIWalletInitiatedInteraction(issuerURI: String): WalletInitiatedOpenID4CI {
         val didResolver = this.didResolver
-            ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
         val crypto = this.crypto
-            ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
+                ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
         return WalletInitiatedOpenID4CI(
-            issuerURI,
-            crypto,
-            didResolver,
+                issuerURI,
+                crypto,
+                didResolver,
         )
     }
 
 
     fun createOpenID4VPInteraction(): OpenID4VP {
         val crypto = this.crypto
-            ?: throw java.lang.Exception("crypto is not initialized, call initSDK()")
+                ?: throw java.lang.Exception("crypto is not initialized, call initSDK()")
         val didResolver = this.didResolver
-            ?: throw java.lang.Exception("did resolver is not initialized, call initSDK()")
+                ?: throw java.lang.Exception("did resolver is not initialized, call initSDK()")
 
         val activityLogger = this.activityLogger
-            ?: throw java.lang.Exception("activity logger is not initialized, call initSDK()")
+                ?: throw java.lang.Exception("activity logger is not initialized, call initSDK()")
 
         return OpenID4VP(crypto, didResolver, activityLogger)
     }
 
     fun resolveCredentialsDisplayData(creds: CredentialsArray, issuerURI: String)
-        : dev.trustbloc.wallet.sdk.display.Data {
+            : dev.trustbloc.wallet.sdk.display.Data {
         val didResolver = this.didResolver
                 ?: throw java.lang.Exception("SDK is not initialized, call initSDK()")
 
@@ -130,23 +131,24 @@ class WalletSDK {
     }
 
     fun getAttestationVC(didVerificationMethod: VerificationMethod, attestationURL: String, disableTLSVerify: Boolean, authenticationMethod: String): String {
-            val opts = Attestation.newCreateClientArgs(
-                                    attestationURL,
-                                    crypto,
-                            );
-            if (disableTLSVerify) {
-                opts.disableHTTPClientTLSVerify()
-            }
+        val opts = Attestation.newCreateClientArgs(
+                attestationURL,
+                crypto,
+        );
+        if (disableTLSVerify) {
+            opts.disableHTTPClientTLSVerify()
+        }
 
-            val attestClient = Attestation.newClient(opts)
+        val attestClient = Attestation.newClient(opts)
 
-            val attestationVC = attestClient.getAttestationVC(
-                    didVerificationMethod,
-                    Attestation.newAttestRequest()
-                            .addAssertion("wallet_authentication")
-                            .addWalletAuthentication("authentication_method", authenticationMethod)
-                            .addWalletMetadata("wallet_name", "Trustbloc Wallet"))
-        
+        val attestationVC = attestClient.getAttestationVC(
+                didVerificationMethod,
+                Attestation.newAttestRequest()
+                        .addAssertion("wallet_authentication")
+                        .addWalletAuthentication("authentication_method", authenticationMethod)
+                        .addWalletMetadata("wallet_name", "Midy Wallet")
+                        .addWalletMetadata("wallet_version", "2.0"))
+
         return attestationVC.serialize()
     }
 }

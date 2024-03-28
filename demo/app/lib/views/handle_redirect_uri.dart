@@ -80,22 +80,38 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
         if (widget.flowType == 'issuer-initiated-flow') {
           var issuerURI = await WalletSDKPlugin.issuerURI();
           var credentials = await WalletSDKPlugin.requestCredentialWithAuth(_redirectUri.toString());
-          var serializedDisplayData = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
+          var serializedDisplayData = await WalletSDKPlugin.resolveDisplayData([credentials], issuerURI!);
           log('serializedDisplayData -> $serializedDisplayData');
           var activities = await WalletSDKPlugin.storeActivityLogger();
           var credID = await WalletSDKPlugin.getCredID([credentials]);
           await _storageService.addActivities(ActivityDataObj(credID!, activities));
           pref.setString('credID', credID);
           setState(() {});
-          _navigateToCredPreviewScreen(credentials, issuerURI, serializedDisplayData!, userDIDId, credID);
+          _navigateToCredPreviewScreen([
+            CredentialData(
+                rawCredential: credentials,
+                issuerURL: issuerURI,
+                issuerDisplayData: serializedDisplayData.issuerDisplay,
+                credentialDisplayData: serializedDisplayData.credentialsDisplay[0],
+                credentialDID: userDIDId,
+                credID: credID),
+          ]);
         } else {
           log('_redirectUri.toString() ${_redirectUri.toString()}');
           var credentials = await WalletSDKPlugin.requestCredentialWithWalletInitiatedFlow(_redirectUri.toString());
           var issuerURI = widget.issuerURI;
-          var serializedDisplayData = await WalletSDKPlugin.serializeDisplayData([credentials], issuerURI!);
+          var serializedDisplayData = await WalletSDKPlugin.resolveDisplayData([credentials], issuerURI!);
           log('serializedDisplayData -> $serializedDisplayData');
           // TODO: Issue-518 Add activity logger support for wallet-initiated-flow
-          _navigateToCredPreviewScreen(credentials, issuerURI, serializedDisplayData!, userDIDId, '');
+          _navigateToCredPreviewScreen([
+            CredentialData(
+                rawCredential: credentials,
+                issuerURL: issuerURI,
+                issuerDisplayData: serializedDisplayData.issuerDisplay,
+                credentialDisplayData: serializedDisplayData.credentialsDisplay[0],
+                credentialDID: userDIDId,
+                credID: ''),
+          ]);
         }
       } catch (error) {
         Navigator.push(
@@ -161,20 +177,10 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
     }
   }
 
-  _navigateToCredPreviewScreen(
-      String credentialResp, String issuerURI, String credentialDisplayData, String didID, String credID) async {
+  _navigateToCredPreviewScreen(List<CredentialData> credentialsData) async {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => CredentialPreview(
-                    credentialData: CredentialData(
-                        rawCredential: credentialResp,
-                        issuerURL: issuerURI,
-                        credentialDisplayData: credentialDisplayData,
-                        credentialDID: didID,
-                        credID: credID),
-                  )));
+          context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialsData: credentialsData)));
     });
   }
 }

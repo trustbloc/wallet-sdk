@@ -5,9 +5,9 @@ import 'package:app/widgets/credential_card.dart';
 class SuccessCard extends StatelessWidget {
   String? verifierName;
   String? subTitle;
-  List<CredentialData> credentialData;
+  List<CredentialData> credentialDatas;
 
-  SuccessCard({required this.credentialData, this.verifierName, this.subTitle, Key? key}) : super(key: key);
+  SuccessCard({required this.credentialDatas, this.verifierName, this.subTitle, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -32,11 +32,12 @@ class SuccessCard extends StatelessWidget {
                 subtitle: Text(subTitle! + verifierName!,
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
               ),
-              CredentialCard(
-                credentialData: credentialData[0],
-                isDashboardWidget: false,
-                isDetailArrowRequired: false,
-              ),
+              for (final credData in credentialDatas)
+                CredentialCard(
+                  credentialData: credData,
+                  isDashboardWidget: false,
+                  isDetailArrowRequired: false,
+                ),
             ],
           ),
         ));

@@ -55,12 +55,7 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
         if (inputDescriptor.matchedVCsID.contains(payload['jti'])) {
           var credentialDisplayData = storedCredentials
               .where((element) => cred.contains(element.value.rawCredential))
-              .map((e) => CredentialData(
-                  rawCredential: e.value.rawCredential,
-                  issuerURL: e.value.issuerURL,
-                  credentialDisplayData: e.value.credentialDisplayData,
-                  credentialDID: e.value.credentialDID,
-                  credID: e.value.credID))
+              .map((e) => e.value)
               .toList();
           credentialDisplayDataList.add(credentialDisplayData.first);
         }
@@ -74,18 +69,13 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
       log('matched length, more than matched vc ids are found ${matchedVCsID.length}');
       var credentialDisplayData = storedCredentials
           .where((element) => matchedVCsID.contains(element.value.credID))
-          .map((e) => CredentialData(
-              rawCredential: e.value.rawCredential,
-              issuerURL: e.value.issuerURL,
-              credentialDisplayData: e.value.credentialDisplayData,
-              credentialDID: e.value.credentialDID,
-              credID: e.value.credID))
+          .map((e) => e.value)
           .toList();
       navigateToPresentMultiCredChooseOne(context, credentialDisplayData);
       return;
     } else {
       log('single matched vc id flow');
-      String credentialDisplayData;
+
       for (var inputDes in submission.inputDescriptors) {
         for (var matchVC in inputDes.matchedVCs) {
           var credID = (await walletSDKPlugin.getCredID([matchVC]))!;
@@ -97,15 +87,16 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
               storedCredentials.firstWhere((element) => credID.contains(element.value.credID)).value.credentialDID;
 
           log('matched issuerURI found: $issuerURI');
-          credentialDisplayData = (await walletSDKPlugin.serializeDisplayData([matchVC], issuerURI.first))!;
+          final credentialDisplayData = (await walletSDKPlugin.resolveDisplayData([matchVC], issuerURI.first))!;
           log('credentialDisplayData -> $credentialDisplayData');
           navigateToPresentationPreviewScreen(
               context,
               CredentialData(
                   rawCredential: matchVC,
                   issuerURL: issuerURI.first,
-                  credentialDisplayData: credentialDisplayData,
+                  credentialDisplayData: credentialDisplayData.credentialsDisplay[0],
                   credentialDID: credentialDID,
+                  issuerDisplayData: credentialDisplayData.issuerDisplay,
                   credID: credID));
           return;
         }

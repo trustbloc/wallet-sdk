@@ -16,6 +16,24 @@ func convertVerifiableCredentialsArray(arr: VerifiableCredentialsArray)-> Array<
    return credList
 }
 
+func convertVerifiableCredentialsWithIdArray(arr: VerifiableCredentialsArray)-> Array<Dictionary<String, Any>> {
+   var credList: [Dictionary<String, Any>] = []
+   for i in 0..<arr.length() {
+       credList.append(["id": (arr.atIndex(i)?.id_())!, "content" :(arr.atIndex(i)?.serialize(nil))!])
+   }
+    
+   return credList
+}
+
+func convertCredentialsDisplayDataArray(arr: DisplayData)-> Array<String> {
+   var credList: [String] = []
+    for i in 0..<arr.credentialDisplaysLength() {
+      credList.append((arr.credentialDisplay(at: i)?.serialize(nil))!)
+   }
+    
+   return credList
+}
+
 func convertSubmissionRequirementArray(requirements: CredentialSubmissionRequirementArray) -> Array<Dictionary<String, Any>> {
     var result: [Dictionary<String, Any>] = []
     for i in 0..<requirements.len() {
