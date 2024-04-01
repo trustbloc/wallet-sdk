@@ -1078,14 +1078,14 @@ class MainActivity : FlutterActivity() {
         val disableTLSVerify = call.argument<Boolean>("disableTLSVerify")
                 ?: throw java.lang.Exception("disableTLSVerify params is missed")
 
-        val authenticationMethod = call.argument<String>("authenticationMethod")
+        val attestationPayload = call.argument<String>("attestationPayload")
                 ?: throw java.lang.Exception("authenticationMethod params is missed")
 
         if (attestationDID == null) {
             attestationDID = sdk.createDID("ion", "ED25519")
         }
 
-        return sdk.getAttestationVC(attestationDID!!.assertionMethod(), attestationURL, disableTLSVerify, authenticationMethod)
+        return sdk.getAttestationVC(attestationDID!!.assertionMethod(), attestationURL, disableTLSVerify, attestationPayload)
     }
 
     private fun getCustomScope(): ArrayList<String> {

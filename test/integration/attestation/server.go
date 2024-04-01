@@ -14,7 +14,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"reflect"
 	"sync"
 	"time"
 
@@ -35,6 +34,7 @@ import (
 
 type sessionMetadata struct {
 	challenge string
+	payload   map[string]interface{}
 }
 
 type serverConfig struct {
@@ -111,13 +111,6 @@ func (s *server) evaluateWalletAttestationInitRequest(w http.ResponseWriter, r *
 
 	log.Printf("handling request: %s with payload %v", r.URL.String(), request)
 
-	if !reflect.DeepEqual(request.Assertions, []string{"wallet_authentication"}) {
-		s.writeResponse(
-			w, http.StatusBadRequest, "assertions field is invalid")
-
-		return
-	}
-
 	sessionID, challenge := uuid.NewString(), uuid.NewString()
 
 	response := &AttestWalletInitResponse{
@@ -127,6 +120,7 @@ func (s *server) evaluateWalletAttestationInitRequest(w http.ResponseWriter, r *
 
 	s.sessions.Store(sessionID, sessionMetadata{
 		challenge: challenge,
+		payload:   request.Payload,
 	})
 
 	go func() {
@@ -170,14 +164,14 @@ func (s *server) evaluateWalletAttestationCompleteRequest(w http.ResponseWriter,
 		return
 	}
 
-	walletDID, err := s.evaluateWalletProofJWT(request.SessionID, request.Proof.Jwt)
+	walletDID, sesData, err := s.evaluateWalletProofJWT(request.SessionID, request.Proof.Jwt)
 	if err != nil {
 		s.writeResponse(w, http.StatusBadRequest, err.Error())
 
 		return
 	}
 
-	attestationVC, err := s.attestationVC(context.Background(), walletDID)
+	attestationVC, err := s.attestationVC(context.Background(), walletDID, sesData)
 	if err != nil {
 		s.writeResponse(w, http.StatusInternalServerError, err.Error())
 
@@ -199,16 +193,16 @@ func (s *server) evaluateWalletAttestationCompleteRequest(w http.ResponseWriter,
 
 func (s *server) evaluateWalletProofJWT(
 	sessionID, proofJWT string,
-) (string, error) {
+) (string, *sessionMetadata, error) {
 	jwtParsed, _, err := jwt.Parse(proofJWT)
 	if err != nil {
-		return "", fmt.Errorf("parse request.Proof.Jwt: %s", err.Error())
+		return "", nil, fmt.Errorf("parse request.Proof.Jwt: %s", err.Error())
 	}
 
 	var jwtProofClaims JwtProofClaims
 	err = jwtParsed.DecodeClaims(&jwtProofClaims)
 	if err != nil {
-		return "", fmt.Errorf("decode request.Proof.Jwt: %s", err.Error())
+		return "", nil, fmt.Errorf("decode request.Proof.Jwt: %s", err.Error())
 	}
 
 	var sessionData sessionMetadata
@@ -218,29 +212,29 @@ func (s *server) evaluateWalletProofJWT(
 	}
 
 	if !ok {
-		return "", fmt.Errorf("session %s is unknown", sessionID)
+		return "", nil, fmt.Errorf("session %s is unknown", sessionID)
 	}
 
 	if jwtProofClaims.Audience == "" {
-		return "", fmt.Errorf("jwtProofClaims.Audience is empty")
+		return "", nil, fmt.Errorf("jwtProofClaims.Audience is empty")
 	}
 
 	if jwtProofClaims.IssuedAt == 0 {
-		return "", fmt.Errorf("jwtProofClaims.IssuedAt is invalid")
+		return "", nil, fmt.Errorf("jwtProofClaims.IssuedAt is invalid")
 	}
 
 	if jwtProofClaims.Exp == 0 {
-		return "", fmt.Errorf("jwtProofClaims.Exp is invalid")
+		return "", nil, fmt.Errorf("jwtProofClaims.Exp is invalid")
 	}
 
 	if jwtProofClaims.Nonce != sessionData.challenge {
-		return "", fmt.Errorf("jwtProofClaims.Nonce is invalid, got: %s, want: %s", jwtProofClaims.Nonce, sessionData.challenge)
+		return "", nil, fmt.Errorf("jwtProofClaims.Nonce is invalid, got: %s, want: %s", jwtProofClaims.Nonce, sessionData.challenge)
 	}
 
-	return jwtProofClaims.Issuer, nil
+	return jwtProofClaims.Issuer, &sessionData, nil
 }
 
-func (s *server) attestationVC(ctx context.Context, walletDID string) (string, error) {
+func (s *server) attestationVC(ctx context.Context, walletDID string, ses *sessionMetadata) (string, error) {
 	vcc := verifiable.CredentialContents{
 		Context: []string{
 			verifiable.ContextURI,
@@ -253,7 +247,8 @@ func (s *server) attestationVC(ctx context.Context, walletDID string) (string, e
 		},
 		Subject: []verifiable.Subject{
 			{
-				ID: walletDID,
+				ID:           walletDID,
+				CustomFields: ses.payload,
 			},
 		},
 		Issuer: &verifiable.Issuer{

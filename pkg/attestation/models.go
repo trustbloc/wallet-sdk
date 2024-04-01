@@ -8,10 +8,7 @@ package attestation
 
 // AttestWalletInitRequest attestation init request.
 type AttestWalletInitRequest struct {
-	Assertions           []string               `json:"assertions,omitempty"`
-	ClientAssertionType  []string               `json:"client_assertion_type,omitempty"`
-	WalletAuthentication map[string]interface{} `json:"wallet_authentication,omitempty"`
-	WalletMetadata       map[string]interface{} `json:"wallet_metadata,omitempty"`
+	Payload map[string]interface{} `json:"payload"`
 }
 
 // AttestWalletInitResponse attestation init response.

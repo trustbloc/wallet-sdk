@@ -130,7 +130,7 @@ class WalletSDK {
                 dev.trustbloc.wallet.sdk.display.Opts().setDIDResolver(didResolver))
     }
 
-    fun getAttestationVC(didVerificationMethod: VerificationMethod, attestationURL: String, disableTLSVerify: Boolean, authenticationMethod: String): String {
+    fun getAttestationVC(didVerificationMethod: VerificationMethod, attestationURL: String, disableTLSVerify: Boolean, attestationPayload: String): String {
         val opts = Attestation.newCreateClientArgs(
                 attestationURL,
                 crypto,
@@ -143,11 +143,7 @@ class WalletSDK {
 
         val attestationVC = attestClient.getAttestationVC(
                 didVerificationMethod,
-                Attestation.newAttestRequest()
-                        .addAssertion("wallet_authentication")
-                        .addWalletAuthentication("authentication_method", authenticationMethod)
-                        .addWalletMetadata("wallet_name", "Midy Wallet")
-                        .addWalletMetadata("wallet_version", "2.0"))
+                attestationPayload)
 
         return attestationVC.serialize()
     }

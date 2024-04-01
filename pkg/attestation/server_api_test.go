@@ -17,14 +17,18 @@ import (
 
 func TestAttestationInitAPI(t *testing.T) {
 	sampleRequest := AttestWalletInitRequest{
-		Assertions: []string{
-			"wallet_authentication",
-		},
-		WalletAuthentication: map[string]interface{}{
-			"wallet_id": "did:example:123545",
-		},
-		WalletMetadata: map[string]interface{}{
-			"wallet_name": "wallet-cli",
+		Payload: map[string]interface{}{
+			"type": "urn:attestation:application:trustbloc",
+			"application": map[string]interface{}{
+				"type":    "wallet-cli",
+				"name":    "wallet-cli",
+				"version": "1.0",
+			},
+			"compliance": []interface{}{
+				map[string]interface{}{
+					"type": "fcra",
+				},
+			},
 		},
 	}
 
@@ -67,7 +71,7 @@ func TestAttestationInitAPI(t *testing.T) {
 		api := &serverAPI{httpClient: client, metricsLogger: noopmetricslogger.NewMetricsLogger()}
 
 		_, err := api.AttestationInit(AttestWalletInitRequest{
-			WalletAuthentication: map[string]interface{}{
+			Payload: map[string]interface{}{
 				"sss": make(chan string),
 			},
 		},

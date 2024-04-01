@@ -8,7 +8,9 @@ SPDX-License-Identifier: Apache-2.0
 package attestation
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/trustbloc/wallet-sdk/pkg/common"
@@ -136,14 +138,22 @@ func NewClient(
 // GetAttestationVC requests an attestation VC from the attestation service.
 func (c *Client) GetAttestationVC(
 	vm *api.VerificationMethod,
-	attestationRequest *AttestRequest,
+	attestationPayloadJSON string,
 ) (*verifiable.Credential, error) {
 	signer, err := createSigner(vm, c.crypto)
 	if err != nil {
 		return nil, wrapper.ToMobileErrorWithTrace(err, c.oTel)
 	}
 
-	credential, err := c.impl.GetAttestationVC(attestationRequest.wrappedRequest, signer)
+	var attestationRequest attestationgoapi.AttestWalletInitRequest
+
+	err = json.Unmarshal([]byte(attestationPayloadJSON), &attestationRequest.Payload)
+	if err != nil {
+		return nil, wrapper.ToMobileErrorWithTrace(walleterror.NewInvalidSDKUsageError(
+			attestationgoapi.ErrorModule, fmt.Errorf("parse attestation vc payload: %w", err)), c.oTel)
+	}
+
+	credential, err := c.impl.GetAttestationVC(attestationRequest, signer)
 	if err != nil {
 		return nil, wrapper.ToMobileErrorWithTrace(err, c.oTel)
 	}

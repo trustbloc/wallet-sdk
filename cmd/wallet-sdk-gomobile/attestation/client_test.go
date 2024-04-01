@@ -75,11 +75,19 @@ func TestClient_GetAttestationVC(t *testing.T) {
 		},
 	}
 
-	correctRequest := NewAttestRequest().
-		AddAssertion("wallet_authentication").
-		AddWalletAuthentication("wallet_id", "did:test:foo").
-		AddClientAssertionType("test_assertion").
-		AddWalletMetadata("wallet_name", "wallet-cli")
+	correctRequest := `
+		{
+			"type": "urn:attestation:application:trustbloc",
+			"application": {
+				"type":    "wallet-cli",
+				"name":    "wallet-cli",
+				"version": "1.0"
+			},
+			"compliance": {
+				"type": "fcra"				
+			}
+		}
+	`
 
 	t.Run("test success", func(t *testing.T) {
 		args := NewCreateClientArgs("https://attestation.com", kms.GetCrypto())
@@ -92,6 +100,19 @@ func TestClient_GetAttestationVC(t *testing.T) {
 		vc, err := c.GetAttestationVC(verificationMethod, correctRequest)
 		require.NoError(t, err)
 		require.NotNil(t, vc)
+	})
+
+	t.Run("invalid payload", func(t *testing.T) {
+		args := NewCreateClientArgs("https://attestation.com", kms.GetCrypto())
+		args.customAPI = correctAPI
+
+		c, err := NewClient(args)
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		vc, err := c.GetAttestationVC(verificationMethod, "{")
+		require.ErrorContains(t, err, "parse attestation vc payload")
+		require.Nil(t, vc)
 	})
 
 	t.Run("nil verificationMethod", func(t *testing.T) {

@@ -20,7 +20,6 @@ import (
 )
 
 const (
-	mockDID   = "did:test:foo"
 	mockKeyID = "did:test:foo#testId"
 )
 
@@ -41,14 +40,18 @@ func TestNewClient(t *testing.T) {
 
 func TestClient_GetAttestationVC(t *testing.T) {
 	initReq := attestation.AttestWalletInitRequest{
-		Assertions: []string{
-			"wallet_authentication",
-		},
-		WalletAuthentication: map[string]interface{}{
-			"wallet_id": mockDID,
-		},
-		WalletMetadata: map[string]interface{}{
-			"wallet_name": "wallet-cli",
+		Payload: map[string]interface{}{
+			"type": "urn:attestation:application:trustbloc",
+			"application": map[string]interface{}{
+				"type":    "wallet-cli",
+				"name":    "wallet-cli",
+				"version": "1.0",
+			},
+			"compliance": []interface{}{
+				map[string]interface{}{
+					"type": "fcra",
+				},
+			},
 		},
 	}
 
