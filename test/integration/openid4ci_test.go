@@ -344,10 +344,18 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 							DisableHTTPClientTLSVerify())
 					require.NoError(t, err)
 
-					attestationVC, err := attClient.GetAttestationVC(vm, attestation.NewAttestRequest().
-						AddAssertion("wallet_authentication").
-						AddWalletAuthentication("wallet_id", didID).
-						AddWalletMetadata("wallet_name", "int-test"),
+					attestationVC, err := attClient.GetAttestationVC(vm,
+						`{
+							"type": "urn:attestation:application:trustbloc",
+							"application": {
+								"type":    "wallet-cli",
+								"name":    "wallet-cli",
+								"version": "1.0"
+							},
+							"compliance": {
+								"type": "fcra"				
+							}
+						}`,
 					)
 					require.NoError(t, err)
 

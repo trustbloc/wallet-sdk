@@ -76,10 +76,18 @@ class IntegrationTest {
 
         val attestationVC = attestClient.getAttestationVC(
                 userDID.assertionMethod(),
-                Attestation.newAttestRequest()
-                        .addAssertion("wallet_authentication")
-                        .addWalletAuthentication("wallet_id", userDID.id())
-                        .addWalletMetadata("wallet_name", "int-test"))
+                """{
+                        "type": "urn:attestation:application:trustbloc",
+                        "application": {
+                            "type":    "wallet-cli",
+                            "name":    "wallet-cli",
+                            "version": "1.0"
+                        },
+                        "compliance": {
+                            "type": "fcra"				
+                        }
+                    }""",
+        )
 
         val requiredOpenID4CIArgs = IssuerInitiatedInteractionArgs(requestURI, crypto, didResolver)
 

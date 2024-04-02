@@ -7,7 +7,7 @@ class AttestationService {
 
   static Future<String> getAttestationVC() async {
     _attestationVC ??=
-        await WalletSDK().getAttestationVC(attestationURL: attestationURL, authenticationMethod: 'system_biometry');
+        await WalletSDK().getAttestationVC(attestationURL: attestationURL, attestationPayload: const String.fromEnvironment('attestationPayload'));
 
     return _attestationVC!;
   }

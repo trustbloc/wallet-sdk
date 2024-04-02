@@ -48,7 +48,17 @@ void main() async {
       final attestationVC = await walletSDKPlugin.getAttestationVC(
           attestationURL: 'https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/',
           disableTLSVerify: true,
-          authenticationMethod: 'system_biometry');
+          attestationPayload: '''{
+							"type": "urn:attestation:application:trustbloc",
+							"application": {
+								"type":    "wallet-cli",
+								"name":    "wallet-cli",
+								"version": "1.0"
+							},
+							"compliance": {
+								"type": "fcra"				
+							}
+						}''',);
 
       final credentials = (await walletSDKPlugin.requestCredential('', attestationVC: attestationVC)).map((e) => e.content).toList();
 

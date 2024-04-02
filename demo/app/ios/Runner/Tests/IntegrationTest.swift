@@ -64,7 +64,20 @@ class IntegrationTest: XCTestCase {
           nil
         )!
 
-        let attestationVC = try attClient.getAttestationVC(userDID!.assertionMethod(), attestationRequest: AttestationNewAttestRequest()!.addAssertion("wallet_authentication")!.addWalletAuthentication("wallet_id", value:userDID!.id_(nil))!.addWalletMetadata("wallet_name", value:"int-test"))
+        let attestationVC = try attClient.getAttestationVC(userDID!.assertionMethod(),
+            attestationPayloadJSON: """
+                                 {
+                                    "type": "urn:attestation:application:trustbloc",
+                                    "application": {
+                                        "type":    "wallet-cli",
+                                        "name":    "wallet-cli",
+                                        "version": "1.0"
+                                    },
+                                    "compliance": {
+                                        "type": "fcra"
+                                    }
+                                }
+                                """)
 
         let preAuthOpts = Openid4ciRequestCredentialWithPreAuthOpts()!.setPIN("")!
         preAuthOpts.setAttestationVC(try userDID!.assertionMethod(), vc: try attestationVC.serialize(nil))

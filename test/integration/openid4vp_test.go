@@ -299,18 +299,22 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 					vm, err := testHelper.DIDDoc.AssertionMethod()
 					require.NoError(t, err)
 
-					didID, err := testHelper.DIDDoc.ID()
-					require.NoError(t, err)
-
 					attClient, err := attestation.NewClient(
 						attestation.NewCreateClientArgs(attestationURL, testHelper.KMS.GetCrypto()).
 							DisableHTTPClientTLSVerify())
 					require.NoError(t, err)
 
-					attestationVC, err := attClient.GetAttestationVC(vm, attestation.NewAttestRequest().
-						AddAssertion("wallet_authentication").
-						AddWalletAuthentication("wallet_id", didID).
-						AddWalletMetadata("wallet_name", "int-test"),
+					attestationVC, err := attClient.GetAttestationVC(vm, `{
+							"type": "urn:attestation:application:trustbloc",
+							"application": {
+								"type":    "wallet-cli",
+								"name":    "wallet-cli",
+								"version": "1.0"
+							},
+							"compliance": {
+								"type": "fcra"				
+							}
+						}`,
 					)
 					require.NoError(t, err)
 

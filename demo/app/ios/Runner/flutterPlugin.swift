@@ -336,25 +336,25 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         do {
             guard let walletSDK = self.walletSDK else{
                 return  result(FlutterError.init(code: "NATIVE_ERR",
-                                                 message: "error while creating did",
+                                                 message: "error while getAttestationVC did",
                                                  details: "WalletSDK interaction is not initialized, call initSDK()"))
             }
 
             guard let attestationURL = arguments["attestationURL"] as? String else{
                 return  result(FlutterError.init(code: "NATIVE_ERR",
-                                                 message: "error while create did operation",
+                                                 message: "error while getAttestationVC operation",
                                                  details: "parameter attestationURL is missed"))
             }
 
             guard let disableTLSVerify = arguments["disableTLSVerify"] as? Bool else{
                 return  result(FlutterError.init(code: "NATIVE_ERR",
-                                                 message: "error while create did operation",
+                                                 message: "error while getAttestationVC operation",
                                                  details: "parameter disableTLSVerify is missed"))
             }
 
-            guard let authenticationMethod = arguments["attestationURL"] as? String else{
+            guard let attestationPayload = arguments["attestationPayload"] as? String else{
                 return  result(FlutterError.init(code: "NATIVE_ERR",
-                                                 message: "error while create did operation",
+                                                 message: "error while getAttestationVC operation",
                                                  details: "parameter authenticationMethod is missed"))
             }
 
@@ -366,7 +366,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 didVerificationMethod: try attestationDID!.assertionMethod(),
                 attestationURL: attestationURL,
                 disableTLSVerify: disableTLSVerify,
-                authenticationMethod: authenticationMethod)
+                attestationPayload: attestationPayload)
 
             result(attestationVC);
 
