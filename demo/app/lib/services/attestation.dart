@@ -7,7 +7,7 @@ class AttestationService {
 
   static Future<String> getAttestationVC() async {
     _attestationVC ??=
-        await WalletSDK().getAttestationVC(attestationURL: attestationURL, attestationPayload: const String.fromEnvironment('attestationPayload'));
+        await WalletSDK().getAttestationVC(attestationURL: attestationURL, attestationPayload: '{"type":"urn:attestation:application:midy","application":{"type":"MidyWallet","name":"Midy Wallet","version":"2.0"},"compliance":[{"type":"fcra"}]}');
 
     return _attestationVC!;
   }

@@ -195,7 +195,7 @@ func (a *serverAPI) AttestationInit(
 		"application/json",
 		bytes.NewBuffer(body), attestationInitReqEventText, "", nil, &resp)
 	if err != nil {
-		return nil, fmt.Errorf("do request: %w", err)
+		return nil, fmt.Errorf("do request %s: %w", string(body), err)
 	}
 
 	return &resp, nil

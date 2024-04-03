@@ -13,7 +13,7 @@ endif
 
 ALPINE_VER ?= 3.18
 GO_ALPINE_VER ?= 3.18
-GO_VER ?= 1.21
+GO_VER ?= 1.22
 
 NEW_VERSION ?= $(shell git describe --tags --always `git rev-list --tags --max-count=1`)-SNAPSHOT-$(shell git rev-parse --short=7 HEAD)
 GIT_REV ?= $(shell git rev-parse HEAD)

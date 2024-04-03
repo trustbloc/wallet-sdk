@@ -7,7 +7,7 @@
 name: "wallet-sdk ci"
 
 env:
-  GO_VERSION: '1.21'
+  GO_VERSION: '1.22'
 
 on:
   push:
@@ -98,7 +98,7 @@ jobs:
       - name: Build docker images for test server
         run: |
           docker build -f ./images/mocks/loginconsent/Dockerfile --no-cache -t wallet-sdk/mock-login-consent:latest \
-          --build-arg GO_VER=1.21 \
+          --build-arg GO_VER=1.22 \
           --build-arg ALPINE_VER=3.18 .
       - name: Save docker image as tar
         run: |
@@ -121,7 +121,7 @@ jobs:
       - name: Build docker images for test server
         run: |
           docker build -f ./images/mocks/trustregistry/Dockerfile --no-cache -t wallet-sdk/mock-trust-registry:latest \
-          --build-arg GO_VER=1.21 \
+          --build-arg GO_VER=1.22 \
           --build-arg ALPINE_VER=3.18 .
       - name: Save docker image as tar
         run: |
@@ -144,7 +144,7 @@ jobs:
       - name: Build docker images for test server
         run: |
           docker build -f ./images/mocks/attestation/Dockerfile --no-cache -t wallet-sdk/mock-attestation:latest \
-          --build-arg GO_VER=1.21 \
+          --build-arg GO_VER=1.22 \
           --build-arg ALPINE_VER=3.18 .
       - name: Save docker image as tar
         run: |
