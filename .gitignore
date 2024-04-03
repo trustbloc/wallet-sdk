@@ -47,3 +47,4 @@ test/integration/fixtures/keys/tls/*
 
 # Flutter demo app JS bindings
 demo/app/web/wallet-sdk-js/
+demo/app/lib/assets/config.override.json

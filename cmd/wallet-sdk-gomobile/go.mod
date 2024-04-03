@@ -5,18 +5,16 @@
 
 module github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile
 
-go 1.21
-
-toolchain go1.21.0
+go 1.22
 
 require (
 	github.com/go-jose/go-jose/v3 v3.0.1
 	github.com/google/uuid v1.3.0
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.2
-	github.com/trustbloc/did-go v1.2.0
-	github.com/trustbloc/kms-go v1.1.1
-	github.com/trustbloc/vc-go v1.1.1
+	github.com/trustbloc/did-go v1.2.1-0.20240403080251-cdfc1165460f
+	github.com/trustbloc/kms-go v1.1.2-0.20240403074855-38b6c31bf198
+	github.com/trustbloc/vc-go v1.1.2-0.20240403093810-664ef7b3328a
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 )
 

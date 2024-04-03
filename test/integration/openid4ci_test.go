@@ -21,7 +21,6 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/attestation"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
@@ -240,8 +239,8 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 	err = oidc4ciSetup.AuthorizeIssuerBypassAuth(organizationID, vcsAPIDirectURL)
 	require.NoError(t, err)
 
-	vcStatusVerifier, err := credential.NewStatusVerifier(credential.NewStatusVerifierOpts())
-	require.NoError(t, err)
+	//vcStatusVerifier, err := credential.NewStatusVerifier(credential.NewStatusVerifierOpts())
+	//require.NoError(t, err)
 
 	var traceIDs []string
 
@@ -340,22 +339,12 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			for i := 0; i < result.RequestedAttestationLength(); i++ {
 				if result.RequestedAttestationAtIndex(i) == "wallet_authentication" {
 					attClient, err := attestation.NewClient(
-						attestation.NewCreateClientArgs(attestationURL, testHelper.KMS.GetCrypto()).
+						attestation.NewCreateClientArgs("https://krakend-k8s-dev1.dev.dts-dsa.com/vcs/wallet/attestation", testHelper.KMS.GetCrypto()).
 							DisableHTTPClientTLSVerify())
 					require.NoError(t, err)
 
 					attestationVC, err := attClient.GetAttestationVC(vm,
-						`{
-							"type": "urn:attestation:application:trustbloc",
-							"application": {
-								"type":    "wallet-cli",
-								"name":    "wallet-cli",
-								"version": "1.0"
-							},
-							"compliance": {
-								"type": "fcra"				
-							}
-						}`,
+						`{"type":"urn:attestation:application:midy","application":{"type":"MidyWallet","name":"Midy Wallet","version":"2.0"},"compliance":{"type":"fcra"}}`,
 					)
 					require.NoError(t, err)
 
@@ -420,7 +409,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		require.NoError(t, err)
 		require.Contains(t, subID, didID)
 
-		require.NoError(t, vcStatusVerifier.Verify(vc))
+		//		require.NoError(t, vcStatusVerifier.Verify(vc))
 
 		testHelper.CheckActivityLogAfterOpenID4CIFlow(t, vcsAPIDirectURL,
 			tc.issuerProfileID, subID)

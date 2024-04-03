@@ -5,24 +5,24 @@
 
 module github.com/trustbloc/wallet-sdk
 
-go 1.21
+go 1.22
 
 require (
+	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/google/uuid v1.3.0
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.2
 	github.com/trustbloc/bbs-signature-go v1.0.2
-	github.com/trustbloc/did-go v1.2.0
-	github.com/trustbloc/kms-go v1.1.1
+	github.com/trustbloc/did-go v1.2.1-0.20240403080251-cdfc1165460f
+	github.com/trustbloc/kms-go v1.1.2-0.20240403074855-38b6c31bf198
 	github.com/trustbloc/sidetree-go v1.1.0
-	github.com/trustbloc/vc-go v1.1.1
+	github.com/trustbloc/vc-go v1.1.2-0.20240403093810-664ef7b3328a
 	golang.org/x/oauth2 v0.13.0
 )
 
 require (
 	github.com/IBM/mathlib v0.0.3-0.20231011094432-44ee0eb539da // indirect
 	github.com/PaesslerAG/gval v1.1.0 // indirect
-	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
 	github.com/VictoriaMetrics/fastcache v1.5.7 // indirect
 	github.com/bits-and-blooms/bitset v1.7.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.1.3 // indirect

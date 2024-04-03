@@ -540,7 +540,7 @@ func (i *IssuerInitiatedInteraction) getPreAuthTokenResponse(
 		fmt.Sprintf(fetchTokenViaPOSTReqEventText, tokenEndpoint),
 		requestCredentialEventText, tokenErrorResponseHandler)
 	if err != nil {
-		return nil, fmt.Errorf("issuer's token endpoint: %w", err)
+		return nil, fmt.Errorf("issuer's token endpoint %s: %w", attestationVP, err)
 	}
 
 	var tokenResp preAuthTokenResponse

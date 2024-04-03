@@ -49,11 +49,11 @@ void main() async {
           attestationURL: 'https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/',
           disableTLSVerify: true,
           attestationPayload: '''{
-							"type": "urn:attestation:application:trustbloc",
+							"type": "urn:attestation:application:midy",
 							"application": {
-								"type":    "wallet-cli",
-								"name":    "wallet-cli",
-								"version": "1.0"
+								"type":    "MidyWallet",
+								"name":    "Midy Wallet",
+								"version": "2.0"
 							},
 							"compliance": {
 								"type": "fcra"				

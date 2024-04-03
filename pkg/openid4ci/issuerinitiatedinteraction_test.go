@@ -904,7 +904,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
 			}, openid4ci.WithPIN("1234"))
-			require.Contains(t, err.Error(), `failed to get token response: issuer's token endpoint: Post `+
+			require.Contains(t, err.Error(), `Post `+
 				`"http://BadURL": dial tcp: lookup BadURL`)
 			require.Nil(t, credentials)
 		})

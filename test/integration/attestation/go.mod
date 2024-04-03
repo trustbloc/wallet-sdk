@@ -4,15 +4,15 @@
 
 module github.com/trustbloc/wallet-sdk/test/integration/attestation
 
-go 1.21
+go 1.22
 
 require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/trustbloc/cmdutil-go v1.0.0
-	github.com/trustbloc/did-go v1.2.0
-	github.com/trustbloc/kms-go v1.1.1
-	github.com/trustbloc/vc-go v1.1.1
+	github.com/trustbloc/did-go v1.2.1-0.20240403080251-cdfc1165460f
+	github.com/trustbloc/kms-go v1.1.2-0.20240403074855-38b6c31bf198
+	github.com/trustbloc/vc-go v1.1.2-0.20240403093810-664ef7b3328a
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 )
 
