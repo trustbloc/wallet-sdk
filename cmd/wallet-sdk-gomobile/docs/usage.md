@@ -1725,12 +1725,19 @@ val attestClient = Attestation.newClient(Attestation.newCreateClientArgs("<URL>"
 
 // generate attestation VC
 val attestationVC = attestClient.getAttestationVC(
-                attestDID.assertionMethod(),
-                Attestation.newAttestRequest()
-                        .addAssertion("wallet_authentication")
-                        .addWalletAuthentication("authentication_method", "system_biometry")
-                        .addWalletMetadata("wallet_name", "Mi Wallet"))
-                        .addWalletMetadata("wallet_version", "2.0"))
+	attestDID.assertionMethod(),
+	"""{
+			"type": "urn:attestation:application:trustbloc",
+			"application": {
+				"type":    "wallet-cli",
+				"name":    "wallet-cli",
+				"version": "1.0"
+			},
+			"compliance": {
+				"type": "fra"				
+			}
+		}""",
+)
 
 // use this attestation VC with issuance or presentation flows.
 ```
@@ -1745,7 +1752,21 @@ let attestDID = DidionCreateLongForm(jwk, &error)
 let attClient = AttestationNewClient(AttestationNewCreateClientArgs("<URL>", crypto),nil)!
 
 // generate attestation VC
-let attestationVC = try attClient.getAttestationVC(attestDID!.assertionMethod(), attestationRequest: AttestationNewAttestRequest()!.addAssertion("wallet_authentication")!.addWalletAuthentication("authentication_method", value:"system_biometry")!.addWalletMetadata("wallet_name", value:"Mi Wallet")!.addWalletMetadata("wallet_version", value:"2.0"))
+let attestationVC = try attClient.getAttestationVC(attestDID!.assertionMethod(),
+	attestationPayloadJSON: """
+						 {
+							"type": "urn:attestation:application:trustbloc",
+							"application": {
+								"type":    "wallet-cli",
+								"name":    "wallet-cli",
+								"version": "1.0"
+							},
+							"compliance": {
+								"type": "fcra"
+							}
+						}
+	""")
+
 
 // use this attestation VC with issuance or presentation flows.
 ```
