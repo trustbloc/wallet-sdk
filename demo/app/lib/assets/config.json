@@ -1,0 +1,19 @@
+{
+  "didResolverURI":  "",
+  "evaluateIssuanceURL": "",
+  "evaluatePresentationURL": "",
+  "attestationURL": "",
+  "attestationPayload": {
+    "type": "urn:attestation:application:trustbloc",
+    "application": {
+      "type": "TrustblocWallet",
+      "name": "Trustbloc Wallet",
+      "version": "2.0"
+    },
+    "compliance": [
+      {
+        "type": "fcra"
+      }
+    ]
+  }
+}

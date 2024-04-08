@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import 'package:app/scenarios/handle_openid_url.dart';
+import 'package:app/services/config_service.dart';
 import 'package:app/widgets/common_logo_appbar.dart';
 import 'package:app/widgets/primary_input_field.dart';
 import 'package:app/widgets/primary_button.dart';
@@ -20,8 +21,8 @@ final WalletSDKPlugin = WalletSDK();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  const didResolverURI = String.fromEnvironment('didResolverURI');
-  await WalletSDKPlugin.initSDK(didResolverURI);
+  await ConfigService.init();
+  await WalletSDKPlugin.initSDK(ConfigService.config.didResolverURI);
 
   runApp(const MyApp());
 }

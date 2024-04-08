@@ -98,9 +98,7 @@ flutter:
    - lib/assets/images/logoIcon.png
    - lib/assets/images/error_icon.svg
    - lib/assets/images/tick-checked.svg
-   - lib/assets/issuerAuthFlowConfig.json
-   - lib/assets/walletInitiatedIssuerConfig.json
-   - lib/assets/customScopes.json
+   - lib/assets/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

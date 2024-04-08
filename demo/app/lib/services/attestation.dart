@@ -1,13 +1,14 @@
 import '../wallet_sdk/wallet_sdk.dart';
+import 'config_service.dart';
 
 class AttestationService {
-  static String get attestationURL => const String.fromEnvironment('attestationURL');
+  static String get attestationURL => ConfigService.config.attestationURL;
 
   static bool get attestationEnabled => attestationURL.isNotEmpty;
 
   static Future<String> getAttestationVC() async {
     _attestationVC ??=
-        await WalletSDK().getAttestationVC(attestationURL: attestationURL, attestationPayload: '{"type":"urn:attestation:application:midy","application":{"type":"MidyWallet","name":"Midy Wallet","version":"2.0"},"compliance":[{"type":"fcra"}]}');
+        await WalletSDK().getAttestationVC(attestationURL: attestationURL, attestationPayload: ConfigService.config.attestationPayload);
 
     return _attestationVC!;
   }
