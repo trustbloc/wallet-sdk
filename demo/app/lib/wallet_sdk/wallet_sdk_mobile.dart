@@ -11,6 +11,7 @@ import 'package:app/wallet_sdk/wallet_sdk_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../services/config_service.dart';
 import 'wallet_sdk_interface.dart';
 
 class WalletSDK extends WalletPlatform {
@@ -177,8 +178,8 @@ class WalletSDK extends WalletPlatform {
   }
 
   Future<IssuerDisplayData> parseIssuerDisplay(String issuerDisplayData) async {
-    var issuerDisplay = await methodChannel.invokeMethod(
-        'parseIssuerDisplay', <String, dynamic>{'issuerDisplayData': issuerDisplayData});
+    var issuerDisplay = await methodChannel
+        .invokeMethod('parseIssuerDisplay', <String, dynamic>{'issuerDisplayData': issuerDisplayData});
     return IssuerDisplayData.fromMap(issuerDisplay.cast<String, dynamic>());
   }
 
@@ -234,14 +235,14 @@ class WalletSDK extends WalletPlatform {
   }
 
   Future<EvaluationResult?> evaluateIssuanceTrustInfo() async {
-    var data = await methodChannel.invokeMethod(
-        'evaluateIssuanceTrustInfo', {'evaluateIssuanceURL': const String.fromEnvironment('evaluateIssuanceURL')});
+    var data = await methodChannel
+        .invokeMethod('evaluateIssuanceTrustInfo', {'evaluateIssuanceURL': ConfigService.config.evaluateIssuanceURL});
     return EvaluationResult.fromMap(data.cast<String, dynamic>());
   }
 
   Future<EvaluationResult?> evaluatePresentationTrustInfo() async {
-    var data = await methodChannel.invokeMethod('evaluatePresentationTrustInfo',
-        {'evaluatePresentationURL': const String.fromEnvironment('evaluatePresentationURL')});
+    var data = await methodChannel.invokeMethod(
+        'evaluatePresentationTrustInfo', {'evaluatePresentationURL': ConfigService.config.evaluatePresentationURL});
     return EvaluationResult.fromMap(data.cast<String, dynamic>());
   }
 
