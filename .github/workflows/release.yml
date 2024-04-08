@@ -82,6 +82,15 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
+      - name: Build Custom GO
+        run: |
+          cd ..
+          git clone https://go.googlesource.com/go goroot          
+          cd goroot
+          git checkout go1.22.2
+          cp ../wallet-sdk/cmd/wallet-sdk-gomobile/gopatches/* ./
+          git apply cmd_cgo__fix_unaligned_arguments_typedmemmove_crash_on_iOS.patch
+          cd src && ./all.bash
       - name: Derive the new version
         run: |
           echo "new version"
@@ -94,14 +103,15 @@ jobs:
           echo ${{ github.workspace }}
           echo ${GOPATH}
           echo ${GOROOT}
-          export PATH=$PATH:$GOPATH/bin
+          export PATH=$GOPATH/bin:$PATH        
           echo $PATH
+          which go 
           go install golang.org/x/mobile/cmd/gomobile@latest
           gomobile init
           NEW_VERSION=$NEW_VER GIT_REV=$(git rev-parse HEAD) BUILD_TIME=$(date) make generate-ios-bindings
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOPATH: /Users/runner/work/wallet-sdk/go
+          GOPATH: /Users/runner/work/wallet-sdk/goroot
       - name: Upload iOS bindings to GitHub Actions Artifacts
         uses: actions/upload-artifact@v3
         if: always()
