@@ -578,6 +578,7 @@ class EvaluationResult {
   final String errorCode;
   final String errorMessage;
   final List<String> requestedAttestations;
+  bool multipleCredentialAllowed;
 
 //<editor-fold desc="Data Methods">
   EvaluationResult({
@@ -585,15 +586,30 @@ class EvaluationResult {
     required this.errorCode,
     required this.errorMessage,
     required this.requestedAttestations,
+    required this.multipleCredentialAllowed
   });
 
   @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EvaluationResult &&
+          runtimeType == other.runtimeType &&
+          allowed == other.allowed &&
+          multipleCredentialAllowed == other.multipleCredentialAllowed &&
+          errorCode == other.errorCode &&
+          errorMessage == other.errorMessage);
+
+  @override
+  int get hashCode => allowed.hashCode ^ multipleCredentialAllowed.hashCode ^ errorCode.hashCode ^ errorMessage.hashCode;
+
+  @override
   String toString() {
-    return 'EvaluationResult{ allowed: $allowed, errorCode: $errorCode, errorMessage: $errorMessage, requestedAttestations: $requestedAttestations,}';
+    return 'EvaluationResult{ allowed: $allowed, multipleCredentialAllowed: $multipleCredentialAllowed, errorCode: $errorCode, errorMessage: $errorMessage, requestedAttestations: $requestedAttestations,}';
   }
 
   EvaluationResult copyWith({
     bool? allowed,
+    bool? multipleCredentialAllowed,
     String? errorCode,
     String? errorMessage,
   }) {
@@ -602,12 +618,14 @@ class EvaluationResult {
       errorCode: errorCode ?? this.errorCode,
       errorMessage: errorMessage ?? this.errorMessage,
       requestedAttestations: requestedAttestations,
+      multipleCredentialAllowed: multipleCredentialAllowed ?? this.multipleCredentialAllowed,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'allowed': allowed,
+      'multipleCredentialAllowed' : multipleCredentialAllowed,
       'errorCode': errorCode,
       'errorMessage': errorMessage,
       'requestedAttestations': requestedAttestations,
@@ -617,6 +635,7 @@ class EvaluationResult {
   factory EvaluationResult.fromMap(Map<String, dynamic> map) {
     return EvaluationResult(
       allowed: map['allowed'] as bool,
+      multipleCredentialAllowed: map['multipleCredentialAllowed'] as bool,
       errorCode: map['errorCode'] as String,
       errorMessage: map['errorMessage'] as String,
       requestedAttestations: map['requestedAttestations'].cast<String>(),

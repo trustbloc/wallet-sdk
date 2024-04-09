@@ -24,6 +24,7 @@ func convertEvaluationResult(res: TrustregistryEvaluationResult) -> Dictionary<S
 
     var resDic :[String: Any] = [
         "allowed":   res.allowed,
+        "multipleCredentialAllowed": res.multipleCredentialAllowed,
         "errorCode":   res.errorCode,
         "errorMessage":   res.errorMessage,
         "requestedAttestations": requestedAttestations,

@@ -964,7 +964,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         do {
             let res = try openID4CI?.checkWithTrustRegistry(evaluateIssuanceURL: evaluateIssuanceURL)
             result(convertEvaluationResult(res:res!))
-            
+
         } catch let error as NSError {
             return result(FlutterError.init(code: "Exception",
                                             message: "error while call evaluateIssuanceTrustInfo",
@@ -982,9 +982,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         
         do {
             let res = try openID4VP?.checkWithTrustRegistry(evaluatePresentationURL: evaluatePresentationURL)
-            
-            result(convertEvaluationResult(res:res!))
-            
+              result(convertEvaluationResult(res:res!))
+
         } catch let error as NSError {
             return result(FlutterError.init(code: "Exception",
                                             message: "error while call evaluateIssuanceTrustInfo",
