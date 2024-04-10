@@ -10,6 +10,7 @@ import dev.trustbloc.wallet.sdk.credential.InputDescriptor
 import dev.trustbloc.wallet.sdk.credential.SubmissionRequirement
 import dev.trustbloc.wallet.sdk.credential.SubmissionRequirementArray
 import dev.trustbloc.wallet.sdk.display.Data
+import dev.trustbloc.wallet.sdk.trustregistry.EvaluationResult
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 
 public fun convertVerifiableCredentialsArray(arr: CredentialsArray): List<String> {
@@ -82,4 +83,18 @@ private fun convertInputDescriptors(req: SubmissionRequirement): List<HashMap<St
     ) { i: Int ->
         convertInputDescriptor(req.descriptorAtIndex(i.toLong()))
     }
+}
+
+public fun convertEvaluationResult(result: EvaluationResult): HashMap<String, Any> {
+    val requestedAttestations = List(result.requestedAttestationLength().toInt()
+    ) { i: Int ->
+        result.requestedAttestationAtIndex(i.toLong())
+    }
+
+    return hashMapOf(
+            "allowed" to result.allowed,
+            "errorCode" to result.errorCode,
+            "errorMessage" to result.errorMessage,
+            "requestedAttestations" to requestedAttestations,
+    )
 }

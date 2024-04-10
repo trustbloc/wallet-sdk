@@ -55,6 +55,11 @@ class IssuancePreviewState extends State<IssuancePreview> {
       this.trustInfoEvaluationResult = trustInfoEvaluationResult;
     });
 
+    final requestedAttestations = trustInfoEvaluationResult?.requestedAttestations ?? [];
+    if (requestedAttestations.where((attestation) => attestation == 'wallet_authentication').isNotEmpty) {
+      await AttestationService.issueAttestationVC();
+    }
+
     final offerDisplayData = await WalletSDKPlugin.getCredentialOfferDisplayData();
     setState(() {
       this.offerDisplayData = offerDisplayData;
@@ -259,7 +264,8 @@ class IssuancePreviewState extends State<IssuancePreview> {
   void navigateToWithoutPinFlow(BuildContext context) async {
     var credentialData = await fetchPreviewScreenDetails();
 
-    Navigator.push(context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialsData: credentialData)));
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => CredentialPreview(credentialsData: credentialData)));
   }
 
   Future<List<CredentialData>> fetchPreviewScreenDetails() async {
@@ -286,7 +292,8 @@ class IssuancePreviewState extends State<IssuancePreview> {
       attestationVC: await AttestationService.returnAttestationVCIfEnabled(),
     );
     final issuerURL = await WalletSDKPlugin.issuerURI();
-    final resolvedCredentialsDisplay = await WalletSDKPlugin.resolveDisplayData(credentials.map((e) => e.content).toList(), issuerURL!);
+    final resolvedCredentialsDisplay =
+        await WalletSDKPlugin.resolveDisplayData(credentials.map((e) => e.content).toList(), issuerURL!);
 
     var activities = await WalletSDKPlugin.storeActivityLogger();
 

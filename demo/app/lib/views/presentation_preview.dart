@@ -66,6 +66,11 @@ class PresentationPreviewState extends State<PresentationPreview> {
 
       trustInfoEvaluationResult = await WalletSDKPlugin.evaluatePresentationTrustInfo();
       setState(() {});
+
+      final requestedAttestations = trustInfoEvaluationResult?.requestedAttestations ?? [];
+      if (requestedAttestations.where((attestation) => attestation == 'wallet_authentication').isNotEmpty) {
+        await AttestationService.issueAttestationVC();
+      }
     });
   }
 
