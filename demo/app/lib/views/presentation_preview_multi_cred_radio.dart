@@ -18,8 +18,9 @@ import 'package:app/services/storage_service.dart';
 import 'package:app/models/activity_data_object.dart';
 import 'package:app/widgets/credential_card.dart';
 
-import '../services/attestation.dart';
-import '../services/config_service.dart';
+import 'package:app/services/attestation.dart';
+import 'package:app/services/config_service.dart';
+import 'package:app/wallet_sdk/wallet_sdk_model.dart';
 import 'custom_error.dart';
 
 class PresentationPreviewMultiCred extends StatefulWidget {
@@ -28,33 +29,46 @@ class PresentationPreviewMultiCred extends StatefulWidget {
   const PresentationPreviewMultiCred({super.key, required this.credentialData});
 
   @override
-  State<PresentationPreviewMultiCred> createState() => PresentationPreviewMultiCredState();
+  State<PresentationPreviewMultiCred> createState() =>
+      PresentationPreviewMultiCredState();
 }
 
-class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCred> {
+class PresentationPreviewMultiCredState
+    extends State<PresentationPreviewMultiCred> {
   final StorageService _storageService = StorageService();
   final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   var uuid = const Uuid();
   bool checked = false;
+
   late CredentialData selectedCredentialData = widget.credentialData[0];
+  List multipleCredential = [];
+  List<CredentialData> credentialToBeShared = [];
   int selectedRadio = 0;
   late String verifierLogoURL = '';
   late String verifierName = '';
   late String serviceURL = '';
   late String verifierPurpose = '';
   bool verifiedDomain = true;
+  bool multipleCredentialAllowed = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      final verifiedDisplayData = await WalletSDKPlugin.getVerifierDisplayData();
-      var resp = await WalletSDKPlugin.wellKnownDidConfig(verifiedDisplayData.did);
+      final verifiedDisplayData =
+          await WalletSDKPlugin.getVerifierDisplayData();
+      var resp =
+          await WalletSDKPlugin.wellKnownDidConfig(verifiedDisplayData.did);
+
+      final trustInfoEvaluationResult =
+          await WalletSDKPlugin.evaluatePresentationTrustInfo();
+
       setState(() {
         verifierName = verifiedDisplayData.name;
         verifierLogoURL = verifiedDisplayData.logoURI;
         verifierPurpose = verifiedDisplayData.purpose;
         serviceURL = resp.serviceURL;
+        multipleCredentialAllowed = trustInfoEvaluationResult!.multipleCredentialAllowed;
         verifiedDomain = resp.isValid;
       });
     });
@@ -86,16 +100,21 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
                     ? const SizedBox.shrink()
                     : CachedNetworkImage(
                         imageUrl: verifierLogoURL,
-                        placeholder: (context, url) => const CircularProgressIndicator(),
-                        errorWidget: (context, url, error) =>
-                            Image.asset('lib/assets/images/credLogo.png', fit: BoxFit.contain),
+                        placeholder: (context, url) =>
+                            const CircularProgressIndicator(),
+                        errorWidget: (context, url, error) => Image.asset(
+                            'lib/assets/images/credLogo.png',
+                            fit: BoxFit.contain),
                         width: 60,
                         height: 60,
                         fit: BoxFit.contain,
                       ),
-                title: Text(verifierName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                title: Text(verifierName,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
                 subtitle: Text(serviceURL != '' ? serviceURL : 'verifier.com',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.normal)),
                 trailing: FittedBox(
                     child: verifiedDomain
                         ? const Row(children: [
@@ -149,20 +168,25 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
               ),
               Text(verifierPurpose),
               for (var i = 0; i < widget.credentialData.length; i++)
-                RadioListTile(
+                 multipleCredentialAllowed ? CredentialCard(
+                        credentialData: widget.credentialData[i],
+                        isDashboardWidget: false,
+                        isDetailArrowRequired: false
+                ): RadioListTile(
                   controlAffinity: ListTileControlAffinity.leading,
                   title: CredentialCard(
-                      credentialData: widget.credentialData[i], isDashboardWidget: false, isDetailArrowRequired: true),
+                      credentialData: widget.credentialData[i],
+                      isDashboardWidget: false,
+                      isDetailArrowRequired: true),
                   activeColor: Colors.deepPurple,
                   autofocus: false,
                   value: i,
                   groupValue: selectedRadio,
                   onChanged: (val) {
-                    print('Radio $val');
                     selectedCredentialData = widget.credentialData[i];
                     setSelectedRadio(val!);
                   },
-                ),
+                 ),
               Padding(
                 padding: EdgeInsets.only(top: width * 0.8),
               ),
@@ -181,15 +205,29 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
                             Map<String, dynamic> customScopeConfigList = {};
                             final ConfigService configService = ConfigService();
                             final attestationVC = await AttestationService.returnAttestationVCIfEnabled();
+                            List<String> selectedCredentials = <String>[];
+
+                            if (multipleCredentialAllowed) {
+                              for (var i = 0; i < widget.credentialData.length; i++) {
+                                multipleCredential.add(widget.credentialData[i].rawCredential);
+                                credentialToBeShared.add(widget.credentialData[i]);
+                                selectedCredentials = multipleCredential.cast<String>();
+                              }
+                            } else {
+                              selectedCredentials = [selectedCredentialData.rawCredential];
+                              credentialToBeShared.add(selectedCredentialData);
+                            }
 
                             WalletSDKPlugin.getCustomScope()
                                 .then((customScopeList) async {
-                                  customScopeConfigList = await configService.readCustomScopeConfig(customScopeList);
+                                  customScopeConfigList = await configService
+                                      .readCustomScopeConfig(customScopeList);
                                 })
-                                .whenComplete(() => WalletSDKPlugin.presentCredential(
-                                    attestationVC: attestationVC,
-                                    selectedCredentials: [selectedCredentialData.rawCredential],
-                                    customScopeList: customScopeConfigList))
+                                .whenComplete(() =>
+                                    WalletSDKPlugin.presentCredential(
+                                        attestationVC: attestationVC,
+                                        selectedCredentials: selectedCredentials,
+                                        customScopeList: customScopeConfigList))
                                 .onError((error, stackTrace) {
                                   var errString = error.toString().replaceAll(r'\', '');
                                   Navigator.push(
@@ -206,7 +244,9 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
                             _navigateToCredentialShareSuccess(verifierName);
                           },
                           width: double.infinity,
-                          child: const Text('Share Credential', style: TextStyle(fontSize: 16, color: Colors.white))),
+                          child: const Text('Share Credential',
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.white))),
                       const Padding(
                         padding: EdgeInsets.fromLTRB(12, 0, 12, 8),
                       ),
@@ -233,14 +273,16 @@ class PresentationPreviewMultiCredState extends State<PresentationPreviewMultiCr
   }
 
   _navigateToDashboard() async {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }
 
   _navigateToCredentialShareSuccess(String verifierName) async {
     Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) =>
-                CredentialShared(verifierName: verifierName, credentialData: [selectedCredentialData])));
+            builder: (context) => CredentialShared(
+                verifierName: verifierName,
+                credentialData: credentialToBeShared)));
   }
 }

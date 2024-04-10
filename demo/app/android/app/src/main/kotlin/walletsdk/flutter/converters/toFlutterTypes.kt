@@ -93,6 +93,7 @@ public fun convertEvaluationResult(result: EvaluationResult): HashMap<String, An
 
     return hashMapOf(
             "allowed" to result.allowed,
+            "multipleCredentialAllowed" to  result.multipleCredentialAllowed,
             "errorCode" to result.errorCode,
             "errorMessage" to result.errorMessage,
             "requestedAttestations" to requestedAttestations,
