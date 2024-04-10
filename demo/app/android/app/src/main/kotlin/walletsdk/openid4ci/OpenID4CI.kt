@@ -100,7 +100,8 @@ class OpenID4CI constructor(
 
             val credentialOffer = CredentialOffer();
             credentialOffer.credentialFormat = offer.credentialFormat
-            credentialOffer.credentialType =offer.credentialFormat
+            credentialOffer.credentialType =offer.credentialType
+            credentialOffer.clientAttestationRequested = true
 
             issuanceRequest.addCredentialOffers(credentialOffer)
         }

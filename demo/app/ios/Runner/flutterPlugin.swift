@@ -963,14 +963,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         
         do {
             let res = try openID4CI?.checkWithTrustRegistry(evaluateIssuanceURL: evaluateIssuanceURL)
-            
-            var resDic :[String: Any] = [
-                "allowed":   res!.allowed,
-                "errorCode":   res!.errorCode,
-                "errorMessage":   res!.errorMessage,
-            ]
-            
-            result(resDic)
+            result(convertEvaluationResult(res:res!))
             
         } catch let error as NSError {
             return result(FlutterError.init(code: "Exception",
@@ -990,13 +983,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         do {
             let res = try openID4VP?.checkWithTrustRegistry(evaluatePresentationURL: evaluatePresentationURL)
             
-            var resDic :[String: Any] = [
-                "allowed":   res!.allowed,
-                "errorCode":   res!.errorCode,
-                "errorMessage":   res!.errorMessage,
-            ]
-            
-            result(resDic)
+            result(convertEvaluationResult(res:res!))
             
         } catch let error as NSError {
             return result(FlutterError.init(code: "Exception",

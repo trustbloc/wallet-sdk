@@ -56,7 +56,7 @@ class IssuancePreviewState extends State<IssuancePreview> {
     });
 
     final requestedAttestations = trustInfoEvaluationResult?.requestedAttestations ?? [];
-    if (requestedAttestations.where((attestation) => attestation == 'wallet_authentication').isNotEmpty) {
+    if (requestedAttestations.where((attestation) => attestation == 'urn:attestation:compliance:fcra').isNotEmpty) {
       await AttestationService.issueAttestationVC();
     }
 
