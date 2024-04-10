@@ -574,32 +574,22 @@ class CredentialsDisplayData {
 }
 
 class EvaluationResult {
-  bool allowed;
-  String errorCode;
-  String errorMessage;
+  final bool allowed;
+  final String errorCode;
+  final String errorMessage;
+  final List<String> requestedAttestations;
 
 //<editor-fold desc="Data Methods">
   EvaluationResult({
     required this.allowed,
     required this.errorCode,
     required this.errorMessage,
+    required this.requestedAttestations,
   });
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is EvaluationResult &&
-          runtimeType == other.runtimeType &&
-          allowed == other.allowed &&
-          errorCode == other.errorCode &&
-          errorMessage == other.errorMessage);
-
-  @override
-  int get hashCode => allowed.hashCode ^ errorCode.hashCode ^ errorMessage.hashCode;
-
-  @override
   String toString() {
-    return 'EvaluationResult{ allowed: $allowed, errorCode: $errorCode, errorMessage: $errorMessage,}';
+    return 'EvaluationResult{ allowed: $allowed, errorCode: $errorCode, errorMessage: $errorMessage, requestedAttestations: $requestedAttestations,}';
   }
 
   EvaluationResult copyWith({
@@ -611,6 +601,7 @@ class EvaluationResult {
       allowed: allowed ?? this.allowed,
       errorCode: errorCode ?? this.errorCode,
       errorMessage: errorMessage ?? this.errorMessage,
+      requestedAttestations: requestedAttestations,
     );
   }
 
@@ -619,6 +610,7 @@ class EvaluationResult {
       'allowed': allowed,
       'errorCode': errorCode,
       'errorMessage': errorMessage,
+      'requestedAttestations': requestedAttestations,
     };
   }
 
@@ -627,6 +619,7 @@ class EvaluationResult {
       allowed: map['allowed'] as bool,
       errorCode: map['errorCode'] as String,
       errorMessage: map['errorMessage'] as String,
+      requestedAttestations: map['requestedAttestations'].cast<String>(),
     );
   }
 

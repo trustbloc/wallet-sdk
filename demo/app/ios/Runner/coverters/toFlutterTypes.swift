@@ -16,6 +16,22 @@ func convertVerifiableCredentialsArray(arr: VerifiableCredentialsArray)-> Array<
    return credList
 }
 
+func convertEvaluationResult(res: TrustregistryEvaluationResult) -> Dictionary<String, Any> {
+    var requestedAttestations: [String] = []
+    for i in 0..<res.requestedAttestationLength() {
+        requestedAttestations.append(res.requestedAttestation(at:i))
+    }
+
+    var resDic :[String: Any] = [
+        "allowed":   res.allowed,
+        "errorCode":   res.errorCode,
+        "errorMessage":   res.errorMessage,
+        "requestedAttestations": requestedAttestations,
+    ]
+
+    return resDic;
+}
+
 func convertVerifiableCredentialsWithIdArray(arr: VerifiableCredentialsArray)-> Array<Dictionary<String, Any>> {
    var credList: [Dictionary<String, Any>] = []
    for i in 0..<arr.length() {

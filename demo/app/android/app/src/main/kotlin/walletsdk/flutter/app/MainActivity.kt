@@ -1022,7 +1022,8 @@ class MainActivity : FlutterActivity() {
                 ?: throw java.lang.Exception("OpenID4CI not initiated. Call authorize before this.")
 
         val result = openID4CI.checkWithTrustRegistry(evaluateIssuanceURL)
-        return hashMapOf("allowed" to result.allowed, "errorCode" to result.errorCode, "errorMessage" to result.errorMessage)
+
+        return convertEvaluationResult(result)
     }
 
     private fun evaluatePresentationTrustInfo(call: MethodCall): HashMap<String, Any> {
@@ -1032,7 +1033,8 @@ class MainActivity : FlutterActivity() {
                 ?: throw java.lang.Exception("OpenID4VP not initiated. Call startVPInteraction.")
 
         val result = openID4VP.checkWithTrustRegistry(evaluatePresentationURL)
-        return hashMapOf("allowed" to result.allowed, "errorCode" to result.errorCode, "errorMessage" to result.errorMessage)
+
+        return convertEvaluationResult(result)
     }
 
     private fun credentialStatusVerifier(call: MethodCall): Boolean {
