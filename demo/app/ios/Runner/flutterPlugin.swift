@@ -322,7 +322,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             
             try openID4VP.presentCredential(
                 selectedCredentials: selectedCredentialsArray!, customScopes: customScopeList,
-                didVerificationMethod: attestationDID?.assertionMethod(), attestationVC:attestationVC)
+                didVerificationMethod: didDocResolution?.assertionMethod(), attestationVC:attestationVC,
+                attestationVM: attestationDID?.assertionMethod())
             result(true);
             
         }  catch let error as NSError{
@@ -830,17 +831,24 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                              message: "error while process requestCredential credential",
                                              details: "openID4CI not initiated. Call authorize before this."))
         }
-        
-        guard let attestationDID = self.attestationDID else{
+
+        guard let didDocResolution = self.didDocResolution else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
                                              message: "error while process requestCredential credential",
                                              details: "Did document not initialized"))
         }
 
         let attestationVC = arguments["attestationVC"] as? String
+
+        if (attestationVC != nil && attestationDID == nil) {
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                     message: "error while process requestCredential credential",
+                                                     details: "attestation DID document not initialized"))
+        }
         
         do {
-            let credentialCreated = try openID4CI.requestCredentials(didVerificationMethod: attestationDID.assertionMethod(), otp: otp!, attestationVC: attestationVC)
+            let credentialCreated = try openID4CI.requestCredentials(didVerificationMethod: didDocResolution.assertionMethod(), otp: otp!,
+            attestationVC: attestationVC, attestationVM: attestationDID?.assertionMethod())
             result(credentialCreated)
         } catch let error as NSError{
             return result(FlutterError.init(code: "Exception",
