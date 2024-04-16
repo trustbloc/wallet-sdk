@@ -113,7 +113,7 @@ public class OpenID4VP {
         let opts = Openid4vpNewPresentCredentialOpts()
 
         if (attestationVC != nil && attestationVM != nil) {
-          opts?.setAttestationVC(didVerificationMethod, vc: attestationVC)
+          opts?.setAttestationVC(attestationVM, vc: attestationVC)
         }
         
         for scope in customScopes {

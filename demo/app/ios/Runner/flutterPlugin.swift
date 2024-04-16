@@ -840,7 +840,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
 
         let attestationVC = arguments["attestationVC"] as? String
 
-        if (attestationVC != null && attestationDID == null) {
+        if (attestationVC != nil && attestationDID == nil) {
             return  result(FlutterError.init(code: "NATIVE_ERR",
                                                      message: "error while process requestCredential credential",
                                                      details: "attestation DID document not initialized"))
