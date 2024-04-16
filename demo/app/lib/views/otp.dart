@@ -40,9 +40,9 @@ class _OTPPage extends State<OTP> {
   Future<String?> _createDid() async {
     final SharedPreferences pref = await prefs;
     var didType = pref.getString('didType');
-    didType = didType ?? 'ion';
+    didType = didType ?? 'jwk';
     var keyType = pref.getString('keyType');
-    keyType = keyType ?? 'ED25519';
+    keyType = keyType ?? 'ECDSAP384IEEEP1363';
     var didResolution = await WalletSDKPlugin.createDID(didType, keyType);
     var didID = didResolution.did;
     setState(() {
