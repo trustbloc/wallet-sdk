@@ -32,15 +32,15 @@ class SettingsState extends State<Settings> {
   String buildTimeRev = '';
 
   final List<String> supportedDids = [
-    'ion',
-    'key',
     'jwk',
+    'key',
+    'ion',
   ];
   final List<String> supportedKeyTypes = [
-    'ED25519',
-    'ECDSAP256IEEEP1363',
     'ECDSAP384IEEEP1363',
+    'ECDSAP256IEEEP1363',
     'ECDSAP521IEEEP1363',
+    'ED25519',
     'ECDSAP256DER',
     'ECDSAP384DER',
     'ECDSAP521DER'

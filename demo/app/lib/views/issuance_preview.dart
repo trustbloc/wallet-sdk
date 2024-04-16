@@ -276,8 +276,8 @@ class IssuancePreviewState extends State<IssuancePreview> {
     var didType = pref.getString('didType');
     var keyType = pref.getString('keyType');
     // choosing default if no selection is made
-    didType = didType ?? 'ion';
-    keyType = keyType ?? 'ED25519';
+    didType = didType ?? 'jwk';
+    keyType = keyType ?? 'ECDSAP384IEEEP1363';
 
     var didResolution = await WalletSDKPlugin.createDID(didType, keyType);
     var didID = didResolution.did;
