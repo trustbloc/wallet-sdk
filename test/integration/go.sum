@@ -162,8 +162,8 @@ github.com/trustbloc/logutil-go v1.0.0-rc1 h1:rRJbvgQfrlUfyej+mY0nuQJymGqjRW4oZE
 github.com/trustbloc/logutil-go v1.0.0-rc1/go.mod h1:JlxT0oZfNKgIlSNtgc001WEeDMxlnAvOM43gNm8DQVc=
 github.com/trustbloc/sidetree-go v1.1.0 h1:ZNCtYTut5MHVXJR26FvOPSo8uCGDR0YTNeA155s/QIo=
 github.com/trustbloc/sidetree-go v1.1.0/go.mod h1:IQ1iX/gLe/YL+M6kzenc5Oi14uzaYqfL7KgMyNuSGvI=
-github.com/trustbloc/vc-go v1.1.2-0.20240403093810-664ef7b3328a h1:IdfEcR3ecQdCqrJ2IhkuCIxmuWNNf0sNTuRypNCi8fE=
-github.com/trustbloc/vc-go v1.1.2-0.20240403093810-664ef7b3328a/go.mod h1:oxbnBh4xLg34N7bmTdhxADMGgfxEV5rC35cHLfpPZgA=
+github.com/trustbloc/vc-go v1.1.2-0.20240418074737-90b8ad202b64 h1:FHz1Mi87ZskL27GdtYZv9KzzFYnOa22txoFG02OomJ0=
+github.com/trustbloc/vc-go v1.1.2-0.20240418074737-90b8ad202b64/go.mod h1:oxbnBh4xLg34N7bmTdhxADMGgfxEV5rC35cHLfpPZgA=
 github.com/veraison/go-cose v1.1.0 h1:AalPS4VGiKavpAzIlBjrn7bhqXiXi4jbMYY/2+UC+4o=
 github.com/veraison/go-cose v1.1.0/go.mod h1:7ziE85vSq4ScFTg6wyoMXjucIGOf4JkFEZi/an96Ct4=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=

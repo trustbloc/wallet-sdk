@@ -419,6 +419,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 			verifiable.WithJSONLDDocumentLoader(documentLoader),
 			verifiable.WithProofChecker(defaults.NewDefaultProofChecker(common.NewVDRKeyResolver(didResolver))),
 		),
+		presexch.WithDefaultPresentationFormat("jwt_vp"),
 	)
 	if err != nil {
 		return nil, err
@@ -518,6 +519,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 			verifiable.WithDisabledProofCheck(),
 			verifiable.WithJSONLDDocumentLoader(documentLoader),
 		),
+		presexch.WithDefaultPresentationFormat("jwt_vp"),
 	)
 	if err != nil {
 		return nil, err

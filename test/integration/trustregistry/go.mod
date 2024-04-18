@@ -43,7 +43,7 @@ require (
 	github.com/trustbloc/bbs-signature-go v1.0.2 // indirect
 	github.com/trustbloc/did-go v1.2.1-0.20240403080251-cdfc1165460f // indirect
 	github.com/trustbloc/kms-go v1.1.2-0.20240403074855-38b6c31bf198 // indirect
-	github.com/trustbloc/vc-go v1.1.2-0.20240403093810-664ef7b3328a // indirect
+	github.com/trustbloc/vc-go v1.1.2-0.20240418074737-90b8ad202b64 // indirect
 	github.com/veraison/go-cose v1.1.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
