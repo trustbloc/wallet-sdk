@@ -1,0 +1,19 @@
+Subject: [PATCH] cmd/cgo: fix unaligned arguments typedmemmove crash on iOS
+---
+Index: src/cmd/cgo/out.go
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/cmd/cgo/out.go b/src/cmd/cgo/out.go
+--- a/src/cmd/cgo/out.go	(revision dddf0ae40fa0c1223aba191d73a44425a08e1035)
++++ b/src/cmd/cgo/out.go	(date 1712322519672)
+@@ -1029,7 +1029,7 @@
+ 		// string.h for memset, and is also robust to C++
+ 		// types with constructors. Both GCC and LLVM optimize
+ 		// this into just zeroing _cgo_a.
+-		fmt.Fprintf(fgcc, "\ttypedef %s %v _cgo_argtype;\n", ctype, p.packedAttribute())
++		fmt.Fprintf(fgcc, "\ttypedef %s %v __attribute__((aligned(%d))) _cgo_argtype;\n", ctype, p.packedAttribute(), p.PtrSize)
+ 		fmt.Fprintf(fgcc, "\tstatic _cgo_argtype _cgo_zero;\n")
+ 		fmt.Fprintf(fgcc, "\t_cgo_argtype _cgo_a = _cgo_zero;\n")
+ 		if gccResult != "void" && (len(fntype.Results.List) > 1 || len(fntype.Results.List[0].Names) > 1) {
