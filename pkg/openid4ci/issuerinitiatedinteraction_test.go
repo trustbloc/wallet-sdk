@@ -466,12 +466,26 @@ func TestNewIssuerInitiatedInteraction(t *testing.T) {
 }
 
 type mockResolver struct {
-	keyWriter api.KeyWriter
-	pubJWK    *jwk.JWK
+	keyWriter           api.KeyWriter
+	pubJWK              *jwk.JWK
+	linkedDomainsNumber *int
 }
 
 func (m *mockResolver) Resolve(string) (*did.DocResolution, error) {
-	didDoc, err := makeMockDoc(m.keyWriter, m.pubJWK)
+	var services []did.Service
+	if m.linkedDomainsNumber == nil {
+		one := 1
+		m.linkedDomainsNumber = &one
+	}
+	for i := 0; i < *m.linkedDomainsNumber; i++ {
+		services = append(services, did.Service{
+			ID:              "#LinkedDomains",
+			Type:            "LinkedDomains",
+			ServiceEndpoint: endpoint.NewDIDCommV1Endpoint("https://demo-issuer.trustbloc.local:8078/"),
+		})
+	}
+
+	didDoc, err := makeMockDoc(m.keyWriter, m.pubJWK, services)
 	if err != nil {
 		return nil, err
 	}
@@ -791,6 +805,82 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			testutil.RequireErrorContains(t, err,
 				"the credential offer requires a user PIN, but none was provided")
 			require.Nil(t, credentials)
+		})
+
+		t.Run("No linked domains", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t:                  t,
+				credentialResponse: sampleCredentialResponse,
+				httpStatusCode:     http.StatusCreated,
+			}
+
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: localkms.NewMemKMSStore()})
+			require.NoError(t, err)
+
+			_, publicKey, err := localKMS.Create(arieskms.ED25519Type)
+			require.NoError(t, err)
+
+			networkDocumentLoaderHTTPTimeout := time.Second * 10
+
+			zero := 0
+			config := &openid4ci.ClientConfig{
+				DIDResolver:                      &mockResolver{keyWriter: localKMS, pubJWK: publicKey, linkedDomainsNumber: &zero},
+				DisableVCProofChecks:             true,
+				NetworkDocumentLoaderHTTPTimeout: &networkDocumentLoaderHTTPTimeout,
+			}
+
+			issuerServerHandler.issuerMetadata = createSignedMetadata(t, localKMS, publicKey, server.URL)
+
+			credentialOfferIssuanceURI := createCredentialOfferIssuanceURI(t, server.URL, false, true)
+
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, config)
+			require.NoError(t, err)
+			require.NotNil(t, interaction)
+
+			trustInfo, err := interaction.IssuerTrustInfo()
+			require.NoError(t, err)
+			require.Empty(t, trustInfo.Domain)
+		})
+
+		t.Run("multiple linked domains", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t:                  t,
+				credentialResponse: sampleCredentialResponse,
+				httpStatusCode:     http.StatusCreated,
+			}
+
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: localkms.NewMemKMSStore()})
+			require.NoError(t, err)
+
+			_, publicKey, err := localKMS.Create(arieskms.ED25519Type)
+			require.NoError(t, err)
+
+			networkDocumentLoaderHTTPTimeout := time.Second * 10
+
+			zero := 2
+			config := &openid4ci.ClientConfig{
+				DIDResolver:                      &mockResolver{keyWriter: localKMS, pubJWK: publicKey, linkedDomainsNumber: &zero},
+				DisableVCProofChecks:             true,
+				NetworkDocumentLoaderHTTPTimeout: &networkDocumentLoaderHTTPTimeout,
+			}
+
+			issuerServerHandler.issuerMetadata = createSignedMetadata(t, localKMS, publicKey, server.URL)
+
+			credentialOfferIssuanceURI := createCredentialOfferIssuanceURI(t, server.URL, false, true)
+
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, config)
+			require.NoError(t, err)
+			require.NotNil(t, interaction)
+
+			trustInfo, err := interaction.IssuerTrustInfo()
+			require.NoError(t, err)
+			require.Equal(t, "https://demo-issuer.trustbloc.local:8078", trustInfo.Domain)
 		})
 
 		t.Run("attestation VC", func(t *testing.T) {
@@ -2068,7 +2158,7 @@ func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 // makeMockDoc creates a key in the given KMS and returns a mock DID Doc with a verification method.
-func makeMockDoc(keyWriter api.KeyWriter, pubJWK *jwk.JWK) (*did.Doc, error) {
+func makeMockDoc(keyWriter api.KeyWriter, pubJWK *jwk.JWK, services []did.Service) (*did.Doc, error) {
 	if pubJWK == nil {
 		var err error
 
@@ -2101,13 +2191,7 @@ func makeMockDoc(keyWriter api.KeyWriter, pubJWK *jwk.JWK) (*did.Doc, error) {
 		VerificationMethod: []did.VerificationMethod{
 			*vm,
 		},
-		Service: []did.Service{
-			{
-				ID:              "#LinkedDomains",
-				Type:            "LinkedDomains",
-				ServiceEndpoint: endpoint.NewDIDCommV1Endpoint("https://demo-issuer.trustbloc.local:8078/"),
-			},
-		},
+		Service: services,
 	}
 
 	return newDoc, nil

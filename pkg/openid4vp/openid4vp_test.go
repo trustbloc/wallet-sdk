@@ -880,7 +880,6 @@ func TestOpenID4VP_TrustInfo(t *testing.T) {
 	})
 
 	t.Run("Failure", func(t *testing.T) {
-		mockDoc := mockResolution(t, mockDID)
 		httpClient := &mock.HTTPClientMock{
 			StatusCode: 200,
 		}
@@ -888,7 +887,7 @@ func TestOpenID4VP_TrustInfo(t *testing.T) {
 		interaction, err := NewInteraction(
 			requestObjectJWT,
 			&jwtSignatureVerifierMock{},
-			&didResolverMock{ResolveValue: mockDoc},
+			nil,
 			&cryptoMock{SignVal: []byte(testSignature)},
 			lddl,
 			WithHTTPClient(httpClient),
@@ -896,7 +895,7 @@ func TestOpenID4VP_TrustInfo(t *testing.T) {
 		require.NoError(t, err)
 
 		info, err := interaction.TrustInfo()
-		require.ErrorContains(t, err, "no Linked Domains services specified")
+		require.ErrorContains(t, err, "no resolver provided")
 		require.Nil(t, info)
 	})
 }
