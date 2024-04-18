@@ -65,6 +65,10 @@ func ValidateLinkedDomains(did string, resolver api.DIDResolver,
 		return false, "", err
 	}
 
+	if linkedDomainsService == nil {
+		return false, "", nil
+	}
+
 	client := didconfig.New(didconfig.WithHTTPClient(httpClient),
 		didconfig.WithVDRegistry(&didResolverWrapper{didResolver: resolver}))
 
@@ -99,16 +103,9 @@ func getLinkedDomainsService(didDoc *diddoc.Doc) (*diddoc.Service, error) {
 		}
 
 		if strings.EqualFold(serviceType, linkedDomainsServiceType) {
-			if linkedDomainsService != nil {
-				return nil, errors.New("validating multiple Linked Domains services not supported")
-			}
-
 			linkedDomainsService = &didDoc.Service[i]
+			break
 		}
-	}
-
-	if linkedDomainsService == nil {
-		return nil, errors.New("resolved DID document has no Linked Domains services specified")
 	}
 
 	return linkedDomainsService, nil

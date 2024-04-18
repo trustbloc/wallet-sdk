@@ -165,10 +165,11 @@ func TestValidate(t *testing.T) {
 		sampleDIDWithoutServices := "did:key:z6MkoTHsgNNrby8JzCNQ1iRLyW5QQ6R8Xuu6AA8igGrMVPUM"
 
 		valid, domain, err := wellknown.ValidateLinkedDomains(sampleDIDWithoutServices, didResolver, nil)
-		testutil.RequireErrorContains(t, err, "resolved DID document has no Linked Domains services specified")
+		require.NoError(t, err)
 		require.False(t, valid)
 		require.Empty(t, domain)
 	})
+
 	t.Run("Resolved DID document has more than one service", func(t *testing.T) {
 		didDoc := `{
   "@context": ["https://www.w3.org/ns/did/v1","https://identity.foundation/.well-known/did-configuration/v1"],
@@ -188,23 +189,22 @@ func TestValidate(t *testing.T) {
       "id":"did:example:123#foo",
       "type": "LinkedDomains",
       "serviceEndpoint": {
-        "origins": ["https://identity.foundation"]
+        "origins": ["https://did.rohitgulati.com"]
       }
     },
 	{
       "id":"did:example:123#foo",
       "type": "LinkedDomains",
       "serviceEndpoint": {
-        "origins": ["https://identity.foundation"]
+        "origins": ["https://did.rohitgulati.com"]
       }
     }
   ]
 }`
 
-		valid, domain, err := wellknown.ValidateLinkedDomains("DID", newMockResolver(didDoc), nil)
-		testutil.RequireErrorContains(t, err, "validating multiple Linked Domains services not supported")
-		require.False(t, valid)
-		require.Empty(t, domain)
+		_, domain, err := wellknown.ValidateLinkedDomains("DID", newMockResolver(didDoc), nil)
+		require.NoError(t, err)
+		require.Equal(t, "https://did.rohitgulati.com", domain)
 	})
 	t.Run("DID service validation failure", func(t *testing.T) {
 		testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, _ *http.Request) {
@@ -274,7 +274,7 @@ func TestValidate(t *testing.T) {
   ]
 }`
 		valid, domain, err := wellknown.ValidateLinkedDomains("DID", newMockResolver(didDoc), nil)
-		testutil.RequireErrorContains(t, err, "resolved DID document has no Linked Domains services specified")
+		require.NoError(t, err)
 		require.False(t, valid)
 		require.Empty(t, domain)
 	})
