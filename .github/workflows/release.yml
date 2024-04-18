@@ -67,7 +67,7 @@ jobs:
   PublishIosSDKRelease:
     needs: [ PublishAndroidSDKRelease ]
     runs-on: macos-latest
-    timeout-minutes: 10
+    timeout-minutes: 40
     permissions:
       contents: write
     steps:
