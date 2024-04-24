@@ -1533,6 +1533,188 @@ let preferredVC = savedCredentials.atIndex(0)
 interaction.presentCredentialUnsafe(preferredVC)
 ```
 
+##### SubmissionRequirements complex cases
+
+###### Example 1: single submission requirement, rule is "all", nestedRequirement is empty.
+
+This is case the verifier requires all credentials to be presented.
+For example, it can be a Resident Permit <b>AND</b> Driver's Licence.
+In this case, the user should select one credential for each descriptor from the matchedVCs and confirm that they want to share it.
+
+```kotlin
+val selectedCredentials = CredentialsArray()
+if (requirements.len() == 1L && requirements.atIndex(0).rule() == "all" && requirements.atIndex(0).nestedRequirementLength() == 0L) {
+    var requirement = requirements.atIndex(0)
+
+    for (i in 0 until requirement.descriptorLen()) {
+        val descriptor = requirement.descriptorAtIndex(i)
+
+        if (descriptor.matchedVCs.length() > 0) {
+            selectedCredentials.add(descriptor.matchedVCs.atIndex(0))
+        } else {
+            // Show error message, that no credentials found for this descriptor.
+            // descriptor.name() and descriptor.purpose() can be used to show the error message.
+        }
+    }
+    
+    var credentials = interaction.presentCredential(selectedCredentials)
+}
+```
+
+###### Example 2: single submission requirement, rule is "pick", count 1, nestedRequirement is empty.
+
+This is case the verifier requires one credential to be presented from multiple descriptors.
+For example, it can be a Resident Permit <b>OR</b> Driver's Licence.
+
+```kotlin
+val selectedCredentials = CredentialsArray()
+if (requirements.len() == 1L &&
+        requirements.atIndex(0).rule() == "pick" &&
+        requirements.atIndex(0).count() == 1L &&
+        requirements.atIndex(0).nestedRequirementLength() == 0L) {
+    var requirement = requirements.atIndex(0)
+    var credentialToShowToUser = CredentialsArray();
+
+    for (i in 0 until requirement.descriptorLen()) {
+        val descriptor = requirement.descriptorAtIndex(i)
+        if (descriptor.matchedVCs.length() > 0) {
+            credentialToShowToUser.add(descriptor.matchedVCs.atIndex(0))
+        }
+    }
+
+    if (credentialToShowToUser.length() == 0L) {
+        // Show error message, that no credentials found for this requirement.
+    }
+    // User selects one credential from credentialToShowToUser array.
+
+    selectedCredentials.add(credentialSelectedByUser);
+
+    var credentials = interaction.presentCredential(selectedCredentials)
+}
+```
+
+###### Example 3: single submission requirement, rule is "pick", count 2, nestedRequirement is empty.
+This is case the verifier requires two credentials to be presented from multiple descriptors.
+For example, the verifier can require a Resident Permit, Driver's Licence, or Bank Account Information.
+The user needs to choose two credentials from the given three credentials.
+
+```kotlin
+val selectedCredentials = CredentialsArray()
+if (requirements.len() == 1L &&
+        requirements.atIndex(0).rule() == "pick" &&
+        requirements.atIndex(0).count() == 2L &&
+        requirements.atIndex(0).nestedRequirementLength() == 0L) {
+    var requirement = requirements.atIndex(0)
+    var credentialToShowToUser = CredentialsArray();
+
+    for (i in 0 until requirement.descriptorLen()) {
+        val descriptor = requirement.descriptorAtIndex(i)
+        if (descriptor.matchedVCs.length() > 0) {
+            credentialToShowToUser.add(descriptor.matchedVCs.atIndex(0))
+        }
+    }
+
+    if (credentialToShowToUser.length() == 0L) {
+        // Show error message, that no credentials found for this requirement.
+    }
+    // User selects two credentials from credentialToShowToUser array.
+
+    selectedCredentials.add(credential1SelectedByUser);
+    selectedCredentials.add(credential2SelectedByUser);
+
+    var credentials = interaction.presentCredential(selectedCredentials)
+}
+```
+
+###### Example 4: single submission requirement, rule is "pick", min is 2, max is 4, nestedRequirement is empty.
+
+```kotlin
+val selectedCredentials = CredentialsArray()
+if (requirements.len() == 1L &&
+        requirements.atIndex(0).rule() == "pick" &&
+        requirements.atIndex(0).min() == 2L &&
+        requirements.atIndex(0).max() == 4L &&
+        requirements.atIndex(0).nestedRequirementLength() == 0L) {
+    var requirement = requirements.atIndex(0)
+    var credentialToShowToUser = CredentialsArray();
+
+    for (i in 0 until requirement.descriptorLen()) {
+        val descriptor = requirement.descriptorAtIndex(i)
+        if (descriptor.matchedVCs.length() > 0) {
+            credentialToShowToUser.add(descriptor.matchedVCs.atIndex(0))
+        }
+    }
+
+    if (credentialToShowToUser.length() == 0L) {
+        // Show error message, that no credentials found for this requirement.
+    }
+    // The user selects from two to four credentials from credentialToShowToUser array.
+
+    selectedCredentials.add(credential1SelectedByUser);
+    selectedCredentials.add(credential2SelectedByUser);
+
+    var credentials = interaction.presentCredential(selectedCredentials)
+}
+```
+
+###### Example 5: single submission requirement, nestedRequirement not empty.
+The verifier provides two options for the user to choose from. 
+* Option 1: Present a Resident Permit.
+* Option 2: Present a Driver's Licence <b>AND</b> Bank Account Information.
+
+In this case, nestedRequirements will contain two requirements, one for each option.
+name() and purpose() can be used to show proper description to the user.
+
+```kotlin
+val selectedCredentials = CredentialsArray()
+if (requirements.len() == 1L &&
+        requirements.atIndex(0).nestedRequirementLength() == 2L) {
+    var requirement = requirements.atIndex(0)
+    var credentialToShowToUser = CredentialsArray();
+
+    // Assume that requirement.nestedRequirementAtIndex(0) request a Resident Permit
+    // and requirement.nestedRequirementAtIndex(1) request a Driver's Licence and Bank Account Information.
+    val option1 = requirement.nestedRequirementAtIndex(0);
+    val option2 = requirement.nestedRequirementAtIndex(1);
+
+    // In this case option1.pick() will be "all" and option2.pick() will be "pick".
+
+    if (userSelectOption1) {
+        selectedCredentials.add(option1.descriptorAtIndex(0).matchedVCs.atIndex(0))
+    } else
+
+    if (userSelectOption2) {
+        for (i in 0 until option2.descriptorLen()) {
+            val descriptor = option2.descriptorAtIndex(i)
+            if (descriptor.matchedVCs.length() > 0) {
+                credentialToShowToUser.add(descriptor.matchedVCs.atIndex(0))
+            }
+        }
+    }
+    
+    var credentials = interaction.presentCredential(selectedCredentials)
+}
+```
+
+###### Example 6: multiple submission requirements.
+
+```kotlin
+val selectedCredentials = CredentialsArray()
+
+for (i in 0 until requirements.len()) {
+    val requirement = requirements.atIndex(i)
+
+    // For each submission requirement, apply the same logic as in examples 1, 2, 3, 4.
+    // Resulting user-selected credentials should be added to selectedCredentials array.
+
+    selectedCredentials.add(credential1SelectedByUser);
+    selectedCredentials.add(credential2SelectedByUser);
+    // ...
+    selectedCredentials.add(credentialNSelectedByUser);
+}
+
+var credentials = interaction.presentCredential(selectedCredentials)
+```
 ###### Read scope and add custom scope claims
 
 ```swift
