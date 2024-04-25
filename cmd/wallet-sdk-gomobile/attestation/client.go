@@ -8,10 +8,14 @@ SPDX-License-Identifier: Apache-2.0
 package attestation
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/gowebpki/jcs"
 
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/memstorage/legacy"
@@ -24,6 +28,23 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	attestationgoapi "github.com/trustbloc/wallet-sdk/pkg/attestation"
 )
+
+// GetAttestationPayloadHash returns the SHA256 hash of the given attestation payload JSON.
+// JSON is canonicalized according to RFC 8785.
+func GetAttestationPayloadHash(attestationPayloadJSON string) (string, error) {
+	transformed, err := jcs.Transform([]byte(attestationPayloadJSON))
+	if err != nil {
+		return "", err
+	}
+
+	return hashSHA256(transformed), nil
+}
+
+func hashSHA256(data []byte) string {
+	hash := sha256.Sum256(data)
+
+	return hex.EncodeToString(hash[:])
+}
 
 // Client is a client for the attestation API.
 type Client struct {

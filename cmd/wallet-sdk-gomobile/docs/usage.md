@@ -1899,6 +1899,9 @@ for rInd in 0..<evaluationResult!.requestedAttestationLength() {
 ### Kotlin
 
 ```Kotlin
+// calculate the attestation payload hash
+val hash = Attestation.getAttestationPayloadHash(attestationPayload)
+
 // create a DID
 val attestDID = Didion.createLongForm(jwk)
 
@@ -1927,6 +1930,9 @@ val attestationVC = attestClient.getAttestationVC(
 ### Swift
 
 ```swift
+// calculate the attestation payload hash
+let hash = AttestationGetAttestationPayloadHash(attestationPayload, nil)
+
 // create a DID
 let attestDID = DidionCreateLongForm(jwk, &error)
 
