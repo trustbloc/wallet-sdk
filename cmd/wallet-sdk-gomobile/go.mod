@@ -10,6 +10,7 @@ go 1.22
 require (
 	github.com/go-jose/go-jose/v3 v3.0.1
 	github.com/google/uuid v1.3.0
+	github.com/gowebpki/jcs v1.0.1
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.2
 	github.com/trustbloc/did-go v1.2.1-0.20240403080251-cdfc1165460f

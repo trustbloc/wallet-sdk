@@ -168,6 +168,33 @@ func TestNewCreateClientArgs(t *testing.T) {
 	require.NotNil(t, args.metricsLogger)
 }
 
+func TestGetAttestationPayloadHash(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		payload := `
+		{
+			"type": "urn:attestation:application:trustbloc",
+			"application": {
+				"type":    "wallet-cli",
+				"name":    "wallet-cli",
+				"version": "1.0"
+			},
+			"compliance": {
+				"type": "fcra"				
+			}
+		}
+	`
+
+		hash, err := GetAttestationPayloadHash(payload)
+		require.NoError(t, err)
+		require.NotEmpty(t, hash)
+	})
+
+	t.Run("Invalid payload", func(t *testing.T) {
+		_, err := GetAttestationPayloadHash("{")
+		require.ErrorContains(t, err, "Unexpected EOF reached")
+	})
+}
+
 type documentLoaderMock struct {
 	LoadResult *api.LDDocument
 	LoadErr    error
