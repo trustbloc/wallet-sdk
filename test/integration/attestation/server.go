@@ -109,6 +109,13 @@ func (s *server) evaluateWalletAttestationInitRequest(w http.ResponseWriter, r *
 		return
 	}
 
+	authorization := r.Header.Get("Authorization")
+	if authorization != "Bearer token" {
+		s.writeResponse(w, http.StatusUnauthorized, fmt.Sprintf("authorization header is invalid: %q", authorization))
+
+		return
+	}
+
 	log.Printf("handling request: %s with payload %v", r.URL.String(), request)
 
 	sessionID, challenge := uuid.NewString(), uuid.NewString()
@@ -146,6 +153,13 @@ func (s *server) evaluateWalletAttestationCompleteRequest(w http.ResponseWriter,
 	if err != nil {
 		s.writeResponse(
 			w, http.StatusBadRequest, fmt.Sprintf("decode wallet attestation init request: %s", err.Error()))
+
+		return
+	}
+
+	authorization := r.Header.Get("Authorization")
+	if authorization != "Bearer token" {
+		s.writeResponse(w, http.StatusUnauthorized, fmt.Sprintf("authorization header is invalid: %q", authorization))
 
 		return
 	}

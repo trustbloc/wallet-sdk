@@ -60,7 +60,7 @@ class IntegrationTest: XCTestCase {
         XCTAssertFalse(pinRequired)
 
         let attClient = AttestationNewClient(
-          AttestationNewCreateClientArgs("https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/", crypto)?.disableHTTPClientTLSVerify(),
+          AttestationNewCreateClientArgs("https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/", crypto)?.disableHTTPClientTLSVerify()?.add(ApiHeader("Authorization", value: "Bearer token")),
           nil
         )!
 

@@ -9,6 +9,7 @@ package walletsdk
 import dev.trustbloc.wallet.sdk.api.Crypto
 import dev.trustbloc.wallet.sdk.api.DIDDocResolution
 import dev.trustbloc.wallet.sdk.api.DIDResolver
+import dev.trustbloc.wallet.sdk.api.Header
 import dev.trustbloc.wallet.sdk.did.Resolver
 import dev.trustbloc.wallet.sdk.did.ResolverOpts
 import dev.trustbloc.wallet.sdk.didion.Didion
@@ -130,13 +131,23 @@ class WalletSDK {
                 dev.trustbloc.wallet.sdk.display.Opts().setDIDResolver(didResolver))
     }
 
-    fun getAttestationVC(didVerificationMethod: VerificationMethod, attestationURL: String, disableTLSVerify: Boolean, attestationPayload: String): String {
+    fun getAttestationVC(
+            didVerificationMethod: VerificationMethod,
+            attestationURL: String,
+            disableTLSVerify: Boolean,
+            attestationPayload: String,
+            attestationToken: String?,
+    ): String {
         val opts = Attestation.newCreateClientArgs(
                 attestationURL,
                 crypto,
         );
         if (disableTLSVerify) {
             opts.disableHTTPClientTLSVerify()
+        }
+
+        if (attestationToken != null) {
+            opts.addHeader(Header("Authorization", "Bearer $attestationToken"))
         }
 
         val attestClient = Attestation.newClient(opts)

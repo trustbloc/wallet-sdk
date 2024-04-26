@@ -107,10 +107,19 @@ class WalletSDK {
         return OpenID4VP(didResolver: didResolver, crypto: crypto, activityLogger: activityLogger)
     }
 
-    func getAttestationVC(didVerificationMethod: ApiVerificationMethod, attestationURL: String, disableTLSVerify: Bool, attestationPayload: String) throws -> String {
+    func getAttestationVC(
+        didVerificationMethod: ApiVerificationMethod,
+        attestationURL: String,
+        disableTLSVerify: Bool,
+        attestationPayload: String,
+        attestationToken: String?
+   ) throws -> String {
         let opts = AttestationNewCreateClientArgs(attestationURL, crypto)!
         if (disableTLSVerify) {
             opts.disableHTTPClientTLSVerify()
+        }
+        if (attestationToken != nil) {
+            opts.add(ApiHeader("Authorization", value: "Bearer "+attestationToken!))
         }
 
         let attestClient = AttestationNewClient(opts, nil)!
