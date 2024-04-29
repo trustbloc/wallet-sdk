@@ -339,8 +339,11 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			for i := 0; i < result.RequestedAttestationLength(); i++ {
 				if result.RequestedAttestationAtIndex(i) == "wallet_authentication" {
 					attClient, err := attestation.NewClient(
-						attestation.NewCreateClientArgs("https://krakend-k8s-dev1.dev.dts-dsa.com/vcs/wallet/attestation", testHelper.KMS.GetCrypto()).
-							DisableHTTPClientTLSVerify())
+						attestation.NewCreateClientArgs(attestationURL, testHelper.KMS.GetCrypto()).
+							DisableHTTPClientTLSVerify().AddHeader(&api.Header{
+							Name:  "Authorization",
+							Value: "Bearer token",
+						}))
 					require.NoError(t, err)
 
 					attestationVC, err := attClient.GetAttestationVC(vm,

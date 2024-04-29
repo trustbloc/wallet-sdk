@@ -48,6 +48,7 @@ void main() async {
       final attestationVC = await walletSDKPlugin.getAttestationVC(
           attestationURL: 'https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/',
           disableTLSVerify: true,
+          attestationToken: 'token',
           attestationPayload: '''{
 							"type": "urn:attestation:application:midy",
 							"application": {

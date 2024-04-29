@@ -72,7 +72,7 @@ class IntegrationTest {
         val attestClient = Attestation.newClient(Attestation.newCreateClientArgs(
                 "https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/",
                 crypto,
-        ).disableHTTPClientTLSVerify())
+        ).disableHTTPClientTLSVerify().addHeader(Header("Authorization", "Bearer token")))
 
         val attestationVC = attestClient.getAttestationVC(
                 userDID.assertionMethod(),

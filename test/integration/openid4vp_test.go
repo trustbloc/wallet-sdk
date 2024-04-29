@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/attestation"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
@@ -301,7 +302,10 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 					attClient, err := attestation.NewClient(
 						attestation.NewCreateClientArgs(attestationURL, testHelper.KMS.GetCrypto()).
-							DisableHTTPClientTLSVerify())
+							DisableHTTPClientTLSVerify().AddHeader(&api.Header{
+							Name:  "Authorization",
+							Value: "Bearer token",
+						}))
 					require.NoError(t, err)
 
 					attestationVC, err := attClient.GetAttestationVC(vm, `{

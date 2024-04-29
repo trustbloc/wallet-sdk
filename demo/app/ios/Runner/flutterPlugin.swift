@@ -359,6 +359,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                                                  details: "parameter authenticationMethod is missed"))
             }
 
+            let attestationToken = arguments["attestationToken"] as? String
+
             if (attestationDID == nil) {
                 attestationDID = try walletSDK.createDID(didMethodType: "ion", didKeyType: "ED25519")
             }
@@ -367,7 +369,8 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 didVerificationMethod: try attestationDID!.assertionMethod(),
                 attestationURL: attestationURL,
                 disableTLSVerify: disableTLSVerify,
-                attestationPayload: attestationPayload)
+                attestationPayload: attestationPayload,
+                attestationToken: attestationToken)
 
             result(attestationVC);
 

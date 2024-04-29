@@ -1083,11 +1083,14 @@ class MainActivity : FlutterActivity() {
         val attestationPayload = call.argument<String>("attestationPayload")
                 ?: throw java.lang.Exception("authenticationMethod params is missed")
 
+        val attestationToken = call.argument<String>("attestationToken")
+
         if (attestationDID == null) {
             attestationDID = sdk.createDID("ion", "ED25519")
         }
 
-        return sdk.getAttestationVC(attestationDID!!.assertionMethod(), attestationURL, disableTLSVerify, attestationPayload)
+        return sdk.getAttestationVC(attestationDID!!.assertionMethod(), attestationURL,
+                disableTLSVerify, attestationPayload, attestationToken)
     }
 
     private fun getCustomScope(): ArrayList<String> {

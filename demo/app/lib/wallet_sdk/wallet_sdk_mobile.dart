@@ -203,11 +203,15 @@ class WalletSDK extends WalletPlatform {
   }
 
   Future<String> getAttestationVC(
-      {required String attestationURL, bool disableTLSVerify = false, required String attestationPayload}) async {
+      {required String attestationURL,
+      bool disableTLSVerify = false,
+      required String attestationPayload,
+      String? attestationToken}) async {
     var attestationVC = await methodChannel.invokeMethod<String>('getAttestationVC', <String, dynamic>{
       'attestationURL': attestationURL,
       'disableTLSVerify': disableTLSVerify,
-      'attestationPayload': attestationPayload
+      'attestationPayload': attestationPayload,
+      'attestationToken': attestationToken,
     });
     return attestationVC!;
   }
