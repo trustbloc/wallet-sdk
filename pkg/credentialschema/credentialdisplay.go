@@ -49,7 +49,7 @@ func buildCredentialDisplays(
 				continue
 			}
 
-			credentialDisplay, err := buildCredentialDisplay(credentialConfigurationSupported, subject, preferredLocale,
+			credentialDisplay, err := buildCredentialDisplay(credentialConfigurationSupported, vc, subject, preferredLocale,
 				maskingString)
 			if err != nil {
 				return nil, err
@@ -120,10 +120,11 @@ func haveMatchingTypes(credentialConfSupported *issuer.CredentialConfigurationSu
 
 func buildCredentialDisplay(
 	credentialConfigurationSupported *issuer.CredentialConfigurationSupported,
+	vc *verifiable.Credential,
 	subject *verifiable.Subject,
 	preferredLocale, maskingString string,
 ) (*CredentialDisplay, error) {
-	resolvedClaims, err := resolveClaims(credentialConfigurationSupported, subject, preferredLocale, maskingString)
+	resolvedClaims, err := resolveClaims(credentialConfigurationSupported, vc, subject, preferredLocale, maskingString)
 	if err != nil {
 		return nil, err
 	}
@@ -172,6 +173,7 @@ func getSubject(vc *verifiable.Credential) (*verifiable.Subject, error) {
 
 func resolveClaims(
 	credentialConfigurationSupported *issuer.CredentialConfigurationSupported,
+	vc *verifiable.Credential,
 	credentialSubject *verifiable.Subject,
 	preferredLocale, maskingString string,
 ) ([]ResolvedClaim, error) {
@@ -179,7 +181,7 @@ func resolveClaims(
 
 	for fieldName, claim := range credentialConfigurationSupported.CredentialDefinition.CredentialSubject {
 		resolvedClaim, err := resolveClaim(
-			fieldName, claim, credentialSubject, credentialConfigurationSupported, preferredLocale, maskingString)
+			fieldName, claim, vc, credentialSubject, credentialConfigurationSupported, preferredLocale, maskingString)
 		if err != nil && !errors.Is(err, errNoClaimDisplays) && !errors.Is(err, errClaimValueNotFoundInVC) {
 			return nil, err
 		}
@@ -195,6 +197,7 @@ func resolveClaims(
 func resolveClaim(
 	fieldName string,
 	claim *issuer.Claim,
+	vc *verifiable.Credential,
 	credentialSubject *verifiable.Subject,
 	credentialConfigurationSupported *issuer.CredentialConfigurationSupported,
 	preferredLocale, maskingString string,
@@ -205,7 +208,7 @@ func resolveClaim(
 
 	label, labelLocale := getLocalizedLabel(preferredLocale, claim)
 
-	untypedValue := getMatchingClaimValue(credentialSubject, fieldName)
+	untypedValue := getMatchingClaimValue(vc, credentialSubject, fieldName)
 	if untypedValue == nil {
 		return nil, errClaimValueNotFoundInVC
 	}
@@ -277,7 +280,8 @@ func getLocalizedLabel(preferredLocale string, claim *issuer.Claim) (string, str
 }
 
 // Returns nil if no matching claim value could be found.
-func getMatchingClaimValue(credentialSubject *verifiable.Subject, fieldName string) interface{} {
+func getMatchingClaimValue(vc *verifiable.Credential, credentialSubject *verifiable.Subject,
+	fieldName string) interface{} {
 	if strings.EqualFold(fieldName, "ID") {
 		if credentialSubject.ID == "" {
 			return nil
@@ -287,7 +291,7 @@ func getMatchingClaimValue(credentialSubject *verifiable.Subject, fieldName stri
 	}
 
 	if strings.HasPrefix(fieldName, "$.") {
-		value := findMatchingClaimUsingJSONPath(credentialSubject.CustomFields, fieldName)
+		value := findMatchingClaimUsingJSONPath(vc.ToRawJSON(), fieldName)
 		if value != nil {
 			return value
 		}
