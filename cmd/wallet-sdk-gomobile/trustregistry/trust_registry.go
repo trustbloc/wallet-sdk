@@ -73,6 +73,7 @@ func (r *Registry) EvaluateIssuance(request *IssuanceRequest) (*EvaluationResult
 		ErrorCode:            result.ErrorCode,
 		ErrorMessage:         result.ErrorMessage,
 		attestationsRequired: attestationsRequired,
+		denyReasons:          result.DenyReasons,
 	}, nil
 }
 
@@ -114,6 +115,7 @@ func (r *Registry) EvaluatePresentation(request *PresentationRequest) (*Evaluati
 		ErrorMessage:              result.ErrorMessage,
 		attestationsRequired:      attestationsRequired,
 		MultipleCredentialAllowed: multipleCredentialAllowed,
+		denyReasons:               result.DenyReasons,
 	}, nil
 }
 

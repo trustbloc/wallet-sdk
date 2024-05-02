@@ -55,6 +55,7 @@ func TestRegistry_EvaluateIssuance(t *testing.T) {
 		require.NotNil(t, result)
 		require.False(t, result.Allowed)
 		require.Equal(t, result.ErrorCode, "didForbidden")
+		require.Equal(t, result.DenyReason(), "unauthorized issuer, empty credentials")
 	})
 
 	t.Run("Invalid server URI", func(t *testing.T) {

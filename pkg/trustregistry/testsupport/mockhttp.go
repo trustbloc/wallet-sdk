@@ -59,6 +59,7 @@ func HandleEvaluateIssuanceRequest(w http.ResponseWriter, r *http.Request) {
 		writeResponse(w, &trustregistry.EvaluationResult{
 			ErrorCode:    "didForbidden",
 			ErrorMessage: "Interaction with given issuer is forbidden",
+			DenyReasons:  []string{"unauthorized issuer", "empty credentials"},
 		})
 
 		return

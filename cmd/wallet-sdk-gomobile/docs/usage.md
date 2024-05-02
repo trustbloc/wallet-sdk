@@ -1844,7 +1844,10 @@ config.evaluatePresentationURL = evaluatePresentationURL
 val evaluationResult = Registry(config).evaluatePresentation(presentationRequest)
 
 // check if the txn is allowed
-evaluationResult!.allowed 
+evaluationResult.allowed
+
+// check txn denial reason if allowed=false
+evaluationResult.denyReason()
 
 // Get the requested attestations
 for (rInd in 0 until evaluationResult.requestedAttestationLength() ) {
@@ -1886,7 +1889,10 @@ config.evaluatePresentationURL = evaluatePresentationURL
 let evaluationResult = try TrustregistryRegistry(config)!.evaluatePresentation(presentationRequest)
 
 // check if the txn is allowed
-evaluationResult!.allowed 
+evaluationResult!.allowed
+
+// check txn denial reason if allowed=false
+evaluationResult!.denyReason()
 
 // Get the requested attestations
 for rInd in 0..<evaluationResult!.requestedAttestationLength() {
