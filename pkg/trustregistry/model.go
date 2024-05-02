@@ -13,6 +13,7 @@ type EvaluationResult struct {
 	Allowed      bool            `json:"allowed,omitempty"`
 	ErrorCode    string          `json:"errorCode,omitempty"`
 	ErrorMessage string          `json:"errorMessage,omitempty"`
+	DenyReasons  []string        `json:"deny_reasons,omitempty"`
 	Data         *EvaluationData `json:"payload,omitempty"`
 }
 

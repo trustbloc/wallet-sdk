@@ -7,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package trustregistry
 
 import (
+	"strings"
+
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 )
 
@@ -17,6 +19,12 @@ type EvaluationResult struct {
 	ErrorMessage              string
 	MultipleCredentialAllowed bool
 	attestationsRequired      []string
+	denyReasons               []string
+}
+
+// DenyReason check the reasons when the transaction is not allowed (=false).
+func (e *EvaluationResult) DenyReason() string {
+	return strings.Join(e.denyReasons, ", ")
 }
 
 // RequestedAttestationLength returns the number attestation requested.
