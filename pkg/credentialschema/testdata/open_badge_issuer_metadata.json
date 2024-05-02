@@ -28,10 +28,15 @@
         "https://www.w3.org/2018/credentials/v1"
       ],
       "order": [
-        "$.achievement.fieldOfStudy",
-        "$.achievement.specialization",
-        "$.source.name",
-        "$.identifier[0].identityHash"
+        "$.name",
+        "$.credentialSubject.achievement.fieldOfStudy",
+        "$.credentialSubject.achievement.specialization",
+        "$.credentialSubject.source.name",
+        "$.credentialSubject.identifier[0].identityHash",
+        "$.awardedDate",
+        "$.issuanceDate",
+        "$.issuer.name",
+        "$.credentialSubject.licenseNumber"
       ],
       "credential_definition":{
         "type":[
@@ -39,7 +44,52 @@
           "AchievementCredential"
         ],
         "credentialSubject":{
-          "$.achievement.fieldOfStudy":{
+          "$.name":{
+            "value_type":"string",
+            "display":[
+              {
+                "name":"Degree",
+                "locale":"en-US"
+              }
+            ]
+          },
+          "$.awardedDate":{
+            "value_type":"date",
+            "display":[
+              {
+                "name":"Awarded date",
+                "locale":"en-US"
+              }
+            ]
+          },
+          "$.issuanceDate":{
+            "value_type":"date",
+            "display":[
+              {
+                "name":"Issuance date",
+                "locale":"en-US"
+              }
+            ]
+          },
+          "$.issuer.name":{
+            "value_type":"string",
+            "display":[
+              {
+                "name":"Issued By",
+                "locale":"en-US"
+              }
+            ]
+          },
+          "$.credentialSubject.licenseNumber":{
+            "value_type":"string",
+            "display":[
+              {
+                "name":"Transaction ID",
+                "locale":"en-US"
+              }
+            ]
+          },
+          "$.credentialSubject.achievement.fieldOfStudy":{
             "value_type":"string",
             "display":[
               {
@@ -48,7 +98,7 @@
               }
             ]
           },
-          "$.achievement.specialization":{
+          "$.credentialSubject.achievement.specialization":{
             "value_type":"string",
             "display":[
               {
@@ -57,7 +107,7 @@
               }
             ]
           },
-          "$.source.name":{
+          "$.credentialSubject.source.name":{
             "value_type":"string",
             "display":[
               {
@@ -66,7 +116,7 @@
               }
             ]
           },
-          "$.identifier[0].identityHash":{
+          "$.credentialSubject.identifier[0].identityHash":{
             "value_type":"string",
             "display":[
               {

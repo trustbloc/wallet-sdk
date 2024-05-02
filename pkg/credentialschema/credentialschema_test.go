@@ -468,7 +468,7 @@ func TestResolveMetadataWithJsonPath(t *testing.T) {
 			credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 			credentialschema.WithIssuerMetadata(&issuerMetadata))
 		require.NoError(t, errResolve)
-		require.Equal(t, len(resolvedDisplayData.CredentialDisplays[0].Claims), 4)
+		require.Equal(t, len(resolvedDisplayData.CredentialDisplays[0].Claims), 7)
 	})
 }
 
