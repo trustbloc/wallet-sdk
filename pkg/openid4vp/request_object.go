@@ -9,32 +9,26 @@ package openid4vp
 import "github.com/trustbloc/vc-go/presexch"
 
 type requestObject struct {
-	JTI          string                    `json:"jti"`
-	IAT          int64                     `json:"iat"`
-	Issuer       string                    `json:"iss"`
-	ResponseType string                    `json:"response_type"` //nolint: tagliatelle
-	ResponseMode string                    `json:"response_mode"` //nolint: tagliatelle
-	Scope        string                    `json:"scope"`
-	Nonce        string                    `json:"nonce"`
-	ClientID     string                    `json:"client_id"`    //nolint: tagliatelle
-	RedirectURI  string                    `json:"redirect_uri"` //nolint: tagliatelle
-	State        string                    `json:"state"`
-	Exp          int64                     `json:"exp"`
-	Registration requestObjectRegistration `json:"registration"`
-	Claims       requestObjectClaims       `json:"claims"`
+	JTI                    string                           `json:"jti"`
+	IAT                    int64                            `json:"iat"`
+	Issuer                 string                           `json:"iss"`
+	ResponseType           string                           `json:"response_type"` //nolint: tagliatelle
+	ResponseMode           string                           `json:"response_mode"` //nolint: tagliatelle
+	ResponseURI            string                           `json:"response_uri"`
+	Scope                  string                           `json:"scope"`
+	Nonce                  string                           `json:"nonce"`
+	ClientID               string                           `json:"client_id"` //nolint: tagliatelle
+	ClientIDScheme         string                           `json:"client_id_scheme"`
+	State                  string                           `json:"state"`
+	Exp                    int64                            `json:"exp"`
+	ClientMetadata         clientMetadata                   `json:"client_metadata"`
+	PresentationDefinition *presexch.PresentationDefinition `json:"presentation_definition"`
 }
 
-type requestObjectRegistration struct {
+type clientMetadata struct {
 	ClientName                  string           `json:"client_name"`                    //nolint: tagliatelle
-	SubjectSyntaxTypesSupported []string         `json:"subject_syntax_types_supported"` //nolint: tagliatelle
-	VPFormats                   *presexch.Format `json:"vp_formats"`                     //nolint: tagliatelle
 	ClientPurpose               string           `json:"client_purpose"`                 //nolint: tagliatelle
 	ClientLogoURI               string           `json:"logo_uri"`                       //nolint: tagliatelle
-}
-
-type requestObjectClaims struct {
-	VPToken vpToken `json:"vp_token"` //nolint: tagliatelle
-}
-type vpToken struct {
-	PresentationDefinition *presexch.PresentationDefinition `json:"presentation_definition"` //nolint: tagliatelle
+	SubjectSyntaxTypesSupported []string         `json:"subject_syntax_types_supported"` //nolint: tagliatelle
+	VPFormats                   *presexch.Format `json:"vp_formats"`                     //nolint: tagliatelle
 }

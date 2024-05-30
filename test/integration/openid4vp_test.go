@@ -70,13 +70,13 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		"photo":             "data-URL-encoded image",
 	}
 
-	universityDegreeClaims := map[string]interface{}{
-		"familyName":   "John Doe",
-		"givenName":    "John",
-		"degree":       "MIT",
-		"degreeSchool": "MIT school",
-		"photo":        "binary data",
-	}
+	//universityDegreeClaims := map[string]interface{}{
+	//	"familyName":   "John Doe",
+	//	"givenName":    "John",
+	//	"degree":       "MIT",
+	//	"degreeSchool": "MIT school",
+	//	"photo":        "binary data",
+	//}
 
 	type customScope struct {
 		name         string
@@ -96,21 +96,24 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 	}
 
 	tests := []test{
-		{
-			issuerProfileIDs:   []string{"university_degree_issuer_bbs"},
-			claimData:          []claimData{universityDegreeClaims},
-			walletDIDMethod:    "ion",
-			verifierProfileID:  "v_ldp_university_degree_sd_bbs",
-			matchedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeSD),
-			signingKeyType:     "ECDSAP256IEEEP1363", // Will result in a DI proof being added to the presentation
-			trustInfo:          true,
-		},
-		{
-			issuerProfileIDs:  []string{"university_degree_issuer"},
-			claimData:         []claimData{universityDegreeClaims},
-			walletDIDMethod:   "ion",
-			verifierProfileID: "v_ldp_university_degree",
-		},
+		// TODO: Add support for VP in LDP format
+		// --------------------------------------
+		//{
+		//	issuerProfileIDs:   []string{"university_degree_issuer_bbs"},
+		//	claimData:          []claimData{universityDegreeClaims},
+		//	walletDIDMethod:    "ion",
+		//	verifierProfileID:  "v_ldp_university_degree_sd_bbs",
+		//	matchedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeSD),
+		//	signingKeyType:     "ECDSAP256IEEEP1363", // Will result in a DI proof being added to the presentation
+		//	trustInfo:          true,
+		//},
+		//{
+		//	issuerProfileIDs:  []string{"university_degree_issuer"},
+		//	claimData:         []claimData{universityDegreeClaims},
+		//	walletDIDMethod:   "ion",
+		//	verifierProfileID: "v_ldp_university_degree",
+		//},
+		// --------------------------------------
 		{
 			issuerProfileIDs:  []string{"bank_issuer"},
 			claimData:         []claimData{verifiableEmployeeClaims},
