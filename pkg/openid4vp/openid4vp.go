@@ -10,6 +10,7 @@ package openid4vp
 import (
 	"bytes"
 	"crypto/rand"
+	"encoding/gob"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -83,9 +84,10 @@ type Interaction struct {
 }
 
 type authorizedResponse struct {
-	IDTokenJWS string
-	VPTokenJWS string
-	State      string
+	IDTokenJWS             string
+	VPTokenJWS             string
+	PresentationSubmission string
+	State                  string
 }
 
 // NewInteraction creates a new OpenID4VP interaction object.
@@ -113,7 +115,7 @@ func NewInteraction(
 		rawRequestObject = authorizationRequest
 	}
 
-	requestObject, err := verifyRequestObjectAndDecodeClaims(rawRequestObject, signatureVerifier)
+	reqObject, err := verifyRequestObjectAndDecodeClaims(rawRequestObject, signatureVerifier)
 	if err != nil {
 		return nil, walleterror.NewValidationError(
 			ErrorModule,
@@ -123,7 +125,7 @@ func NewInteraction(
 	}
 
 	return &Interaction{
-		requestObject:  requestObject,
+		requestObject:  reqObject,
 		httpClient:     client,
 		activityLogger: activityLogger,
 		metricsLogger:  metricsLogger,
@@ -136,7 +138,7 @@ func NewInteraction(
 
 // GetQuery creates query based on authorization request data.
 func (o *Interaction) GetQuery() *presexch.PresentationDefinition {
-	return o.requestObject.Claims.VPToken.PresentationDefinition
+	return o.requestObject.PresentationDefinition
 }
 
 // CustomScope returns vp integration scope.
@@ -156,9 +158,9 @@ func (o *Interaction) CustomScope() []string {
 func (o *Interaction) VerifierDisplayData() *VerifierDisplayData {
 	return &VerifierDisplayData{
 		DID:     o.requestObject.ClientID,
-		Name:    o.requestObject.Registration.ClientName,
-		Purpose: o.requestObject.Registration.ClientPurpose,
-		LogoURI: o.requestObject.Registration.ClientLogoURI,
+		Name:    o.requestObject.ClientMetadata.ClientName,
+		Purpose: o.requestObject.ClientMetadata.ClientPurpose,
+		LogoURI: o.requestObject.ClientMetadata.ClientLogoURI,
 	}
 }
 
@@ -264,6 +266,7 @@ func (o *Interaction) presentCredentials(
 	data := url.Values{}
 	data.Set("id_token", response.IDTokenJWS)
 	data.Set("vp_token", response.VPTokenJWS)
+	data.Set("presentation_submission", response.PresentationSubmission)
 	data.Set("state", response.State)
 
 	err = o.sendAuthorizedResponse(data.Encode())
@@ -284,7 +287,7 @@ func (o *Interaction) presentCredentials(
 		Type: api.LogTypeCredentialActivity,
 		Time: time.Now(),
 		Data: api.Data{
-			Client:    o.requestObject.Registration.ClientName,
+			Client:    o.requestObject.ClientMetadata.ClientName,
 			Operation: activityLogOperation,
 			Status:    api.ActivityLogStatusSuccess,
 		},
@@ -292,7 +295,7 @@ func (o *Interaction) presentCredentials(
 }
 
 func (o *Interaction) PresentedClaims(credential *verifiable.Credential) (interface{}, error) {
-	pd := o.requestObject.Claims.VPToken.PresentationDefinition
+	pd := o.requestObject.PresentationDefinition
 
 	bbsProofCreator := &verifiable.BBSProofCreator{
 		ProofDerivation:            bbs12381g2pub.New(),
@@ -324,9 +327,9 @@ func (o *Interaction) PresentedClaims(credential *verifiable.Credential) (interf
 
 func (o *Interaction) sendAuthorizedResponse(responseBody string) error {
 	_, err := httprequest.New(o.httpClient, o.metricsLogger).Do(http.MethodPost,
-		o.requestObject.RedirectURI, "application/x-www-form-urlencoded",
+		o.requestObject.ResponseURI, "application/x-www-form-urlencoded",
 		bytes.NewBufferString(responseBody),
-		fmt.Sprintf(sendAuthorizedResponseEventText, o.requestObject.RedirectURI),
+		fmt.Sprintf(sendAuthorizedResponseEventText, o.requestObject.ResponseURI),
 		presentCredentialEventText, processAuthorizationErrorResponse)
 
 	return err
@@ -371,14 +374,29 @@ func verifyRequestObjectAndDecodeClaims(
 	rawRequestObject string,
 	signatureVerifier jwt.ProofChecker,
 ) (*requestObject, error) {
-	requestObject := &requestObject{}
+	reqObject := &requestObject{}
 
-	err := verifyTokenSignatureAndDecodeClaims(rawRequestObject, requestObject, signatureVerifier)
+	err := verifyTokenSignatureAndDecodeClaims(rawRequestObject, reqObject, signatureVerifier)
 	if err != nil {
 		return nil, err
 	}
 
-	return requestObject, nil
+	// temporary solution for backward compatibility
+	if reqObject.PresentationDefinition == nil && reqObject.Claims.VPToken.PresentationDefinition != nil {
+		reqObject.PresentationDefinition = reqObject.Claims.VPToken.PresentationDefinition
+	}
+	if reqObject.ClientMetadata.VPFormats == nil && reqObject.Registration.VPFormats != nil {
+		reqObject.ClientMetadata.ClientName = reqObject.Registration.ClientName
+		reqObject.ClientMetadata.ClientPurpose = reqObject.Registration.ClientPurpose
+		reqObject.ClientMetadata.ClientLogoURI = reqObject.Registration.LogoURI
+		reqObject.ClientMetadata.VPFormats = reqObject.Registration.VPFormats
+		reqObject.ClientMetadata.SubjectSyntaxTypesSupported = reqObject.Registration.SubjectSyntaxTypesSupported
+	}
+	if reqObject.ResponseURI == "" && reqObject.RedirectURI != "" {
+		reqObject.ResponseURI = reqObject.RedirectURI
+	}
+
+	return reqObject, nil
 }
 
 func verifyTokenSignatureAndDecodeClaims(rawJwt string, claims interface{}, proofChecker jwt.ProofChecker) error {
@@ -428,7 +446,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 	documentLoader ld.DocumentLoader,
 	opts *presentOpts,
 ) (*authorizedResponse, error) {
-	pd := requestObject.Claims.VPToken.PresentationDefinition
+	pd := requestObject.PresentationDefinition
 
 	if opts != nil && opts.ignoreConstraints {
 		for i := range pd.InputDescriptors {
@@ -450,7 +468,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 			verifiable.WithJSONLDDocumentLoader(documentLoader),
 			verifiable.WithProofChecker(defaults.NewDefaultProofChecker(common.NewVDRKeyResolver(didResolver))),
 		),
-		presexch.WithDefaultPresentationFormat("jwt_vp"),
+		presexch.WithDefaultPresentationFormat(presexch.FormatJWTVP),
 	)
 	if err != nil {
 		return nil, err
@@ -488,10 +506,6 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 		return nil, err
 	}
 
-	presentationSubmission := presentation.CustomFields["presentation_submission"]
-
-	presentation.CustomFields["presentation_submission"] = nil
-
 	var attestationVP string
 	if opts != nil && opts.attestationVC != "" {
 		attestationVP, err = createAttestationVP(
@@ -501,7 +515,10 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 		}
 	}
 
-	idTokenJWS, err := createIDToken(requestObject, presentationSubmission, did, customClaims, jwtSigner, attestationVP)
+	presentationSubmission := presentation.CustomFields["presentation_submission"]
+	presentation.CustomFields["presentation_submission"] = nil
+
+	idTokenJWS, err := createIDToken(requestObject, did, customClaims, jwtSigner, attestationVP, presentationSubmission)
 	if err != nil {
 		return nil, err
 	}
@@ -522,7 +539,17 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 		return nil, fmt.Errorf("sign vp_token: %w", err)
 	}
 
-	return &authorizedResponse{IDTokenJWS: idTokenJWS, VPTokenJWS: vpTokenJWS, State: requestObject.State}, nil
+	presentationSubmissionBytes, err := json.Marshal(presentationSubmission)
+	if err != nil {
+		return nil, fmt.Errorf("marshal presentation submission: %w", err)
+	}
+
+	return &authorizedResponse{
+		IDTokenJWS:             idTokenJWS,
+		VPTokenJWS:             vpTokenJWS,
+		PresentationSubmission: string(presentationSubmissionBytes),
+		State:                  requestObject.State,
+	}, nil
 }
 
 func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to decompose without a major reworking
@@ -535,14 +562,14 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 	signer wrapperapi.KMSCryptoSigner,
 	opts *presentOpts,
 ) (*authorizedResponse, error) {
-	pd := requestObject.Claims.VPToken.PresentationDefinition
+	pd := requestObject.PresentationDefinition
 
 	bbsProofCreator := &verifiable.BBSProofCreator{
 		ProofDerivation:            bbs12381g2pub.New(),
 		VerificationMethodResolver: common.NewVDRKeyResolver(didResolver),
 	}
 
-	presentations, submission, err := pd.CreateVPArray(
+	presentations, presentationSubmission, err := pd.CreateVPArray(
 		credentials,
 		documentLoader,
 		presexch.WithSDBBSProofCreator(bbsProofCreator),
@@ -550,7 +577,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 			verifiable.WithDisabledProofCheck(),
 			verifiable.WithJSONLDDocumentLoader(documentLoader),
 		),
-		presexch.WithDefaultPresentationFormat("jwt_vp"),
+		presexch.WithDefaultPresentationFormat(presexch.FormatJWTVP),
 	)
 	if err != nil {
 		return nil, err
@@ -630,16 +657,22 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 		}
 	}
 
-	idTokenJWS, err := createIDToken(requestObject, submission, idTokenSigningDID,
-		customClaims, signers[idTokenSigningDID], attestationVP)
+	idTokenJWS, err := createIDToken(requestObject, idTokenSigningDID, customClaims,
+		signers[idTokenSigningDID], attestationVP, presentationSubmission)
 	if err != nil {
 		return nil, err
 	}
 
+	presentationSubmissionJSON, err := json.Marshal(presentationSubmission)
+	if err != nil {
+		return nil, fmt.Errorf("marshal presentation submission: %w", err)
+	}
+
 	return &authorizedResponse{
-		IDTokenJWS: idTokenJWS,
-		VPTokenJWS: string(vpTokenListJSON),
-		State:      requestObject.State,
+		IDTokenJWS:             idTokenJWS,
+		VPTokenJWS:             string(vpTokenListJSON),
+		PresentationSubmission: string(presentationSubmissionJSON),
+		State:                  requestObject.State,
 	}, nil
 }
 
@@ -672,16 +705,13 @@ func addDataIntegrityProof(did string, didResolver api.DIDResolver, documentLoad
 
 func createIDToken(
 	req *requestObject,
-	submission interface{},
 	signingDID string,
 	customClaims CustomClaims,
 	signer api.JWTSigner,
 	attestationVP string,
+	presentationSubmission interface{},
 ) (string, error) {
 	idToken := &idTokenClaims{
-		VPToken: idTokenVPToken{
-			PresentationSubmission: submission,
-		},
 		Scope:         customClaims.ScopeClaims,
 		AttestationVP: attestationVP,
 		Nonce:         req.Nonce,
@@ -694,12 +724,44 @@ func createIDToken(
 		Jti:           uuid.NewString(),
 	}
 
+	if ps, ok := presentationSubmission.(*presexch.PresentationSubmission); ok {
+		var psCopy presexch.PresentationSubmission
+
+		if err := deepCopy(ps, &psCopy); err != nil {
+			return "", fmt.Errorf("deep copy presentation submission: %w", err)
+		}
+
+		for _, descriptor := range psCopy.DescriptorMap {
+			if descriptor.PathNested != nil {
+				descriptor.PathNested.Path = strings.Replace(descriptor.PathNested.Path, "$.vp.", "$.", 1)
+			}
+		}
+
+		idToken.VPToken = idTokenVPToken{
+			PresentationSubmission: psCopy,
+		}
+	} else {
+		idToken.VPToken = idTokenVPToken{
+			PresentationSubmission: presentationSubmission,
+		}
+	}
+
 	idTokenJWS, err := signToken(idToken, signer)
 	if err != nil {
 		return "", fmt.Errorf("sign id_token: %w", err)
 	}
 
 	return idTokenJWS, nil
+}
+
+func deepCopy(src, dst interface{}) error {
+	var b bytes.Buffer
+
+	if err := gob.NewEncoder(&b).Encode(src); err != nil {
+		return err
+	}
+
+	return gob.NewDecoder(bytes.NewBuffer(b.Bytes())).Decode(dst)
 }
 
 func createAttestationVP(

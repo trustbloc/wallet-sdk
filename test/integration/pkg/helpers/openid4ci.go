@@ -221,24 +221,24 @@ func checkCredentialDisplay(t *testing.T, actualCredentialDisplay,
 	}
 }
 
-func claimOrderMatches(t *testing.T, claim1, claim2 *display.Claim) bool {
+func claimOrderMatches(t *testing.T, actualClaim, expectedClaim *display.Claim) bool {
 	t.Helper()
 
-	if claim1.HasOrder() {
-		if !claim2.HasOrder() {
+	if actualClaim.HasOrder() {
+		if !expectedClaim.HasOrder() {
 			return false
 		}
 
-		claim1Order, err := claim1.Order()
+		actualClaimOrder, err := actualClaim.Order()
 		require.NoError(t, err)
 
-		claim2Order, err := claim1.Order()
+		expectedClaimOrder, err := expectedClaim.Order()
 		require.NoError(t, err)
 
-		if claim1Order != claim2Order {
+		if actualClaimOrder != expectedClaimOrder {
 			return false
 		}
-	} else if claim2.HasOrder() {
+	} else if expectedClaim.HasOrder() {
 		return false
 	}
 
