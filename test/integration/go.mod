@@ -12,9 +12,9 @@ require (
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.2
 	github.com/trustbloc/cmdutil-go v0.0.0-20221125151303-09d42adcc811
-	github.com/trustbloc/did-go v1.2.1-0.20240403080251-cdfc1165460f
+	github.com/trustbloc/did-go v1.2.1
 	github.com/trustbloc/logutil-go v1.0.0-rc1
-	github.com/trustbloc/vc-go v1.1.2-0.20240418074737-90b8ad202b64
+	github.com/trustbloc/vc-go v1.1.2
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile v0.0.0-00010101000000-000000000000
 	go.uber.org/zap v1.23.0
@@ -65,7 +65,7 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
 	github.com/trustbloc/bbs-signature-go v1.0.2 // indirect
-	github.com/trustbloc/kms-go v1.1.2-0.20240403074855-38b6c31bf198 // indirect
+	github.com/trustbloc/kms-go v1.1.2 // indirect
 	github.com/trustbloc/sidetree-go v1.1.0 // indirect
 	github.com/veraison/go-cose v1.1.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
