@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4vp"
 )
 
 // EvaluationResult result of policy evaluation.
@@ -76,11 +77,12 @@ func (p *PresentationRequest) AddCredentialClaims(c *CredentialClaimsToCheck) *P
 // CredentialClaimsToCheck contains data about credentials in the presentation request,
 // that is sent to the trust registry API for evaluation.
 type CredentialClaimsToCheck struct {
-	CredentialID    string
-	CredentialTypes *api.StringArray
-	IssuerID        string
-	IssuanceDate    int64
-	ExpirationDate  int64
+	CredentialID        string
+	CredentialTypes     *api.StringArray
+	IssuerID            string
+	IssuanceDate        int64
+	ExpirationDate      int64
+	CredentialClaimKeys *openid4vp.CredentialClaimKeys
 }
 
 // LegacyNewCredentialClaimsToCheck create new CredentialClaimsToCheck object.

@@ -291,6 +291,37 @@ func (o *Interaction) presentCredentials(
 	})
 }
 
+func (o *Interaction) PresentedClaims(credential *verifiable.Credential) (interface{}, error) {
+	pd := o.requestObject.Claims.VPToken.PresentationDefinition
+
+	bbsProofCreator := &verifiable.BBSProofCreator{
+		ProofDerivation:            bbs12381g2pub.New(),
+		VerificationMethodResolver: common.NewVDRKeyResolver(o.didResolver),
+	}
+
+	presentation, err := pd.CreateVP(
+		[]*verifiable.Credential{credential},
+		o.documentLoader,
+		presexch.WithSDBBSProofCreator(bbsProofCreator),
+		presexch.WithSDCredentialOptions(
+			verifiable.WithDisabledProofCheck(),
+			verifiable.WithJSONLDDocumentLoader(o.documentLoader),
+			verifiable.WithProofChecker(defaults.NewDefaultProofChecker(common.NewVDRKeyResolver(o.didResolver))),
+		),
+		presexch.WithDefaultPresentationFormat("jwt_vp"),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	vcContent := presentation.Credentials()[0].Contents()
+	if len(vcContent.Subject) == 0 {
+		return nil, errors.New("no subject in presentation VC")
+	}
+
+	return copyJSONKeysOnly(vcContent.Subject[0].CustomFields), nil
+}
+
 func (o *Interaction) sendAuthorizedResponse(responseBody string) error {
 	_, err := httprequest.New(o.httpClient, o.metricsLogger).Do(http.MethodPost,
 		o.requestObject.RedirectURI, "application/x-www-form-urlencoded",
@@ -877,5 +908,41 @@ func processUsingMSEntraErrorResponseFormat(respBytes []byte, detailedErr error)
 			OtherAuthorizationResponseError,
 			errorResponse.Error.InnerError.Message,
 			detailedErr)
+	}
+}
+
+type emptyObj struct {
+}
+
+func copyJSONKeysOnly(obj interface{}) interface{} {
+	empty := &emptyObj{}
+
+	switch jsonObj := obj.(type) {
+	case map[string]interface{}:
+		newMap := make(map[string]interface{})
+
+		for k, v := range jsonObj {
+			newMap[k] = copyJSONKeysOnly(v)
+		}
+
+		return newMap
+	case verifiable.CustomFields:
+		newMap := make(map[string]interface{})
+
+		for k, v := range jsonObj {
+			newMap[k] = copyJSONKeysOnly(v)
+		}
+
+		return newMap
+	case []interface{}:
+		newSlice := make([]interface{}, len(jsonObj))
+
+		for i, v := range jsonObj {
+			newSlice[i] = copyJSONKeysOnly(v)
+		}
+
+		return newSlice
+	default:
+		return empty
 	}
 }

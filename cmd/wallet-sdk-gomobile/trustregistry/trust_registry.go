@@ -82,12 +82,18 @@ func (r *Registry) EvaluatePresentation(request *PresentationRequest) (*Evaluati
 	var credentialClaims []trustregistry.CredentialClaimsToCheck
 
 	for _, claims := range request.credentialClaims {
+		var contentJSON interface{}
+		if claims.CredentialClaimKeys != nil {
+			contentJSON = claims.CredentialClaimKeys.ContentJSON
+		}
+
 		credentialClaims = append(credentialClaims, trustregistry.CredentialClaimsToCheck{
-			CredentialID:    claims.CredentialID,
-			CredentialTypes: claims.CredentialTypes.Strings,
-			IssuerID:        claims.IssuerID,
-			IssuanceDate:    time.Unix(claims.IssuanceDate, 0),
-			ExpirationDate:  time.Unix(claims.ExpirationDate, 0),
+			CredentialID:        claims.CredentialID,
+			CredentialTypes:     claims.CredentialTypes.Strings,
+			IssuerID:            claims.IssuerID,
+			IssuanceDate:        time.Unix(claims.IssuanceDate, 0),
+			ExpirationDate:      time.Unix(claims.ExpirationDate, 0),
+			CredentialClaimKeys: contentJSON,
 		})
 	}
 

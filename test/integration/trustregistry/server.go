@@ -91,6 +91,16 @@ func (s *Server) handleEvaluatePresentationRequest(w http.ResponseWriter, r *htt
 	}
 
 	for _, cred := range presentationRequest.CredentialClaims {
+		fmt.Printf("credential claims: %+v\n", cred.CredentialClaimKeys)
+
+		if cred.CredentialClaimKeys == nil {
+			writeResponse(w, &trustregistry.EvaluationResult{
+				ErrorCode:    "claimsForbidden",
+				ErrorMessage: "Interaction without credential_claim_keys is forbidden",
+			})
+
+			return
+		}
 		for _, credType := range cred.CredentialTypes {
 			if slices.Contains(s.rules.ForbiddenTypes, credType) {
 				writeResponse(w, &trustregistry.EvaluationResult{
