@@ -267,6 +267,15 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		}
 
 		selectedCreds := verifiable.NewCredentialsArray()
+		for ind := 0; ind < matchedVCs.Length(); ind++ {
+			vcID := matchedVCs.AtIndex(ind).ID()
+
+			for j := 0; j < issuedCredentials.Length(); j++ {
+				if issuedCredentials.AtIndex(j).ID() == vcID {
+					selectedCreds.Add(issuedCredentials.AtIndex(ind))
+				}
+			}
+		}
 
 		presentOps := openid4vp.NewPresentCredentialOpts()
 
@@ -280,20 +289,23 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 				VerifierDomain: info.Domain,
 			}
 
-			for ind := 0; ind < matchedVCs.Length(); ind++ {
-				cred := matchedVCs.AtIndex(ind)
+			for ind := 0; ind < selectedCreds.Length(); ind++ {
+				cred := selectedCreds.AtIndex(ind)
 
-				presTrustInfo.AddCredentialClaims(trustregistry.LegacyNewCredentialClaimsToCheck(
-					cred.ID(),
-					cred.Types(),
-					cred.IssuerID(),
-					0, 0,
-				))
+				claims, err2 := interaction.PresentedClaims(cred)
+				require.NoError(t, err2)
+
+				presTrustInfo.AddCredentialClaims(&trustregistry.CredentialClaimsToCheck{
+					CredentialID:        cred.ID(),
+					CredentialTypes:     cred.Types(),
+					IssuerID:            cred.IssuerID(),
+					CredentialClaimKeys: claims,
+				})
 			}
 
 			result, trustErr := trustRegistryAPI.EvaluatePresentation(presTrustInfo)
 			require.NoError(t, trustErr)
-			require.Equal(t, !tc.shouldBeForbidden, result.Allowed)
+			require.Equal(t, !tc.shouldBeForbidden, result.Allowed, result.ErrorMessage)
 
 			for i := 0; i < result.RequestedAttestationLength(); i++ {
 				if result.RequestedAttestationAtIndex(i) == "wallet_authentication" {
@@ -332,16 +344,6 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 
 					println("attestationVC=", attestationVC)
 
-				}
-			}
-		}
-
-		for ind := 0; ind < matchedVCs.Length(); ind++ {
-			vcID := matchedVCs.AtIndex(ind).ID()
-
-			for j := 0; j < issuedCredentials.Length(); j++ {
-				if issuedCredentials.AtIndex(j).ID() == vcID {
-					selectedCreds.Add(issuedCredentials.AtIndex(ind))
 				}
 			}
 		}

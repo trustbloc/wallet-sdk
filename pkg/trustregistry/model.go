@@ -49,9 +49,10 @@ type PresentationRequest struct {
 // CredentialClaimsToCheck  contains data about credentials in the presentation request,
 // that is sent to the trust registry API for evaluation.
 type CredentialClaimsToCheck struct {
-	CredentialID    string    `json:"credential_id"`
-	CredentialTypes []string  `json:"credential_types"`
-	IssuerID        string    `json:"issuer_id"`
-	IssuanceDate    time.Time `json:"issuance_date"`
-	ExpirationDate  time.Time `json:"expiration_date"`
+	CredentialID        string      `json:"credential_id"`
+	CredentialTypes     []string    `json:"credential_types"`
+	IssuerID            string      `json:"issuer_id"`
+	IssuanceDate        time.Time   `json:"issuance_date"`
+	ExpirationDate      time.Time   `json:"expiration_date"`
+	CredentialClaimKeys interface{} `json:"credential_claim_keys"`
 }

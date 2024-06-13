@@ -921,6 +921,123 @@ func TestResolverAdapter(t *testing.T) {
 	require.Equal(t, mockDoc.DIDDocument.ID, doc.DIDDocument.ID)
 }
 
+func TestOpenID4VP_PresentedClaims(t *testing.T) {
+	lddl := testutil.DocumentLoader(t)
+
+	presentation, presErr := verifiable.ParsePresentation(presentationJSONLD,
+		verifiable.WithPresDisabledProofCheck(),
+		verifiable.WithPresJSONLDDocumentLoader(lddl))
+
+	require.NoError(t, presErr)
+	require.NotNil(t, presentation)
+
+	var credentials, singleCred []*verifiable.Credential
+
+	var rawCreds []json.RawMessage
+
+	require.NoError(t, json.Unmarshal(credentialsJSONLD, &rawCreds))
+
+	for _, credBytes := range rawCreds {
+		cred, credErr := verifiable.ParseCredential(
+			credBytes,
+			verifiable.WithDisabledProofCheck(),
+			verifiable.WithJSONLDDocumentLoader(lddl),
+		)
+		require.NoError(t, credErr)
+
+		credentials = append(credentials, cred)
+	}
+
+	singleCred = append(singleCred, credentials[0])
+
+	mockDoc := mockResolution(t, mockDID)
+
+	t.Run("Success", func(t *testing.T) {
+		httpClient := &mock.HTTPClientMock{
+			StatusCode: 200,
+		}
+
+		interaction, err := NewInteraction(
+			requestObjectJWT,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockDoc},
+			&cryptoMock{SignVal: []byte(testSignature)},
+			lddl,
+			WithHTTPClient(httpClient),
+		)
+		require.NoError(t, err)
+
+		query := interaction.GetQuery()
+		require.NotNil(t, query)
+
+		displayData := interaction.VerifierDisplayData()
+		require.NoError(t, err)
+		require.Equal(t, verifierDID, displayData.DID)
+		require.Equal(t, "v_myprofile_jwt", displayData.Name)
+		require.Equal(t, "", displayData.Purpose)
+		require.Equal(t, "", displayData.LogoURI)
+
+		claims, err := interaction.PresentedClaims(credentials[0])
+		require.NoError(t, err)
+		require.NotNil(t, claims)
+
+		claimsJSON, err := json.Marshal(copyJSONKeysOnly(claims))
+		require.NoError(t, err)
+		require.JSONEq(t, `
+			{
+				"name":{},
+				"spouse":{},
+				"degree":{
+					"degree":{},
+					"type":{}					
+				}
+			}
+			`, string(claimsJSON))
+	})
+}
+
+func TestCopyJSONKeysOnly(t *testing.T) {
+	t.Run("Success simple", func(t *testing.T) {
+		src := map[string]interface{}{
+			"key1": "value1",
+			"key2": "value2",
+		}
+
+		result, err := json.Marshal(copyJSONKeysOnly(src))
+		require.NoError(t, err)
+		require.JSONEq(t, `{"key1":{},"key2":{}}`, string(result))
+	})
+
+	t.Run("Success address", func(t *testing.T) {
+		src := map[string]interface{}{
+			"name": "test name",
+			"address": map[string]interface{}{
+				"streetAddress":      "test street",
+				"addressCountryCode": "test country",
+			},
+		}
+
+		result, err := json.Marshal(copyJSONKeysOnly(src))
+		require.NoError(t, err)
+		require.JSONEq(t, `{"name": {},
+        "address": {
+          "streetAddress": {},
+          "addressCountryCode": {}
+        }}`, string(result))
+	})
+
+	t.Run("Success array", func(t *testing.T) {
+		src := map[string]interface{}{
+			"key1": []interface{}{"value1"},
+			"key2": "value2",
+		}
+
+		result, err := json.Marshal(copyJSONKeysOnly(src))
+		require.NoError(t, err)
+		require.JSONEq(t, `{"key1":[{}],"key2":{}}`, string(result))
+	})
+}
+
 type jwtSignatureVerifierMock struct {
 	err error
 }

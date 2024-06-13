@@ -36,6 +36,7 @@ type goAPIOpenID4VP interface {
 		customClaims openid4vp.CustomClaims,
 		opts ...openid4vp.PresentOpt,
 	) error
+	PresentedClaims(credential *afgoverifiable.Credential) (interface{}, error)
 	PresentCredentialUnsafe(credential *afgoverifiable.Credential, customClaims openid4vp.CustomClaims) error
 	VerifierDisplayData() *openid4vp.VerifierDisplayData
 	TrustInfo() (*openid4vp.VerifierTrustInfo, error)
@@ -46,6 +47,11 @@ type VerifierTrustInfo struct {
 	DID         string
 	Domain      string
 	DomainValid bool
+}
+
+// CredentialClaimKeys represent credential claim keys.
+type CredentialClaimKeys struct {
+	ContentJSON interface{}
 }
 
 // Interaction represents a single OpenID4VP interaction between a wallet and a verifier. The methods defined on this
@@ -171,6 +177,16 @@ func (o *Interaction) VerifierDisplayData() *VerifierDisplayData {
 	displayData := o.goAPIOpenID4VP.VerifierDisplayData()
 
 	return &VerifierDisplayData{displayData: displayData}
+}
+
+// PresentedClaims returns vc presented claims.
+func (o *Interaction) PresentedClaims(credential *verifiable.Credential) (*CredentialClaimKeys, error) {
+	claims, err := o.goAPIOpenID4VP.PresentedClaims(credential.VC)
+	if err != nil {
+		return nil, wrapper.ToMobileErrorWithTrace(err, o.oTel)
+	}
+
+	return &CredentialClaimKeys{ContentJSON: claims}, nil
 }
 
 // PresentCredential presents credentials to redirect uri from request object.

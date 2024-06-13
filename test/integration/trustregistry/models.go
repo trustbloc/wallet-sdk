@@ -23,11 +23,12 @@ type VerifierPresentationRequest struct {
 
 // CredentialMetadata defines model for CredentialMetadata.
 type CredentialMetadata struct {
-	CredentialID    *string   `json:"credential_id,omitempty"`
-	CredentialTypes *[]string `json:"credential_types,omitempty"`
-	ExpirationDate  *string   `json:"expiration_date,omitempty"`
-	IssuanceDate    *string   `json:"issuance_date,omitempty"`
-	IssuerID        *string   `json:"issuer_id,omitempty"`
+	CredentialID        *string     `json:"credential_id,omitempty"`
+	CredentialTypes     *[]string   `json:"credential_types,omitempty"`
+	ExpirationDate      *string     `json:"expiration_date,omitempty"`
+	IssuanceDate        *string     `json:"issuance_date,omitempty"`
+	IssuerID            *string     `json:"issuer_id,omitempty"`
+	CredentialClaimKeys interface{} `json:"credential_claim_keys,omitempty"`
 }
 
 // PolicyEvaluationResponse defines model for PolicyEvaluationResponse.

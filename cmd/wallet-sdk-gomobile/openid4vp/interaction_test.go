@@ -286,6 +286,33 @@ func TestGetCustomClaims(t *testing.T) {
 	})
 }
 
+func TestInteraction_PresentedClaims(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		instance := &Interaction{
+			goAPIOpenID4VP: &mockGoAPIInteraction{
+				PresentedClaimsResult: map[string]interface{}{
+					"claim1": "val1",
+				},
+			},
+		}
+
+		claims, err := instance.PresentedClaims(&verifiable.Credential{})
+		require.NoError(t, err)
+		require.Equal(t, map[string]interface{}{"claim1": "val1"}, claims.ContentJSON)
+	})
+
+	t.Run("Failure", func(t *testing.T) {
+		instance := &Interaction{
+			goAPIOpenID4VP: &mockGoAPIInteraction{
+				PresentedClaimsErr: errors.New("presented claims err"),
+			},
+		}
+
+		_, err := instance.PresentedClaims(&verifiable.Credential{})
+		require.ErrorContains(t, err, "presented claims err")
+	})
+}
+
 func TestInteraction_VerifierDisplayData(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		instance := &Interaction{
@@ -382,6 +409,9 @@ type mockGoAPIInteraction struct {
 	VerifierDisplayDataRes     *openid4vp.VerifierDisplayData
 	VerifierTrustInfo          *openid4vp.VerifierTrustInfo
 	VerifierTrustInfoErr       error
+
+	PresentedClaimsResult interface{}
+	PresentedClaimsErr    error
 }
 
 func (o *mockGoAPIInteraction) GetQuery() *presexch.PresentationDefinition {
@@ -398,6 +428,10 @@ func (o *mockGoAPIInteraction) PresentCredential(
 	...openid4vp.PresentOpt,
 ) error {
 	return o.PresentCredentialErr
+}
+
+func (o *mockGoAPIInteraction) PresentedClaims(*afgoverifiable.Credential) (interface{}, error) {
+	return o.PresentedClaimsResult, o.PresentedClaimsErr
 }
 
 func (o *mockGoAPIInteraction) PresentCredentialUnsafe(*afgoverifiable.Credential, openid4vp.CustomClaims) error {
