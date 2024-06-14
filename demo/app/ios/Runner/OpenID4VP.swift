@@ -77,12 +77,14 @@ public class OpenID4VP {
                     let cred = descriptor.matchedVCs!.atIndex(credInd)!
                     
                     let claimsToCheck = TrustregistryCredentialClaimsToCheck();
+                    let credentialClaims = try presentedClaims(credential: cred);
+                    
                     claimsToCheck.credentialID = cred.id_()
                     claimsToCheck.issuerID = cred.issuerID()
                     claimsToCheck.credentialTypes = cred.types()
                     claimsToCheck.expirationDate = cred.expirationDate()
                     claimsToCheck.issuanceDate = cred.issuanceDate()
-                    
+                    claimsToCheck.credentialClaimKeys = credentialClaims
                     presentationRequest.addCredentialClaims(claimsToCheck)
                 }
             }
@@ -122,6 +124,11 @@ public class OpenID4VP {
         }
         try initiatedInteraction.presentCredentialOpts(selectedCredentials, opts: opts)
         
+    }
+    
+    
+    func presentedClaims(credential: VerifiableCredential) throws -> Openid4vpCredentialClaimKeys {
+       return try initiatedInteraction?.presentedClaims(credential) ?? Openid4vpCredentialClaimKeys()
     }
     
     func getCustomScope() throws -> [String] {
