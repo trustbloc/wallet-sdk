@@ -33,7 +33,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.1.2'
+        classpath 'com.android.tools.build:gradle:7.4.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         if (walletSdkPkgUsr != null) {
             classpath "dev.trustbloc:vc-wallet-sdk:$walletSdkPkgVer"
@@ -44,6 +44,7 @@ buildscript {
 allprojects {
     def localProperties = new Properties()
     def localPropertiesFile = rootProject.file('local.properties')
+
     if (localPropertiesFile.exists()) {
         localPropertiesFile.withReader('UTF-8') { reader ->
             localProperties.load(reader)
@@ -76,6 +77,17 @@ allprojects {
 rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                if (namespace == null) {
+                    namespace project.group
+                }
+            }
+        }
+    }
 }
 subprojects {
     project.evaluationDependsOn(':app')

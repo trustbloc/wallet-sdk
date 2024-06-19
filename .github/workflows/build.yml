@@ -209,7 +209,7 @@ jobs:
         uses: flutter-actions/setup-flutter@v2
         with:
           channel: stable
-          version: 3.10.6
+          version: 3.19.5
       - name: Install flutter app dependencies
         run: make install-flutter-dependencies
       - name: Run iOS Simulator
@@ -288,7 +288,7 @@ jobs:
         uses: flutter-actions/setup-flutter@v2
         with:
           channel: stable
-          version: 3.10.6
+          version: 3.19.5
       - name: Install flutter app dependencies
         run: make install-flutter-dependencies
       - name: Build APK in Debug mode

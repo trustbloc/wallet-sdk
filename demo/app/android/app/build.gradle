@@ -35,10 +35,11 @@ apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
-    compileSdkVersion 34
-    ndkVersion flutter.ndkVersion
+    compileSdkVersion 35
+    ndkVersion "25.1.8937393"
 
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -56,11 +57,10 @@ android {
         applicationId "dev.trustbloc.wallet"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-build-configuration.
-        minSdkVersion 22
-        targetSdkVersion flutter.targetSdkVersion
+        minSdkVersion 24
+        targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -77,6 +77,7 @@ android {
             it.buildConfigField 'String', 'INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW', '"' + INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW + '"'
         }
     }
+    namespace 'dev.trustbloc.wallet'
 }
 
 flutter {
@@ -100,4 +101,5 @@ dependencies {
     androidTestImplementation "androidx.test:runner:1.2.0"
     androidTestUtil "androidx.test:orchestrator:1.4.2"
     implementation 'com.squareup.okhttp3:okhttp:4.9.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.0'
 }
