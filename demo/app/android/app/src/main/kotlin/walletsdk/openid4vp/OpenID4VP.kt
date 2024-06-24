@@ -26,6 +26,8 @@ import dev.trustbloc.wallet.sdk.trustregistry.Registry
 import dev.trustbloc.wallet.sdk.trustregistry.RegistryConfig
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import dev.trustbloc.wallet.sdk.api.VerificationMethod
+import dev.trustbloc.wallet.sdk.openid4vp.CredentialClaimKeys
+import dev.trustbloc.wallet.sdk.verifiable.Credential
 
 class OpenID4VP constructor(
         private val crypto: Crypto,
@@ -86,6 +88,7 @@ class OpenID4VP constructor(
                 val descriptor = requirement.descriptorAtIndex(dInd)
                 for (credInd in 0 until descriptor.matchedVCs.length()) {
                     val cred = descriptor.matchedVCs.atIndex(credInd)
+                    val credentialClaims = presentedClaims(cred);
 
                     val claimsToCheck = CredentialClaimsToCheck();
                     claimsToCheck.credentialID = cred.id()
@@ -93,6 +96,7 @@ class OpenID4VP constructor(
                     claimsToCheck.credentialTypes = cred.types()
                     claimsToCheck.expirationDate = cred.expirationDate()
                     claimsToCheck.issuanceDate = cred.issuanceDate()
+                    claimsToCheck.credentialClaimKeys = credentialClaims
 
                     presentationRequest.addCredentialClaims(claimsToCheck)
                 }
@@ -134,6 +138,9 @@ class OpenID4VP constructor(
         initiatedInteraction.presentCredentialOpts(selectedCredentials, opts)
     }
 
+    fun presentedClaims(credential: Credential): CredentialClaimKeys? {
+        return initiatedInteraction?.presentedClaims(credential)
+        }
     fun getCustomScope(): ArrayList<String> {
         val initiatedInteraction = this.initiatedInteraction
                 ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
