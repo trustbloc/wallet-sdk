@@ -55,7 +55,33 @@ func CheckResolvedDisplayData(t *testing.T, actualDisplayData, expectedDisplayDa
 	actualCredentialDisplay := actualDisplayData.CredentialDisplayAtIndex(0)
 	expectedCredentialDisplay := expectedDisplayData.CredentialDisplayAtIndex(0)
 
+	if checkClaims && expectedDisplayData.CredentialDisplaysLength() > 1 {
+		expectedClaims := claimsMap(expectedCredentialDisplay)
+
+		for j := 0; j < actualDisplayData.CredentialDisplaysLength(); j++ {
+			actualCredentialDisplay = actualDisplayData.CredentialDisplayAtIndex(j)
+			actualClaims := claimsMap(actualCredentialDisplay)
+
+			for k, v := range expectedClaims {
+				if actualClaims[k] != v {
+					break
+				}
+			}
+		}
+	}
+
 	checkCredentialDisplay(t, actualCredentialDisplay, expectedCredentialDisplay, checkClaims)
+}
+
+func claimsMap(credentialDisplay *display.CredentialDisplay) map[string]string {
+	m := make(map[string]string)
+
+	for i := 0; i < credentialDisplay.ClaimsLength(); i++ {
+		claim := credentialDisplay.ClaimAtIndex(i)
+		m[claim.Label()] = claim.Value()
+	}
+
+	return m
 }
 
 func checkResolveMetricsEvent(t *testing.T, metricsLogger *metricslogger.MetricsLogger, issuerProfileID string) {

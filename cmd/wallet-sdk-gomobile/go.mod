@@ -21,7 +21,7 @@ require (
 
 require (
 	github.com/IBM/mathlib v0.0.3-0.20231011094432-44ee0eb539da // indirect
-	github.com/PaesslerAG/gval v1.1.0 // indirect
+	github.com/PaesslerAG/gval v1.2.2 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
 	github.com/VictoriaMetrics/fastcache v1.5.7 // indirect
 	github.com/bits-and-blooms/bitset v1.7.0 // indirect
@@ -55,6 +55,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
+	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8 // indirect
 	github.com/tidwall/gjson v1.14.3 // indirect
