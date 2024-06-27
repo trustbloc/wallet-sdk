@@ -290,7 +290,14 @@ func getMatchingClaimValue(vc *verifiable.Credential, credentialSubject *verifia
 		return credentialSubject.ID
 	}
 
-	if strings.HasPrefix(fieldName, "$.") {
+	if strings.HasPrefix(fieldName, "$.credentialSubject.") {
+		// work around for issue in vc.ToRawJSON() where the sd-jwt credentialSubject data is not included in the raw JSON
+		fieldName = strings.ReplaceAll(fieldName, "$.credentialSubject.", "$.")
+		value := findMatchingClaimUsingJSONPath(credentialSubject.CustomFields, fieldName)
+		if value != nil {
+			return value
+		}
+	} else if strings.HasPrefix(fieldName, "$.") {
 		value := findMatchingClaimUsingJSONPath(vc.ToRawJSON(), fieldName)
 		if value != nil {
 			return value
