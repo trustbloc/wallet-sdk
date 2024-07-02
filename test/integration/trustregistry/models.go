@@ -17,7 +17,6 @@ type IssuerIssuanceRequest struct {
 type VerifierPresentationRequest struct {
 	AttestationVC      *[]string            `json:"attestation_vc,omitempty"`
 	CredentialMetadata []CredentialMetadata `json:"credential_metadata"`
-	CredentialMatches  []CredentialMetadata `json:"credential_matches"`
 	VerifierDID        string               `json:"verifier_did"`
 }
 

@@ -186,16 +186,6 @@ func (s *Server) evaluateVerifierPresentationPolicy(w http.ResponseWriter, r *ht
 
 		return
 	}
-	if request.CredentialMatches == nil {
-		request.CredentialMatches = request.CredentialMetadata
-	}
-
-	if request.CredentialMatches == nil || len(request.CredentialMatches) == 0 {
-		writeResponseWithStatus(
-			w, http.StatusBadRequest, "no credential matches supplied")
-
-		return
-	}
 
 	if request.AttestationVC == nil || len(*request.AttestationVC) == 0 {
 		writeResponseWithStatus(
