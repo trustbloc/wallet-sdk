@@ -44,19 +44,31 @@ type CredentialOverview struct {
 type ResolvedClaim struct {
 	// RawID is the raw field name (key) from the VC associated with this claim.
 	// It's not localized or formatted for display.
-	RawID     string  `json:"raw_id,omitempty"`
-	Label     string  `json:"label,omitempty"`
-	ValueType string  `json:"value_type,omitempty"`
-	RawValue  string  `json:"raw_value,omitempty"`
-	Value     *string `json:"value,omitempty"`
-	Order     *int    `json:"order,omitempty"`
-	Pattern   string  `json:"pattern,omitempty"`
-	Mask      string  `json:"mask,omitempty"`
-	Locale    string  `json:"locale,omitempty"`
+	RawID      string      `json:"raw_id,omitempty"`
+	Label      string      `json:"label,omitempty"`
+	ValueType  string      `json:"value_type,omitempty"`
+	RawValue   string      `json:"raw_value,omitempty"`
+	Value      *string     `json:"value,omitempty"`
+	Order      *int        `json:"order,omitempty"`
+	Pattern    string      `json:"pattern,omitempty"`
+	Mask       string      `json:"mask,omitempty"`
+	Locale     string      `json:"locale,omitempty"`
+	Attachment *Attachment `json:"attachment,omitempty"`
 }
 
 // Logo represents display information for a logo.
 type Logo struct {
 	URL     string `json:"uri,omitempty"`
 	AltText string `json:"alt_text,omitempty"`
+}
+
+// Attachment contains data for display for a vc attachment.
+type Attachment struct {
+	ID          string   `json:"id,omitempty"`
+	Type        []string `json:"type,omitempty"`
+	MimeType    string   `json:"mimeType,omitempty"`
+	Description string   `json:"description,omitempty"`
+	URI         string   `json:"uri,omitempty"`
+	Hash        string   `json:"hash,omitempty"`
+	HashAlg     string   `json:"hash-alg,omitempty"`
 }
