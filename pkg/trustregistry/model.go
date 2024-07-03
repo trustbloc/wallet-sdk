@@ -40,10 +40,9 @@ type IssuanceRequest struct {
 // PresentationRequest contains data about the presentation request,
 // that is sent to the trust registry API for evaluation.
 type PresentationRequest struct {
-	VerifierDid       string                    `json:"verifier_did"`
-	VerifierDomain    string                    `json:"verifier_domain"`
-	CredentialClaims  []CredentialClaimsToCheck `json:"credential_metadata"`
-	CredentialMatches []CredentialClaimsToCheck `json:"credential_matches"`
+	VerifierDid      string                    `json:"verifier_did"`
+	VerifierDomain   string                    `json:"verifier_domain"`
+	CredentialClaims []CredentialClaimsToCheck `json:"credential_metadata"`
 }
 
 // CredentialClaimsToCheck  contains data about credentials in the presentation request,
