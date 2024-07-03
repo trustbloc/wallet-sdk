@@ -98,10 +98,9 @@ func (r *Registry) EvaluatePresentation(request *PresentationRequest) (*Evaluati
 	}
 
 	result, err := r.impl.EvaluatePresentation(&trustregistry.PresentationRequest{
-		VerifierDid:       request.VerifierDID,
-		VerifierDomain:    request.VerifierDomain,
-		CredentialClaims:  credentialClaims,
-		CredentialMatches: credentialClaims,
+		VerifierDid:      request.VerifierDID,
+		VerifierDomain:   request.VerifierDomain,
+		CredentialClaims: credentialClaims,
 	})
 	if err != nil {
 		return nil, err
