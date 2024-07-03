@@ -579,6 +579,7 @@ class EvaluationResult {
   final String errorMessage;
   final List<String> requestedAttestations;
   bool multipleCredentialAllowed;
+  final String denyReason;
 
 //<editor-fold desc="Data Methods">
   EvaluationResult({
@@ -586,7 +587,8 @@ class EvaluationResult {
     required this.errorCode,
     required this.errorMessage,
     required this.requestedAttestations,
-    required this.multipleCredentialAllowed
+    required this.multipleCredentialAllowed,
+    required this.denyReason
   });
 
   @override
@@ -597,14 +599,16 @@ class EvaluationResult {
           allowed == other.allowed &&
           multipleCredentialAllowed == other.multipleCredentialAllowed &&
           errorCode == other.errorCode &&
-          errorMessage == other.errorMessage);
+          errorMessage == other.errorMessage &&
+          denyReason == other.denyReason
+      );
 
   @override
-  int get hashCode => allowed.hashCode ^ multipleCredentialAllowed.hashCode ^ errorCode.hashCode ^ errorMessage.hashCode;
+  int get hashCode => allowed.hashCode ^ multipleCredentialAllowed.hashCode ^ errorCode.hashCode ^ errorMessage.hashCode ^ denyReason.hashCode ;
 
   @override
   String toString() {
-    return 'EvaluationResult{ allowed: $allowed, multipleCredentialAllowed: $multipleCredentialAllowed, errorCode: $errorCode, errorMessage: $errorMessage, requestedAttestations: $requestedAttestations,}';
+    return 'EvaluationResult{ allowed: $allowed, multipleCredentialAllowed: $multipleCredentialAllowed, errorCode: $errorCode, errorMessage: $errorMessage, requestedAttestations: $requestedAttestations, denyReason: $denyReason}';
   }
 
   EvaluationResult copyWith({
@@ -612,12 +616,14 @@ class EvaluationResult {
     bool? multipleCredentialAllowed,
     String? errorCode,
     String? errorMessage,
+    String? denyReason,
   }) {
     return EvaluationResult(
       allowed: allowed ?? this.allowed,
       errorCode: errorCode ?? this.errorCode,
       errorMessage: errorMessage ?? this.errorMessage,
       requestedAttestations: requestedAttestations,
+      denyReason:  denyReason ?? this.denyReason,
       multipleCredentialAllowed: multipleCredentialAllowed ?? this.multipleCredentialAllowed,
     );
   }
@@ -629,6 +635,7 @@ class EvaluationResult {
       'errorCode': errorCode,
       'errorMessage': errorMessage,
       'requestedAttestations': requestedAttestations,
+      'denyReason': denyReason
     };
   }
 
@@ -639,6 +646,7 @@ class EvaluationResult {
       errorCode: map['errorCode'] as String,
       errorMessage: map['errorMessage'] as String,
       requestedAttestations: map['requestedAttestations'].cast<String>(),
+      denyReason: map['denyReason'] as String
     );
   }
 
