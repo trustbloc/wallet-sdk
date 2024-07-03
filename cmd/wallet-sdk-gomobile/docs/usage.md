@@ -1199,7 +1199,7 @@ The structure of the display data object is as follows:
 
 * Describes display information for a specific claim within a credential.
 * Has `label()`, `rawID()`, `valueType()`, `value()`, `rawValue()`, `isMasked()`, `hasOrder()`, `order()`,
-  `pattern()`, and `locale()` methods.
+  `pattern()`,  `attachment()` and `locale()` methods.
 * For example, if the UI were to display "Given Name: Alice", then `label()` would correspond to "Given Name" while
   `value()` would correspond to "Alice".
 * Display order data is optional and will only exist if the issuer provided it. Use the `hasOrder()` method
@@ -1214,7 +1214,8 @@ The structure of the display data object is as follows:
 * `rawID()` returns the claim's ID, which is the raw field name (key) from the VC associated with this claim.
   It's not localized or formatted for display.
 * `valueType()` returns the value type for this claim - when it's "image", then you should expect the value data to be
-  formatted using the [data URL scheme](https://www.rfc-editor.org/rfc/rfc2397).
+  formatted using the [data URL scheme](https://www.rfc-editor.org/rfc/rfc2397). For type=attachment, ignore the RawValue()  and Value(), instead use Attachment() method.
+* `attachment()` returns the attachment object for this claim. If the claim is not of type attachment. The object has `id()`, `type()`, `mimeType()`, `description()`, `URI()`, `hash()` and `hashAlg()` methods.
 
 ### Code Examples
 

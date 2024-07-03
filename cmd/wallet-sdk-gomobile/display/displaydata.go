@@ -231,7 +231,8 @@ func (c *Claim) Label() string {
 }
 
 // ValueType returns the display value type for this claim.
-// For example:  "string", "number", "image", etc.
+// For example:  "string", "number", "image", "attachment" etc.
+// For type=attachment, ignore the RawValue()  and Value(), instead use Attachment() method.
 func (c *Claim) ValueType() string {
 	return c.claim.ValueType
 }
@@ -286,4 +287,53 @@ func (c *Claim) Order() (int, error) {
 // localizations were provided in the issuer's metadata.
 func (c *Claim) Locale() string {
 	return c.claim.Locale
+}
+
+// Attachment returns the attachment data. Check this field if the claim type is "attachment", instead of value field.
+func (c *Claim) Attachment() *Attachment {
+	return &Attachment{attachment: c.claim.Attachment}
+}
+
+// Attachment represents display data for a credential.
+// Display data for specific claims (e.g. first name, date of birth, etc.) are in the CredentialSubject objects.
+type Attachment struct {
+	attachment *goapicredentialschema.Attachment
+}
+
+// ID returns the attachment ID.
+func (c *Attachment) ID() string {
+	return c.attachment.ID
+}
+
+// Type returns the attachment Type. This could be "EmbeddedAttachment", "RemoteAttachment" or "AttachmentEvidence".
+// For EmbeddedAttachment, the uri will be a data URI. Hash and HashAlg will provide the hash value of the data along with Hash algorithm used to generate the hash.
+// For RemoteAttachment, the uri will be a remote HTTP URL. Hash and HashAlg will provide the hash value of the data along with Hash algorithm used to generate the hash. Consumer of this API need to validate the hash value against the hash of the data object retrieved from the remote url
+// For AttachmentEvidence, the uri will be empty. But the hash and hashAlg will provide the hash value of the data along with Hash algorithm used to generate the hash. Consumer of this API need to validate the hash value against the hash of the data object retrieved from the out of band.
+func (c *Attachment) Type() string {
+	return c.attachment.Type[0]
+}
+
+// MimeType returns mime-type of the credential attachment.
+func (c *Attachment) MimeType() string {
+	return c.attachment.MimeType
+}
+
+// Description returns the description of the credential attachment.
+func (c *Attachment) Description() string {
+	return c.attachment.Description
+}
+
+// URI returns URI of the attachment. This could be embedded data or a link to external data.
+func (c *Attachment) URI() string {
+	return c.attachment.URI
+}
+
+// Hash returns the hash of the attachment data.
+func (c *Attachment) Hash() string {
+	return c.attachment.Hash
+}
+
+// HashAlg returns the hash algorithm used to hash the attachment data.
+func (c *Attachment) HashAlg() string {
+	return c.attachment.HashAlg
 }

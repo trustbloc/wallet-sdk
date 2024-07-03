@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package credentialschema
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -213,6 +214,25 @@ func resolveClaim(
 		return nil, errClaimValueNotFoundInVC
 	}
 
+	var attachment *Attachment
+
+	if claim.ValueType == "attachment" {
+		switch untypedValue.(type) {
+		case map[string]interface{}:
+			attachmentJSON, err := json.Marshal(untypedValue)
+			if err != nil {
+				fmt.Println("json marshal attachment ", err)
+			}
+
+			attachment = &Attachment{}
+			if err := json.Unmarshal(attachmentJSON, &attachment); err != nil {
+				fmt.Println("json unmarshal attachment ", err)
+			}
+		default:
+			return nil, fmt.Errorf("unsupported attachment value '%v'", untypedValue)
+		}
+	}
+
 	rawValue := fmt.Sprintf("%v", untypedValue)
 
 	var value *string
@@ -234,15 +254,16 @@ func resolveClaim(
 	}
 
 	return &ResolvedClaim{
-		RawID:     fieldName,
-		Label:     label,
-		ValueType: claim.ValueType,
-		Order:     order,
-		RawValue:  rawValue,
-		Value:     value,
-		Pattern:   claim.Pattern,
-		Mask:      claim.Mask,
-		Locale:    labelLocale,
+		RawID:      fieldName,
+		Label:      label,
+		ValueType:  claim.ValueType,
+		Order:      order,
+		RawValue:   rawValue,
+		Value:      value,
+		Pattern:    claim.Pattern,
+		Mask:       claim.Mask,
+		Locale:     labelLocale,
+		Attachment: attachment,
 	}, nil
 }
 
