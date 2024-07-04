@@ -51,7 +51,7 @@ class CredentialVerifiedState extends State<CredentialVerifiedInformation> {
         controller: credDataController,
         shrinkWrap: true,
         itemBuilder: (context, position) {
-          if (credPrev[position].valueType != 'image') {
+          if (credPrev[position].valueType == 'string') {
             return Row(
               children: [
                 const Divider(
@@ -138,11 +138,17 @@ class CredentialVerifiedState extends State<CredentialVerifiedInformation> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Image.memory(
-                          const Base64Decoder().convert(credPrev[position].rawValue.split(',').last),
-                          width: 80,
-                          height: 80,
-                        ),
+                       credPrev[position].uri == null ?
+                       Image.memory(
+                         const Base64Decoder().convert(credPrev[position].rawValue.split(',').last),
+                         width: 80,
+                         height: 80,
+                       ):
+                       Image.memory(
+                         const Base64Decoder().convert(credPrev[position].uri!.split(',').last),
+                         width: 80,
+                         height: 80,
+                       )
                       ],
                     ),
                   ),

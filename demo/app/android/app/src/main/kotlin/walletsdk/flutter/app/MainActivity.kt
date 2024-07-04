@@ -826,6 +826,16 @@ class MainActivity : FlutterActivity() {
             claims["rawValue"] = claim.rawValue()
             claims["valueType"] = claim.valueType()
             claims["label"] = claim.label()
+
+            if (claim.valueType() == "attachment") {
+                // For type=attachment, ignore the RawValue() and Value(), instead use Attachment() method.
+                claims["rawValue"] = ""
+                claims["value"] = ""
+                val attachmentResp = claim.attachment()
+                claims["uri"] = attachmentResp.uri()
+            }
+
+
             claimList.addAll(listOf(claims))
         }
         var overview = credentialDisplay.overview()
