@@ -387,6 +387,7 @@ class CredentialDisplayData {
 class CredentialDisplayClaim {
   final String rawValue;
   final String valueType;
+  final String? uri;
   final String label;
   final String? value;
   final int? order;
@@ -395,6 +396,7 @@ class CredentialDisplayClaim {
   const CredentialDisplayClaim({
     required this.rawValue,
     required this.valueType,
+    required this.uri,
     required this.label,
     this.value,
     this.order,
@@ -407,22 +409,24 @@ class CredentialDisplayClaim {
           runtimeType == other.runtimeType &&
           rawValue == other.rawValue &&
           valueType == other.valueType &&
+          uri == other.uri &&
           label == other.label &&
           value == other.value &&
           order == other.order);
 
   @override
-  int get hashCode => rawValue.hashCode ^ valueType.hashCode ^ label.hashCode ^ value.hashCode ^ order.hashCode;
+  int get hashCode => rawValue.hashCode ^ valueType.hashCode ^ label.hashCode ^ value.hashCode ^ order.hashCode ^ uri.hashCode;
 
   @override
   String toString() {
-    return 'CredentialDisplayClaim{ rawValue: $rawValue, valueType: $valueType, label: $label, value: $value, order: $order,}';
+    return 'CredentialDisplayClaim{ rawValue: $rawValue, valueType: $valueType, label: $label, value: $value, order: $order, uri: $uri}';
   }
 
   CredentialDisplayClaim copyWith({
     String? rawValue,
     String? valueType,
     String? label,
+    String? uri,
     String? value,
     int? order,
   }) {
@@ -430,6 +434,7 @@ class CredentialDisplayClaim {
       rawValue: rawValue ?? this.rawValue,
       valueType: valueType ?? this.valueType,
       label: label ?? this.label,
+      uri: uri ?? this.uri,
       value: value ?? this.value,
       order: order ?? this.order,
     );
@@ -441,6 +446,7 @@ class CredentialDisplayClaim {
       'valueType': valueType,
       'label': label,
       'value': value,
+      'uri': uri,
       'order': order,
     };
   }
@@ -450,6 +456,7 @@ class CredentialDisplayClaim {
       rawValue: map['rawValue'] as String,
       valueType: map['valueType'] as String,
       label: map['label'] as String,
+      uri: map['uri'] as String?,
       value: map['value'] as String?,
       order: map['order'] as int?,
     );

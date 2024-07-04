@@ -1099,6 +1099,15 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
                 claims["rawValue"] = claim.rawValue()
                 claims["valueType"] = claim.valueType()
                 claims["label"] = claim.label()
+    
+                
+                if claim.valueType() == "attachment" {
+                    // For type=attachment, ignore the RawValue() and Value(), instead use Attachment() method.
+                    claims["rawValue"] = ""
+                    claims["value"] = ""
+                    let attachmentResp = claim.attachment()
+                    claims["uri"] = attachmentResp!.uri()
+                }
                 claimList.append(claims)
             }
         }
@@ -1115,6 +1124,7 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         
         result(resolveDisplayResp)
     }
+    
     
     public func parseIssuerDisplay(arguments: Dictionary<String, Any>, result: @escaping FlutterResult) {
         guard let issuerDisplayData = arguments["issuerDisplayData"] as? String else{
