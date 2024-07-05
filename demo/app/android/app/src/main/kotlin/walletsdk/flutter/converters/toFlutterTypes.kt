@@ -97,5 +97,6 @@ public fun convertEvaluationResult(result: EvaluationResult): HashMap<String, An
             "errorCode" to result.errorCode,
             "errorMessage" to result.errorMessage,
             "requestedAttestations" to requestedAttestations,
+            "denyReason" to result.denyReason(),
     )
 }

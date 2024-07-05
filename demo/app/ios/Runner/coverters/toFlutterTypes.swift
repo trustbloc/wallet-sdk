@@ -28,6 +28,8 @@ func convertEvaluationResult(res: TrustregistryEvaluationResult) -> Dictionary<S
         "errorCode":   res.errorCode,
         "errorMessage":   res.errorMessage,
         "requestedAttestations": requestedAttestations,
+        "denyReason": res.denyReason()
+
     ]
 
     return resDic;

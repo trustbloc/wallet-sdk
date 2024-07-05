@@ -66,7 +66,6 @@ class PresentationPreviewState extends State<PresentationPreview> {
 
       trustInfoEvaluationResult = await WalletSDKPlugin.evaluatePresentationTrustInfo();
       setState(() {});
-
       final requestedAttestations = trustInfoEvaluationResult?.requestedAttestations ?? [];
       if (requestedAttestations.where((attestation) => attestation == 'wallet_authentication').isNotEmpty) {
         await AttestationService.issueAttestationVC();
@@ -168,6 +167,13 @@ class PresentationPreviewState extends State<PresentationPreview> {
                       fontWeight: FontWeight.bold,
                       color: Colors.red,
                     )),
+              if (trustInfoEvaluationResult != null && trustInfoEvaluationResult!.denyReason.isNotEmpty)
+                Text('Warning: ${trustInfoEvaluationResult!.denyReason}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.yellow,
+                    )),
 
               Text(verifierPurpose),
               CredentialCard(
@@ -230,13 +236,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
         customScopeList: customScopeConfigList))
         .onError((error, stackTrace) {
       var errString = error.toString().replaceAll(r'\', '');
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => CustomError(
-                  titleBar: 'Presentation Preview',
-                  requestErrorTitleMsg: 'error while presenting credential',
-                  requestErrorSubTitleMsg: errString)));
+      _navigateToCustomError(errString);
     });
     var activities = await WalletSDKPlugin.storeActivityLogger();
     var credID = pref.getString('credID');
@@ -246,6 +246,16 @@ class PresentationPreviewState extends State<PresentationPreview> {
 
   _navigateToDashboard() async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
+  }
+
+  _navigateToCustomError(String errString) async {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => CustomError(
+                titleBar: 'Presentation Preview',
+                requestErrorTitleMsg: 'error while presenting credential',
+                requestErrorSubTitleMsg: errString)));
   }
 
   _navigateToCredentialShareSuccess(String verifierName) async {
