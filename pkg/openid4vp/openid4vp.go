@@ -928,11 +928,7 @@ func copyJSONKeysOnly(obj interface{}) interface{} {
 		return newMap
 	case verifiable.CustomFields:
 		newMap := make(map[string]interface{})
-
-		for k, v := range jsonObj {
-			newMap[k] = copyJSONKeysOnly(v)
-		}
-
+		populateClaimKeys(newMap, jsonObj)
 		return newMap
 	case []interface{}:
 		newSlice := make([]interface{}, len(jsonObj))
@@ -944,5 +940,22 @@ func copyJSONKeysOnly(obj interface{}) interface{} {
 		return newSlice
 	default:
 		return empty
+	}
+}
+
+func populateClaimKeys(claimKeys, doc map[string]interface{}) {
+	for k, v := range doc {
+		if k == "_sd" {
+			continue
+		}
+
+		keys := make(map[string]interface{})
+
+		claimKeys[k] = keys
+
+		obj, ok := v.(map[string]interface{})
+		if ok {
+			populateClaimKeys(keys, obj)
+		}
 	}
 }
