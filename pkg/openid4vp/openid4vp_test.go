@@ -46,9 +46,6 @@ var (
 	//go:embed test_data/credentials.jsonld
 	credentialsJSONLD []byte
 
-	//go:embed test_data/verifier_did.data
-	verifierDID string
-
 	//go:embed test_data/attestation_cred.jwt
 	attestationCredJWT string
 )
@@ -57,6 +54,7 @@ const (
 	testSignature = "test signature"
 	mockDID       = "did:example:12345"
 	mockVMID      = "#key-1"
+	verifierDID   = "did:test:acde"
 )
 
 type failingMetricsLogger struct {
@@ -232,13 +230,9 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	}
 
 	mockRequestObject := &requestObject{
-		Nonce: "test123456",
-		State: "test34566",
-		Claims: requestObjectClaims{
-			VPToken: vpToken{
-				PresentationDefinition: mockPresentationDefinition,
-			},
-		},
+		Nonce:                  "test123456",
+		State:                  "test34566",
+		PresentationDefinition: mockPresentationDefinition,
 	}
 
 	t.Run("Success", func(t *testing.T) {
@@ -263,8 +257,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, verifierDID, displayData.DID)
 		require.Equal(t, "v_myprofile_jwt", displayData.Name)
-		require.Equal(t, "", displayData.Purpose)
-		require.Equal(t, "", displayData.LogoURI)
+		require.Equal(t, "test verifier", displayData.Purpose)
+		require.Equal(t, "https://example.com/verifier/logo", displayData.LogoURI)
 
 		err = interaction.PresentCredential(credentials, CustomClaims{})
 
@@ -280,31 +274,18 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		data, err := url.ParseQuery(string(httpClient.SentBody))
 		require.NoError(t, err)
 
-		var submissionWrapper struct {
-			VPToken struct {
-				PresentationSubmission *presexch.PresentationSubmission `json:"presentation_submission"`
-			} `json:"_vp_token"`
-		}
-
-		payloadBytes := func(jws string) []byte {
-			parts := strings.Split(jws, ".")
-			if len(parts) != 3 {
-				return nil
-			}
-
-			payload, e := base64.RawURLEncoding.DecodeString(parts[1])
-			require.NoError(t, e)
-
-			return payload
-		}
-
 		require.Contains(t, data, "id_token")
 		require.NotEmpty(t, data["id_token"])
 
-		require.NoError(t, json.Unmarshal(payloadBytes(data["id_token"][0]), &submissionWrapper))
-
 		require.Contains(t, data, "vp_token")
 		require.NotEmpty(t, data["vp_token"])
+
+		require.Contains(t, data, "presentation_submission")
+		require.NotEmpty(t, data["presentation_submission"])
+
+		var presentationSubmission *presexch.PresentationSubmission
+		require.NoError(t, json.Unmarshal([]byte(data["presentation_submission"][0]), &presentationSubmission))
+
 		var vpTokenList []string
 		require.NoError(t, json.Unmarshal([]byte(data["vp_token"][0]), &vpTokenList))
 
@@ -317,16 +298,14 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 				verifiable.WithDisabledJSONLDChecks())
 			require.NoError(t, e)
 
-			parsedPresentation.JWT = ""
-
 			presentations = append(presentations, parsedPresentation)
 		}
 
-		_, err = interaction.requestObject.Claims.VPToken.PresentationDefinition.Match(
+		_, err = interaction.requestObject.PresentationDefinition.Match(
 			presentations,
 			lddl,
 			presexch.WithDisableSchemaValidation(),
-			presexch.WithMergedSubmission(submissionWrapper.VPToken.PresentationSubmission),
+			presexch.WithMergedSubmission(presentationSubmission),
 			presexch.WithCredentialOptions(verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(lddl)),
 		)
 		require.NoError(t, err)
@@ -483,13 +462,9 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		}
 
 		req := &requestObject{
-			Nonce: "test123456",
-			State: "test34566",
-			Claims: requestObjectClaims{
-				VPToken: vpToken{
-					PresentationDefinition: pd,
-				},
-			},
+			Nonce:                  "test123456",
+			State:                  "test34566",
+			PresentationDefinition: pd,
 		}
 
 		// ...so creating a VP fails...
@@ -974,8 +949,8 @@ func TestOpenID4VP_PresentedClaims(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, verifierDID, displayData.DID)
 		require.Equal(t, "v_myprofile_jwt", displayData.Name)
-		require.Equal(t, "", displayData.Purpose)
-		require.Equal(t, "", displayData.LogoURI)
+		require.Equal(t, "test verifier", displayData.Purpose)
+		require.Equal(t, "https://example.com/verifier/logo", displayData.LogoURI)
 
 		claims, err := interaction.PresentedClaims(credentials[0])
 		require.NoError(t, err)
