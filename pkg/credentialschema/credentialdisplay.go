@@ -24,6 +24,8 @@ var (
 	errClaimValueNotFoundInVC error
 )
 
+const defaultLocale = "en-US"
+
 func buildCredentialDisplays(
 	vcs []*verifiable.Credential,
 	credentialConfigurationsSupported map[issuer.CredentialConfigurationID]*issuer.CredentialConfigurationSupported,
@@ -288,7 +290,7 @@ func getMaskedValue(rawValue, maskingPattern, maskingString string) (string, err
 // on what is available). If no preferred locale is specified, then the first available locale is used.
 func getLocalizedLabel(preferredLocale string, claim *issuer.Claim) (string, string) {
 	if preferredLocale == "" {
-		return claim.LocalizedClaimDisplays[0].Name, claim.LocalizedClaimDisplays[0].Locale
+		preferredLocale = defaultLocale
 	}
 
 	for _, claimDisplay := range claim.LocalizedClaimDisplays {
@@ -369,9 +371,7 @@ func getOverviewDisplay(
 	preferredLocale string,
 ) *CredentialOverview {
 	if preferredLocale == "" {
-		return issuerCredentialDisplayToResolvedCredentialOverview(
-			&credentialConfigurationSupported.LocalizedCredentialDisplays[0],
-		)
+		preferredLocale = defaultLocale
 	}
 
 	for i := range credentialConfigurationSupported.LocalizedCredentialDisplays {
