@@ -203,6 +203,47 @@ func TestResolve(t *testing.T) {
 	})
 }
 
+func TestResolveCredential(t *testing.T) {
+	issuerServerHandler := &mockIssuerServerHandler{
+		t:              t,
+		issuerMetadata: string(sampleIssuerMetadata),
+	}
+	server := httptest.NewServer(issuerServerHandler)
+
+	defer server.Close()
+
+	parseVCOptionalArgs := verifiable.NewOpts()
+	parseVCOptionalArgs.DisableProofCheck()
+
+	vc, err := verifiable.ParseCredential(credentialUniversityDegree, parseVCOptionalArgs)
+	require.NoError(t, err)
+
+	vcs := verifiable.NewCredentialsArray()
+	vcs.Add(vc)
+
+	opts := display.NewOpts().SetMaskingString("*")
+
+	resolvedDisplayData, err := display.ResolveCredential(vcs, server.URL, opts)
+	require.NoError(t, err)
+
+	require.Equal(t, resolvedDisplayData.LocalizedIssuersLength(), 2)
+	require.Equal(t, resolvedDisplayData.CredentialsLength(), 1)
+	require.Equal(t, resolvedDisplayData.CredentialAtIndex(0).LocalizedOverviewsLength(), 1)
+	require.Equal(t, resolvedDisplayData.CredentialAtIndex(0).SubjectsLength(), 6)
+
+	credentialDisplay := resolvedDisplayData.CredentialAtIndex(0)
+
+	for i := 0; i < credentialDisplay.SubjectsLength(); i++ {
+		claim := credentialDisplay.SubjectAtIndex(i)
+
+		if claim.LocalizedLabelAtIndex(0).Name() == sensitiveIDLabel {
+			require.Equal(t, "*****6789", claim.Value())
+		} else if claim.LocalizedLabelAtIndex(0).Name() == reallySensitiveIDLabel {
+			require.Equal(t, "*******", claim.Value())
+		}
+	}
+}
+
 func TestResolveCredentialOffer(t *testing.T) {
 	metadata := &issuer.Metadata{}
 

@@ -43,3 +43,20 @@ func getIssuerDisplay(issuerDisplays []issuer.LocalizedIssuerDisplay, locale str
 		TextColor:       issuerDisplays[0].TextColor,
 	}
 }
+
+func getIssuerDisplayAllLocale(issuerDisplays []issuer.LocalizedIssuerDisplay) []ResolvedIssuerDisplay {
+	var resolvedIssuerDisplay []ResolvedIssuerDisplay
+
+	for _, issuerDisplay := range issuerDisplays {
+		resolvedIssuerDisplay = append(resolvedIssuerDisplay, ResolvedIssuerDisplay{
+			Name:            issuerDisplay.Name,
+			Locale:          issuerDisplay.Locale,
+			URL:             issuerDisplay.URL,
+			Logo:            convertLogo(issuerDisplay.Logo),
+			BackgroundColor: issuerDisplay.BackgroundColor,
+			TextColor:       issuerDisplay.TextColor,
+		})
+	}
+
+	return resolvedIssuerDisplay
+}

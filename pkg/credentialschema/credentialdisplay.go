@@ -411,3 +411,164 @@ func convertLogo(logo *issuer.Logo) *Logo {
 
 	return nil
 }
+
+func buildCredentialDisplaysAllLocale(
+	vcs []*verifiable.Credential,
+	credentialConfigurationsSupported map[issuer.CredentialConfigurationID]*issuer.CredentialConfigurationSupported,
+	maskingString string,
+) ([]Credential, error) {
+	var credentialDisplays []Credential
+
+	for _, vc := range vcs {
+		// The call below creates a copy of the VC with the selective disclosures merged into the credential subject.
+		displayVC, err := vc.CreateDisplayCredential(verifiable.DisplayAllDisclosures())
+		if err != nil {
+			return nil, err
+		}
+
+		subject, err := getSubject(displayVC) // Will contain both selective and non-selective disclosures.
+		if err != nil {
+			return nil, err
+		}
+
+		for _, credentialConfigurationSupported := range credentialConfigurationsSupported {
+			if !haveMatchingTypes(credentialConfigurationSupported, displayVC.Contents().Types) {
+				continue
+			}
+
+			credentialDisplay, err := buildCredentialDisplayAllLocale(credentialConfigurationSupported, vc, subject, maskingString)
+			if err != nil {
+				return nil, err
+			}
+
+			credentialDisplays = append(credentialDisplays, *credentialDisplay)
+
+			break
+		}
+	}
+
+	return credentialDisplays, nil
+}
+
+func buildCredentialDisplayAllLocale(
+	credentialConfigurationSupported *issuer.CredentialConfigurationSupported,
+	vc *verifiable.Credential,
+	subject *verifiable.Subject,
+	maskingString string,
+) (*Credential, error) {
+	resolvedClaims, err := resolveClaimsAllLocale(credentialConfigurationSupported, vc, subject, maskingString)
+	if err != nil {
+		return nil, err
+	}
+
+	var overviews []CredentialOverview
+	for _, v := range credentialConfigurationSupported.LocalizedCredentialDisplays {
+		overviews = append(overviews, CredentialOverview{
+			Name:            v.Name,
+			Locale:          v.Locale,
+			BackgroundColor: v.BackgroundColor,
+			TextColor:       v.TextColor,
+			Logo:            convertLogo(v.Logo),
+		})
+	}
+
+	return &Credential{LocalizedOverview: overviews, Subject: resolvedClaims}, nil
+}
+
+func resolveClaimsAllLocale(
+	credentialConfigurationSupported *issuer.CredentialConfigurationSupported,
+	vc *verifiable.Credential,
+	credentialSubject *verifiable.Subject,
+	maskingString string,
+) ([]Subject, error) {
+	var resolvedClaims []Subject
+
+	for fieldName, claim := range credentialConfigurationSupported.CredentialDefinition.CredentialSubject {
+		resolvedClaim, err := resolveClaimAllLocale(
+			fieldName, claim, vc, credentialSubject, credentialConfigurationSupported, maskingString)
+		if err != nil && !errors.Is(err, errNoClaimDisplays) && !errors.Is(err, errClaimValueNotFoundInVC) {
+			return nil, err
+		}
+
+		if resolvedClaim != nil {
+			resolvedClaims = append(resolvedClaims, *resolvedClaim)
+		}
+	}
+
+	return resolvedClaims, nil
+}
+
+func resolveClaimAllLocale(
+	fieldName string,
+	claim *issuer.Claim,
+	vc *verifiable.Credential,
+	credentialSubject *verifiable.Subject,
+	credentialConfigurationSupported *issuer.CredentialConfigurationSupported,
+	maskingString string,
+) (*Subject, error) {
+	if len(claim.LocalizedClaimDisplays) == 0 {
+		return nil, errNoClaimDisplays
+	}
+
+	var labels []Label
+
+	for _, claimDisplay := range claim.LocalizedClaimDisplays {
+		labels = append(labels, Label{Name: claimDisplay.Name, Locale: claimDisplay.Locale})
+	}
+
+	untypedValue := getMatchingClaimValue(vc, credentialSubject, fieldName)
+	if untypedValue == nil {
+		return nil, errClaimValueNotFoundInVC
+	}
+
+	var attachment *Attachment
+
+	if claim.ValueType == "attachment" {
+		switch untypedValue.(type) {
+		case map[string]interface{}:
+			attachmentJSON, err := json.Marshal(untypedValue)
+			if err != nil {
+				fmt.Println("json marshal attachment ", err)
+			}
+
+			attachment = &Attachment{}
+			if err := json.Unmarshal(attachmentJSON, &attachment); err != nil {
+				fmt.Println("json unmarshal attachment ", err)
+			}
+		default:
+			return nil, fmt.Errorf("unsupported attachment value '%v'", untypedValue)
+		}
+	}
+
+	rawValue := fmt.Sprintf("%v", untypedValue)
+
+	var value *string
+
+	if claim.Mask != "" {
+		maskedValue, err := getMaskedValue(rawValue, claim.Mask, maskingString)
+		if err != nil {
+			return nil, err
+		}
+
+		value = &maskedValue
+	}
+
+	var order *int
+
+	orderAsInt, err := credentialConfigurationSupported.ClaimOrderAsInt(fieldName)
+	if err == nil {
+		order = &orderAsInt
+	}
+
+	return &Subject{
+		RawID:           fieldName,
+		LocalizedLabels: labels,
+		ValueType:       claim.ValueType,
+		Order:           order,
+		RawValue:        rawValue,
+		Value:           value,
+		Pattern:         claim.Pattern,
+		Mask:            claim.Mask,
+		Attachment:      attachment,
+	}, nil
+}

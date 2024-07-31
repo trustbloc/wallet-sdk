@@ -28,6 +28,8 @@ import (
 // The CredentialDisplays in the returned Data object correspond to the VCs passed in and are in the
 // same order.
 // This method requires one or more VCs and the issuer's base URI.
+// Deprecated: Use ResolveCredential function instead, which would give data for all locales. The consumer of the SDK
+// can run logic to display exact locale data to the user.
 func Resolve(vcs *verifiable.CredentialsArray, issuerURI string, opts *Opts) (*Data, error) {
 	goAPIOpts, err := generateGoAPIOpts(vcs, issuerURI, opts)
 	if err != nil {
@@ -40,6 +42,20 @@ func Resolve(vcs *verifiable.CredentialsArray, issuerURI string, opts *Opts) (*D
 	}
 
 	return &Data{resolvedDisplayData: resolvedDisplayData}, nil
+}
+
+func ResolveCredential(vcs *verifiable.CredentialsArray, issuerURI string, opts *Opts) (*Resolved, error) {
+	goAPIOpts, err := generateGoAPIOpts(vcs, issuerURI, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	resolvedDisplayData, err := goapicredentialschema.ResolveCredential(goAPIOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Resolved{resolvedDisplayData: resolvedDisplayData}, nil
 }
 
 // ResolveCredentialOffer resolves display information for some offered credentials based on an issuer's metadata.
