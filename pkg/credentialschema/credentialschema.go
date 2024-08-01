@@ -38,6 +38,32 @@ func Resolve(opts ...ResolveOpt) (*ResolvedDisplayData, error) {
 	}, nil
 }
 
+// ResolveCredential resolves display information for some issued credentials based on an issuer's metadata.
+func ResolveCredential(opts ...ResolveOpt) (*ResolvedData, error) {
+	vcs, metadata, _, maskingString, err := processOpts(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if maskingString == nil {
+		defaultMaskingString := "•"
+		maskingString = &defaultMaskingString
+	}
+
+	credentialDisplays, err := buildCredentialDisplaysAllLocale(vcs, metadata.CredentialConfigurationsSupported,
+		*maskingString)
+	if err != nil {
+		return nil, err
+	}
+
+	issuerOverview := getIssuerDisplayAllLocale(metadata.LocalizedIssuerDisplays)
+
+	return &ResolvedData{
+		LocalizedIssuer: issuerOverview,
+		Credential:      credentialDisplays,
+	}, nil
+}
+
 // ResolveCredentialOffer resolves display information for some offered credentials based on an issuer's metadata.
 // The CredentialDisplays in the returned ResolvedDisplayData object correspond to the offered credential types
 // passed in and are in the same order.

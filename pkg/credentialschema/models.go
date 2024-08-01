@@ -56,6 +56,38 @@ type ResolvedClaim struct {
 	Attachment *Attachment `json:"attachment,omitempty"`
 }
 
+// ResolvedData represents display information for the credentials based on an issuer's metadata.
+type ResolvedData struct {
+	LocalizedIssuer []ResolvedIssuerDisplay `json:"localized_issuer,omitempty"`
+	Credential      []Credential            `json:"credentials,omitempty"`
+}
+
+// Credential represents display data for a credential.
+// Display data for specific claims (e.g. first name, date of birth, etc.) are in Subject.
+type Credential struct {
+	LocalizedOverview []CredentialOverview `json:"localized_overview,omitempty"`
+	Subject           []Subject            `json:"subjects,omitempty"`
+}
+
+// Subject represents display data for a specific credential subject.
+type Subject struct {
+	RawID           string      `json:"raw_id,omitempty"`
+	LocalizedLabels []Label     `json:"localized_labels,omitempty"`
+	ValueType       string      `json:"value_type,omitempty"`
+	RawValue        string      `json:"raw_value,omitempty"`
+	Value           *string     `json:"value,omitempty"`
+	Order           *int        `json:"order,omitempty"`
+	Pattern         string      `json:"pattern,omitempty"`
+	Mask            string      `json:"mask,omitempty"`
+	Attachment      *Attachment `json:"attachment,omitempty"`
+}
+
+// Label represents display information for localizaed credential subject label.
+type Label struct {
+	Name   string `json:"name,omitempty"`
+	Locale string `json:"locale,omitempty"`
+}
+
 // Logo represents display information for a logo.
 type Logo struct {
 	URL     string `json:"uri,omitempty"`

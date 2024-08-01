@@ -21,7 +21,8 @@ For the sake of readability, the following is omitted in most code examples:
 - [Decentralized Identifier (DID) Resolver](#decentralized-identifier-did-resolver)
 - [DID Service Validation](#did-service-validation)
 - [OpenID Credential Issuance (OpenID4VCI)](#openid-credential-issuance-openid4vci)
-- [Credential Display API](#credential-display-api)
+- [Credential Display API (Deprecated)](#credential-display-api)
+- [Credential Display API with Locale](#credential-display-with-locale-api)
 - [Credential Status](#credential-status)
 - [OpenID Credential Presentation (OpenID4VP)](#openid-credential-presentation-openid4vp)
 - [Trust Evaluation](#trust-evaluation)
@@ -1090,6 +1091,8 @@ let credentials = interaction.requestCredential(vm: didDocument.assertionMethod(
 
 ## Credential Display API
 
+Note: This API has been deprecated. Please use the [Credential Display API with Locale](#credential-display-with-locale-api) API instead.
+
 After completing the `RequestCredential` step of the OpenID4CI flow, you will have your issued Verifiable Credential
 objects. These objects contain the data needed for various wallet operations, but they don't tell you how you can
 display the credential data in an easily-understandable way via a user interface. This is where the credential display
@@ -1277,6 +1280,116 @@ var error: NSError?
 let opts = DisplayNewOpts().setPreferredLocale("en-us")
 let displayData = DisplayResolve(vcArray, "Issuer_URI_Goes_Here", opts, &error)
 ```
+
+## Credential Display with locale API 
+
+After completing the `RequestCredential` step of the OpenID4CI flow, you will have your issued Verifiable Credential
+objects. These objects contain the data needed for various wallet operations, but they don't tell you how you can
+display the credential data in an easily-understandable way via a user interface. This is where the credential display
+data comes in.
+
+To get display data with all locales, call the `display.resolveCredential` function with your VCs and the issuer URI. An issuer URI can be obtained by
+calling the `issuerURI` method on an OpenID4CI interaction object after it's been instantiated. It's a good idea to
+store the issuer URI somewhere in persistent storage after going through the OpenID4CI flow. This way, you can call the
+`display.resolveCredential` function later if/when you need to refresh your display data based on the latest display information
+from the issuer. Note that if the issuer uses signed metadata, then you'll need to also pass a DID resolver into
+the `display.resolveCredential` function. See the [Options](#options) section for more information.
+
+
+### Options
+
+The `display.resolveCredential` function has a number of different options available. For a full list of available options, check
+the associated `Opts` object. This section will highlight some especially notable ones:
+
+### Set DID Resolver
+
+If the issuer makes use of signed issuer metadata, then you'll need to pass in a DID resolver using the
+`setDIDResolver(didResolver)` option. Otherwise, the`resolveDisplay` call will fail.
+
+### Set Masking String
+
+The `setMaskingString(maskingString)` option allows you to specify the string to be used when creating masked values for
+display. The substitution is done on a character-by-character basis, whereby each individual character to be masked
+will be replaced by the entire string. See the examples below to better understand exactly how the substitution works.
+
+#### Examples
+
+Note that any quote characters used in these examples are only there for readability reasons - they're not actually
+part of the values.
+
+Scenario: The unmasked display value is 12345, and the issuer's metadata specifies that the first 3 characters are
+to be masked. The most common use-case is to substitute every masked character with a single character. This is
+achieved by specifying just a single character in the `maskingString`. Here's what the masked value would look like
+with different `maskingString` choices:
+```
+maskingString="•"    -->    •••45
+maskingString="*"    -->    ***45
+```
+
+It's also possible to specify multiple characters in the `maskingString`, or even an empty string if so desired.
+Here's what the masked value would like in such cases:
+
+```
+maskingString="???"  -->    ?????????45
+maskingString=""     -->    45
+```
+
+If this option isn't used, then by default "•" characters (without the quotes) will be used for masking.
+
+### The Display Object Structure
+
+The structure of the display data object is as follows:
+
+#### `Resolved`
+
+* The root object.
+* Contains display information for the issuer and each of the credentials passed in to the  API.
+* Use the `LocalizedIssuersLength()` and `LocalizedIssuerAtIndex()` methods to iterate over the different localized issuer display data.
+* Use the `credentialsLength()` and `credentialAtIndex()` methods to iterate over the credential passed to the API.
+
+#### `Issuer`
+
+* Describes display information about the issuer.
+* Has `name()`, `locale()`, `URL()`, `Logo()`, `BackgroundColor()` and `TextColor()` methods.
+
+#### `Credential`
+
+* Describes display information about a credential.
+* Use the `localizedOverviewsLength()` and `localizedOverviewAtIndex()` methods to iterate over the different localized credential display data.
+* Use the `subjectsLength()` and `subjectAtIndex()` methods to iterate over the credential `Subject` or claim objects.
+
+#### `Overview`
+
+* Describes display information for a credential as a whole.
+* Has `name()`, `logo()`, `backgroundColor()`, `textColor()`, and `locale()` methods. The `logo()` method returns
+  a `Logo` object.
+
+#### `Logo`
+
+* Describes display information for a logo.
+* Has `url()` and `altText()` methods.
+
+#### `Subject`
+
+* Describes display information for a specific claim within a credential.
+* Has `rawID()`, `valueType()`, `value()`, `rawValue()`, `isMasked()`, `hasOrder()`, `order()`,
+  `pattern()`,  `attachment()` and `locale()` methods.
+* Use the `localizedLabelsLength()` and `localizedLabelAtIndex()` methods to iterate over the different localized credential subject label.
+* Display order data is optional and will only exist if the issuer provided it. Use the `hasOrder()` method
+  to determine if there is a specified order before attempting to retrieve the order, since `order()` will return an
+  error/throw an exception if the claim has no order information. If you've ensured that the claim has an order
+  (by using `hadOrder()`), then you can safely ignore the error/exception from the `order()` method.
+* `IsMasked()` indicates whether this claim's value is masked. If this method returns true, then the `value()` method
+  will return the masked value while the `rawValue()` method will return the unmasked version.
+* `rawValue()` returns the raw display value for this claim without any formatting.
+  For example, if this claim is masked, this method will return the unmasked version.
+  If no special formatting was applied to the display value, then this method will be equivalent to calling Value.
+* `rawID()` returns the claim's ID, which is the raw field name (key) from the VC associated with this claim.
+  It's not localized or formatted for display.
+* `valueType()` returns the value type for this claim - when it's "image", then you should expect the value data to be
+  formatted using the [data URL scheme](https://www.rfc-editor.org/rfc/rfc2397). For type=attachment, ignore the RawValue()  and Value(), instead use Attachment() method.
+* `attachment()` returns the attachment object for this claim. If the claim is not of type attachment. The object has `id()`, `type()`, `mimeType()`, `description()`, `URI()`, `hash()` and `hashAlg()` methods.
+
 
 ## Credential Status
 

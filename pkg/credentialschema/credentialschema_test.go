@@ -485,6 +485,25 @@ func TestResolveCredentialOffer(t *testing.T) {
 	})
 }
 
+func TestResolveCredential(t *testing.T) { //nolint: gocognit // Test file
+	credential, err := verifiable.ParseCredential(credentialUniversityDegree,
+		verifiable.WithCredDisableValidation(),
+		verifiable.WithDisabledProofCheck())
+	require.NoError(t, err)
+
+	var issuerMetadata issuer.Metadata
+
+	err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
+	require.NoError(t, err)
+
+	resolvedDisplayData, errResolve := credentialschema.ResolveCredential(
+		credentialschema.WithCredentials([]*verifiable.Credential{credential}),
+		credentialschema.WithIssuerMetadata(&issuerMetadata))
+	require.NoError(t, errResolve)
+
+	require.Equal(t, len(resolvedDisplayData.Credential), 1)
+}
+
 func checkSuccessCaseMatchedOverviewData(t *testing.T, resolvedDisplayData *credentialschema.ResolvedDisplayData) {
 	t.Helper()
 
