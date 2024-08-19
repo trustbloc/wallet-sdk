@@ -40,6 +40,7 @@ type goAPIOpenID4VP interface {
 	PresentCredentialUnsafe(credential *afgoverifiable.Credential, customClaims openid4vp.CustomClaims) error
 	VerifierDisplayData() *openid4vp.VerifierDisplayData
 	TrustInfo() (*openid4vp.VerifierTrustInfo, error)
+	Acknowledgment() *openid4vp.Acknowledgment
 }
 
 // VerifierTrustInfo represent verifier trust information.
@@ -170,6 +171,11 @@ func (o *Interaction) TrustInfo() (*VerifierTrustInfo, error) {
 		Domain:      info.Domain,
 		DomainValid: info.DomainValid,
 	}, nil
+}
+
+// Acknowledgment returns acknowledgment object.
+func (o *Interaction) Acknowledgment() *Acknowledgment {
+	return &Acknowledgment{acknowledgment: o.goAPIOpenID4VP.Acknowledgment()}
 }
 
 // VerifierDisplayData returns display information about verifier.

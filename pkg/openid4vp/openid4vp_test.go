@@ -971,6 +971,55 @@ func TestOpenID4VP_PresentedClaims(t *testing.T) {
 	})
 }
 
+func TestAcknowledgment_AcknowledgeVerifier(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		ack := &Acknowledgment{
+			ResponseURI: "https://verifier/present",
+			State:       "98822a39-9178-4742-a2dc-aba49879fc7b",
+		}
+
+		err := ack.AcknowledgeVerifier("error", "desc",
+			&mock.HTTPClientMock{
+				ExpectedEndpoint: "https://verifier/present",
+				StatusCode:       200,
+			},
+		)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("Fail to do request", func(t *testing.T) {
+		ack := &Acknowledgment{
+			ResponseURI: "https://verifier/present",
+			State:       "98822a39-9178-4742-a2dc-aba49879fc7b",
+		}
+
+		err := ack.AcknowledgeVerifier("error", "desc",
+			&mock.HTTPClientMock{
+				Err: errors.New("http error"),
+			},
+		)
+
+		require.ErrorContains(t, err, "http error")
+	})
+
+	t.Run("Unexpected status code", func(t *testing.T) {
+		ack := &Acknowledgment{
+			ResponseURI: "https://verifier/present",
+			State:       "98822a39-9178-4742-a2dc-aba49879fc7b",
+		}
+
+		err := ack.AcknowledgeVerifier("error", "desc",
+			&mock.HTTPClientMock{
+				ExpectedEndpoint: "https://verifier/present",
+				StatusCode:       500,
+			},
+		)
+
+		require.ErrorContains(t, err, "unexpected status code")
+	})
+}
+
 func TestCopyJSONKeysOnly(t *testing.T) {
 	t.Run("Success simple", func(t *testing.T) {
 		src := map[string]interface{}{
