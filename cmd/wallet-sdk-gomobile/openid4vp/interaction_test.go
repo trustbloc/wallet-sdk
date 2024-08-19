@@ -365,6 +365,33 @@ func TestInteraction_TrustInfo(t *testing.T) {
 	})
 }
 
+func TestInteraction_Acknowledgment(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		instance := &Interaction{
+			goAPIOpenID4VP: &mockGoAPIInteraction{
+				AcknowledgmentResult: &openid4vp.Acknowledgment{
+					ResponseURI: "https://verifier/present",
+					State:       "98822a39-9178-4742-a2dc-aba49879fc7b",
+				},
+			},
+		}
+
+		ack := instance.Acknowledgment()
+
+		require.NotNil(t, ack)
+		require.Equal(t, "https://verifier/present", ack.acknowledgment.ResponseURI)
+		require.Equal(t, "98822a39-9178-4742-a2dc-aba49879fc7b", ack.acknowledgment.State)
+
+		serialized, err := ack.Serialize()
+		require.NoError(t, err)
+
+		ackRestored, err := NewAcknowledgment(serialized)
+		require.NoError(t, err)
+		require.Equal(t, ack.acknowledgment.ResponseURI, ackRestored.acknowledgment.ResponseURI)
+		require.Equal(t, ack.acknowledgment.State, ackRestored.acknowledgment.State)
+	})
+}
+
 type documentLoaderWrapper struct {
 	goAPIDocumentLoader ld.DocumentLoader
 }
@@ -412,6 +439,8 @@ type mockGoAPIInteraction struct {
 
 	PresentedClaimsResult interface{}
 	PresentedClaimsErr    error
+
+	AcknowledgmentResult *openid4vp.Acknowledgment
 }
 
 func (o *mockGoAPIInteraction) GetQuery() *presexch.PresentationDefinition {
@@ -444,6 +473,10 @@ func (o *mockGoAPIInteraction) VerifierDisplayData() *openid4vp.VerifierDisplayD
 
 func (o *mockGoAPIInteraction) TrustInfo() (*openid4vp.VerifierTrustInfo, error) {
 	return o.VerifierTrustInfo, o.VerifierTrustInfoErr
+}
+
+func (o *mockGoAPIInteraction) Acknowledgment() *openid4vp.Acknowledgment {
+	return o.AcknowledgmentResult
 }
 
 type mockDIDResolver struct {

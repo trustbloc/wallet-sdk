@@ -183,6 +183,14 @@ func (o *Interaction) TrustInfo() (*VerifierTrustInfo, error) {
 	}, nil
 }
 
+// Acknowledgment returns acknowledgment object for the current interaction.
+func (o *Interaction) Acknowledgment() *Acknowledgment {
+	return &Acknowledgment{
+		ResponseURI: o.requestObject.ResponseURI,
+		State:       o.requestObject.State,
+	}
+}
+
 type presentOpts struct {
 	ignoreConstraints bool
 	signer            wrapperapi.KMSCryptoSigner

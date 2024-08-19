@@ -84,15 +84,16 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 	}
 
 	type test struct {
-		issuerProfileIDs   []string
-		claimData          []claimData
-		walletDIDMethod    string
-		verifierProfileID  string
-		signingKeyType     string
-		matchedDisplayData *display.Data
-		customScopes       []customScope
-		trustInfo          bool
-		shouldBeForbidden  bool
+		issuerProfileIDs     []string
+		claimData            []claimData
+		walletDIDMethod      string
+		verifierProfileID    string
+		signingKeyType       string
+		matchedDisplayData   *display.Data
+		customScopes         []customScope
+		trustInfo            bool
+		shouldBeForbidden    bool
+		acknowledgeNoConsent bool
 	}
 
 	tests := []test{
@@ -169,6 +170,13 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 								}`,
 				},
 			},
+		},
+		{
+			issuerProfileIDs:     []string{"bank_issuer"},
+			claimData:            []claimData{verifiableEmployeeClaims},
+			walletDIDMethod:      "ion",
+			verifierProfileID:    "v_myprofile_jwt_verified_employee",
+			acknowledgeNoConsent: true,
 		},
 	}
 
@@ -264,6 +272,19 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			issuer := issuersInfo[vc.ID()]
 			helpers.ResolveDisplayData(t, toCredArray(vc), tc.matchedDisplayData, issuer.IssuerURI, issuer.ProfileID,
 				didResolver)
+		}
+
+		requestedAcknowledgment := interaction.Acknowledgment()
+
+		requestedAcknowledgmentData, err := requestedAcknowledgment.Serialize()
+		require.NoError(t, err)
+
+		requestedAcknowledgmentRestored, err := openid4vp.NewAcknowledgment(requestedAcknowledgmentData)
+		require.NotNil(t, requestedAcknowledgmentRestored)
+
+		if tc.acknowledgeNoConsent {
+			require.NoError(t, requestedAcknowledgmentRestored.NoConsent())
+			continue
 		}
 
 		selectedCreds := verifiable.NewCredentialsArray()
