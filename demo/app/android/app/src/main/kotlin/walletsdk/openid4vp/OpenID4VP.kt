@@ -26,6 +26,7 @@ import dev.trustbloc.wallet.sdk.trustregistry.Registry
 import dev.trustbloc.wallet.sdk.trustregistry.RegistryConfig
 import dev.trustbloc.wallet.sdk.verifiable.CredentialsArray
 import dev.trustbloc.wallet.sdk.api.VerificationMethod
+import dev.trustbloc.wallet.sdk.openid4vp.Acknowledgment
 import dev.trustbloc.wallet.sdk.openid4vp.CredentialClaimKeys
 import dev.trustbloc.wallet.sdk.verifiable.Credential
 
@@ -156,6 +157,12 @@ class OpenID4VP constructor(
         return customScopesList
     }
 
+    fun noConsentAcknowledgement(): Acknowledgment {
+        val initiatedInteraction = this.initiatedInteraction
+            ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")
+
+        return initiatedInteraction.acknowledgment()
+    }
     fun getVerifierDisplayData(): VerifierDisplayData {
         val initiatedInteraction = this.initiatedInteraction
                 ?: throw Exception("OpenID4VP interaction not properly initialized, call startVPInteraction first")

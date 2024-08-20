@@ -62,6 +62,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             
         case "evaluatePresentationTrustInfo":
             evaluatePresentationTrustInfo(arguments: arguments!, result: result)
+       
+        case "noConsentAcknowledgement":
+            noConsentAcknowledgement(result: result)
             
         case "fetchDID":
             let didID = fetchArgsKeyValue(call, key: "didID")
@@ -998,6 +1001,19 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         } catch let error as NSError {
             return result(FlutterError.init(code: "Exception",
                                             message: "error while call evaluateIssuanceTrustInfo",
+                                            details: error.localizedDescription))
+            
+        }
+    }
+    
+    public func noConsentAcknowledgement(result: @escaping FlutterResult) {
+        do {
+            let ackRes = try openID4VP?.noConsentAcknowledgement();
+            try ackRes!.noConsent()
+            result(ackRes!.serialize(nil))
+        } catch let error as NSError {
+            return result(FlutterError.init(code: "Exception",
+                                            message: "error while calling no consent acknowledgement",
                                             details: error.localizedDescription))
             
         }
