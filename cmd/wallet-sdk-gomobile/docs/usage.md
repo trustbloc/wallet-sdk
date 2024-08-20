@@ -1584,6 +1584,17 @@ interaction.presentCredential(selectedVCs)
 // requirements, use this instead of presentCredential:
 val preferredVC = savedCredentials.atIndex(0)
 interaction.presentCredentialUnsafe(preferredVC)
+
+// verifer Acknowledgment
+interaction.acknowledgment() // get the Acknowledgment object
+
+// use this API to get the opaque string, which needs to be submitted to the Acknowledgment APIs
+val ackTkn = interaction.acknowledgment().serialize()
+
+val ack = Acknowledgment(ackTkn)
+
+ack.noConsent()() // user declines the share request
+ack.noMatchingCredential()() // no matching credentials found
 ```
 
 ###### Read scope and add custom scope claims
@@ -1645,6 +1656,17 @@ let credentials = interaction.presentCredential(selectedVCs)
 // requirements, use this instead of presentCredential:
 let preferredVC = savedCredentials.atIndex(0)
 interaction.presentCredentialUnsafe(preferredVC)
+
+// verifier Acknowledgment
+interaction.acknowledgment() // get the Acknowledgment object
+
+// use this API to get the opaque string, which needs to be submitted to the Acknowledgment APIs
+let  ackTkn = interaction.Acknowledgment().Serialize()
+
+let  ack = Acknowledgment(ackTkn)
+
+try ack.noConsent()() // user declines the share request
+try ack.noMatchingCredential()() // no matching credentials found
 ```
 
 ##### SubmissionRequirements complex cases
