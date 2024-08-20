@@ -252,7 +252,7 @@ class PresentationPreviewMultiCredState
                       ),
                       PrimaryButton(
                         onPressed: () {
-                          _navigateToDashboard();
+                          _callNoConsentAcknowledgment();
                         },
                         width: double.infinity,
                         gradient: const LinearGradient(
@@ -270,6 +270,13 @@ class PresentationPreviewMultiCredState
         ),
       ),
     );
+  }
+
+  void  _callNoConsentAcknowledgment() async {
+    var ackResp = await  WalletSDKPlugin.noConsentAcknowledgement();
+    if (ackResp != null) {
+      _navigateToDashboard();
+    }
   }
 
   _navigateToDashboard() async {

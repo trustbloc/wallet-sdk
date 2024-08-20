@@ -131,6 +131,14 @@ public class OpenID4VP {
        return try initiatedInteraction?.presentedClaims(credential) ?? Openid4vpCredentialClaimKeys()
     }
     
+    // returns the presentation acknowledgment 
+    func noConsentAcknowledgement() throws -> Openid4vpAcknowledgment {
+        guard self.initiatedInteraction != nil else {
+            throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")
+        }
+        return try initiatedInteraction?.acknowledgment() ?? Openid4vpAcknowledgment()
+    }
+    
     func getCustomScope() throws -> [String] {
         guard let initiatedInteraction = self.initiatedInteraction else {
             throw OpenID4VPError.runtimeError("OpenID4VP interaction not properly initialized, call processAuthorizationRequest first")

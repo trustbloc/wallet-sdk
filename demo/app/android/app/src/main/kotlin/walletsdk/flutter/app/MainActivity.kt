@@ -159,6 +159,18 @@ class MainActivity : FlutterActivity() {
                             }
                         }
 
+                        "noConsentAcknowledgement" -> {
+                            try {
+                                result.success(noConsentAcknowledgement())
+                            } catch (e: Exception) {
+                                result.error(
+                                    "Exception",
+                                    "Error while calling no consent acknowledgement\"",
+                                    e.localizedMessage
+                                )
+                            }
+                        }
+
                         "requestCredentials" -> {
                             try {
                                 val credentialsCreated = requestCredentials(call)
@@ -1045,6 +1057,16 @@ class MainActivity : FlutterActivity() {
         val result = openID4VP.checkWithTrustRegistry(evaluatePresentationURL)
 
         return convertEvaluationResult(result)
+    }
+
+    private fun noConsentAcknowledgement(): String? {
+        val ackRes = openID4VP?.noConsentAcknowledgement()
+        try {
+              ackRes?.noConsent()
+                } catch (e: Exception) {
+                    throw e
+                }
+            return ackRes?.serialize()
     }
 
     private fun credentialStatusVerifier(call: MethodCall): Boolean {

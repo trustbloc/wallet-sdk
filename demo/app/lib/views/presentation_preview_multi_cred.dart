@@ -266,7 +266,7 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                       ),
                       PrimaryButton(
                         onPressed: () {
-                          _navigateToDashboard();
+                          _callNoConsentAcknowledgment();
                         },
                         width: double.infinity,
                         gradient: const LinearGradient(
@@ -286,6 +286,12 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
     );
   }
 
+  void  _callNoConsentAcknowledgment() async {
+    var ackResp = await  WalletSDKPlugin.noConsentAcknowledgement();
+    if (ackResp != null) {
+      _navigateToDashboard();
+    }
+  }
   _navigateToDashboard() async {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const Dashboard()));
   }

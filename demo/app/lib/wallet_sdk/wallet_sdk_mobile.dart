@@ -96,6 +96,11 @@ class WalletSDK extends WalletPlatform {
     return ackResp!;
   }
 
+  Future<String> noConsentAcknowledgement() async {
+      var data = await methodChannel.invokeMethod('noConsentAcknowledgement');
+      return data;
+  }
+
   void acknowledgeSuccess() async {
     try {
       await methodChannel.invokeMethod<bool>('acknowledgeSuccess');

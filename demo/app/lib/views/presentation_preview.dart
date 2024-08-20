@@ -201,7 +201,7 @@ class PresentationPreviewState extends State<PresentationPreview> {
                       ),
                       PrimaryButton(
                         onPressed: () {
-                          _navigateToDashboard();
+                          _callNoConsentAcknowledgment();
                         },
                         width: double.infinity,
                         gradient: const LinearGradient(
@@ -219,6 +219,13 @@ class PresentationPreviewState extends State<PresentationPreview> {
         ),
       ),
     );
+  }
+
+  void  _callNoConsentAcknowledgment() async {
+    var ackResp = await  WalletSDKPlugin.noConsentAcknowledgement();
+    if (ackResp != null) {
+      _navigateToDashboard();
+    }
   }
 
   void _presentCredential() async {
