@@ -27,6 +27,15 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+      - name: Build Custom GO
+        run: |
+          cd ..
+          git clone https://go.googlesource.com/go goroot          
+          cd goroot
+          git checkout go1.22.2
+          cp ../wallet-sdk/cmd/wallet-sdk-gomobile/gopatches/* ./
+          git apply cmd_cgo__fix_unaligned_arguments_typedmemmove_crash_on_iOS.patch
+          cd src && ./all.bash
       - name: Derive the new version
         run: |
           echo "new version"
