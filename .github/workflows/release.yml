@@ -43,14 +43,18 @@ jobs:
           echo $NEW_VER
       - name: Generate Binding
         run: |
-          export PATH=$PATH:$GOPATH/bin
+          echo ${{ github.workspace }}
+          echo ${GOPATH}
+          echo ${GOROOT}
+          export PATH=$GOPATH/bin:$PATH
           echo $PATH
+          which go 
           go install golang.org/x/mobile/cmd/gomobile@latest
           gomobile init
           NEW_VERSION=$NEW_VER GIT_REV=$(git rev-parse HEAD) BUILD_TIME=$(date) make generate-android-bindings
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOPATH: /home/runner/work/wallet-sdk/go
+          GOPATH: /home/runner/work/wallet-sdk/goroot
       - name: Upload Android bindings to GitHub Actions Artifacts
         uses: actions/upload-artifact@v4
         if: always()
