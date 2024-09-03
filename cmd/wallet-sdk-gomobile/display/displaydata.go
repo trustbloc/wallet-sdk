@@ -310,6 +310,10 @@ func (c *Attachment) ID() string {
 // For RemoteAttachment, the uri will be a remote HTTP URL. Hash and HashAlg will provide the hash value of the data along with Hash algorithm used to generate the hash. Consumer of this API need to validate the hash value against the hash of the data object retrieved from the remote url
 // For AttachmentEvidence, the uri will be empty. But the hash and hashAlg will provide the hash value of the data along with Hash algorithm used to generate the hash. Consumer of this API need to validate the hash value against the hash of the data object retrieved from the out of band.
 func (c *Attachment) Type() string {
+	if len(c.attachment.Type) == 0 {
+		return ""
+	}
+
 	return c.attachment.Type[0]
 }
 
