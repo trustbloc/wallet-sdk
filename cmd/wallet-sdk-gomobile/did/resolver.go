@@ -9,6 +9,7 @@ SPDX-License-Identifier: Apache-2.0
 package did
 
 import (
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	// helps gomobile bind api.DIDResolver interface to Resolver implementation in ios-bindings.
 	_ "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
@@ -39,6 +40,10 @@ func NewResolver(opts *ResolverOpts) (*Resolver, error) {
 
 		goAPIResolverOpts = append(goAPIResolverOpts, httpTimeoutOpt)
 	}
+
+	httpClient := wrapper.NewHTTPClient(opts.httpTimeout, api.Headers{}, opts.disableHTTPClientTLSVerification)
+
+	goAPIResolverOpts = append(goAPIResolverOpts, resolver.WithHTTPClient(httpClient))
 
 	didResolver, err := resolver.NewDIDResolver(goAPIResolverOpts...)
 	if err != nil {
