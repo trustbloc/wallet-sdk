@@ -10,8 +10,9 @@ import "time"
 
 // ResolverOpts contains all optional arguments that can be passed into the ResolveDID method.
 type ResolverOpts struct {
-	resolverServerURI string
-	httpTimeout       *time.Duration
+	resolverServerURI                string
+	httpTimeout                      *time.Duration
+	disableHTTPClientTLSVerification bool
 }
 
 // NewResolverOpts returns a new ResolverOpts object.
@@ -32,6 +33,13 @@ func (c *ResolverOpts) SetResolverServerURI(resolverServerURI string) *ResolverO
 func (c *ResolverOpts) SetHTTPTimeoutNanoseconds(timeout int64) *ResolverOpts {
 	timeoutDuration := time.Duration(timeout)
 	c.httpTimeout = &timeoutDuration
+
+	return c
+}
+
+// DisableHTTPClientTLSVerify disables tls verification, should be used only for test purposes.
+func (c *ResolverOpts) DisableHTTPClientTLSVerify() *ResolverOpts {
+	c.disableHTTPClientTLSVerification = true
 
 	return c
 }

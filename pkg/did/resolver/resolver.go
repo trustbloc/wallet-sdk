@@ -17,6 +17,7 @@ import (
 	"github.com/trustbloc/did-go/method/key"
 	"github.com/trustbloc/did-go/method/web"
 	"github.com/trustbloc/did-go/vdr"
+	vdrapi "github.com/trustbloc/did-go/vdr/api"
 	longform "github.com/trustbloc/sidetree-go/pkg/vdr/sidetreelongform"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -26,7 +27,8 @@ import (
 
 // DIDResolver is used for resolving DID using supported DID methods.
 type DIDResolver struct {
-	vdr *vdr.Registry
+	vdr        *vdr.Registry
+	httpClient httpClient
 }
 
 // NewDIDResolver returns a new DID Resolver.
@@ -79,13 +81,14 @@ func NewDIDResolver(opts ...Opt) (*DIDResolver, error) {
 	}
 
 	return &DIDResolver{
-		vdr: vdr.New(vdrOpts...),
+		vdr:        vdr.New(vdrOpts...),
+		httpClient: mergedOpts.httpClient,
 	}, nil
 }
 
 // Resolve resolves a DID.
 func (d *DIDResolver) Resolve(did string) (*didDoc.DocResolution, error) {
-	res, err := d.vdr.Resolve(did)
+	res, err := d.vdr.Resolve(did, vdrapi.WithOption(web.HTTPClientOpt, d.httpClient))
 	if err != nil {
 		return nil, walleterror.NewExecutionError(
 			diderrors.Module,

@@ -6,11 +6,19 @@ SPDX-License-Identifier: Apache-2.0
 
 package resolver
 
-import "time"
+import (
+	"net/http"
+	"time"
+)
 
 type opts struct {
 	resolverServerURI string
 	httpTimeout       *time.Duration
+	httpClient        httpClient
+}
+
+type httpClient interface {
+	Do(req *http.Request) (*http.Response, error)
 }
 
 // An Opt is a single option for a Resolver instance.
@@ -29,6 +37,14 @@ func WithResolverServerURI(resolverServerURI string) Opt {
 func WithHTTPTimeout(timeout time.Duration) Opt {
 	return func(opts *opts) {
 		opts.httpTimeout = &timeout
+	}
+}
+
+// WithHTTPClient is an option for an OpenID4VP instance that allows a caller to specify their own HTTP client
+// implementation.
+func WithHTTPClient(httpClient httpClient) Opt {
+	return func(opts *opts) {
+		opts.httpClient = httpClient
 	}
 }
 
