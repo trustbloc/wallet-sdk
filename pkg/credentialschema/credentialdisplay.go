@@ -416,6 +416,7 @@ func buildCredentialDisplaysAllLocale(
 	vcs []*verifiable.Credential,
 	credentialConfigurationsSupported map[issuer.CredentialConfigurationID]*issuer.CredentialConfigurationSupported,
 	maskingString string,
+	skipNonClaimData bool,
 ) ([]Credential, error) {
 	var credentialDisplays []Credential
 
@@ -436,7 +437,8 @@ func buildCredentialDisplaysAllLocale(
 				continue
 			}
 
-			credentialDisplay, err := buildCredentialDisplayAllLocale(credentialConfigurationSupported, vc, subject, maskingString)
+			credentialDisplay, err := buildCredentialDisplayAllLocale(credentialConfigurationSupported, vc, subject,
+				maskingString, skipNonClaimData)
 			if err != nil {
 				return nil, err
 			}
@@ -455,8 +457,10 @@ func buildCredentialDisplayAllLocale(
 	vc *verifiable.Credential,
 	subject *verifiable.Subject,
 	maskingString string,
+	skipNonClaimData bool,
 ) (*Credential, error) {
-	resolvedClaims, err := resolveClaimsAllLocale(credentialConfigurationSupported, vc, subject, maskingString)
+	resolvedClaims, err := resolveClaimsAllLocale(credentialConfigurationSupported, vc, subject,
+		maskingString, skipNonClaimData)
 	if err != nil {
 		return nil, err
 	}
@@ -480,10 +484,17 @@ func resolveClaimsAllLocale(
 	vc *verifiable.Credential,
 	credentialSubject *verifiable.Subject,
 	maskingString string,
+	skipNonClaimData bool,
 ) ([]Subject, error) {
 	var resolvedClaims []Subject
 
 	for fieldName, claim := range credentialConfigurationSupported.CredentialDefinition.CredentialSubject {
+		if skipNonClaimData &&
+			strings.HasPrefix(fieldName, "$.") &&
+			!strings.HasPrefix(fieldName, "$.credentialSubject.") {
+			continue
+		}
+
 		resolvedClaim, err := resolveClaimAllLocale(
 			fieldName, claim, vc, credentialSubject, credentialConfigurationSupported, maskingString)
 		if err != nil && !errors.Is(err, errNoClaimDisplays) && !errors.Is(err, errClaimValueNotFoundInVC) {
