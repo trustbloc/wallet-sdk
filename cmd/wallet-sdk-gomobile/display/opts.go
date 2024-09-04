@@ -21,6 +21,7 @@ type Opts struct {
 	disableHTTPClientTLSVerification bool
 	maskingString                    *string
 	didResolver                      api.DIDResolver
+	skipNonClaimData                 bool
 }
 
 // NewOpts returns a new Opts object.
@@ -105,6 +106,13 @@ func (o *Opts) SetMaskingString(maskingString string) *Opts {
 // provided so that the issuer metadata's signature can be verified.
 func (o *Opts) SetDIDResolver(didResolver api.DIDResolver) *Opts {
 	o.didResolver = didResolver
+
+	return o
+}
+
+// SkipNonClaimData skips the non-claims related data like issue and expiry date.
+func (o *Opts) SkipNonClaimData() *Opts {
+	o.skipNonClaimData = true
 
 	return o
 }

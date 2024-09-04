@@ -45,13 +45,15 @@ func ResolveCredential(opts ...ResolveOpt) (*ResolvedData, error) {
 		return nil, err
 	}
 
+	rOpts := mergeOpts(opts)
+
 	if maskingString == nil {
 		defaultMaskingString := "•"
 		maskingString = &defaultMaskingString
 	}
 
 	credentialDisplays, err := buildCredentialDisplaysAllLocale(vcs, metadata.CredentialConfigurationsSupported,
-		*maskingString)
+		*maskingString, rOpts.skipNonClaimData)
 	if err != nil {
 		return nil, err
 	}

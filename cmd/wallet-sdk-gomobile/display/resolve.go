@@ -108,6 +108,12 @@ func generateGoAPIOpts(vcs *verifiable.CredentialsArray, issuerURI string,
 		goAPIOpts = append(goAPIOpts, goAPIOpt)
 	}
 
+	if opts.skipNonClaimData {
+		goAPIOpt := goapicredentialschema.WithSkipNonClaimData()
+
+		goAPIOpts = append(goAPIOpts, goAPIOpt)
+	}
+
 	if opts.didResolver != nil {
 		jwtVerifier := defaults.NewDefaultProofChecker(
 			common.NewVDRKeyResolver(&wrapper.VDRResolverWrapper{

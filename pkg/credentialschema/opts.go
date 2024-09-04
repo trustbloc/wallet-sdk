@@ -55,6 +55,7 @@ type resolveOpts struct {
 	httpClient           httpClient
 	maskingString        *string
 	signatureVerifier    jwt.ProofChecker
+	skipNonClaimData     bool
 }
 
 // ResolveOpt represents an option for the Resolve function.
@@ -159,6 +160,13 @@ func WithMaskingString(maskingString string) ResolveOpt {
 func WithJWTSignatureVerifier(signatureVerifier jwt.ProofChecker) ResolveOpt {
 	return func(opts *resolveOpts) {
 		opts.signatureVerifier = signatureVerifier
+	}
+}
+
+// WithSkipNonClaimData skips the non-claims related data like issue and expiry date.
+func WithSkipNonClaimData() ResolveOpt {
+	return func(opts *resolveOpts) {
+		opts.skipNonClaimData = true
 	}
 }
 
