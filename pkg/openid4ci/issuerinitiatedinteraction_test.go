@@ -1438,7 +1438,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
 			}, openid4ci.WithPIN("1234"))
-			require.EqualError(t, err, "CREDENTIAL_PARSE_FAILED(OCI1-0007):failed to parse credential from "+
+			require.Contains(t, err.Error(), "CREDENTIAL_PARSE_FAILED(OCI1-0007):failed to parse credential from "+
 				"credential response at index 0: unmarshal new credential: unexpected end of JSON input")
 			require.Nil(t, credentials)
 		})
