@@ -156,7 +156,7 @@ jobs:
           path: /tmp/mock-attestation.tar
 
   iOSFlutterIntegrationTest:
-    runs-on: macos-12
+    runs-on: macos-13
     needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer ]
     steps:
       - name: Checkout
@@ -186,8 +186,13 @@ jobs:
           echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
-          brew install docker docker-compose
+          brew install docker docker-compose colima
+          mkdir -p ~/.docker/cli-plugins
+          ln -sfn /usr/local/opt/docker-compose/bin/docker-compose ~/.docker/cli-plugins/docker-compose
           colima start
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
       - name: Download artifacts (Docker images) from previous workflows
         uses: actions/download-artifact@v4
       - name: Load mock-login-consent server
@@ -229,7 +234,7 @@ jobs:
           docker ps -a
 
   AndroidFlutterIntegrationTest:
-    runs-on: macos-12
+    runs-on: macos-13
     needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer ]
     steps:
       - name: checkout
@@ -259,7 +264,9 @@ jobs:
           echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
-          brew install docker docker-compose
+          brew install docker docker-compose colima
+          brew upgrade
+          colima delete
           colima start
       - name: Download artifacts (Docker images) from previous workflows
         uses: actions/download-artifact@v4
