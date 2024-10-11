@@ -112,7 +112,7 @@ func TestCredentialAPI(t *testing.T) {
 			templateCredential, err := afgoverifiable.CreateCredential(afgoverifiable.CredentialContents{
 				ID:      "cred-ID",
 				Types:   []string{afgoverifiable.VCType},
-				Context: []string{afgoverifiable.ContextURI},
+				Context: []string{afgoverifiable.V1ContextURI},
 				Subject: []afgoverifiable.Subject{{
 					ID: "foo",
 				}},

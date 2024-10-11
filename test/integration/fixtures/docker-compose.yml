@@ -56,6 +56,15 @@ services:
     networks:
       - bdd_net
 
+  vcs.webhook.example.com:
+    container_name: vcs.webhook.example.com
+    image: wallet-sdk/sample-webhook:latest
+    environment:
+      - WEBHOOK_PORT=8180
+    ports:
+      - 8180:8180
+    networks:
+      - bdd_net
 
   did-resolver.trustbloc.local:
     container_name: did-resolver.trustbloc.local

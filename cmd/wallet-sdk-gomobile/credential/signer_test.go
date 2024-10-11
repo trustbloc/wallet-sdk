@@ -36,7 +36,7 @@ func TestSigner_Issue(t *testing.T) {
 	mockCredential, err := afgoverifiable.CreateCredential(afgoverifiable.CredentialContents{
 		ID:      credID,
 		Types:   []string{afgoverifiable.VCType},
-		Context: []string{afgoverifiable.ContextURI},
+		Context: []string{afgoverifiable.V1ContextURI},
 		Subject: []afgoverifiable.Subject{{
 			ID: "foo",
 		}},
