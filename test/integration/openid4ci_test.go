@@ -387,6 +387,9 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		requestedAcknowledgmentRestored, err := openid4ci.NewAcknowledgment(requestedAcknowledgmentData)
 		require.NotNil(t, requestedAcknowledgmentRestored)
 
+		err = requestedAcknowledgmentRestored.SetInteractionDetails(fmt.Sprintf(`{"profile": %q}`, tc.issuerProfileID))
+		require.NoError(t, err)
+
 		if tc.acknowledgeReject {
 			require.NoError(t, requestedAcknowledgmentRestored.Reject())
 		} else {

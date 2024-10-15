@@ -83,6 +83,7 @@ type mockIssuerServerHandler struct {
 	batchCredentialResponse                                 []byte
 	httpStatusCode                                          int
 	ackRequestErrorResponse                                 string
+	ackRequestExpectInteractionDetails                      bool
 }
 
 //nolint:gocyclo // test file
@@ -161,6 +162,13 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 		if m.httpStatusCode != 0 {
 			statusCode = m.httpStatusCode
 		}
+
+		var payload map[string]interface{}
+		err = json.NewDecoder(request.Body).Decode(&payload)
+		require.NoError(m.t, err)
+
+		_, ok := payload["interaction_details"]
+		require.Equal(m.t, m.ackRequestExpectInteractionDetails, ok)
 
 		if m.ackRequestErrorResponse != "" {
 			_, err = writer.Write([]byte(m.ackRequestErrorResponse))
@@ -684,8 +692,9 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				}
 
 				issuerServerHandler := &mockIssuerServerHandler{
-					t:                  t,
-					credentialResponse: sampleCredentialResponseAsk,
+					t:                                  t,
+					credentialResponse:                 sampleCredentialResponseAsk,
+					ackRequestExpectInteractionDetails: true,
 				}
 
 				server := httptest.NewServer(issuerServerHandler)
@@ -709,6 +718,8 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 					requestedAcknowledgment, err := interaction.Acknowledgment()
 					require.NoError(t, err)
 					require.NotNil(t, requestedAcknowledgment)
+
+					requestedAcknowledgment.InteractionDetails = map[string]interface{}{"key1": "value1"}
 
 					if !tc.reject {
 						err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.EventStatusCredentialAccepted, &http.Client{})

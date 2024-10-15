@@ -35,6 +35,15 @@ func (a *Acknowledgment) Serialize() (string, error) {
 	return string(data), nil
 }
 
+// SetInteractionDetails extends acknowledgment request with serializedInteractionDetails.
+func (a *Acknowledgment) SetInteractionDetails(serializedInteractionDetails string) error {
+	if err := json.Unmarshal([]byte(serializedInteractionDetails), &a.acknowledgment.InteractionDetails); err != nil {
+		return fmt.Errorf("decode ci ack interaction details: %w", err)
+	}
+
+	return nil
+}
+
 // Success acknowledge issuer that client accepts credentials.
 func (a *Acknowledgment) Success() error {
 	return a.acknowledgment.AcknowledgeIssuer(openid4cigoapi.EventStatusCredentialAccepted, &http.Client{})

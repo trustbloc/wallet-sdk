@@ -135,6 +135,7 @@ type mockIssuerServerHandler struct {
 	tokenRequestShouldGiveUnmarshallableResponse      bool
 	credentialRequestShouldFail                       bool
 	credentialRequestShouldGiveUnmarshallableResponse bool
+	ackRequestExpectInteractionDetails                bool
 	credentialResponse                                []byte
 	headersToCheck                                    *api.Headers
 }
@@ -177,6 +178,13 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 			_, err = writer.Write(m.credentialResponse)
 		}
 	case "/oidc/ack_endpoint":
+		var payload map[string]interface{}
+		err = json.NewDecoder(request.Body).Decode(&payload)
+		require.NoError(m.t, err)
+
+		_, ok := payload["interaction_details"]
+		require.Equal(m.t, m.ackRequestExpectInteractionDetails, ok)
+
 		writer.WriteHeader(http.StatusNoContent)
 	}
 
@@ -258,10 +266,10 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			doRequestCredentialTest(t, nil, true)
 		})
 		t.Run("Acknowledge reject", func(t *testing.T) {
-			doRequestCredentialTestExt(t, nil, false, true, "")
+			doRequestCredentialTestExt(t, nil, false, true, "", false)
 		})
 		t.Run("Acknowledge reject with code", func(t *testing.T) {
-			doRequestCredentialTestExt(t, nil, false, true, "tc_declined")
+			doRequestCredentialTestExt(t, nil, false, true, "tc_declined", false)
 		})
 	})
 	t.Run("Success with jwk public key", func(t *testing.T) {
@@ -594,17 +602,18 @@ func doRequestCredentialTest(t *testing.T, additionalHeaders *api.Headers,
 	disableTLSVerification bool,
 ) {
 	t.Helper()
-	doRequestCredentialTestExt(t, additionalHeaders, disableTLSVerification, false, "")
+	doRequestCredentialTestExt(t, additionalHeaders, disableTLSVerification, false, "", true)
 }
 
 //nolint:thelper // Not a test helper function
 func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
-	disableTLSVerification bool, acknowledgeReject bool, rejectCode string,
+	disableTLSVerification bool, acknowledgeReject bool, rejectCode string, expectAckInteractionDetails bool,
 ) {
 	issuerServerHandler := &mockIssuerServerHandler{
-		t:                  t,
-		credentialResponse: sampleCredentialResponse,
-		headersToCheck:     additionalHeaders,
+		t:                                  t,
+		credentialResponse:                 sampleCredentialResponse,
+		headersToCheck:                     additionalHeaders,
+		ackRequestExpectInteractionDetails: expectAckInteractionDetails,
 	}
 
 	server := httptest.NewServer(issuerServerHandler)
@@ -655,6 +664,11 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 	acknowledgmentRestored, err := openid4ci.NewAcknowledgment(acknowledgmentData)
 	require.NotEmpty(t, acknowledgmentRestored)
 	require.NoError(t, err)
+
+	if expectAckInteractionDetails {
+		err = acknowledgmentRestored.SetInteractionDetails(`{"key1": "value1"}`)
+		require.NoError(t, err)
+	}
 
 	if acknowledgeReject {
 		if rejectCode != "" {

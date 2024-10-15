@@ -41,6 +41,15 @@ func (a *Acknowledgment) Serialize() (string, error) {
 	return string(data), nil
 }
 
+// SetInteractionDetails extends acknowledgment request with serializedInteractionDetails.
+func (a *Acknowledgment) SetInteractionDetails(serializedInteractionDetails string) error {
+	if err := json.Unmarshal([]byte(serializedInteractionDetails), &a.acknowledgment.InteractionDetails); err != nil {
+		return fmt.Errorf("decode vp ack interaction details: %w", err)
+	}
+
+	return nil
+}
+
 // NoConsent acknowledge verifier that user does not consent to the presentation request.
 func (a *Acknowledgment) NoConsent() error {
 	return a.acknowledgment.AcknowledgeVerifier(openid4vp.AccessDeniedErrorResponse,

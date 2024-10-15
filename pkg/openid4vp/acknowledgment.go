@@ -9,6 +9,8 @@ package openid4vp
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -26,8 +28,9 @@ const (
 
 // Acknowledgment holds data needed to acknowledge the verifier.
 type Acknowledgment struct {
-	ResponseURI string `json:"response_uri"`
-	State       string `json:"state"`
+	ResponseURI        string                 `json:"response_uri"`
+	State              string                 `json:"state"`
+	InteractionDetails map[string]interface{} `json:"interaction_details,omitempty"`
 }
 
 // AcknowledgeVerifier sends acknowledgment to the verifier.
@@ -37,6 +40,15 @@ func (a *Acknowledgment) AcknowledgeVerifier(error, desc string, httpClient http
 	v.Set("error", error)
 	v.Set("error_description", desc)
 	v.Set("state", a.State)
+
+	if a.InteractionDetails != nil {
+		interactionDetailsBytes, e := json.Marshal(a.InteractionDetails)
+		if e != nil {
+			return fmt.Errorf("encode interaction details: %w", e)
+		}
+
+		v.Add("interaction_details", base64.StdEncoding.EncodeToString(interactionDetailsBytes))
+	}
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, a.ResponseURI,
 		bytes.NewBufferString(v.Encode()))

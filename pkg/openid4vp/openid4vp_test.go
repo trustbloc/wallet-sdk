@@ -283,6 +283,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.Contains(t, data, "presentation_submission")
 		require.NotEmpty(t, data["presentation_submission"])
 
+		require.NotContains(t, data, "interaction_details")
+
 		var presentationSubmission *presexch.PresentationSubmission
 		require.NoError(t, json.Unmarshal([]byte(data["presentation_submission"][0]), &presentationSubmission))
 
@@ -359,8 +361,34 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NotNil(t, query)
 
 		err = interaction.PresentCredential(singleCred, CustomClaims{},
-			WithAttestationVC(attestationSigner, attestationCredJWT))
+			WithAttestationVC(attestationSigner, attestationCredJWT),
+			WithInteractionDetails(map[string]interface{}{"key1": "value1", "key2": "value2"}),
+		)
 		require.NoError(t, err)
+
+		// TODO: https://github.com/trustbloc/wallet-sdk/issues/459 refactor this into validation helper functions
+		data, err := url.ParseQuery(string(httpClient.SentBody))
+		require.NoError(t, err)
+
+		require.Contains(t, data, "id_token")
+		require.NotEmpty(t, data["id_token"])
+
+		require.Contains(t, data, "vp_token")
+		require.NotEmpty(t, data["vp_token"])
+
+		require.Contains(t, data, "presentation_submission")
+		require.NotEmpty(t, data["presentation_submission"])
+
+		require.Contains(t, data, "interaction_details")
+
+		interactionDetailsRaw, err := base64.StdEncoding.DecodeString(data["interaction_details"][0])
+		require.NoError(t, err)
+
+		var interactionDetails map[string]interface{}
+		err = json.Unmarshal(interactionDetailsRaw, &interactionDetails)
+		require.NoError(t, err)
+
+		require.Equal(t, map[string]interface{}{"key1": "value1", "key2": "value2"}, interactionDetails)
 	})
 
 	t.Run("Success - with opts, multi cred", func(t *testing.T) {
@@ -978,14 +1006,56 @@ func TestAcknowledgment_AcknowledgeVerifier(t *testing.T) {
 			State:       "98822a39-9178-4742-a2dc-aba49879fc7b",
 		}
 
-		err := ack.AcknowledgeVerifier("error", "desc",
-			&mock.HTTPClientMock{
-				ExpectedEndpoint: "https://verifier/present",
-				StatusCode:       200,
-			},
-		)
+		client := &mock.HTTPClientMock{
+			ExpectedEndpoint: "https://verifier/present",
+			StatusCode:       200,
+		}
 
+		err := ack.AcknowledgeVerifier("error", "desc", client)
 		require.NoError(t, err)
+
+		data, err := url.ParseQuery(string(client.SentBody))
+		require.NoError(t, err)
+
+		require.Equal(t, "error", data["error"][0])
+		require.Equal(t, "desc", data["error_description"][0])
+		require.Equal(t, "98822a39-9178-4742-a2dc-aba49879fc7b", data["state"][0])
+
+		require.NotContains(t, data, "interaction_details")
+	})
+
+	t.Run("Success: with interaction details", func(t *testing.T) {
+		ack := &Acknowledgment{
+			ResponseURI:        "https://verifier/present",
+			State:              "98822a39-9178-4742-a2dc-aba49879fc7b",
+			InteractionDetails: map[string]interface{}{"key1": "value1"},
+		}
+
+		client := &mock.HTTPClientMock{
+			ExpectedEndpoint: "https://verifier/present",
+			StatusCode:       200,
+		}
+
+		err := ack.AcknowledgeVerifier("error", "desc", client)
+		require.NoError(t, err)
+
+		data, err := url.ParseQuery(string(client.SentBody))
+		require.NoError(t, err)
+
+		require.Equal(t, "error", data["error"][0])
+		require.Equal(t, "desc", data["error_description"][0])
+		require.Equal(t, "98822a39-9178-4742-a2dc-aba49879fc7b", data["state"][0])
+
+		require.Contains(t, data, "interaction_details")
+
+		interactionDetailsRaw, err := base64.StdEncoding.DecodeString(data["interaction_details"][0])
+		require.NoError(t, err)
+
+		var interactionDetails map[string]interface{}
+		err = json.Unmarshal(interactionDetailsRaw, &interactionDetails)
+		require.NoError(t, err)
+
+		require.Equal(t, map[string]interface{}{"key1": "value1"}, interactionDetails)
 	})
 
 	t.Run("Fail to do request", func(t *testing.T) {

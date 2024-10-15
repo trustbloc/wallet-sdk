@@ -364,7 +364,6 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 					require.NotNil(t, attestationVC)
 
 					println("attestationVC=", attestationVC)
-
 				}
 			}
 		}
@@ -381,6 +380,8 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		for _, scope := range tc.customScopes {
 			presentOps.AddScopeClaim(scope.name, scope.customClaims)
 		}
+
+		presentOps.SetInteractionDetails(fmt.Sprintf(`{"profile": %q}`, tc.verifierProfileID))
 
 		err = interaction.PresentCredentialOpts(selectedCreds, presentOps)
 		require.NoError(t, err)
