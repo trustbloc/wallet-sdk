@@ -41,6 +41,8 @@ services:
       - VC_TRANSIENT_DATA_STORE_TYPE=redis
       - VC_REDIS_URL=redis.example.com:6379
       - VC_REDIS_DISABLE_TLS=true
+      - VC_OIDC4CI_TRANSACTION_DATA_TTL=5h
+      - VC_OIDC4VP_NONCE_DATA_TTL=5h
     ports:
       - "8075:8075"
       - "48127:48127"

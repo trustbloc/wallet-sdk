@@ -7,11 +7,11 @@ generate-all-bindings: dependencies gomobile-android-bind gomobile-ios-bind
 	@make tidy
 
 .PHONY: generate-android-bindings
-generate-android-bindings: dependencies gomobile-android-bind
+generate-android-bindings: gomobile-android-bind
 	@make tidy
 
 .PHONY: generate-ios-bindings
-generate-ios-bindings: dependencies gomobile-ios-bind
+generate-ios-bindings: gomobile-ios-bind
 	@make tidy
 
 .PHONY: dependencies
@@ -20,13 +20,15 @@ dependencies:
 	@go get -u golang.org/x/mobile/cmd/gomobile
 
 .PHONY: gomobile-android-bind
-gomobile-android-bind: dependencies
+gomobile-android-bind: dependencies tidy
+	@make dependencies
 	@mkdir -p bindings/android
 	@echo 'Generating Android bindings...'
 	@scripts/build_android_bindings.sh
 
 .PHONY: gomobile-ios-bind
-gomobile-ios-bind: dependencies
+gomobile-ios-bind: dependencies tidy
+	@make dependencies
 	@mkdir -p bindings/ios
 	@echo 'Generating iOS bindings...'
 	@scripts/build_ios_bindings.sh
