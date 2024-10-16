@@ -316,7 +316,7 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			require.NoError(t, trErr)
 			require.NotNil(t, trustInfo)
 
-			require.Contains(t, trustInfo.Domain, "trustbloc.local:8078")
+			require.Contains(t, trustInfo.Domain, "trustbloc.local:8075")
 
 			req := &trustregistry.IssuanceRequest{
 				IssuerDID:    trustInfo.DID,

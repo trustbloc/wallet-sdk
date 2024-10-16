@@ -222,7 +222,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 				ID: uuid.NewString(),
 				Schema: []*presexch.Schema{
 					{
-						URI: fmt.Sprintf("%s#%s", verifiable.ContextID, verifiable.VCType),
+						URI: fmt.Sprintf("%s#%s", verifiable.V1ContextID, verifiable.VCType),
 					},
 				},
 			},
@@ -446,7 +446,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			InputDescriptors: []*presexch.InputDescriptor{{
 				ID: uuid.NewString(),
 				Schema: []*presexch.Schema{{
-					URI: fmt.Sprintf("%s#%s", verifiable.ContextID, verifiable.VCType),
+					URI: fmt.Sprintf("%s#%s", verifiable.V1ContextID, verifiable.VCType),
 				}},
 				// These constraints aren't satisfied by the provided VC...
 				Constraints: &presexch.Constraints{
@@ -527,7 +527,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 				vc: []verifiable.CredentialContents{
 					{
 						ID:      "foo",
-						Context: []string{verifiable.ContextURI},
+						Context: []string{verifiable.V1ContextURI},
 						Types:   []string{verifiable.VCType},
 					},
 				},
@@ -536,12 +536,12 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 				vc: []verifiable.CredentialContents{
 					{
 						ID:      "foo",
-						Context: []string{verifiable.ContextURI},
+						Context: []string{verifiable.V1ContextURI},
 						Types:   []string{verifiable.VCType},
 					},
 					{
 						ID:      "bar",
-						Context: []string{verifiable.ContextURI},
+						Context: []string{verifiable.V1ContextURI},
 						Types:   []string{verifiable.VCType},
 					},
 				},

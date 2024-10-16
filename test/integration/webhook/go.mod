@@ -8,11 +8,13 @@ go 1.22
 
 require (
 	github.com/gorilla/mux v1.8.0
-	github.com/trustbloc/logutil-go v0.0.0-20221124174025-c46110e3ea42
+	github.com/trustbloc/logutil-go v1.0.0
 )
 
 require (
 	github.com/pkg/errors v0.9.1 // indirect
+	go.opentelemetry.io/otel v1.12.0 // indirect
+	go.opentelemetry.io/otel/trace v1.12.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.23.0 // indirect

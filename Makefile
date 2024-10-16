@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 GOBIN_PATH=$(abspath .)/.build/bin
+GOPROXY ?= https://proxy.golang.org
 
 OS := $(shell uname)
 ifeq  ($(OS),$(filter $(OS),Darwin Linux))
@@ -73,7 +74,16 @@ demo-app-android: generate-android-bindings copy-android-bindings
 sample-webhook:
 	@echo "Building sample webhook server"
 	@mkdir -p ./build/bin
-	@go build -o ./build/bin/webhook-server test/integration/webhook/main.go
+	@go build -modfile test/integration/webhook/go.mod -o ./build/bin/webhook-server test/integration/webhook/main.go
+
+.PHONY: sample-webhook-docker
+sample-webhook-docker:
+	@echo "Building sample webhook server docker image"
+	@docker build -f ./images/mocks/webhook/Dockerfile -t wallet-sdk/sample-webhook:latest \
+	--build-arg GO_VER=$(GO_VER) \
+	--build-arg ALPINE_VER=$(GO_ALPINE_VER) \
+	--build-arg GO_PROXY=$(GOPROXY) \
+	--build-arg GO_IMAGE=$(GO_IMAGE) .
 
 .PHONY: mock-login-consent-docker
 mock-login-consent-docker:
@@ -101,7 +111,7 @@ mock-attestation-docker:
 	--build-arg GO_IMAGE=$(GO_IMAGE) .
 
 .PHONY: integration-test
-integration-test: mock-login-consent-docker mock-trust-registry-docker mock-attestation-docker generate-test-keys
+integration-test: mock-login-consent-docker mock-trust-registry-docker mock-attestation-docker sample-webhook-docker generate-test-keys
 	@cd test/integration && go mod tidy && ENABLE_COMPOSITION=true go test -count=1 -v -cover . -p 1 -timeout=10m -race
 
 .PHONY: build-integration-cli
@@ -111,7 +121,7 @@ build-integration-cli:
 	@cd test/integration/cli && go build -o ../../../build/bin/integration-cli main.go
 
 .PHONY: prepare-integration-test-flutter
-prepare-integration-test-flutter: build-integration-cli mock-login-consent-docker mock-trust-registry-docker mock-attestation-docker generate-test-keys start-integration-env-flutter
+prepare-integration-test-flutter: build-integration-cli mock-login-consent-docker mock-trust-registry-docker mock-attestation-docker sample-webhook-docker generate-test-keys start-integration-env-flutter
 
 .PHONY: start-integration-env-flutter
 start-integration-env-flutter:

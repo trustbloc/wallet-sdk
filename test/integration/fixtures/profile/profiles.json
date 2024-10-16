@@ -386,7 +386,7 @@
         "name": "Bank Issuer",
         "organizationID": "f13d1va9lp403pb9lyj89vk55",
         "url": "http://vc-rest-echo.trustbloc.local:8075",
-        "webHook": "https://demo-issuer.trustbloc.local:8078/verify/openid4ci/webhook",
+        "webHook": "http://vc-rest-echo.trustbloc.local:8075/verify/openid4ci/webhook",
         "active": true,
         "checks": {
           "policy": {
@@ -571,7 +571,7 @@
         "name": "Bank Issuer",
         "organizationID": "f13d1va9lp403pb9lyj89vk55",
         "url": "http://vc-rest-echo.trustbloc.local:8075",
-        "webHook": "https://demo-issuer.trustbloc.local:8078/verify/openid4ci/webhook",
+        "webHook": "http://vc-rest-echo.trustbloc.local:8075/verify/openid4ci/webhook",
         "active": true,
         "vcConfig": {
           "signingAlgorithm": "JsonWebSignature2020",

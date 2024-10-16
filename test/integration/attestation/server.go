@@ -251,7 +251,7 @@ func (s *server) evaluateWalletProofJWT(
 func (s *server) attestationVC(ctx context.Context, walletDID string, ses *sessionMetadata) (string, error) {
 	vcc := verifiable.CredentialContents{
 		Context: []string{
-			verifiable.ContextURI,
+			verifiable.V1ContextURI,
 			"https://w3c-ccg.github.io/lds-jws2020/contexts/lds-jws2020-v1.json",
 		},
 		ID: uuid.New().String(),

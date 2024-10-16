@@ -7,23 +7,25 @@
 ARG GO_VER
 ARG ALPINE_VER
 
-FROM golang:${GO_VER}-alpine${ALPINE_VER} as builder
+FROM golang:${GO_VER}-alpine${ALPINE_VER} AS golang
+RUN apk add --no-cache \
+    bash \
+    gcc \
+    git \
+    libtool \
+    make \
+    musl-dev;
+COPY . $GOPATH/src/github.com/trustbloc/wallet-sdk/
+WORKDIR $GOPATH/src/github.com/trustbloc/wallet-sdk
+ENV EXECUTABLES go git
 
-RUN apk update && apk add git && apk add ca-certificates
-RUN adduser -D -g '' appuser
+FROM golang AS wallet-sdk
+ARG GO_TAGS
+ARG GO_PROXY
+RUN GO_TAGS=${GO_TAGS} GOPROXY=${GO_PROXY} make sample-webhook
 
-COPY . $GOPATH/src/github.com/trustbloc/wallet-sdk/test/integration/webhook/
-WORKDIR $GOPATH/src/github.com/trustbloc/wallet-sdk/test/integration/webhook/
+FROM alpine:${ALPINE_VER} AS base
+LABEL org.opencontainers.image.source=https://github.com/trustbloc/wallet-sdk
+COPY --from=wallet-sdk /go/src/github.com/trustbloc/wallet-sdk/build/bin/webhook-server /usr/local/bin
 
-RUN CGO_ENABLED=0 go build -o /usr/bin/webhook-server
-
-FROM scratch
-
-LABEL org.opencontainers.image.source https://github.com/trustbloc/wallet-sdk/test/integration/webhook
-
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /etc/passwd /etc/passwd
-COPY --from=builder /usr/bin/webhook-server /usr/bin/webhook-server
-USER appuser
-
-ENTRYPOINT ["/usr/bin/webhook-server"]
+ENTRYPOINT ["webhook-server"]

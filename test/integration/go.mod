@@ -12,9 +12,9 @@ require (
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.2
 	github.com/trustbloc/cmdutil-go v0.0.0-20221125151303-09d42adcc811
-	github.com/trustbloc/did-go v1.3.0
+	github.com/trustbloc/did-go v1.3.1-0.20240910130808-bf0188fdfe70
 	github.com/trustbloc/logutil-go v1.0.0-rc1
-	github.com/trustbloc/vc-go v1.2.0
+	github.com/trustbloc/vc-go v1.2.1-0.20240927095859-a58759112df5
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile v0.0.0-00010101000000-000000000000
 	go.uber.org/zap v1.23.0
@@ -58,6 +58,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
+	github.com/samber/lo v1.47.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8 // indirect
@@ -66,7 +67,7 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
 	github.com/trustbloc/bbs-signature-go v1.0.2 // indirect
-	github.com/trustbloc/kms-go v1.1.2 // indirect
+	github.com/trustbloc/kms-go v1.1.3-0.20241001141623-8d9510c6bb88 // indirect
 	github.com/trustbloc/sidetree-go v1.1.0 // indirect
 	github.com/veraison/go-cose v1.1.1-0.20240126165338-2300d5c96dbd // indirect
 	github.com/x448/float16 v0.8.4 // indirect
@@ -81,6 +82,7 @@ require (
 	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

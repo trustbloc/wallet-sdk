@@ -33,7 +33,7 @@ func TestSigner_Issue(t *testing.T) {
 	mockCredential, cErr := verifiable.CreateCredential(verifiable.CredentialContents{
 		ID:      "foo",
 		Types:   []string{verifiable.VCType},
-		Context: []string{verifiable.ContextURI},
+		Context: []string{verifiable.V1ContextURI},
 		Subject: []verifiable.Subject{{
 			ID: "foo",
 		}},
@@ -161,7 +161,7 @@ func TestSigner_Issue(t *testing.T) {
 		badCredential, cErr := verifiable.CreateCredential(verifiable.CredentialContents{
 			ID:      "foo",
 			Types:   []string{verifiable.VCType},
-			Context: []string{verifiable.ContextURI},
+			Context: []string{verifiable.V1ContextURI},
 			Subject: []verifiable.Subject{},
 			Issuer: &verifiable.Issuer{
 				ID: "did:foo:bar",
