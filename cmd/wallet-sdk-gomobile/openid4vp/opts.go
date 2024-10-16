@@ -110,8 +110,9 @@ func NewPresentCredentialOpts() *PresentCredentialOpts {
 type PresentCredentialOpts struct {
 	scopeClaims map[string]string
 
-	attestationVM *api.VerificationMethod
-	attestationVC string
+	attestationVM                *api.VerificationMethod
+	attestationVC                string
+	serializedInteractionDetails string
 }
 
 // AddScopeClaim adds scope claim with given name.
@@ -132,6 +133,15 @@ func (o *PresentCredentialOpts) SetAttestationVC(
 ) *PresentCredentialOpts {
 	o.attestationVM = vm
 	o.attestationVC = vc
+
+	return o
+}
+
+// SetInteractionDetails extends authorization response with interaction details.
+func (o *PresentCredentialOpts) SetInteractionDetails(
+	serializedInteractionDetails string,
+) *PresentCredentialOpts {
+	o.serializedInteractionDetails = serializedInteractionDetails
 
 	return o
 }

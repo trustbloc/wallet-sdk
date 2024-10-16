@@ -13,17 +13,20 @@ import (
 
 // Acknowledgment represents an object that allows to acknowledge the issuer the user's accepted or rejected credential.
 type Acknowledgment struct {
-	AckIDs                []string            `json:"ack_ids,omitempty"`
-	CredentialAckEndpoint string              `json:"credential_ack_endpoint,omitempty"`
-	IssuerURI             string              `json:"issuer_uri,omitempty"`
-	AuthToken             *universalAuthToken `json:"auth_token,omitempty"`
+	AckIDs                []string               `json:"ack_ids,omitempty"`
+	CredentialAckEndpoint string                 `json:"credential_ack_endpoint,omitempty"`
+	IssuerURI             string                 `json:"issuer_uri,omitempty"`
+	AuthToken             *universalAuthToken    `json:"auth_token,omitempty"`
+	InteractionDetails    map[string]interface{} `json:"interaction_details,omitempty"`
 }
 
 // AcknowledgeIssuer acknowledge issuer that client accepts or rejects credentials.
 func (a *Acknowledgment) AcknowledgeIssuer(
 	eventStatus EventStatus, httpClient *http.Client,
 ) error {
-	var ackRequest acknowledgementRequest
+	ackRequest := acknowledgementRequest{
+		InteractionDetails: a.InteractionDetails,
+	}
 
 	for _, ackID := range a.AckIDs {
 		ackRequest.Credentials = append(ackRequest.Credentials, credentialAcknowledgement{

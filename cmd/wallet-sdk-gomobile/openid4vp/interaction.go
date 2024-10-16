@@ -222,13 +222,24 @@ func (o *Interaction) PresentCredentialOpts(
 
 	var presentOpts []openid4vp.PresentOpt
 
-	if opts != nil && opts.attestationVM != nil {
-		attestationSigner, attErr := common.NewJWSSigner(opts.attestationVM.ToSDKVerificationMethod(), o.crypto)
-		if attErr != nil {
-			return wrapper.ToMobileErrorWithTrace(attErr, o.oTel)
+	if opts != nil {
+		if len(opts.serializedInteractionDetails) > 0 {
+			var interactionDetails map[string]interface{}
+			if err = json.Unmarshal([]byte(opts.serializedInteractionDetails), &interactionDetails); err != nil {
+				return fmt.Errorf("decode vp interaction details: %w", err)
+			}
+
+			presentOpts = append(presentOpts, openid4vp.WithInteractionDetails(interactionDetails))
 		}
 
-		presentOpts = append(presentOpts, openid4vp.WithAttestationVC(attestationSigner, opts.attestationVC))
+		if opts.attestationVM != nil {
+			attestationSigner, attErr := common.NewJWSSigner(opts.attestationVM.ToSDKVerificationMethod(), o.crypto)
+			if attErr != nil {
+				return wrapper.ToMobileErrorWithTrace(attErr, o.oTel)
+			}
+
+			presentOpts = append(presentOpts, openid4vp.WithAttestationVC(attestationSigner, opts.attestationVC))
+		}
 	}
 
 	return wrapper.ToMobileErrorWithTrace(o.goAPIOpenID4VP.PresentCredential(vcs, claims, presentOpts...), o.oTel)

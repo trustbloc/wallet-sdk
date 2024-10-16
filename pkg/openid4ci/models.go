@@ -151,7 +151,8 @@ type errorResponse struct {
 }
 
 type acknowledgementRequest struct {
-	Credentials []credentialAcknowledgement `json:"credentials"`
+	Credentials        []credentialAcknowledgement `json:"credentials"`
+	InteractionDetails map[string]interface{}      `json:"interaction_details,omitempty"`
 }
 
 type credentialAcknowledgement struct {

@@ -194,7 +194,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 		err := instance.PresentCredentialOpts(credentials, NewPresentCredentialOpts().
 			AddScopeClaim("claim1", `{"key" : "val"}`).
-			SetAttestationVC(verificationMethod, "invalidVC"))
+			SetAttestationVC(verificationMethod, "invalidVC").
+			SetInteractionDetails(`{"key1": "value1"}`))
 		require.NoError(t, err)
 	})
 
@@ -241,6 +242,14 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		err := instance.PresentCredentialOpts(credentials, NewPresentCredentialOpts().
 			AddScopeClaim("claim1", `"key" : "val"`))
 		require.ErrorContains(t, err, `fail to parse "claim1" claim json`)
+	})
+
+	t.Run("Present credentials with invalid interaction details", func(t *testing.T) {
+		instance := makeInteraction()
+
+		err := instance.PresentCredentialOpts(credentials, NewPresentCredentialOpts().
+			SetInteractionDetails(`"key1": "value1"`))
+		require.ErrorContains(t, err, `decode vp interaction details`)
 	})
 
 	t.Run("Present credentials unsafe failed", func(t *testing.T) {
@@ -382,6 +391,9 @@ func TestInteraction_Acknowledgment(t *testing.T) {
 		require.Equal(t, "https://verifier/present", ack.acknowledgment.ResponseURI)
 		require.Equal(t, "98822a39-9178-4742-a2dc-aba49879fc7b", ack.acknowledgment.State)
 
+		err := ack.SetInteractionDetails(`{"key1": "value1"}`)
+		require.NoError(t, err)
+
 		serialized, err := ack.Serialize()
 		require.NoError(t, err)
 
@@ -389,6 +401,7 @@ func TestInteraction_Acknowledgment(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, ack.acknowledgment.ResponseURI, ackRestored.acknowledgment.ResponseURI)
 		require.Equal(t, ack.acknowledgment.State, ackRestored.acknowledgment.State)
+		require.Equal(t, map[string]interface{}{"key1": "value1"}, ackRestored.acknowledgment.InteractionDetails)
 	})
 }
 
@@ -424,7 +437,7 @@ func (c *mockCrypto) Sign(_ []byte, _ string) ([]byte, error) {
 	return c.SignResult, c.SignErr
 }
 
-func (c *mockCrypto) Verify([]byte, []byte, string) error {
+func (c *mockCrypto) Verify(_ []byte, _ []byte, _ string) error {
 	return c.VerifyErr
 }
 

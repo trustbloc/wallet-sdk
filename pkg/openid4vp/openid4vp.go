@@ -10,6 +10,7 @@ package openid4vp
 import (
 	"bytes"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/gob"
 	"encoding/json"
 	"errors"
@@ -197,6 +198,8 @@ type presentOpts struct {
 
 	attestationVPSigner api.JWTSigner
 	attestationVC       string
+
+	interactionDetails map[string]interface{}
 }
 
 // PresentOpt is an option for the RequestCredentialWithPreAuth method.
@@ -210,6 +213,15 @@ func WithAttestationVC(
 	return func(opts *presentOpts) {
 		opts.attestationVPSigner = attestationVPSigner
 		opts.attestationVC = vc
+	}
+}
+
+// WithInteractionDetails extends authorization response with interaction details.
+func WithInteractionDetails(
+	interactionDetails map[string]interface{},
+) PresentOpt {
+	return func(opts *presentOpts) {
+		opts.interactionDetails = interactionDetails
 	}
 }
 
@@ -276,6 +288,15 @@ func (o *Interaction) presentCredentials(
 	data.Set("vp_token", response.VPTokenJWS)
 	data.Set("presentation_submission", response.PresentationSubmission)
 	data.Set("state", response.State)
+
+	if opts.interactionDetails != nil {
+		interactionDetailsBytes, e := json.Marshal(opts.interactionDetails)
+		if e != nil {
+			return fmt.Errorf("encode interaction details: %w", e)
+		}
+
+		data.Add("interaction_details", base64.StdEncoding.EncodeToString(interactionDetailsBytes))
+	}
 
 	err = o.sendAuthorizedResponse(data.Encode())
 	if err != nil {
