@@ -135,6 +135,16 @@
       }
     },
     {
+      "url": "https://www.w3.org/ns/credentials/examples/v2",
+      "content" : {
+        "@context": [
+          {
+            "@vocab": "https://www.w3.org/ns/credentials/examples#"
+          }
+        ]
+      }
+    },
+    {
       "url": "https://www.w3.org/ns/odrl.jsonld",
       "content": {
         "@context": {
