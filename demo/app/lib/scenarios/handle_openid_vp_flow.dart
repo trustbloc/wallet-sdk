@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import 'dart:developer';
+import 'dart:convert';
 import 'package:app/wallet_sdk/wallet_sdk.dart';
 import 'package:app/views/custom_error.dart';
 import 'package:flutter/material.dart';
@@ -51,8 +52,24 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
     for (var cred in credentials) {
       log('multi cred flow $submission and ${credentials.length}');
       for (var inputDescriptor in submission.inputDescriptors) {
-        Map<String, dynamic> payload = Jwt.parseJwt(cred);
-        if (inputDescriptor.matchedVCsID.contains(payload['jti'])) {
+        Map<String, dynamic>? payload;
+        try {
+          payload = Jwt.parseJwt(cred);
+        } catch (jwtError) {
+          try {
+            payload = json.decode(cred) as Map<String, dynamic>;
+          } catch (jsonError) {
+            log('error while parsing cred as json: $jsonError');
+            continue;
+          }
+        }
+        var key = payload['jti'] ?? payload['id'];
+        if (key == null) {
+          log('no key found in cred payload');
+          continue;
+        }
+        if (inputDescriptor.matchedVCsID.contains(key)) {
+          log('matched vc with id $key added to list');
           var credentialDisplayData = storedCredentials
               .where((element) => cred.contains(element.value.rawCredential))
               .map((e) => e.value)

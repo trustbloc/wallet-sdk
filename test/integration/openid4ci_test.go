@@ -56,6 +56,9 @@ var (
 
 	//go:embed expecteddisplaydata/university_degree_multi.json
 	expectedUniversityDegreeMulti string
+
+	//go:embed expecteddisplaydata/university_degree_v2.json
+	expectedUniversityDegreeV2 string
 )
 
 const (
@@ -230,6 +233,21 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			},
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeMulti),
 			expectedIssuerURI:   "http://localhost:8075/oidc/idp/university_degree_issuer/v1.0",
+		},
+		{
+			issuerProfileID: "university_degree_issuer_v2",
+			issuerDIDMethod: "ion",
+			walletDIDMethod: "ion",
+			claims: []*claimEntry{
+				{
+					Data: universityDegreeClaims,
+				},
+				{
+					Data: universityDegreeClaims2,
+				},
+			},
+			expectedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeV2),
+			expectedIssuerURI:   "http://localhost:8075/oidc/idp/university_degree_issuer_v2/v1.0",
 		},
 	}
 

@@ -4,7 +4,9 @@
 
 module github.com/trustbloc/wallet-sdk/test/integration/helper
 
-go 1.22
+go 1.22.0
+
+toolchain go1.23.2
 
 require github.com/trustbloc/wallet-sdk/test/integration v0.0.0-20221207181956-419a3951143f
 
@@ -18,7 +20,7 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.23.0 // indirect
-	golang.org/x/net v0.26.0 // indirect
+	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/oauth2 v0.13.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
