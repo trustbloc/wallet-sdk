@@ -13,7 +13,7 @@ ROOT=`pwd`
 
 echo "starting containers..."
 cd $ROOT/test/integration/fixtures
-docker pull jaegertracing/all-in-one:1.41
+docker pull jaegertracing/all-in-one:1.62.0
 docker pull devopsfaith/krakend:2.1.3
 docker pull aholovko/cognito-local:0.2.2
 docker images
