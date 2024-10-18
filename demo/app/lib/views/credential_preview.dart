@@ -167,7 +167,9 @@ class CredentialPreviewState extends State<CredentialPreview> {
                           onPressed: () async {
                             var ackResp = await WalletSDKPlugin.requireAcknowledgment();
                             if (ackResp == true) {
+                              print('here for respo');
                               WalletSDKPlugin.acknowledgeSuccess();
+                              WalletSDKPlugin.acknowledgeSetInteractionDetails();
                             }
                             for (var credentialData in widget.credentialsData) {
                               await _storageService

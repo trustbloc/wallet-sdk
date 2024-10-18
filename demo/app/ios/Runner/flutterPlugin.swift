@@ -137,6 +137,9 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             acknowledgeSuccess(result: result)
         case "acknowledgeReject":
             acknowledgeReject(result: result)
+            
+        case "acknowledgeSetInteractionDetails":
+            acknowledgeSetInteractionDetails(result: result)
 
         case "getAttestationVC":
             getAttestationVC(arguments: arguments!, result: result)
@@ -883,6 +886,24 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
         }
         
     }
+    
+    public func acknowledgeSetInteractionDetails(result: @escaping FlutterResult) {
+        print("here in SetInteractionDetails")
+        guard let openID4CI = self.openID4CI else{
+            return  result(FlutterError.init(code: "NATIVE_ERR",
+                                             message: "error in acknowledge Set interaction details",
+                                             details: "openID4CI not initiated. Call authorize before this."))
+        }
+        do {
+            try openID4CI.acknowledgeSetInteractionDetails()
+        } catch let error as NSError {
+            return result(FlutterError.init(code: "Exception",
+                                            message: "error in acknowledge Set interaction details",
+                                            details: error.localizedDescription
+                                           ))
+        }
+    }
+    
     
     public func acknowledgeSuccess(result: @escaping FlutterResult) {
         guard let openID4CI = self.openID4CI else{
