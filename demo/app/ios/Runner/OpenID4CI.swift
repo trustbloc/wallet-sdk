@@ -126,8 +126,18 @@ public class OpenID4CI {
             throw actualError
         }
         
+        
+        var test = [String : String] ()
+        test["user"] = "123456"
+
+        let data = try JSONEncoder().encode(test)
+        let serializedInteractionDetails = String(data: data, encoding: .utf8)!
+        
+        try acknowledgement?.setInteractionDetails(serializedInteractionDetails)
+        
         try acknowledgement?.success()
     }
+    
     
     func acknowledgeReject() throws {
         return try initiatedInteraction.acknowledgment().reject()

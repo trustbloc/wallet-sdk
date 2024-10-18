@@ -29,7 +29,7 @@ import dev.trustbloc.wallet.sdk.api.VerificationMethod
 import dev.trustbloc.wallet.sdk.openid4vp.Acknowledgment
 import dev.trustbloc.wallet.sdk.openid4vp.CredentialClaimKeys
 import dev.trustbloc.wallet.sdk.verifiable.Credential
-
+import java.util.TreeMap
 class OpenID4VP constructor(
         private val crypto: Crypto,
         private val didResolver: DIDResolver,
@@ -136,6 +136,9 @@ class OpenID4VP constructor(
             opts.setAttestationVC(didVerificationMethod, attestationVC)
         }
 
+       // var map = TreeMap<String, Any>()
+        val interactionDetailsData = """{"user": "123456"}"""
+        opts.setInteractionDetails(interactionDetailsData)
         initiatedInteraction.presentCredentialOpts(selectedCredentials, opts)
     }
 

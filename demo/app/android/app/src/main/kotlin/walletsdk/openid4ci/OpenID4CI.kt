@@ -13,14 +13,13 @@ import dev.trustbloc.wallet.sdk.localkms.KMS
 import dev.trustbloc.wallet.sdk.openid4ci.*
 import dev.trustbloc.wallet.sdk.otel.Otel
 import dev.trustbloc.wallet.sdk.stderr.MetricsLogger
+import dev.trustbloc.wallet.sdk.trustregistry.CredentialOffer
 import dev.trustbloc.wallet.sdk.trustregistry.EvaluationResult
 import dev.trustbloc.wallet.sdk.trustregistry.IssuanceRequest
 import dev.trustbloc.wallet.sdk.trustregistry.Registry
 import dev.trustbloc.wallet.sdk.trustregistry.RegistryConfig
-import dev.trustbloc.wallet.sdk.trustregistry.CredentialOffer
-import walletsdk.flutter.converters.convertVerifiableCredentialsArray
 import walletsdk.flutter.converters.convertVerifiableCredentialsWithIdArray
-
+import java.util.TreeMap
 class OpenID4CI constructor(
         private val requestURI: String,
         private val crypto: Crypto,
@@ -168,6 +167,9 @@ class OpenID4CI constructor(
     fun acknowledgeSuccess() {
         val serializedStateResp = newInteraction.acknowledgment().serialize()
         val acknowledgement = Acknowledgment(serializedStateResp)
+
+        val interactionDetailsData = """{"user": "123456"}"""
+        acknowledgement.setInteractionDetails(interactionDetailsData)
         return acknowledgement.success()
     }
 
