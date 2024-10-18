@@ -109,6 +109,29 @@ jobs:
           name: mock-login-consent
           path: /tmp/mock-login-consent.tar
 
+  BuildMockSampleWebhookServer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Build docker images for test server
+        run: |
+          docker build -f ./images/mocks/webhook/Dockerfile --no-cache -t wallet-sdk/sample-webhook:latest \
+          --build-arg GO_VER=1.22 \
+          --build-arg ALPINE_VER=3.18 .
+      - name: Save docker image as tar
+        run: |
+          docker save --output /tmp/mock-sample-webhook.tar wallet-sdk/sample-webhook
+      - name: Upload image to artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mock-sample-webhook
+          path: /tmp/mock-sample-webhook.tar
+
   BuilMockTrustRegistryServer:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -156,8 +179,8 @@ jobs:
           path: /tmp/mock-attestation.tar
 
   iOSFlutterIntegrationTest:
-    runs-on: macos-12
-    needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer ]
+    runs-on: macos-13
+    needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer, BuildMockSampleWebhookServer ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -179,15 +202,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: /Users/runner/work/wallet-sdk/go
-      - name: Install and start docker
+      - name: Setup hosts
         run: |
           echo '127.0.0.1 file-server.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 did-resolver.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
-          brew install docker docker-compose
-          colima start
+      - name: Install and start docker
+        uses: douglascamata/setup-docker-macos-action@8d5fa43892aed7eee4effcdea113fd53e4d4bf83
+        with:
+          upgrade-qemu: false
+          lima: v0.22.0
+          colima: v0.7.3
       - name: Download artifacts (Docker images) from previous workflows
         uses: actions/download-artifact@v4
       - name: Load mock-login-consent server
@@ -199,6 +226,9 @@ jobs:
       - name: Load mock attestation server
         run: |
           docker load --input mock-attestation/mock-attestation.tar
+      - name: Load mock-sample-webhook server
+        run: |
+          docker load --input mock-sample-webhook/mock-sample-webhook.tar
       - name: Generate test cli and keys
         run: |
           make build-integration-cli generate-test-keys
@@ -229,8 +259,8 @@ jobs:
           docker ps -a
 
   AndroidFlutterIntegrationTest:
-    runs-on: macos-12
-    needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer ]
+    runs-on: macos-13
+    needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer, BuildMockSampleWebhookServer ]
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -252,15 +282,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: /Users/runner/work/wallet-sdk/go
-      - name: Install and start docker
+      - name: Setup hosts
         run: |
           echo '127.0.0.1 file-server.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 did-resolver.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
-          brew install docker docker-compose
-          colima start
+      - name: Install and start docker
+        uses: douglascamata/setup-docker-macos-action@8d5fa43892aed7eee4effcdea113fd53e4d4bf83
+        with:
+          upgrade-qemu: false
+          lima: v0.22.0
+          colima: v0.7.3
       - name: Download artifacts (Docker images) from previous workflows
         uses: actions/download-artifact@v4
       - name: Load mock-login-consent server
@@ -272,6 +306,9 @@ jobs:
       - name: Load mock attestation server
         run: |
           docker load --input mock-attestation/mock-attestation.tar
+      - name: Load mock-sample-webhook server
+        run: |
+          docker load --input mock-sample-webhook/mock-sample-webhook.tar
       - name: Generate test cli and keys
         run: |
           make build-integration-cli generate-test-keys
