@@ -101,6 +101,18 @@ class WalletSDK extends WalletPlatform {
       return data;
   }
 
+
+  void acknowledgeSetInteractionDetails() async {
+    print('acknowledgeSetInteractionDetails- ');
+    try {
+     var resp = await methodChannel.invokeMethod<bool>('acknowledgeSetInteractionDetails');
+     print('acknowledgeSetInteractionDetails-  $resp');
+    } on PlatformException catch (error) {
+      debugPrint(error.toString());
+      rethrow;
+    }
+  }
+
   void acknowledgeSuccess() async {
     try {
       await methodChannel.invokeMethod<bool>('acknowledgeSuccess');

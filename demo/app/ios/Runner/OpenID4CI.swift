@@ -129,6 +129,25 @@ public class OpenID4CI {
         try acknowledgement?.success()
     }
     
+    
+    func acknowledgeSetInteractionDetails() throws {
+        var error: NSError?
+        let serializedStateResp = try initiatedInteraction.acknowledgment().serialize(&error)
+        print("serializedStateResp ",  serializedStateResp)
+        if let actualError = error {
+            print("error from acknowledge  set interaction details",  actualError.localizedDescription)
+            throw actualError
+        }
+        
+        let acknowledgement = try Openid4ciNewAcknowledgment(serializedStateResp, &error)
+        if let actualError = error {
+            print("error from acknowledge  set interaction details",  actualError.localizedDescription)
+            throw actualError
+        }
+        print("acknowledgement ",  acknowledgement)
+        try acknowledgement?.setInteractionDetails(serializedStateResp)
+    }
+    
     func acknowledgeReject() throws {
         return try initiatedInteraction.acknowledgment().reject()
     }
