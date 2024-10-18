@@ -18,4 +18,7 @@ cd ../../demo/app
 
 flutter build ios --simulator
 cd ios
+echo "destinations:"
+xcodebuild -workspace Runner.xcworkspace -scheme Runner -showdestinations
+echo "end destinations:"
 INITIATE_ISSUANCE_URL="${INITIATE_ISSUANCE_URL}" INITIATE_VERIFICATION_URL="${INITIATE_VERIFICATION_URL}" INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW="${INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW}" xcodebuild test -workspace Runner.xcworkspace -scheme Runner  -destination 'platform=iOS Simulator,name=iPhone 14'
