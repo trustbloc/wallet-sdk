@@ -782,10 +782,14 @@ val ackTkn = interaction.acknowledgment().serialize()
 
 val ack = Acknowledgment(ackTkn)
 
+// Additional Interactions are recorded as part of the wallet’s activity history which are OPTIONAL.
+// Upon the conclusion of issuance or presentation flows, the wallet will send a modified acknowledgment request to the downstream project. 
+
+ack.setInteractionDetails({"userID": "123456"}) //SetInteractionDetails extends acknowledgment request to record additional interactions as part of the wallet’s activity history. (Optional)
+    
 ack.success() // user accepts the credential
 ack.reject() // user rejects the credential
 
-// Consider checking the activity log at some point after the interaction
 ```
 
 #### Swift (iOS) - Issuer-Initiated - Pre-Authorized Code Flow
@@ -840,7 +844,7 @@ interaction.requireAcknowledgment() // returns true, if the issuer requires ackn
 let ackTkn = interaction.Acknowledgment().Serialize()
 
 let ack = Openid4ciNewAcknowledgment(ackTkn)
-
+try ack.setInteractionDetails("""{"user": "123456"}""") //SetInteractionDetails extends acknowledgment request to record additional interactions as part of the wallet’s activity history. (Optional)
 try ack.success() // user accepts the credential
 try ack.reject() // user rejects the credential
 
@@ -1580,6 +1584,9 @@ selectedVCs.add(requirementDesc.matchedVCs.atIndex(0)) // Users should select on
 interaction.presentCredential(selectedVCs)
 // Consider checking the activity log at some point after the interaction
 
+interaction.presentCredentialOpts(selectedCredentials, PresentCredentialOpts().setInteractionDetails( """{"user": "123456"}"""))
+
+
 // To force a specific credential to be presented, even if it doesn't match all
 // requirements, use this instead of presentCredential:
 val preferredVC = savedCredentials.atIndex(0)
@@ -1593,8 +1600,9 @@ val ackTkn = interaction.acknowledgment().serialize()
 
 val ack = Acknowledgment(ackTkn)
 
-ack.noConsent()() // user declines the share request
-ack.noMatchingCredential()() // no matching credentials found
+ack.SetInteractionDetails({"userID": "123456"}) // SetInteractionDetails extends acknowledgment request to record additional interactions as part of the wallet’s activity history. (Optional)
+ack.noConsent() // user declines the share request
+ack.noMatchingCredential() // no matching credentials found
 ```
 
 ###### Read scope and add custom scope claims
@@ -1603,11 +1611,10 @@ ack.noMatchingCredential()() // no matching credentials found
 
 val scope = interaction.customScope()
 
-interaction.PresentCredentialOpts(PresentCredentialOpts().addScopeClaim(
-        scope.atIndex(0), """{"email":"test@example.com"}"""), selectedCredentials)
+interaction.presentCredentialOpts(selectedCredentials, PresentCredentialOpts().addScopeClaim(
+        scope.atIndex(0), """{"email":"test@example.com"}"""),)
 
 ```
-
 
 #### Swift (iOS)
 
@@ -1652,6 +1659,11 @@ selectedVCs.add(requirementDesc.matchedVCs.atIndex(0)) // Users should select on
 let credentials = interaction.presentCredential(selectedVCs)
 // Consider checking the activity log at some point after the interaction
 
+try interaction.presentCredentialOpts(
+    selectedVCs,
+    opts: Openid4vpNewPresentCredentialOpts()?.setInteractionDetails({"userId": "123456"}))     
+ )
+
 // To force a specific credential to be presented, even if it doesn't match all
 // requirements, use this instead of presentCredential:
 let preferredVC = savedCredentials.atIndex(0)
@@ -1665,8 +1677,9 @@ let  ackTkn = interaction.Acknowledgment().Serialize()
 
 let  ack = Acknowledgment(ackTkn)
 
-try ack.noConsent()() // user declines the share request
-try ack.noMatchingCredential()() // no matching credentials found
+try ack.SetInteractionDetails({"userID":"123456"}) //SetInteractionDetails extends acknowledgment request to record additional interactions as part of the wallet’s activity history. (Optional)
+try ack.noConsent() // user declines the share request
+try ack.noMatchingCredential() // no matching credentials found
 ```
 
 ##### SubmissionRequirements complex cases
@@ -1861,9 +1874,7 @@ try interaction.presentCredentialOpts(
     selectedCreds,
     opts: Openid4vpNewPresentCredentialOpts()?.addScopeClaim(scope.atIndex(0), claimJSON:#"{"email":"test@example.com"}"#)     
 )
-
 ```
-
 
 ### Error Codes & Troubleshooting Tips
 
