@@ -118,10 +118,18 @@ public class OpenID4VP {
           opts?.setAttestationVC(attestationVM, vc: attestationVC)
         }
         
+        var test = [String : String] ()
+        test["user"] = "123456"
+
+        let data = try JSONEncoder().encode(test)
+        let serializedInteractionDetails = String(data: data, encoding: .utf8)!
+        
+        opts?.setInteractionDetails(serializedInteractionDetails)
+        
         for scope in customScopes {
             opts?.addScopeClaim(scope.key, claimJSON: scope.value as? String)
-            
         }
+        
         try initiatedInteraction.presentCredentialOpts(selectedCredentials, opts: opts)
         
     }

@@ -85,6 +85,7 @@ flutter {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
     if (walletSdkPkgUsr != null) {
         implementation "dev.trustbloc:vc-wallet-sdk:$walletSdkPkgVer"
     } else {
