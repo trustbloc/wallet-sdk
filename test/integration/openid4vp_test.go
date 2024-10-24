@@ -178,6 +178,12 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			verifierProfileID:    "v_myprofile_jwt_verified_employee",
 			acknowledgeNoConsent: true,
 		},
+		{
+			issuerProfileIDs:  []string{"university_degree_issuer_v2"},
+			claimData:         []claimData{universityDegreeClaims},
+			walletDIDMethod:   "ion",
+			verifierProfileID: "v_ldp_university_degree",
+		},
 	}
 
 	var traceIDs []string
