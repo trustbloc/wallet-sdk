@@ -26,6 +26,7 @@ import (
 	"github.com/trustbloc/bbs-signature-go/bbs12381g2pub"
 	diddoc "github.com/trustbloc/did-go/doc/did"
 	vdrapi "github.com/trustbloc/did-go/vdr/api"
+	"github.com/trustbloc/kms-go/spi/kms"
 	wrapperapi "github.com/trustbloc/kms-go/wrapper/api"
 	"github.com/trustbloc/vc-go/dataintegrity"
 	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
@@ -33,6 +34,7 @@ import (
 	"github.com/trustbloc/vc-go/presexch"
 	"github.com/trustbloc/vc-go/proof/defaults"
 	"github.com/trustbloc/vc-go/verifiable"
+	"github.com/trustbloc/wallet-sdk/pkg/ldproof"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
@@ -86,7 +88,7 @@ type Interaction struct {
 
 type authorizedResponse struct {
 	IDTokenJWS             string
-	VPTokenJWS             string
+	VPToken                string
 	PresentationSubmission string
 	State                  string
 }
@@ -285,7 +287,7 @@ func (o *Interaction) presentCredentials(
 
 	data := url.Values{}
 	data.Set("id_token", response.IDTokenJWS)
-	data.Set("vp_token", response.VPTokenJWS)
+	data.Set("vp_token", response.VPToken)
 	data.Set("presentation_submission", response.PresentationSubmission)
 	data.Set("state", response.State)
 
@@ -488,6 +490,17 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 		VerificationMethodResolver: common.NewVDRKeyResolver(didResolver),
 	}
 
+	vpFormat := presexch.FormatJWTVP
+
+	if vpFormats := requestObject.ClientMetadata.VPFormats; vpFormats != nil {
+		switch {
+		case vpFormats.JwtVP != nil:
+			break
+		case vpFormats.LdpVP != nil:
+			vpFormat = presexch.FormatLDPVP
+		}
+	}
+
 	presentation, err := pd.CreateVP(
 		[]*verifiable.Credential{credential},
 		documentLoader,
@@ -497,7 +510,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 			verifiable.WithJSONLDDocumentLoader(documentLoader),
 			verifiable.WithProofChecker(defaults.NewDefaultProofChecker(common.NewVDRKeyResolver(didResolver))),
 		),
-		presexch.WithDefaultPresentationFormat(presexch.FormatJWTVP),
+		presexch.WithDefaultPresentationFormat(vpFormat),
 	)
 	if err != nil {
 		return nil, err
@@ -552,20 +565,32 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 		return nil, err
 	}
 
-	vpTok := vpTokenClaims{
-		VP:    presentation,
-		Nonce: requestObject.Nonce,
-		Exp:   time.Now().Unix() + tokenLiveTimeSec,
-		Iss:   did,
-		Aud:   requestObject.ClientID,
-		Nbf:   time.Now().Unix(),
-		Iat:   time.Now().Unix(),
-		Jti:   uuid.NewString(),
-	}
+	var vpToken string
 
-	vpTokenJWS, err := signToken(vpTok, jwtSigner)
-	if err != nil {
-		return nil, fmt.Errorf("sign vp_token: %w", err)
+	switch vpFormat {
+	case presexch.FormatJWTVP:
+		claims := vpTokenClaims{
+			VP:    presentation,
+			Nonce: requestObject.Nonce,
+			Exp:   time.Now().Unix() + tokenLiveTimeSec,
+			Iss:   did,
+			Aud:   requestObject.ClientID,
+			Nbf:   time.Now().Unix(),
+			Iat:   time.Now().Unix(),
+			Jti:   uuid.NewString(),
+		}
+
+		vpToken, err = signToken(claims, jwtSigner)
+		if err != nil {
+			return nil, fmt.Errorf("sign vp token: %w", err)
+		}
+	case presexch.FormatLDPVP:
+		vpToken, err = createLdpVPToken(crypto, documentLoader, signingVM, requestObject, presentation)
+		if err != nil {
+			return nil, fmt.Errorf("create ldp vp token: %w", err)
+		}
+	default:
+		return nil, fmt.Errorf("unsupported presentation exchange format: %s", vpFormat)
 	}
 
 	presentationSubmissionBytes, err := json.Marshal(presentationSubmission)
@@ -575,7 +600,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 
 	return &authorizedResponse{
 		IDTokenJWS:             idTokenJWS,
-		VPTokenJWS:             vpTokenJWS,
+		VPToken:                vpToken,
 		PresentationSubmission: string(presentationSubmissionBytes),
 		State:                  requestObject.State,
 	}, nil
@@ -598,6 +623,17 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 		VerificationMethodResolver: common.NewVDRKeyResolver(didResolver),
 	}
 
+	vpFormat := presexch.FormatJWTVP
+
+	if vpFormats := requestObject.ClientMetadata.VPFormats; vpFormats != nil {
+		switch {
+		case vpFormats.JwtVP != nil:
+			break
+		case vpFormats.LdpVP != nil:
+			vpFormat = presexch.FormatLDPVP
+		}
+	}
+
 	presentations, presentationSubmission, err := pd.CreateVPArray(
 		credentials,
 		documentLoader,
@@ -606,7 +642,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 			verifiable.WithDisabledProofCheck(),
 			verifiable.WithJSONLDDocumentLoader(documentLoader),
 		),
-		presexch.WithDefaultPresentationFormat(presexch.FormatJWTVP),
+		presexch.WithDefaultPresentationFormat(vpFormat),
 	)
 	if err != nil {
 		return nil, err
@@ -640,31 +676,43 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 			}
 		}
 
-		signer, e := getHolderSigner(signingVM, crypto)
+		jwtSigner, e := getHolderSigner(signingVM, crypto)
 		if e != nil {
 			return nil, e
 		}
 
-		signers[holderDID] = signer
+		signers[holderDID] = jwtSigner
 
-		// TODO: Fix this issue: the vpToken always uses the last presentation from the loop above
-		vpTok := vpTokenClaims{
-			VP:    presentation,
-			Nonce: requestObject.Nonce,
-			Exp:   time.Now().Unix() + tokenLiveTimeSec,
-			Iss:   holderDID,
-			Aud:   requestObject.ClientID,
-			Nbf:   time.Now().Unix(),
-			Iat:   time.Now().Unix(),
-			Jti:   uuid.NewString(),
+		var vpToken string
+
+		switch vpFormat {
+		case presexch.FormatJWTVP:
+			// TODO: Fix this issue: the vpToken always uses the last presentation from the loop above
+			claims := vpTokenClaims{
+				VP:    presentation,
+				Nonce: requestObject.Nonce,
+				Exp:   time.Now().Unix() + tokenLiveTimeSec,
+				Iss:   holderDID,
+				Aud:   requestObject.ClientID,
+				Nbf:   time.Now().Unix(),
+				Iat:   time.Now().Unix(),
+				Jti:   uuid.NewString(),
+			}
+
+			vpToken, err = signToken(claims, jwtSigner)
+			if err != nil {
+				return nil, fmt.Errorf("sign vp token: %w", err)
+			}
+		case presexch.FormatLDPVP:
+			vpToken, err = createLdpVPToken(crypto, documentLoader, signingVM, requestObject, presentation)
+			if err != nil {
+				return nil, fmt.Errorf("create ldp vp token: %w", err)
+			}
+		default:
+			return nil, fmt.Errorf("unsupported presentation exchange format: %s", vpFormat)
 		}
 
-		vpTokJWS, e := signToken(vpTok, signer)
-		if e != nil {
-			return nil, fmt.Errorf("sign vp_token: %w", e)
-		}
-
-		vpTokens = append(vpTokens, vpTokJWS)
+		vpTokens = append(vpTokens, vpToken)
 	}
 
 	vpTokenListJSON, err := json.Marshal(vpTokens)
@@ -699,7 +747,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 
 	return &authorizedResponse{
 		IDTokenJWS:             idTokenJWS,
-		VPTokenJWS:             string(vpTokenListJSON),
+		VPToken:                string(vpTokenListJSON),
 		PresentationSubmission: string(presentationSubmissionJSON),
 		State:                  requestObject.State,
 	}, nil
@@ -708,7 +756,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 func addDataIntegrityProof(did string, didResolver api.DIDResolver, documentLoader ld.DocumentLoader,
 	signer wrapperapi.KMSCryptoSigner, presentation *verifiable.Presentation,
 ) error {
-	context := &verifiable.DataIntegrityProofContext{
+	proofContext := &verifiable.DataIntegrityProofContext{
 		SigningKeyID: did,
 		CryptoSuite:  ecdsa2019.SuiteType,
 	}
@@ -724,12 +772,49 @@ func addDataIntegrityProof(did string, didResolver api.DIDResolver, documentLoad
 		return err
 	}
 
-	err = presentation.AddDataIntegrityProof(context, dataIntegritySigner)
+	err = presentation.AddDataIntegrityProof(proofContext, dataIntegritySigner)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func createLdpVPToken(
+	crypto api.Crypto,
+	documentLoader ld.DocumentLoader,
+	signingVM *diddoc.VerificationMethod,
+	requestObject *requestObject,
+	presentation *verifiable.Presentation,
+) (string, error) {
+	ldProof, err := ldproof.New(
+		crypto,
+		documentLoader,
+		requestObject.ClientMetadata.VPFormats.LdpVP,
+		kms.ECDSAP384IEEEP1363, // TODO: Use the key type passed from the caller
+	)
+	if err != nil {
+		return "", fmt.Errorf("create ld proof: %w", err)
+	}
+
+	err = ldProof.Add(
+		presentation,
+		ldproof.WithSigningVM(signingVM),
+		ldproof.WithNonce(requestObject.Nonce),
+		ldproof.WithDomain(requestObject.ClientID),
+	)
+	if err != nil {
+		return "", fmt.Errorf("add ld proof to vp: %w", err)
+	}
+
+	var vpBytes []byte
+
+	vpBytes, err = presentation.MarshalJSON()
+	if err != nil {
+		return "", fmt.Errorf("marshal vp into vp token: %w", err)
+	}
+
+	return string(vpBytes), nil
 }
 
 func createIDToken(
