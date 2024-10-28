@@ -49,9 +49,7 @@ type requestObjectRegistration struct {
 }
 
 type requestObjectClaims struct {
-	VPToken vpToken `json:"vp_token"`
-}
-
-type vpToken struct {
-	PresentationDefinition *presexch.PresentationDefinition `json:"presentation_definition"`
+	VPToken struct {
+		PresentationDefinition *presexch.PresentationDefinition `json:"presentation_definition"`
+	} `json:"vp_token"`
 }

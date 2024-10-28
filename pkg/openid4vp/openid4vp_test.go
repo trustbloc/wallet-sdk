@@ -24,6 +24,9 @@ import (
 	"github.com/trustbloc/did-go/doc/did"
 	"github.com/trustbloc/did-go/doc/did/endpoint"
 	"github.com/trustbloc/kms-go/doc/jose"
+	"github.com/trustbloc/kms-go/doc/jose/jwk"
+	"github.com/trustbloc/kms-go/doc/util/jwkkid"
+	"github.com/trustbloc/kms-go/spi/kms"
 	"github.com/trustbloc/vc-go/presexch"
 	"github.com/trustbloc/vc-go/verifiable"
 
@@ -39,6 +42,9 @@ import (
 var (
 	//go:embed test_data/request_object.jwt
 	requestObjectJWT string
+
+	//go:embed test_data/request_object_ldp_vp.jwt
+	requestObjectJWTLdpVP string
 
 	//go:embed test_data/presentation.jsonld
 	presentationJSONLD []byte
@@ -213,7 +219,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 	singleCred = append(singleCred, credentials[0])
 
-	mockDoc := mockResolution(t, mockDID)
+	mockDoc := mockResolution(t, mockDID, false)
 
 	mockPresentationDefinition := &presexch.PresentationDefinition{
 		ID: uuid.NewString(),
@@ -421,6 +427,42 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("Success - with ldp_vp", func(t *testing.T) {
+		mockHTTPClient := &mock.HTTPClientMock{
+			StatusCode: 200,
+		}
+
+		crypto := &cryptoMock{SignVal: []byte(testSignature)}
+
+		interaction, err := NewInteraction(
+			requestObjectJWTLdpVP,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockResolution(t, mockDID, true)},
+			crypto,
+			lddl,
+			WithHTTPClient(mockHTTPClient),
+		)
+		require.NoError(t, err)
+
+		query := interaction.GetQuery()
+		require.NotNil(t, query)
+
+		err = interaction.PresentCredential(singleCred, CustomClaims{})
+		require.NoError(t, err)
+
+		data, err := url.ParseQuery(string(mockHTTPClient.SentBody))
+		require.NoError(t, err)
+
+		require.Contains(t, data, "id_token")
+		require.NotEmpty(t, data["id_token"])
+
+		require.Contains(t, data, "vp_token")
+		require.NotEmpty(t, data["vp_token"])
+
+		require.Contains(t, data, "presentation_submission")
+		require.NotEmpty(t, data["presentation_submission"])
+	})
+
 	t.Run("Check custom claims", func(t *testing.T) {
 		response, err := createAuthorizedResponse(
 			singleCred,
@@ -460,7 +502,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NoError(t, err)
 		require.Contains(t, string(idToken), "test123456")
 
-		vpToken, err := base64.RawURLEncoding.DecodeString(strings.Split(response.VPTokenJWS, ".")[1])
+		vpToken, err := base64.RawURLEncoding.DecodeString(strings.Split(response.VPToken, ".")[1])
 		require.NoError(t, err)
 		require.Contains(t, string(vpToken), "test123456")
 	})
@@ -916,7 +958,7 @@ func TestInteraction_Scope(t *testing.T) {
 }
 
 func TestResolverAdapter(t *testing.T) {
-	mockDoc := mockResolution(t, mockDID)
+	mockDoc := mockResolution(t, mockDID, false)
 	adapter := wrapResolver(&didResolverMock{ResolveValue: mockDoc})
 
 	doc, err := adapter.Resolve(mockDID)
@@ -953,7 +995,7 @@ func TestOpenID4VP_PresentedClaims(t *testing.T) {
 
 	singleCred = append(singleCred, credentials[0])
 
-	mockDoc := mockResolution(t, mockDID)
+	mockDoc := mockResolution(t, mockDID, false)
 
 	t.Run("Success", func(t *testing.T) {
 		httpClient := &mock.HTTPClientMock{
@@ -1163,13 +1205,25 @@ func (c *cryptoMock) Verify(_, _ []byte, _ string) error {
 	return c.VerifyErr
 }
 
-func mockResolution(t *testing.T, mockDID string) *did.DocResolution {
+func mockResolution(t *testing.T, mockDID string, useJWK bool) *did.DocResolution {
 	t.Helper()
 
 	edPub, _, err := ed25519.GenerateKey(rand.Reader)
 	require.NoError(t, err)
 
-	mockVM := did.NewVerificationMethodFromBytes(mockVMID, "Ed25519VerificationKey2018", mockDID, edPub)
+	var mockVM *did.VerificationMethod
+
+	if useJWK {
+		var key *jwk.JWK
+
+		key, err = jwkkid.BuildJWK(edPub, kms.ED25519Type)
+		require.NoError(t, err)
+
+		mockVM, err = did.NewVerificationMethodFromJWK(mockVMID, "JsonWebKey2020", mockDID, key)
+		require.NoError(t, err)
+	} else {
+		mockVM = did.NewVerificationMethodFromBytes(mockVMID, "Ed25519VerificationKey2018", mockDID, edPub)
+	}
 
 	docRes := &did.DocResolution{
 		DIDDocument: &did.Doc{
