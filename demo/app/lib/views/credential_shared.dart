@@ -34,6 +34,7 @@ class CredentialSharedState extends State<CredentialShared> {
               _navigateToDashboard();
             },
             icon: const Icon(Icons.close),
+            color: Colors.white,
           ),
         ],
         flexibleSpace: Container(
