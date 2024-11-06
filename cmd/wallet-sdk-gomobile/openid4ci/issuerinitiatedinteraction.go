@@ -10,14 +10,16 @@ package openid4ci
 
 import (
 	"errors"
+	"fmt"
 
-	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
+	verifiableapi "github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/otel"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	openid4cigoapi "github.com/trustbloc/wallet-sdk/pkg/openid4ci"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 // IssuerInitiatedInteraction represents a single issuer-instantiated OpenID4CI interaction between a wallet and an
@@ -102,13 +104,38 @@ func (i *IssuerInitiatedInteraction) CreateAuthorizationURL(clientID, redirectUR
 func (i *IssuerInitiatedInteraction) RequestCredentialWithPreAuth(
 	vm *api.VerificationMethod, opts *RequestCredentialWithPreAuthOpts,
 ) (*verifiable.CredentialsArray, error) {
+	credentials, _, err := i.requestCredentialWithPreAuth(vm, opts)
+	if err != nil {
+		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
+	}
+
+	return toGomobileCredentials(credentials), nil
+}
+
+// RequestCredentialWithPreAuthV2 requests credentials using a pre-authorized code flow.
+// Returns an array of credentials with config IDs, which map to CredentialConfigurationSupported in the
+// issuer's metadata.
+func (i *IssuerInitiatedInteraction) RequestCredentialWithPreAuthV2(
+	vm *api.VerificationMethod, opts *RequestCredentialWithPreAuthOpts,
+) (*verifiable.CredentialsArrayV2, error) {
+	credentials, configIDs, err := i.requestCredentialWithPreAuth(vm, opts)
+	if err != nil {
+		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
+	}
+
+	return toGomobileCredentialsV2(credentials, configIDs), nil
+}
+
+func (i *IssuerInitiatedInteraction) requestCredentialWithPreAuth(
+	vm *api.VerificationMethod, opts *RequestCredentialWithPreAuthOpts,
+) ([]*verifiableapi.Credential, []string, error) {
 	if opts == nil {
 		opts = NewRequestCredentialWithPreAuthOpts()
 	}
 
 	signer, err := createSigner(vm, i.crypto)
 	if err != nil {
-		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
+		return nil, nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
 
 	goOpts := []openid4cigoapi.RequestCredentialWithPreAuthOpt{openid4cigoapi.WithPIN(opts.pin)}
@@ -116,7 +143,7 @@ func (i *IssuerInitiatedInteraction) RequestCredentialWithPreAuth(
 	if opts.attestationVM != nil {
 		attestationSigner, attErr := createSigner(opts.attestationVM, i.crypto)
 		if attErr != nil {
-			return nil, wrapper.ToMobileErrorWithTrace(attErr, i.oTel)
+			return nil, nil, wrapper.ToMobileErrorWithTrace(attErr, i.oTel)
 		}
 
 		goOpts = append(goOpts, openid4cigoapi.WithAttestationVC(attestationSigner, opts.attestationVC))
@@ -124,10 +151,17 @@ func (i *IssuerInitiatedInteraction) RequestCredentialWithPreAuth(
 
 	credentials, err := i.goAPIInteraction.RequestCredentialWithPreAuth(signer, goOpts...)
 	if err != nil {
-		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
+		return nil, nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
 	}
 
-	return toGomobileCredentials(credentials), nil
+	configIDs := i.goAPIInteraction.CredentialConfigIDs()
+
+	if len(credentials) != len(configIDs) {
+		return nil, nil, fmt.Errorf("mismatch in the number of credentials and configuration IDs: "+
+			"expected %d but got %d", len(credentials), len(configIDs))
+	}
+
+	return credentials, configIDs, nil
 }
 
 // RequestCredentialWithAuth requests credential(s) from the issuer. This method can only be used for the

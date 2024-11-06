@@ -8,10 +8,10 @@ package credentialschema
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/trustbloc/vc-go/jwt"
-
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
@@ -31,6 +31,9 @@ type credentialSource struct {
 	reader credentialReader
 	// ids specifies which credentials should be retrieved from the reader.
 	ids []string
+	// credentialConfigIDs holds the config IDs for credentials, with each ID corresponding to the credential
+	// at the same index in the vcs slice.
+	credentialConfigIDs []string
 }
 
 // issuerMetadataSource represents the different ways that issuer metadata can be specified in the Resolve function.
@@ -41,6 +44,12 @@ type credentialSource struct {
 type issuerMetadataSource struct {
 	issuerURI string
 	metadata  *issuer.Metadata
+}
+
+// credentialConfigMapping represents a mapping of Credential to its corresponding CredentialConfigurationSupported
+type credentialConfigMapping struct {
+	credential *verifiable.Credential
+	config     map[string]*issuer.CredentialConfigurationSupported // config ID -> CredentialConfigurationSupported
 }
 
 type httpClient interface {
@@ -62,9 +71,10 @@ type resolveOpts struct {
 type ResolveOpt func(opts *resolveOpts)
 
 // WithCredentials is an option allowing a caller to directly pass in the VCs that they want to have resolved.
-func WithCredentials(vcs []*verifiable.Credential) ResolveOpt {
+func WithCredentials(vcs []*verifiable.Credential, configID ...string) ResolveOpt {
 	return func(opts *resolveOpts) {
 		opts.credentialSource.vcs = vcs
+		opts.credentialSource.credentialConfigIDs = configID
 	}
 }
 
@@ -170,7 +180,7 @@ func WithSkipNonClaimData() ResolveOpt {
 	}
 }
 
-func processOpts(opts []ResolveOpt) ([]*verifiable.Credential, *issuer.Metadata, string, *string, error) {
+func processOpts(opts []ResolveOpt) ([]*credentialConfigMapping, *issuer.Metadata, string, *string, error) {
 	mergedOpts := mergeOpts(opts)
 
 	err := validateOpts(mergedOpts)
@@ -204,9 +214,19 @@ func validateVCOpts(credentialSource *credentialSource) error {
 		return errors.New("no credentials specified")
 	}
 
-	if credentialSource.vcs != nil && credentialSource.reader != nil {
-		return errors.New("cannot have multiple credential sources specified - must use either " +
-			"WithCredentials or WithCredentialReader, but not both")
+	if credentialSource.vcs != nil {
+		if credentialSource.reader != nil {
+			return errors.New("cannot have multiple credential sources specified - must use either " +
+				"WithCredentials or WithCredentialReader, but not both")
+		}
+
+		numConfigIDs := len(credentialSource.credentialConfigIDs)
+		numVCs := len(credentialSource.vcs)
+
+		if numConfigIDs > 0 && numConfigIDs != numVCs {
+			return fmt.Errorf("mismatch between the number of credentials (%d) and the number of config IDs (%d)",
+				numVCs, numConfigIDs)
+		}
 	}
 
 	if credentialSource.reader != nil && len(credentialSource.ids) == 0 {
@@ -224,8 +244,8 @@ func validateIssuerMetadataOpts(issuerMetadataSource *issuerMetadataSource) erro
 	return nil
 }
 
-func processValidatedOpts(opts *resolveOpts) ([]*verifiable.Credential, *issuer.Metadata, string, *string, error) {
-	vcs, err := processVCOpts(&opts.credentialSource)
+func processValidatedOpts(opts *resolveOpts) ([]*credentialConfigMapping, *issuer.Metadata, string, *string, error) {
+	credentialConfigMappings, err := processVCOpts(&opts.credentialSource)
 	if err != nil {
 		return nil, nil, "", nil, err
 	}
@@ -248,14 +268,55 @@ func processValidatedOpts(opts *resolveOpts) ([]*verifiable.Credential, *issuer.
 		return nil, nil, "", nil, err
 	}
 
-	return vcs, issuerMetadata, opts.preferredLocal, opts.maskingString, nil
+	for _, m := range credentialConfigMappings {
+		vc := m.credential
+
+		if len(m.config) > 0 {
+			for configID := range m.config {
+				config, ok := issuerMetadata.CredentialConfigurationsSupported[configID]
+				if !ok {
+					return nil, nil, "", nil, errors.New(fmt.Sprintf("credential configuration with ID %s not found",
+						configID))
+				}
+
+				m.config[configID] = config
+			}
+
+			continue
+		}
+
+		for configID, config := range issuerMetadata.CredentialConfigurationsSupported {
+			if !haveMatchingTypes(config, vc.Contents().Types) {
+				continue
+			}
+
+			m.config[configID] = config
+			break
+		}
+	}
+
+	return credentialConfigMappings, issuerMetadata, opts.preferredLocal, opts.maskingString, nil
 }
 
-func processVCOpts(credentialSource *credentialSource) ([]*verifiable.Credential, error) {
-	var vcs []*verifiable.Credential
+func processVCOpts(credentialSource *credentialSource) ([]*credentialConfigMapping, error) {
+	var credentialConfigMappings []*credentialConfigMapping
 
 	if credentialSource.vcs != nil {
-		vcs = credentialSource.vcs
+		numVCs := len(credentialSource.vcs)
+		numConfigIDs := len(credentialSource.credentialConfigIDs)
+
+		for i := 0; i < numVCs; i++ {
+			m := &credentialConfigMapping{
+				credential: credentialSource.vcs[i],
+				config:     make(map[string]*issuer.CredentialConfigurationSupported),
+			}
+
+			if numConfigIDs > 0 && i < numConfigIDs {
+				m.config[credentialSource.credentialConfigIDs[i]] = nil
+			}
+
+			credentialConfigMappings = append(credentialConfigMappings, m)
+		}
 	} else {
 		for _, id := range credentialSource.ids {
 			vc, err := credentialSource.reader.Get(id)
@@ -263,11 +324,16 @@ func processVCOpts(credentialSource *credentialSource) ([]*verifiable.Credential
 				return nil, err
 			}
 
-			vcs = append(vcs, vc)
+			credentialConfigMappings = append(credentialConfigMappings,
+				&credentialConfigMapping{
+					credential: vc,
+					config:     make(map[string]*issuer.CredentialConfigurationSupported),
+				},
+			)
 		}
 	}
 
-	return vcs, nil
+	return credentialConfigMappings, nil
 }
 
 func processIssuerMetadataOpts(issuerMetadataSource *issuerMetadataSource, httpClient httpClient,

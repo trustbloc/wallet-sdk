@@ -109,3 +109,13 @@ func toGomobileCredentials(credentials []*afgoverifiable.Credential) *verifiable
 
 	return gomobileCredentials
 }
+
+func toGomobileCredentialsV2(credentials []*afgoverifiable.Credential, configIDs []string) *verifiable.CredentialsArrayV2 {
+	credentialArray := verifiable.NewCredentialsArrayV2()
+
+	for i := range credentials {
+		credentialArray.Add(verifiable.NewCredential(credentials[i]), configIDs[i])
+	}
+
+	return credentialArray
+}

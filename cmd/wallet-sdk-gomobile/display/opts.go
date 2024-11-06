@@ -22,6 +22,7 @@ type Opts struct {
 	maskingString                    *string
 	didResolver                      api.DIDResolver
 	skipNonClaimData                 bool
+	credentialConfigIDs              []string
 }
 
 // NewOpts returns a new Opts object.

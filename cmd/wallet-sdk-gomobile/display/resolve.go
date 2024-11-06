@@ -9,17 +9,14 @@ package display
 
 import (
 	"errors"
-
 	"github.com/trustbloc/vc-go/proof/defaults"
+	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
-	"github.com/trustbloc/wallet-sdk/pkg/common"
-
-	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
-
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
 	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 )
 
@@ -44,8 +41,30 @@ func Resolve(vcs *verifiable.CredentialsArray, issuerURI string, opts *Opts) (*D
 	return &Data{resolvedDisplayData: resolvedDisplayData}, nil
 }
 
-func ResolveCredential(vcs *verifiable.CredentialsArray, issuerURI string, opts *Opts) (*Resolved, error) {
-	goAPIOpts, err := generateGoAPIOpts(vcs, issuerURI, opts)
+func ResolveCredential(credentialsArray *verifiable.CredentialsArray, issuerURI string, opts *Opts) (*Resolved, error) {
+	goAPIOpts, err := generateGoAPIOpts(credentialsArray, issuerURI, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	resolvedDisplayData, err := goapicredentialschema.ResolveCredential(goAPIOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Resolved{resolvedDisplayData: resolvedDisplayData}, nil
+}
+
+func ResolveCredentialV2(credentialsArray *verifiable.CredentialsArrayV2, issuerURI string, opts *Opts) (*Resolved, error) {
+	credentials := &verifiable.CredentialsArray{}
+	opts.credentialConfigIDs = make([]string, credentialsArray.Length())
+
+	for i := 0; i < credentialsArray.Length(); i++ {
+		credentials.Add(credentialsArray.AtIndex(i))
+		opts.credentialConfigIDs[i] = credentialsArray.ConfigIDAtIndex(i)
+	}
+
+	goAPIOpts, err := generateGoAPIOpts(credentials, issuerURI, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +108,7 @@ func generateGoAPIOpts(vcs *verifiable.CredentialsArray, issuerURI string,
 	httpClient := wrapper.NewHTTPClient(opts.httpTimeout, opts.additionalHeaders, opts.disableHTTPClientTLSVerification)
 
 	goAPIOpts := []goapicredentialschema.ResolveOpt{
-		goapicredentialschema.WithCredentials(mobileVCsArrayToGoAPIVCsArray(vcs)),
+		goapicredentialschema.WithCredentials(mobileVCsArrayToGoAPIVCsArray(vcs), opts.credentialConfigIDs...),
 		goapicredentialschema.WithIssuerURI(issuerURI),
 		goapicredentialschema.WithPreferredLocale(opts.preferredLocale),
 		goapicredentialschema.WithHTTPClient(httpClient),
