@@ -4,12 +4,13 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+import 'dart:async';
 import 'dart:developer';
 import 'package:app/scenarios/handle_openid_url.dart';
 import 'package:app/widgets/common_title_appbar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:safe_device/safe_device.dart';
 
 import 'package:app/widgets/primary_button.dart';
@@ -24,10 +25,14 @@ class QRScanner extends StatefulWidget {
 }
 
 class QRScannerState extends State<QRScanner> {
-  QRViewController? controller;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   final textController = TextEditingController();
   bool isRealDevice = false;
+
+  final MobileScannerController controller = MobileScannerController(
+      detectionSpeed: DetectionSpeed.noDuplicates,
+      returnImage: true
+  );
 
   @override
   void initState() {
@@ -51,18 +56,15 @@ class QRScannerState extends State<QRScanner> {
               addCloseIcon: true,
               height: 50,
             ),
-            body: QRView(
-              key: qrKey,
-              onQRViewCreated: _onQRViewCreated,
-              overlay: QrScannerOverlayShape(
-                borderColor: const Color(0xffE74577),
-                borderRadius: 24,
-                borderLength: 30,
-                borderWidth: 10,
-                cutOutSize: 256,
-              ),
-              onPermissionSet: (ctrl, p) => _onPermissionSet(context, ctrl, p),
-            ),
+            body: MobileScanner(
+                controller: controller,
+                onDetect: (capture) {
+                  final List<Barcode> barcodes = capture.barcodes;
+                  for (final barcode in barcodes) {
+                    handleOpenIDUrl(context, barcode.rawValue ?? 'No Data found in QR');
+                  }
+                  controller.dispose();
+                }),
           )
         : Scaffold(
             appBar: const CustomTitleAppBar(
@@ -107,20 +109,4 @@ class QRScannerState extends State<QRScanner> {
             ));
   }
 
-  void _onQRViewCreated(QRViewController controller) {
-    this.controller = controller;
-    controller.scannedDataStream.listen((scanData) async {
-      controller.dispose();
-      handleOpenIDUrl(context, scanData.code!);
-    });
-  }
-
-  void _onPermissionSet(BuildContext context, QRViewController ctrl, bool p) {
-    log('${DateTime.now().toIso8601String()}_onPermissionSet $p');
-    if (!p) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('no Permission')),
-      );
-    }
-  }
 }

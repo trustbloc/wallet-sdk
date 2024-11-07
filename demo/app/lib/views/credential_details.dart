@@ -93,7 +93,7 @@ class CredentialDetailsState extends State<CredentialDetails> {
         title: const Text('Credential Details',
             textAlign: TextAlign.center,
             style: TextStyle(
-                fontSize: 18, fontStyle: FontStyle.normal, fontWeight: FontWeight.w700, fontFamily: 'SF Pro')),
+                fontSize: 18, fontStyle: FontStyle.normal, fontWeight: FontWeight.w700, fontFamily: 'SF Pro', color: Colors.white)),
         backgroundColor: const Color(0xff261131),
       ),
       body: SingleChildScrollView(
