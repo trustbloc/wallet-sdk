@@ -12,11 +12,11 @@ toolchain go1.22.2
 require (
 	github.com/google/uuid v1.3.0
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	github.com/trustbloc/cmdutil-go v0.0.0-20221125151303-09d42adcc811
-	github.com/trustbloc/did-go v1.3.1-0.20240910130808-bf0188fdfe70
+	github.com/trustbloc/did-go v1.3.1-0.20241021165331-5721a3ff7396
 	github.com/trustbloc/logutil-go v1.0.0-rc1
-	github.com/trustbloc/vc-go v1.2.1-0.20240927095859-a58759112df5
+	github.com/trustbloc/vc-go v1.2.1-0.20241031140324-d25fb970e6f5
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile v0.0.0-00010101000000-000000000000
 	go.uber.org/zap v1.23.0
@@ -80,11 +80,11 @@ require (
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/crypto v0.28.0 // indirect
+	golang.org/x/crypto v0.29.0 // indirect
 	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63 // indirect
-	golang.org/x/net v0.30.0 // indirect
-	golang.org/x/sys v0.26.0 // indirect
-	golang.org/x/text v0.19.0 // indirect
+	golang.org/x/net v0.31.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
+	golang.org/x/text v0.20.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -94,3 +94,5 @@ require (
 replace github.com/trustbloc/wallet-sdk => ../../
 
 replace github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile => ../../cmd/wallet-sdk-gomobile
+
+replace github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f => github.com/trustbloc/json-gold v0.5.1
