@@ -1450,7 +1450,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				keyID: mockKeyID,
 			}, openid4ci.WithPIN("1234"))
 			require.Contains(t, err.Error(), "CREDENTIAL_PARSE_FAILED(OCI1-0007):failed to parse credential from "+
-				"credential response at index 0: unmarshal new credential: unexpected end of JSON input")
+				"credential response at index 0: unmarshal cbor cred after hex failed\nunmarshal cbor credential: EOF")
 			require.Nil(t, credentials)
 		})
 		t.Run("Fail VC proof check - public key not found for issuer DID", func(t *testing.T) {

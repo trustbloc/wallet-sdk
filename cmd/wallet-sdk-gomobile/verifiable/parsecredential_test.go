@@ -44,7 +44,7 @@ func TestParse(t *testing.T) {
 
 		universityDegreeVC, err := verifiable.ParseCredential("", opts)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "unexpected end of JSON input")
+		require.Contains(t, err.Error(), "unmarshal cbor credential: EOF")
 		require.Nil(t, universityDegreeVC)
 	})
 }
