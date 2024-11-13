@@ -62,6 +62,10 @@ class SettingsState extends State<Settings> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
           automaticallyImplyLeading: false,
           title: const Text('Settings'),
           backgroundColor: const Color(0xffEEEAEE),

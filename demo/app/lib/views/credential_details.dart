@@ -90,6 +90,10 @@ class CredentialDetailsState extends State<CredentialDetails> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text('Credential Details',
             textAlign: TextAlign.center,
             style: TextStyle(
