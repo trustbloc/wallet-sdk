@@ -7,7 +7,7 @@
 name: "wallet-sdk release"
 
 env:
-  GO_VERSION: '1.22'
+  GO_VERSION: '1.23'
 
 on:
   push:
@@ -32,7 +32,7 @@ jobs:
           cd ..
           git clone https://go.googlesource.com/go goroot          
           cd goroot
-          git checkout go1.22.2
+          git checkout go1.23.3
           cp ../wallet-sdk/cmd/wallet-sdk-gomobile/gopatches/* ./
           git apply cmd_cgo__fix_unaligned_arguments_typedmemmove_crash_on_iOS.patch
           cd src && ./all.bash
@@ -98,7 +98,7 @@ jobs:
           cd ..
           git clone https://go.googlesource.com/go goroot          
           cd goroot
-          git checkout go1.22.2
+          git checkout go1.23.3
           cp ../wallet-sdk/cmd/wallet-sdk-gomobile/gopatches/* ./
           git apply cmd_cgo__fix_unaligned_arguments_typedmemmove_crash_on_iOS.patch
           cd src && ./all.bash
