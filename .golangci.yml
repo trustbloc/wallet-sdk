@@ -6,14 +6,14 @@
 
 run:
   concurrency: 4
-  deadline: 3m
+  timeout: 3m
   issues-exit-code: 1
   tests: true
   build-tags: [""]
-  skip-dirs:  [""]
 
 output:
-  format: colored-line-number
+  formats:
+    - format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
 
@@ -21,19 +21,18 @@ linters-settings:
   errcheck:
     check-type-assertions: true
     check-blank: true
-    ignore: fmt:.*,io/ioutil:^Read.*
+    exclude-functions:
+      - fmt:.*
+      - io/ioutil:^Read.*
   govet:
-    check-shadowing: true
-  golint:
-    min-confidence: 0.6
+    enable:
+      - shadow
   gofmt:
     simplify: true
   goimports:
     local-prefixes: github.com/trustbloc/agent-sdk
   gocyclo:
     min-complexity: 10
-  maligned:
-    suggest-new: true
   dupl:
     threshold: 100
   goconst:
@@ -46,8 +45,6 @@ linters-settings:
   lll:
     line-length: 120
     tab-width: 1
-  unused:
-    check-exported: false
   unparam:
     check-exported: false
   nakedret:
@@ -73,17 +70,11 @@ linters-settings:
 linters:
   enable-all: true
   disable:
-    - maligned
     - prealloc
-    - goerr113 # not good: https://github.com/Djarvur/go-err113/issues/10
+    - err113 # not good: https://github.com/Djarvur/go-err113/issues/10
     - paralleltest
-    - exhaustivestruct
 #    - tparallel
-    - interfacer # deprecated by the author https://github.com/mvdan/interfacer#interfacer
-    - scopelint # deprecated by the author https://github.com/kyoh86/scopelint#obsoleted
-    - maligned # deprecated by the author https://github.com/mdempsky/maligned
     - cyclop # TODO consider replacing gocyclo with cyclop
-    - ifshort # TODO enable
     - wrapcheck # TODO enable
     - forbidigo # TODO enable
     - gci # giving spurious errors for imports of syscall/js
@@ -92,6 +83,10 @@ linters:
     - tagliatelle # JSON tags using camel-case required by the specs we implement
     - varnamelen # This linter prevents us from using "i" as an index variable or "vc" for a variable name for a Verifiable Credential, both of which are very common in our code
     - depguard # TODO consider enabling in the future
+    - exportloopref
+    - revive
+    - perfsprint
+    - thelper
 
 issues:
   exclude-use-default: false
@@ -101,6 +96,8 @@ issues:
         - dupl
         - funlen
         - maintidx
+  max-issues-per-linter: 0
+  max-same-issues: 0
 
   exclude:
     # Allow package logger variables (for now)

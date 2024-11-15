@@ -70,7 +70,7 @@ func (r *Request) Do(method, endpointURL, contentType string, body io.Reader,
 	defer func() {
 		errClose := resp.Body.Close()
 		if errClose != nil {
-			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
+			fmt.Printf("failed to close response body: %s\n", errClose.Error())
 		}
 	}()
 

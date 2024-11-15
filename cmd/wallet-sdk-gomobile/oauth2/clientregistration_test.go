@@ -13,12 +13,12 @@ import (
 	"testing"
 	"time"
 
-	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
-
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/oauth2"
+	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	goapioauth2 "github.com/trustbloc/wallet-sdk/pkg/oauth2"
 )
 
@@ -61,12 +61,12 @@ func (m *mockIssuerServerHandler) ServeHTTP(w http.ResponseWriter, _ *http.Reque
 	}
 
 	responseBytes, err := json.Marshal(response)
-	require.NoError(m.t, err)
+	assert.NoError(m.t, err)
 
 	w.WriteHeader(http.StatusCreated)
 
 	_, err = w.Write(responseBytes)
-	require.NoError(m.t, err)
+	assert.NoError(m.t, err)
 }
 
 func TestRegisterClient(t *testing.T) {

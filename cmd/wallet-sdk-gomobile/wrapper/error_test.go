@@ -103,13 +103,13 @@ func TestToMobileError(t *testing.T) {
 			require.Equal(t, "Code", parsedErr.Code)
 			require.Equal(t, "Category", parsedErr.Category)
 			require.Equal(t, "even-higher-level error: higher-level error: Details", parsedErr.Details)
-		})
+		},
+	)
 	t.Run("goapiwalleterror.Error wrapped by another goapiwalleterror.Error", func(t *testing.T) {
 		// Note: We shouldn't actually do this anywhere in our code. If this happens, then the highest-level
 		// goapiwalleterror.Error is the one that will be detected and converted properly to the Gomobile error type,
 		// while the lower one will get "squashed" into the Details field. This test just confirms that this is the
 		// expected behaviour in such a scenario.
-
 		lowerLevelWalletError := &goapiwalleterror.Error{
 			Code:        "Lower-Level-Code",
 			Category:    "Lower-Level-Category",

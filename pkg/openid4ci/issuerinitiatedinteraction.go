@@ -700,7 +700,7 @@ func determineCredentialTypesAndFormats(
 	types := make([][]string, len(credentialOffer.CredentialConfigurationIDs))
 	formats := make([]string, len(credentialOffer.CredentialConfigurationIDs))
 
-	for i := 0; i < len(credentialOffer.CredentialConfigurationIDs); i++ {
+	for i := range credentialOffer.CredentialConfigurationIDs {
 		id := credentialOffer.CredentialConfigurationIDs[i]
 
 		configuration, ok := issuerMetadata.CredentialConfigurationsSupported[id]
@@ -736,7 +736,7 @@ func determineCredentialTypesAndFormats(
 
 func validateSignerKeyID(jwtSigner api.JWTSigner) error {
 	kidParts := strings.Split(jwtSigner.GetKeyID(), "#")
-	if len(kidParts) < 2 { //nolint: gomnd
+	if len(kidParts) < 2 { //nolint: mnd
 		return walleterror.NewExecutionError(
 			ErrorModule,
 			KeyIDMissingDIDPartCode,
@@ -750,10 +750,10 @@ func validateSignerKeyID(jwtSigner api.JWTSigner) error {
 func getSubjectIDs(vcs []*verifiable.Credential) []string {
 	var subjectIDs []string
 
-	for i := 0; i < len(vcs); i++ {
+	for i := range vcs {
 		subjects := vcs[i].Contents().Subject
 
-		for j := 0; j < len(subjects); j++ {
+		for j := range subjects {
 			subjectIDs = append(subjectIDs, subjects[j].ID)
 		}
 	}

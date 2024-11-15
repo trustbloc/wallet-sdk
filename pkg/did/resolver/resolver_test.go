@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/pkg/did/resolver"
@@ -66,7 +67,7 @@ func TestDIDResolver(t *testing.T) {
 			res.WriteHeader(http.StatusOK)
 
 			_, err := res.Write([]byte(doc))
-			require.NoError(t, err)
+			assert.NoError(t, err)
 		}))
 
 		defer func() { testServer.Close() }()

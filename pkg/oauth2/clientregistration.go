@@ -75,7 +75,7 @@ func getRawResponse(requestBytes []byte, registrationEndpoint string, opts *opts
 	defer func() {
 		errClose := resp.Body.Close()
 		if errClose != nil {
-			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
+			fmt.Printf("failed to close response body: %s\n", errClose.Error())
 		}
 	}()
 

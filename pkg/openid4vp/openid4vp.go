@@ -261,7 +261,7 @@ func (o *Interaction) PresentCredentialUnsafe(credential *verifiable.Credential,
 }
 
 // PresentCredential presents credentials to redirect uri from request object.
-func (o *Interaction) presentCredentials(
+func (o *Interaction) presentCredentials( //nolint: funlen
 	credentials []*verifiable.Credential,
 	customClaims CustomClaims,
 	opts *presentOpts,
@@ -416,6 +416,7 @@ func verifyRequestObjectAndDecodeClaims(
 	if reqObject.PresentationDefinition == nil && reqObject.Claims.VPToken.PresentationDefinition != nil {
 		reqObject.PresentationDefinition = reqObject.Claims.VPToken.PresentationDefinition
 	}
+
 	if reqObject.ClientMetadata.VPFormats == nil && reqObject.Registration.VPFormats != nil {
 		reqObject.ClientMetadata.ClientName = reqObject.Registration.ClientName
 		reqObject.ClientMetadata.ClientPurpose = reqObject.Registration.ClientPurpose
@@ -423,6 +424,7 @@ func verifyRequestObjectAndDecodeClaims(
 		reqObject.ClientMetadata.VPFormats = reqObject.Registration.VPFormats
 		reqObject.ClientMetadata.SubjectSyntaxTypesSupported = reqObject.Registration.SubjectSyntaxTypesSupported
 	}
+
 	if reqObject.ResponseURI == "" && reqObject.RedirectURI != "" {
 		reqObject.ResponseURI = reqObject.RedirectURI
 	}
@@ -567,7 +569,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 
 	var vpToken string
 
-	switch vpFormat {
+	switch vpFormat { //nolint:dupl
 	case presexch.FormatJWTVP:
 		claims := vpTokenClaims{
 			VP:    presentation,
@@ -606,7 +608,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 	}, nil
 }
 
-func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to decompose without a major reworking
+func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo,gocognit
 	credentials []*verifiable.Credential,
 	requestObject *requestObject,
 	customClaims CustomClaims,
@@ -685,7 +687,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 
 		var vpToken string
 
-		switch vpFormat {
+		switch vpFormat { //nolint:dupl
 		case presexch.FormatJWTVP:
 			// TODO: Fix this issue: the vpToken always uses the last presentation from the loop above
 			claims := vpTokenClaims{
@@ -1087,8 +1089,7 @@ func processUsingMSEntraErrorResponseFormat(respBytes []byte, detailedErr error)
 	}
 }
 
-type emptyObj struct {
-}
+type emptyObj struct{}
 
 func copyJSONKeysOnly(obj interface{}) interface{} {
 	empty := &emptyObj{}
@@ -1105,6 +1106,7 @@ func copyJSONKeysOnly(obj interface{}) interface{} {
 	case verifiable.CustomFields:
 		newMap := make(map[string]interface{})
 		populateClaimKeys(newMap, jsonObj)
+
 		return newMap
 	case []interface{}:
 		newSlice := make([]interface{}, len(jsonObj))
