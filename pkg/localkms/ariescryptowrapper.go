@@ -28,7 +28,7 @@ func NewAriesCryptoWrapper(cryptoSuite api.Suite) *AriesCryptoWrapper {
 // Sign gets key from kms using keyID and use it to sign data.
 func (c *AriesCryptoWrapper) Sign(msg []byte, keyID string) ([]byte, error) {
 	kidParts := strings.Split(keyID, "#")
-	if len(kidParts) == 2 { //nolint: gomnd
+	if len(kidParts) == 2 { //nolint: mnd
 		keyID = kidParts[1]
 	}
 

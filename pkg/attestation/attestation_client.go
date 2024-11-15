@@ -158,7 +158,7 @@ func (c *Client) attestationComplete(
 
 func getSignerDID(jwtSigner api.JWTSigner) (string, error) {
 	kidParts := strings.Split(jwtSigner.GetKeyID(), "#")
-	if len(kidParts) < 2 { //nolint: gomnd
+	if len(kidParts) < 2 { //nolint: mnd
 		return "", walleterror.NewExecutionError(
 			ErrorModule,
 			KeyIDMissingDIDPartCode,

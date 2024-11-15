@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/pkg/oauth2"
@@ -42,10 +43,10 @@ func (m *mockIssuerServerHandler) ServeHTTP(w http.ResponseWriter, _ *http.Reque
 	}
 
 	responseBytes, err := json.Marshal(response)
-	require.NoError(m.t, err)
+	assert.NoError(m.t, err)
 
 	_, err = w.Write(responseBytes)
-	require.NoError(m.t, err)
+	assert.NoError(m.t, err)
 }
 
 func TestRegisterClient(t *testing.T) {

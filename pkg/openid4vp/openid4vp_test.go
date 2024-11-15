@@ -315,7 +315,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NotNil(t, query)
 
 		displayData := interaction.VerifierDisplayData()
-		require.NoError(t, err)
+
 		require.Equal(t, verifierDID, displayData.DID)
 		require.Equal(t, "v_myprofile_jwt", displayData.Name)
 		require.Equal(t, "test verifier", displayData.Purpose)
@@ -347,9 +347,11 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NotContains(t, data, "interaction_details")
 
 		var presentationSubmission *presexch.PresentationSubmission
+
 		require.NoError(t, json.Unmarshal([]byte(data["presentation_submission"][0]), &presentationSubmission))
 
 		var vpTokenList []string
+
 		require.NoError(t, json.Unmarshal([]byte(data["vp_token"][0]), &vpTokenList))
 
 		var presentations []*verifiable.Presentation
@@ -597,7 +599,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		)
 
 		require.NoError(t, err)
-		require.Equal(t, response.State, "test34566")
+		require.Equal(t, "test34566", response.State)
 
 		idToken, err := base64.RawURLEncoding.DecodeString(strings.Split(response.IDTokenJWS, ".")[1])
 		require.NoError(t, err)
@@ -668,7 +670,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		)
 
 		require.NoError(t, err)
-		require.Equal(t, response.State, "test34566")
+		require.Equal(t, "test34566", response.State)
 	})
 
 	t.Run("no credentials provided", func(t *testing.T) {
@@ -724,9 +726,11 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		for _, testCase := range testCases {
 			t.Run("", func(t *testing.T) {
 				var vcs []*verifiable.Credential
+
 				for _, vcc := range testCase.vc {
 					vc, err := verifiable.CreateCredential(vcc, nil)
 					require.NoError(t, err)
+
 					vcs = append(vcs, vc)
 				}
 
@@ -921,7 +925,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 				require.Error(t, err)
 
 				var walletError *walleterror.Error
-				require.True(t, errors.As(err, &walletError))
+
+				require.ErrorAs(t, err, &walletError)
 				require.Equal(t, MSEntraBadOrMissingFieldsError, walletError.Category)
 				require.Equal(t, "message", walletError.Message)
 			})
@@ -1089,7 +1094,7 @@ func TestOpenID4VP_PresentedClaims(t *testing.T) {
 	require.NoError(t, presErr)
 	require.NotNil(t, presentation)
 
-	var credentials, singleCred []*verifiable.Credential
+	var credentials []*verifiable.Credential
 
 	var rawCreds []json.RawMessage
 
@@ -1105,8 +1110,6 @@ func TestOpenID4VP_PresentedClaims(t *testing.T) {
 
 		credentials = append(credentials, cred)
 	}
-
-	singleCred = append(singleCred, credentials[0])
 
 	mockDoc := mockResolution(t, mockDID, false)
 
@@ -1129,7 +1132,7 @@ func TestOpenID4VP_PresentedClaims(t *testing.T) {
 		require.NotNil(t, query)
 
 		displayData := interaction.VerifierDisplayData()
-		require.NoError(t, err)
+
 		require.Equal(t, verifierDID, displayData.DID)
 		require.Equal(t, "v_myprofile_jwt", displayData.Name)
 		require.Equal(t, "test verifier", displayData.Purpose)
@@ -1318,7 +1321,7 @@ func (c *cryptoMock) Verify(_, _ []byte, _ string) error {
 	return c.VerifyErr
 }
 
-func mockResolution(t *testing.T, mockDID string, useJWK bool) *did.DocResolution {
+func mockResolution(t *testing.T, mockDID string, useJWK bool) *did.DocResolution { //nolint:unparam
 	t.Helper()
 
 	edPub, _, err := ed25519.GenerateKey(rand.Reader)

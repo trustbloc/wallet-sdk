@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/piprate/json-gold/ld"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/did-go/doc/did"
 	arieskms "github.com/trustbloc/kms-go/spi/kms"
@@ -150,7 +151,7 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 		for _, headerToCheck := range m.headersToCheck.GetAll() {
 			// Note: for these tests, we're assuming that there aren't multiple values under a single name/key.
 			value := request.Header.Get(headerToCheck.Name)
-			require.Equal(m.t, headerToCheck.Value, value)
+			assert.Equal(m.t, headerToCheck.Value, value)
 		}
 	}
 
@@ -183,15 +184,15 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 
 		var payload map[string]interface{}
 		err = json.NewDecoder(request.Body).Decode(&payload)
-		require.NoError(m.t, err)
+		assert.NoError(m.t, err)
 
 		_, ok := payload["interaction_details"]
-		require.Equal(m.t, m.ackRequestExpectInteractionDetails, ok)
+		assert.Equal(m.t, m.ackRequestExpectInteractionDetails, ok)
 
 		writer.WriteHeader(http.StatusNoContent)
 	}
 
-	require.NoError(m.t, err)
+	assert.NoError(m.t, err)
 }
 
 func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {

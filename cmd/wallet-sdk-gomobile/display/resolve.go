@@ -9,15 +9,16 @@ package display
 
 import (
 	"errors"
+
 	"github.com/trustbloc/vc-go/proof/defaults"
 	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
+	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
-	goapicredentialschema "github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 )
 
 // Resolve resolves display information for issued credentials based on an issuer's metadata, which is fetched
@@ -55,11 +56,15 @@ func ResolveCredential(credentialsArray *verifiable.CredentialsArray, issuerURI 
 	return &Resolved{resolvedDisplayData: resolvedDisplayData}, nil
 }
 
-func ResolveCredentialV2(credentialsArray *verifiable.CredentialsArrayV2, issuerURI string, opts *Opts) (*Resolved, error) {
+func ResolveCredentialV2(
+	credentialsArray *verifiable.CredentialsArrayV2,
+	issuerURI string,
+	opts *Opts,
+) (*Resolved, error) {
 	credentials := &verifiable.CredentialsArray{}
 	opts.credentialConfigIDs = make([]string, credentialsArray.Length())
 
-	for i := 0; i < credentialsArray.Length(); i++ {
+	for i := range credentialsArray.Length() {
 		credentials.Add(credentialsArray.AtIndex(i))
 		opts.credentialConfigIDs[i] = credentialsArray.ConfigIDAtIndex(i)
 	}
@@ -150,7 +155,7 @@ func generateGoAPIOpts(vcs *verifiable.CredentialsArray, issuerURI string,
 func mobileVCsArrayToGoAPIVCsArray(vcs *verifiable.CredentialsArray) []*afgoverifiable.Credential {
 	goAPIVCs := make([]*afgoverifiable.Credential, vcs.Length())
 
-	for i := 0; i < vcs.Length(); i++ {
+	for i := range vcs.Length() {
 		goAPIVCs[i] = vcs.AtIndex(i).VC
 	}
 
