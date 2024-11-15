@@ -204,3 +204,46 @@ func (a *CredentialsArray) AtIndex(index int) *Credential {
 
 	return a.credentials[index]
 }
+
+// CredentialsArrayV2 represents an array of Credentials with associated array of config IDs.
+// Each config ID maps to CredentialConfigurationSupported in the issuer's metadata.
+type CredentialsArrayV2 struct {
+	credentials []*Credential
+	configIDs   []string
+}
+
+// NewCredentialsArrayV2 creates a new CredentialsArrayV2.
+func NewCredentialsArrayV2() *CredentialsArrayV2 {
+	return &CredentialsArrayV2{}
+}
+
+// Add adds a new Credential with associated credential config ID.
+func (a *CredentialsArrayV2) Add(credential *Credential, configID string) {
+	a.credentials = append(a.credentials, credential)
+	a.configIDs = append(a.configIDs, configID)
+}
+
+// Length returns the number of Credentials contained within this CredentialsArrayV2.
+func (a *CredentialsArrayV2) Length() int {
+	return len(a.credentials)
+}
+
+// AtIndex returns the Credential at the given index.
+// If the index passed in is out of bounds, then nil is returned.
+func (a *CredentialsArrayV2) AtIndex(index int) *Credential {
+	if index < 0 || index >= len(a.credentials) {
+		return nil
+	}
+
+	return a.credentials[index]
+}
+
+// ConfigIDAtIndex returns the config ID for the Credential at the given index.
+// If the index is out of bounds, it returns an empty string.
+func (a *CredentialsArrayV2) ConfigIDAtIndex(index int) string {
+	if index < 0 || index >= len(a.credentials) {
+		return ""
+	}
+
+	return a.configIDs[index]
+}

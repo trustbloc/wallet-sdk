@@ -27,13 +27,18 @@ var (
 const defaultLocale = "en-US"
 
 func buildCredentialDisplays(
-	vcs []*verifiable.Credential,
-	credentialConfigurationsSupported map[issuer.CredentialConfigurationID]*issuer.CredentialConfigurationSupported,
+	credentialConfigMappings []*credentialConfigMapping,
 	preferredLocale, maskingString string,
 ) ([]CredentialDisplay, error) {
 	var credentialDisplays []CredentialDisplay
 
-	for _, vc := range vcs {
+	for _, m := range credentialConfigMappings {
+		vc := m.credential
+
+		if vc == nil {
+			return nil, errors.New("no credential specified")
+		}
+
 		// The call below creates a copy of the VC with the selective disclosures merged into the credential subject.
 		displayVC, err := vc.CreateDisplayCredential(verifiable.DisplayAllDisclosures())
 		if err != nil {
@@ -45,34 +50,27 @@ func buildCredentialDisplays(
 			return nil, err
 		}
 
-		var foundMatchingType bool
+		var credentialDisplay *CredentialDisplay
 
-		for _, credentialConfigurationSupported := range credentialConfigurationsSupported {
-			if !haveMatchingTypes(credentialConfigurationSupported, displayVC.Contents().Types) {
-				continue
+		if len(m.config) > 0 {
+			var config *issuer.CredentialConfigurationSupported
+			for _, c := range m.config {
+				config = c
+				break
 			}
 
-			credentialDisplay, err := buildCredentialDisplay(credentialConfigurationSupported, vc, subject, preferredLocale,
-				maskingString)
+			credentialDisplay, err = buildCredentialDisplay(config, vc, subject, preferredLocale, maskingString)
 			if err != nil {
 				return nil, err
 			}
-
-			credentialDisplays = append(credentialDisplays, *credentialDisplay)
-
-			foundMatchingType = true
-
-			break
-		}
-
-		if !foundMatchingType {
+		} else {
 			// In case the issuer's metadata doesn't contain display info for this type of credential for some
 			// reason, we build up a default/generic type of credential display based only on information in the VC.
 			// It'll be functional, but won't be pretty.
-			credentialDisplay := buildDefaultCredentialDisplay(vc.Contents().ID, subject)
-
-			credentialDisplays = append(credentialDisplays, *credentialDisplay)
+			credentialDisplay = buildDefaultCredentialDisplay(vc.Contents().ID, subject)
 		}
+
+		credentialDisplays = append(credentialDisplays, *credentialDisplay)
 	}
 
 	return credentialDisplays, nil
@@ -413,14 +411,29 @@ func convertLogo(logo *issuer.Logo) *Logo {
 }
 
 func buildCredentialDisplaysAllLocale(
-	vcs []*verifiable.Credential,
-	credentialConfigurationsSupported map[issuer.CredentialConfigurationID]*issuer.CredentialConfigurationSupported,
+	credentialConfigMappings []*credentialConfigMapping,
 	maskingString string,
 	skipNonClaimData bool,
 ) ([]Credential, error) {
 	var credentialDisplays []Credential
 
-	for _, vc := range vcs {
+	for _, m := range credentialConfigMappings {
+		vc := m.credential
+
+		if vc == nil {
+			return nil, errors.New("no credential specified")
+		}
+
+		var config *issuer.CredentialConfigurationSupported
+		for _, c := range m.config {
+			config = c
+			break
+		}
+
+		if config == nil {
+			return nil, errors.New("no credential configuration specified")
+		}
+
 		// The call below creates a copy of the VC with the selective disclosures merged into the credential subject.
 		displayVC, err := vc.CreateDisplayCredential(verifiable.DisplayAllDisclosures())
 		if err != nil {
@@ -432,21 +445,12 @@ func buildCredentialDisplaysAllLocale(
 			return nil, err
 		}
 
-		for _, credentialConfigurationSupported := range credentialConfigurationsSupported {
-			if !haveMatchingTypes(credentialConfigurationSupported, displayVC.Contents().Types) {
-				continue
-			}
-
-			credentialDisplay, err := buildCredentialDisplayAllLocale(credentialConfigurationSupported, vc, subject,
-				maskingString, skipNonClaimData)
-			if err != nil {
-				return nil, err
-			}
-
-			credentialDisplays = append(credentialDisplays, *credentialDisplay)
-
-			break
+		credentialDisplay, err := buildCredentialDisplayAllLocale(config, vc, subject, maskingString, skipNonClaimData)
+		if err != nil {
+			return nil, err
 		}
+
+		credentialDisplays = append(credentialDisplays, *credentialDisplay)
 	}
 
 	return credentialDisplays, nil

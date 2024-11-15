@@ -64,6 +64,7 @@ type IssuerInitiatedInteraction struct {
 
 	credentialTypes              [][]string
 	credentialFormats            []string
+	credentialConfigIDs          []string
 	preAuthorizedCodeGrantParams *PreAuthorizedCodeGrantParams
 	authorizationCodeGrantParams *AuthorizationCodeGrantParams
 
@@ -125,6 +126,7 @@ func NewIssuerInitiatedInteraction(
 			authorizationCodeGrantParams: authorizationCodeGrantParams,
 			credentialTypes:              credentialTypes,
 			credentialFormats:            credentialFormats,
+			credentialConfigIDs:          credentialOffer.CredentialConfigurationIDs,
 		},
 		config.MetricsLogger.Log(
 			&api.MetricsEvent{
@@ -231,6 +233,11 @@ func (i *IssuerInitiatedInteraction) PreAuthorizedCodeGrantParams() (*PreAuthori
 	}
 
 	return i.preAuthorizedCodeGrantParams, nil
+}
+
+// CredentialConfigIDs returns the credential config IDs from the credential offer.
+func (i *IssuerInitiatedInteraction) CredentialConfigIDs() []string {
+	return i.credentialConfigIDs
 }
 
 // AuthorizationCodeGrantTypeSupported indicates whether the issuer supports the authorization code grant type.

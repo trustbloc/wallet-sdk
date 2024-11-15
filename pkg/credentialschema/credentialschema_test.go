@@ -13,14 +13,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/trustbloc/kms-go/doc/jose"
-
-	"github.com/trustbloc/wallet-sdk/pkg/memstorage"
-
 	"github.com/stretchr/testify/require"
+	"github.com/trustbloc/kms-go/doc/jose"
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/pkg/credentialschema"
+	"github.com/trustbloc/wallet-sdk/pkg/memstorage"
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 

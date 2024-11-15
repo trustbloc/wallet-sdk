@@ -73,6 +73,59 @@ func CheckResolvedDisplayData(t *testing.T, actualDisplayData, expectedDisplayDa
 	checkCredentialDisplay(t, actualCredentialDisplay, expectedCredentialDisplay, checkClaims)
 }
 
+func ResolveDisplayDataV2(t *testing.T, credentials *verifiable.CredentialsArrayV2, expectedDisplayData *display.Data,
+	issuerURI, issuerProfileID string, didResolver *did.Resolver,
+) {
+	metricsLogger := metricslogger.NewMetricsLogger()
+
+	opts := display.NewOpts()
+	opts.SetMetricsLogger(metricsLogger)
+	opts.DisableHTTPClientTLSVerify()
+	opts.SetDIDResolver(didResolver)
+
+	resolvedDisplayData, err := display.ResolveCredentialV2(credentials, issuerURI, opts)
+	require.NoError(t, err)
+	require.NotNil(t, resolvedDisplayData)
+
+	CheckResolvedDisplayDataV2(t, resolvedDisplayData, expectedDisplayData)
+
+	checkResolveMetricsEvent(t, metricsLogger, issuerProfileID)
+}
+
+func CheckResolvedDisplayDataV2(t *testing.T, resolvedDisplayData *display.Resolved, expectedDisplayData *display.Data) {
+	t.Helper()
+
+	require.Equal(t, 1, resolvedDisplayData.LocalizedIssuersLength())
+
+	resolvedIssuerData := resolvedDisplayData.LocalizedIssuerAtIndex(0)
+	expectedIssuerData := expectedDisplayData.IssuerDisplay()
+
+	require.Equal(t, expectedIssuerData.Name(), resolvedIssuerData.Name())
+	require.Equal(t, expectedIssuerData.Locale(), resolvedIssuerData.Locale())
+	require.Equal(t, expectedIssuerData.BackgroundColor(), resolvedIssuerData.BackgroundColor())
+	require.Equal(t, expectedIssuerData.TextColor(), resolvedIssuerData.TextColor())
+
+	require.Equal(t, expectedDisplayData.CredentialDisplaysLength(), resolvedDisplayData.CredentialsLength())
+
+	for i := 0; i < expectedDisplayData.CredentialDisplaysLength(); i++ {
+		expectedCredentialDisplay := expectedDisplayData.CredentialDisplayAtIndex(i)
+		resolvedCredentialDisplay := resolvedDisplayData.CredentialAtIndex(i)
+
+		require.Equal(t, resolvedCredentialDisplay.LocalizedOverviewsLength(), 1)
+
+		expectedOverview := expectedCredentialDisplay.Overview()
+		resolvedOverview := resolvedCredentialDisplay.LocalizedOverviewAtIndex(0)
+
+		require.Equal(t, expectedOverview.Name(), resolvedOverview.Name())
+		require.Equal(t, expectedOverview.Locale(), resolvedOverview.Locale())
+		require.Equal(t, expectedOverview.BackgroundColor(), resolvedOverview.BackgroundColor())
+		require.Equal(t, expectedOverview.TextColor(), resolvedOverview.TextColor())
+		require.Equal(t, expectedOverview.Logo(), resolvedOverview.Logo())
+
+		require.Equal(t, expectedCredentialDisplay.ClaimsLength(), resolvedCredentialDisplay.SubjectsLength())
+	}
+}
+
 func claimsMap(credentialDisplay *display.CredentialDisplay) map[string]string {
 	m := make(map[string]string)
 

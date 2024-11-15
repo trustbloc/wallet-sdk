@@ -1139,6 +1139,62 @@
                   "text_color": "#FFFFFF"
                 }
               ]
+            },
+            "UniversityDegreeCredential_ldp_vc_v2": {
+              "format": "ldp_vc",
+              "credential_definition": {
+                "type": [
+                  "VerifiableCredential",
+                  "UniversityDegreeCredential"
+                ],
+                "credentialSubject": {
+                  "familyName": {
+                    "display": [
+                      {
+                        "name": "Family Name",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "givenName": {
+                    "display": [
+                      {
+                        "name": "Given Name",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "degree": {
+                    "display": [
+                      {
+                        "name": "Degree",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  }
+                }
+              },
+              "cryptographic_binding_methods_supported": [
+                "did"
+              ],
+              "credential_signing_alg_values_supported": [
+                "Ed25519Signature2018"
+              ],
+              "display": [
+                {
+                  "name": "University Degree Credential",
+                  "locale": "en-US",
+                  "logo": {
+                    "uri": "https://example.com/public/logo.png",
+                    "alt_text": "a square logo of a degree verification"
+                  },
+                  "background_color": "#12107c",
+                  "text_color": "#FFFFFF"
+                }
+              ]
             }
           }
         }

@@ -10,8 +10,10 @@ package integration
 import (
 	"crypto/tls"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -77,6 +79,7 @@ type test struct {
 	claims              []*claimEntry
 	acknowledgeReject   bool
 	trustInfo           bool
+	displayAPIv2        bool
 }
 
 type claimEntry struct {
@@ -248,23 +251,21 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			},
 			expectedDisplayData: helpers.ParseDisplayData(t, expectedUniversityDegreeV2),
 			expectedIssuerURI:   "http://localhost:8075/oidc/idp/university_degree_issuer_v2/v1.0",
+			displayAPIv2:        true,
 		},
 	}
 
-	oidc4ciSetup, err := oidc4ci.NewSetup(testenv.NewHttpRequest())
-	require.NoError(t, err)
+	oidc4ciSetup, setupErr := oidc4ci.NewSetup(testenv.NewHttpRequest())
+	require.NoError(t, setupErr)
 
-	err = oidc4ciSetup.AuthorizeIssuerBypassAuth(organizationID, vcsAPIDirectURL)
-	require.NoError(t, err)
-
-	//vcStatusVerifier, err := credential.NewStatusVerifier(credential.NewStatusVerifierOpts())
-	//require.NoError(t, err)
+	setupErr = oidc4ciSetup.AuthorizeIssuerBypassAuth(organizationID, vcsAPIDirectURL)
+	require.NoError(t, setupErr)
 
 	var traceIDs []string
 
 	for _, tc := range preAuthTests {
-		fmt.Println(fmt.Sprintf("running tests with issuerProfileID=%s issuerDIDMethod=%s walletDIDMethod=%s",
-			tc.issuerProfileID, tc.issuerDIDMethod, tc.walletDIDMethod))
+		fmt.Printf("Running tests with issuerProfileID=%s issuerDIDMethod=%s walletDIDMethod=%s\n",
+			tc.issuerProfileID, tc.issuerDIDMethod, tc.walletDIDMethod)
 
 		credentialConfigs := make([]oidc4ci.CredentialConfiguration, 0)
 
@@ -279,20 +280,29 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		offerCredentialURL, err := oidc4ciSetup.InitiatePreAuthorizedIssuance(tc.issuerProfileID, credentialConfigs)
 		require.NoError(t, err)
 
-		println(offerCredentialURL)
+		if tc.displayAPIv2 {
+			// In the current implementation, VCS determines the configuration ID by matching the credential type.
+			// To test Display API v2, we intentionally switch to the second configuration ID, which shares the same
+			// credential type as the first configuration but has a different set of display fields.
+			setCredentialConfigurationIDs(t, &offerCredentialURL,
+				[]string{"UniversityDegreeCredential_ldp_vc_v2", "UniversityDegreeCredential_ldp_vc_v1"})
+		}
+
+		fmt.Printf("offerCredentialURL=%s\n", offerCredentialURL)
 
 		testHelper := helpers.NewCITestHelper(t, tc.walletDIDMethod, tc.walletKeyType)
 
-		opts := did.NewResolverOpts()
-		opts.SetResolverServerURI(didResolverURL)
+		resolverOpts := did.NewResolverOpts()
+		resolverOpts.SetResolverServerURI(didResolverURL)
 
-		didResolver, err := did.NewResolver(opts)
+		didResolver, err := did.NewResolver(resolverOpts)
 		require.NoError(t, err)
 
 		didID, err := testHelper.DIDDoc.ID()
 		require.NoError(t, err)
 
-		interactionRequiredArgs := openid4ci.NewIssuerInitiatedInteractionArgs(offerCredentialURL, testHelper.KMS.GetCrypto(), didResolver)
+		interactionRequiredArgs := openid4ci.NewIssuerInitiatedInteractionArgs(offerCredentialURL,
+			testHelper.KMS.GetCrypto(), didResolver)
 
 		interactionOptionalArgs := openid4ci.NewInteractionOpts()
 		interactionOptionalArgs.SetDocumentLoader(&documentLoaderReverseWrapper{DocumentLoader: testutil.DocumentLoader(t)})
@@ -315,6 +325,9 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 
 		issuerMetadata, err := interaction.IssuerMetadata()
 		require.NoError(t, err)
+
+		issuerURI := interaction.IssuerURI()
+		require.Equal(t, tc.expectedIssuerURI, issuerURI)
 
 		offeringDisplayData := display.ResolveCredentialOffer(
 			issuerMetadata,
@@ -382,28 +395,28 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			}
 		}
 
-		credentials, err := interaction.RequestCredentialWithPreAuth(vm, opt)
-		require.NoError(t, err)
-		require.NotNil(t, credentials)
+		var subjectID string
 
-		for i := 0; i < credentials.Length(); i++ {
-			cred := credentials.AtIndex(i)
-
-			require.NotEmpty(t, cred.ID())
-			require.NotEmpty(t, cred.IssuerID())
-			require.NotEmpty(t, cred.Types())
-			require.True(t, cred.IssuanceDate() > 0)
-			require.True(t, cred.ExpirationDate() > 0)
+		if tc.displayAPIv2 {
+			subjectID = requestCredentialWithPreAuthV2(t, interaction, vm, didResolver, opt, tc.issuerDIDMethod,
+				tc.issuerProfileID, tc.expectedDisplayData)
+		} else {
+			subjectID = requestCredentialWithPreAuth(t, interaction, vm, didResolver, opt, tc.issuerDIDMethod,
+				tc.issuerProfileID, tc.expectedDisplayData)
 		}
+
+		require.Contains(t, subjectID, didID)
 
 		requestedAcknowledgment, err := interaction.Acknowledgment()
 		require.NotNil(t, requestedAcknowledgment)
+		require.NoError(t, err)
 
 		requestedAcknowledgmentData, err := requestedAcknowledgment.Serialize()
 		require.NoError(t, err)
 
 		requestedAcknowledgmentRestored, err := openid4ci.NewAcknowledgment(requestedAcknowledgmentData)
 		require.NotNil(t, requestedAcknowledgmentRestored)
+		require.NoError(t, err)
 
 		err = requestedAcknowledgmentRestored.SetInteractionDetails(fmt.Sprintf(`{"profile": %q}`, tc.issuerProfileID))
 		require.NoError(t, err)
@@ -414,36 +427,15 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 			require.NoError(t, requestedAcknowledgmentRestored.Success())
 		}
 
-		vc := credentials.AtIndex(0)
-
-		serializedVC, err := vc.Serialize()
-		require.NoError(t, err)
-
-		println("credential:", serializedVC)
-		require.NoError(t, err)
-		require.Contains(t, vc.VC.Contents().Issuer.ID, tc.issuerDIDMethod)
-
-		helpers.ResolveDisplayData(t, credentials, tc.expectedDisplayData, interaction.IssuerURI(), tc.issuerProfileID,
-			didResolver)
-
-		issuerURI := interaction.IssuerURI()
-		require.Equal(t, tc.expectedIssuerURI, issuerURI)
-
-		subID, err := verifiable.SubjectID(vc.VC.Contents().Subject)
-		require.NoError(t, err)
-		require.Contains(t, subID, didID)
-
-		//		require.NoError(t, vcStatusVerifier.Verify(vc))
-
 		testHelper.CheckActivityLogAfterOpenID4CIFlow(t, vcsAPIDirectURL,
-			tc.issuerProfileID, subID)
+			tc.issuerProfileID, subjectID)
 	}
 
 	require.Len(t, traceIDs, len(preAuthTests))
 
 	time.Sleep(5 * time.Second)
 	for _, traceID := range traceIDs {
-		_, err = testenv.NewHttpRequest().Send(http.MethodGet,
+		_, err := testenv.NewHttpRequest().Send(http.MethodGet,
 			queryTraceURL+traceID,
 			"",
 			nil,
@@ -452,6 +444,115 @@ func doPreAuthCodeFlowTest(t *testing.T) {
 		)
 		require.NoError(t, err)
 	}
+}
+
+func setCredentialConfigurationIDs(t *testing.T, credentialOfferURL *string, configIDs []string) {
+	t.Helper()
+
+	u, err := url.Parse(*credentialOfferURL)
+	require.NoError(t, err)
+
+	offerParam := u.Query().Get("credential_offer")
+	require.NotEmpty(t, offerParam)
+
+	var offer map[string]interface{}
+	err = json.Unmarshal([]byte(offerParam), &offer)
+	require.NoError(t, err)
+
+	offer["credential_configuration_ids"] = configIDs
+
+	modifiedOffer, err := json.Marshal(offer)
+	require.NoError(t, err)
+
+	query := u.Query()
+	query.Set("credential_offer", string(modifiedOffer))
+	u.RawQuery = query.Encode()
+
+	*credentialOfferURL = u.String()
+}
+
+func requestCredentialWithPreAuth(
+	t *testing.T,
+	interaction *openid4ci.IssuerInitiatedInteraction,
+	vm *api.VerificationMethod,
+	didResolver *did.Resolver,
+	opts *openid4ci.RequestCredentialWithPreAuthOpts,
+	issuerDIDMethod, issuerProfileID string,
+	expectedDisplayData *display.Data,
+) string {
+	credentials, err := interaction.RequestCredentialWithPreAuth(vm, opts)
+	require.NoError(t, err)
+	require.NotNil(t, credentials)
+
+	for i := 0; i < credentials.Length(); i++ {
+		cred := credentials.AtIndex(i)
+
+		require.NotEmpty(t, cred.ID())
+		require.NotEmpty(t, cred.IssuerID())
+		require.NotEmpty(t, cred.Types())
+		require.True(t, cred.IssuanceDate() > 0)
+		require.True(t, cred.ExpirationDate() > 0)
+	}
+
+	vc := credentials.AtIndex(0)
+
+	serializedVC, err := vc.Serialize()
+	require.NoError(t, err)
+
+	fmt.Printf("credential: %s\n", serializedVC)
+
+	require.NoError(t, err)
+	require.Contains(t, vc.VC.Contents().Issuer.ID, issuerDIDMethod)
+
+	helpers.ResolveDisplayData(t, credentials, expectedDisplayData, interaction.IssuerURI(), issuerProfileID,
+		didResolver)
+
+	subjectID, err := verifiable.SubjectID(vc.VC.Contents().Subject)
+	require.NoError(t, err)
+
+	return subjectID
+}
+
+func requestCredentialWithPreAuthV2(
+	t *testing.T,
+	interaction *openid4ci.IssuerInitiatedInteraction,
+	vm *api.VerificationMethod,
+	didResolver *did.Resolver,
+	opts *openid4ci.RequestCredentialWithPreAuthOpts,
+	issuerDIDMethod, issuerProfileID string,
+	expectedDisplayData *display.Data,
+) string {
+	credentials, err := interaction.RequestCredentialWithPreAuthV2(vm, opts)
+	require.NoError(t, err)
+	require.NotNil(t, credentials)
+
+	for i := 0; i < credentials.Length(); i++ {
+		cred := credentials.AtIndex(i)
+
+		require.NotEmpty(t, cred.ID())
+		require.NotEmpty(t, cred.IssuerID())
+		require.NotEmpty(t, cred.Types())
+		require.True(t, cred.IssuanceDate() > 0)
+		require.True(t, cred.ExpirationDate() > 0)
+	}
+
+	vc := credentials.AtIndex(0)
+
+	serializedVC, err := vc.Serialize()
+	require.NoError(t, err)
+
+	fmt.Printf("credential: %s\n", serializedVC)
+
+	require.NoError(t, err)
+	require.Contains(t, vc.VC.Contents().Issuer.ID, issuerDIDMethod)
+
+	helpers.ResolveDisplayDataV2(t, credentials, expectedDisplayData, interaction.IssuerURI(), issuerProfileID,
+		didResolver)
+
+	subjectID, err := verifiable.SubjectID(vc.VC.Contents().Subject)
+	require.NoError(t, err)
+
+	return subjectID
 }
 
 func doAuthCodeFlowTest(t *testing.T, useDynamicClientRegistration bool) {

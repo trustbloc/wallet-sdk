@@ -15,15 +15,14 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
-	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
+	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
 const (
@@ -215,33 +214,65 @@ func TestResolveCredential(t *testing.T) {
 	parseVCOptionalArgs := verifiable.NewOpts()
 	parseVCOptionalArgs.DisableProofCheck()
 
-	vc, err := verifiable.ParseCredential(credentialUniversityDegree, parseVCOptionalArgs)
-	require.NoError(t, err)
+	t.Run("Success: CredentialArray v1", func(t *testing.T) {
+		vc, err := verifiable.ParseCredential(credentialUniversityDegree, parseVCOptionalArgs)
+		require.NoError(t, err)
 
-	vcs := verifiable.NewCredentialsArray()
-	vcs.Add(vc)
+		vcs := verifiable.NewCredentialsArray()
+		vcs.Add(vc)
 
-	opts := display.NewOpts().SetMaskingString("*")
+		opts := display.NewOpts().SetMaskingString("*")
 
-	resolvedDisplayData, err := display.ResolveCredential(vcs, server.URL, opts)
-	require.NoError(t, err)
+		resolvedDisplayData, err := display.ResolveCredential(vcs, server.URL, opts)
+		require.NoError(t, err)
 
-	require.Equal(t, resolvedDisplayData.LocalizedIssuersLength(), 2)
-	require.Equal(t, resolvedDisplayData.CredentialsLength(), 1)
-	require.Equal(t, resolvedDisplayData.CredentialAtIndex(0).LocalizedOverviewsLength(), 1)
-	require.Equal(t, resolvedDisplayData.CredentialAtIndex(0).SubjectsLength(), 6)
+		require.Equal(t, resolvedDisplayData.LocalizedIssuersLength(), 2)
+		require.Equal(t, resolvedDisplayData.CredentialsLength(), 1)
+		require.Equal(t, resolvedDisplayData.CredentialAtIndex(0).LocalizedOverviewsLength(), 1)
+		require.Equal(t, resolvedDisplayData.CredentialAtIndex(0).SubjectsLength(), 6)
 
-	credentialDisplay := resolvedDisplayData.CredentialAtIndex(0)
+		credentialDisplay := resolvedDisplayData.CredentialAtIndex(0)
 
-	for i := 0; i < credentialDisplay.SubjectsLength(); i++ {
-		claim := credentialDisplay.SubjectAtIndex(i)
+		for i := 0; i < credentialDisplay.SubjectsLength(); i++ {
+			claim := credentialDisplay.SubjectAtIndex(i)
 
-		if claim.LocalizedLabelAtIndex(0).Name() == sensitiveIDLabel {
-			require.Equal(t, "*****6789", claim.Value())
-		} else if claim.LocalizedLabelAtIndex(0).Name() == reallySensitiveIDLabel {
-			require.Equal(t, "*******", claim.Value())
+			if claim.LocalizedLabelAtIndex(0).Name() == sensitiveIDLabel {
+				require.Equal(t, "*****6789", claim.Value())
+			} else if claim.LocalizedLabelAtIndex(0).Name() == reallySensitiveIDLabel {
+				require.Equal(t, "*******", claim.Value())
+			}
 		}
-	}
+	})
+
+	t.Run("Success: CredentialArray v2", func(t *testing.T) {
+		vc, err := verifiable.ParseCredential(credentialUniversityDegree, parseVCOptionalArgs)
+		require.NoError(t, err)
+
+		vcs := verifiable.NewCredentialsArrayV2()
+		vcs.Add(vc, "UniversityDegreeCredential_jwt_vc_json_v1")
+
+		opts := display.NewOpts().SetMaskingString("*")
+
+		resolvedDisplayData, err := display.ResolveCredentialV2(vcs, server.URL, opts)
+		require.NoError(t, err)
+
+		require.Equal(t, resolvedDisplayData.LocalizedIssuersLength(), 2)
+		require.Equal(t, resolvedDisplayData.CredentialsLength(), 1)
+		require.Equal(t, resolvedDisplayData.CredentialAtIndex(0).LocalizedOverviewsLength(), 1)
+		require.Equal(t, resolvedDisplayData.CredentialAtIndex(0).SubjectsLength(), 6)
+
+		credentialDisplay := resolvedDisplayData.CredentialAtIndex(0)
+
+		for i := 0; i < credentialDisplay.SubjectsLength(); i++ {
+			claim := credentialDisplay.SubjectAtIndex(i)
+
+			if claim.LocalizedLabelAtIndex(0).Name() == sensitiveIDLabel {
+				require.Equal(t, "*****6789", claim.Value())
+			} else if claim.LocalizedLabelAtIndex(0).Name() == reallySensitiveIDLabel {
+				require.Equal(t, "*******", claim.Value())
+			}
+		}
+	})
 }
 
 func TestResolveCredentialOffer(t *testing.T) {
