@@ -59,6 +59,9 @@ var (
 	//go:embed testdata/sample_credential_response_batch.json
 	sampleCredentialResponseBatch []byte
 
+	//go:embed testdata/sample_credential_response_jsonld.json
+	sampleCredentialResponseJSONLD []byte
+
 	//go:embed testdata/sample_issuer_metadata.json
 	sampleIssuerMetadata string
 
@@ -1919,6 +1922,32 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 	})
 }
 
+func TestIssuerInitiatedInteraction_RequestCredential_NoProofFound(t *testing.T) {
+	issuerServerHandler := &mockIssuerServerHandler{
+		t:                  t,
+		credentialResponse: sampleCredentialResponseJSONLD,
+		httpStatusCode:     http.StatusOK,
+	}
+
+	server := httptest.NewServer(issuerServerHandler)
+	defer server.Close()
+
+	issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
+	interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false, true),
+		enableVCProofChecks())
+
+	credentials, err := interaction.RequestCredentialWithPreAuth(
+		&jwtSignerMock{
+			keyID: mockKeyID,
+		},
+		openid4ci.WithPIN("1234"),
+	)
+
+	require.ErrorContains(t, err, "proof not found")
+	require.Len(t, credentials, 0)
+}
+
 func TestIssuerInitiatedInteraction_GrantTypes(t *testing.T) {
 	issuerServerHandler := &mockIssuerServerHandler{
 		t:                  t,
@@ -2100,10 +2129,22 @@ func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
 	})
 }
 
-func newIssuerInitiatedInteraction(t *testing.T, requestURI string) *openid4ci.IssuerInitiatedInteraction {
+type clientConfigOpt func(*openid4ci.ClientConfig)
+
+func enableVCProofChecks() clientConfigOpt {
+	return func(config *openid4ci.ClientConfig) {
+		config.DisableVCProofChecks = false
+	}
+}
+
+func newIssuerInitiatedInteraction(t *testing.T, requestURI string, opts ...clientConfigOpt) *openid4ci.IssuerInitiatedInteraction {
 	t.Helper()
 
 	config := getTestClientConfig(t)
+
+	for _, opt := range opts {
+		opt(config)
+	}
 
 	interaction, err := openid4ci.NewIssuerInitiatedInteraction(requestURI, config)
 	require.NoError(t, err)

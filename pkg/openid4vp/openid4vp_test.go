@@ -524,7 +524,9 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 					Fields: []*presexch.Field{{
 						Path: []string{"$.credentialSubject.taxResidency", "$.vc.credentialSubject.taxResidency"},
 						Filter: &presexch.Filter{
-							Type: &strType,
+							FilterItem: presexch.FilterItem{
+								Type: &strType,
+							},
 						},
 					}},
 				},

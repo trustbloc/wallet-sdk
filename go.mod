@@ -18,7 +18,7 @@ require (
 	github.com/trustbloc/did-go v1.3.1-0.20241021165331-5721a3ff7396
 	github.com/trustbloc/kms-go v1.1.3-0.20241001141623-8d9510c6bb88
 	github.com/trustbloc/sidetree-go v1.1.0
-	github.com/trustbloc/vc-go v1.2.1-0.20241031140324-d25fb970e6f5
+	github.com/trustbloc/vc-go v1.2.1-0.20241119140508-59af0e10bdcc
 	golang.org/x/oauth2 v0.13.0
 )
 
