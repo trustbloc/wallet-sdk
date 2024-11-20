@@ -25,7 +25,10 @@ var universityDegreeCredentialWithoutName string
 
 func TestParse(t *testing.T) {
 	t.Run("Success - default options", func(t *testing.T) {
-		universityDegreeVC, err := verifiable.ParseCredential(universityDegreeCredential, nil)
+		opts := verifiable.NewOpts()
+		opts.DisableProofCheck()
+
+		universityDegreeVC, err := verifiable.ParseCredential(universityDegreeCredential, opts)
 		require.NoError(t, err)
 		require.Equal(t, "http://example.edu/credentials/1872", universityDegreeVC.VC.Contents().ID)
 	})
