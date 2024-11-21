@@ -181,6 +181,7 @@ jobs:
   iOSFlutterIntegrationTest:
     runs-on: macos-13
     needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer, BuildMockSampleWebhookServer ]
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -261,6 +262,7 @@ jobs:
   AndroidFlutterIntegrationTest:
     runs-on: macos-13
     needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer, BuildMockSampleWebhookServer ]
+    timeout-minutes: 60
     steps:
       - name: checkout
         uses: actions/checkout@v4
