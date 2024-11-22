@@ -102,8 +102,8 @@ public class OpenID4CI {
             opts.setAttestationVC(attestationVM!, vc: attestationVC)
         }
 
-        let credentials  = try initiatedInteraction.requestCredential(withPreAuth: didVerificationMethod, opts: opts)
-        return convertVerifiableCredentialsWithIdArray(arr:credentials);
+        let credentials  = try initiatedInteraction.requestCredential(withPreAuthV2: didVerificationMethod, opts: opts)
+        return convertVerifiableCredentialsV2WithIdArray(arr:credentials);
     }
     
     func requireAcknowledgment() throws -> ObjCBool{

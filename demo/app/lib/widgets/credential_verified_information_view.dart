@@ -26,7 +26,8 @@ class CredentialVerifiedState extends State<CredentialVerifiedInformation> {
     setState(() {
       isLoading = true;
     });
-    WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then((response) {
+    debugPrint('whats the verified credential ${widget.credentialData.resolvedCredentialData.toString()}');
+    WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.resolvedCredentialData).then((response) {
       setState(() {
         if(response.claims.isNotEmpty){
         credentialClaimsData = response.claims;

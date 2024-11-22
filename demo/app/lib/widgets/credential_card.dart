@@ -38,7 +38,8 @@ class _CredentialCardState extends State<CredentialCard> {
 
   @override
   void initState() {
-    WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.credentialDisplayData).then((response) {
+
+    WalletSDKPlugin.parseCredentialDisplayData(widget.credentialData.resolvedCredentialData).then((response) {
       setState(() {
           credentialDisplayName = response.overviewName;
           logoURL = response.logo;

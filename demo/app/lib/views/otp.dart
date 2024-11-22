@@ -194,11 +194,11 @@ class _OTPPage extends State<OTP> {
                                     _otp!,
                                     attestationVC: await AttestationService.returnAttestationVCIfEnabled(),
                                   );
-
+                                  debugPrint('whats the credentials config id..${credentials.elementAt(0).configID}');
                                   String? issuerURI = await WalletSDKPlugin.issuerURI();
                                   final resolvedCredentialsDisplay = await WalletSDKPlugin.resolveDisplayData(
-                                      credentials.map((e) => e.content).toList(), issuerURI!);
-                                  log('serializeDisplayData otp-> $resolvedCredentialsDisplay');
+                                      credentials.map((e) => e.content).toList(), credentials.map((e) => e.configID).toList(), issuerURI!);
+                                  debugPrint('serializeDisplayData otp-> ${resolvedCredentialsDisplay.resolvedCredentialDisplayData}');
                                   var activities = await WalletSDKPlugin.storeActivityLogger();
 
                                   final result = <CredentialData>[];
@@ -213,7 +213,7 @@ class _OTPPage extends State<OTP> {
                                     result.add(CredentialData(
                                         rawCredential: credential,
                                         issuerURL: issuerURI,
-                                        credentialDisplayData: resolvedCredentialsDisplay.credentialsDisplay[i],
+                                        resolvedCredentialData: resolvedCredentialsDisplay.resolvedCredentialDisplayData,
                                         issuerDisplayData: resolvedCredentialsDisplay.issuerDisplay,
                                         credentialDID: userDIDId,
                                         credID: credID));

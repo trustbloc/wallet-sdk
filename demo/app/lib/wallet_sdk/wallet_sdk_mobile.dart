@@ -169,9 +169,9 @@ class WalletSDK extends WalletPlatform {
     return issuerURI;
   }
 
-  Future<CredentialsDisplayData> resolveDisplayData(List<String> credentials, String issuerURI) async {
+  Future<CredentialsDisplayData> resolveDisplayData(List<String> credentials, List<String> configIDs, String issuerURI) async {
     final credentialResponse = await methodChannel
-        .invokeMethod('resolveDisplayData', <String, dynamic>{'vcCredentials': credentials, 'uri': issuerURI});
+        .invokeMethod('resolveDisplayData', <String, dynamic>{'vcCredentials': credentials, 'configIds': configIDs,  'uri': issuerURI});
 
     return CredentialsDisplayData.fromMap(credentialResponse.cast<String, dynamic>());
   }

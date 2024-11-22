@@ -535,16 +535,19 @@ class VerifierDisplayData {
 class CredentialWithId {
   final String id;
   final String content;
+  final String configID;
 
   const CredentialWithId({
     required this.id,
     required this.content,
+    required this.configID
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'content': content,
+      'configID': configID
     };
   }
 
@@ -552,30 +555,31 @@ class CredentialWithId {
     return CredentialWithId(
       id: map['id'] as String,
       content: map['content'] as String,
+      configID: map['configID'] as String
     );
   }
 }
 
 class CredentialsDisplayData {
-  final List<String> credentialsDisplay;
   final String issuerDisplay;
+  final String resolvedCredentialDisplayData;
 
   const CredentialsDisplayData({
-    required this.credentialsDisplay,
     required this.issuerDisplay,
+    required this.resolvedCredentialDisplayData
   });
 
   Map<String, dynamic> toMap() {
     return {
-      'credentialsDisplay': credentialsDisplay,
       'issuerDisplay': issuerDisplay,
+      'resolvedCredentialDisplayData' : resolvedCredentialDisplayData
     };
   }
 
   factory CredentialsDisplayData.fromMap(Map<String, dynamic> map) {
     return CredentialsDisplayData(
-      credentialsDisplay: map['credentialsDisplay']?.cast<String>(),
       issuerDisplay: map['issuerDisplay'] as String,
+      resolvedCredentialDisplayData: map['resolvedCredentialDisplayData'] as String
     );
   }
 }
