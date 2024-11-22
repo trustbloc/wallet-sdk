@@ -21,24 +21,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/trustbloc/vc-go/proof/defaults"
-
-	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
-	"github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
-
-	"github.com/trustbloc/wallet-sdk/pkg/common"
-
 	"github.com/google/uuid"
 	"github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/vc-go/dataintegrity"
 	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
+	"github.com/trustbloc/vc-go/proof/defaults"
 	"github.com/trustbloc/vc-go/verifiable"
 	"golang.org/x/oauth2"
 
-	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
-
 	"github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
+	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
+	"github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
+	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
@@ -652,7 +648,16 @@ func (i *interaction) issuerBasicTrustInfo() (*basicTrustInfo, error) {
 	jwtKID := i.issuerMetadata.GetJWTKID()
 
 	if jwtKID == nil {
-		return &basicTrustInfo{}, nil
+		var issuerURI *url.URL
+
+		issuerURI, err = url.Parse(i.issuerURI)
+		if err != nil {
+			return nil, fmt.Errorf("parse issuer uri: %w", err)
+		}
+
+		return &basicTrustInfo{
+			Domain: issuerURI.Host,
+		}, nil
 	}
 
 	jwtKIDSplit := strings.Split(*jwtKID, "#")

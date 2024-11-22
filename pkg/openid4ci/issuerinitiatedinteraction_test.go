@@ -2092,40 +2092,65 @@ func TestIssuerInitiatedInteraction_VerifyIssuer(t *testing.T) {
 }
 
 func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
+	issuerServerHandler := &mockIssuerServerHandler{
+		t: t,
+	}
+
+	server := httptest.NewServer(issuerServerHandler)
+	defer server.Close()
+
 	t.Run("Success", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{
-			t: t,
-		}
+		t.Run("Signed metadata", func(t *testing.T) {
+			localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: localkms.NewMemKMSStore()})
+			require.NoError(t, err)
 
-		server := httptest.NewServer(issuerServerHandler)
-		defer server.Close()
+			_, publicKey, err := localKMS.Create(arieskms.ED25519Type)
+			require.NoError(t, err)
 
-		localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: localkms.NewMemKMSStore()})
-		require.NoError(t, err)
+			networkDocumentLoaderHTTPTimeout := time.Second * 10
 
-		_, publicKey, err := localKMS.Create(arieskms.ED25519Type)
-		require.NoError(t, err)
+			config := &openid4ci.ClientConfig{
+				DIDResolver:                      &mockResolver{keyWriter: localKMS, pubJWK: publicKey},
+				DisableVCProofChecks:             true,
+				NetworkDocumentLoaderHTTPTimeout: &networkDocumentLoaderHTTPTimeout,
+			}
 
-		networkDocumentLoaderHTTPTimeout := time.Second * 10
+			issuerServerHandler.issuerMetadata = createSignedMetadata(t, localKMS, publicKey, server.URL)
 
-		config := &openid4ci.ClientConfig{
-			DIDResolver:                      &mockResolver{keyWriter: localKMS, pubJWK: publicKey},
-			DisableVCProofChecks:             true,
-			NetworkDocumentLoaderHTTPTimeout: &networkDocumentLoaderHTTPTimeout,
-		}
+			credentialOfferIssuanceURI := createCredentialOfferIssuanceURI(t, server.URL, false, true)
 
-		issuerServerHandler.issuerMetadata = createSignedMetadata(t, localKMS, publicKey, server.URL)
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, config)
+			require.NoError(t, err)
+			require.NotNil(t, interaction)
 
-		credentialOfferIssuanceURI := createCredentialOfferIssuanceURI(t, server.URL, false, true)
+			trustInfo, err := interaction.IssuerTrustInfo()
+			require.NoError(t, err)
+			require.NotNil(t, trustInfo)
+			require.Contains(t, trustInfo.Domain, "trustbloc.local")
+		})
 
-		interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, config)
-		require.NoError(t, err)
-		require.NotNil(t, interaction)
+		t.Run("Origin-based trust", func(t *testing.T) {
+			config := &openid4ci.ClientConfig{
+				DIDResolver: &mockResolver{},
+			}
 
-		trustInfo, err := interaction.IssuerTrustInfo()
-		require.NoError(t, err)
-		require.NotNil(t, trustInfo)
-		require.Contains(t, trustInfo.Domain, "trustbloc.local")
+			issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder,
+				server.URL)
+
+			credentialOfferIssuanceURI := createCredentialOfferIssuanceURI(t, server.URL, false, true)
+
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, config)
+			require.NoError(t, err)
+			require.NotNil(t, interaction)
+
+			serverURL, err := url.Parse(server.URL)
+			require.NoError(t, err)
+
+			trustInfo, err := interaction.IssuerTrustInfo()
+			require.NoError(t, err)
+			require.NotNil(t, trustInfo)
+			require.Equal(t, serverURL.Host, trustInfo.Domain)
+		})
 	})
 }
 
