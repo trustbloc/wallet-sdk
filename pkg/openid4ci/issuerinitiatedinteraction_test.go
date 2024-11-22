@@ -87,6 +87,7 @@ type mockIssuerServerHandler struct {
 	httpStatusCode                                          int
 	ackRequestErrorResponse                                 string
 	ackRequestExpectInteractionDetails                      bool
+	ackRequestExpectedCalls                                 int
 }
 
 //nolint:gocyclo // test file
@@ -160,6 +161,8 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 			_, err = writer.Write(m.batchCredentialResponse)
 		}
 	case "/oidc/ack_endpoint":
+		m.ackRequestExpectedCalls--
+
 		statusCode := http.StatusNoContent
 
 		if m.httpStatusCode != 0 {
@@ -647,9 +650,10 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				})
 				t.Run("Batch credential endpoint", func(t *testing.T) {
 					issuerServerHandler := &mockIssuerServerHandler{
-						t:                       t,
-						batchCredentialResponse: sampleCredentialResponseBatch,
-						httpStatusCode:          http.StatusOK,
+						t:                                  t,
+						batchCredentialResponse:            sampleCredentialResponseBatch,
+						ackRequestExpectInteractionDetails: true,
+						ackRequestExpectedCalls:            2,
 					}
 
 					server := httptest.NewServer(issuerServerHandler)
@@ -677,6 +681,24 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 					require.Len(t, credentials, 2)
 					require.NotEmpty(t, credentials[0])
 					require.NotEmpty(t, credentials[1])
+
+					requestedAcknowledgment, err := interaction.Acknowledgment()
+					require.NoError(t, err)
+					require.NotNil(t, requestedAcknowledgment)
+
+					requestedAcknowledgment.InteractionDetails = map[string]interface{}{"key1": "value1"}
+
+					err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.EventStatusCredentialAccepted, &http.Client{})
+					require.NoError(t, err)
+
+					err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.EventStatusCredentialAccepted, &http.Client{})
+					require.NoError(t, err)
+
+					require.Zero(t, issuerServerHandler.ackRequestExpectedCalls)
+					require.Empty(t, requestedAcknowledgment.AckIDs)
+
+					err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.EventStatusCredentialAccepted, &http.Client{})
+					require.ErrorContains(t, err, "ack list is empty")
 				})
 			})
 			t.Run("Issuer require acknowledgment", func(t *testing.T) {
@@ -698,6 +720,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 					t:                                  t,
 					credentialResponse:                 sampleCredentialResponseAsk,
 					ackRequestExpectInteractionDetails: true,
+					ackRequestExpectedCalls:            2,
 				}
 
 				server := httptest.NewServer(issuerServerHandler)
@@ -731,6 +754,8 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 					}
 					require.NoError(t, err)
 				}
+
+				require.Zero(t, issuerServerHandler.ackRequestExpectedCalls)
 			})
 
 			t.Run("Using credential_offer_uri", func(t *testing.T) {

@@ -446,7 +446,7 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 
 		credentialResponses[index] = credentialResponse
 
-		i.interaction.storeAcknowledgmentID(credentialResponse.AscID)
+		i.interaction.storeAcknowledgmentID(credentialResponse.AckID)
 	}
 
 	return credentialResponses, nil
@@ -515,10 +515,10 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesBatch(
 			TransactionID:   credentialResp.TransactionID,
 			CNonce:          *response.CNonce,
 			CNonceExpiresIn: *response.CNonceExpiresIn,
-			AscID:           credentialResp.AscID,
+			AckID:           credentialResp.AckID,
 		}
 
-		i.interaction.storeAcknowledgmentID(credentialResp.AscID)
+		i.interaction.storeAcknowledgmentID(credentialResp.AckID)
 	}
 
 	return credentialResponses, nil
