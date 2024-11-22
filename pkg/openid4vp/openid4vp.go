@@ -105,12 +105,30 @@ func NewInteraction(
 ) (*Interaction, error) {
 	client, activityLogger, metricsLogger, signer := processOpts(opts)
 
-	var rawRequestObject string
+	var (
+		authorizationRequestClientID string
+		rawRequestObject             string
+	)
 
-	if strings.HasPrefix(authorizationRequest, "openid-vc://") {
-		var err error
+	if strings.HasPrefix(authorizationRequest, "openid-vc://") ||
+		strings.HasPrefix(authorizationRequest, "openid4vp://") {
+		var (
+			authorizationRequestURL *url.URL
+			err                     error
+		)
 
-		rawRequestObject, err = fetchRequestObject(authorizationRequest, client, metricsLogger)
+		authorizationRequestURL, err = url.Parse(authorizationRequest)
+		if err != nil {
+			return nil, walleterror.NewValidationError(
+				ErrorModule,
+				InvalidAuthorizationRequestErrorCode,
+				InvalidAuthorizationRequestError,
+				err)
+		}
+
+		authorizationRequestClientID = authorizationRequestURL.Query().Get("client_id")
+
+		rawRequestObject, err = fetchRequestObject(authorizationRequestURL, client, metricsLogger)
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +136,7 @@ func NewInteraction(
 		rawRequestObject = authorizationRequest
 	}
 
-	reqObject, err := verifyRequestObjectAndDecodeClaims(rawRequestObject, signatureVerifier)
+	reqObject, err := parseRequestObject(authorizationRequestClientID, rawRequestObject, signatureVerifier)
 	if err != nil {
 		return nil, walleterror.NewValidationError(
 			ErrorModule,
@@ -169,21 +187,32 @@ func (o *Interaction) VerifierDisplayData() *VerifierDisplayData {
 
 // TrustInfo return verifier trust info.
 func (o *Interaction) TrustInfo() (*VerifierTrustInfo, error) {
-	// Verifier is issuer of request object.
-	verifier := o.requestObject.Issuer
+	trustInfo := &VerifierTrustInfo{}
 
-	verifierDID := strings.Split(verifier, "#")[0]
+	if o.requestObject.ClientIDScheme == redirectURIScheme {
+		verifierURI, err := url.Parse(o.requestObject.ResponseURI)
+		if err != nil {
+			return nil, err
+		}
 
-	valid, linkedDomain, err := wellknown.ValidateLinkedDomains(verifierDID, o.didResolver, o.httpClient)
-	if err != nil {
-		return nil, err
+		trustInfo.Domain = verifierURI.Host
+	} else {
+		// Verifier is issuer of request object.
+		verifier := o.requestObject.Issuer
+
+		verifierDID := strings.Split(verifier, "#")[0]
+
+		valid, linkedDomain, err := wellknown.ValidateLinkedDomains(verifierDID, o.didResolver, o.httpClient)
+		if err != nil {
+			return nil, err
+		}
+
+		trustInfo.DID = verifierDID
+		trustInfo.Domain = linkedDomain
+		trustInfo.DomainValid = valid
 	}
 
-	return &VerifierTrustInfo{
-		DID:         verifierDID,
-		Domain:      linkedDomain,
-		DomainValid: valid,
-	}, nil
+	return trustInfo, nil
 }
 
 // Acknowledgment returns acknowledgment object for the current interaction.
@@ -366,18 +395,9 @@ func (o *Interaction) sendAuthorizedResponse(responseBody string) error {
 	return err
 }
 
-func fetchRequestObject(authorizationRequest string, client httpClient,
+func fetchRequestObject(authorizationRequestURL *url.URL, client httpClient,
 	metricsLogger api.MetricsLogger,
 ) (string, error) {
-	authorizationRequestURL, err := url.Parse(authorizationRequest)
-	if err != nil {
-		return "", walleterror.NewValidationError(
-			ErrorModule,
-			InvalidAuthorizationRequestErrorCode,
-			InvalidAuthorizationRequestError,
-			err)
-	}
-
 	if !authorizationRequestURL.Query().Has("request_uri") {
 		return "", walleterror.NewValidationError(
 			ErrorModule,
@@ -401,15 +421,39 @@ func fetchRequestObject(authorizationRequest string, client httpClient,
 	return string(respBytes), nil
 }
 
-func verifyRequestObjectAndDecodeClaims(
+func parseRequestObject(
+	authorizationRequestClientID string,
 	rawRequestObject string,
 	signatureVerifier jwt.ProofChecker,
 ) (*requestObject, error) {
 	reqObject := &requestObject{}
 
-	err := verifyTokenSignatureAndDecodeClaims(rawRequestObject, reqObject, signatureVerifier)
+	_, _, err := jwt.Parse(rawRequestObject,
+		jwt.DecodeClaimsTo(reqObject),
+		jwt.WithIgnoreClaimsMapDecoding(true),
+	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse jwt: %w", err)
+	}
+
+	switch reqObject.ClientIDScheme {
+	case "": //TODO: For backward compatibility, remove this case in the future
+		fallthrough
+	case didScheme:
+		if reqObject.Issuer == "" {
+			return nil, errors.New("iss claim in request object is required")
+		}
+
+		err = jwt.CheckProof(rawRequestObject, signatureVerifier, &reqObject.Issuer, nil)
+		if err != nil {
+			return nil, fmt.Errorf("check proof: %w", err)
+		}
+	case redirectURIScheme:
+		if !strings.EqualFold(authorizationRequestClientID, reqObject.ResponseURI) {
+			return nil, errors.New("client_id mismatch between authorization request and request object")
+		}
+	default:
+		return nil, fmt.Errorf("unsupported client_id_scheme: %s", reqObject.ClientIDScheme)
 	}
 
 	// temporary solution for backward compatibility
@@ -428,22 +472,6 @@ func verifyRequestObjectAndDecodeClaims(
 	}
 
 	return reqObject, nil
-}
-
-func verifyTokenSignatureAndDecodeClaims(rawJwt string, claims interface{}, proofChecker jwt.ProofChecker) error {
-	jsonWebToken, _, err := jwt.ParseAndCheckProof(rawJwt, proofChecker, true,
-		jwt.DecodeClaimsTo(claims),
-		jwt.WithIgnoreClaimsMapDecoding(true))
-	if err != nil {
-		return fmt.Errorf("parse JWT: %w", err)
-	}
-
-	err = jsonWebToken.DecodeClaims(claims)
-	if err != nil {
-		return fmt.Errorf("decode claims: %w", err)
-	}
-
-	return nil
 }
 
 func createAuthorizedResponse(

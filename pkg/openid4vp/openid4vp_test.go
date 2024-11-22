@@ -27,6 +27,7 @@ import (
 	"github.com/trustbloc/kms-go/doc/jose/jwk"
 	"github.com/trustbloc/kms-go/doc/util/jwkkid"
 	"github.com/trustbloc/kms-go/spi/kms"
+	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/vc-go/presexch"
 	"github.com/trustbloc/vc-go/verifiable"
 
@@ -117,6 +118,60 @@ func TestNewInteraction(t *testing.T) {
 			)
 			require.NoError(t, err)
 			require.NotNil(t, interaction)
+		})
+		t.Run("openid4vp protocol with redirect_uri client id scheme", func(t *testing.T) {
+			reqObject := &requestObject{
+				ClientIDScheme: redirectURIScheme,
+				ResponseURI:    "https://example.com/redirect",
+			}
+
+			token, err := jwt.NewUnsecured(reqObject)
+			require.NoError(t, err)
+
+			reqObjectJWT, err := token.Serialize(false)
+			require.NoError(t, err)
+
+			interaction, err := NewInteraction("openid4vp://authorize?client_id=https://example.com/redirect&"+
+				"request_uri=https://example.com/request-object",
+				&jwtSignatureVerifierMock{},
+				nil,
+				nil,
+				nil,
+				WithHTTPClient(&mock.HTTPClientMock{
+					Response:         reqObjectJWT,
+					StatusCode:       200,
+					ExpectedEndpoint: "https://example.com/request-object",
+				}),
+			)
+			require.NoError(t, err)
+			require.NotNil(t, interaction)
+		})
+		t.Run("client_id mismatch between authorization request and request object", func(t *testing.T) {
+			reqObject := &requestObject{
+				ClientIDScheme: redirectURIScheme,
+				ResponseURI:    "https://invalid.example.com/redirect",
+			}
+
+			token, err := jwt.NewUnsecured(reqObject)
+			require.NoError(t, err)
+
+			reqObjectJWT, err := token.Serialize(false)
+			require.NoError(t, err)
+
+			interaction, err := NewInteraction("openid4vp://authorize?client_id=https://example.com/redirect&"+
+				"request_uri=https://example.com/request-object",
+				&jwtSignatureVerifierMock{},
+				nil,
+				nil,
+				nil,
+				WithHTTPClient(&mock.HTTPClientMock{
+					Response:         reqObjectJWT,
+					StatusCode:       200,
+					ExpectedEndpoint: "https://example.com/request-object",
+				}),
+			)
+			require.ErrorContains(t, err, "client_id mismatch between authorization request and request object")
+			require.Nil(t, interaction)
 		})
 	})
 
@@ -924,6 +979,38 @@ func TestOpenID4VP_TrustInfo(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, info)
 		require.Equal(t, "mock-uri", info.Domain)
+	})
+
+	t.Run("Success: origin-based trust info", func(t *testing.T) {
+		reqObject := &requestObject{
+			ClientIDScheme: redirectURIScheme,
+			ResponseURI:    "https://example.com/redirect",
+		}
+
+		token, err := jwt.NewUnsecured(reqObject)
+		require.NoError(t, err)
+
+		reqObjectJWT, err := token.Serialize(false)
+		require.NoError(t, err)
+
+		interaction, err := NewInteraction("openid4vp://authorize?client_id=https://example.com/redirect&"+
+			"request_uri=https://example.com/request-object",
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockResolutionWithServices(t, mockDID)},
+			&cryptoMock{SignVal: []byte(testSignature)},
+			lddl,
+			WithHTTPClient(&mock.HTTPClientMock{
+				Response:         reqObjectJWT,
+				StatusCode:       200,
+				ExpectedEndpoint: "https://example.com/request-object",
+			}),
+		)
+		require.NoError(t, err)
+
+		info, err := interaction.TrustInfo()
+		require.NoError(t, err)
+		require.NotNil(t, info)
+		require.Equal(t, "example.com", info.Domain)
 	})
 
 	t.Run("Failure", func(t *testing.T) {
