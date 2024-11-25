@@ -380,6 +380,10 @@ func getOverviewDisplay(
 		}
 	}
 
+	if len(credentialConfigurationSupported.LocalizedCredentialDisplays) == 0 {
+		return &CredentialOverview{}
+	}
+
 	return issuerCredentialDisplayToResolvedCredentialOverview(
 		&credentialConfigurationSupported.LocalizedCredentialDisplays[0],
 	)
