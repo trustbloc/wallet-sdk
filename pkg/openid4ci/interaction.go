@@ -73,6 +73,9 @@ type interaction struct {
 }
 
 type requestedAcknowledgment struct {
+	//TODO: after update to the latest OIDC4CI this variable can be changed to string
+	// since notification_id should be the same for given session.
+	// spec: https://openid.github.io/OpenID4VCI/openid-4-verifiable-credential-issuance-wg-draft.html#section-8.3-14
 	ackIDs []string
 }
 
@@ -384,7 +387,7 @@ func (i *interaction) getCredentialResponsesWithAuth(signer api.JWTSigner, crede
 
 		credentialResponses[index] = credentialResponse
 
-		i.storeAcknowledgmentID(credentialResponse.AscID)
+		i.storeAcknowledgmentID(credentialResponse.AckID)
 	}
 
 	return credentialResponses, nil
@@ -727,10 +730,10 @@ func (i *interaction) requireAcknowledgment() (bool, error) {
 	return i.requestedAcknowledgment != nil && i.issuerMetadata.NotificationEndpoint != "", nil
 }
 
-func (i *interaction) storeAcknowledgmentID(id string) {
+func (i *interaction) storeAcknowledgmentID(ackID string) {
 	if i.requestedAcknowledgment == nil {
 		i.requestedAcknowledgment = &requestedAcknowledgment{}
 	}
 
-	i.requestedAcknowledgment.ackIDs = append(i.requestedAcknowledgment.ackIDs, id)
+	i.requestedAcknowledgment.ackIDs = append(i.requestedAcknowledgment.ackIDs, ackID)
 }

@@ -136,6 +136,7 @@ type mockIssuerServerHandler struct {
 	credentialRequestShouldFail                       bool
 	credentialRequestShouldGiveUnmarshallableResponse bool
 	ackRequestExpectInteractionDetails                bool
+	ackRequestExpectedAmount                          int
 	credentialResponse                                []byte
 	headersToCheck                                    *api.Headers
 }
@@ -178,6 +179,8 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 			_, err = writer.Write(m.credentialResponse)
 		}
 	case "/oidc/ack_endpoint":
+		m.ackRequestExpectedAmount--
+
 		var payload map[string]interface{}
 		err = json.NewDecoder(request.Body).Decode(&payload)
 		require.NoError(m.t, err)
@@ -614,6 +617,7 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 		credentialResponse:                 sampleCredentialResponse,
 		headersToCheck:                     additionalHeaders,
 		ackRequestExpectInteractionDetails: expectAckInteractionDetails,
+		ackRequestExpectedAmount:           1,
 	}
 
 	server := httptest.NewServer(issuerServerHandler)
@@ -670,17 +674,28 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 		require.NoError(t, err)
 	}
 
-	if acknowledgeReject {
-		if rejectCode != "" {
-			err = acknowledgmentRestored.RejectWithCode(rejectCode)
-		} else {
-			err = acknowledgmentRestored.Reject()
-		}
-	} else {
+	switch {
+	case acknowledgeReject && rejectCode != "":
+		err = acknowledgmentRestored.RejectWithCode(rejectCode)
+		require.NoError(t, err)
+
+		err = acknowledgmentRestored.RejectWithCode(rejectCode)
+		require.ErrorContains(t, err, "ack list is empty")
+	case acknowledgeReject:
+		err = acknowledgmentRestored.Reject()
+		require.NoError(t, err)
+
+		err = acknowledgmentRestored.Reject()
+		require.ErrorContains(t, err, "ack list is empty")
+	default:
 		err = acknowledgmentRestored.Success()
+		require.NoError(t, err)
+
+		err = acknowledgmentRestored.Success()
+		require.ErrorContains(t, err, "ack list is empty")
 	}
 
-	require.NoError(t, err)
+	require.Zero(t, issuerServerHandler.ackRequestExpectedAmount, 0)
 
 	numberOfActivitiesLogged := activityLogger.Length()
 	require.Equal(t, 1, numberOfActivitiesLogged)
