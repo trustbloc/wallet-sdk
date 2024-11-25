@@ -43,7 +43,8 @@ func TestNew(t *testing.T) {
 				crypto = &cryptoMock{}
 				documentLoader = testutil.DocumentLoader(t)
 				ldpVPFormat = &presexch.LdpType{
-					ProofType: []string{"EcdsaSecp256k1Signature2019", "Ed25519Signature2018", "Ed25519Signature2020",
+					ProofType: []string{
+						"EcdsaSecp256k1Signature2019", "Ed25519Signature2018", "Ed25519Signature2020",
 						"JsonWebSignature2020",
 					},
 				}
@@ -84,8 +85,8 @@ func TestLDProof_Add(t *testing.T) {
 		&cryptoMock{Signature: []byte("signature")},
 		testutil.DocumentLoader(t),
 		&presexch.LdpType{
-			ProofType: []string{"EcdsaSecp256k1Signature2019", "Ed25519Signature2018", "Ed25519Signature2020",
-				"JsonWebSignature2020",
+			ProofType: []string{
+				"EcdsaSecp256k1Signature2019", "Ed25519Signature2018", "Ed25519Signature2020", "JsonWebSignature2020",
 			},
 		},
 		kms.ED25519Type,

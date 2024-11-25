@@ -15,6 +15,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/did-go/doc/did"
 	"github.com/trustbloc/did-go/method/httpbinding"
@@ -126,11 +127,11 @@ func TestValidate(t *testing.T) {
 		}
 
 		testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			require.Equal(t, "/"+testDID, req.URL.String())
+			assert.Equal(t, "/"+testDID, req.URL.String())
 			res.Header().Add("Content-type", "application/did+ld+json")
 			res.WriteHeader(http.StatusOK)
 			_, err := res.Write([]byte(resolutionResponse))
-			require.NoError(t, err)
+			assert.NoError(t, err)
 		}))
 
 		defer func() { testServer.Close() }()
@@ -209,7 +210,7 @@ func TestValidate(t *testing.T) {
 	t.Run("DID service validation failure", func(t *testing.T) {
 		testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, _ *http.Request) {
 			_, err := res.Write([]byte(didCfg))
-			require.NoError(t, err)
+			assert.NoError(t, err)
 		}))
 
 		defer func() { testServer.Close() }()

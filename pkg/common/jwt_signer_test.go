@@ -167,13 +167,13 @@ func TestJWSSigner_Sign(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, sig, []byte("mock sig"))
 
-		require.Equal(t, signer.GetKeyID(), "testKeyID")
-		require.Equal(t, signer.Algorithm(), "EdDSA")
+		require.Equal(t, "testKeyID", signer.GetKeyID())
+		require.Equal(t, "EdDSA", signer.Algorithm())
 
 		headers, err := signer.CreateJWTHeaders(jwt.SignParameters{})
 		require.NoError(t, err)
-		require.Equal(t, headers["kid"], "testKeyID")
-		require.Equal(t, headers["alg"], "EdDSA")
+		require.Equal(t, "testKeyID", headers["kid"])
+		require.Equal(t, "EdDSA", headers["alg"])
 	})
 
 	t.Run("Failed", func(t *testing.T) {

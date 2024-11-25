@@ -34,7 +34,7 @@ func TestCredentialResponse_SerializeToCredentialsBytes(t *testing.T) {
 		}
 		res, err := credRes.SerializeToCredentialsBytes()
 		require.NoError(t, err)
-		require.Equal(t, "{\"fld1\":\"val1\",\"fld2\":\"val2\",\"fld3\":\"val3\"}", string(res))
+		require.JSONEq(t, "{\"fld1\":\"val1\",\"fld2\":\"val2\",\"fld3\":\"val3\"}", string(res))
 	})
 
 	t.Run("Unsupported type", func(t *testing.T) {

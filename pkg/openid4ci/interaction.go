@@ -625,7 +625,7 @@ func (i *interaction) issuerFullTrustInfo(
 
 	supportedCredentials := make([]SupportedCredential, len(credentialFormats))
 
-	for j := 0; j < len(credentialFormats); j++ {
+	for j := range credentialFormats {
 		supportedCredentials[j] = SupportedCredential{
 			Format: credentialFormats[j],
 			Types:  credentialTypes[j],

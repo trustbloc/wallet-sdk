@@ -4,6 +4,7 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+// Package ldproof contains a function for adding linked data proof to a verifiable presentation.
 package ldproof
 
 import (
@@ -31,6 +32,7 @@ const (
 	proofPurpose = "authentication"
 )
 
+//nolint:gochecknoglobals
 var supportedLDProofTypes = map[string]proof.LDProofDescriptor{
 	ecdsasecp256k1signature2019.ProofType: ecdsasecp256k1signature2019.New(),
 	ed25519signature2018.ProofType:        ed25519signature2018.New(),
@@ -48,7 +50,7 @@ type LDProof struct {
 
 // New returns a new instance of LDProof.
 func New(
-	crypto api.Crypto,
+	crypt api.Crypto,
 	documentLoader ld.DocumentLoader,
 	ldpVPFormat *presexch.LdpType,
 	keyType kms.KeyType,
@@ -62,6 +64,7 @@ func New(
 		if proofDesc, found = supportedLDProofTypes[proofType]; found && isKeyTypeSupported(proofDesc, keyType) {
 			break
 		}
+
 		found = false
 	}
 
@@ -70,7 +73,7 @@ func New(
 	}
 
 	return &LDProof{
-		crypto:            crypto,
+		crypto:            crypt,
 		documentLoader:    documentLoader,
 		ldProofDescriptor: proofDesc,
 		keyType:           keyType,

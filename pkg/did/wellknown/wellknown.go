@@ -104,6 +104,7 @@ func getLinkedDomainsService(didDoc *diddoc.Doc) (*diddoc.Service, error) {
 
 		if strings.EqualFold(serviceType, linkedDomainsServiceType) {
 			linkedDomainsService = &didDoc.Service[i]
+
 			break
 		}
 	}

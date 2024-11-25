@@ -437,7 +437,7 @@ func (c *mockCrypto) Sign(_ []byte, _ string) ([]byte, error) {
 	return c.SignResult, c.SignErr
 }
 
-func (c *mockCrypto) Verify(_ []byte, _ []byte, _ string) error {
+func (c *mockCrypto) Verify(_, _ []byte, _ string) error {
 	return c.VerifyErr
 }
 
