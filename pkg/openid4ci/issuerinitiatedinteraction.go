@@ -65,6 +65,7 @@ type IssuerInitiatedInteraction struct {
 	credentialTypes              [][]string
 	credentialFormats            []string
 	credentialConfigIDs          []string
+	credentialContexts           [][]string
 	preAuthorizedCodeGrantParams *PreAuthorizedCodeGrantParams
 	authorizationCodeGrantParams *AuthorizationCodeGrantParams
 
@@ -114,7 +115,7 @@ func NewIssuerInitiatedInteraction(
 		return nil, err
 	}
 
-	credentialTypes, credentialFormats, err := determineCredentialTypesAndFormats(credentialOffer,
+	credentialTypes, credentialFormats, credentialContexts, err := determineCredentialParameters(credentialOffer,
 		issuerInteraction.issuerMetadata)
 	if err != nil {
 		return nil, err
@@ -126,6 +127,7 @@ func NewIssuerInitiatedInteraction(
 			authorizationCodeGrantParams: authorizationCodeGrantParams,
 			credentialTypes:              credentialTypes,
 			credentialFormats:            credentialFormats,
+			credentialContexts:           credentialContexts,
 			credentialConfigIDs:          credentialOffer.CredentialConfigurationIDs,
 		},
 		config.MetricsLogger.Log(
@@ -158,7 +160,7 @@ func (i *IssuerInitiatedInteraction) CreateAuthorizationURL(clientID, redirectUR
 	}
 
 	return i.interaction.createAuthorizationURL(clientID, redirectURI, i.credentialFormats[0], i.credentialTypes[0],
-		issuerState, processedOpts.scopes, processedOpts.useOAuthDiscoverableClientIDScheme)
+		i.credentialContexts[0], issuerState, processedOpts.scopes, processedOpts.useOAuthDiscoverableClientIDScheme)
 }
 
 // RequestCredentialWithPreAuth requests credential(s) from the issuer. This method can only be used for the
@@ -208,7 +210,7 @@ func (i *IssuerInitiatedInteraction) RequestCredentialWithAuth(jwtSigner api.JWT
 		return nil, err
 	}
 
-	return i.interaction.requestCredentialWithAuth(jwtSigner, i.credentialFormats, i.credentialTypes)
+	return i.interaction.requestCredentialWithAuth(jwtSigner, i.credentialFormats, i.credentialTypes, i.credentialContexts)
 }
 
 // IssuerURI returns the issuer's URI from the initiation request. It's useful to store this somewhere in case
@@ -421,7 +423,7 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 
 	for index := range i.credentialTypes {
 		request, err := i.interaction.createCredentialRequestWithoutAccessToken(proofJWT, i.credentialFormats[index],
-			i.credentialTypes[index])
+			i.credentialTypes[index], i.credentialContexts[index])
 		if err != nil {
 			return nil, err
 		}
@@ -693,19 +695,20 @@ func getCredentialOfferJSONFromCredentialOfferURI(credentialOfferURI string,
 	return responseBytes, nil
 }
 
-func determineCredentialTypesAndFormats(
+func determineCredentialParameters(
 	credentialOffer *CredentialOffer,
 	issuerMetadata *issuer.Metadata,
-) ([][]string, []string, error) {
+) ([][]string, []string, [][]string, error) {
 	types := make([][]string, len(credentialOffer.CredentialConfigurationIDs))
 	formats := make([]string, len(credentialOffer.CredentialConfigurationIDs))
+	contexts := make([][]string, len(credentialOffer.CredentialConfigurationIDs))
 
-	for i := 0; i < len(credentialOffer.CredentialConfigurationIDs); i++ {
+	for i := range len(credentialOffer.CredentialConfigurationIDs) {
 		id := credentialOffer.CredentialConfigurationIDs[i]
 
 		configuration, ok := issuerMetadata.CredentialConfigurationsSupported[id]
 		if !ok {
-			return nil, nil, walleterror.NewValidationError(
+			return nil, nil, nil, walleterror.NewValidationError(
 				ErrorModule,
 				InvalidCredentialConfigurationIDCode,
 				InvalidCredentialConfigurationIDError,
@@ -718,7 +721,7 @@ func determineCredentialTypesAndFormats(
 		if configuration.Format != jwtVCJSONCredentialFormat &&
 			configuration.Format != jwtVCJSONLDCredentialFormat &&
 			configuration.Format != ldpVCCredentialFormat {
-			return nil, nil, walleterror.NewValidationError(
+			return nil, nil, nil, walleterror.NewValidationError(
 				ErrorModule,
 				UnsupportedCredentialTypeInOfferCode,
 				UnsupportedCredentialTypeInOfferError,
@@ -729,9 +732,13 @@ func determineCredentialTypesAndFormats(
 		}
 
 		formats[i] = configuration.Format
+
+		if configuration.CredentialDefinition != nil && configuration.Format == ldpVCCredentialFormat {
+			contexts[i] = configuration.CredentialDefinition.Context
+		}
 	}
 
-	return types, formats, nil
+	return types, formats, contexts, nil
 }
 
 func validateSignerKeyID(jwtSigner api.JWTSigner) error {

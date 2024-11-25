@@ -26,8 +26,9 @@ import (
 type WalletInitiatedInteraction struct {
 	interaction *interaction
 
-	credentialFormat string
-	credentialTypes  []string
+	credentialFormat  string
+	credentialTypes   []string
+	credentialContext []string
 }
 
 // NewWalletInitiatedInteraction creates a new OpenID4CI WalletInitiatedInteraction.
@@ -96,13 +97,15 @@ func (i *WalletInitiatedInteraction) CreateAuthorizationURL(clientID, redirectUR
 	processedOpts := processCreateAuthorizationURLOpts(opts)
 
 	authorizationURL, err := i.interaction.createAuthorizationURL(clientID, redirectURI, credentialFormat,
-		credentialTypes, processedOpts.issuerState, processedOpts.scopes, processedOpts.useOAuthDiscoverableClientIDScheme)
+		credentialTypes, processedOpts.context, processedOpts.issuerState, processedOpts.scopes,
+		processedOpts.useOAuthDiscoverableClientIDScheme)
 	if err != nil {
 		return "", err
 	}
 
 	i.credentialFormat = credentialFormat
 	i.credentialTypes = credentialTypes
+	i.credentialContext = processedOpts.context
 
 	return authorizationURL, nil
 }
@@ -119,7 +122,7 @@ func (i *WalletInitiatedInteraction) RequestCredential(jwtSigner api.JWTSigner, 
 		return nil, err
 	}
 
-	return i.interaction.requestCredentialWithAuth(jwtSigner, []string{i.credentialFormat}, [][]string{i.credentialTypes})
+	return i.interaction.requestCredentialWithAuth(jwtSigner, []string{i.credentialFormat}, [][]string{i.credentialTypes}, [][]string{i.credentialContext})
 }
 
 // DynamicClientRegistrationSupported indicates whether the issuer supports dynamic client registration.

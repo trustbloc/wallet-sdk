@@ -76,8 +76,8 @@ type requestedAcknowledgment struct {
 	ackIDs []string
 }
 
-func (i *interaction) createAuthorizationURL(clientID, redirectURI, format string, types []string, issuerState *string,
-	scopes []string, useOAuthDiscoverableClientIDScheme bool,
+func (i *interaction) createAuthorizationURL(clientID, redirectURI, format string, types, credentialContext []string,
+	issuerState *string, scopes []string, useOAuthDiscoverableClientIDScheme bool,
 ) (string, error) {
 	err := i.populateIssuerMetadata("Authorization")
 	if err != nil {
@@ -91,7 +91,7 @@ func (i *interaction) createAuthorizationURL(clientID, redirectURI, format strin
 		return "", err
 	}
 
-	authorizationDetails, err := i.generateAuthorizationDetails(format, types)
+	authorizationDetails, err := i.generateAuthorizationDetails(format, types, credentialContext)
 	if err != nil {
 		return "", err
 	}
@@ -134,13 +134,13 @@ func (i *interaction) instantiateCodeVerifier() error {
 	return nil
 }
 
-func (i *interaction) generateAuthorizationDetails(format string, types []string) ([]byte, error) {
+func (i *interaction) generateAuthorizationDetails(format string, types, credentialContext []string) ([]byte, error) {
 	// TODO: Add support for requesting multiple credentials at once (by sending an array).
 	// Currently we always use the first credential type specified in the offer.
 	authorizationDetailsDTO := authorizationDetails{
 		CredentialConfigurationID: "",
 		CredentialDefinition: &issuer.CredentialDefinition{
-			Context:           nil,
+			Context:           credentialContext,
 			CredentialSubject: nil,
 			Type:              types,
 		},
@@ -304,11 +304,11 @@ func (i *interaction) populateIssuerMetadata(parentEvent string) error {
 }
 
 func (i *interaction) requestCredentialWithAuth(jwtSigner api.JWTSigner, credentialFormats []string,
-	credentialTypes [][]string,
+	credentialTypes, credentialContexts [][]string,
 ) ([]*verifiable.Credential, error) {
 	timeStartRequestCredential := time.Now()
 
-	credentialResponses, err := i.getCredentialResponsesWithAuth(jwtSigner, credentialFormats, credentialTypes)
+	credentialResponses, err := i.getCredentialResponsesWithAuth(jwtSigner, credentialFormats, credentialTypes, credentialContexts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get credential response: %w", err)
 	}
@@ -346,7 +346,7 @@ func (i *interaction) requestCredentialWithAuth(jwtSigner api.JWTSigner, credent
 
 // credentialsFormats and credentialTypes need to have the same length.
 func (i *interaction) getCredentialResponsesWithAuth(signer api.JWTSigner, credentialFormats []string,
-	credentialTypes [][]string,
+	credentialTypes, credentialContexts [][]string,
 ) ([]CredentialResponse, error) {
 	proofJWT, err := i.createClaimsProof(i.authTokenResponseNonce, signer)
 	if err != nil {
@@ -359,7 +359,7 @@ func (i *interaction) getCredentialResponsesWithAuth(signer api.JWTSigner, crede
 
 	for index := range credentialTypes {
 		request, err := i.createCredentialRequestWithoutAccessToken(proofJWT, credentialFormats[index],
-			credentialTypes[index])
+			credentialTypes[index], credentialContexts[index])
 		if err != nil {
 			return nil, err
 		}
@@ -442,11 +442,19 @@ func createOAuthHTTPClient(
 // The returned *http.Request will not have the access token set on it. The caller must ensure that it's set
 // before sending the request to the server.
 func (i *interaction) createCredentialRequestWithoutAccessToken(proofJWT, credentialFormat string,
-	credentialTypes []string,
+	credentialTypes, credentialContext []string,
 ) (*http.Request, error) {
+
+	var credentialContextToSend *[]string
+
+	if len(credentialContext) > 0 {
+		credentialContextToSend = &credentialContext
+	}
+
 	credentialReq := &credentialRequest{
 		CredentialDefinition: &credentialDefinition{
-			Type: credentialTypes,
+			Type:    credentialTypes,
+			Context: credentialContextToSend,
 		},
 		Format: credentialFormat,
 		Proof: proof{
