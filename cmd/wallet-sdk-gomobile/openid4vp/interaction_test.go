@@ -134,7 +134,7 @@ func TestNewInteraction(t *testing.T) {
 
 		instance, err := NewInteraction(requiredArgs, nil)
 		testutil.RequireErrorContains(t, err, "INVALID_AUTHORIZATION_REQUEST")
-		testutil.RequireErrorContains(t, err, "verify request object: parse JWT: invalid public key id:"+
+		testutil.RequireErrorContains(t, err, "verify request object: check proof: invalid public key id:"+
 			" resolve DID did:ion:EiDYWcDuP-EDjVyFWGFdpgPncar9A7OGFykdeX71ZTU-wg:")
 		require.Nil(t, instance)
 	})
