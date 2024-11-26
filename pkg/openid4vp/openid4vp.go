@@ -315,10 +315,16 @@ func (o *Interaction) presentCredentials(
 	}
 
 	data := url.Values{}
-	data.Set("id_token", response.IDTokenJWS)
-	data.Set("vp_token", response.VPToken)
 	data.Set("presentation_submission", response.PresentationSubmission)
-	data.Set("state", response.State)
+	data.Set("vp_token", response.VPToken)
+
+	if response.IDTokenJWS != "" {
+		data.Set("id_token", response.IDTokenJWS)
+	}
+
+	if response.State != "" {
+		data.Set("state", response.State)
+	}
 
 	if opts.interactionDetails != nil {
 		interactionDetailsBytes, e := json.Marshal(opts.interactionDetails)
@@ -576,21 +582,12 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 		return nil, err
 	}
 
-	var attestationVP string
-	if opts != nil && opts.attestationVC != "" {
-		attestationVP, err = createAttestationVP(
-			opts.attestationVC, opts.attestationVPSigner, documentLoader)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	presentationSubmission := presentation.CustomFields["presentation_submission"]
 	presentation.CustomFields["presentation_submission"] = nil
 
-	idTokenJWS, err := createIDToken(requestObject, did, customClaims, jwtSigner, attestationVP, presentationSubmission)
+	presentationSubmissionBytes, err := json.Marshal(presentationSubmission)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal presentation submission: %w", err)
 	}
 
 	var vpToken string
@@ -621,15 +618,29 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 		return nil, fmt.Errorf("unsupported presentation exchange format: %s", vpFormat)
 	}
 
-	presentationSubmissionBytes, err := json.Marshal(presentationSubmission)
-	if err != nil {
-		return nil, fmt.Errorf("marshal presentation submission: %w", err)
+	var idTokenJWS string
+
+	if strings.Contains(requestObject.ResponseType, "id_token") {
+		var attestationVP string
+
+		if opts != nil && opts.attestationVC != "" {
+			attestationVP, err = createAttestationVP(
+				opts.attestationVC, opts.attestationVPSigner, documentLoader)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		idTokenJWS, err = createIDToken(requestObject, did, customClaims, jwtSigner, attestationVP, presentationSubmission)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &authorizedResponse{
-		IDTokenJWS:             idTokenJWS,
-		VPToken:                vpToken,
 		PresentationSubmission: string(presentationSubmissionBytes),
+		VPToken:                vpToken,
+		IDTokenJWS:             idTokenJWS,
 		State:                  requestObject.State,
 	}, nil
 }
@@ -748,24 +759,30 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 		return nil, err
 	}
 
-	idTokenSigningDID, err := pickRandomElement(mapKeys(signers))
-	if err != nil {
-		return nil, err
-	}
+	var idTokenJWS string
 
-	var attestationVP string
-	if opts.attestationVC != "" {
-		attestationVP, err = createAttestationVP(
-			opts.attestationVC, opts.attestationVPSigner, documentLoader)
+	if strings.Contains(requestObject.ResponseType, "id_token") {
+		var idTokenSigningDID string
+
+		idTokenSigningDID, err = pickRandomElement(mapKeys(signers))
 		if err != nil {
 			return nil, err
 		}
-	}
 
-	idTokenJWS, err := createIDToken(requestObject, idTokenSigningDID, customClaims,
-		signers[idTokenSigningDID], attestationVP, presentationSubmission)
-	if err != nil {
-		return nil, err
+		var attestationVP string
+
+		if opts.attestationVC != "" {
+			attestationVP, err = createAttestationVP(opts.attestationVC, opts.attestationVPSigner, documentLoader)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		idTokenJWS, err = createIDToken(requestObject, idTokenSigningDID, customClaims,
+			signers[idTokenSigningDID], attestationVP, presentationSubmission)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	presentationSubmissionJSON, err := json.Marshal(presentationSubmission)

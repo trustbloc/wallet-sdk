@@ -294,6 +294,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		Nonce:                  "test123456",
 		State:                  "test34566",
 		PresentationDefinition: mockPresentationDefinition,
+		ResponseType:           "vp_token id_token",
 	}
 
 	t.Run("Success", func(t *testing.T) {
