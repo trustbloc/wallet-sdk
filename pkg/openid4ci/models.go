@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 // EventStatus used to acknowledge issuer that client accepts or rejects credentials.
@@ -159,6 +160,11 @@ type batchCredentialRequest struct {
 
 type errorResponse struct {
 	Error string `json:"error,omitempty"`
+	// containing a nonce to be used to create a proof of possession of key material
+	// when requesting a Credential.
+	CNonce string `json:"c_nonce"`
+	// number denoting the lifetime in seconds of the c_nonce.
+	CNonceExpiresIn int `json:"c_nonce_expires_in"`
 }
 
 type acknowledgementRequest struct {
@@ -185,4 +191,32 @@ type acknowledgementRequest struct {
 	NotificationID string `json:"notification_id"`
 
 	InteractionDetails map[string]interface{} `json:"interaction_details,omitempty"`
+}
+
+// InvalidProofError -- special type of error to handle case described in specification
+// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-7.3.2
+type InvalidProofError struct {
+	ParentError     *walleterror.Error
+	CNonce          string
+	CNonceExpiresIn int
+}
+
+func NewInvalidProofError(parentError *walleterror.Error, cNonce string, cNonceExpiresIn int) *InvalidProofError {
+	return &InvalidProofError{
+		ParentError:     parentError,
+		CNonce:          cNonce,
+		CNonceExpiresIn: cNonceExpiresIn,
+	}
+}
+
+func (e InvalidProofError) Error() string {
+	if e.ParentError == nil {
+		return ""
+	}
+
+	return e.ParentError.Error()
+}
+
+func (e *InvalidProofError) Unwrap() error {
+	return e.ParentError
 }

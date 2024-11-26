@@ -410,10 +410,31 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 		ExpiresAt: tokenResponse.expiry(), RefreshToken: tokenResponse.RefreshToken,
 	}
 
-	proofJWT, err := i.interaction.createClaimsProof(tokenResponse.CNonce, signer)
+	return i.getCredentialResponse(tokenResponse, tokenResponse.CNonce, signer, true)
+}
+
+func (i *IssuerInitiatedInteraction) getCredentialResponse(
+	tokenResponse *preAuthTokenResponse,
+	nonce any,
+	signer api.JWTSigner,
+	allowRetry bool) (
+	credentialResponse []CredentialResponse,
+	err error) {
+	proofJWT, err := i.interaction.createClaimsProof(nonce, signer)
 	if err != nil {
 		return nil, err
 	}
+
+	defer func() {
+		if err == nil || !allowRetry {
+			return
+		}
+
+		proofError := &InvalidProofError{}
+		if errors.As(err, &proofError) {
+			credentialResponse, err = i.getCredentialResponse(tokenResponse, nonce, signer, false)
+		}
+	}()
 
 	if len(i.credentialTypes) > 1 && i.interaction.issuerMetadata.BatchCredentialEndpoint != "" {
 		return i.getCredentialResponsesBatch(proofJWT, tokenResponse)

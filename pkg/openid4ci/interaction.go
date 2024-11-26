@@ -351,7 +351,26 @@ func (i *interaction) requestCredentialWithAuth(jwtSigner api.JWTSigner, credent
 func (i *interaction) getCredentialResponsesWithAuth(signer api.JWTSigner, credentialFormats []string,
 	credentialTypes, credentialContexts [][]string,
 ) ([]CredentialResponse, error) {
-	proofJWT, err := i.createClaimsProof(i.authTokenResponseNonce, signer)
+	return i.getCredentialResponse(signer, i.authTokenResponseNonce,
+		credentialFormats, credentialTypes, credentialContexts, true)
+}
+
+func (i *interaction) getCredentialResponse(signer api.JWTSigner, nonce any,
+	credentialFormats []string, credentialTypes, credentialContexts [][]string, allowRetry bool,
+) (credentialResponse []CredentialResponse, err error) {
+	defer func() {
+		if err == nil || !allowRetry {
+			return
+		}
+
+		proofError := &InvalidProofError{}
+		if errors.As(err, &proofError) {
+			credentialResponse, err = i.getCredentialResponse(signer, proofError.CNonce,
+				credentialFormats, credentialTypes, credentialContexts, false)
+		}
+	}()
+
+	proofJWT, err := i.createClaimsProof(nonce, signer)
 	if err != nil {
 		return nil, err
 	}
@@ -618,6 +637,11 @@ func processCredentialErrorResponse(statusCode int, respBytes []byte) error {
 			AcknowledgmentExpiredErrorCode,
 			AcknowledgmentExpiredError,
 			detailedErr)
+	case "invalid_proof":
+		return NewInvalidProofError(walleterror.NewExecutionError(ErrorModule,
+			AcknowledgmentExpiredErrorCode,
+			AcknowledgmentExpiredError,
+			detailedErr), errorResponse.CNonce, errorResponse.CNonceExpiresIn)
 	default:
 		return walleterror.NewExecutionError(ErrorModule,
 			OtherCredentialRequestErrorCode,

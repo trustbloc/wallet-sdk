@@ -81,6 +81,7 @@ type mockIssuerServerHandler struct {
 	credentialRequestShouldFail                             bool
 	credentialRequestErrorResponse                          string
 	credentialRequestShouldGiveUnmarshallableResponse       bool
+	credentialRequestShouldGiveInvalidProofResponse         bool
 	batchCredentialRequestShouldFail                        bool
 	credentialResponse                                      []byte
 	batchCredentialResponse                                 []byte
@@ -148,6 +149,10 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 			writer.WriteHeader(statusCode)
 
 			_, err = writer.Write([]byte("invalid"))
+		case m.credentialRequestShouldGiveInvalidProofResponse:
+			writer.WriteHeader(http.StatusInternalServerError)
+
+			_, err = writer.Write([]byte(`{"error":"invalid_proof"}`))
 		default:
 			_, err = writer.Write(m.credentialResponse)
 		}
@@ -1270,6 +1275,24 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			testutil.RequireErrorContains(t, err, "INVALID_CREDENTIAL_REQUEST")
 			testutil.RequireErrorContains(t, err, "received status code [500] "+
 				`with body [{"error":"invalid_request"}] from issuer's credential endpoint`)
+			require.Nil(t, credentials)
+		})
+		t.Run("Fail to get credential response: invalid proof error ", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{t: t, credentialRequestShouldGiveInvalidProofResponse: true}
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
+			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false, true)
+
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			testutil.RequireErrorContains(t, err, "received status code [500] "+
+				`with body [{"error":"invalid_proof"}] from issuer's credential endpoint`)
 			require.Nil(t, credentials)
 		})
 		t.Run("Fail to get credential response: invalid token", func(t *testing.T) {
