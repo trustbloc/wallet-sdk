@@ -29,17 +29,19 @@ import (
 	"github.com/trustbloc/kms-go/spi/kms"
 	wrapperapi "github.com/trustbloc/kms-go/wrapper/api"
 	"github.com/trustbloc/vc-go/dataintegrity"
+	"github.com/trustbloc/vc-go/dataintegrity/suite"
 	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
+	"github.com/trustbloc/vc-go/dataintegrity/suite/eddsa2022"
 	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/vc-go/presexch"
 	"github.com/trustbloc/vc-go/proof/defaults"
 	"github.com/trustbloc/vc-go/verifiable"
-	"github.com/trustbloc/wallet-sdk/pkg/ldproof"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
+	"github.com/trustbloc/wallet-sdk/pkg/ldproof"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
@@ -527,10 +529,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 	vpFormat := presexch.FormatJWTVP
 
 	if vpFormats := requestObject.ClientMetadata.VPFormats; vpFormats != nil {
-		switch {
-		case vpFormats.JwtVP != nil:
-			break
-		case vpFormats.LdpVP != nil:
+		if vpFormats.LdpVP != nil {
 			vpFormat = presexch.FormatLDPVP
 		}
 	}
@@ -564,31 +563,19 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 		return nil, err
 	}
 
-	if opts != nil && opts.signer != nil {
-		err = addDataIntegrityProof(
-			fullVMID(did, signingVM.ID),
-			didResolver,
-			documentLoader,
-			opts.signer,
-			presentation,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to add data integrity proof to VP: %w", err)
-		}
-	}
-
 	jwtSigner, err := getHolderSigner(signingVM, crypto)
 	if err != nil {
 		return nil, err
 	}
 
 	presentationSubmission := presentation.CustomFields["presentation_submission"]
-	presentation.CustomFields["presentation_submission"] = nil
-
 	presentationSubmissionBytes, err := json.Marshal(presentationSubmission)
 	if err != nil {
 		return nil, fmt.Errorf("marshal presentation submission: %w", err)
 	}
+
+	presentation.CustomFields = nil
+	presentation.ID = "urn:uuid:" + presentation.ID //TODO: Resolve this properly in the vc-go
 
 	var vpToken string
 
@@ -610,9 +597,51 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 			return nil, fmt.Errorf("sign vp token: %w", err)
 		}
 	case presexch.FormatLDPVP:
-		vpToken, err = createLdpVPToken(crypto, documentLoader, signingVM, requestObject, presentation)
-		if err != nil {
-			return nil, fmt.Errorf("create ldp vp token: %w", err)
+		var proofAdded bool
+
+		vpFormats := requestObject.ClientMetadata.VPFormats
+
+		if vpFormats != nil && vpFormats.LdpVP != nil {
+			for _, proofType := range vpFormats.LdpVP.ProofType {
+				if proofType == ecdsa2019.SuiteTypeNew || proofType == eddsa2022.SuiteType {
+					if opts == nil || opts.signer == nil {
+						return nil, errors.New("signer is required for ldp_vp data integrity proof")
+					}
+
+					err = addDataIntegrityProof(
+						fullVMID(did, signingVM.ID),
+						didResolver,
+						documentLoader,
+						opts.signer,
+						presentation,
+						proofType,
+						requestObject.Nonce,
+						requestObject.ClientID,
+					)
+					if err != nil {
+						return nil, fmt.Errorf("failed to add data integrity proof to vp: %w", err)
+					}
+
+					proofAdded = true
+					break
+				}
+			}
+		}
+
+		if !proofAdded {
+			vpToken, err = createLdpVPToken(crypto, documentLoader, signingVM, requestObject, presentation)
+			if err != nil {
+				return nil, fmt.Errorf("create ldp vp token: %w", err)
+			}
+		} else {
+			var vpBytes []byte
+
+			vpBytes, err = presentation.MarshalJSON()
+			if err != nil {
+				return nil, fmt.Errorf("marshal vp into vp token: %w", err)
+			}
+
+			vpToken = string(vpBytes)
 		}
 	default:
 		return nil, fmt.Errorf("unsupported presentation exchange format: %s", vpFormat)
@@ -709,6 +738,9 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 				documentLoader,
 				signer,
 				presentation,
+				ecdsa2019.SuiteTypeNew,
+				requestObject.Nonce,
+				requestObject.ClientID,
 			)
 			if e != nil {
 				return nil, fmt.Errorf("failed to add data integrity proof to VP: %w", e)
@@ -800,21 +832,46 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 
 func addDataIntegrityProof(did string, didResolver api.DIDResolver, documentLoader ld.DocumentLoader,
 	signer wrapperapi.KMSCryptoSigner, presentation *verifiable.Presentation,
+	dataIntegritySuite, challenge, domain string,
 ) error {
-	proofContext := &verifiable.DataIntegrityProofContext{
-		SigningKeyID: did,
-		CryptoSuite:  ecdsa2019.SuiteType,
+	var signerInitializer suite.SignerInitializer
+
+	switch dataIntegritySuite {
+	case ecdsa2019.SuiteTypeNew:
+		signerInitializer = ecdsa2019.NewSignerInitializer(
+			&ecdsa2019.SignerInitializerOptions{
+				LDDocumentLoader: documentLoader,
+				SignerGetter:     ecdsa2019.WithKMSCryptoWrapper(signer),
+			},
+		)
+	case eddsa2022.SuiteType:
+		signerInitializer = eddsa2022.NewSignerInitializer(
+			&eddsa2022.SignerInitializerOptions{
+				LDDocumentLoader: documentLoader,
+				SignerGetter:     eddsa2022.WithKMSCryptoWrapper(signer),
+			},
+		)
+	default:
+		return fmt.Errorf("unsupported data integrity suite: %s", dataIntegritySuite)
 	}
 
-	signerOpts := dataintegrity.Options{DIDResolver: &didResolverWrapper{didResolver: didResolver}}
-
-	dataIntegritySigner, err := dataintegrity.NewSigner(&signerOpts,
-		ecdsa2019.NewSignerInitializer(&ecdsa2019.SignerInitializerOptions{
-			LDDocumentLoader: documentLoader,
-			SignerGetter:     ecdsa2019.WithKMSCryptoWrapper(signer),
-		}))
+	dataIntegritySigner, err := dataintegrity.NewSigner(
+		&dataintegrity.Options{
+			DIDResolver: &didResolverWrapper{
+				didResolver: didResolver,
+			},
+		},
+		signerInitializer)
 	if err != nil {
 		return err
+	}
+
+	proofContext := &verifiable.DataIntegrityProofContext{
+		SigningKeyID: did,
+		CryptoSuite:  dataIntegritySuite,
+		ProofPurpose: "authentication",
+		Challenge:    challenge,
+		Domain:       domain,
 	}
 
 	err = presentation.AddDataIntegrityProof(proofContext, dataIntegritySigner)

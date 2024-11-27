@@ -483,7 +483,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Success - with ldp_vp", func(t *testing.T) {
+	t.Run("Success - with ldp_vp, single cred", func(t *testing.T) {
 		mockHTTPClient := &mock.HTTPClientMock{
 			StatusCode: 200,
 		}
@@ -736,6 +736,14 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	})
 
 	t.Run("fail to add data integrity proof", func(t *testing.T) {
+		reqObject := &requestObject{
+			Nonce:                  "test123456",
+			State:                  "test34566",
+			PresentationDefinition: mockPresentationDefinition,
+			ResponseType:           "vp_token id_token",
+			ClientMetadata:         clientMetadata{VPFormats: &presexch.Format{LdpVP: &presexch.LdpType{}}},
+		}
+
 		t.Run("single credential", func(t *testing.T) {
 			localKMS, err := localkms.NewLocalKMS(localkms.Config{
 				Storage: localkms.NewMemKMSStore(),
@@ -747,15 +755,14 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			_, err = createAuthorizedResponse(
 				singleCred,
-				mockRequestObject,
+				reqObject,
 				CustomClaims{},
 				&didResolverMock{ResolveValue: mockDoc},
 				&cryptoMock{},
 				lddl,
 				&presentOpts{signer: signer},
 			)
-			require.Contains(t, err.Error(),
-				"failed to add data integrity proof to VP: data integrity proof generation error")
+			require.ErrorContains(t, err, "no supported linked data proof found")
 		})
 		t.Run("multiple credentials", func(t *testing.T) {
 			localKMS, err := localkms.NewLocalKMS(localkms.Config{
@@ -768,15 +775,14 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 			_, err = createAuthorizedResponse(
 				credentials,
-				mockRequestObject,
+				reqObject,
 				CustomClaims{},
 				&didResolverMock{ResolveValue: mockDoc},
 				&cryptoMock{},
 				lddl,
 				&presentOpts{signer: signer},
 			)
-			require.Contains(t, err.Error(),
-				"failed to add data integrity proof to VP: data integrity proof generation error")
+			require.ErrorContains(t, err, "failed to add data integrity proof to VP")
 		})
 	})
 

@@ -49,7 +49,6 @@ func NewCITestHelper(t *testing.T, didMethod string, keyType string) *CITestHelp
 
 	switch didMethod {
 	case "key":
-
 		didDoc, err = didkey.Create(jwk)
 		require.NoError(t, err)
 	case "jwk":
