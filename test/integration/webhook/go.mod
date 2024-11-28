@@ -4,7 +4,7 @@
 
 module github.com/trustbloc/wallet-sdk/test/integration/webhook
 
-go 1.23
+go 1.22.0
 
 require (
 	github.com/gorilla/mux v1.8.0

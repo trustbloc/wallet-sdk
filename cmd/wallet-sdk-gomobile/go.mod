@@ -5,9 +5,9 @@
 
 module github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile
 
-go 1.23
+go 1.22.0
 
-toolchain go1.23.3
+toolchain go1.22.2
 
 require (
 	github.com/go-jose/go-jose/v3 v3.0.1
