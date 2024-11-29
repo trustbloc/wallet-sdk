@@ -13,10 +13,10 @@ import 'package:flutter/material.dart';
 void handleOpenIDUrl(BuildContext context, String qrCodeURL) async {
   log('received qr code url - $qrCodeURL');
   // Check if the flow is for the verifiable presentation or for issuance.
-  if (!qrCodeURL.contains('openid-vc')) {
-    handleOpenIDIssuanceFlow(context, qrCodeURL);
-  } else {
+  if (qrCodeURL.contains('openid-vc://') || qrCodeURL.contains('openid4vp://')) {
     handleOpenIDVpFlow(context, qrCodeURL);
+  } else {
+    handleOpenIDIssuanceFlow(context, qrCodeURL);
   }
 }
 

@@ -75,7 +75,6 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		"givenName":    "John",
 		"degree":       "MIT",
 		"degreeSchool": "MIT school",
-		"photo":        "binary data",
 	}
 
 	type customScope struct {
