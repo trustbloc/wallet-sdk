@@ -731,21 +731,22 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 			return nil, e
 		}
 
-		if signer != nil {
-			e = addDataIntegrityProof(
-				fullVMID(holderDID, signingVM.ID),
-				didResolver,
-				documentLoader,
-				signer,
-				presentation,
-				ecdsa2019.SuiteTypeNew,
-				requestObject.Nonce,
-				requestObject.ClientID,
-			)
-			if e != nil {
-				return nil, fmt.Errorf("failed to add data integrity proof to VP: %w", e)
-			}
-		}
+		// TODO: Refactor data integrity proof implementation
+		//if signer != nil {
+		//	e = addDataIntegrityProof(
+		//		fullVMID(holderDID, signingVM.ID),
+		//		didResolver,
+		//		documentLoader,
+		//		signer,
+		//		presentation,
+		//		ecdsa2019.SuiteTypeNew,
+		//		requestObject.Nonce,
+		//		requestObject.ClientID,
+		//	)
+		//	if e != nil {
+		//		return nil, fmt.Errorf("failed to add data integrity proof to VP: %w", e)
+		//	}
+		//}
 
 		jwtSigner, e := getHolderSigner(signingVM, crypto)
 		if e != nil {
