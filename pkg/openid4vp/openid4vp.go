@@ -457,7 +457,7 @@ func parseRequestObject(
 			return nil, fmt.Errorf("check proof: %w", err)
 		}
 	case redirectURIScheme:
-		if !strings.EqualFold(authorizationRequestClientID, reqObject.ResponseURI) {
+		if !matchClientIDAndResponseURI(authorizationRequestClientID, reqObject.ResponseURI) {
 			return nil, errors.New("client_id mismatch between authorization request and request object")
 		}
 	default:
@@ -480,6 +480,22 @@ func parseRequestObject(
 	}
 
 	return reqObject, nil
+}
+
+func matchClientIDAndResponseURI(clientID, responseURI string) bool {
+	clientIDURL, err := url.Parse(clientID)
+	if err != nil {
+		return false
+	}
+
+	responseURIURL, err := url.Parse(responseURI)
+	if err != nil {
+		return false
+	}
+
+	return strings.EqualFold(clientIDURL.Scheme, responseURIURL.Scheme) &&
+		strings.EqualFold(clientIDURL.Host, responseURIURL.Host) &&
+		strings.EqualFold(clientIDURL.Path, responseURIURL.Path)
 }
 
 func createAuthorizedResponse(

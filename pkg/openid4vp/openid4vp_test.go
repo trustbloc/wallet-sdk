@@ -122,7 +122,7 @@ func TestNewInteraction(t *testing.T) {
 		t.Run("openid4vp protocol with redirect_uri client id scheme", func(t *testing.T) {
 			reqObject := &requestObject{
 				ClientIDScheme: redirectURIScheme,
-				ResponseURI:    "https://example.com/redirect",
+				ResponseURI:    "https://example.com/redirect?query=param",
 			}
 
 			token, err := jwt.NewUnsecured(reqObject)
