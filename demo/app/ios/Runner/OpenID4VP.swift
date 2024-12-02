@@ -15,15 +15,17 @@ public class OpenID4VP {
     private var didResolver: ApiDIDResolverProtocol
     private var crypto: ApiCryptoProtocol
     private var activityLogger: ApiActivityLoggerProtocol
+    private var kms: LocalkmsKMS
     
     private var initiatedInteraction: Openid4vpInteraction?
     private var vpQueryContent: Data?
     private var submissionRequirement: CredentialSubmissionRequirementArray?
     
-    init (didResolver: ApiDIDResolverProtocol, crypto: ApiCryptoProtocol, activityLogger: ApiActivityLoggerProtocol) {
+    init (didResolver: ApiDIDResolverProtocol, crypto: ApiCryptoProtocol, activityLogger: ApiActivityLoggerProtocol, kms: LocalkmsKMS) {
         self.didResolver = didResolver
         self.crypto = crypto
         self.activityLogger = activityLogger
+        self.kms = kms
     }
     
     /**
@@ -40,7 +42,8 @@ public class OpenID4VP {
         let opts = Openid4vpNewOpts()
         opts!.setActivityLogger(activityLogger)
         opts!.add(trace!.traceHeader())
-        
+        opts!.enableAddingDIProofs(kms)
+
         let interaction = Openid4vpNewInteraction(args, opts, nil)
         
         vpQueryContent = try interaction!.getQuery()

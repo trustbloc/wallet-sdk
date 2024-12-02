@@ -104,7 +104,10 @@ class WalletSDK {
         guard let activityLogger = self.activityLogger else {
             throw WalletSDKError.runtimeError("activity logger is not initialized, call initSDK()")
         }
-        return OpenID4VP(didResolver: didResolver, crypto: crypto, activityLogger: activityLogger)
+        guard let kms = self.kms else {
+            throw WalletSDKError.runtimeError("kms is not initialized, call initSDK()")
+        }
+        return OpenID4VP(didResolver: didResolver, crypto: crypto, activityLogger: activityLogger, kms: kms)
     }
 
     func getAttestationVC(
