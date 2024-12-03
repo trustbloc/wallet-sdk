@@ -14,7 +14,7 @@ require (
 	github.com/trustbloc/cmdutil-go v0.0.0-20221125151303-09d42adcc811
 	github.com/trustbloc/did-go v1.3.1-0.20241122115441-c010226da580
 	github.com/trustbloc/logutil-go v1.0.0-rc1
-	github.com/trustbloc/vc-go v1.2.1-0.20241125142751-c33f1ff65382
+	github.com/trustbloc/vc-go v1.2.1-0.20241203163133-9ba13d3d6c52
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile v0.0.0-00010101000000-000000000000
 	go.uber.org/zap v1.23.0
