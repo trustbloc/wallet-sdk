@@ -545,7 +545,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 	vpFormat := presexch.FormatJWTVP
 
 	if vpFormats := requestObject.ClientMetadata.VPFormats; vpFormats != nil {
-		if vpFormats.LdpVP != nil {
+		if vpFormats.LdpVP != nil && !credential.IsJWT() {
 			vpFormat = presexch.FormatLDPVP
 		}
 	}
