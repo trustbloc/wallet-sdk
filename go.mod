@@ -15,10 +15,10 @@ require (
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.3
 	github.com/trustbloc/bbs-signature-go v1.0.2
-	github.com/trustbloc/did-go v1.3.1-0.20241122115441-c010226da580
-	github.com/trustbloc/kms-go v1.1.3-0.20241001141623-8d9510c6bb88
+	github.com/trustbloc/did-go v1.3.1
+	github.com/trustbloc/kms-go v1.2.0
 	github.com/trustbloc/sidetree-go v1.1.0
-	github.com/trustbloc/vc-go v1.2.1-0.20241203163133-9ba13d3d6c52
+	github.com/trustbloc/vc-go v1.3.0
 	golang.org/x/oauth2 v0.13.0
 )
 

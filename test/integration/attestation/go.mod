@@ -12,9 +12,9 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/trustbloc/cmdutil-go v1.0.0
-	github.com/trustbloc/did-go v1.3.1-0.20241122115441-c010226da580
-	github.com/trustbloc/kms-go v1.1.3-0.20241001141623-8d9510c6bb88
-	github.com/trustbloc/vc-go v1.2.1-0.20241203163133-9ba13d3d6c52
+	github.com/trustbloc/did-go v1.3.1
+	github.com/trustbloc/kms-go v1.2.0
+	github.com/trustbloc/vc-go v1.3.0
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 )
 

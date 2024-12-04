@@ -47,9 +47,9 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
 	github.com/trustbloc/bbs-signature-go v1.0.2 // indirect
-	github.com/trustbloc/did-go v1.3.1-0.20241122115441-c010226da580 // indirect
-	github.com/trustbloc/kms-go v1.1.3-0.20241001141623-8d9510c6bb88 // indirect
-	github.com/trustbloc/vc-go v1.2.1-0.20241203163133-9ba13d3d6c52 // indirect
+	github.com/trustbloc/did-go v1.3.1 // indirect
+	github.com/trustbloc/kms-go v1.2.0 // indirect
+	github.com/trustbloc/vc-go v1.3.0 // indirect
 	github.com/veraison/go-cose v1.1.1-0.20240126165338-2300d5c96dbd // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
