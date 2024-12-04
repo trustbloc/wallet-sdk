@@ -710,10 +710,15 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 	vpFormat := presexch.FormatJWTVP
 
 	if vpFormats := requestObject.ClientMetadata.VPFormats; vpFormats != nil {
-		switch {
-		case vpFormats.JwtVP != nil:
-			break
-		case vpFormats.LdpVP != nil:
+		isJWTCredential := false
+		for _, credential := range credentials {
+			if credential.IsJWT() {
+				isJWTCredential = true
+				break
+			}
+		}
+
+		if vpFormats.LdpVP != nil && !isJWTCredential {
 			vpFormat = presexch.FormatLDPVP
 		}
 	}
