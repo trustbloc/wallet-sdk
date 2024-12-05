@@ -443,19 +443,22 @@ func (i *IssuerInitiatedInteraction) getCredentialResponse(
 	credentialResponses := make([]CredentialResponse, len(i.credentialTypes))
 
 	for index := range i.credentialTypes {
-		request, err := i.interaction.createCredentialRequestWithoutAccessToken(proofJWT, i.credentialFormats[index],
+		requestBody, err := i.interaction.createCredentialRequestBody(proofJWT, i.credentialFormats[index],
 			i.credentialTypes[index], i.credentialContexts[index])
 		if err != nil {
 			return nil, err
 		}
 
-		request.Header.Add("Authorization", "Bearer "+tokenResponse.AccessToken)
+		headers := http.Header{}
+		headers.Add("Authorization", "Bearer "+tokenResponse.AccessToken)
 
 		fetchCredentialResponseEventText := fmt.Sprintf(fetchCredentialViaGETReqEventText, index+1,
 			len(i.credentialTypes), i.interaction.issuerMetadata.CredentialEndpoint)
 
-		responseBytes, err := i.interaction.getRawCredentialResponse(request, fetchCredentialResponseEventText,
-			i.interaction.httpClient)
+		responseBytes, err := httprequest.New(i.interaction.httpClient, i.interaction.metricsLogger).DoContext(context.TODO(),
+			http.MethodPost, i.interaction.issuerMetadata.CredentialEndpoint, "application/json", headers,
+			bytes.NewReader(requestBody), fetchCredentialResponseEventText, requestCredentialEventText,
+			[]int{http.StatusOK, http.StatusCreated}, processCredentialErrorResponse)
 		if err != nil {
 			return nil, err
 		}
@@ -505,22 +508,16 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesBatch(
 		return nil, err
 	}
 
-	request, err := http.NewRequestWithContext(context.Background(),
-		http.MethodPost,
-		i.interaction.issuerMetadata.BatchCredentialEndpoint,
-		bytes.NewReader(b),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	request.Header.Add("Content-Type", "application/json")
-	request.Header.Add("Authorization", "Bearer "+tokenResponse.AccessToken)
+	headers := http.Header{}
+	headers.Add("Authorization", "Bearer "+tokenResponse.AccessToken)
 
 	fetchCredentialResponseEventText := fmt.Sprintf(fetchCredentialViaGETReqEventText, numberOfCredentials,
 		numberOfCredentials, i.interaction.issuerMetadata.BatchCredentialEndpoint)
 
-	b, err = i.interaction.getRawCredentialResponse(request, fetchCredentialResponseEventText, i.interaction.httpClient)
+	b, err = httprequest.New(i.interaction.httpClient, i.interaction.metricsLogger).DoContext(context.TODO(),
+		http.MethodPost, i.interaction.issuerMetadata.BatchCredentialEndpoint, "application/json", headers,
+		bytes.NewReader(b), fetchCredentialResponseEventText, requestCredentialEventText,
+		[]int{http.StatusOK, http.StatusCreated}, processCredentialErrorResponse)
 	if err != nil {
 		return nil, err
 	}

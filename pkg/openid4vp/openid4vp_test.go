@@ -1130,7 +1130,7 @@ func TestOpenID4VP_PresentedClaims(t *testing.T) {
 				"spouse":{},
 				"degree":{
 					"degree":{},
-					"type":{}					
+					"type":{}
 				}
 			}
 			`, string(claimsJSON))
@@ -1224,7 +1224,7 @@ func TestAcknowledgment_AcknowledgeVerifier(t *testing.T) {
 			},
 		)
 
-		require.ErrorContains(t, err, "unexpected status code")
+		require.ErrorContains(t, err, "but got status code 500")
 	})
 }
 
