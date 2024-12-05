@@ -7,12 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package verifiable
 
 import (
-	"net/http"
-
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
-	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/memstorage/legacy"
 )
@@ -30,13 +27,7 @@ func ParseCredential(vc string, opts *Opts) (*Credential, error) {
 	}
 
 	if opts.documentLoader == nil {
-		httpClient := &http.Client{}
-
-		if opts.httpTimeout != nil {
-			httpClient.Timeout = *opts.httpTimeout
-		} else {
-			httpClient.Timeout = goapi.DefaultHTTPTimeout
-		}
+		httpClient := wrapper.NewHTTPClient(opts.httpTimeout, opts.additionalHeaders, opts.disableHTTPClientTLSVerification)
 
 		goAPIDocumentLoader, err := common.CreateJSONLDDocumentLoader(httpClient, legacy.NewProvider())
 		if err != nil {
