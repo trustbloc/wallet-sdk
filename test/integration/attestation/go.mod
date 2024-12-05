@@ -14,7 +14,7 @@ require (
 	github.com/trustbloc/cmdutil-go v1.0.0
 	github.com/trustbloc/did-go v1.3.1
 	github.com/trustbloc/kms-go v1.2.0
-	github.com/trustbloc/vc-go v1.3.0
+	github.com/trustbloc/vc-go v1.3.1-0.20241205150408-80cf2ffc44ec
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 )
 
