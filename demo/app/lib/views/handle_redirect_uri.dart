@@ -80,7 +80,7 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
         if (widget.flowType == 'issuer-initiated-flow') {
           var issuerURI = await WalletSDKPlugin.issuerURI();
           var credentials = await WalletSDKPlugin.requestCredentialWithAuth(_redirectUri.toString());
-          var serializedDisplayData = await WalletSDKPlugin.resolveDisplayData([credentials], issuerURI!);
+          var serializedDisplayData = await WalletSDKPlugin.resolveDisplayData([credentials],[''],  issuerURI!);
           log('serializedDisplayData -> $serializedDisplayData');
           var activities = await WalletSDKPlugin.storeActivityLogger();
           var credID = await WalletSDKPlugin.getCredID([credentials]);
@@ -92,15 +92,15 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
                 rawCredential: credentials,
                 issuerURL: issuerURI,
                 issuerDisplayData: serializedDisplayData.issuerDisplay,
-                credentialDisplayData: serializedDisplayData.credentialsDisplay[0],
                 credentialDID: userDIDId,
-                credID: credID),
+                credID: credID,
+                resolvedCredentialData: serializedDisplayData.resolvedCredentialDisplayData),
           ]);
         } else {
           log('_redirectUri.toString() ${_redirectUri.toString()}');
           var credentials = await WalletSDKPlugin.requestCredentialWithWalletInitiatedFlow(_redirectUri.toString());
           var issuerURI = widget.issuerURI;
-          var serializedDisplayData = await WalletSDKPlugin.resolveDisplayData([credentials], issuerURI!);
+          var serializedDisplayData = await WalletSDKPlugin.resolveDisplayData([credentials],[''], issuerURI!);
           log('serializedDisplayData -> $serializedDisplayData');
           // TODO: Issue-518 Add activity logger support for wallet-initiated-flow
           _navigateToCredPreviewScreen([
@@ -108,9 +108,9 @@ class HandleRedirectUriState extends State<HandleRedirectUri> {
                 rawCredential: credentials,
                 issuerURL: issuerURI,
                 issuerDisplayData: serializedDisplayData.issuerDisplay,
-                credentialDisplayData: serializedDisplayData.credentialsDisplay[0],
                 credentialDID: userDIDId,
-                credID: ''),
+                credID: '',
+                resolvedCredentialData: serializedDisplayData.resolvedCredentialDisplayData),
           ]);
         }
       } catch (error) {

@@ -1037,7 +1037,13 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             guard let vcCredentials = arguments["vcCredentials"] as? Array<String> else{
                 return  result(FlutterError.init(code: "NATIVE_ERR",
                                                  message: "error while resolve credential display",
-                                                 details: "parameter storedcredentials is missed"))
+                                                 details: "parameter vcCredentials is missed"))
+            }
+            
+            guard let configIds = arguments["configIds"] as? Array<String> else{
+                return  result(FlutterError.init(code: "NATIVE_ERR",
+                                                 message: "error while resolve credential display",
+                                                 details: "parameter configIds is missed"))
             }
             
             guard let walletSDK = self.walletSDK else{
@@ -1047,19 +1053,20 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
             }
             
             var resolveError: NSError?
-            let resolvedDisplayData = DisplayResolve(convertToVerifiableCredentialsArray(credentials: vcCredentials), issuerURI,
-                                                     DisplayOpts()!.setDIDResolver(walletSDK.didResolver), &resolveError)
+            let resolvedDisplayData = DisplayResolveCredentialV2(convertToVerifiableCredentialsArrayV2(credentials: vcCredentials, configIds: configIds), issuerURI,
+                                                                 DisplayOpts()!.setDIDResolver(walletSDK.didResolver), &resolveError)
             if (resolveError != nil) {
                 return result(FlutterError.init(code: "Exception",
                                                 message: "error while resolving credential",
                                                 details: resolveError?.localizedDescription))
             }
-            
+        
+                        
             let serialized : [String: Any] = [
-                "credentialsDisplay" : convertCredentialsDisplayDataArray(arr: resolvedDisplayData!),
-                "issuerDisplay": resolvedDisplayData!.issuerDisplay()!.serialize(nil)
+                "resolvedCredentialDisplayData": resolvedDisplayData!.serialize(nil),
+                "issuerDisplay": convertIssuerDisplayDataArrayV2(arr: resolvedDisplayData!)
             ]
-            
+
             result(serialized)
         } catch let error as NSError {
             let parsedError = WalleterrorParse(error.localizedDescription)
@@ -1085,59 +1092,63 @@ public class SwiftWalletSDKPlugin: NSObject, FlutterPlugin {
     
     
     public func parseCredentialDisplay(arguments: Dictionary<String, Any>, result: @escaping FlutterResult){
-        
-        
         guard let resolvedCredentialDisplayData = arguments["resolvedCredentialDisplayData"] as? String else{
             return  result(FlutterError.init(code: "NATIVE_ERR",
                                              message: "error while parseCredentialDisplay",
                                              details: "parameter resolvedCredentialDisplayData is missed"))
         }
-        let credentialDisplay = DisplayParseCredentialDisplay(resolvedCredentialDisplayData, nil)!
-      
+        
+        let credentialDisplay = DisplayParseResolvedData(resolvedCredentialDisplayData, nil)!
+
+        
         var claimList:[Any] = []
-        if(credentialDisplay.claimsLength() != 0){
-            for i in 0...(credentialDisplay.claimsLength())-1{
-                let claim = credentialDisplay.claim(at: i)!
-                var claims : [String: Any] = [:]
-                if claim.isMasked(){
-                    claims["value"] = claim.value()
-                    claims["rawValue"] = claim.rawValue()
-                }
-                var order: Int = -1
-                if claim.hasOrder() {
-                    do {
-                        try claim.order(&order)
-                        claims["order"] = order
-                    } catch let err as NSError {
-                        print("Error: \(err)")
+        var resolveDisplayResp : [String: Any] = [:]
+        if(credentialDisplay.credentialsLength() != 0){
+            for i in 0...(credentialDisplay.credentialsLength())-1{
+                let claim = credentialDisplay.credential(at: i)!
+                for i in 0...(claim.subjectsLength())-1{
+                    var claims : [String: Any] = [:]
+                    let subject = claim.subject(at: i)!
+                    if  subject.isMasked(){
+                        claims["value"] = subject.value()
+                        claims["rawValue"] = subject.rawValue()
                     }
-                }
-                claims["rawValue"] = claim.rawValue()
-                claims["valueType"] = claim.valueType()
-                claims["label"] = claim.label()
-    
+                    var order: Int = -1
+                    if subject.hasOrder() {
+                        do {
+                            try subject.order(&order)
+                            claims["order"] = order
+                        } catch let err as NSError {
+                            print("Error: \(err)")
+                        }
+                    }
+                    claims["rawValue"] = subject.rawValue()
+                    claims["valueType"] = subject.valueType()
+                    if subject.localizedLabelsLength() != 0 {
+                        claims["label"] = subject.localizedLabel(at: 0)?.name()
+                    }
+                  
                 
-                if claim.valueType() == "attachment" {
-                    // For type=attachment, ignore the RawValue() and Value(), instead use Attachment() method.
-                    claims["rawValue"] = ""
-                    claims["value"] = ""
-                    let attachmentResp = claim.attachment()
-                    claims["uri"] = attachmentResp!.uri()
+                    if subject.valueType() == "attachment" {
+                        // For type=attachment, ignore the RawValue() and Value(), instead use Attachment() method.
+                        claims["rawValue"] = ""
+                        claims["value"] = ""
+                        let attachmentResp = subject.attachment()
+                        claims["uri"] = attachmentResp!.uri()
+                    }
+                    claimList.append(claims)
                 }
-                claimList.append(claims)
+                
+                let overview = claim.localizedOverview(at: i)
+                let logo = overview?.logo()
+                resolveDisplayResp["claims"] = claimList
+                resolveDisplayResp["overviewName"] = overview?.name()
+                resolveDisplayResp["logo"] = logo?.url()
+                resolveDisplayResp["textColor"] = overview?.textColor()
+                resolveDisplayResp["backgroundColor"] = overview?.backgroundColor()
             }
         }
-        
-        let overview = credentialDisplay.overview()
-        let logo = overview?.logo()
-        
-        var resolveDisplayResp : [String: Any] = [:]
-        resolveDisplayResp["claims"] = claimList
-        resolveDisplayResp["overviewName"] = overview?.name()
-        resolveDisplayResp["logo"] = logo?.url()
-        resolveDisplayResp["textColor"] = overview?.textColor()
-        resolveDisplayResp["backgroundColor"] = overview?.backgroundColor()
-        
+   
         result(resolveDisplayResp)
     }
     

@@ -104,17 +104,18 @@ void handleOpenIDVpFlow(BuildContext context, String qrCodeURL) async {
               storedCredentials.firstWhere((element) => credID.contains(element.value.credID)).value.credentialDID;
 
           log('matched issuerURI found: $issuerURI');
-          final credentialDisplayData = (await walletSDKPlugin.resolveDisplayData([matchVC], issuerURI.first))!;
+          final credentialDisplayData = (await walletSDKPlugin.resolveDisplayData([matchVC], [''], issuerURI.first))!;
           log('credentialDisplayData -> $credentialDisplayData');
           navigateToPresentationPreviewScreen(
               context,
               CredentialData(
                   rawCredential: matchVC,
                   issuerURL: issuerURI.first,
-                  credentialDisplayData: credentialDisplayData.credentialsDisplay[0],
                   credentialDID: credentialDID,
                   issuerDisplayData: credentialDisplayData.issuerDisplay,
-                  credID: credID));
+                  credID: credID,
+                  resolvedCredentialData: credentialDisplayData.resolvedCredentialDisplayData
+              ));
           return;
         }
       }

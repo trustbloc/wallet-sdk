@@ -293,7 +293,7 @@ class IssuancePreviewState extends State<IssuancePreview> {
     );
     final issuerURL = await WalletSDKPlugin.issuerURI();
     final resolvedCredentialsDisplay =
-        await WalletSDKPlugin.resolveDisplayData(credentials.map((e) => e.content).toList(), issuerURL!);
+        await WalletSDKPlugin.resolveDisplayData(credentials.map((e) => e.content).toList(),credentials.map((e) => e.configID).toList(), issuerURL!);
 
     var activities = await WalletSDKPlugin.storeActivityLogger();
 
@@ -309,10 +309,11 @@ class IssuancePreviewState extends State<IssuancePreview> {
       result.add(CredentialData(
           rawCredential: credential,
           issuerURL: issuerURL,
-          credentialDisplayData: resolvedCredentialsDisplay.credentialsDisplay[i],
           issuerDisplayData: resolvedCredentialsDisplay.issuerDisplay,
           credentialDID: didID,
-          credID: credID));
+          credID: credID,
+          resolvedCredentialData: resolvedCredentialsDisplay.resolvedCredentialDisplayData
+      ));
     }
 
     return result;

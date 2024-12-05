@@ -18,7 +18,7 @@ import dev.trustbloc.wallet.sdk.trustregistry.EvaluationResult
 import dev.trustbloc.wallet.sdk.trustregistry.IssuanceRequest
 import dev.trustbloc.wallet.sdk.trustregistry.Registry
 import dev.trustbloc.wallet.sdk.trustregistry.RegistryConfig
-import walletsdk.flutter.converters.convertVerifiableCredentialsWithIdArray
+import walletsdk.flutter.converters.convertVerifiableCredentialsV2WithIdArray
 import java.util.TreeMap
 class OpenID4CI constructor(
         private val requestURI: String,
@@ -126,9 +126,9 @@ class OpenID4CI constructor(
             opts.setAttestationVC(attestationVM, attestationVC)
         }
 
-        val credsArr = newInteraction.requestCredentialWithPreAuth(didVerificationMethod, opts)
+        val credsArr = newInteraction.requestCredentialWithPreAuthV2(didVerificationMethod, opts)
 
-        return convertVerifiableCredentialsWithIdArray(credsArr)
+        return convertVerifiableCredentialsV2WithIdArray(credsArr)
     }
 
     @SuppressLint("SuspiciousIndentation")

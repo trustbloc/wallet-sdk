@@ -189,11 +189,12 @@ class PresentationPreviewMultiCredCheckState extends State<PresentationPreviewMu
                           log('multiple selected adding $multipleSelected');
                           selectedCredentialData.add(CredentialData(
                               rawCredential: checkListItems[index].rawCredential,
-                              credentialDisplayData: checkListItems[index].credentialDisplayData,
                               issuerDisplayData: checkListItems[index].issuerDisplayData,
                               issuerURL: '',
                               credentialDID: checkListItems[index].credentialDID,
-                              credID: checkListItems[index].credID));
+                              credID: checkListItems[index].credID,
+                              resolvedCredentialData: checkListItems[index].resolvedCredentialData
+                          ));
                           setState(() => rememberMe = value!);
                           setState(() => showErrorMessage = false);
                         }

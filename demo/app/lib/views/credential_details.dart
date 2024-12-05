@@ -59,7 +59,7 @@ class CredentialDetailsState extends State<CredentialDetails> {
   }
 
   prettifyRawJson() {
-    final parsedJson = json.decode(widget.credentialData.credentialDisplayData);
+    final parsedJson = json.decode(widget.credentialData.resolvedCredentialData);
     final prettyString = const JsonEncoder.withIndent('  ').convert(parsedJson);
     return SelectableText(prettyString);
   }

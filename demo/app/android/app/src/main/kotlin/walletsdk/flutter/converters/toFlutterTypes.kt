@@ -27,6 +27,13 @@ public fun convertVerifiableCredentialsWithIdArray(arr: CredentialsArray): List<
     }
 }
 
+public fun convertVerifiableCredentialsV2WithIdArray(arr: CredentialsArray): List<HashMap<String, String>> {
+    return List(arr.length().toInt()
+    ) { i: Int ->
+        hashMapOf("id" to arr.atIndex(i.toLong()).id(), "content" to arr.atIndex(i.toLong()).serialize(), "configID" to (arr.atIndex(i.toLong()).configID))
+    }
+}
+
 public fun convertCredentialsDisplayDataArray(arr: Data): List<String> {
     return List(arr.credentialDisplaysLength().toInt()
     ) { i: Int ->
