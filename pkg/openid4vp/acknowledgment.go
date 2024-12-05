@@ -8,12 +8,14 @@ package openid4vp
 
 import (
 	"bytes"
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
+
+	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
+	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
 )
 
 const (
@@ -50,25 +52,10 @@ func (a *Acknowledgment) AcknowledgeVerifier(error, desc string, httpClient http
 		v.Add("interaction_details", base64.StdEncoding.EncodeToString(interactionDetailsBytes))
 	}
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, a.ResponseURI,
-		bytes.NewBufferString(v.Encode()))
+	_, err := httprequest.New(httpClient, noop.NewMetricsLogger()).Do(http.MethodPost, a.ResponseURI,
+		"application/x-www-form-urlencoded", bytes.NewBufferString(v.Encode()), "", "", nil)
 	if err != nil {
 		return err
-	}
-
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
 	return nil

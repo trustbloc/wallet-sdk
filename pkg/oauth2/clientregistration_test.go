@@ -86,7 +86,7 @@ func TestRegisterClient(t *testing.T) {
 		defer server.Close()
 
 		response, err := oauth2.RegisterClient(server.URL, nil)
-		require.EqualError(t, err, "server returned status code 500 with body []")
+		require.ErrorContains(t, err, "expected status code 201 but got status code 500 with response body  instead")
 		require.Nil(t, response)
 	})
 	t.Run("Server returns empty body, resulting in a JSON unmarshal failure", func(t *testing.T) {
