@@ -5,9 +5,9 @@
 
 module github.com/trustbloc/wallet-sdk
 
-go 1.22.0
+go 1.23
 
-toolchain go1.22.2
+toolchain go1.23.4
 
 require (
 	github.com/PaesslerAG/jsonpath v0.1.1

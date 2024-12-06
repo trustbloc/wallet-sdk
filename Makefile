@@ -12,9 +12,9 @@ else
 	PATH:=$(PATH);$(subst /,\\,$(GOBIN_PATH))
 endif
 
-ALPINE_VER ?= 3.18
-GO_ALPINE_VER ?= 3.18
-GO_VER ?= 1.22
+ALPINE_VER ?= 3.20
+GO_ALPINE_VER ?= 3.20
+GO_VER ?= 1.23
 
 NEW_VERSION ?= $(shell git describe --tags --always `git rev-list --tags --max-count=1`)-SNAPSHOT-$(shell git rev-parse --short=7 HEAD)
 GIT_REV ?= $(shell git rev-parse HEAD)
@@ -35,7 +35,7 @@ all: checks unit-test integration-test
 checks: license lint
 
 .PHONY: lint
-lint: 
+lint:
 	@scripts/check_lint.sh
 
 .PHONY: license
@@ -43,7 +43,7 @@ license:
 	@scripts/check_license.sh
 
 .PHONY: unit-test
-unit-test: 
+unit-test:
 	@scripts/check_unit.sh
 
 .PHONY: generate-android-bindings
