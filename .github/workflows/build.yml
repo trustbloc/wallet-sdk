@@ -7,7 +7,7 @@
 name: "wallet-sdk ci"
 
 env:
-  GO_VERSION: '1.22.4'
+  GO_VERSION: '1.23.4'
 
 on:
   push:
@@ -98,8 +98,8 @@ jobs:
       - name: Build docker images for test server
         run: |
           docker build -f ./images/mocks/loginconsent/Dockerfile --no-cache -t wallet-sdk/mock-login-consent:latest \
-          --build-arg GO_VER=1.22 \
-          --build-arg ALPINE_VER=3.18 .
+          --build-arg GO_VER=1.23 \
+          --build-arg ALPINE_VER=3.20 .
       - name: Save docker image as tar
         run: |
           docker save --output /tmp/mock-login-consent.tar wallet-sdk/mock-login-consent
@@ -121,8 +121,8 @@ jobs:
       - name: Build docker images for test server
         run: |
           docker build -f ./images/mocks/webhook/Dockerfile --no-cache -t wallet-sdk/sample-webhook:latest \
-          --build-arg GO_VER=1.22 \
-          --build-arg ALPINE_VER=3.18 .
+          --build-arg GO_VER=1.23 \
+          --build-arg ALPINE_VER=3.20 .
       - name: Save docker image as tar
         run: |
           docker save --output /tmp/mock-sample-webhook.tar wallet-sdk/sample-webhook
@@ -144,8 +144,8 @@ jobs:
       - name: Build docker images for test server
         run: |
           docker build -f ./images/mocks/trustregistry/Dockerfile --no-cache -t wallet-sdk/mock-trust-registry:latest \
-          --build-arg GO_VER=1.22 \
-          --build-arg ALPINE_VER=3.18 .
+          --build-arg GO_VER=1.23 \
+          --build-arg ALPINE_VER=3.20 .
       - name: Save docker image as tar
         run: |
           docker save --output /tmp/mock-trust-registry.tar wallet-sdk/mock-trust-registry
@@ -167,8 +167,8 @@ jobs:
       - name: Build docker images for test server
         run: |
           docker build -f ./images/mocks/attestation/Dockerfile --no-cache -t wallet-sdk/mock-attestation:latest \
-          --build-arg GO_VER=1.22 \
-          --build-arg ALPINE_VER=3.18 .
+          --build-arg GO_VER=1.23 \
+          --build-arg ALPINE_VER=3.20 .
       - name: Save docker image as tar
         run: |
           docker save --output /tmp/mock-attestation.tar wallet-sdk/mock-attestation

@@ -5,7 +5,9 @@
 
 module github.com/trustbloc/wallet-sdk/test/integration
 
-go 1.22.0
+go 1.23
+
+toolchain go1.23.4
 
 require (
 	github.com/google/uuid v1.3.0
