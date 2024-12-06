@@ -12,9 +12,9 @@ require (
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.3
 	github.com/trustbloc/cmdutil-go v0.0.0-20221125151303-09d42adcc811
-	github.com/trustbloc/did-go v1.3.1
+	github.com/trustbloc/did-go v1.3.2-0.20241206132250-6ae560f13021
 	github.com/trustbloc/logutil-go v1.0.0-rc1
-	github.com/trustbloc/vc-go v1.3.1-0.20241205150408-80cf2ffc44ec
+	github.com/trustbloc/vc-go v1.3.1-0.20241206135341-cb6ea1d75d15
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 	github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile v0.0.0-00010101000000-000000000000
 	go.uber.org/zap v1.23.0
@@ -93,4 +93,4 @@ replace github.com/trustbloc/wallet-sdk => ../../
 
 replace github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile => ../../cmd/wallet-sdk-gomobile
 
-replace github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f => github.com/trustbloc/json-gold v0.5.1
+replace github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f => github.com/trustbloc/json-gold v0.5.2-0.20241206130328-d2135d9f36a8

@@ -15,10 +15,10 @@ require (
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.8.3
 	github.com/trustbloc/bbs-signature-go v1.0.2
-	github.com/trustbloc/did-go v1.3.1
+	github.com/trustbloc/did-go v1.3.2-0.20241206132250-6ae560f13021
 	github.com/trustbloc/kms-go v1.2.0
 	github.com/trustbloc/sidetree-go v1.1.0
-	github.com/trustbloc/vc-go v1.3.1-0.20241205150408-80cf2ffc44ec
+	github.com/trustbloc/vc-go v1.3.1-0.20241206135341-cb6ea1d75d15
 	golang.org/x/oauth2 v0.13.0
 )
 
@@ -81,4 +81,4 @@ require (
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
 
-replace github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f => github.com/trustbloc/json-gold v0.5.1
+replace github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f => github.com/trustbloc/json-gold v0.5.2-0.20241206130328-d2135d9f36a8
