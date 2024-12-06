@@ -167,6 +167,28 @@ clean:
 	@rm -rf coverage*.out
 	@rm -Rf ./test/bdd/docker-compose.log
 
+DID_GO_VERSION						= 6ae560f130216bddbb8bfaeb8e781d54929bb7a3
+.PHONY: update-did
+update-did:
+	@find . -type d \( -name build -prune \) -o -name go.mod -print | while read -r gomod_path; do \
+		dir_path=$$(dirname "$$gomod_path"); \
+		if grep -q "github.com/trustbloc/did-go" "$$gomod_path"; then \
+			echo "Executing 'updating did-go' in directory: $$dir_path"; \
+			(cd "$$dir_path" && GOPROXY=$(GOPROXY) go get github.com/trustbloc/did-go@$(DID_GO_VERSION) && go mod tidy) || exit 1; \
+		fi; \
+	done
+
+VC_FRAMEWORK_VERSION				= cb6ea1d75d15ea672eb402bf222659148e78bed4
+.PHONY: update-vc
+update-vc:
+	@find . -type d \( -name build -prune \) -o -name go.mod -print | while read -r gomod_path; do \
+		dir_path=$$(dirname "$$gomod_path"); \
+		if grep -q "github.com/trustbloc/vc-go" "$$gomod_path"; then \
+			echo "Executing 'updating vc-go' in directory: $$dir_path"; \
+			(cd "$$dir_path" && GOPROXY=$(GOPROXY) go get github.com/trustbloc/vc-go@$(VC_FRAMEWORK_VERSION) && go mod tidy) || exit 1; \
+		fi; \
+	done
+
 .PHONY: tidy-modules
 tidy-modules:
 	@find . -type d \( -name build -prune \) -o -name go.mod -print | while read -r gomod_path; do \

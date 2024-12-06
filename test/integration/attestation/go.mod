@@ -12,9 +12,9 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/trustbloc/cmdutil-go v1.0.0
-	github.com/trustbloc/did-go v1.3.1
+	github.com/trustbloc/did-go v1.3.2-0.20241206132250-6ae560f13021
 	github.com/trustbloc/kms-go v1.2.0
-	github.com/trustbloc/vc-go v1.3.1-0.20241205150408-80cf2ffc44ec
+	github.com/trustbloc/vc-go v1.3.1-0.20241206135341-cb6ea1d75d15
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
 )
 
@@ -81,3 +81,5 @@ require (
 )
 
 replace github.com/trustbloc/wallet-sdk => ../../../../wallet-sdk
+
+replace github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f => github.com/trustbloc/json-gold v0.5.2-0.20241206130328-d2135d9f36a8
