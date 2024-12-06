@@ -4,7 +4,7 @@ This package contains the `gomobile`-compatible version of the SDK. It acts as a
 
 ## Prerequisites
 
-* [Go 1.22](https://go.dev/doc/install) or newer
+* [Go 1.23](https://go.dev/doc/install) or newer
 * The gomobile tools:
   ```
   go install golang.org/x/mobile/cmd/gomobile@latest
@@ -52,7 +52,7 @@ For usage documentation + examples, see [here](docs/usage.md).
 
 ## Helpful Tips
 
-* After importing `walletsdk.aar` into your Android project, to use the Wallet SDK packages in a Kotlin or 
+* After importing `walletsdk.aar` into your Android project, to use the Wallet SDK packages in a Kotlin or
   Java file, you import them in a roughly similar way as you would the equivalent Go package:
   ```java
   // Follow the pattern below for other packages/types as well
@@ -73,6 +73,6 @@ For usage documentation + examples, see [here](docs/usage.md).
   #import <Walletsdk/Api.objc.h>
   #import <Walletsdk/Storage.objc.h>
   ```
-  Note that the various types, interfaces and methods will have the package names prefixed to them (e.g. 
+  Note that the various types, interfaces and methods will have the package names prefixed to them (e.g.
   `Signer` in Go becomes `CredentialsignerSigner` in Swift and Objective-C).
 * If you've regenerated bindings on your machine, make sure you update your Android Studio or Xcode project accordingly.
