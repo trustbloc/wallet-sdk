@@ -47,9 +47,9 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
 	github.com/trustbloc/bbs-signature-go v1.0.2 // indirect
-	github.com/trustbloc/did-go v1.3.1 // indirect
+	github.com/trustbloc/did-go v1.3.2-0.20241206132250-6ae560f13021 // indirect
 	github.com/trustbloc/kms-go v1.2.0 // indirect
-	github.com/trustbloc/vc-go v1.3.1-0.20241205150408-80cf2ffc44ec // indirect
+	github.com/trustbloc/vc-go v1.3.1-0.20241206135341-cb6ea1d75d15 // indirect
 	github.com/veraison/go-cose v1.1.1-0.20240126165338-2300d5c96dbd // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
@@ -63,3 +63,5 @@ require (
 )
 
 replace github.com/trustbloc/wallet-sdk => ../../../
+
+replace github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f => github.com/trustbloc/json-gold v0.5.2-0.20241206130328-d2135d9f36a8
