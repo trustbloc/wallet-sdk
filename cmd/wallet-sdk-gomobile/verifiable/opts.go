@@ -14,9 +14,11 @@ import (
 
 // Opts contains all optional arguments that can be passed into the Parse function.
 type Opts struct {
-	disableProofCheck bool
-	documentLoader    api.LDDocumentLoader
-	httpTimeout       *time.Duration
+	disableProofCheck                bool
+	documentLoader                   api.LDDocumentLoader
+	httpTimeout                      *time.Duration
+	additionalHeaders                api.Headers
+	disableHTTPClientTLSVerification bool
 }
 
 // NewOpts returns a new Opts object for use with the Parse function.
@@ -45,6 +47,21 @@ func (o *Opts) SetDocumentLoader(documentLoader api.LDDocumentLoader) *Opts {
 func (o *Opts) SetHTTPTimeoutNanoseconds(timeout int64) *Opts {
 	timeoutDuration := time.Duration(timeout)
 	o.httpTimeout = &timeoutDuration
+
+	return o
+}
+
+// AddHeader adds the given HTTP header to all REST calls made by network-based document loader
+// In case SetDocumentLoader is used - this option does not affect http calls.
+func (o *Opts) AddHeader(header *api.Header) *Opts {
+	o.additionalHeaders.Add(header)
+
+	return o
+}
+
+// DisableHTTPClientTLSVerify disables TLS verification. Should be used for testing purposes only.
+func (o *Opts) DisableHTTPClientTLSVerify() *Opts {
+	o.disableHTTPClientTLSVerification = true
 
 	return o
 }
