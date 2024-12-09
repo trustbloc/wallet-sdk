@@ -10,11 +10,18 @@ package oauth2
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
+
+	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
+)
+
+const (
+	newRegisterClientEventText  = "Register client"
+	fetchRequestObjectEventText = "Fetch request object via an HTTP GET request to %s"
 )
 
 // RegisterClient registers a new client at the given registration endpoint.
@@ -55,39 +62,15 @@ func RegisterClient(registrationEndpoint string, clientMetadata *ClientMetadata,
 }
 
 func getRawResponse(requestBytes []byte, registrationEndpoint string, opts *opts) ([]byte, error) {
-	httpReq, err := http.NewRequest( //nolint: noctx // Timeout expected to be set in HTTP client already
-		http.MethodPost, registrationEndpoint, bytes.NewReader(requestBytes))
-	if err != nil {
-		return nil, err
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-
+	headers := http.Header{}
 	if opts.initialAccessBearerToken != "" {
-		httpReq.Header.Set("Authorization", "Bearer "+opts.initialAccessBearerToken)
+		headers.Set("Authorization", "Bearer "+opts.initialAccessBearerToken)
 	}
 
-	resp, err := opts.httpClient.Do(httpReq)
-	if err != nil {
-		return nil, err
-	}
+	metricsEvent := fmt.Sprintf(fetchRequestObjectEventText, registrationEndpoint)
 
-	defer func() {
-		errClose := resp.Body.Close()
-		if errClose != nil {
-			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
-		}
-	}()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("server returned status code %d with body [%s]", resp.StatusCode,
-			string(respBody))
-	}
-
-	return respBody, nil
+	return httprequest.New(opts.httpClient, opts.metricsLogger).DoContext(context.TODO(),
+		http.MethodPost, registrationEndpoint, "application/json", headers,
+		bytes.NewReader(requestBytes), metricsEvent, newRegisterClientEventText,
+		[]int{http.StatusCreated}, nil)
 }

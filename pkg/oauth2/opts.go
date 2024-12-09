@@ -4,11 +4,13 @@ import (
 	"net/http"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
 )
 
 type opts struct {
 	initialAccessBearerToken string
 	httpClient               *http.Client
+	metricsLogger            api.MetricsLogger
 }
 
 // An Opt is a single option for a call to RegisterClient.
@@ -29,6 +31,15 @@ func WithHTTPClient(httpClient *http.Client) Opt {
 	}
 }
 
+// WithMetricsLogger is an option for a call to RegisterClient that allows a caller to specify their MetricsLogger.
+// If used, then performance metrics events will be pushed to the given MetricsLogger implementation.
+// If this option is not used, then metrics logging will be disabled.
+func WithMetricsLogger(metricsLogger api.MetricsLogger) Opt {
+	return func(opts *opts) {
+		opts.metricsLogger = metricsLogger
+	}
+}
+
 func processOpts(options []Opt) *opts {
 	opts := mergeOpts(options)
 
@@ -46,6 +57,10 @@ func mergeOpts(options []Opt) *opts {
 		if opt != nil {
 			opt(resolveOpts)
 		}
+	}
+
+	if resolveOpts.metricsLogger == nil {
+		resolveOpts.metricsLogger = noop.NewMetricsLogger()
 	}
 
 	return resolveOpts
