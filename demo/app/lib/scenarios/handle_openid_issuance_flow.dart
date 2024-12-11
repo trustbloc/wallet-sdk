@@ -76,7 +76,8 @@ readIssuerAuthFlowConfig(String qrCodeURL) async {
   final uri = Uri.parse(decodedUri);
   var credentialsQuery = json.decode(uri.queryParameters['credential_offer']!);
   await persistCredentialType(credentialsQuery);
-  final String response = await rootBundle.loadString('lib/assets/issuerAuthFlowConfig.json');
+  final String response =
+      await rootBundle.loadString('lib/assets/issuerAuthFlowConfig.json');
   final configData = await json.decode(response);
   return configData[credentialsQuery['credential_issuer']];
 }
@@ -97,9 +98,11 @@ persistCredentialType(credentialsQuery) async {
 parseCredentialOfferUri(String qrCodeURL) async {
   var decodedUri = Uri.decodeComponent(qrCodeURL);
   final uri = Uri.parse(decodedUri);
-  final response = await http.get(Uri.parse(uri.queryParameters['credential_offer_uri']!));
+  final response =
+      await http.get(Uri.parse(uri.queryParameters['credential_offer_uri']!));
   if (response.statusCode == 200) {
-    final String configResp = await rootBundle.loadString('lib/assets/issuerAuthFlowConfig.json');
+    final String configResp =
+        await rootBundle.loadString('lib/assets/issuerAuthFlowConfig.json');
     final configData = await json.decode(configResp);
     var resp = CredentialOfferObject.fromJson(jsonDecode(response.body));
     await persistCredentialType(json.decode(response.body.toString()));
@@ -109,11 +112,17 @@ parseCredentialOfferUri(String qrCodeURL) async {
   }
 }
 
-void navigateToIssuancePreviewScreen(BuildContext context, bool? authorizeResultPinRequired) async {
-  Navigator.push(context,
-      MaterialPageRoute(builder: (context) => IssuancePreview(authorizeResultPinRequired: authorizeResultPinRequired)));
+void navigateToIssuancePreviewScreen(
+    BuildContext context, bool? authorizeResultPinRequired) async {
+  Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => IssuancePreview(
+              authorizeResultPinRequired: authorizeResultPinRequired)));
 }
 
-void navigateToIssuancePreviewScreenAuthFlow(BuildContext context, Uri uri) async {
-  Navigator.push(context, MaterialPageRoute(builder: (context) => IssuancePreview(uri: uri)));
+void navigateToIssuancePreviewScreenAuthFlow(
+    BuildContext context, Uri uri) async {
+  Navigator.push(context,
+      MaterialPageRoute(builder: (context) => IssuancePreview(uri: uri)));
 }
