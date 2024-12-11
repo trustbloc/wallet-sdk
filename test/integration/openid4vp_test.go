@@ -112,6 +112,12 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			verifierProfileID: "v_ldp_university_degree",
 		},
 		{
+			issuerProfileIDs:  []string{"university_degree_issuer_jwt"},
+			claimData:         []claimData{universityDegreeClaims},
+			walletDIDMethod:   "ion",
+			verifierProfileID: "v_jwt_university_degree",
+		},
+		{
 			issuerProfileIDs:  []string{"bank_issuer"},
 			claimData:         []claimData{verifiableEmployeeClaims},
 			walletDIDMethod:   "ion",
@@ -182,6 +188,12 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			claimData:         []claimData{universityDegreeClaims},
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_ldp_university_degree",
+		},
+		{
+			issuerProfileIDs:  []string{"university_degree_issuer_v2"},
+			claimData:         []claimData{universityDegreeClaims},
+			walletDIDMethod:   "jwk",
+			verifierProfileID: "v_ldp_university_degree_v2",
 		},
 	}
 
