@@ -875,6 +875,138 @@
     },
     {
       "issuer": {
+        "id": "university_degree_issuer_jwt",
+        "version": "v1.0",
+        "groupID": "group_university_degree_issuer",
+        "name": "University Degree Issuer",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
+        "url": "http://localhost:8075",
+        "active": true,
+        "vcConfig": {
+          "signingAlgorithm": "JsonWebSignature2020",
+          "signatureRepresentation": 0,
+          "keyType": "ED25519",
+          "format": "jwt",
+          "didMethod": "ion",
+          "status": {
+            "type": "StatusList2021Entry"
+          }
+        },
+        "oidcConfig": {
+          "client_id": "7d4u50e7w6nfq8tfayhzplgjf",
+          "client_secret_handle": "282ks4fkuqfosus5k0x30abnv",
+          "issuer_well_known": "http://cognito-mock.trustbloc.local:9229/local_5a9GzRvB/.well-known/openid-configuration",
+          "scopes_supported": [
+            "openid",
+            "profile"
+          ],
+          "grant_types_supported": [
+            "urn:ietf:params:oauth:grant-type:pre-authorized_code"
+          ],
+          "response_types_supported": [
+            "code"
+          ],
+          "token_endpoint_auth_methods_supported": [
+            "none"
+          ],
+          "pre-authorized_grant_anonymous_access_supported": true
+        },
+        "credentialTemplates": [
+          {
+            "contexts": [
+              "https://www.w3.org/2018/credentials/v1",
+              "https://www.w3.org/2018/credentials/examples/v1"
+            ],
+            "type": "UniversityDegreeCredential",
+            "id": "templateID",
+            "issuer": "did:ion:university_degree_issuer_jwt",
+            "checks": {
+              "strict": false
+            }
+          }
+        ],
+        "credentialMetadata": {
+          "credential_configurations_supported": {
+            "UniversityDegreeCredential_jwt_vc": {
+              "format": "jwt_vc_json",
+              "credential_definition": {
+                "type": [
+                  "VerifiableCredential",
+                  "UniversityDegreeCredential"
+                ],
+                "credentialSubject": {
+                  "familyName": {
+                    "display": [
+                      {
+                        "name": "Family Name",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "givenName": {
+                    "display": [
+                      {
+                        "name": "Given Name",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "degree": {
+                    "display": [
+                      {
+                        "name": "Degree",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  },
+                  "photo": {
+                    "display": [
+                      {
+                        "name": "Photo"
+                      }
+                    ],
+                    "value_type": "image"
+                  },
+                  "degreeSchool": {
+                    "display": [
+                      {
+                        "name": "Degree School",
+                        "locale": "en-US"
+                      }
+                    ],
+                    "value_type": "string"
+                  }
+                }
+              },
+              "cryptographic_binding_methods_supported": [
+                "did"
+              ],
+              "credential_signing_alg_values_supported": [
+                "JsonWebSignature2020"
+              ],
+              "display": [
+                {
+                  "name": "University Degree Credential",
+                  "locale": "en-US",
+                  "logo": {
+                    "uri": "https://example.com/public/logo.png",
+                    "alt_text": "a square logo of a degree verification"
+                  },
+                  "background_color": "#12107c",
+                  "text_color": "#FFFFFF"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "createDID": true
+    },
+    {
+      "issuer": {
         "id": "university_degree_issuer_bbs",
         "version": "v1.0",
         "groupID": "group_university_degree_issuer_bbs",
@@ -1441,6 +1573,105 @@
     },
     {
       "verifier": {
+        "id": "v_ldp_university_degree_v2",
+        "version": "v1.0",
+        "name": "v_ldp_university_degree_v2",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
+        "url": "https://test-verifier.com",
+        "active": true,
+        "webHook": "http://vcs.webhook.example.com:8180",
+        "checks": {
+          "credential": {
+            "format": [
+              "ldp"
+            ],
+            "proof": true
+          },
+          "presentation": {
+            "format": [
+              "ldp",
+              "jwt"
+            ],
+            "vcSubject": true,
+            "proof": true
+          }
+        },
+        "oidcConfig": {
+          "roSigningAlgorithm": "JsonWebSignature2020",
+          "keyType": "ED25519",
+          "didMethod": "ion"
+        },
+        "presentationDefinitions": [
+          {
+            "id": "32f54163-7166-48f1-93d8-ff217bdb0653",
+            "format": {
+              "ldp_vc": {
+                "proof_type": [
+                  "JsonWebSignature2020"
+                ]
+              },
+              "ldp_vp": {
+                "proof_type": [
+                  "JsonWebSignature2020"
+                ]
+              }
+            },
+            "input_descriptors": [
+              {
+                "id": "degree",
+                "name": "Degree",
+                "purpose": "We can only hire with university degree.",
+                "constraints": {
+                  "fields": [
+                    {
+                      "path": [
+                        "$['@context']"
+                      ],
+                      "filter": {
+                        "type": "array",
+                        "allOf": [
+                          {
+                            "contains": {
+                              "type": "string",
+                              "const": "https://www.w3.org/ns/credentials/v2"
+                            }
+                          },
+                          {
+                            "contains": {
+                              "type": "string",
+                              "const": "https://www.w3.org/ns/credentials/examples/v2"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "path": [
+                        "$['type']"
+                      ],
+                      "filter": {
+                        "type": "array",
+                        "allOf": [
+                          {
+                            "contains": {
+                              "type": "string",
+                              "const": "UniversityDegreeCredential"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "createDID": true
+    },
+    {
+      "verifier": {
         "id": "v_ldp_university_degree_sd_bbs",
         "version": "v1.0",
         "name": "v_ldp_university_degree_sd_bbs",
@@ -1516,6 +1747,95 @@
                     }
                   ]
                 }
+              }
+            ]
+          }
+        ]
+      },
+      "createDID": true
+    },
+    {
+      "verifier": {
+        "id": "v_jwt_university_degree",
+        "version": "v1.0",
+        "name": "v_jwt_university_degree",
+        "organizationID": "f13d1va9lp403pb9lyj89vk55",
+        "url": "https://test-verifier.com",
+        "active": true,
+        "webHook": "http://vcs.webhook.example.com:8180",
+        "checks": {
+          "credential": {
+            "format": [
+              "jwt"
+            ],
+            "proof": true,
+            "status": true
+          },
+          "presentation": {
+            "format": [
+              "jwt"
+            ],
+            "vcSubject": true,
+            "proof": true
+          }
+        },
+        "oidcConfig": {
+          "roSigningAlgorithm": "JsonWebSignature2020",
+          "keyType": "ED25519",
+          "didMethod": "ion"
+        },
+        "presentationDefinitions": [
+          {
+            "id": "6eca10b3-7e68-4ce5-bc19-4bd8aa464fc3",
+            "input_descriptors": [
+              {
+                "id": "e17655ff-e769-43fb-8e20-e72e7501aedd",
+                "name": "Degree",
+                "purpose": "We can only hire with university degree.",
+                "constraints": {
+                  "fields": [
+                    {
+                      "path": [
+                        "$.issuer",
+                        "$.iss"
+                      ],
+                      "filter": {
+                        "type": "string",
+                        "pattern": "^did:ion:[a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+$"
+                      }
+                    },
+                    {
+                      "path": [
+                        "$.credentialStatus",
+                        "$.vc.credentialStatus"
+                      ]
+                    },
+                    {
+                      "path": [
+                        "$.expirationDate",
+                        "$.exp"
+                      ],
+                      "filter": {
+                        "type": "number",
+                        "minimum": 1733839361
+                      }
+                    },
+                    {
+                      "path": [
+                        "$.vc.credentialSubject.degreeSchool"
+                      ],
+                      "filter": {
+                        "type": "string",
+                        "const": "MIT school"
+                      }
+                    }
+                  ]
+                },
+                "schema": [
+                  {
+                    "uri": "VerifiableCredential"
+                  }
+                ]
               }
             ]
           }
