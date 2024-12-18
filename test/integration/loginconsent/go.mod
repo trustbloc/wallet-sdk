@@ -9,19 +9,15 @@ go 1.23
 toolchain go1.23.4
 
 require (
-	github.com/google/uuid v1.3.0
-	github.com/gorilla/mux v1.8.0
+	github.com/google/uuid v1.6.0
+	github.com/gorilla/mux v1.8.1
 	github.com/ory/hydra-client-go v1.11.8
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.10.0
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/oauth2 v0.7.0 // indirect
-	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
+	golang.org/x/oauth2 v0.24.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
