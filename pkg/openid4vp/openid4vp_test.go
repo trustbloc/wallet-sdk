@@ -35,7 +35,6 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/mock"
-	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
@@ -519,6 +518,52 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NotEmpty(t, data["presentation_submission"])
 	})
 
+	t.Run("Success - with ldp_vp, multi cred", func(t *testing.T) {
+		mockHTTPClient := &mock.HTTPClientMock{
+			StatusCode: 200,
+		}
+
+		crypto := &cryptoMock{SignVal: []byte(testSignature)}
+
+		var ldpCredentials []*verifiable.Credential
+
+		for _, cred := range credentials {
+			if cred.IsJWT() {
+				continue
+			}
+
+			ldpCredentials = append(ldpCredentials, cred)
+		}
+
+		interaction, err := NewInteraction(
+			requestObjectJWTLdpVP,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockResolution(t, mockDID, true)},
+			crypto,
+			lddl,
+			WithHTTPClient(mockHTTPClient),
+		)
+		require.NoError(t, err)
+
+		query := interaction.GetQuery()
+		require.NotNil(t, query)
+
+		err = interaction.PresentCredential(ldpCredentials, CustomClaims{})
+		require.NoError(t, err)
+
+		data, err := url.ParseQuery(string(mockHTTPClient.SentBody))
+		require.NoError(t, err)
+
+		require.Contains(t, data, "id_token")
+		require.NotEmpty(t, data["id_token"])
+
+		require.Contains(t, data, "vp_token")
+		require.NotEmpty(t, data["vp_token"])
+
+		require.Contains(t, data, "presentation_submission")
+		require.NotEmpty(t, data["presentation_submission"])
+	})
+
 	t.Run("Check custom claims", func(t *testing.T) {
 		response, err := createAuthorizedResponse(
 			singleCred,
@@ -745,45 +790,17 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		}
 
 		t.Run("single credential", func(t *testing.T) {
-			localKMS, err := localkms.NewLocalKMS(localkms.Config{
-				Storage: localkms.NewMemKMSStore(),
-			})
-			require.NoError(t, err)
-
-			signer, err := localKMS.AriesSuite.KMSCryptoSigner()
-			require.NoError(t, err)
-
-			_, err = createAuthorizedResponse(
+			_, err := createAuthorizedResponse(
 				singleCred,
 				reqObject,
 				CustomClaims{},
 				&didResolverMock{ResolveValue: mockDoc},
 				&cryptoMock{},
 				lddl,
-				&presentOpts{signer: signer},
+				&presentOpts{},
 			)
-			require.ErrorContains(t, err, "no supported linked data proof found")
+			require.ErrorContains(t, err, "no supported ldp types found")
 		})
-		//t.Run("multiple credentials", func(t *testing.T) {
-		//	localKMS, err := localkms.NewLocalKMS(localkms.Config{
-		//		Storage: localkms.NewMemKMSStore(),
-		//	})
-		//	require.NoError(t, err)
-		//
-		//	signer, err := localKMS.AriesSuite.KMSCryptoSigner()
-		//	require.NoError(t, err)
-		//
-		//	_, err = createAuthorizedResponse(
-		//		credentials,
-		//		reqObject,
-		//		CustomClaims{},
-		//		&didResolverMock{ResolveValue: mockDoc},
-		//		&cryptoMock{},
-		//		lddl,
-		//		&presentOpts{signer: signer},
-		//	)
-		//	require.ErrorContains(t, err, "failed to add data integrity proof to VP")
-		//})
 	})
 
 	t.Run("fail to send authorized response", func(t *testing.T) {

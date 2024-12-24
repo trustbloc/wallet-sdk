@@ -95,6 +95,7 @@ func (o *Opts) DisableOpenTelemetry() *Opts {
 
 // EnableAddingDIProofs enables the adding of data integrity proofs to presentations sent to the verifier. It requires
 // a KMS to be passed in.
+// Deprecated: DI proofs are now enabled by default. Their usage depends on the proof types supported by the verifier.
 func (o *Opts) EnableAddingDIProofs(kms *localkms.KMS) *Opts {
 	o.kms = kms
 

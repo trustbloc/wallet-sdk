@@ -17,24 +17,19 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/trustbloc/kms-go/doc/jose/jwk"
-	wrapperapi "github.com/trustbloc/kms-go/wrapper/api"
-
-	gomobdid "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
-	goapilocalkms "github.com/trustbloc/wallet-sdk/pkg/localkms"
-
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
-
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
-
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/did-go/doc/did"
+	"github.com/trustbloc/kms-go/doc/jose/jwk"
+	wrapperapi "github.com/trustbloc/kms-go/wrapper/api"
 	"github.com/trustbloc/vc-go/presexch"
 	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	gomobdid "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
@@ -105,24 +100,6 @@ func TestNewInteraction(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, instance)
 		})
-	})
-
-	t.Run("Failure - kms crypto suite does not support signing for DI proofs", func(t *testing.T) {
-		requiredArgs := NewArgs(
-			requestObjectJWT,
-			&mockCrypto{},
-			&mockDIDResolver{},
-		)
-
-		opts := NewOpts()
-
-		localKMS := &localkms.KMS{GoAPILocalKMS: &goapilocalkms.LocalKMS{AriesSuite: &mockSuite{}}}
-
-		opts.EnableAddingDIProofs(localKMS)
-
-		instance, err := NewInteraction(requiredArgs, opts)
-		testutil.RequireErrorContains(t, err, "aries local crypto suite missing support for signing")
-		require.Nil(t, instance)
 	})
 
 	t.Run("Failure - invalid authorization request", func(t *testing.T) {
@@ -467,7 +444,7 @@ func (o *mockGoAPIInteraction) CustomScope() []string {
 func (o *mockGoAPIInteraction) PresentCredential(
 	[]*afgoverifiable.Credential,
 	openid4vp.CustomClaims,
-	...openid4vp.PresentOpt,
+...openid4vp.PresentOpt,
 ) error {
 	return o.PresentCredentialErr
 }

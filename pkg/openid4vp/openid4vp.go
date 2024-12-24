@@ -26,12 +26,6 @@ import (
 	"github.com/trustbloc/bbs-signature-go/bbs12381g2pub"
 	diddoc "github.com/trustbloc/did-go/doc/did"
 	vdrapi "github.com/trustbloc/did-go/vdr/api"
-	"github.com/trustbloc/kms-go/spi/kms"
-	wrapperapi "github.com/trustbloc/kms-go/wrapper/api"
-	"github.com/trustbloc/vc-go/dataintegrity"
-	"github.com/trustbloc/vc-go/dataintegrity/suite"
-	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
-	"github.com/trustbloc/vc-go/dataintegrity/suite/eddsa2022"
 	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/vc-go/presexch"
 	"github.com/trustbloc/vc-go/proof/defaults"
@@ -57,14 +51,6 @@ const (
 	sendAuthorizedResponseEventText = "Send authorized response via an HTTP POST request to %s"
 )
 
-type didResolverWrapper struct {
-	didResolver api.DIDResolver
-}
-
-func (d *didResolverWrapper) Resolve(did string, _ ...vdrapi.DIDMethodOption) (*diddoc.DocResolution, error) {
-	return d.didResolver.Resolve(did)
-}
-
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
@@ -85,7 +71,6 @@ type Interaction struct {
 	didResolver    api.DIDResolver
 	crypto         api.Crypto
 	documentLoader ld.DocumentLoader
-	signer         wrapperapi.KMSCryptoSigner
 }
 
 type authorizedResponse struct {
@@ -105,7 +90,7 @@ func NewInteraction(
 	documentLoader ld.DocumentLoader,
 	opts ...Opt,
 ) (*Interaction, error) {
-	client, activityLogger, metricsLogger, signer := processOpts(opts)
+	client, activityLogger, metricsLogger := processOpts(opts)
 
 	var (
 		authorizationRequestClientID string
@@ -155,7 +140,6 @@ func NewInteraction(
 		didResolver:    didResolver,
 		crypto:         crypto,
 		documentLoader: documentLoader,
-		signer:         signer,
 	}, nil
 }
 
@@ -227,7 +211,6 @@ func (o *Interaction) Acknowledgment() *Acknowledgment {
 
 type presentOpts struct {
 	ignoreConstraints bool
-	signer            wrapperapi.KMSCryptoSigner
 
 	attestationVPSigner api.JWTSigner
 	attestationVC       string
@@ -264,7 +247,7 @@ func (o *Interaction) PresentCredential(
 	customClaims CustomClaims,
 	opts ...PresentOpt,
 ) error {
-	resolveOpts := &presentOpts{signer: o.signer}
+	resolveOpts := &presentOpts{}
 
 	for _, opt := range opts {
 		if opt != nil {
@@ -515,8 +498,7 @@ func createAuthorizedResponse(
 			didResolver, crypto, documentLoader, opts)
 	default:
 		return createAuthorizedResponseMultiCred(credentials, requestObject, customClaims,
-			didResolver, crypto, documentLoader,
-			opts.signer, opts)
+			didResolver, crypto, documentLoader, opts)
 	}
 }
 
@@ -574,12 +556,12 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 		return nil, fmt.Errorf("presentation VC does not have a subject ID")
 	}
 
-	signingVM, err := getSigningVM(did, didResolver)
+	assertionVM, err := getAssertionVM(did, didResolver)
 	if err != nil {
 		return nil, err
 	}
 
-	jwtSigner, err := getHolderSigner(signingVM, crypto)
+	jwtSigner, err := getHolderSigner(assertionVM, crypto)
 	if err != nil {
 		return nil, err
 	}
@@ -613,51 +595,9 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 			return nil, fmt.Errorf("sign vp token: %w", err)
 		}
 	case presexch.FormatLDPVP:
-		var proofAdded bool
-
-		vpFormats := requestObject.ClientMetadata.VPFormats
-
-		if vpFormats != nil && vpFormats.LdpVP != nil {
-			for _, proofType := range vpFormats.LdpVP.ProofType {
-				if proofType == ecdsa2019.SuiteTypeNew || proofType == eddsa2022.SuiteType {
-					if opts == nil || opts.signer == nil {
-						return nil, errors.New("signer is required for ldp_vp data integrity proof")
-					}
-
-					err = addDataIntegrityProof(
-						fullVMID(did, signingVM.ID),
-						didResolver,
-						documentLoader,
-						opts.signer,
-						presentation,
-						proofType,
-						requestObject.Nonce,
-						requestObject.ClientID,
-					)
-					if err != nil {
-						return nil, fmt.Errorf("failed to add data integrity proof to vp: %w", err)
-					}
-
-					proofAdded = true
-					break
-				}
-			}
-		}
-
-		if !proofAdded {
-			vpToken, err = createLdpVPToken(crypto, documentLoader, signingVM, requestObject, presentation)
-			if err != nil {
-				return nil, fmt.Errorf("create ldp vp token: %w", err)
-			}
-		} else {
-			var vpBytes []byte
-
-			vpBytes, err = presentation.MarshalJSON()
-			if err != nil {
-				return nil, fmt.Errorf("marshal vp into vp token: %w", err)
-			}
-
-			vpToken = string(vpBytes)
+		vpToken, err = createLdpVPToken(crypto, documentLoader, didResolver, did, assertionVM, requestObject, presentation)
+		if err != nil {
+			return nil, fmt.Errorf("create ldp vp token: %w", err)
 		}
 	default:
 		return nil, fmt.Errorf("unsupported presentation exchange format: %s", vpFormat)
@@ -697,7 +637,6 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
-	signer wrapperapi.KMSCryptoSigner,
 	opts *presentOpts,
 ) (*authorizedResponse, error) {
 	pd := requestObject.PresentationDefinition
@@ -747,29 +686,12 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 			return nil, fmt.Errorf("presentation VC does not have a subject ID: %w", e)
 		}
 
-		signingVM, e := getSigningVM(holderDID, didResolver)
+		assertionVM, e := getAssertionVM(holderDID, didResolver)
 		if e != nil {
 			return nil, e
 		}
 
-		// TODO: Refactor data integrity proof implementation
-		//if signer != nil {
-		//	e = addDataIntegrityProof(
-		//		fullVMID(holderDID, signingVM.ID),
-		//		didResolver,
-		//		documentLoader,
-		//		signer,
-		//		presentation,
-		//		ecdsa2019.SuiteTypeNew,
-		//		requestObject.Nonce,
-		//		requestObject.ClientID,
-		//	)
-		//	if e != nil {
-		//		return nil, fmt.Errorf("failed to add data integrity proof to VP: %w", e)
-		//	}
-		//}
-
-		jwtSigner, e := getHolderSigner(signingVM, crypto)
+		jwtSigner, e := getHolderSigner(assertionVM, crypto)
 		if e != nil {
 			return nil, e
 		}
@@ -797,7 +719,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 				return nil, fmt.Errorf("sign vp token: %w", err)
 			}
 		case presexch.FormatLDPVP:
-			vpToken, err = createLdpVPToken(crypto, documentLoader, signingVM, requestObject, presentation)
+			vpToken, err = createLdpVPToken(crypto, documentLoader, didResolver, holderDID, assertionVM, requestObject, presentation)
 			if err != nil {
 				return nil, fmt.Errorf("create ldp vp token: %w", err)
 			}
@@ -852,79 +774,33 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 	}, nil
 }
 
-func addDataIntegrityProof(did string, didResolver api.DIDResolver, documentLoader ld.DocumentLoader,
-	signer wrapperapi.KMSCryptoSigner, presentation *verifiable.Presentation,
-	dataIntegritySuite, challenge, domain string,
-) error {
-	var signerInitializer suite.SignerInitializer
-
-	switch dataIntegritySuite {
-	case ecdsa2019.SuiteTypeNew:
-		signerInitializer = ecdsa2019.NewSignerInitializer(
-			&ecdsa2019.SignerInitializerOptions{
-				LDDocumentLoader: documentLoader,
-				SignerGetter:     ecdsa2019.WithKMSCryptoWrapper(signer),
-			},
-		)
-	case eddsa2022.SuiteType:
-		signerInitializer = eddsa2022.NewSignerInitializer(
-			&eddsa2022.SignerInitializerOptions{
-				LDDocumentLoader: documentLoader,
-				SignerGetter:     eddsa2022.WithKMSCryptoWrapper(signer),
-			},
-		)
-	default:
-		return fmt.Errorf("unsupported data integrity suite: %s", dataIntegritySuite)
-	}
-
-	dataIntegritySigner, err := dataintegrity.NewSigner(
-		&dataintegrity.Options{
-			DIDResolver: &didResolverWrapper{
-				didResolver: didResolver,
-			},
-		},
-		signerInitializer)
-	if err != nil {
-		return err
-	}
-
-	proofContext := &verifiable.DataIntegrityProofContext{
-		SigningKeyID: did,
-		CryptoSuite:  dataIntegritySuite,
-		ProofPurpose: "authentication",
-		Challenge:    challenge,
-		Domain:       domain,
-	}
-
-	err = presentation.AddDataIntegrityProof(proofContext, dataIntegritySigner)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func createLdpVPToken(
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
-	signingVM *diddoc.VerificationMethod,
+	didResolver api.DIDResolver,
+	did string,
+	assertionVM *diddoc.VerificationMethod,
 	requestObject *requestObject,
 	presentation *verifiable.Presentation,
 ) (string, error) {
-	ldProof, err := ldproof.New(
-		crypto,
-		documentLoader,
-		requestObject.ClientMetadata.VPFormats.LdpVP,
-		kms.ECDSAP384IEEEP1363, // TODO: Use the key type passed from the caller
-	)
-	if err != nil {
-		return "", fmt.Errorf("create ld proof: %w", err)
+	vpFormats := requestObject.ClientMetadata.VPFormats
+
+	if vpFormats == nil || vpFormats.LdpVP == nil {
+		return "", errors.New("client does not support ldp_vp format")
 	}
 
-	err = ldProof.Add(
+	ldProof := ldproof.New(
+		crypto,
+		documentLoader,
+		didResolver,
+	)
+
+	err := ldProof.Add(
 		presentation,
-		ldproof.WithSigningVM(signingVM),
-		ldproof.WithNonce(requestObject.Nonce),
+		ldproof.WithLdpType(vpFormats.LdpVP),
+		ldproof.WithVerificationMethod(assertionVM),
+		ldproof.WithDID(did),
+		ldproof.WithChallenge(requestObject.Nonce),
 		ldproof.WithDomain(requestObject.ClientID),
 	)
 	if err != nil {
@@ -1043,10 +919,10 @@ func signToken(claims interface{}, signer api.JWTSigner) (string, error) {
 	return tokenBytes, nil
 }
 
-func getSigningVM(holderDID string, didResolver api.DIDResolver) (*diddoc.VerificationMethod, error) {
+func getAssertionVM(holderDID string, didResolver api.DIDResolver) (*diddoc.VerificationMethod, error) {
 	docRes, err := didResolver.Resolve(holderDID)
 	if err != nil {
-		return nil, fmt.Errorf("resolve holder DID for signing: %w", err)
+		return nil, fmt.Errorf("resolve holder DID for assertion method: %w", err)
 	}
 
 	verificationMethods := docRes.DIDDocument.VerificationMethods(diddoc.AssertionMethod)
@@ -1055,13 +931,13 @@ func getSigningVM(holderDID string, didResolver api.DIDResolver) (*diddoc.Verifi
 		return nil, fmt.Errorf("holder DID has no assertion method for signing")
 	}
 
-	signingVM := verificationMethods[diddoc.AssertionMethod][0].VerificationMethod
+	assertionVM := verificationMethods[diddoc.AssertionMethod][0].VerificationMethod
 
-	return &signingVM, nil
+	return &assertionVM, nil
 }
 
-func getHolderSigner(signingVM *diddoc.VerificationMethod, crypto api.Crypto) (api.JWTSigner, error) {
-	return common.NewJWSSigner(models.VerificationMethodFromDoc(signingVM), crypto)
+func getHolderSigner(vm *diddoc.VerificationMethod, crypto api.Crypto) (api.JWTSigner, error) {
+	return common.NewJWSSigner(models.VerificationMethodFromDoc(vm), crypto)
 }
 
 func getSubjectID(vc *verifiable.Credential) (string, error) {
@@ -1085,22 +961,6 @@ func pickRandomElement(list []string) (string, error) {
 	}
 
 	return list[idx.Int64()], nil
-}
-
-func fullVMID(did, vmID string) string {
-	if vmID == "" {
-		return did
-	}
-
-	if vmID[0] == '#' {
-		return did + vmID
-	}
-
-	if strings.HasPrefix(vmID, "did:") {
-		return vmID
-	}
-
-	return did + "#" + vmID
 }
 
 type resolverAdapter struct {
