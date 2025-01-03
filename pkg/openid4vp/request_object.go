@@ -31,11 +31,11 @@ type requestObject struct {
 	ClientMetadata         clientMetadata                   `json:"client_metadata"`
 	PresentationDefinition *presexch.PresentationDefinition `json:"presentation_definition"`
 
-	// Deprecated: Use response_uri instead.
+	// Deprecated: Deprecated in OID4VP-ID2. Use response_uri instead.
 	RedirectURI string `json:"redirect_uri"`
-	// Deprecated: Use client_metadata instead.
+	// Deprecated: Deprecated in OID4VP-ID2. Use client_metadata instead.
 	Registration requestObjectRegistration `json:"registration"`
-	// Deprecated: Use top-level "presentation_definition" instead.
+	// Deprecated: Deprecated in OID4VP-ID2. Use top-level "presentation_definition" instead.
 	Claims requestObjectClaims `json:"claims"`
 }
 

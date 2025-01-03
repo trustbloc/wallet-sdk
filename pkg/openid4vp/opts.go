@@ -54,19 +54,10 @@ func WithMetricsLogger(metricsLogger api.MetricsLogger) Opt {
 	}
 }
 
-// WithDIProofs enables the adding of data integrity proofs to presentations sent to the verifier. It requires
-// a signer and a KMS to be passed in.
-func WithDIProofs(signer wrapperapi.KMSCryptoSigner) Opt {
-	return func(opts *opts) {
-		opts.signer = signer
-	}
-}
-
 func processOpts(options []Opt) (
 	httpClient,
 	api.ActivityLogger,
 	api.MetricsLogger,
-	wrapperapi.KMSCryptoSigner,
 ) {
 	opts := mergeOpts(options)
 
@@ -82,7 +73,7 @@ func processOpts(options []Opt) (
 		opts.metricsLogger = noopmetricslogger.NewMetricsLogger()
 	}
 
-	return opts.httpClient, opts.activityLogger, opts.metricsLogger, opts.signer
+	return opts.httpClient, opts.activityLogger, opts.metricsLogger
 }
 
 func mergeOpts(options []Opt) *opts {

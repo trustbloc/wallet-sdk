@@ -286,16 +286,6 @@ func toGoAPIOpts(opts *Opts) ([]openid4vp.Opt, error) {
 		goAPIOpts = append(goAPIOpts, openid4vp.WithMetricsLogger(mobileMetricsLoggerWrapper))
 	}
 
-	if opts.kms != nil {
-		signer, err := opts.kms.GoAPILocalKMS.AriesSuite.KMSCryptoSigner()
-		if err != nil {
-			return nil, fmt.Errorf("aries local crypto suite missing support for signing: %w", err)
-		}
-
-		goAPIOpts = append(goAPIOpts,
-			openid4vp.WithDIProofs(signer))
-	}
-
 	return goAPIOpts, nil
 }
 
