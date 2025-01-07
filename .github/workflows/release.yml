@@ -34,9 +34,8 @@ jobs:
           cd goroot
           git checkout go1.23.4
           cp ../wallet-sdk/cmd/wallet-sdk-gomobile/gopatches/* ./
-          git apply cmd_cgo__fix_unaligned_arguments_typedmemmove_crash_on_iOS.patch
           git revert 3560cf0afb3c29300a6c88ccd98256949ca7a6f6
-          cd src && ./all.bash
+          cd src && ./make.bash
       - name: Derive the new version
         run: |
           echo "new version"
@@ -101,9 +100,8 @@ jobs:
           cd goroot
           git checkout go1.23.4
           cp ../wallet-sdk/cmd/wallet-sdk-gomobile/gopatches/* ./
-          git apply cmd_cgo__fix_unaligned_arguments_typedmemmove_crash_on_iOS.patch
           git revert 3560cf0afb3c29300a6c88ccd98256949ca7a6f6
-          cd src && ./all.bash
+          cd src && ./make.bash
       - name: Derive the new version
         run: |
           echo "new version"
