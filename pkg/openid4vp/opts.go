@@ -9,8 +9,6 @@ package openid4vp
 import (
 	"net/http"
 
-	wrapperapi "github.com/trustbloc/kms-go/wrapper/api"
-
 	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	noopmetricslogger "github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
@@ -20,9 +18,6 @@ type opts struct {
 	httpClient     httpClient
 	activityLogger api.ActivityLogger
 	metricsLogger  api.MetricsLogger
-	// If both of the below fields are set, then data integrity proofs will be added to
-	// presentations sent to the verifier.
-	signer wrapperapi.KMSCryptoSigner
 }
 
 // An Opt is a single option for an OpenID4VP instance.

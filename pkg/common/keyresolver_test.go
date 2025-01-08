@@ -35,7 +35,7 @@ func TestDIDKeyResolver_Resolve(t *testing.T) {
 	req.Equal(publicKey.Value, pubKey.Value)
 	req.Equal("Ed25519VerificationKey2018", pubKey.Type)
 	req.NotNil(pubKey.JWK)
-	req.Equal(pubKey.JWK.Algorithm, "EdDSA")
+	req.Equal("EdDSA", pubKey.JWK.Algorithm)
 }
 
 type vdrResolverAdapter struct {

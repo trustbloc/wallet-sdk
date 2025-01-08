@@ -74,6 +74,8 @@ type IssuerInitiatedInteraction struct {
 
 // NewIssuerInitiatedInteraction creates a new OpenID4CI IssuerInitiatedInteraction.
 // If no ActivityLogger is provided (via the ClientConfig object), then no activity logging will take place.
+//
+//nolint:funlen
 func NewIssuerInitiatedInteraction(
 	initiateIssuanceURI string,
 	config *ClientConfig,
@@ -413,13 +415,15 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 	return i.getCredentialResponse(tokenResponse, tokenResponse.CNonce, signer, true)
 }
 
+//nolint:funlen,gocyclo,nonamedreturns
 func (i *IssuerInitiatedInteraction) getCredentialResponse(
 	tokenResponse *preAuthTokenResponse,
 	nonce any,
 	signer api.JWTSigner,
 	allowRetry bool) (
 	credentialResponse []CredentialResponse,
-	err error) {
+	err error,
+) {
 	proofJWT, err := i.interaction.createClaimsProof(nonce, signer)
 	if err != nil {
 		return nil, err
@@ -761,7 +765,7 @@ func determineCredentialParameters(
 
 func validateSignerKeyID(jwtSigner api.JWTSigner) error {
 	kidParts := strings.Split(jwtSigner.GetKeyID(), "#")
-	if len(kidParts) < 2 { //nolint: gomnd
+	if len(kidParts) < 2 { //nolint: mnd
 		return walleterror.NewExecutionError(
 			ErrorModule,
 			KeyIDMissingDIDPartCode,
@@ -775,10 +779,10 @@ func validateSignerKeyID(jwtSigner api.JWTSigner) error {
 func getSubjectIDs(vcs []*verifiable.Credential) []string {
 	var subjectIDs []string
 
-	for i := 0; i < len(vcs); i++ {
+	for i := range vcs {
 		subjects := vcs[i].Contents().Subject
 
-		for j := 0; j < len(subjects); j++ {
+		for j := range subjects {
 			subjectIDs = append(subjectIDs, subjects[j].ID)
 		}
 	}

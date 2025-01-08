@@ -4,6 +4,7 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+// Package ldproof contains a function for adding linked data proof to a verifiable presentation.
 package ldproof
 
 import (
@@ -36,6 +37,7 @@ const (
 	proofPurpose = "authentication"
 )
 
+//nolint:gochecknoglobals
 var supportedLDProofTypes = map[string]proof.LDProofDescriptor{
 	ecdsasecp256k1signature2019.ProofType: ecdsasecp256k1signature2019.New(),
 	ed25519signature2018.ProofType:        ed25519signature2018.New(),
@@ -43,6 +45,7 @@ var supportedLDProofTypes = map[string]proof.LDProofDescriptor{
 	jsonwebsignature2020.ProofType:        jsonwebsignature2020.New(),
 }
 
+//nolint:gochecknoglobals
 var supportedDIKeyTypes = map[string][]kms.KeyType{
 	ecdsa2019.SuiteTypeNew: {kms.ECDSAP256TypeIEEEP1363, kms.ECDSAP384TypeIEEEP1363},
 	eddsa2022.SuiteType:    {kms.ED25519Type},
@@ -130,20 +133,20 @@ func getKeyIDAndType(vm *did.VerificationMethod) (string, kms.KeyType, error) {
 	return "", "", fmt.Errorf("unsupported verification method type: %s", vm.Type)
 }
 
-func fullVMID(did, vmID string) string {
+func fullVMID(id, vmID string) string {
 	if vmID == "" {
-		return did
+		return id
 	}
 
 	if vmID[0] == '#' {
-		return did + vmID
+		return id + vmID
 	}
 
 	if strings.HasPrefix(vmID, "did:") {
 		return vmID
 	}
 
-	return did + "#" + vmID
+	return id + "#" + vmID
 }
 
 func isKeyTypeSupported(ldProof proof.LDProofDescriptor, keyType kms.KeyType) bool {
@@ -156,7 +159,11 @@ func isKeyTypeSupported(ldProof proof.LDProofDescriptor, keyType kms.KeyType) bo
 	return false
 }
 
-func (p *LDProof) addDataIntegrityProof(vp *verifiable.Presentation, dataIntegritySuite string, keyID string, o *options) error {
+func (p *LDProof) addDataIntegrityProof(
+	vp *verifiable.Presentation,
+	dataIntegritySuite, keyID string,
+	o *options,
+) error {
 	var initializer suite.SignerInitializer
 
 	switch dataIntegritySuite {
@@ -201,8 +208,13 @@ func (p *LDProof) addDataIntegrityProof(vp *verifiable.Presentation, dataIntegri
 	return vp.AddDataIntegrityProof(proofContext, dataIntegritySigner)
 }
 
-func (p *LDProof) addLinkedDataProof(vp *verifiable.Presentation,
-	proofDesc proof.LDProofDescriptor, keyID string, keyType kms.KeyType, o *options) error {
+func (p *LDProof) addLinkedDataProof(
+	vp *verifiable.Presentation,
+	proofDesc proof.LDProofDescriptor,
+	keyID string,
+	keyType kms.KeyType,
+	o *options,
+) error {
 	proofContext := &verifiable.LinkedDataProofContext{
 		SignatureType:           proofDesc.ProofType(),
 		ProofCreator:            creator.New(creator.WithLDProofType(proofDesc, p.createSigner(keyID))),
@@ -247,6 +259,6 @@ type didResolverWrapper struct {
 	didResolver api.DIDResolver
 }
 
-func (d *didResolverWrapper) Resolve(did string, _ ...vdrapi.DIDMethodOption) (*did.DocResolution, error) {
-	return d.didResolver.Resolve(did)
+func (d *didResolverWrapper) Resolve(id string, _ ...vdrapi.DIDMethodOption) (*did.DocResolution, error) {
+	return d.didResolver.Resolve(id)
 }

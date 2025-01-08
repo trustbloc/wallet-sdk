@@ -115,7 +115,7 @@ func rawTypesToStringArray(rawTypes interface{}) *api.StringArray {
 	typesAsInterfaceArray, ok := rawTypes.([]interface{}) // This will be the type if the VC was parsed (unmarshalled)
 	if ok {
 		types := make([]string, len(typesAsInterfaceArray))
-		for i := 0; i < len(typesAsInterfaceArray); i++ {
+		for i := range typesAsInterfaceArray {
 			types[i], ok = typesAsInterfaceArray[i].(string)
 			if !ok {
 				return nil

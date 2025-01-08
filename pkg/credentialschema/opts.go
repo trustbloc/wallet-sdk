@@ -46,7 +46,7 @@ type issuerMetadataSource struct {
 	metadata  *issuer.Metadata
 }
 
-// credentialConfigMapping represents a mapping of Credential to its corresponding CredentialConfigurationSupported
+// credentialConfigMapping represents a mapping of Credential to its corresponding CredentialConfigurationSupported.
 type credentialConfigMapping struct {
 	credential *verifiable.Credential
 	config     map[string]*issuer.CredentialConfigurationSupported // config ID -> CredentialConfigurationSupported
@@ -244,6 +244,7 @@ func validateIssuerMetadataOpts(issuerMetadataSource *issuerMetadataSource) erro
 	return nil
 }
 
+//nolint:gocyclo
 func processValidatedOpts(opts *resolveOpts) ([]*credentialConfigMapping, *issuer.Metadata, string, *string, error) {
 	credentialConfigMappings, err := processVCOpts(&opts.credentialSource)
 	if err != nil {
@@ -275,8 +276,7 @@ func processValidatedOpts(opts *resolveOpts) ([]*credentialConfigMapping, *issue
 			for configID := range m.config {
 				config, ok := issuerMetadata.CredentialConfigurationsSupported[configID]
 				if !ok {
-					return nil, nil, "", nil, errors.New(fmt.Sprintf("credential configuration with ID %s not found",
-						configID))
+					return nil, nil, "", nil, fmt.Errorf("credential configuration with ID %s not found", configID)
 				}
 
 				m.config[configID] = config
@@ -291,6 +291,7 @@ func processValidatedOpts(opts *resolveOpts) ([]*credentialConfigMapping, *issue
 			}
 
 			m.config[configID] = config
+
 			break
 		}
 	}
@@ -305,7 +306,7 @@ func processVCOpts(credentialSource *credentialSource) ([]*credentialConfigMappi
 		numVCs := len(credentialSource.vcs)
 		numConfigIDs := len(credentialSource.credentialConfigIDs)
 
-		for i := 0; i < numVCs; i++ {
+		for i := range numVCs {
 			m := &credentialConfigMapping{
 				credential: credentialSource.vcs[i],
 				config:     make(map[string]*issuer.CredentialConfigurationSupported),

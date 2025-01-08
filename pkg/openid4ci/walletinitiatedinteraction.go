@@ -122,7 +122,8 @@ func (i *WalletInitiatedInteraction) RequestCredential(jwtSigner api.JWTSigner, 
 		return nil, err
 	}
 
-	return i.interaction.requestCredentialWithAuth(jwtSigner, []string{i.credentialFormat}, [][]string{i.credentialTypes}, [][]string{i.credentialContext})
+	return i.interaction.requestCredentialWithAuth(jwtSigner, []string{i.credentialFormat},
+		[][]string{i.credentialTypes}, [][]string{i.credentialContext})
 }
 
 // DynamicClientRegistrationSupported indicates whether the issuer supports dynamic client registration.

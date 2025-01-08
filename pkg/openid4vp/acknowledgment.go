@@ -22,9 +22,11 @@ const (
 	// AccessDeniedErrorResponse is returned in "error" of Authorization Error Response when no consent is provided or
 	// no credentials match found.
 	AccessDeniedErrorResponse = "access_denied"
-	// NoConsentErrorDescription is returned in "error_description" of Authorization Error Response when no consent is provided.
+	// NoConsentErrorDescription is returned in "error_description" of Authorization Error Response when
+	// no consent is provided.
 	NoConsentErrorDescription = "no_consent"
-	// NoMatchFoundErrorDescription is returned in "error_description" of Authorization Error Response when no credentials match found.
+	// NoMatchFoundErrorDescription is returned in "error_description" of Authorization Error Response when
+	// no credentials match found.
 	NoMatchFoundErrorDescription = "no_match_found"
 )
 
@@ -36,10 +38,10 @@ type Acknowledgment struct {
 }
 
 // AcknowledgeVerifier sends acknowledgment to the verifier.
-func (a *Acknowledgment) AcknowledgeVerifier(error, desc string, httpClient httpClient) error {
+func (a *Acknowledgment) AcknowledgeVerifier(errStr, desc string, httpClient httpClient) error {
 	// https://openid.github.io/OpenID4VP/openid-4-verifiable-presentations-wg-draft.html#section-6.2-16
 	v := url.Values{}
-	v.Set("error", error)
+	v.Set("error", errStr)
 	v.Set("error_description", desc)
 	v.Set("state", a.State)
 

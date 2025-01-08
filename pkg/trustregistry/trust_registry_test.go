@@ -51,7 +51,7 @@ func TestRegistry_EvaluateIssuance(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.False(t, result.Allowed)
-		require.Equal(t, result.ErrorCode, "didForbidden")
+		require.Equal(t, "didForbidden", result.ErrorCode)
 	})
 
 	t.Run("Invalid server URI", func(t *testing.T) {
@@ -103,7 +103,7 @@ func TestRegistry_EvaluatePresentation(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.False(t, result.Allowed)
-		require.Equal(t, result.ErrorCode, "didForbidden")
+		require.Equal(t, "didForbidden", result.ErrorCode)
 	})
 
 	t.Run("Invalid server URI", func(t *testing.T) {

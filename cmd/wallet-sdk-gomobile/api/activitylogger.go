@@ -123,7 +123,7 @@ func (p *Params) GetString(key string) (string, error) {
 func (p *Params) GetStringArray(key string) (*StringArray, error) {
 	value, exists := p.params[key]
 	if !exists {
-		return nil, fmt.Errorf(noValueFoundErrMsg)
+		return nil, errors.New(noValueFoundErrMsg)
 	}
 
 	return interfaceAsStringArray(value)
@@ -218,7 +218,7 @@ func getType(value interface{}) (string, error) {
 // This function checks to see if the []interface{} value is really a []string, and if so,
 // returns "[]string" (which matches what fmt.Sprintf("%T", value) returns for a []string).
 func getTypeOfInterfaceArray(typedValue []interface{}) (string, error) {
-	for i := 0; i < len(typedValue); i++ {
+	for i := range typedValue {
 		_, ok := typedValue[i].(string)
 		if !ok {
 			return "", errors.New(unsupportedTypeErrMsg)
@@ -237,7 +237,7 @@ func interfaceAsStringArray(value interface{}) (*StringArray, error) {
 		}
 
 		strings := make([]string, len(valueAsInterfaceArray))
-		for i := 0; i < len(valueAsInterfaceArray); i++ {
+		for i := range valueAsInterfaceArray {
 			strings[i], ok = valueAsInterfaceArray[i].(string)
 			if !ok {
 				return nil, errors.New(valueNotStringArrayErrMsg)

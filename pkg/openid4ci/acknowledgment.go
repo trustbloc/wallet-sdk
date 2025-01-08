@@ -1,3 +1,9 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package openid4ci
 
 import (
@@ -85,7 +91,7 @@ func (a *Acknowledgment) sendAcknowledgeRequest(
 	defer func() {
 		errClose := resp.Body.Close()
 		if errClose != nil {
-			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
+			fmt.Printf("failed to close response body: %s\n", errClose.Error())
 		}
 	}()
 

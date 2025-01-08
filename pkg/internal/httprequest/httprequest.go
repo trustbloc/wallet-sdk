@@ -47,9 +47,12 @@ func (r *Request) Do(method, endpointURL, contentType string, body io.Reader,
 		nil, body, event, parentEvent, nil, errorResponseHandler)
 }
 
+//nolint:gochecknoglobals
 var defaultAcceptableStatuses = []int{http.StatusOK}
 
 // DoContext is the same as Do, but also accept context and headers.
+//
+//nolint:gocyclo
 func (r *Request) DoContext(ctx context.Context, method, endpointURL, contentType string,
 	additionalHeaders http.Header, body io.Reader, event, parentEvent string, acceptableStatuses []int,
 	errorResponseHandler func(statusCode int, responseBody []byte) error,
@@ -88,7 +91,7 @@ func (r *Request) DoContext(ctx context.Context, method, endpointURL, contentTyp
 	defer func() {
 		errClose := resp.Body.Close()
 		if errClose != nil {
-			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
+			fmt.Printf("failed to close response body: %s\n", errClose.Error())
 		}
 	}()
 

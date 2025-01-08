@@ -73,7 +73,7 @@ type interaction struct {
 }
 
 type requestedAcknowledgment struct {
-	//TODO: after update to the latest OIDC4CI this variable can be changed to string
+	// TODO: after update to the latest OIDC4CI this variable can be changed to string
 	// since notification_id should be the same for given session.
 	// spec: https://openid.github.io/OpenID4VCI/openid-4-verifiable-credential-issuance-wg-draft.html#section-8.3-14
 	ackIDs []string
@@ -311,7 +311,8 @@ func (i *interaction) requestCredentialWithAuth(jwtSigner api.JWTSigner, credent
 ) ([]*verifiable.Credential, error) {
 	timeStartRequestCredential := time.Now()
 
-	credentialResponses, err := i.getCredentialResponsesWithAuth(jwtSigner, credentialFormats, credentialTypes, credentialContexts)
+	credentialResponses, err := i.getCredentialResponsesWithAuth(jwtSigner, credentialFormats, credentialTypes,
+		credentialContexts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get credential response: %w", err)
 	}
@@ -355,6 +356,7 @@ func (i *interaction) getCredentialResponsesWithAuth(signer api.JWTSigner, crede
 		credentialFormats, credentialTypes, credentialContexts, true)
 }
 
+//nolint:nonamedreturns
 func (i *interaction) getCredentialResponse(signer api.JWTSigner, nonce any,
 	credentialFormats []string, credentialTypes, credentialContexts [][]string, allowRetry bool,
 ) (credentialResponse []CredentialResponse, err error) {
@@ -609,7 +611,7 @@ func (i *interaction) issuerFullTrustInfo(
 
 	supportedCredentials := make([]SupportedCredential, len(credentialFormats))
 
-	for j := 0; j < len(credentialFormats); j++ {
+	for j := range credentialFormats {
 		supportedCredentials[j] = SupportedCredential{
 			Format: credentialFormats[j],
 			Types:  credentialTypes[j],
