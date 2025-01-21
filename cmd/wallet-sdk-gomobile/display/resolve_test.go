@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -49,12 +50,12 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 		for _, headerToCheck := range m.headersToCheck.GetAll() {
 			// Note: for these tests, we're assuming that there aren't multiple values under a single name/key.
 			value := request.Header.Get(headerToCheck.Name)
-			require.Equal(m.t, headerToCheck.Value, value)
+			assert.Equal(m.t, headerToCheck.Value, value)
 		}
 	}
 
 	_, err := writer.Write([]byte(m.issuerMetadata))
-	require.NoError(m.t, err)
+	assert.NoError(m.t, err)
 }
 
 func TestResolve(t *testing.T) {
@@ -85,7 +86,7 @@ func TestResolve(t *testing.T) {
 
 				credentialDisplay := resolvedDisplayData.CredentialDisplayAtIndex(0)
 
-				for i := 0; i < credentialDisplay.ClaimsLength(); i++ {
+				for i := range credentialDisplay.ClaimsLength() {
 					claim := credentialDisplay.ClaimAtIndex(i)
 
 					if claim.Label() == sensitiveIDLabel {
@@ -103,7 +104,7 @@ func TestResolve(t *testing.T) {
 
 				credentialDisplay := resolvedDisplayData.CredentialDisplayAtIndex(0)
 
-				for i := 0; i < credentialDisplay.ClaimsLength(); i++ {
+				for i := range credentialDisplay.ClaimsLength() {
 					claim := credentialDisplay.ClaimAtIndex(i)
 
 					if claim.Label() == sensitiveIDLabel {
@@ -121,7 +122,7 @@ func TestResolve(t *testing.T) {
 
 				credentialDisplay := resolvedDisplayData.CredentialDisplayAtIndex(0)
 
-				for i := 0; i < credentialDisplay.ClaimsLength(); i++ {
+				for i := range credentialDisplay.ClaimsLength() {
 					claim := credentialDisplay.ClaimAtIndex(i)
 
 					if claim.Label() == sensitiveIDLabel {
@@ -226,14 +227,14 @@ func TestResolveCredential(t *testing.T) {
 		resolvedDisplayData, err := display.ResolveCredential(vcs, server.URL, opts)
 		require.NoError(t, err)
 
-		require.Equal(t, resolvedDisplayData.LocalizedIssuersLength(), 2)
-		require.Equal(t, resolvedDisplayData.CredentialsLength(), 1)
-		require.Equal(t, resolvedDisplayData.CredentialAtIndex(0).LocalizedOverviewsLength(), 1)
-		require.Equal(t, resolvedDisplayData.CredentialAtIndex(0).SubjectsLength(), 6)
+		require.Equal(t, 2, resolvedDisplayData.LocalizedIssuersLength())
+		require.Equal(t, 1, resolvedDisplayData.CredentialsLength())
+		require.Equal(t, 1, resolvedDisplayData.CredentialAtIndex(0).LocalizedOverviewsLength())
+		require.Equal(t, 6, resolvedDisplayData.CredentialAtIndex(0).SubjectsLength())
 
 		credentialDisplay := resolvedDisplayData.CredentialAtIndex(0)
 
-		for i := 0; i < credentialDisplay.SubjectsLength(); i++ {
+		for i := range credentialDisplay.SubjectsLength() {
 			claim := credentialDisplay.SubjectAtIndex(i)
 
 			if claim.LocalizedLabelAtIndex(0).Name() == sensitiveIDLabel {
@@ -256,14 +257,14 @@ func TestResolveCredential(t *testing.T) {
 		resolvedDisplayData, err := display.ResolveCredentialV2(vcs, server.URL, opts)
 		require.NoError(t, err)
 
-		require.Equal(t, resolvedDisplayData.LocalizedIssuersLength(), 2)
-		require.Equal(t, resolvedDisplayData.CredentialsLength(), 1)
-		require.Equal(t, resolvedDisplayData.CredentialAtIndex(0).LocalizedOverviewsLength(), 1)
-		require.Equal(t, resolvedDisplayData.CredentialAtIndex(0).SubjectsLength(), 6)
+		require.Equal(t, 2, resolvedDisplayData.LocalizedIssuersLength())
+		require.Equal(t, 1, resolvedDisplayData.CredentialsLength())
+		require.Equal(t, 1, resolvedDisplayData.CredentialAtIndex(0).LocalizedOverviewsLength())
+		require.Equal(t, 6, resolvedDisplayData.CredentialAtIndex(0).SubjectsLength())
 
 		credentialDisplay := resolvedDisplayData.CredentialAtIndex(0)
 
-		for i := 0; i < credentialDisplay.SubjectsLength(); i++ {
+		for i := range credentialDisplay.SubjectsLength() {
 			claim := credentialDisplay.SubjectAtIndex(i)
 
 			if claim.LocalizedLabelAtIndex(0).Name() == sensitiveIDLabel {
@@ -421,10 +422,10 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 	}
 	expectedClaimsChecklist.Found = make([]bool, len(expectedClaimsChecklist.Claims))
 
-	for i := 0; i < credentialDisplay.ClaimsLength(); i++ {
+	for i := range credentialDisplay.ClaimsLength() {
 		claim := credentialDisplay.ClaimAtIndex(i)
 
-		for j := 0; j < len(expectedClaimsChecklist.Claims); j++ {
+		for j := range len(expectedClaimsChecklist.Claims) {
 			expectedClaim := expectedClaimsChecklist.Claims[j]
 			if claim.Label() == expectedClaim.Label &&
 				claim.ValueType() == expectedClaim.ValueType &&
@@ -458,7 +459,7 @@ func checkClaims(t *testing.T, credentialDisplay *display.CredentialDisplay) { /
 		}
 	}
 
-	for i := 0; i < len(expectedClaimsChecklist.Claims); i++ {
+	for i := range len(expectedClaimsChecklist.Claims) {
 		if !expectedClaimsChecklist.Found[i] {
 			expectedClaim := expectedClaimsChecklist.Claims[i]
 			require.FailNow(t, "claim was expected but wasn't received",

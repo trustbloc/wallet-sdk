@@ -275,7 +275,7 @@ func (o *Interaction) PresentCredentialUnsafe(credential *verifiable.Credential,
 }
 
 // PresentCredential presents credentials to redirect uri from request object.
-func (o *Interaction) presentCredentials(
+func (o *Interaction) presentCredentials( //nolint: funlen
 	credentials []*verifiable.Credential,
 	customClaims CustomClaims,
 	opts *presentOpts,
@@ -412,6 +412,7 @@ func fetchRequestObject(authorizationRequestURL *url.URL, client httpClient,
 	return string(respBytes), nil
 }
 
+//nolint:gocyclo
 func parseRequestObject(
 	authorizationRequestClientID string,
 	rawRequestObject string,
@@ -428,9 +429,7 @@ func parseRequestObject(
 	}
 
 	switch reqObject.ClientIDScheme {
-	case "": //TODO: For backward compatibility, remove this case in the future
-		fallthrough
-	case didScheme:
+	case "", didScheme:
 		if reqObject.Issuer == "" {
 			return nil, errors.New("iss claim in request object is required")
 		}
@@ -451,6 +450,7 @@ func parseRequestObject(
 	if reqObject.PresentationDefinition == nil && reqObject.Claims.VPToken.PresentationDefinition != nil {
 		reqObject.PresentationDefinition = reqObject.Claims.VPToken.PresentationDefinition
 	}
+
 	if reqObject.ClientMetadata.VPFormats == nil && reqObject.Registration.VPFormats != nil {
 		reqObject.ClientMetadata.ClientName = reqObject.Registration.ClientName
 		reqObject.ClientMetadata.ClientPurpose = reqObject.Registration.ClientPurpose
@@ -458,6 +458,7 @@ func parseRequestObject(
 		reqObject.ClientMetadata.VPFormats = reqObject.Registration.VPFormats
 		reqObject.ClientMetadata.SubjectSyntaxTypesSupported = reqObject.Registration.SubjectSyntaxTypesSupported
 	}
+
 	if reqObject.ResponseURI == "" && reqObject.RedirectURI != "" {
 		reqObject.ResponseURI = reqObject.RedirectURI
 	}
@@ -567,17 +568,20 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 	}
 
 	presentationSubmission := presentation.CustomFields["presentation_submission"]
+
 	presentationSubmissionBytes, err := json.Marshal(presentationSubmission)
 	if err != nil {
 		return nil, fmt.Errorf("marshal presentation submission: %w", err)
 	}
 
 	presentation.CustomFields = nil
-	presentation.ID = "urn:uuid:" + presentation.ID //TODO: Resolve this properly in the vc-go
+
+	// TODO: Resolve this properly in the vc-go
+	presentation.ID = "urn:uuid:" + presentation.ID
 
 	var vpToken string
 
-	switch vpFormat {
+	switch vpFormat { //nolint:dupl
 	case presexch.FormatJWTVP:
 		claims := vpTokenClaims{
 			VP:    presentation,
@@ -630,7 +634,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 	}, nil
 }
 
-func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to decompose without a major reworking
+func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo,gocognit
 	credentials []*verifiable.Credential,
 	requestObject *requestObject,
 	customClaims CustomClaims,
@@ -650,9 +654,11 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 
 	if vpFormats := requestObject.ClientMetadata.VPFormats; vpFormats != nil {
 		isJWTCredential := false
+
 		for _, credential := range credentials {
 			if credential.IsJWT() {
 				isJWTCredential = true
+
 				break
 			}
 		}
@@ -700,7 +706,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 
 		var vpToken string
 
-		switch vpFormat {
+		switch vpFormat { //nolint:dupl
 		case presexch.FormatJWTVP:
 			// TODO: Fix this issue: the vpToken always uses the last presentation from the loop above
 			claims := vpTokenClaims{
@@ -719,7 +725,8 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 				return nil, fmt.Errorf("sign vp token: %w", err)
 			}
 		case presexch.FormatLDPVP:
-			vpToken, err = createLdpVPToken(crypto, documentLoader, didResolver, holderDID, assertionVM, requestObject, presentation)
+			vpToken, err = createLdpVPToken(crypto, documentLoader, didResolver, holderDID, assertionVM, requestObject,
+				presentation)
 			if err != nil {
 				return nil, fmt.Errorf("create ldp vp token: %w", err)
 			}
@@ -737,6 +744,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 
 	var idTokenJWS string
 
+	//nolint:nestif
 	if strings.Contains(requestObject.ResponseType, "id_token") {
 		var idTokenSigningDID string
 
@@ -1071,8 +1079,7 @@ func processUsingMSEntraErrorResponseFormat(respBytes []byte, detailedErr error)
 	}
 }
 
-type emptyObj struct {
-}
+type emptyObj struct{}
 
 func copyJSONKeysOnly(obj interface{}) interface{} {
 	empty := &emptyObj{}
@@ -1089,6 +1096,7 @@ func copyJSONKeysOnly(obj interface{}) interface{} {
 	case verifiable.CustomFields:
 		newMap := make(map[string]interface{})
 		populateClaimKeys(newMap, jsonObj)
+
 		return newMap
 	case []interface{}:
 		newSlice := make([]interface{}, len(jsonObj))

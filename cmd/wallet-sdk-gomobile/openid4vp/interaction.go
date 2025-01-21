@@ -222,8 +222,8 @@ func (o *Interaction) PresentCredentialOpts(
 
 	var presentOpts []openid4vp.PresentOpt
 
-	if opts != nil {
-		if len(opts.serializedInteractionDetails) > 0 {
+	if opts != nil { //nolint:nestif
+		if opts.serializedInteractionDetails != "" {
 			var interactionDetails map[string]interface{}
 			if err = json.Unmarshal([]byte(opts.serializedInteractionDetails), &interactionDetails); err != nil {
 				return fmt.Errorf("decode vp interaction details: %w", err)
@@ -267,6 +267,7 @@ func (o *Interaction) OTelTraceID() string {
 	return traceID
 }
 
+//nolint:unparam
 func toGoAPIOpts(opts *Opts) ([]openid4vp.Opt, error) {
 	httpClient := wrapper.NewHTTPClient(opts.httpTimeout, opts.additionalHeaders, opts.disableHTTPClientTLSVerification)
 
@@ -296,7 +297,7 @@ func unwrapVCs(vcs *verifiable.CredentialsArray) ([]*afgoverifiable.Credential, 
 
 	var credentials []*afgoverifiable.Credential
 
-	for i := 0; i < vcs.Length(); i++ {
+	for i := range vcs.Length() {
 		vc := vcs.AtIndex(i)
 		if vc == nil {
 			return nil, fmt.Errorf("credential objects cannot be nil (credential at index %d is nil)", i)

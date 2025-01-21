@@ -56,6 +56,7 @@ func buildCredentialDisplays(
 			var config *issuer.CredentialConfigurationSupported
 			for _, c := range m.config {
 				config = c
+
 				break
 			}
 
@@ -195,7 +196,7 @@ func resolveClaims(
 	return resolvedClaims, nil
 }
 
-func resolveClaim(
+func resolveClaim( //nolint:funlen
 	fieldName string,
 	claim *issuer.Claim,
 	vc *verifiable.Credential,
@@ -301,8 +302,11 @@ func getLocalizedLabel(preferredLocale string, claim *issuer.Claim) (string, str
 }
 
 // Returns nil if no matching claim value could be found.
-func getMatchingClaimValue(vc *verifiable.Credential, credentialSubject *verifiable.Subject,
-	fieldName string) interface{} {
+func getMatchingClaimValue(
+	vc *verifiable.Credential,
+	credentialSubject *verifiable.Subject,
+	fieldName string,
+) interface{} {
 	if strings.EqualFold(fieldName, "ID") {
 		if credentialSubject.ID == "" {
 			return nil
@@ -311,9 +315,10 @@ func getMatchingClaimValue(vc *verifiable.Credential, credentialSubject *verifia
 		return credentialSubject.ID
 	}
 
-	if strings.HasPrefix(fieldName, "$.credentialSubject.") {
+	if strings.HasPrefix(fieldName, "$.credentialSubject.") { //nolint:gocritic,nestif
 		// work around for issue in vc.ToRawJSON() where the sd-jwt credentialSubject data is not included in the raw JSON
 		fieldName = strings.ReplaceAll(fieldName, "$.credentialSubject.", "$.")
+
 		value := findMatchingClaimUsingJSONPath(credentialSubject.CustomFields, fieldName)
 		if value != nil {
 			return value
@@ -431,6 +436,7 @@ func buildCredentialDisplaysAllLocale(
 		var config *issuer.CredentialConfigurationSupported
 		for _, c := range m.config {
 			config = c
+
 			break
 		}
 
@@ -517,7 +523,7 @@ func resolveClaimsAllLocale(
 	return resolvedClaims, nil
 }
 
-func resolveClaimAllLocale(
+func resolveClaimAllLocale( //nolint:funlen,gocyclo
 	fieldName string,
 	claim *issuer.Claim,
 	vc *verifiable.Credential,

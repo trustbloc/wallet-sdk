@@ -76,7 +76,7 @@ type CredentialResponse struct {
 	// OPTIONAL. Contains issued Credential.
 	// It MUST be present when transaction_id is not returned.
 	// It MAY be a string or an object, depending on the Credential format.
-	// Deprecated. Use Credentials instead.
+	// Deprecated: Use Credentials instead.
 	Credential interface{} `json:"credential,omitempty"`
 	// OPTIONAL. String identifying a Deferred Issuance transaction.
 	// This claim is contained in the response if the Credential Issuer was unable to immediately issue the Credential.
@@ -195,6 +195,8 @@ type acknowledgementRequest struct {
 
 // InvalidProofError -- special type of error to handle case described in specification
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-7.3.2
+//
+//nolint:recvcheck
 type InvalidProofError struct {
 	ParentError     *walleterror.Error
 	CNonce          string

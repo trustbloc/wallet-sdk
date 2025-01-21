@@ -154,7 +154,7 @@ func checkActivity(t *testing.T, activity *api.Activity) {
 
 	require.Equal(t, 2, keyValuePairs.Length())
 
-	for i := 0; i < keyValuePairs.Length(); i++ {
+	for i := range keyValuePairs.Length() {
 		var stringCaseChecked, stringArrayCaseChecked bool
 
 		keyValuePair := keyValuePairs.AtIndex(i)

@@ -135,7 +135,7 @@ func (c *ClientMetadata) SetScopes(scopes *api.StringArray) {
 
 	indexOfLastScope := numOfScopes - 1
 
-	for i := 0; i < indexOfLastScope; i++ {
+	for i := range indexOfLastScope {
 		sb.WriteString(scopes.AtIndex(i))
 		sb.WriteString(" ")
 	}

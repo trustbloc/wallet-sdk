@@ -62,7 +62,7 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, _ *http.
 	}
 }
 
-func TestResolve(t *testing.T) { //nolint: gocognit // Test file
+func TestResolve(t *testing.T) { //nolint:gocognit
 	t.Run("Success", func(t *testing.T) {
 		t.Run("Credentials supported object contains display info for the given VC", func(t *testing.T) {
 			credential, err := verifiable.ParseCredential(credentialUniversityDegree,
@@ -296,6 +296,7 @@ func TestResolve(t *testing.T) { //nolint: gocognit // Test file
 			})
 			t.Run("VC does not have the subject fields specified by the claim display info", func(t *testing.T) {
 				var rawCred verifiable.JSONObject
+
 				require.NoError(t, json.Unmarshal(credentialUniversityDegree, &rawCred))
 				// TODO: it not works in case of nil credentialSubject, but works with empty subject id.
 				// Is empty subject id has sense at all?
@@ -333,7 +334,7 @@ func TestResolve(t *testing.T) { //nolint: gocognit // Test file
 				require.Equal(t, "#12107c", resolvedDisplayData.CredentialDisplays[0].Overview.BackgroundColor)
 				require.Equal(t, "#FFFFFF", resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
 
-				require.Len(t, resolvedDisplayData.CredentialDisplays[0].Claims, 0)
+				require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Claims)
 			})
 		})
 
@@ -466,7 +467,7 @@ func TestResolveMetadataWithJsonPath(t *testing.T) {
 			credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 			credentialschema.WithIssuerMetadata(&issuerMetadata))
 		require.NoError(t, errResolve)
-		require.Equal(t, len(resolvedDisplayData.CredentialDisplays[0].Claims), 7)
+		require.Len(t, resolvedDisplayData.CredentialDisplays[0].Claims, 7)
 	})
 }
 
@@ -483,7 +484,7 @@ func TestResolveCredentialOffer(t *testing.T) {
 	})
 }
 
-func TestResolveCredential(t *testing.T) { //nolint: gocognit // Test file
+func TestResolveCredential(t *testing.T) {
 	credential, err := verifiable.ParseCredential(credentialUniversityDegree,
 		verifiable.WithCredDisableValidation(),
 		verifiable.WithDisabledProofCheck())
@@ -499,7 +500,7 @@ func TestResolveCredential(t *testing.T) { //nolint: gocognit // Test file
 		credentialschema.WithIssuerMetadata(&issuerMetadata))
 	require.NoError(t, errResolve)
 
-	require.Equal(t, len(resolvedDisplayData.Credential), 1)
+	require.Len(t, resolvedDisplayData.Credential, 1)
 }
 
 func checkSuccessCaseMatchedOverviewData(t *testing.T, resolvedDisplayData *credentialschema.ResolvedDisplayData) {

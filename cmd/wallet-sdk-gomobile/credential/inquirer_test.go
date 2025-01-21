@@ -91,25 +91,25 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 		requirements, err := query.GetSubmissionRequirements(multiInputPD, createCredJSONArray(t, contents))
 
 		require.NoError(t, err)
-		require.Equal(t, requirements.Len(), 1)
+		require.Equal(t, 1, requirements.Len())
 		req1 := requirements.AtIndex(0)
-		require.Equal(t, req1.DescriptorLen(), 3)
-		require.Equal(t, req1.Name(), "Information")
-		require.Equal(t, req1.Purpose(), "test purpose")
-		require.Equal(t, req1.Rule(), "pick")
+		require.Equal(t, 3, req1.DescriptorLen())
+		require.Equal(t, "Information", req1.Name())
+		require.Equal(t, "test purpose", req1.Purpose())
+		require.Equal(t, "pick", req1.Rule())
 		require.Nil(t, requirements.AtIndex(1))
 
-		require.Equal(t, req1.Count(), 1)
-		require.Equal(t, req1.Min(), 0)
-		require.Equal(t, req1.Max(), 0)
-		require.Equal(t, req1.NestedRequirementLength(), 0)
+		require.Equal(t, 1, req1.Count())
+		require.Equal(t, 0, req1.Min())
+		require.Equal(t, 0, req1.Max())
+		require.Equal(t, 0, req1.NestedRequirementLength())
 
 		desc1 := req1.DescriptorAtIndex(0)
 
-		require.Equal(t, desc1.ID, "VerifiedEmployee")
-		require.Equal(t, desc1.Name, "Verified Employee")
-		require.Equal(t, desc1.Purpose, "test purpose")
-		require.Equal(t, desc1.MatchedVCs.Length(), 1)
+		require.Equal(t, "VerifiedEmployee", desc1.ID)
+		require.Equal(t, "Verified Employee", desc1.Name)
+		require.Equal(t, "test purpose", desc1.Purpose)
+		require.Equal(t, 1, desc1.MatchedVCs.Length())
 		require.Equal(t, 0, desc1.Schemas().Length())
 		require.Nil(t, desc1.Schemas().AtIndex(0))
 		require.Equal(t, "VerifiedEmployee", desc1.TypeConstraint())
@@ -124,26 +124,26 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 		requirements, err := query.GetSubmissionRequirements(nestedRequirementsPD, createCredJSONArray(t, contents))
 
 		require.NoError(t, err)
-		require.Equal(t, requirements.Len(), 1)
+		require.Equal(t, 1, requirements.Len())
 		req1 := requirements.AtIndex(0)
-		require.Equal(t, req1.DescriptorLen(), 0)
-		require.Equal(t, req1.Name(), "Nested requirements")
-		require.Equal(t, req1.Rule(), "all")
+		require.Equal(t, 0, req1.DescriptorLen())
+		require.Equal(t, "Nested requirements", req1.Name())
+		require.Equal(t, "all", req1.Rule())
 
-		require.Equal(t, req1.Count(), 2)
-		require.Equal(t, req1.Min(), 0)
-		require.Equal(t, req1.Max(), 0)
-		require.Equal(t, req1.NestedRequirementLength(), 2)
+		require.Equal(t, 2, req1.Count())
+		require.Equal(t, 0, req1.Min())
+		require.Equal(t, 0, req1.Max())
+		require.Equal(t, 2, req1.NestedRequirementLength())
 
 		nestedReq1 := req1.NestedRequirementAtIndex(0)
 
-		require.Equal(t, nestedReq1.DescriptorLen(), 2)
+		require.Equal(t, 2, nestedReq1.DescriptorLen())
 
 		desc1 := nestedReq1.DescriptorAtIndex(0)
 
-		require.Equal(t, desc1.ID, "VerifiedEmployee")
-		require.Equal(t, desc1.Name, "Verified Employee")
-		require.Equal(t, desc1.MatchedVCs.Length(), 1)
+		require.Equal(t, "VerifiedEmployee", desc1.ID)
+		require.Equal(t, "Verified Employee", desc1.Name)
+		require.Equal(t, 1, desc1.MatchedVCs.Length())
 
 		require.Nil(t, req1.NestedRequirementAtIndex(2))
 	})
@@ -155,7 +155,7 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 		requirements, err := query.GetSubmissionRequirements(schemaPD, createCredJSONArray(t, contents))
 
 		require.NoError(t, err)
-		require.Equal(t, requirements.Len(), 1)
+		require.Equal(t, 1, requirements.Len())
 		req1 := requirements.AtIndex(0)
 
 		desc1 := req1.DescriptorAtIndex(0)
@@ -178,7 +178,7 @@ func TestInstance_GetSubmissionRequirements(t *testing.T) {
 		requirements, err := query.GetSubmissionRequirements(schemaPD, nil)
 
 		require.NoError(t, err)
-		require.Equal(t, requirements.Len(), 1)
+		require.Equal(t, 1, requirements.Len())
 		req1 := requirements.AtIndex(0)
 
 		desc1 := req1.DescriptorAtIndex(0)
@@ -238,18 +238,18 @@ func TestInstance_GetSubmissionRequirementsCitizenship(t *testing.T) {
 		requirements, err := query.GetSubmissionRequirements(citizenshipPD, createCredJSONArray(t, contents))
 
 		require.NoError(t, err)
-		require.Equal(t, requirements.Len(), 1)
+		require.Equal(t, 1, requirements.Len())
 		req1 := requirements.AtIndex(0)
-		require.Equal(t, req1.DescriptorLen(), 1)
+		require.Equal(t, 1, req1.DescriptorLen())
 
-		require.Equal(t, req1.Count(), 1)
-		require.Equal(t, req1.Min(), 0)
-		require.Equal(t, req1.Max(), 0)
-		require.Equal(t, req1.NestedRequirementLength(), 0)
+		require.Equal(t, 1, req1.Count())
+		require.Equal(t, 0, req1.Min())
+		require.Equal(t, 0, req1.Max())
+		require.Equal(t, 0, req1.NestedRequirementLength())
 
 		desc1 := req1.DescriptorAtIndex(0)
 
-		require.Equal(t, desc1.MatchedVCs.Length(), 1)
+		require.Equal(t, 1, desc1.MatchedVCs.Length())
 	})
 }
 
