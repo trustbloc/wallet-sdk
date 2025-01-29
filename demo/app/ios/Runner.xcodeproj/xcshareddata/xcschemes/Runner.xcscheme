@@ -26,7 +26,7 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "NO">
+      shouldUseLaunchSchemeArgsEnv = "YES">
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
@@ -36,31 +36,15 @@
             ReferencedContainer = "container:Runner.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
-      <EnvironmentVariables>
-         <EnvironmentVariable
-            key = "INITIATE_VERIFICATION_URL"
-            value = "${INITIATE_VERIFICATION_URL}"
-            isEnabled = "YES">
-         </EnvironmentVariable>
-         <EnvironmentVariable
-            key = "INITIATE_ISSUANCE_URL"
-            value = "${INITIATE_ISSUANCE_URL}"
-            isEnabled = "YES">
-         </EnvironmentVariable>
-         <EnvironmentVariable
-             key = "INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW"
-             value = "${INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW}"
-             isEnabled = "YES">
-         </EnvironmentVariable>
-      </EnvironmentVariables>
       <Testables>
          <TestableReference
-            skipped = "NO">
+            skipped = "NO"
+            parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "8CA8C12129B5C63E00832F9B"
-               BuildableName = "WalletTests.xctest"
-               BlueprintName = "WalletTests"
+               BlueprintIdentifier = "331C8080294A63A400263BE5"
+               BuildableName = "RunnerTests.xctest"
+               BlueprintName = "RunnerTests"
                ReferencedContainer = "container:Runner.xcodeproj">
             </BuildableReference>
          </TestableReference>

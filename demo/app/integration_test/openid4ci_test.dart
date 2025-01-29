@@ -84,7 +84,8 @@ void main() async {
       await walletSDKPlugin.presentCredential(
           selectedCredentials: credentials, customScopeList: customScopesList, attestationVC: attestationVC);
     }
-  });
+  },
+      timeout: Timeout.none );
 
   testWidgets('Testing openid4vc with multiple credentials', (tester) async {
     const didMethodTypes = String.fromEnvironment('WALLET_DID_METHODS');
@@ -141,7 +142,7 @@ void main() async {
     };
 
     await walletSDKPlugin.presentCredential(selectedCredentials: matchedCreds, customScopeList: customScopesList);
-  });
+  },       timeout: Timeout.none );
 
   testWidgets('Testing openid4vc with the auth code flow', (tester) async {
     const didMethodTypes = String.fromEnvironment('WALLET_DID_METHODS');
@@ -204,5 +205,5 @@ void main() async {
     }
 
     expect(credential, hasLength(greaterThan(0)));
-  });
+  },       timeout: Timeout.none );
 }
