@@ -15,30 +15,26 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
-	"github.com/trustbloc/vc-go/proof/defaults"
-
-	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
-	"github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
-
-	"github.com/trustbloc/wallet-sdk/pkg/common"
-
 	"github.com/google/uuid"
 	"github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/vc-go/dataintegrity"
 	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
+	"github.com/trustbloc/vc-go/proof/defaults"
 	"github.com/trustbloc/vc-go/verifiable"
 	"golang.org/x/oauth2"
 
-	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
-
 	"github.com/trustbloc/wallet-sdk/pkg/api"
+	"github.com/trustbloc/wallet-sdk/pkg/common"
+	diderrors "github.com/trustbloc/wallet-sdk/pkg/did"
+	"github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
+	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
 	metadatafetcher "github.com/trustbloc/wallet-sdk/pkg/internal/issuermetadata"
+	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
@@ -77,11 +73,14 @@ type interaction struct {
 }
 
 type requestedAcknowledgment struct {
+	// TODO: after update to the latest OIDC4CI this variable can be changed to string
+	// since notification_id should be the same for given session.
+	// spec: https://openid.github.io/OpenID4VCI/openid-4-verifiable-credential-issuance-wg-draft.html#section-8.3-14
 	ackIDs []string
 }
 
-func (i *interaction) createAuthorizationURL(clientID, redirectURI, format string, types []string, issuerState *string,
-	scopes []string, useOAuthDiscoverableClientIDScheme bool,
+func (i *interaction) createAuthorizationURL(clientID, redirectURI, format string, types, credentialContext []string,
+	issuerState *string, scopes []string, useOAuthDiscoverableClientIDScheme bool,
 ) (string, error) {
 	err := i.populateIssuerMetadata("Authorization")
 	if err != nil {
@@ -95,7 +94,7 @@ func (i *interaction) createAuthorizationURL(clientID, redirectURI, format strin
 		return "", err
 	}
 
-	authorizationDetails, err := i.generateAuthorizationDetails(format, types)
+	authorizationDetails, err := i.generateAuthorizationDetails(format, types, credentialContext)
 	if err != nil {
 		return "", err
 	}
@@ -138,13 +137,13 @@ func (i *interaction) instantiateCodeVerifier() error {
 	return nil
 }
 
-func (i *interaction) generateAuthorizationDetails(format string, types []string) ([]byte, error) {
+func (i *interaction) generateAuthorizationDetails(format string, types, credentialContext []string) ([]byte, error) {
 	// TODO: Add support for requesting multiple credentials at once (by sending an array).
 	// Currently we always use the first credential type specified in the offer.
 	authorizationDetailsDTO := authorizationDetails{
 		CredentialConfigurationID: "",
 		CredentialDefinition: &issuer.CredentialDefinition{
-			Context:           nil,
+			Context:           credentialContext,
 			CredentialSubject: nil,
 			Type:              types,
 		},
@@ -308,11 +307,12 @@ func (i *interaction) populateIssuerMetadata(parentEvent string) error {
 }
 
 func (i *interaction) requestCredentialWithAuth(jwtSigner api.JWTSigner, credentialFormats []string,
-	credentialTypes [][]string,
+	credentialTypes, credentialContexts [][]string,
 ) ([]*verifiable.Credential, error) {
 	timeStartRequestCredential := time.Now()
 
-	credentialResponses, err := i.getCredentialResponsesWithAuth(jwtSigner, credentialFormats, credentialTypes)
+	credentialResponses, err := i.getCredentialResponsesWithAuth(jwtSigner, credentialFormats, credentialTypes,
+		credentialContexts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get credential response: %w", err)
 	}
@@ -350,9 +350,29 @@ func (i *interaction) requestCredentialWithAuth(jwtSigner api.JWTSigner, credent
 
 // credentialsFormats and credentialTypes need to have the same length.
 func (i *interaction) getCredentialResponsesWithAuth(signer api.JWTSigner, credentialFormats []string,
-	credentialTypes [][]string,
+	credentialTypes, credentialContexts [][]string,
 ) ([]CredentialResponse, error) {
-	proofJWT, err := i.createClaimsProof(i.authTokenResponseNonce, signer)
+	return i.getCredentialResponse(signer, i.authTokenResponseNonce,
+		credentialFormats, credentialTypes, credentialContexts, true)
+}
+
+//nolint:nonamedreturns
+func (i *interaction) getCredentialResponse(signer api.JWTSigner, nonce any,
+	credentialFormats []string, credentialTypes, credentialContexts [][]string, allowRetry bool,
+) (credentialResponse []CredentialResponse, err error) {
+	defer func() {
+		if err == nil || !allowRetry {
+			return
+		}
+
+		proofError := &InvalidProofError{}
+		if errors.As(err, &proofError) {
+			credentialResponse, err = i.getCredentialResponse(signer, proofError.CNonce,
+				credentialFormats, credentialTypes, credentialContexts, false)
+		}
+	}()
+
+	proofJWT, err := i.createClaimsProof(nonce, signer)
 	if err != nil {
 		return nil, err
 	}
@@ -362,19 +382,21 @@ func (i *interaction) getCredentialResponsesWithAuth(signer api.JWTSigner, crede
 	oAuthHTTPClient := createOAuthHTTPClient(i.oAuth2Config, i.authToken, i.httpClient)
 
 	for index := range credentialTypes {
-		request, err := i.createCredentialRequestWithoutAccessToken(proofJWT, credentialFormats[index],
-			credentialTypes[index])
+		requestBody, err := i.createCredentialRequestBody(proofJWT, credentialFormats[index],
+			credentialTypes[index], credentialContexts[index])
 		if err != nil {
 			return nil, err
 		}
 
-		// The access token header will be injected automatically by the OAuth HTTP client, so there's no need to
-		// explicitly set it on the request object generated by the method call above.
-
 		fetchCredentialResponseEventText := fmt.Sprintf(fetchCredentialViaGETReqEventText, index+1,
 			len(credentialTypes), i.issuerMetadata.CredentialEndpoint)
 
-		responseBytes, err := i.getRawCredentialResponse(request, fetchCredentialResponseEventText, oAuthHTTPClient)
+		// The access token header will be injected automatically by the OAuth HTTP client, so there's no need to
+		// explicitly set it on the request object generated by the method call above.
+		responseBytes, err := httprequest.New(oAuthHTTPClient, i.metricsLogger).DoContext(context.TODO(),
+			http.MethodPost, i.issuerMetadata.CredentialEndpoint, "application/json", nil,
+			bytes.NewReader(requestBody), fetchCredentialResponseEventText, requestCredentialEventText,
+			[]int{http.StatusOK, http.StatusCreated}, processCredentialErrorResponse)
 		if err != nil {
 			return nil, err
 		}
@@ -388,7 +410,7 @@ func (i *interaction) getCredentialResponsesWithAuth(signer api.JWTSigner, crede
 
 		credentialResponses[index] = credentialResponse
 
-		i.storeAcknowledgmentID(credentialResponse.AscID)
+		i.storeAcknowledgmentID(credentialResponse.AckID)
 	}
 
 	return credentialResponses, nil
@@ -443,14 +465,19 @@ func createOAuthHTTPClient(
 	return oAuthHTTPClient
 }
 
-// The returned *http.Request will not have the access token set on it. The caller must ensure that it's set
-// before sending the request to the server.
-func (i *interaction) createCredentialRequestWithoutAccessToken(proofJWT, credentialFormat string,
-	credentialTypes []string,
-) (*http.Request, error) {
+func (i *interaction) createCredentialRequestBody(proofJWT, credentialFormat string,
+	credentialTypes, credentialContext []string,
+) ([]byte, error) {
+	var credentialContextToSend *[]string
+
+	if len(credentialContext) > 0 {
+		credentialContextToSend = &credentialContext
+	}
+
 	credentialReq := &credentialRequest{
 		CredentialDefinition: &credentialDefinition{
-			Type: credentialTypes,
+			Type:    credentialTypes,
+			Context: credentialContextToSend,
 		},
 		Format: credentialFormat,
 		Proof: proof{
@@ -459,57 +486,7 @@ func (i *interaction) createCredentialRequestWithoutAccessToken(proofJWT, creden
 		},
 	}
 
-	credentialReqBytes, err := json.Marshal(credentialReq)
-	if err != nil {
-		return nil, err
-	}
-
-	request, err := http.NewRequest(http.MethodPost, //nolint: noctx
-		i.issuerMetadata.CredentialEndpoint, bytes.NewReader(credentialReqBytes))
-	if err != nil {
-		return nil, err
-	}
-
-	request.Header.Add("Content-Type", "application/json")
-
-	return request, nil
-}
-
-func (i *interaction) getRawCredentialResponse(credentialReq *http.Request, eventText string, httpClient *http.Client,
-) ([]byte, error) {
-	timeStartHTTPRequest := time.Now()
-
-	response, err := httpClient.Do(credentialReq)
-	if err != nil {
-		return nil, err
-	}
-
-	err = i.metricsLogger.Log(&api.MetricsEvent{
-		Event:       eventText,
-		ParentEvent: requestCredentialEventText,
-		Duration:    time.Since(timeStartHTTPRequest),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	responseBytes, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusCreated {
-		return nil, processCredentialErrorResponse(response.StatusCode, responseBytes)
-	}
-
-	defer func() {
-		errClose := response.Body.Close()
-		if errClose != nil {
-			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
-		}
-	}()
-
-	return responseBytes, nil
+	return json.Marshal(credentialReq)
 }
 
 func (i *interaction) getVCsFromCredentialResponses(
@@ -611,6 +588,11 @@ func processCredentialErrorResponse(statusCode int, respBytes []byte) error {
 			AcknowledgmentExpiredErrorCode,
 			AcknowledgmentExpiredError,
 			detailedErr)
+	case "invalid_proof":
+		return NewInvalidProofError(walleterror.NewExecutionError(ErrorModule,
+			AcknowledgmentExpiredErrorCode,
+			AcknowledgmentExpiredError,
+			detailedErr), errorResponse.CNonce, errorResponse.CNonceExpiresIn)
 	default:
 		return walleterror.NewExecutionError(ErrorModule,
 			OtherCredentialRequestErrorCode,
@@ -629,7 +611,7 @@ func (i *interaction) issuerFullTrustInfo(
 
 	supportedCredentials := make([]SupportedCredential, len(credentialFormats))
 
-	for j := 0; j < len(credentialFormats); j++ {
+	for j := range credentialFormats {
 		supportedCredentials[j] = SupportedCredential{
 			Format: credentialFormats[j],
 			Types:  credentialTypes[j],
@@ -652,7 +634,16 @@ func (i *interaction) issuerBasicTrustInfo() (*basicTrustInfo, error) {
 	jwtKID := i.issuerMetadata.GetJWTKID()
 
 	if jwtKID == nil {
-		return &basicTrustInfo{}, nil
+		var issuerURI *url.URL
+
+		issuerURI, err = url.Parse(i.issuerURI)
+		if err != nil {
+			return nil, fmt.Errorf("parse issuer uri: %w", err)
+		}
+
+		return &basicTrustInfo{
+			Domain: issuerURI.Host,
+		}, nil
 	}
 
 	jwtKIDSplit := strings.Split(*jwtKID, "#")
@@ -714,10 +705,10 @@ func (i *interaction) requireAcknowledgment() (bool, error) {
 	return i.requestedAcknowledgment != nil && i.issuerMetadata.NotificationEndpoint != "", nil
 }
 
-func (i *interaction) storeAcknowledgmentID(id string) {
+func (i *interaction) storeAcknowledgmentID(ackID string) {
 	if i.requestedAcknowledgment == nil {
 		i.requestedAcknowledgment = &requestedAcknowledgment{}
 	}
 
-	i.requestedAcknowledgment.ackIDs = append(i.requestedAcknowledgment.ackIDs, id)
+	i.requestedAcknowledgment.ackIDs = append(i.requestedAcknowledgment.ackIDs, ackID)
 }

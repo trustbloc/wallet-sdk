@@ -47,6 +47,7 @@ func createGoAPIClientConfig(didResolver api.DIDResolver, opts *InteractionOpts)
 		dlHTTPClient := wrapper.NewHTTPClient(opts.httpTimeout, api.Headers{}, opts.disableHTTPClientTLSVerification)
 
 		var err error
+
 		goAPIClientConfig.DocumentLoader, err = common.CreateJSONLDDocumentLoader(dlHTTPClient, legacy.NewProvider())
 		if err != nil {
 			return nil, err
@@ -110,7 +111,10 @@ func toGomobileCredentials(credentials []*afgoverifiable.Credential) *verifiable
 	return gomobileCredentials
 }
 
-func toGomobileCredentialsV2(credentials []*afgoverifiable.Credential, configIDs []string) *verifiable.CredentialsArrayV2 {
+func toGomobileCredentialsV2(
+	credentials []*afgoverifiable.Credential,
+	configIDs []string,
+) *verifiable.CredentialsArrayV2 {
 	credentialArray := verifiable.NewCredentialsArrayV2()
 
 	for i := range credentials {

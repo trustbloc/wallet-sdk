@@ -635,7 +635,7 @@ func doAuthCodeFlowTest(t *testing.T, useDynamicClientRegistration bool) {
 	require.Equal(t, 1, credentials.Length())
 
 	requestedAcknowledgment, err := interaction.Acknowledgment()
-	require.NotNil(t, requestedAcknowledgment)
+	require.NoError(t, err)
 	require.NoError(t, requestedAcknowledgment.Success())
 }
 

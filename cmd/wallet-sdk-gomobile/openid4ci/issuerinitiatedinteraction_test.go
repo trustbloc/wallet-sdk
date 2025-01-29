@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/piprate/json-gold/ld"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/did-go/doc/did"
 	arieskms "github.com/trustbloc/kms-go/spi/kms"
@@ -136,6 +137,7 @@ type mockIssuerServerHandler struct {
 	credentialRequestShouldFail                       bool
 	credentialRequestShouldGiveUnmarshallableResponse bool
 	ackRequestExpectInteractionDetails                bool
+	ackRequestExpectedAmount                          int
 	credentialResponse                                []byte
 	headersToCheck                                    *api.Headers
 }
@@ -149,7 +151,7 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 		for _, headerToCheck := range m.headersToCheck.GetAll() {
 			// Note: for these tests, we're assuming that there aren't multiple values under a single name/key.
 			value := request.Header.Get(headerToCheck.Name)
-			require.Equal(m.t, headerToCheck.Value, value)
+			assert.Equal(m.t, headerToCheck.Value, value)
 		}
 	}
 
@@ -178,17 +180,19 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, //nolint
 			_, err = writer.Write(m.credentialResponse)
 		}
 	case "/oidc/ack_endpoint":
+		m.ackRequestExpectedAmount--
+
 		var payload map[string]interface{}
 		err = json.NewDecoder(request.Body).Decode(&payload)
-		require.NoError(m.t, err)
+		assert.NoError(m.t, err)
 
 		_, ok := payload["interaction_details"]
-		require.Equal(m.t, m.ackRequestExpectInteractionDetails, ok)
+		assert.Equal(m.t, m.ackRequestExpectInteractionDetails, ok)
 
 		writer.WriteHeader(http.StatusNoContent)
 	}
 
-	require.NoError(m.t, err)
+	assert.NoError(m.t, err)
 }
 
 func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
@@ -614,6 +618,7 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 		credentialResponse:                 sampleCredentialResponse,
 		headersToCheck:                     additionalHeaders,
 		ackRequestExpectInteractionDetails: expectAckInteractionDetails,
+		ackRequestExpectedAmount:           1,
 	}
 
 	server := httptest.NewServer(issuerServerHandler)
@@ -670,17 +675,28 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 		require.NoError(t, err)
 	}
 
-	if acknowledgeReject {
-		if rejectCode != "" {
-			err = acknowledgmentRestored.RejectWithCode(rejectCode)
-		} else {
-			err = acknowledgmentRestored.Reject()
-		}
-	} else {
+	switch {
+	case acknowledgeReject && rejectCode != "":
+		err = acknowledgmentRestored.RejectWithCode(rejectCode)
+		require.NoError(t, err)
+
+		err = acknowledgmentRestored.RejectWithCode(rejectCode)
+		require.ErrorContains(t, err, "ack list is empty")
+	case acknowledgeReject:
+		err = acknowledgmentRestored.Reject()
+		require.NoError(t, err)
+
+		err = acknowledgmentRestored.Reject()
+		require.ErrorContains(t, err, "ack list is empty")
+	default:
 		err = acknowledgmentRestored.Success()
+		require.NoError(t, err)
+
+		err = acknowledgmentRestored.Success()
+		require.ErrorContains(t, err, "ack list is empty")
 	}
 
-	require.NoError(t, err)
+	require.Zero(t, issuerServerHandler.ackRequestExpectedAmount, 0)
 
 	numberOfActivitiesLogged := activityLogger.Length()
 	require.Equal(t, 1, numberOfActivitiesLogged)

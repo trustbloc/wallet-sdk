@@ -7,7 +7,7 @@
 name: "wallet-sdk release"
 
 env:
-  GO_VERSION: '1.22'
+  GO_VERSION: '1.23'
 
 on:
   push:
@@ -30,16 +30,16 @@ jobs:
       - name: Build Custom GO
         run: |
           cd ..
-          git clone https://go.googlesource.com/go goroot          
+          git clone https://go.googlesource.com/go goroot
           cd goroot
-          git checkout go1.22.2
+          git checkout go1.23.4
           cp ../wallet-sdk/cmd/wallet-sdk-gomobile/gopatches/* ./
-          git apply cmd_cgo__fix_unaligned_arguments_typedmemmove_crash_on_iOS.patch
-          cd src && ./all.bash
+          git revert 3560cf0afb3c29300a6c88ccd98256949ca7a6f6
+          cd src && ./make.bash
       - name: Derive the new version
         run: |
           echo "new version"
-          NEW_VER=$(git describe --tags --always `git rev-list --tags --max-count=1`)          
+          NEW_VER=$(git describe --tags --always `git rev-list --tags --max-count=1`)
           echo $NEW_VER
       - name: Generate Binding
         run: |
@@ -47,9 +47,9 @@ jobs:
           echo ${{ github.workspace }}
           echo ${GOPATH}
           echo ${GOROOT}
-          export PATH=$GOPATH/bin:$PATH        
+          export PATH=$GOPATH/bin:$PATH
           echo $PATH
-          which go 
+          which go
           go install golang.org/x/mobile/cmd/gomobile@latest
           gomobile init
           NEW_VERSION=$NEW_VER GIT_REV=$(git rev-parse HEAD) BUILD_TIME=$(date) make generate-android-bindings
@@ -96,12 +96,12 @@ jobs:
       - name: Build Custom GO
         run: |
           cd ..
-          git clone https://go.googlesource.com/go goroot          
+          git clone https://go.googlesource.com/go goroot
           cd goroot
-          git checkout go1.22.2
+          git checkout go1.23.4
           cp ../wallet-sdk/cmd/wallet-sdk-gomobile/gopatches/* ./
-          git apply cmd_cgo__fix_unaligned_arguments_typedmemmove_crash_on_iOS.patch
-          cd src && ./all.bash
+          git revert 3560cf0afb3c29300a6c88ccd98256949ca7a6f6
+          cd src && ./make.bash
       - name: Derive the new version
         run: |
           echo "new version"
@@ -117,9 +117,9 @@ jobs:
           echo ${{ github.workspace }}
           echo ${GOPATH}
           echo ${GOROOT}
-          export PATH=$GOPATH/bin:$PATH        
+          export PATH=$GOPATH/bin:$PATH
           echo $PATH
-          which go 
+          which go
           go install golang.org/x/mobile/cmd/gomobile@latest
           gomobile init
           NEW_VERSION=$NEW_VER GIT_REV=$(git rev-parse HEAD) BUILD_TIME=$(date) make generate-ios-bindings

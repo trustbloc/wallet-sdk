@@ -26,20 +26,16 @@ import (
 	"github.com/trustbloc/bbs-signature-go/bbs12381g2pub"
 	diddoc "github.com/trustbloc/did-go/doc/did"
 	vdrapi "github.com/trustbloc/did-go/vdr/api"
-	"github.com/trustbloc/kms-go/spi/kms"
-	wrapperapi "github.com/trustbloc/kms-go/wrapper/api"
-	"github.com/trustbloc/vc-go/dataintegrity"
-	"github.com/trustbloc/vc-go/dataintegrity/suite/ecdsa2019"
 	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/vc-go/presexch"
 	"github.com/trustbloc/vc-go/proof/defaults"
 	"github.com/trustbloc/vc-go/verifiable"
-	"github.com/trustbloc/wallet-sdk/pkg/ldproof"
 
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/did/wellknown"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/httprequest"
+	"github.com/trustbloc/wallet-sdk/pkg/ldproof"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
@@ -54,14 +50,6 @@ const (
 	presentCredentialEventText      = "Present credential" //nolint:gosec // false positive
 	sendAuthorizedResponseEventText = "Send authorized response via an HTTP POST request to %s"
 )
-
-type didResolverWrapper struct {
-	didResolver api.DIDResolver
-}
-
-func (d *didResolverWrapper) Resolve(did string, _ ...vdrapi.DIDMethodOption) (*diddoc.DocResolution, error) {
-	return d.didResolver.Resolve(did)
-}
 
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
@@ -83,7 +71,6 @@ type Interaction struct {
 	didResolver    api.DIDResolver
 	crypto         api.Crypto
 	documentLoader ld.DocumentLoader
-	signer         wrapperapi.KMSCryptoSigner
 }
 
 type authorizedResponse struct {
@@ -103,14 +90,32 @@ func NewInteraction(
 	documentLoader ld.DocumentLoader,
 	opts ...Opt,
 ) (*Interaction, error) {
-	client, activityLogger, metricsLogger, signer := processOpts(opts)
+	client, activityLogger, metricsLogger := processOpts(opts)
 
-	var rawRequestObject string
+	var (
+		authorizationRequestClientID string
+		rawRequestObject             string
+	)
 
-	if strings.HasPrefix(authorizationRequest, "openid-vc://") {
-		var err error
+	if strings.HasPrefix(authorizationRequest, "openid-vc://") ||
+		strings.HasPrefix(authorizationRequest, "openid4vp://") {
+		var (
+			authorizationRequestURL *url.URL
+			err                     error
+		)
 
-		rawRequestObject, err = fetchRequestObject(authorizationRequest, client, metricsLogger)
+		authorizationRequestURL, err = url.Parse(authorizationRequest)
+		if err != nil {
+			return nil, walleterror.NewValidationError(
+				ErrorModule,
+				InvalidAuthorizationRequestErrorCode,
+				InvalidAuthorizationRequestError,
+				err)
+		}
+
+		authorizationRequestClientID = authorizationRequestURL.Query().Get("client_id")
+
+		rawRequestObject, err = fetchRequestObject(authorizationRequestURL, client, metricsLogger)
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +123,7 @@ func NewInteraction(
 		rawRequestObject = authorizationRequest
 	}
 
-	reqObject, err := verifyRequestObjectAndDecodeClaims(rawRequestObject, signatureVerifier)
+	reqObject, err := parseRequestObject(authorizationRequestClientID, rawRequestObject, signatureVerifier)
 	if err != nil {
 		return nil, walleterror.NewValidationError(
 			ErrorModule,
@@ -135,7 +140,6 @@ func NewInteraction(
 		didResolver:    didResolver,
 		crypto:         crypto,
 		documentLoader: documentLoader,
-		signer:         signer,
 	}, nil
 }
 
@@ -169,21 +173,32 @@ func (o *Interaction) VerifierDisplayData() *VerifierDisplayData {
 
 // TrustInfo return verifier trust info.
 func (o *Interaction) TrustInfo() (*VerifierTrustInfo, error) {
-	// Verifier is issuer of request object.
-	verifier := o.requestObject.Issuer
+	trustInfo := &VerifierTrustInfo{}
 
-	verifierDID := strings.Split(verifier, "#")[0]
+	if o.requestObject.ClientIDScheme == redirectURIScheme {
+		verifierURI, err := url.Parse(o.requestObject.ResponseURI)
+		if err != nil {
+			return nil, err
+		}
 
-	valid, linkedDomain, err := wellknown.ValidateLinkedDomains(verifierDID, o.didResolver, o.httpClient)
-	if err != nil {
-		return nil, err
+		trustInfo.Domain = verifierURI.Host
+	} else {
+		// Verifier is issuer of request object.
+		verifier := o.requestObject.Issuer
+
+		verifierDID := strings.Split(verifier, "#")[0]
+
+		valid, linkedDomain, err := wellknown.ValidateLinkedDomains(verifierDID, o.didResolver, o.httpClient)
+		if err != nil {
+			return nil, err
+		}
+
+		trustInfo.DID = verifierDID
+		trustInfo.Domain = linkedDomain
+		trustInfo.DomainValid = valid
 	}
 
-	return &VerifierTrustInfo{
-		DID:         verifierDID,
-		Domain:      linkedDomain,
-		DomainValid: valid,
-	}, nil
+	return trustInfo, nil
 }
 
 // Acknowledgment returns acknowledgment object for the current interaction.
@@ -196,7 +211,6 @@ func (o *Interaction) Acknowledgment() *Acknowledgment {
 
 type presentOpts struct {
 	ignoreConstraints bool
-	signer            wrapperapi.KMSCryptoSigner
 
 	attestationVPSigner api.JWTSigner
 	attestationVC       string
@@ -233,7 +247,7 @@ func (o *Interaction) PresentCredential(
 	customClaims CustomClaims,
 	opts ...PresentOpt,
 ) error {
-	resolveOpts := &presentOpts{signer: o.signer}
+	resolveOpts := &presentOpts{}
 
 	for _, opt := range opts {
 		if opt != nil {
@@ -261,7 +275,7 @@ func (o *Interaction) PresentCredentialUnsafe(credential *verifiable.Credential,
 }
 
 // PresentCredential presents credentials to redirect uri from request object.
-func (o *Interaction) presentCredentials(
+func (o *Interaction) presentCredentials( //nolint: funlen
 	credentials []*verifiable.Credential,
 	customClaims CustomClaims,
 	opts *presentOpts,
@@ -286,10 +300,16 @@ func (o *Interaction) presentCredentials(
 	}
 
 	data := url.Values{}
-	data.Set("id_token", response.IDTokenJWS)
-	data.Set("vp_token", response.VPToken)
 	data.Set("presentation_submission", response.PresentationSubmission)
-	data.Set("state", response.State)
+	data.Set("vp_token", response.VPToken)
+
+	if response.IDTokenJWS != "" {
+		data.Set("id_token", response.IDTokenJWS)
+	}
+
+	if response.State != "" {
+		data.Set("state", response.State)
+	}
 
 	if opts.interactionDetails != nil {
 		interactionDetailsBytes, e := json.Marshal(opts.interactionDetails)
@@ -366,18 +386,9 @@ func (o *Interaction) sendAuthorizedResponse(responseBody string) error {
 	return err
 }
 
-func fetchRequestObject(authorizationRequest string, client httpClient,
+func fetchRequestObject(authorizationRequestURL *url.URL, client httpClient,
 	metricsLogger api.MetricsLogger,
 ) (string, error) {
-	authorizationRequestURL, err := url.Parse(authorizationRequest)
-	if err != nil {
-		return "", walleterror.NewValidationError(
-			ErrorModule,
-			InvalidAuthorizationRequestErrorCode,
-			InvalidAuthorizationRequestError,
-			err)
-	}
-
 	if !authorizationRequestURL.Query().Has("request_uri") {
 		return "", walleterror.NewValidationError(
 			ErrorModule,
@@ -401,21 +412,45 @@ func fetchRequestObject(authorizationRequest string, client httpClient,
 	return string(respBytes), nil
 }
 
-func verifyRequestObjectAndDecodeClaims(
+//nolint:gocyclo
+func parseRequestObject(
+	authorizationRequestClientID string,
 	rawRequestObject string,
 	signatureVerifier jwt.ProofChecker,
 ) (*requestObject, error) {
 	reqObject := &requestObject{}
 
-	err := verifyTokenSignatureAndDecodeClaims(rawRequestObject, reqObject, signatureVerifier)
+	_, _, err := jwt.Parse(rawRequestObject,
+		jwt.DecodeClaimsTo(reqObject),
+		jwt.WithIgnoreClaimsMapDecoding(true),
+	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse jwt: %w", err)
+	}
+
+	switch reqObject.ClientIDScheme {
+	case "", didScheme:
+		if reqObject.Issuer == "" {
+			return nil, errors.New("iss claim in request object is required")
+		}
+
+		err = jwt.CheckProof(rawRequestObject, signatureVerifier, &reqObject.Issuer, nil)
+		if err != nil {
+			return nil, fmt.Errorf("check proof: %w", err)
+		}
+	case redirectURIScheme:
+		if !matchClientIDAndResponseURI(authorizationRequestClientID, reqObject.ResponseURI) {
+			return nil, errors.New("client_id mismatch between authorization request and request object")
+		}
+	default:
+		return nil, fmt.Errorf("unsupported client_id_scheme: %s", reqObject.ClientIDScheme)
 	}
 
 	// temporary solution for backward compatibility
 	if reqObject.PresentationDefinition == nil && reqObject.Claims.VPToken.PresentationDefinition != nil {
 		reqObject.PresentationDefinition = reqObject.Claims.VPToken.PresentationDefinition
 	}
+
 	if reqObject.ClientMetadata.VPFormats == nil && reqObject.Registration.VPFormats != nil {
 		reqObject.ClientMetadata.ClientName = reqObject.Registration.ClientName
 		reqObject.ClientMetadata.ClientPurpose = reqObject.Registration.ClientPurpose
@@ -423,6 +458,7 @@ func verifyRequestObjectAndDecodeClaims(
 		reqObject.ClientMetadata.VPFormats = reqObject.Registration.VPFormats
 		reqObject.ClientMetadata.SubjectSyntaxTypesSupported = reqObject.Registration.SubjectSyntaxTypesSupported
 	}
+
 	if reqObject.ResponseURI == "" && reqObject.RedirectURI != "" {
 		reqObject.ResponseURI = reqObject.RedirectURI
 	}
@@ -430,20 +466,20 @@ func verifyRequestObjectAndDecodeClaims(
 	return reqObject, nil
 }
 
-func verifyTokenSignatureAndDecodeClaims(rawJwt string, claims interface{}, proofChecker jwt.ProofChecker) error {
-	jsonWebToken, _, err := jwt.ParseAndCheckProof(rawJwt, proofChecker, true,
-		jwt.DecodeClaimsTo(claims),
-		jwt.WithIgnoreClaimsMapDecoding(true))
+func matchClientIDAndResponseURI(clientID, responseURI string) bool {
+	clientIDURL, err := url.Parse(clientID)
 	if err != nil {
-		return fmt.Errorf("parse JWT: %w", err)
+		return false
 	}
 
-	err = jsonWebToken.DecodeClaims(claims)
+	responseURIURL, err := url.Parse(responseURI)
 	if err != nil {
-		return fmt.Errorf("decode claims: %w", err)
+		return false
 	}
 
-	return nil
+	return strings.EqualFold(clientIDURL.Scheme, responseURIURL.Scheme) &&
+		strings.EqualFold(clientIDURL.Host, responseURIURL.Host) &&
+		strings.EqualFold(clientIDURL.Path, responseURIURL.Path)
 }
 
 func createAuthorizedResponse(
@@ -463,8 +499,7 @@ func createAuthorizedResponse(
 			didResolver, crypto, documentLoader, opts)
 	default:
 		return createAuthorizedResponseMultiCred(credentials, requestObject, customClaims,
-			didResolver, crypto, documentLoader,
-			opts.signer, opts)
+			didResolver, crypto, documentLoader, opts)
 	}
 }
 
@@ -493,10 +528,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 	vpFormat := presexch.FormatJWTVP
 
 	if vpFormats := requestObject.ClientMetadata.VPFormats; vpFormats != nil {
-		switch {
-		case vpFormats.JwtVP != nil:
-			break
-		case vpFormats.LdpVP != nil:
+		if vpFormats.LdpVP != nil && !credential.IsJWT() {
 			vpFormat = presexch.FormatLDPVP
 		}
 	}
@@ -525,49 +557,31 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 		return nil, fmt.Errorf("presentation VC does not have a subject ID")
 	}
 
-	signingVM, err := getSigningVM(did, didResolver)
+	assertionVM, err := getAssertionVM(did, didResolver)
 	if err != nil {
 		return nil, err
 	}
 
-	if opts != nil && opts.signer != nil {
-		err = addDataIntegrityProof(
-			fullVMID(did, signingVM.ID),
-			didResolver,
-			documentLoader,
-			opts.signer,
-			presentation,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to add data integrity proof to VP: %w", err)
-		}
-	}
-
-	jwtSigner, err := getHolderSigner(signingVM, crypto)
+	jwtSigner, err := getHolderSigner(assertionVM, crypto)
 	if err != nil {
 		return nil, err
-	}
-
-	var attestationVP string
-	if opts != nil && opts.attestationVC != "" {
-		attestationVP, err = createAttestationVP(
-			opts.attestationVC, opts.attestationVPSigner, documentLoader)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	presentationSubmission := presentation.CustomFields["presentation_submission"]
-	presentation.CustomFields["presentation_submission"] = nil
 
-	idTokenJWS, err := createIDToken(requestObject, did, customClaims, jwtSigner, attestationVP, presentationSubmission)
+	presentationSubmissionBytes, err := json.Marshal(presentationSubmission)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal presentation submission: %w", err)
 	}
+
+	presentation.CustomFields = nil
+
+	// TODO: Resolve this properly in the vc-go
+	presentation.ID = "urn:uuid:" + presentation.ID
 
 	var vpToken string
 
-	switch vpFormat {
+	switch vpFormat { //nolint:dupl
 	case presexch.FormatJWTVP:
 		claims := vpTokenClaims{
 			VP:    presentation,
@@ -585,7 +599,7 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 			return nil, fmt.Errorf("sign vp token: %w", err)
 		}
 	case presexch.FormatLDPVP:
-		vpToken, err = createLdpVPToken(crypto, documentLoader, signingVM, requestObject, presentation)
+		vpToken, err = createLdpVPToken(crypto, documentLoader, didResolver, did, assertionVM, requestObject, presentation)
 		if err != nil {
 			return nil, fmt.Errorf("create ldp vp token: %w", err)
 		}
@@ -593,27 +607,40 @@ func createAuthorizedResponseOneCred( //nolint:funlen,gocyclo // Unable to decom
 		return nil, fmt.Errorf("unsupported presentation exchange format: %s", vpFormat)
 	}
 
-	presentationSubmissionBytes, err := json.Marshal(presentationSubmission)
-	if err != nil {
-		return nil, fmt.Errorf("marshal presentation submission: %w", err)
+	var idTokenJWS string
+
+	if strings.Contains(requestObject.ResponseType, "id_token") {
+		var attestationVP string
+
+		if opts != nil && opts.attestationVC != "" {
+			attestationVP, err = createAttestationVP(
+				opts.attestationVC, opts.attestationVPSigner, documentLoader)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		idTokenJWS, err = createIDToken(requestObject, did, customClaims, jwtSigner, attestationVP, presentationSubmission)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &authorizedResponse{
-		IDTokenJWS:             idTokenJWS,
-		VPToken:                vpToken,
 		PresentationSubmission: string(presentationSubmissionBytes),
+		VPToken:                vpToken,
+		IDTokenJWS:             idTokenJWS,
 		State:                  requestObject.State,
 	}, nil
 }
 
-func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to decompose without a major reworking
+func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo,gocognit
 	credentials []*verifiable.Credential,
 	requestObject *requestObject,
 	customClaims CustomClaims,
 	didResolver api.DIDResolver,
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
-	signer wrapperapi.KMSCryptoSigner,
 	opts *presentOpts,
 ) (*authorizedResponse, error) {
 	pd := requestObject.PresentationDefinition
@@ -626,10 +653,17 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 	vpFormat := presexch.FormatJWTVP
 
 	if vpFormats := requestObject.ClientMetadata.VPFormats; vpFormats != nil {
-		switch {
-		case vpFormats.JwtVP != nil:
-			break
-		case vpFormats.LdpVP != nil:
+		isJWTCredential := false
+
+		for _, credential := range credentials {
+			if credential.IsJWT() {
+				isJWTCredential = true
+
+				break
+			}
+		}
+
+		if vpFormats.LdpVP != nil && !isJWTCredential {
 			vpFormat = presexch.FormatLDPVP
 		}
 	}
@@ -658,25 +692,12 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 			return nil, fmt.Errorf("presentation VC does not have a subject ID: %w", e)
 		}
 
-		signingVM, e := getSigningVM(holderDID, didResolver)
+		assertionVM, e := getAssertionVM(holderDID, didResolver)
 		if e != nil {
 			return nil, e
 		}
 
-		if signer != nil {
-			e = addDataIntegrityProof(
-				fullVMID(holderDID, signingVM.ID),
-				didResolver,
-				documentLoader,
-				signer,
-				presentation,
-			)
-			if e != nil {
-				return nil, fmt.Errorf("failed to add data integrity proof to VP: %w", e)
-			}
-		}
-
-		jwtSigner, e := getHolderSigner(signingVM, crypto)
+		jwtSigner, e := getHolderSigner(assertionVM, crypto)
 		if e != nil {
 			return nil, e
 		}
@@ -685,7 +706,7 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 
 		var vpToken string
 
-		switch vpFormat {
+		switch vpFormat { //nolint:dupl
 		case presexch.FormatJWTVP:
 			// TODO: Fix this issue: the vpToken always uses the last presentation from the loop above
 			claims := vpTokenClaims{
@@ -704,7 +725,8 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 				return nil, fmt.Errorf("sign vp token: %w", err)
 			}
 		case presexch.FormatLDPVP:
-			vpToken, err = createLdpVPToken(crypto, documentLoader, signingVM, requestObject, presentation)
+			vpToken, err = createLdpVPToken(crypto, documentLoader, didResolver, holderDID, assertionVM, requestObject,
+				presentation)
 			if err != nil {
 				return nil, fmt.Errorf("create ldp vp token: %w", err)
 			}
@@ -720,24 +742,31 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 		return nil, err
 	}
 
-	idTokenSigningDID, err := pickRandomElement(mapKeys(signers))
-	if err != nil {
-		return nil, err
-	}
+	var idTokenJWS string
 
-	var attestationVP string
-	if opts.attestationVC != "" {
-		attestationVP, err = createAttestationVP(
-			opts.attestationVC, opts.attestationVPSigner, documentLoader)
+	//nolint:nestif
+	if strings.Contains(requestObject.ResponseType, "id_token") {
+		var idTokenSigningDID string
+
+		idTokenSigningDID, err = pickRandomElement(mapKeys(signers))
 		if err != nil {
 			return nil, err
 		}
-	}
 
-	idTokenJWS, err := createIDToken(requestObject, idTokenSigningDID, customClaims,
-		signers[idTokenSigningDID], attestationVP, presentationSubmission)
-	if err != nil {
-		return nil, err
+		var attestationVP string
+
+		if opts.attestationVC != "" {
+			attestationVP, err = createAttestationVP(opts.attestationVC, opts.attestationVPSigner, documentLoader)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		idTokenJWS, err = createIDToken(requestObject, idTokenSigningDID, customClaims,
+			signers[idTokenSigningDID], attestationVP, presentationSubmission)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	presentationSubmissionJSON, err := json.Marshal(presentationSubmission)
@@ -753,54 +782,33 @@ func createAuthorizedResponseMultiCred( //nolint:funlen,gocyclo // Unable to dec
 	}, nil
 }
 
-func addDataIntegrityProof(did string, didResolver api.DIDResolver, documentLoader ld.DocumentLoader,
-	signer wrapperapi.KMSCryptoSigner, presentation *verifiable.Presentation,
-) error {
-	proofContext := &verifiable.DataIntegrityProofContext{
-		SigningKeyID: did,
-		CryptoSuite:  ecdsa2019.SuiteType,
-	}
-
-	signerOpts := dataintegrity.Options{DIDResolver: &didResolverWrapper{didResolver: didResolver}}
-
-	dataIntegritySigner, err := dataintegrity.NewSigner(&signerOpts,
-		ecdsa2019.NewSignerInitializer(&ecdsa2019.SignerInitializerOptions{
-			LDDocumentLoader: documentLoader,
-			SignerGetter:     ecdsa2019.WithKMSCryptoWrapper(signer),
-		}))
-	if err != nil {
-		return err
-	}
-
-	err = presentation.AddDataIntegrityProof(proofContext, dataIntegritySigner)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func createLdpVPToken(
 	crypto api.Crypto,
 	documentLoader ld.DocumentLoader,
-	signingVM *diddoc.VerificationMethod,
+	didResolver api.DIDResolver,
+	did string,
+	assertionVM *diddoc.VerificationMethod,
 	requestObject *requestObject,
 	presentation *verifiable.Presentation,
 ) (string, error) {
-	ldProof, err := ldproof.New(
-		crypto,
-		documentLoader,
-		requestObject.ClientMetadata.VPFormats.LdpVP,
-		kms.ECDSAP384IEEEP1363, // TODO: Use the key type passed from the caller
-	)
-	if err != nil {
-		return "", fmt.Errorf("create ld proof: %w", err)
+	vpFormats := requestObject.ClientMetadata.VPFormats
+
+	if vpFormats == nil || vpFormats.LdpVP == nil {
+		return "", errors.New("client does not support ldp_vp format")
 	}
 
-	err = ldProof.Add(
+	ldProof := ldproof.New(
+		crypto,
+		documentLoader,
+		didResolver,
+	)
+
+	err := ldProof.Add(
 		presentation,
-		ldproof.WithSigningVM(signingVM),
-		ldproof.WithNonce(requestObject.Nonce),
+		ldproof.WithLdpType(vpFormats.LdpVP),
+		ldproof.WithVerificationMethod(assertionVM),
+		ldproof.WithDID(did),
+		ldproof.WithChallenge(requestObject.Nonce),
 		ldproof.WithDomain(requestObject.ClientID),
 	)
 	if err != nil {
@@ -919,10 +927,10 @@ func signToken(claims interface{}, signer api.JWTSigner) (string, error) {
 	return tokenBytes, nil
 }
 
-func getSigningVM(holderDID string, didResolver api.DIDResolver) (*diddoc.VerificationMethod, error) {
+func getAssertionVM(holderDID string, didResolver api.DIDResolver) (*diddoc.VerificationMethod, error) {
 	docRes, err := didResolver.Resolve(holderDID)
 	if err != nil {
-		return nil, fmt.Errorf("resolve holder DID for signing: %w", err)
+		return nil, fmt.Errorf("resolve holder DID for assertion method: %w", err)
 	}
 
 	verificationMethods := docRes.DIDDocument.VerificationMethods(diddoc.AssertionMethod)
@@ -931,13 +939,13 @@ func getSigningVM(holderDID string, didResolver api.DIDResolver) (*diddoc.Verifi
 		return nil, fmt.Errorf("holder DID has no assertion method for signing")
 	}
 
-	signingVM := verificationMethods[diddoc.AssertionMethod][0].VerificationMethod
+	assertionVM := verificationMethods[diddoc.AssertionMethod][0].VerificationMethod
 
-	return &signingVM, nil
+	return &assertionVM, nil
 }
 
-func getHolderSigner(signingVM *diddoc.VerificationMethod, crypto api.Crypto) (api.JWTSigner, error) {
-	return common.NewJWSSigner(models.VerificationMethodFromDoc(signingVM), crypto)
+func getHolderSigner(vm *diddoc.VerificationMethod, crypto api.Crypto) (api.JWTSigner, error) {
+	return common.NewJWSSigner(models.VerificationMethodFromDoc(vm), crypto)
 }
 
 func getSubjectID(vc *verifiable.Credential) (string, error) {
@@ -961,22 +969,6 @@ func pickRandomElement(list []string) (string, error) {
 	}
 
 	return list[idx.Int64()], nil
-}
-
-func fullVMID(did, vmID string) string {
-	if vmID == "" {
-		return did
-	}
-
-	if vmID[0] == '#' {
-		return did + vmID
-	}
-
-	if strings.HasPrefix(vmID, "did:") {
-		return vmID
-	}
-
-	return did + "#" + vmID
 }
 
 type resolverAdapter struct {
@@ -1087,8 +1079,7 @@ func processUsingMSEntraErrorResponseFormat(respBytes []byte, detailedErr error)
 	}
 }
 
-type emptyObj struct {
-}
+type emptyObj struct{}
 
 func copyJSONKeysOnly(obj interface{}) interface{} {
 	empty := &emptyObj{}
@@ -1105,6 +1096,7 @@ func copyJSONKeysOnly(obj interface{}) interface{} {
 	case verifiable.CustomFields:
 		newMap := make(map[string]interface{})
 		populateClaimKeys(newMap, jsonObj)
+
 		return newMap
 	case []interface{}:
 		newSlice := make([]interface{}, len(jsonObj))

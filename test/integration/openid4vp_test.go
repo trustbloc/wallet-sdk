@@ -75,7 +75,6 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 		"givenName":    "John",
 		"degree":       "MIT",
 		"degreeSchool": "MIT school",
-		"photo":        "binary data",
 	}
 
 	type customScope struct {
@@ -111,6 +110,12 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			claimData:         []claimData{universityDegreeClaims},
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_ldp_university_degree",
+		},
+		{
+			issuerProfileIDs:  []string{"university_degree_issuer_jwt"},
+			claimData:         []claimData{universityDegreeClaims},
+			walletDIDMethod:   "ion",
+			verifierProfileID: "v_jwt_university_degree",
 		},
 		{
 			issuerProfileIDs:  []string{"bank_issuer"},
@@ -183,6 +188,12 @@ func TestOpenID4VPFullFlow(t *testing.T) {
 			claimData:         []claimData{universityDegreeClaims},
 			walletDIDMethod:   "ion",
 			verifierProfileID: "v_ldp_university_degree",
+		},
+		{
+			issuerProfileIDs:  []string{"university_degree_issuer_v2"},
+			claimData:         []claimData{universityDegreeClaims},
+			walletDIDMethod:   "jwk",
+			verifierProfileID: "v_ldp_university_degree_v2",
 		},
 	}
 

@@ -17,24 +17,19 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/trustbloc/kms-go/doc/jose/jwk"
-	wrapperapi "github.com/trustbloc/kms-go/wrapper/api"
-
-	gomobdid "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
-	goapilocalkms "github.com/trustbloc/wallet-sdk/pkg/localkms"
-
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
-
-	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
-
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/did-go/doc/did"
+	"github.com/trustbloc/kms-go/doc/jose/jwk"
+	wrapperapi "github.com/trustbloc/kms-go/wrapper/api"
 	"github.com/trustbloc/vc-go/presexch"
 	afgoverifiable "github.com/trustbloc/vc-go/verifiable"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	gomobdid "github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/verifiable"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
@@ -107,24 +102,6 @@ func TestNewInteraction(t *testing.T) {
 		})
 	})
 
-	t.Run("Failure - kms crypto suite does not support signing for DI proofs", func(t *testing.T) {
-		requiredArgs := NewArgs(
-			requestObjectJWT,
-			&mockCrypto{},
-			&mockDIDResolver{},
-		)
-
-		opts := NewOpts()
-
-		localKMS := &localkms.KMS{GoAPILocalKMS: &goapilocalkms.LocalKMS{AriesSuite: &mockSuite{}}}
-
-		opts.EnableAddingDIProofs(localKMS)
-
-		instance, err := NewInteraction(requiredArgs, opts)
-		testutil.RequireErrorContains(t, err, "aries local crypto suite missing support for signing")
-		require.Nil(t, instance)
-	})
-
 	t.Run("Failure - invalid authorization request", func(t *testing.T) {
 		requiredArgs := NewArgs(
 			requestObjectJWT,
@@ -134,7 +111,7 @@ func TestNewInteraction(t *testing.T) {
 
 		instance, err := NewInteraction(requiredArgs, nil)
 		testutil.RequireErrorContains(t, err, "INVALID_AUTHORIZATION_REQUEST")
-		testutil.RequireErrorContains(t, err, "verify request object: parse JWT: invalid public key id:"+
+		testutil.RequireErrorContains(t, err, "verify request object: check proof: invalid public key id:"+
 			" resolve DID did:ion:EiDYWcDuP-EDjVyFWGFdpgPncar9A7OGFykdeX71ZTU-wg:")
 		require.Nil(t, instance)
 	})
@@ -437,7 +414,7 @@ func (c *mockCrypto) Sign(_ []byte, _ string) ([]byte, error) {
 	return c.SignResult, c.SignErr
 }
 
-func (c *mockCrypto) Verify(_ []byte, _ []byte, _ string) error {
+func (c *mockCrypto) Verify(_, _ []byte, _ string) error {
 	return c.VerifyErr
 }
 

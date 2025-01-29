@@ -8,6 +8,13 @@ package openid4vp
 
 import "github.com/trustbloc/vc-go/presexch"
 
+type clientIDScheme string
+
+const (
+	didScheme         clientIDScheme = "did"
+	redirectURIScheme clientIDScheme = "redirect_uri"
+)
+
 type requestObject struct {
 	JTI                    string                           `json:"jti"`
 	IAT                    int64                            `json:"iat"`
@@ -18,17 +25,17 @@ type requestObject struct {
 	Scope                  string                           `json:"scope"`
 	Nonce                  string                           `json:"nonce"`
 	ClientID               string                           `json:"client_id"` //nolint: tagliatelle
-	ClientIDScheme         string                           `json:"client_id_scheme"`
+	ClientIDScheme         clientIDScheme                   `json:"client_id_scheme"`
 	State                  string                           `json:"state"`
 	Exp                    int64                            `json:"exp"`
 	ClientMetadata         clientMetadata                   `json:"client_metadata"`
 	PresentationDefinition *presexch.PresentationDefinition `json:"presentation_definition"`
 
-	// Deprecated: Use response_uri instead.
+	// Deprecated: Deprecated in OID4VP-ID2. Use response_uri instead.
 	RedirectURI string `json:"redirect_uri"`
-	// Deprecated: Use client_metadata instead.
+	// Deprecated: Deprecated in OID4VP-ID2. Use client_metadata instead.
 	Registration requestObjectRegistration `json:"registration"`
-	// Deprecated: Use top-level "presentation_definition" instead.
+	// Deprecated: Deprecated in OID4VP-ID2. Use top-level "presentation_definition" instead.
 	Claims requestObjectClaims `json:"claims"`
 }
 

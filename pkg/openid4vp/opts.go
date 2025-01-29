@@ -9,8 +9,6 @@ package openid4vp
 import (
 	"net/http"
 
-	wrapperapi "github.com/trustbloc/kms-go/wrapper/api"
-
 	noopactivitylogger "github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	noopmetricslogger "github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
@@ -20,9 +18,6 @@ type opts struct {
 	httpClient     httpClient
 	activityLogger api.ActivityLogger
 	metricsLogger  api.MetricsLogger
-	// If both of the below fields are set, then data integrity proofs will be added to
-	// presentations sent to the verifier.
-	signer wrapperapi.KMSCryptoSigner
 }
 
 // An Opt is a single option for an OpenID4VP instance.
@@ -54,19 +49,10 @@ func WithMetricsLogger(metricsLogger api.MetricsLogger) Opt {
 	}
 }
 
-// WithDIProofs enables the adding of data integrity proofs to presentations sent to the verifier. It requires
-// a signer and a KMS to be passed in.
-func WithDIProofs(signer wrapperapi.KMSCryptoSigner) Opt {
-	return func(opts *opts) {
-		opts.signer = signer
-	}
-}
-
 func processOpts(options []Opt) (
 	httpClient,
 	api.ActivityLogger,
 	api.MetricsLogger,
-	wrapperapi.KMSCryptoSigner,
 ) {
 	opts := mergeOpts(options)
 
@@ -82,7 +68,7 @@ func processOpts(options []Opt) (
 		opts.metricsLogger = noopmetricslogger.NewMetricsLogger()
 	}
 
-	return opts.httpClient, opts.activityLogger, opts.metricsLogger, opts.signer
+	return opts.httpClient, opts.activityLogger, opts.metricsLogger
 }
 
 func mergeOpts(options []Opt) *opts {

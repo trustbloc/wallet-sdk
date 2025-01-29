@@ -10,6 +10,7 @@ type createAuthorizationURLOpts struct {
 	scopes                             []string
 	issuerState                        *string
 	useOAuthDiscoverableClientIDScheme bool
+	context                            []string
 }
 
 // CreateAuthorizationURLOpt is an option for the CreateAuthorizationURL method.
@@ -53,6 +54,15 @@ func WithIssuerState(issuerState string) CreateAuthorizationURLOpt {
 func WithOAuthDiscoverableClientIDScheme() CreateAuthorizationURLOpt {
 	return func(opts *createAuthorizationURLOpts) {
 		opts.useOAuthDiscoverableClientIDScheme = true
+	}
+}
+
+// WithCredentialContext is an option for the CreateAuthorizationURL method that specifies an credential context
+// See https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#appendix-A.1.2.3
+// for more information about authorization request.
+func WithCredentialContext(context []string) CreateAuthorizationURLOpt {
+	return func(opts *createAuthorizationURLOpts) {
+		opts.context = context
 	}
 }
 

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
+	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
 
 // EventStatus used to acknowledge issuer that client accepts or rejects credentials.
@@ -75,17 +76,28 @@ type CredentialResponse struct {
 	// OPTIONAL. Contains issued Credential.
 	// It MUST be present when transaction_id is not returned.
 	// It MAY be a string or an object, depending on the Credential format.
+	// Deprecated: Use Credentials instead.
 	Credential interface{} `json:"credential,omitempty"`
 	// OPTIONAL. String identifying a Deferred Issuance transaction.
 	// This claim is contained in the response if the Credential Issuer was unable to immediately issue the Credential.
+	// Deprecated.
 	TransactionID string `json:"transaction_id"`
 	// OPTIONAL. String containing a nonce to be used to create a proof of possession of key material
 	// when requesting a Credential.
+	// Deprecated.
 	CNonce string `json:"c_nonce"`
 	// OPTIONAL. Number denoting the lifetime in seconds of the c_nonce.
+	// Deprecated.
 	CNonceExpiresIn int `json:"c_nonce_expires_in"`
 	// OPTIONAL. String identifying an issued Credential that the Wallet includes in the Notification Request.
-	AscID string `json:"notification_id"`
+	AckID string `json:"notification_id"`
+	// Contains an array of one or more issued Credentials.
+	Credentials []CredentialResponseCredentialObject `json:"credentials"`
+}
+
+// CredentialResponseCredentialObject is a model for credentials field from credential response.
+type CredentialResponseCredentialObject struct {
+	Credential interface{} `json:"credential"`
 }
 
 // SerializeToCredentialsBytes serializes underlying credential to proper bytes representation depending on
@@ -148,17 +160,14 @@ type batchCredentialRequest struct {
 
 type errorResponse struct {
 	Error string `json:"error,omitempty"`
+	// containing a nonce to be used to create a proof of possession of key material
+	// when requesting a Credential.
+	CNonce string `json:"c_nonce"`
+	// number denoting the lifetime in seconds of the c_nonce.
+	CNonceExpiresIn int `json:"c_nonce_expires_in"`
 }
 
 type acknowledgementRequest struct {
-	Credentials        []credentialAcknowledgement `json:"credentials"`
-	InteractionDetails map[string]interface{}      `json:"interaction_details,omitempty"`
-}
-
-type credentialAcknowledgement struct {
-	// String received in the Credential Response or the Batch Credential Response.
-	NotificationID string `json:"notification_id"`
-
 	// Type of the notification event.
 	// It MUST be a case-sensitive string whose value is either `credential_accepted`, `credential_failure`,
 	// or `credential_deleted`.
@@ -174,6 +183,42 @@ type credentialAcknowledgement struct {
 	// developer in understanding the event that occurred.
 	EventDescription *string `json:"event_description,omitempty"`
 
-	// Additional field that out of the spec.
+	// Optional issuer identifier.
 	IssuerIdentifier string `json:"issuer_identifier"`
+
+	// Ack ID.
+	// String received in the Credential Response or the Batch Credential Response.
+	NotificationID string `json:"notification_id"`
+
+	InteractionDetails map[string]interface{} `json:"interaction_details,omitempty"`
+}
+
+// InvalidProofError -- special type of error to handle case described in specification
+// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-7.3.2
+//
+//nolint:recvcheck
+type InvalidProofError struct {
+	ParentError     *walleterror.Error
+	CNonce          string
+	CNonceExpiresIn int
+}
+
+func NewInvalidProofError(parentError *walleterror.Error, cNonce string, cNonceExpiresIn int) *InvalidProofError {
+	return &InvalidProofError{
+		ParentError:     parentError,
+		CNonce:          cNonce,
+		CNonceExpiresIn: cNonceExpiresIn,
+	}
+}
+
+func (e InvalidProofError) Error() string {
+	if e.ParentError == nil {
+		return ""
+	}
+
+	return e.ParentError.Error()
+}
+
+func (e *InvalidProofError) Unwrap() error {
+	return e.ParentError
 }

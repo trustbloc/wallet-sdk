@@ -8,10 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package trustregistry
 
 import (
-	"crypto/tls"
-	"net/http"
 	"time"
 
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/wrapper"
 	"github.com/trustbloc/wallet-sdk/pkg/trustregistry"
 )
 
@@ -20,6 +20,12 @@ type RegistryConfig struct {
 	EvaluateIssuanceURL        string
 	EvaluatePresentationURL    string
 	DisableHTTPClientTLSVerify bool
+	additionalHeaders          api.Headers
+}
+
+// AddHeader adds the given HTTP header to all REST calls made to the trust registry during evaluation flow.
+func (r *RegistryConfig) AddHeader(header *api.Header) {
+	r.additionalHeaders.Add(header)
 }
 
 // Registry implements API for trust registry.
@@ -29,19 +35,7 @@ type Registry struct {
 
 // NewRegistry creates new trust registry API.
 func NewRegistry(config *RegistryConfig) *Registry {
-	var httpClient *http.Client
-	if config.DisableHTTPClientTLSVerify {
-		httpClient = &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{
-					//nolint:gosec // The ability to disable TLS is an option we provide that
-					// has to be explicitly set by the user. By default, we don't disable TLS.
-					// This option is only intended for testing purposes.
-					InsecureSkipVerify: true,
-				},
-			},
-		}
-	}
+	httpClient := wrapper.NewHTTPClient(nil, config.additionalHeaders, config.DisableHTTPClientTLSVerify)
 
 	return &Registry{
 		impl: trustregistry.New(&trustregistry.RegistryConfig{

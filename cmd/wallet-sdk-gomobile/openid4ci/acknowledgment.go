@@ -35,26 +35,45 @@ func (a *Acknowledgment) Serialize() (string, error) {
 	return string(data), nil
 }
 
-// SetInteractionDetails extends acknowledgment request with serializedInteractionDetails.
+// SetInteractionDetails extends next acknowledgment request with serializedInteractionDetails.
 func (a *Acknowledgment) SetInteractionDetails(serializedInteractionDetails string) error {
-	if err := json.Unmarshal([]byte(serializedInteractionDetails), &a.acknowledgment.InteractionDetails); err != nil {
+	var interactionDetails map[string]interface{}
+
+	if err := json.Unmarshal([]byte(serializedInteractionDetails), &interactionDetails); err != nil {
 		return fmt.Errorf("decode ci ack interaction details: %w", err)
 	}
+
+	a.acknowledgment.InteractionDetails = interactionDetails
 
 	return nil
 }
 
-// Success acknowledge issuer that client accepts credentials.
+// Success acknowledges the client's acceptance of credentials. Each call to this function
+// acknowledges the client's acceptance of the next credential in the list of issued credentials.
+//
+// The first call acknowledges the first credential, the second call acknowledges the second credential,
+// the third call acknowledges the third, and so on. If the number of function calls exceeds the number
+// of credentials issued in the current session, the function returns an error "ack list is empty".
+//
+// Between the calls caller might set different interaction details using SetInteractionDetails.
 func (a *Acknowledgment) Success() error {
 	return a.acknowledgment.AcknowledgeIssuer(openid4cigoapi.EventStatusCredentialAccepted, &http.Client{})
 }
 
-// Reject acknowledge issuer that client rejects credentials.
+// Reject acknowledges the client's rejection of credentials. Each call to this function
+// acknowledges the client's rejection of the next credential in the list of issued credentials.
+//
+// The first call acknowledges the first credential, the second call acknowledges the second credential,
+// the third call acknowledges the third, and so on. If the number of function calls exceeds the number
+// of credentials issued in the current session, the function returns an error "ack list is empty".
+//
+// Between the calls caller might set different interaction details using SetInteractionDetails.
 func (a *Acknowledgment) Reject() error {
 	return a.acknowledgment.AcknowledgeIssuer(openid4cigoapi.EventStatusCredentialFailure, &http.Client{})
 }
 
-// RejectWithCode sends rejection message to issuer with a reject code.
+// RejectWithCode acknowledges the client's rejection of credentials with specific code.
+// See Reject for details.
 func (a *Acknowledgment) RejectWithCode(code string) error {
 	return a.acknowledgment.AcknowledgeIssuer(openid4cigoapi.EventStatus(code), &http.Client{})
 }

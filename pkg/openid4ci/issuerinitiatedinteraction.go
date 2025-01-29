@@ -65,6 +65,7 @@ type IssuerInitiatedInteraction struct {
 	credentialTypes              [][]string
 	credentialFormats            []string
 	credentialConfigIDs          []string
+	credentialContexts           [][]string
 	preAuthorizedCodeGrantParams *PreAuthorizedCodeGrantParams
 	authorizationCodeGrantParams *AuthorizationCodeGrantParams
 
@@ -73,6 +74,8 @@ type IssuerInitiatedInteraction struct {
 
 // NewIssuerInitiatedInteraction creates a new OpenID4CI IssuerInitiatedInteraction.
 // If no ActivityLogger is provided (via the ClientConfig object), then no activity logging will take place.
+//
+//nolint:funlen
 func NewIssuerInitiatedInteraction(
 	initiateIssuanceURI string,
 	config *ClientConfig,
@@ -114,7 +117,7 @@ func NewIssuerInitiatedInteraction(
 		return nil, err
 	}
 
-	credentialTypes, credentialFormats, err := determineCredentialTypesAndFormats(credentialOffer,
+	credentialTypes, credentialFormats, credentialContexts, err := determineCredentialParameters(credentialOffer,
 		issuerInteraction.issuerMetadata)
 	if err != nil {
 		return nil, err
@@ -126,6 +129,7 @@ func NewIssuerInitiatedInteraction(
 			authorizationCodeGrantParams: authorizationCodeGrantParams,
 			credentialTypes:              credentialTypes,
 			credentialFormats:            credentialFormats,
+			credentialContexts:           credentialContexts,
 			credentialConfigIDs:          credentialOffer.CredentialConfigurationIDs,
 		},
 		config.MetricsLogger.Log(
@@ -158,7 +162,7 @@ func (i *IssuerInitiatedInteraction) CreateAuthorizationURL(clientID, redirectUR
 	}
 
 	return i.interaction.createAuthorizationURL(clientID, redirectURI, i.credentialFormats[0], i.credentialTypes[0],
-		issuerState, processedOpts.scopes, processedOpts.useOAuthDiscoverableClientIDScheme)
+		i.credentialContexts[0], issuerState, processedOpts.scopes, processedOpts.useOAuthDiscoverableClientIDScheme)
 }
 
 // RequestCredentialWithPreAuth requests credential(s) from the issuer. This method can only be used for the
@@ -208,7 +212,7 @@ func (i *IssuerInitiatedInteraction) RequestCredentialWithAuth(jwtSigner api.JWT
 		return nil, err
 	}
 
-	return i.interaction.requestCredentialWithAuth(jwtSigner, i.credentialFormats, i.credentialTypes)
+	return i.interaction.requestCredentialWithAuth(jwtSigner, i.credentialFormats, i.credentialTypes, i.credentialContexts)
 }
 
 // IssuerURI returns the issuer's URI from the initiation request. It's useful to store this somewhere in case
@@ -408,10 +412,33 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 		ExpiresAt: tokenResponse.expiry(), RefreshToken: tokenResponse.RefreshToken,
 	}
 
-	proofJWT, err := i.interaction.createClaimsProof(tokenResponse.CNonce, signer)
+	return i.getCredentialResponse(tokenResponse, tokenResponse.CNonce, signer, true)
+}
+
+//nolint:funlen,gocyclo,nonamedreturns
+func (i *IssuerInitiatedInteraction) getCredentialResponse(
+	tokenResponse *preAuthTokenResponse,
+	nonce any,
+	signer api.JWTSigner,
+	allowRetry bool) (
+	credentialResponse []CredentialResponse,
+	err error,
+) {
+	proofJWT, err := i.interaction.createClaimsProof(nonce, signer)
 	if err != nil {
 		return nil, err
 	}
+
+	defer func() {
+		if err == nil || !allowRetry {
+			return
+		}
+
+		proofError := &InvalidProofError{}
+		if errors.As(err, &proofError) {
+			credentialResponse, err = i.getCredentialResponse(tokenResponse, nonce, signer, false)
+		}
+	}()
 
 	if len(i.credentialTypes) > 1 && i.interaction.issuerMetadata.BatchCredentialEndpoint != "" {
 		return i.getCredentialResponsesBatch(proofJWT, tokenResponse)
@@ -420,19 +447,22 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 	credentialResponses := make([]CredentialResponse, len(i.credentialTypes))
 
 	for index := range i.credentialTypes {
-		request, err := i.interaction.createCredentialRequestWithoutAccessToken(proofJWT, i.credentialFormats[index],
-			i.credentialTypes[index])
+		requestBody, err := i.interaction.createCredentialRequestBody(proofJWT, i.credentialFormats[index],
+			i.credentialTypes[index], i.credentialContexts[index])
 		if err != nil {
 			return nil, err
 		}
 
-		request.Header.Add("Authorization", "Bearer "+tokenResponse.AccessToken)
+		headers := http.Header{}
+		headers.Add("Authorization", "Bearer "+tokenResponse.AccessToken)
 
 		fetchCredentialResponseEventText := fmt.Sprintf(fetchCredentialViaGETReqEventText, index+1,
 			len(i.credentialTypes), i.interaction.issuerMetadata.CredentialEndpoint)
 
-		responseBytes, err := i.interaction.getRawCredentialResponse(request, fetchCredentialResponseEventText,
-			i.interaction.httpClient)
+		responseBytes, err := httprequest.New(i.interaction.httpClient, i.interaction.metricsLogger).DoContext(context.TODO(),
+			http.MethodPost, i.interaction.issuerMetadata.CredentialEndpoint, "application/json", headers,
+			bytes.NewReader(requestBody), fetchCredentialResponseEventText, requestCredentialEventText,
+			[]int{http.StatusOK, http.StatusCreated}, processCredentialErrorResponse)
 		if err != nil {
 			return nil, err
 		}
@@ -446,7 +476,7 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesWithPreAuth(
 
 		credentialResponses[index] = credentialResponse
 
-		i.interaction.storeAcknowledgmentID(credentialResponse.AscID)
+		i.interaction.storeAcknowledgmentID(credentialResponse.AckID)
 	}
 
 	return credentialResponses, nil
@@ -482,22 +512,16 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesBatch(
 		return nil, err
 	}
 
-	request, err := http.NewRequestWithContext(context.Background(),
-		http.MethodPost,
-		i.interaction.issuerMetadata.BatchCredentialEndpoint,
-		bytes.NewReader(b),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	request.Header.Add("Content-Type", "application/json")
-	request.Header.Add("Authorization", "Bearer "+tokenResponse.AccessToken)
+	headers := http.Header{}
+	headers.Add("Authorization", "Bearer "+tokenResponse.AccessToken)
 
 	fetchCredentialResponseEventText := fmt.Sprintf(fetchCredentialViaGETReqEventText, numberOfCredentials,
 		numberOfCredentials, i.interaction.issuerMetadata.BatchCredentialEndpoint)
 
-	b, err = i.interaction.getRawCredentialResponse(request, fetchCredentialResponseEventText, i.interaction.httpClient)
+	b, err = httprequest.New(i.interaction.httpClient, i.interaction.metricsLogger).DoContext(context.TODO(),
+		http.MethodPost, i.interaction.issuerMetadata.BatchCredentialEndpoint, "application/json", headers,
+		bytes.NewReader(b), fetchCredentialResponseEventText, requestCredentialEventText,
+		[]int{http.StatusOK, http.StatusCreated}, processCredentialErrorResponse)
 	if err != nil {
 		return nil, err
 	}
@@ -515,10 +539,10 @@ func (i *IssuerInitiatedInteraction) getCredentialResponsesBatch(
 			TransactionID:   credentialResp.TransactionID,
 			CNonce:          *response.CNonce,
 			CNonceExpiresIn: *response.CNonceExpiresIn,
-			AscID:           credentialResp.AscID,
+			AckID:           credentialResp.AckID,
 		}
 
-		i.interaction.storeAcknowledgmentID(credentialResp.AscID)
+		i.interaction.storeAcknowledgmentID(credentialResp.AckID)
 	}
 
 	return credentialResponses, nil
@@ -693,19 +717,20 @@ func getCredentialOfferJSONFromCredentialOfferURI(credentialOfferURI string,
 	return responseBytes, nil
 }
 
-func determineCredentialTypesAndFormats(
+func determineCredentialParameters(
 	credentialOffer *CredentialOffer,
 	issuerMetadata *issuer.Metadata,
-) ([][]string, []string, error) {
+) ([][]string, []string, [][]string, error) {
 	types := make([][]string, len(credentialOffer.CredentialConfigurationIDs))
 	formats := make([]string, len(credentialOffer.CredentialConfigurationIDs))
+	contexts := make([][]string, len(credentialOffer.CredentialConfigurationIDs))
 
-	for i := 0; i < len(credentialOffer.CredentialConfigurationIDs); i++ {
+	for i := range len(credentialOffer.CredentialConfigurationIDs) {
 		id := credentialOffer.CredentialConfigurationIDs[i]
 
 		configuration, ok := issuerMetadata.CredentialConfigurationsSupported[id]
 		if !ok {
-			return nil, nil, walleterror.NewValidationError(
+			return nil, nil, nil, walleterror.NewValidationError(
 				ErrorModule,
 				InvalidCredentialConfigurationIDCode,
 				InvalidCredentialConfigurationIDError,
@@ -718,7 +743,7 @@ func determineCredentialTypesAndFormats(
 		if configuration.Format != jwtVCJSONCredentialFormat &&
 			configuration.Format != jwtVCJSONLDCredentialFormat &&
 			configuration.Format != ldpVCCredentialFormat {
-			return nil, nil, walleterror.NewValidationError(
+			return nil, nil, nil, walleterror.NewValidationError(
 				ErrorModule,
 				UnsupportedCredentialTypeInOfferCode,
 				UnsupportedCredentialTypeInOfferError,
@@ -729,14 +754,18 @@ func determineCredentialTypesAndFormats(
 		}
 
 		formats[i] = configuration.Format
+
+		if configuration.CredentialDefinition != nil && configuration.Format == ldpVCCredentialFormat {
+			contexts[i] = configuration.CredentialDefinition.Context
+		}
 	}
 
-	return types, formats, nil
+	return types, formats, contexts, nil
 }
 
 func validateSignerKeyID(jwtSigner api.JWTSigner) error {
 	kidParts := strings.Split(jwtSigner.GetKeyID(), "#")
-	if len(kidParts) < 2 { //nolint: gomnd
+	if len(kidParts) < 2 { //nolint: mnd
 		return walleterror.NewExecutionError(
 			ErrorModule,
 			KeyIDMissingDIDPartCode,
@@ -750,10 +779,10 @@ func validateSignerKeyID(jwtSigner api.JWTSigner) error {
 func getSubjectIDs(vcs []*verifiable.Credential) []string {
 	var subjectIDs []string
 
-	for i := 0; i < len(vcs); i++ {
+	for i := range vcs {
 		subjects := vcs[i].Contents().Subject
 
-		for j := 0; j < len(subjects); j++ {
+		for j := range subjects {
 			subjectIDs = append(subjectIDs, subjects[j].ID)
 		}
 	}

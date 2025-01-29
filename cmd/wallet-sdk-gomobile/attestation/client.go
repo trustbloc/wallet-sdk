@@ -202,6 +202,7 @@ func createGoAPIClientConfig(args *CreateClientArgs) (*attestationgoapi.ClientCo
 		dlHTTPClient := wrapper.NewHTTPClient(args.httpTimeout, api.Headers{}, args.disableHTTPClientTLSVerification)
 
 		var err error
+
 		goAPIClientConfig.DocumentLoader, err = common.CreateJSONLDDocumentLoader(dlHTTPClient, legacy.NewProvider())
 		if err != nil {
 			return nil, err

@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/did-go/doc/did"
 	"github.com/trustbloc/did-go/doc/did/endpoint"
@@ -59,6 +60,9 @@ var (
 	//go:embed testdata/sample_credential_response_batch.json
 	sampleCredentialResponseBatch []byte
 
+	//go:embed testdata/sample_credential_response_jsonld.json
+	sampleCredentialResponseJSONLD []byte
+
 	//go:embed testdata/sample_issuer_metadata.json
 	sampleIssuerMetadata string
 
@@ -78,12 +82,14 @@ type mockIssuerServerHandler struct {
 	credentialRequestShouldFail                             bool
 	credentialRequestErrorResponse                          string
 	credentialRequestShouldGiveUnmarshallableResponse       bool
+	credentialRequestShouldGiveInvalidProofResponse         bool
 	batchCredentialRequestShouldFail                        bool
 	credentialResponse                                      []byte
 	batchCredentialResponse                                 []byte
 	httpStatusCode                                          int
 	ackRequestErrorResponse                                 string
 	ackRequestExpectInteractionDetails                      bool
+	ackRequestExpectedCalls                                 int
 }
 
 //nolint:gocyclo // test file
@@ -102,7 +108,7 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 			var credentialOfferBytes []byte
 
 			credentialOfferBytes, err = json.Marshal(m.credentialOffer)
-			require.NoError(m.t, err)
+			assert.NoError(m.t, err)
 
 			_, err = writer.Write(credentialOfferBytes)
 		}
@@ -144,6 +150,10 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 			writer.WriteHeader(statusCode)
 
 			_, err = writer.Write([]byte("invalid"))
+		case m.credentialRequestShouldGiveInvalidProofResponse:
+			writer.WriteHeader(http.StatusInternalServerError)
+
+			_, err = writer.Write([]byte(`{"error":"invalid_proof"}`))
 		default:
 			_, err = writer.Write(m.credentialResponse)
 		}
@@ -157,6 +167,8 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 			_, err = writer.Write(m.batchCredentialResponse)
 		}
 	case "/oidc/ack_endpoint":
+		m.ackRequestExpectedCalls--
+
 		statusCode := http.StatusNoContent
 
 		if m.httpStatusCode != 0 {
@@ -165,10 +177,10 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 
 		var payload map[string]interface{}
 		err = json.NewDecoder(request.Body).Decode(&payload)
-		require.NoError(m.t, err)
+		assert.NoError(m.t, err)
 
 		_, ok := payload["interaction_details"]
-		require.Equal(m.t, m.ackRequestExpectInteractionDetails, ok)
+		assert.Equal(m.t, m.ackRequestExpectInteractionDetails, ok)
 
 		if m.ackRequestErrorResponse != "" {
 			_, err = writer.Write([]byte(m.ackRequestErrorResponse))
@@ -177,7 +189,7 @@ func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, request 
 		writer.WriteHeader(statusCode)
 	}
 
-	require.NoError(m.t, err)
+	assert.NoError(m.t, err)
 }
 
 type failingMetricsLogger struct {
@@ -198,6 +210,7 @@ func (f *failingMetricsLogger) Log(metricsEvent *api.MetricsEvent) error {
 func TestNewIssuerInitiatedInteraction(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{t: t, credentialResponse: sampleCredentialResponse}
+
 		server := httptest.NewServer(issuerServerHandler)
 		defer server.Close()
 
@@ -481,11 +494,13 @@ type mockResolver struct {
 
 func (m *mockResolver) Resolve(string) (*did.DocResolution, error) {
 	var services []did.Service
+
 	if m.linkedDomainsNumber == nil {
 		one := 1
 		m.linkedDomainsNumber = &one
 	}
-	for i := 0; i < *m.linkedDomainsNumber; i++ {
+
+	for range *m.linkedDomainsNumber {
 		services = append(services, did.Service{
 			ID:              "#LinkedDomains",
 			Type:            "LinkedDomains",
@@ -644,9 +659,10 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				})
 				t.Run("Batch credential endpoint", func(t *testing.T) {
 					issuerServerHandler := &mockIssuerServerHandler{
-						t:                       t,
-						batchCredentialResponse: sampleCredentialResponseBatch,
-						httpStatusCode:          http.StatusOK,
+						t:                                  t,
+						batchCredentialResponse:            sampleCredentialResponseBatch,
+						ackRequestExpectInteractionDetails: true,
+						ackRequestExpectedCalls:            2,
 					}
 
 					server := httptest.NewServer(issuerServerHandler)
@@ -674,6 +690,24 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 					require.Len(t, credentials, 2)
 					require.NotEmpty(t, credentials[0])
 					require.NotEmpty(t, credentials[1])
+
+					requestedAcknowledgment, err := interaction.Acknowledgment()
+					require.NoError(t, err)
+					require.NotNil(t, requestedAcknowledgment)
+
+					requestedAcknowledgment.InteractionDetails = map[string]interface{}{"key1": "value1"}
+
+					err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.EventStatusCredentialAccepted, &http.Client{})
+					require.NoError(t, err)
+
+					err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.EventStatusCredentialAccepted, &http.Client{})
+					require.NoError(t, err)
+
+					require.Zero(t, issuerServerHandler.ackRequestExpectedCalls)
+					require.Empty(t, requestedAcknowledgment.AckIDs)
+
+					err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.EventStatusCredentialAccepted, &http.Client{})
+					require.ErrorContains(t, err, "ack list is empty")
 				})
 			})
 			t.Run("Issuer require acknowledgment", func(t *testing.T) {
@@ -695,6 +729,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 					t:                                  t,
 					credentialResponse:                 sampleCredentialResponseAsk,
 					ackRequestExpectInteractionDetails: true,
+					ackRequestExpectedCalls:            2,
 				}
 
 				server := httptest.NewServer(issuerServerHandler)
@@ -726,8 +761,11 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 					} else {
 						err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.EventStatusCredentialFailure, &http.Client{})
 					}
+
 					require.NoError(t, err)
 				}
+
+				require.Zero(t, issuerServerHandler.ackRequestExpectedCalls)
 			})
 
 			t.Run("Using credential_offer_uri", func(t *testing.T) {
@@ -1015,6 +1053,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				t:                      t,
 				tokenRequestShouldFail: true,
 			}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1054,9 +1093,11 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
 			}, openid4ci.WithPIN("1234"))
+
 			require.NoError(t, err)
 			require.Len(t, credentials, 1)
 			require.NotEmpty(t, credentials[0])
+
 			_, err = interaction.Acknowledgment()
 
 			require.ErrorContains(t, err, "issuer not support credential acknowledgement")
@@ -1097,6 +1138,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				tokenRequestShouldFail:    true,
 				tokenRequestErrorResponse: `{"error":"invalid_request"}`,
 			}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1120,6 +1162,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				tokenRequestShouldFail:    true,
 				tokenRequestErrorResponse: `{"error":"invalid_grant"}`,
 			}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1142,6 +1185,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				tokenRequestShouldFail:    true,
 				tokenRequestErrorResponse: `{"error":"invalid_client"}`,
 			}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1165,6 +1209,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				tokenRequestShouldFail:    true,
 				tokenRequestErrorResponse: `{"error":"someOtherErrorCode"}`,
 			}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1187,6 +1232,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				t: t,
 				tokenRequestShouldGiveUnmarshallableResponse: true,
 			}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1206,6 +1252,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		t.Run("Fail to get credential response: server response body is not an errorResponse "+
 			"object", func(t *testing.T) {
 			issuerServerHandler := &mockIssuerServerHandler{t: t, credentialRequestShouldFail: true}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1227,6 +1274,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				t: t, credentialRequestShouldFail: true,
 				credentialRequestErrorResponse: `{"error":"invalid_request"}`,
 			}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1244,11 +1292,31 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				`with body [{"error":"invalid_request"}] from issuer's credential endpoint`)
 			require.Nil(t, credentials)
 		})
+		t.Run("Fail to get credential response: invalid proof error ", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{t: t, credentialRequestShouldGiveInvalidProofResponse: true}
+
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
+			requestURI := createCredentialOfferIssuanceURI(t, server.URL, false, true)
+
+			interaction := newIssuerInitiatedInteraction(t, requestURI)
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			testutil.RequireErrorContains(t, err, "received status code [500] "+
+				`with body [{"error":"invalid_proof"}] from issuer's credential endpoint`)
+			require.Nil(t, credentials)
+		})
 		t.Run("Fail to get credential response: invalid token", func(t *testing.T) {
 			issuerServerHandler := &mockIssuerServerHandler{
 				t: t, credentialRequestShouldFail: true,
 				credentialRequestErrorResponse: `{"error":"invalid_token"}`,
 			}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1271,6 +1339,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				t: t, credentialRequestShouldFail: true,
 				credentialRequestErrorResponse: `{"error":"unsupported_credential_format"}`,
 			}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1293,6 +1362,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				t: t, credentialRequestShouldFail: true,
 				credentialRequestErrorResponse: `{"error":"unsupported_credential_type"}`,
 			}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1315,6 +1385,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				t: t, credentialRequestShouldFail: true,
 				credentialRequestErrorResponse: `{"error":"invalid_or_missing_proof"}`,
 			}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1337,6 +1408,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				t: t, credentialRequestShouldFail: true,
 				credentialRequestErrorResponse: `{"error":"someOtherErrorCode"}`,
 			}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1356,6 +1428,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		})
 		t.Run("Fail to get credential response: signature error", func(t *testing.T) {
 			issuerServerHandler := &mockIssuerServerHandler{t: t, credentialRequestShouldFail: true}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1374,6 +1447,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		})
 		t.Run("Fail to reach issuer's credential endpoint", func(t *testing.T) {
 			issuerServerHandler := &mockIssuerServerHandler{t: t}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1390,11 +1464,13 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
 			}, openid4ci.WithPIN("1234"))
+
 			require.Contains(t, err.Error(), `Post "http://BadURL/oidc/credential": dial tcp: lookup BadURL`)
 			require.Nil(t, credentials)
 		})
 		t.Run("Fail to get credential response: KID does not contain the DID part", func(t *testing.T) {
 			issuerServerHandler := &mockIssuerServerHandler{t: t}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1407,11 +1483,13 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: "did:example:12345",
 			}, openid4ci.WithPIN("1234"))
+
 			testutil.RequireErrorContains(t, err, "KEY_ID_MISSING_DID_PART")
 			require.Nil(t, credentials)
 		})
 		t.Run("Fail to unmarshal response from issuer credential endpoint", func(t *testing.T) {
 			issuerServerHandler := &mockIssuerServerHandler{t: t, credentialRequestShouldGiveUnmarshallableResponse: true}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1437,6 +1515,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			require.NoError(t, err)
 
 			issuerServerHandler := &mockIssuerServerHandler{t: t, credentialResponse: credentialResponseBytes}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1449,12 +1528,14 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
 				keyID: mockKeyID,
 			}, openid4ci.WithPIN("1234"))
+
 			require.Contains(t, err.Error(), "CREDENTIAL_PARSE_FAILED(OCI1-0007):failed to parse credential from "+
 				"credential response at index 0: unmarshal cbor cred after hex failed\nunmarshal cbor credential: EOF")
 			require.Nil(t, credentials)
 		})
 		t.Run("Fail VC proof check - public key not found for issuer DID", func(t *testing.T) {
 			issuerServerHandler := &mockIssuerServerHandler{t: t, credentialResponse: sampleCredentialResponse}
+
 			server := httptest.NewServer(issuerServerHandler)
 			defer server.Close()
 
@@ -1919,6 +2000,32 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 	})
 }
 
+func TestIssuerInitiatedInteraction_RequestCredential_NoProofFound(t *testing.T) {
+	issuerServerHandler := &mockIssuerServerHandler{
+		t:                  t,
+		credentialResponse: sampleCredentialResponseJSONLD,
+		httpStatusCode:     http.StatusOK,
+	}
+
+	server := httptest.NewServer(issuerServerHandler)
+	defer server.Close()
+
+	issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
+	interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, false, true),
+		enableVCProofChecks())
+
+	credentials, err := interaction.RequestCredentialWithPreAuth(
+		&jwtSignerMock{
+			keyID: mockKeyID,
+		},
+		openid4ci.WithPIN("1234"),
+	)
+
+	require.ErrorContains(t, err, "proof not found")
+	require.Empty(t, credentials)
+}
+
 func TestIssuerInitiatedInteraction_GrantTypes(t *testing.T) {
 	issuerServerHandler := &mockIssuerServerHandler{
 		t:                  t,
@@ -2063,47 +2170,86 @@ func TestIssuerInitiatedInteraction_VerifyIssuer(t *testing.T) {
 }
 
 func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
+	issuerServerHandler := &mockIssuerServerHandler{
+		t: t,
+	}
+
+	server := httptest.NewServer(issuerServerHandler)
+	defer server.Close()
+
 	t.Run("Success", func(t *testing.T) {
-		issuerServerHandler := &mockIssuerServerHandler{
-			t: t,
-		}
+		t.Run("Signed metadata", func(t *testing.T) {
+			localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: localkms.NewMemKMSStore()})
+			require.NoError(t, err)
 
-		server := httptest.NewServer(issuerServerHandler)
-		defer server.Close()
+			_, publicKey, err := localKMS.Create(arieskms.ED25519Type)
+			require.NoError(t, err)
 
-		localKMS, err := localkms.NewLocalKMS(localkms.Config{Storage: localkms.NewMemKMSStore()})
-		require.NoError(t, err)
+			networkDocumentLoaderHTTPTimeout := time.Second * 10
 
-		_, publicKey, err := localKMS.Create(arieskms.ED25519Type)
-		require.NoError(t, err)
+			config := &openid4ci.ClientConfig{
+				DIDResolver:                      &mockResolver{keyWriter: localKMS, pubJWK: publicKey},
+				DisableVCProofChecks:             true,
+				NetworkDocumentLoaderHTTPTimeout: &networkDocumentLoaderHTTPTimeout,
+			}
 
-		networkDocumentLoaderHTTPTimeout := time.Second * 10
+			issuerServerHandler.issuerMetadata = createSignedMetadata(t, localKMS, publicKey, server.URL)
 
-		config := &openid4ci.ClientConfig{
-			DIDResolver:                      &mockResolver{keyWriter: localKMS, pubJWK: publicKey},
-			DisableVCProofChecks:             true,
-			NetworkDocumentLoaderHTTPTimeout: &networkDocumentLoaderHTTPTimeout,
-		}
+			credentialOfferIssuanceURI := createCredentialOfferIssuanceURI(t, server.URL, false, true)
 
-		issuerServerHandler.issuerMetadata = createSignedMetadata(t, localKMS, publicKey, server.URL)
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, config)
+			require.NoError(t, err)
+			require.NotNil(t, interaction)
 
-		credentialOfferIssuanceURI := createCredentialOfferIssuanceURI(t, server.URL, false, true)
+			trustInfo, err := interaction.IssuerTrustInfo()
+			require.NoError(t, err)
+			require.NotNil(t, trustInfo)
+			require.Contains(t, trustInfo.Domain, "trustbloc.local")
+		})
 
-		interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, config)
-		require.NoError(t, err)
-		require.NotNil(t, interaction)
+		t.Run("Origin-based trust", func(t *testing.T) {
+			config := &openid4ci.ClientConfig{
+				DIDResolver: &mockResolver{},
+			}
 
-		trustInfo, err := interaction.IssuerTrustInfo()
-		require.NoError(t, err)
-		require.NotNil(t, trustInfo)
-		require.Contains(t, trustInfo.Domain, "trustbloc.local")
+			issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder,
+				server.URL)
+
+			credentialOfferIssuanceURI := createCredentialOfferIssuanceURI(t, server.URL, false, true)
+
+			interaction, err := openid4ci.NewIssuerInitiatedInteraction(credentialOfferIssuanceURI, config)
+			require.NoError(t, err)
+			require.NotNil(t, interaction)
+
+			serverURL, err := url.Parse(server.URL)
+			require.NoError(t, err)
+
+			trustInfo, err := interaction.IssuerTrustInfo()
+			require.NoError(t, err)
+			require.NotNil(t, trustInfo)
+			require.Equal(t, serverURL.Host, trustInfo.Domain)
+		})
 	})
 }
 
-func newIssuerInitiatedInteraction(t *testing.T, requestURI string) *openid4ci.IssuerInitiatedInteraction {
+type clientConfigOpt func(*openid4ci.ClientConfig)
+
+func enableVCProofChecks() clientConfigOpt {
+	return func(config *openid4ci.ClientConfig) {
+		config.DisableVCProofChecks = false
+	}
+}
+
+func newIssuerInitiatedInteraction(t *testing.T, requestURI string,
+	opts ...clientConfigOpt,
+) *openid4ci.IssuerInitiatedInteraction {
 	t.Helper()
 
 	config := getTestClientConfig(t)
+
+	for _, opt := range opts {
+		opt(config)
+	}
 
 	interaction, err := openid4ci.NewIssuerInitiatedInteraction(requestURI, config)
 	require.NoError(t, err)

@@ -1,14 +1,14 @@
-Subject: [PATCH] cmd/cgo: fix unaligned arguments typedmemmove crash on iOS
+Subject: [PATCH] cmd/cgo: fixes: #46893 unaligned arguments typedmemmove crash on iOS
+
 ---
-Index: src/cmd/cgo/out.go
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
+ src/cmd/cgo/out.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
 diff --git a/src/cmd/cgo/out.go b/src/cmd/cgo/out.go
---- a/src/cmd/cgo/out.go	(revision dddf0ae40fa0c1223aba191d73a44425a08e1035)
-+++ b/src/cmd/cgo/out.go	(date 1712322519672)
-@@ -1029,7 +1029,7 @@
+index 5329cb3cd2..2cc16fc727 100644
+--- a/src/cmd/cgo/out.go
++++ b/src/cmd/cgo/out.go
+@@ -1039,7 +1039,7 @@ func (p *Package) writeExports(fgo2, fm, fgcc, fgcch io.Writer) {
  		// string.h for memset, and is also robust to C++
  		// types with constructors. Both GCC and LLVM optimize
  		// this into just zeroing _cgo_a.

@@ -65,7 +65,7 @@ func responseBytesToIssuerMetadataObject(responseBytes []byte,
 		return nil, fmt.Errorf("decode metadata: %w", err)
 	}
 
-	if len(metadata.SignedMetadata) > 0 {
+	if metadata.SignedMetadata != "" {
 		return issuerMetadataObjectFromJWT(metadata.SignedMetadata, signatureVerifier, err)
 	}
 

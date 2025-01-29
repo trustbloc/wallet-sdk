@@ -54,6 +54,7 @@ func NewInquirer(opts *InquirerOpts) (*Inquirer, error) {
 		}
 
 		var err error
+
 		goAPIDocumentLoader, err = common.CreateJSONLDDocumentLoader(httpClient, legacy.NewProvider())
 		if err != nil {
 			return nil, wrapper.ToMobileError(err)
@@ -112,7 +113,7 @@ func unwrapQuery(query []byte) (*presexch.PresentationDefinition, error) {
 func unwrapVCs(vcs *verifiable.CredentialsArray) []*afgoverifiable.Credential {
 	var credentials []*afgoverifiable.Credential
 
-	for i := 0; i < vcs.Length(); i++ {
+	for i := range vcs.Length() {
 		credentials = append(credentials, vcs.AtIndex(i).VC)
 	}
 

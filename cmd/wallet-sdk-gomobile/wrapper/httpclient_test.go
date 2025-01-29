@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
@@ -28,7 +29,7 @@ func (m *mockServer) ServeHTTP(_ http.ResponseWriter, request *http.Request) {
 		for _, headerToCheck := range m.headersToCheck.GetAll() {
 			// Note: for these tests, we're assuming that there aren't multiple values under a single name/key.
 			value := request.Header.Get(headerToCheck.Name)
-			require.Equal(m.t, headerToCheck.Value, value)
+			assert.Equal(m.t, headerToCheck.Value, value)
 		}
 	}
 }

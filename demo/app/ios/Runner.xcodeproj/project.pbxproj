@@ -169,6 +169,33 @@
 
 /* Begin PBXNativeTarget section */
 		331C8080294A63A400263BE5 /* RunnerTests */ = {
+		8C72B0AB2A05412C00DE83DF /* PkgManager */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8C72B0C32A05412C00DE83DF /* Build configuration list for PBXNativeTarget "PkgManager" */;
+			buildPhases = (
+				8C72B0AC2A05412C00DE83DF /* [CP] Check Pods Manifest.lock */,
+				8C72B0AD2A05412C00DE83DF /* Run Script */,
+				8C72B0AE2A05412C00DE83DF /* Sources */,
+				8C72B0B92A05412C00DE83DF /* Frameworks */,
+				8C72B0BC2A05412C00DE83DF /* Resources */,
+				8C72B0C12A05412C00DE83DF /* Thin Binary */,
+				8C72B0C22A05412C00DE83DF /* [CP] Embed Pods Frameworks */,
+				4FE47E993FAD0B3D3531024C /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8C51DBA12A0E6797003CF903 /* PBXTargetDependency */,
+			);
+			name = PkgManager;
+			packageProductDependencies = (
+				8C51DB9E2A0E6626003CF903 /* walletsdk */,
+			);
+			productName = Runner;
+			productReference = 8C72B0C72A05412C00DE83DF /* PkgManager.app */;
+			productType = "com.apple.product-type.application";
+		};
+		8CA8C12129B5C63E00832F9B /* WalletTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 331C8087294A63A400263BE5 /* Build configuration list for PBXNativeTarget "RunnerTests" */;
 			buildPhases = (
@@ -198,8 +225,13 @@
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
+
 				9AA5B8A1030BEF0295C17D1A /* [CP] Embed Pods Frameworks */,
 				F8E02613D0251CB5288504E5 /* [CP] Copy Pods Resources */,
+
+				9A352BA51F772EAC20BD57D7 /* [CP] Embed Pods Frameworks */,
+				7306A5726C76E01F5F688731 /* [CP] Copy Pods Resources */,
+
 			);
 			buildRules = (
 			);
@@ -287,7 +319,43 @@
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" embed_and_thin";
 		};
+
 		3FE49DC60C4273E1E242C6CB /* [CP] Check Pods Manifest.lock */ = {
+		4FE47E993FAD0B3D3531024C /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-PkgManager/Pods-PkgManager-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-PkgManager/Pods-PkgManager-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PkgManager/Pods-PkgManager-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		7306A5726C76E01F5F688731 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		8C72B0AC2A05412C00DE83DF /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (

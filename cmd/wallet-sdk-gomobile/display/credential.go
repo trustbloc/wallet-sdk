@@ -157,19 +157,19 @@ type Credential struct {
 }
 
 // LocalizedOverviewsLength returns the number of different locales supported for the credential displays.
-func (d *Credential) LocalizedOverviewsLength() int {
-	return len(d.credentialDisplay.LocalizedOverview)
+func (c *Credential) LocalizedOverviewsLength() int {
+	return len(c.credentialDisplay.LocalizedOverview)
 }
 
 // LocalizedOverviewAtIndex returns the number of different locales supported for the issuer displays.
 // If the index passed in is out of bounds, then nil is returned.
-func (d *Credential) LocalizedOverviewAtIndex(index int) *Overview {
-	maxIndex := len(d.credentialDisplay.LocalizedOverview) - 1
+func (c *Credential) LocalizedOverviewAtIndex(index int) *Overview {
+	maxIndex := len(c.credentialDisplay.LocalizedOverview) - 1
 	if index > maxIndex || index < 0 {
 		return nil
 	}
 
-	return &Overview{overview: &d.credentialDisplay.LocalizedOverview[index]}
+	return &Overview{overview: &c.credentialDisplay.LocalizedOverview[index]}
 }
 
 // SubjectsLength returns the number of credential subject displays contained within this Credential object.

@@ -27,6 +27,7 @@ import (
 	"github.com/trustbloc/kms-go/doc/jose/jwk"
 	"github.com/trustbloc/kms-go/doc/util/jwkkid"
 	"github.com/trustbloc/kms-go/spi/kms"
+	"github.com/trustbloc/vc-go/jwt"
 	"github.com/trustbloc/vc-go/presexch"
 	"github.com/trustbloc/vc-go/verifiable"
 
@@ -34,7 +35,6 @@ import (
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/mock"
-	"github.com/trustbloc/wallet-sdk/pkg/localkms"
 	"github.com/trustbloc/wallet-sdk/pkg/models"
 	"github.com/trustbloc/wallet-sdk/pkg/walleterror"
 )
@@ -117,6 +117,60 @@ func TestNewInteraction(t *testing.T) {
 			)
 			require.NoError(t, err)
 			require.NotNil(t, interaction)
+		})
+		t.Run("openid4vp protocol with redirect_uri client id scheme", func(t *testing.T) {
+			reqObject := &requestObject{
+				ClientIDScheme: redirectURIScheme,
+				ResponseURI:    "https://example.com/redirect?query=param",
+			}
+
+			token, err := jwt.NewUnsecured(reqObject)
+			require.NoError(t, err)
+
+			reqObjectJWT, err := token.Serialize(false)
+			require.NoError(t, err)
+
+			interaction, err := NewInteraction("openid4vp://authorize?client_id=https://example.com/redirect&"+
+				"request_uri=https://example.com/request-object",
+				&jwtSignatureVerifierMock{},
+				nil,
+				nil,
+				nil,
+				WithHTTPClient(&mock.HTTPClientMock{
+					Response:         reqObjectJWT,
+					StatusCode:       200,
+					ExpectedEndpoint: "https://example.com/request-object",
+				}),
+			)
+			require.NoError(t, err)
+			require.NotNil(t, interaction)
+		})
+		t.Run("client_id mismatch between authorization request and request object", func(t *testing.T) {
+			reqObject := &requestObject{
+				ClientIDScheme: redirectURIScheme,
+				ResponseURI:    "https://invalid.example.com/redirect",
+			}
+
+			token, err := jwt.NewUnsecured(reqObject)
+			require.NoError(t, err)
+
+			reqObjectJWT, err := token.Serialize(false)
+			require.NoError(t, err)
+
+			interaction, err := NewInteraction("openid4vp://authorize?client_id=https://example.com/redirect&"+
+				"request_uri=https://example.com/request-object",
+				&jwtSignatureVerifierMock{},
+				nil,
+				nil,
+				nil,
+				WithHTTPClient(&mock.HTTPClientMock{
+					Response:         reqObjectJWT,
+					StatusCode:       200,
+					ExpectedEndpoint: "https://example.com/request-object",
+				}),
+			)
+			require.ErrorContains(t, err, "client_id mismatch between authorization request and request object")
+			require.Nil(t, interaction)
 		})
 	})
 
@@ -239,6 +293,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		Nonce:                  "test123456",
 		State:                  "test34566",
 		PresentationDefinition: mockPresentationDefinition,
+		ResponseType:           "vp_token id_token",
 	}
 
 	t.Run("Success", func(t *testing.T) {
@@ -260,7 +315,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NotNil(t, query)
 
 		displayData := interaction.VerifierDisplayData()
-		require.NoError(t, err)
+
 		require.Equal(t, verifierDID, displayData.DID)
 		require.Equal(t, "v_myprofile_jwt", displayData.Name)
 		require.Equal(t, "test verifier", displayData.Purpose)
@@ -292,9 +347,11 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NotContains(t, data, "interaction_details")
 
 		var presentationSubmission *presexch.PresentationSubmission
+
 		require.NoError(t, json.Unmarshal([]byte(data["presentation_submission"][0]), &presentationSubmission))
 
 		var vpTokenList []string
+
 		require.NoError(t, json.Unmarshal([]byte(data["vp_token"][0]), &vpTokenList))
 
 		var presentations []*verifiable.Presentation
@@ -427,7 +484,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Success - with ldp_vp", func(t *testing.T) {
+	t.Run("Success - with ldp_vp, single cred", func(t *testing.T) {
 		mockHTTPClient := &mock.HTTPClientMock{
 			StatusCode: 200,
 		}
@@ -448,6 +505,52 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.NotNil(t, query)
 
 		err = interaction.PresentCredential(singleCred, CustomClaims{})
+		require.NoError(t, err)
+
+		data, err := url.ParseQuery(string(mockHTTPClient.SentBody))
+		require.NoError(t, err)
+
+		require.Contains(t, data, "id_token")
+		require.NotEmpty(t, data["id_token"])
+
+		require.Contains(t, data, "vp_token")
+		require.NotEmpty(t, data["vp_token"])
+
+		require.Contains(t, data, "presentation_submission")
+		require.NotEmpty(t, data["presentation_submission"])
+	})
+
+	t.Run("Success - with ldp_vp, multi cred", func(t *testing.T) {
+		mockHTTPClient := &mock.HTTPClientMock{
+			StatusCode: 200,
+		}
+
+		crypto := &cryptoMock{SignVal: []byte(testSignature)}
+
+		var ldpCredentials []*verifiable.Credential
+
+		for _, cred := range credentials {
+			if cred.IsJWT() {
+				continue
+			}
+
+			ldpCredentials = append(ldpCredentials, cred)
+		}
+
+		interaction, err := NewInteraction(
+			requestObjectJWTLdpVP,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockResolution(t, mockDID, true)},
+			crypto,
+			lddl,
+			WithHTTPClient(mockHTTPClient),
+		)
+		require.NoError(t, err)
+
+		query := interaction.GetQuery()
+		require.NotNil(t, query)
+
+		err = interaction.PresentCredential(ldpCredentials, CustomClaims{})
 		require.NoError(t, err)
 
 		data, err := url.ParseQuery(string(mockHTTPClient.SentBody))
@@ -496,7 +599,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		)
 
 		require.NoError(t, err)
-		require.Equal(t, response.State, "test34566")
+		require.Equal(t, "test34566", response.State)
 
 		idToken, err := base64.RawURLEncoding.DecodeString(strings.Split(response.IDTokenJWS, ".")[1])
 		require.NoError(t, err)
@@ -524,7 +627,9 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 					Fields: []*presexch.Field{{
 						Path: []string{"$.credentialSubject.taxResidency", "$.vc.credentialSubject.taxResidency"},
 						Filter: &presexch.Filter{
-							Type: &strType,
+							FilterItem: presexch.FilterItem{
+								Type: &strType,
+							},
 						},
 					}},
 				},
@@ -565,7 +670,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		)
 
 		require.NoError(t, err)
-		require.Equal(t, response.State, "test34566")
+		require.Equal(t, "test34566", response.State)
 	})
 
 	t.Run("no credentials provided", func(t *testing.T) {
@@ -621,9 +726,11 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		for _, testCase := range testCases {
 			t.Run("", func(t *testing.T) {
 				var vcs []*verifiable.Credential
+
 				for _, vcc := range testCase.vc {
 					vc, err := verifiable.CreateCredential(vcc, nil)
 					require.NoError(t, err)
+
 					vcs = append(vcs, vc)
 				}
 
@@ -678,47 +785,25 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 	})
 
 	t.Run("fail to add data integrity proof", func(t *testing.T) {
+		reqObject := &requestObject{
+			Nonce:                  "test123456",
+			State:                  "test34566",
+			PresentationDefinition: mockPresentationDefinition,
+			ResponseType:           "vp_token id_token",
+			ClientMetadata:         clientMetadata{VPFormats: &presexch.Format{LdpVP: &presexch.LdpType{}}},
+		}
+
 		t.Run("single credential", func(t *testing.T) {
-			localKMS, err := localkms.NewLocalKMS(localkms.Config{
-				Storage: localkms.NewMemKMSStore(),
-			})
-			require.NoError(t, err)
-
-			signer, err := localKMS.AriesSuite.KMSCryptoSigner()
-			require.NoError(t, err)
-
-			_, err = createAuthorizedResponse(
+			_, err := createAuthorizedResponse(
 				singleCred,
-				mockRequestObject,
+				reqObject,
 				CustomClaims{},
 				&didResolverMock{ResolveValue: mockDoc},
 				&cryptoMock{},
 				lddl,
-				&presentOpts{signer: signer},
+				&presentOpts{},
 			)
-			require.Contains(t, err.Error(),
-				"failed to add data integrity proof to VP: data integrity proof generation error")
-		})
-		t.Run("multiple credentials", func(t *testing.T) {
-			localKMS, err := localkms.NewLocalKMS(localkms.Config{
-				Storage: localkms.NewMemKMSStore(),
-			})
-			require.NoError(t, err)
-
-			signer, err := localKMS.AriesSuite.KMSCryptoSigner()
-			require.NoError(t, err)
-
-			_, err = createAuthorizedResponse(
-				credentials,
-				mockRequestObject,
-				CustomClaims{},
-				&didResolverMock{ResolveValue: mockDoc},
-				&cryptoMock{},
-				lddl,
-				&presentOpts{signer: signer},
-			)
-			require.Contains(t, err.Error(),
-				"failed to add data integrity proof to VP: data integrity proof generation error")
+			require.ErrorContains(t, err, "no supported ldp types found")
 		})
 	})
 
@@ -840,7 +925,8 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 				require.Error(t, err)
 
 				var walletError *walleterror.Error
-				require.True(t, errors.As(err, &walletError))
+
+				require.ErrorAs(t, err, &walletError)
 				require.Equal(t, MSEntraBadOrMissingFieldsError, walletError.Category)
 				require.Equal(t, "message", walletError.Message)
 			})
@@ -924,6 +1010,38 @@ func TestOpenID4VP_TrustInfo(t *testing.T) {
 		require.Equal(t, "mock-uri", info.Domain)
 	})
 
+	t.Run("Success: origin-based trust info", func(t *testing.T) {
+		reqObject := &requestObject{
+			ClientIDScheme: redirectURIScheme,
+			ResponseURI:    "https://example.com/redirect",
+		}
+
+		token, err := jwt.NewUnsecured(reqObject)
+		require.NoError(t, err)
+
+		reqObjectJWT, err := token.Serialize(false)
+		require.NoError(t, err)
+
+		interaction, err := NewInteraction("openid4vp://authorize?client_id=https://example.com/redirect&"+
+			"request_uri=https://example.com/request-object",
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockResolutionWithServices(t, mockDID)},
+			&cryptoMock{SignVal: []byte(testSignature)},
+			lddl,
+			WithHTTPClient(&mock.HTTPClientMock{
+				Response:         reqObjectJWT,
+				StatusCode:       200,
+				ExpectedEndpoint: "https://example.com/request-object",
+			}),
+		)
+		require.NoError(t, err)
+
+		info, err := interaction.TrustInfo()
+		require.NoError(t, err)
+		require.NotNil(t, info)
+		require.Equal(t, "example.com", info.Domain)
+	})
+
 	t.Run("Failure", func(t *testing.T) {
 		httpClient := &mock.HTTPClientMock{
 			StatusCode: 200,
@@ -976,7 +1094,7 @@ func TestOpenID4VP_PresentedClaims(t *testing.T) {
 	require.NoError(t, presErr)
 	require.NotNil(t, presentation)
 
-	var credentials, singleCred []*verifiable.Credential
+	var credentials []*verifiable.Credential
 
 	var rawCreds []json.RawMessage
 
@@ -992,8 +1110,6 @@ func TestOpenID4VP_PresentedClaims(t *testing.T) {
 
 		credentials = append(credentials, cred)
 	}
-
-	singleCred = append(singleCred, credentials[0])
 
 	mockDoc := mockResolution(t, mockDID, false)
 
@@ -1016,7 +1132,7 @@ func TestOpenID4VP_PresentedClaims(t *testing.T) {
 		require.NotNil(t, query)
 
 		displayData := interaction.VerifierDisplayData()
-		require.NoError(t, err)
+
 		require.Equal(t, verifierDID, displayData.DID)
 		require.Equal(t, "v_myprofile_jwt", displayData.Name)
 		require.Equal(t, "test verifier", displayData.Purpose)
@@ -1034,7 +1150,7 @@ func TestOpenID4VP_PresentedClaims(t *testing.T) {
 				"spouse":{},
 				"degree":{
 					"degree":{},
-					"type":{}					
+					"type":{}
 				}
 			}
 			`, string(claimsJSON))
@@ -1128,7 +1244,7 @@ func TestAcknowledgment_AcknowledgeVerifier(t *testing.T) {
 			},
 		)
 
-		require.ErrorContains(t, err, "unexpected status code")
+		require.ErrorContains(t, err, "but got status code 500")
 	})
 }
 
@@ -1205,7 +1321,7 @@ func (c *cryptoMock) Verify(_, _ []byte, _ string) error {
 	return c.VerifyErr
 }
 
-func mockResolution(t *testing.T, mockDID string, useJWK bool) *did.DocResolution {
+func mockResolution(t *testing.T, mockDID string, useJWK bool) *did.DocResolution { //nolint:unparam
 	t.Helper()
 
 	edPub, _, err := ed25519.GenerateKey(rand.Reader)

@@ -1,9 +1,16 @@
+/*
+Copyright Gen Digital Inc. All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package openid4ci
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,24 +27,40 @@ type Acknowledgment struct {
 	InteractionDetails    map[string]interface{} `json:"interaction_details,omitempty"`
 }
 
-// AcknowledgeIssuer acknowledge issuer that client accepts or rejects credentials.
+// AcknowledgeIssuer acknowledge issuer that client accepts or rejects credentials using first existing AckIDs.
 func (a *Acknowledgment) AcknowledgeIssuer(
 	eventStatus EventStatus, httpClient *http.Client,
 ) error {
+	if len(a.AckIDs) == 0 {
+		return errors.New("ack list is empty")
+	}
+
+	// Pull first ackID
+	ackID := a.AckIDs[0]
+
+	// Reduce slice size
+	a.AckIDs = a.AckIDs[1:]
+
+	return a.sendAcknowledge(ackID, eventStatus, httpClient)
+}
+
+func (a *Acknowledgment) sendAcknowledge(
+	ackID string, eventStatus EventStatus, httpClient *http.Client,
+) error {
 	ackRequest := acknowledgementRequest{
+		Event:              eventStatus,
+		EventDescription:   nil,
+		IssuerIdentifier:   a.IssuerURI,
+		NotificationID:     ackID,
 		InteractionDetails: a.InteractionDetails,
 	}
 
-	for _, ackID := range a.AckIDs {
-		ackRequest.Credentials = append(ackRequest.Credentials, credentialAcknowledgement{
-			NotificationID:   ackID,
-			Event:            eventStatus,
-			EventDescription: nil,
-			IssuerIdentifier: a.IssuerURI,
-		})
+	err := a.sendAcknowledgeRequest(ackRequest, httpClient)
+	if err != nil {
+		return fmt.Errorf("send acknowledge request id %s: %w", ackID, err)
 	}
 
-	return a.sendAcknowledgeRequest(ackRequest, httpClient)
+	return nil
 }
 
 func (a *Acknowledgment) sendAcknowledgeRequest(
@@ -68,7 +91,7 @@ func (a *Acknowledgment) sendAcknowledgeRequest(
 	defer func() {
 		errClose := resp.Body.Close()
 		if errClose != nil {
-			println(fmt.Sprintf("failed to close response body: %s", errClose.Error()))
+			fmt.Printf("failed to close response body: %s\n", errClose.Error())
 		}
 	}()
 
