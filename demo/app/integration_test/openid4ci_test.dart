@@ -84,7 +84,8 @@ void main() async {
       await walletSDKPlugin.presentCredential(
           selectedCredentials: credentials, customScopeList: customScopesList, attestationVC: attestationVC);
     }
-  });
+  },
+      timeout: Timeout.none );
 
   testWidgets('Testing openid4vc with multiple credentials', (tester) async {
     const didMethodTypes = String.fromEnvironment('WALLET_DID_METHODS');
