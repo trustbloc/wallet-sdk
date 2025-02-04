@@ -1031,7 +1031,9 @@ func processAuthorizationErrorResponse(statusCode int, respBytes []byte) error {
 		return walleterror.NewExecutionError(ErrorModule,
 			OtherAuthorizationResponseErrorCode,
 			OtherAuthorizationResponseError,
-			detailedErr)
+			detailedErr,
+			walleterror.WithServerErrorCode(errResponse.Error),
+			walleterror.WithServerErrorMessage(errResponse.ErrorDescription))
 	}
 }
 

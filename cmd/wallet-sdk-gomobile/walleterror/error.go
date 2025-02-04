@@ -24,6 +24,10 @@ type Error struct {
 	Details string `json:"details"`
 	// ID of Open Telemetry root trace. Can be used to trace API calls. Only present in certain errors.
 	TraceID string `json:"trace_id"`
+	// Server error code.
+	ServerCode string `json:"server_code,omitempty"`
+	// Server error message.
+	ServerMessage string `json:"server_message,omitempty"`
 }
 
 // Parse used to parse exception message on mobile side.

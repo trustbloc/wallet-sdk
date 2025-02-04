@@ -543,13 +543,14 @@ func (i *interaction) getVCsFromCredentialResponses(
 	return vcs, nil
 }
 
+//nolint:funlen
 func processCredentialErrorResponse(statusCode int, respBytes []byte) error {
 	detailedErr := fmt.Errorf("received status code [%d] with body [%s] from issuer's credential endpoint",
 		statusCode, string(respBytes))
 
-	var errorResponse errorResponse
+	var errResponse errorResponse
 
-	err := json.Unmarshal(respBytes, &errorResponse)
+	err := json.Unmarshal(respBytes, &errResponse)
 	if err != nil {
 		return walleterror.NewExecutionError(ErrorModule,
 			OtherCredentialRequestErrorCode,
@@ -557,47 +558,66 @@ func processCredentialErrorResponse(statusCode int, respBytes []byte) error {
 			detailedErr)
 	}
 
-	switch errorResponse.Error {
+	switch errResponse.Error {
 	case "invalid_request":
 		return walleterror.NewExecutionError(ErrorModule,
 			InvalidCredentialRequestErrorCode,
 			InvalidCredentialRequestError,
-			detailedErr)
+			detailedErr,
+			walleterror.WithServerErrorCode(errResponse.Error),
+			walleterror.WithServerErrorMessage(errResponse.ErrorDescription))
 	case "invalid_token":
 		return walleterror.NewExecutionError(ErrorModule,
 			InvalidTokenErrorCode,
 			InvalidTokenError,
-			detailedErr)
+			detailedErr,
+			walleterror.WithServerErrorCode(errResponse.Error),
+			walleterror.WithServerErrorMessage(errResponse.ErrorDescription))
 	case "unsupported_credential_format":
 		return walleterror.NewExecutionError(ErrorModule,
 			UnsupportedCredentialFormatErrorCode,
 			UnsupportedCredentialFormatError,
-			detailedErr)
+			detailedErr,
+			walleterror.WithServerErrorCode(errResponse.Error),
+			walleterror.WithServerErrorMessage(errResponse.ErrorDescription))
 	case "unsupported_credential_type":
 		return walleterror.NewExecutionError(ErrorModule,
 			UnsupportedCredentialTypeErrorCode,
 			UnsupportedCredentialTypeError,
-			detailedErr)
+			detailedErr,
+			walleterror.WithServerErrorCode(errResponse.Error),
+			walleterror.WithServerErrorMessage(errResponse.ErrorDescription))
 	case "invalid_or_missing_proof":
 		return walleterror.NewExecutionError(ErrorModule,
 			InvalidOrMissingProofErrorCode,
 			InvalidOrMissingProofError,
-			detailedErr)
+			detailedErr,
+			walleterror.WithServerErrorCode(errResponse.Error),
+			walleterror.WithServerErrorMessage(errResponse.ErrorDescription))
 	case "expired_ack_id":
 		return walleterror.NewExecutionError(ErrorModule,
 			AcknowledgmentExpiredErrorCode,
 			AcknowledgmentExpiredError,
-			detailedErr)
+			detailedErr,
+			walleterror.WithServerErrorCode(errResponse.Error),
+			walleterror.WithServerErrorMessage(errResponse.ErrorDescription))
 	case "invalid_proof":
-		return NewInvalidProofError(walleterror.NewExecutionError(ErrorModule,
-			AcknowledgmentExpiredErrorCode,
-			AcknowledgmentExpiredError,
-			detailedErr), errorResponse.CNonce, errorResponse.CNonceExpiresIn)
+		return NewInvalidProofError(
+			walleterror.NewExecutionError(ErrorModule,
+				AcknowledgmentExpiredErrorCode,
+				AcknowledgmentExpiredError,
+				detailedErr,
+				walleterror.WithServerErrorCode(errResponse.Error),
+				walleterror.WithServerErrorMessage(errResponse.ErrorDescription),
+			),
+			errResponse.CNonce, errResponse.CNonceExpiresIn)
 	default:
 		return walleterror.NewExecutionError(ErrorModule,
 			OtherCredentialRequestErrorCode,
 			OtherCredentialRequestError,
-			detailedErr)
+			detailedErr,
+			walleterror.WithServerErrorCode(errResponse.Error),
+			walleterror.WithServerErrorMessage(errResponse.ErrorDescription))
 	}
 }
 

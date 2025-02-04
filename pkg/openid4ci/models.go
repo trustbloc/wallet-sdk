@@ -159,7 +159,8 @@ type batchCredentialRequest struct {
 }
 
 type errorResponse struct {
-	Error string `json:"error,omitempty"`
+	Error            string `json:"error,omitempty"`
+	ErrorDescription string `json:"error_description,omitempty"`
 	// containing a nonce to be used to create a proof of possession of key material
 	// when requesting a Credential.
 	CNonce string `json:"c_nonce"`
