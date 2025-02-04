@@ -106,7 +106,7 @@ func (i *IssuerInitiatedInteraction) RequestCredentialWithPreAuth(
 ) (*verifiable.CredentialsArray, error) {
 	credentials, _, err := i.requestCredentialWithPreAuth(vm, opts)
 	if err != nil {
-		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
+		return nil, err
 	}
 
 	return toGomobileCredentials(credentials), nil
@@ -120,7 +120,7 @@ func (i *IssuerInitiatedInteraction) RequestCredentialWithPreAuthV2(
 ) (*verifiable.CredentialsArrayV2, error) {
 	credentials, configIDs, err := i.requestCredentialWithPreAuth(vm, opts)
 	if err != nil {
-		return nil, wrapper.ToMobileErrorWithTrace(err, i.oTel)
+		return nil, err
 	}
 
 	return toGomobileCredentialsV2(credentials, configIDs), nil

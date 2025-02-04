@@ -625,22 +625,30 @@ func tokenErrorResponseHandler(statusCode int, respBody []byte) error {
 		return walleterror.NewExecutionError(ErrorModule,
 			InvalidTokenRequestErrorCode,
 			InvalidTokenRequestError,
-			detailedErr)
+			detailedErr,
+			walleterror.WithServerErrorCode(errResponse.Error),
+			walleterror.WithServerErrorMessage(errResponse.ErrorDescription))
 	case "invalid_grant":
 		return walleterror.NewExecutionError(ErrorModule,
 			InvalidGrantErrorCode,
 			InvalidGrantError,
-			detailedErr)
+			detailedErr,
+			walleterror.WithServerErrorCode(errResponse.Error),
+			walleterror.WithServerErrorMessage(errResponse.ErrorDescription))
 	case "invalid_client":
 		return walleterror.NewExecutionError(ErrorModule,
 			InvalidClientErrorCode,
 			InvalidClientError,
-			detailedErr)
+			detailedErr,
+			walleterror.WithServerErrorCode(errResponse.Error),
+			walleterror.WithServerErrorMessage(errResponse.ErrorDescription))
 	default:
 		return walleterror.NewExecutionError(ErrorModule,
 			OtherTokenResponseErrorCode,
 			OtherTokenRequestError,
-			detailedErr)
+			detailedErr,
+			walleterror.WithServerErrorCode(errResponse.Error),
+			walleterror.WithServerErrorMessage(errResponse.ErrorDescription))
 	}
 }
 

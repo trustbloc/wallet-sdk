@@ -26,6 +26,10 @@ type Error struct {
 	Message string
 	// The full underlying error.
 	ParentError string
+	// A short code provided by the server to represent the specific error.
+	ServerCode string
+	// A descriptive message from the server that explains the error in more detail.
+	ServerMessage string
 }
 
 // NewValidationError creates validation error.
@@ -37,12 +41,44 @@ func NewValidationError(module string, code int, category string, parentError er
 	}
 }
 
+type serverErrorOpts struct {
+	code    string
+	message string
+}
+
+// ServerErrorOpt is a functional option used to customize server-related error fields.
+type ServerErrorOpt func(opts *serverErrorOpts)
+
 // NewExecutionError creates execution error.
-func NewExecutionError(module string, code int, scenario string, cause error) *Error {
-	return &Error{
-		Code:        getErrorCode(module, executionError, code),
-		Category:    scenario,
-		ParentError: cause.Error(),
+func NewExecutionError(module string, code int, scenario string, cause error, opts ...ServerErrorOpt) *Error {
+	errOpts := &serverErrorOpts{}
+
+	for _, opt := range opts {
+		opt(errOpts)
+	}
+
+	err := &Error{
+		Code:          getErrorCode(module, executionError, code),
+		Category:      scenario,
+		ParentError:   cause.Error(),
+		ServerCode:    errOpts.code,
+		ServerMessage: errOpts.message,
+	}
+
+	return err
+}
+
+// WithServerErrorCode sets the server error code.
+func WithServerErrorCode(code string) ServerErrorOpt {
+	return func(opts *serverErrorOpts) {
+		opts.code = code
+	}
+}
+
+// WithServerErrorMessage sets the server error message.
+func WithServerErrorMessage(message string) ServerErrorOpt {
+	return func(opts *serverErrorOpts) {
+		opts.message = message
 	}
 }
 

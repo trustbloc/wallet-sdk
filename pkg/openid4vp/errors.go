@@ -46,7 +46,8 @@ const (
 )
 
 type errorResponse struct {
-	Error string `json:"error,omitempty"`
+	Error            string `json:"error,omitempty"`
+	ErrorDescription string `json:"error_description,omitempty"`
 }
 
 type msEntraErrorResponse struct {
