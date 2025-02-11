@@ -61,30 +61,40 @@ void main() async {
 							}
 						}''',);
 
-      final credentials = (await walletSDKPlugin.requestCredential('', attestationVC: attestationVC)).map((e) => e.content).toList();
+      List<String> credentials;
+      await tester.runAsync(() async {
+        credentials = (await walletSDKPlugin.requestCredential('', attestationVC: attestationVC))
+            .map((e) => e.content)
+            .toList();
+        print('credentials');
+        expect(credentials, hasLength(greaterThan(0)));
 
-      expect(credentials, hasLength(greaterThan(0)));
+        String verificationURL = verificationURLsList[i];
+        print('verificationURL : $verificationURL');
 
-      String verificationURL = verificationURLsList[i];
-      print('verificationURL : $verificationURL');
+        final l = await walletSDKPlugin.processAuthorizationRequest(authorizationRequest: verificationURL);
+        print('processAuthorizationRequest --> : $l');
 
-      await walletSDKPlugin.processAuthorizationRequest(authorizationRequest: verificationURL);
+        // Add another delay if needed
+        await Future.delayed(Duration(seconds: 2));
 
-      final requirements = await walletSDKPlugin.getSubmissionRequirements(storedCredentials: credentials);
+        final requirements = await walletSDKPlugin.getSubmissionRequirements(storedCredentials: credentials);
+        print('getSubmissionRequirements finished');
 
-      print('getSubmissionRequirements finished');
+        expect(requirements, hasLength(equals(1)));
+        expect(requirements[0].inputDescriptors, hasLength(equals(1)));
+        expect(requirements[0].inputDescriptors[0].matchedVCsID, hasLength(equals(1)));
 
-      expect(requirements, hasLength(equals(1)));
-      expect(requirements[0].inputDescriptors, hasLength(equals(1)));
-      expect(requirements[0].inputDescriptors[0].matchedVCsID, hasLength(equals(1)));
-      var customScopesList = {
-        'registration': jsonEncode({'email': 'test@example.com'}),
-      };
-
-      await walletSDKPlugin.presentCredential(
-          selectedCredentials: credentials, customScopeList: customScopesList, attestationVC: attestationVC);
+        var customScopesList = {
+          'registration': jsonEncode({'email': 'test@example.com'}),
+        };
+        await walletSDKPlugin.presentCredential(
+            selectedCredentials: credentials, customScopeList: customScopesList, attestationVC: attestationVC);
+        print('credential presented');
+      });
     }
-  });
+  },
+      timeout: Timeout.none );
 
   testWidgets('Testing openid4vc with multiple credentials', (tester) async {
     const didMethodTypes = String.fromEnvironment('WALLET_DID_METHODS');
@@ -92,6 +102,8 @@ void main() async {
     String didMethodType = didMethodTypesList[0];
     print('wallet DID type : $didMethodType');
     print('wallet DID Key type : $didKeyType');
+
+    await Future.delayed(Duration(seconds: 2));
     var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[0], didKeyType);
     var didContent = didDocData.did;
     print('wallet DID : $didContent');
@@ -118,7 +130,7 @@ void main() async {
 
       credentials.addAll(requestdCreds.map((e) => e.content).toList());
     }
-    print('issued credentials: $credentials');
+    print('issued credentials');
 
     const verificationURLs = String.fromEnvironment('INITIATE_VERIFICATION_URLS_MULTIPLE_CREDS');
     var verificationURLsList = verificationURLs.split(' ');
@@ -140,8 +152,10 @@ void main() async {
       'testscope': jsonEncode({'data': 'testdata'}),
     };
 
+    // Add a delay before presenting credentials
+    await Future.delayed(Duration(seconds: 2));
     await walletSDKPlugin.presentCredential(selectedCredentials: matchedCreds, customScopeList: customScopesList);
-  });
+  },       timeout: Timeout.none );
 
   testWidgets('Testing openid4vc with the auth code flow', (tester) async {
     const didMethodTypes = String.fromEnvironment('WALLET_DID_METHODS');
@@ -204,5 +218,5 @@ void main() async {
     }
 
     expect(credential, hasLength(greaterThan(0)));
-  });
+  },       timeout: Timeout.none );
 }

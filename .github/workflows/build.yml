@@ -211,11 +211,11 @@ jobs:
           echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
       - name: Install and start docker
-        uses: douglascamata/setup-docker-macos-action@8d5fa43892aed7eee4effcdea113fd53e4d4bf83
+        uses: douglascamata/setup-docker-macos-action@v1-alpha
         with:
           upgrade-qemu: false
-          lima: v0.22.0
-          colima: v0.7.3
+          lima: v1.0.4
+          colima: v0.8.1
       - name: Download artifacts (Docker images) from previous workflows
         uses: actions/download-artifact@v4
       - name: Load mock-login-consent server
@@ -240,19 +240,25 @@ jobs:
         uses: flutter-actions/setup-flutter@v2
         with:
           channel: stable
-          version: 3.19.5
+          version: 3.27.4
       - name: Install flutter app dependencies
         run: make install-flutter-dependencies
       - name: Run iOS Simulator
         uses: futureware-tech/simulator-action@v3
         with:
-          model: 'iPhone 14'
+          model: 'iPhone 15'
       - name: Remove AppIcon contents file (Simulator build fails with this file)
         run: |
           rm -rf demo/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json
           rm -rf demo/app/ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json
-      - name: Run tests on Simulator
-        run: make integration-test-flutter integration-test-ios
+      - name: Debug Path
+        run: ls -lah $GITHUB_WORKSPACE/demo/app/integration_test/
+      - name: Fix file permissions
+        run: chmod +r $GITHUB_WORKSPACE/demo/app/integration_test/openid4ci_test.dart
+      - name: Run flutter tests on Simulator
+        run: make integration-test-flutter
+      - name: Run ios tests on Simulator
+        run: make integration-test-ios
       - name: Docker container status output
         if: always()
         run: |
@@ -292,11 +298,11 @@ jobs:
           echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
       - name: Install and start docker
-        uses: douglascamata/setup-docker-macos-action@8d5fa43892aed7eee4effcdea113fd53e4d4bf83
+        uses: douglascamata/setup-docker-macos-action@v1-alpha
         with:
           upgrade-qemu: false
-          lima: v0.22.0
-          colima: v0.7.3
+          lima: v1.0.4
+          colima: v0.8.1
       - name: Download artifacts (Docker images) from previous workflows
         uses: actions/download-artifact@v4
       - name: Load mock-login-consent server
@@ -327,7 +333,7 @@ jobs:
         uses: flutter-actions/setup-flutter@v2
         with:
           channel: stable
-          version: 3.19.5
+          version: 3.27.4
       - name: Install flutter app dependencies
         run: make install-flutter-dependencies
       - name: Build APK in Debug mode
