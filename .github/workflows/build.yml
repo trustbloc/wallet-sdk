@@ -11,9 +11,10 @@ env:
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, chore-fix-code-coverage-issue ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   SemanticPullRequest:
@@ -51,12 +52,6 @@ jobs:
 
   UnitTest:
     runs-on: ubuntu-24.04
-    on:
-      push:
-        branches: [ main ]
-      pull_request:
-        branches: [ main ]
-      workflow_dispatch:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
