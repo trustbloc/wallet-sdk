@@ -11,10 +11,9 @@ env:
 
 on:
   push:
-    branches: [ main, chore-fix-code-coverage-issue ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
   SemanticPullRequest:
