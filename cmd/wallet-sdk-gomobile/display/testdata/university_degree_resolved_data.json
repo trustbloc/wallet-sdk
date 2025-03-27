@@ -40,7 +40,8 @@
              }
            ],
            "value_type": "number",
-           "raw_value": "4.0"
+           "raw_value": "4.0",
+           "pattern": "^\\d+(\\.\\d+)?$"
          },
          {
            "raw_id": "sensitive_id",
@@ -53,7 +54,8 @@
            "value_type": "string",
            "raw_value": "123456789",
            "value": "•••••6789",
-           "mask": "regex(^(.*).{4}$)"
+           "mask": "regex(^(.*).{4}$)",
+           "order": 5
          },
          {
            "raw_id": "really_sensitive_id",

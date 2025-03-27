@@ -165,6 +165,14 @@ func TestResolve(t *testing.T) {
 			require.NoError(t, err)
 			checkResolvedDisplayData(t, resolvedDisplayData)
 		})
+		t.Run("With skip non claim data", func(t *testing.T) {
+			opts := display.NewOpts()
+			opts.SkipNonClaimData()
+
+			resolvedDisplayData, err := display.Resolve(vcs, server.URL, opts)
+			require.NoError(t, err)
+			checkResolvedDisplayData(t, resolvedDisplayData)
+		})
 		t.Run("With additional headers", func(t *testing.T) {
 			additionalHeaders := api.NewHeaders()
 			additionalHeaders.Add(api.NewHeader("header-name-1", "header-value-1"))
