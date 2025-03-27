@@ -412,8 +412,8 @@ func TestIssuerInitiatedInteraction_GrantTypes(t *testing.T) {
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
-	interaction := createIssuerInitiatedInteraction(t, kms, nil, nil, createCredentialOfferIssuanceURI(t, server.URL, false),
-		nil, false)
+	interaction := createIssuerInitiatedInteraction(t, kms, nil, nil,
+		createCredentialOfferIssuanceURI(t, server.URL, false), nil, false)
 
 	require.True(t, interaction.PreAuthorizedCodeGrantTypeSupported())
 
