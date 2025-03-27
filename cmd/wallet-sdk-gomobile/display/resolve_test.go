@@ -37,6 +37,9 @@ var (
 
 	//go:embed testdata/credential_university_degree.jsonld
 	credentialUniversityDegree string
+
+	//go:embed testdata/university_degree_resolved_data.json
+	universityDegreeResolvedData string
 )
 
 type mockIssuerServerHandler struct {
