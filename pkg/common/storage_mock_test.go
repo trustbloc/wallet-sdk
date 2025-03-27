@@ -1,11 +1,10 @@
 /*
-Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
+
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package mock provides an alternative implementation of a mock Store, supporting most of a MemStore's behaviour
-// with the added ability to override return values.
-package mock
+package common_test
 
 import (
 	"errors"
