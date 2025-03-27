@@ -41,6 +41,25 @@ func TestParse(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "http://example.edu/credentials/1872", universityDegreeVC.VC.Contents().ID)
 	})
+	t.Run("Success - additional headers", func(t *testing.T) {
+		opts := verifiable.NewOpts()
+		opts.DisableProofCheck()
+		opts.SetHTTPTimeoutNanoseconds(0)
+		opts.AddHeader(api.NewHeader("request_id", "123"))
+
+		universityDegreeVC, err := verifiable.ParseCredential(universityDegreeCredential, opts)
+		require.NoError(t, err)
+		require.Equal(t, "http://example.edu/credentials/1872", universityDegreeVC.VC.Contents().ID)
+	})
+	t.Run("Success - skip client verification", func(t *testing.T) {
+		opts := verifiable.NewOpts()
+		opts.DisableProofCheck()
+		opts.DisableHTTPClientTLSVerify()
+
+		universityDegreeVC, err := verifiable.ParseCredential(universityDegreeCredential, opts)
+		require.NoError(t, err)
+		require.Equal(t, "http://example.edu/credentials/1872", universityDegreeVC.VC.Contents().ID)
+	})
 	t.Run("Failure - blank VC", func(t *testing.T) {
 		opts := &verifiable.Opts{}
 		opts.SetDocumentLoader(&documentLoaderMock{})

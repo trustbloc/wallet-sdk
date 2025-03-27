@@ -183,3 +183,88 @@ func TestVerifiableCredential_ClaimTypes(t *testing.T) {
 		require.Nil(t, types)
 	})
 }
+
+func TestVerifiableCredentialV2(t *testing.T) {
+	t.Run("Valid VCs", func(t *testing.T) {
+		vcArray := verifiable.NewCredentialsArrayV2()
+
+		vcArray.AtIndex(0)
+
+		opts := &verifiable.Opts{}
+		opts.DisableProofCheck()
+
+		universityDegreeVC, err := verifiable.ParseCredential(universityDegreeCredential, opts)
+		require.NoError(t, err)
+
+		id := universityDegreeVC.ID()
+		require.Equal(t, "http://example.edu/credentials/1872", id)
+
+		name := universityDegreeVC.Name()
+		require.Equal(t, "University Degree Credential", name)
+
+		issuerID := universityDegreeVC.IssuerID()
+		require.Equal(t, "did:example:76e12ec712ebc6f1c221ebfeb1f", issuerID)
+
+		typesFromClaims := universityDegreeVC.ClaimTypes()
+		require.Equal(t, 1, typesFromClaims.Length())
+		require.Equal(t, "UniversityDegreeCredential", typesFromClaims.AtIndex(0))
+
+		issuanceDate := universityDegreeVC.IssuanceDate()
+		require.Equal(t, int64(1262373804), issuanceDate)
+
+		hasExpirationDate := universityDegreeVC.HasExpirationDate()
+		require.True(t, hasExpirationDate)
+
+		expirationDate := universityDegreeVC.ExpirationDate()
+		require.Equal(t, int64(1577906604), expirationDate)
+
+		vcArray.Add(universityDegreeVC, "123")
+
+		require.Equal(t, 1, vcArray.Length())
+
+		driversLicenceVC, err := verifiable.ParseCredential(driversLicenceCredential, opts)
+		require.NoError(t, err)
+
+		id = driversLicenceVC.ID()
+		require.Equal(t, "https://eu.com/claims/DriversLicense", id)
+
+		name = driversLicenceVC.Name()
+		require.Empty(t, name)
+
+		issuerID = driversLicenceVC.IssuerID()
+		require.Equal(t, "did:foo:123", issuerID)
+
+		typesFromClaims = driversLicenceVC.ClaimTypes()
+		require.Equal(t, 1, typesFromClaims.Length())
+		require.Equal(t, "DriversLicence", typesFromClaims.AtIndex(0))
+
+		issuanceDate = driversLicenceVC.IssuanceDate()
+		require.Equal(t, int64(1262375604), issuanceDate)
+
+		hasExpirationDate = driversLicenceVC.HasExpirationDate()
+		require.False(t, hasExpirationDate)
+
+		expirationDate = driversLicenceVC.ExpirationDate()
+		require.Equal(t, int64(0), expirationDate)
+
+		vcArray.Add(driversLicenceVC, "124")
+
+		require.Equal(t, 2, vcArray.Length())
+
+		vc1 := vcArray.AtIndex(0)
+		require.Equal(t, universityDegreeVC, vc1)
+
+		vc2 := vcArray.AtIndex(1)
+		require.Equal(t, driversLicenceVC, vc2)
+
+		config1 := vcArray.ConfigIDAtIndex(0)
+		require.Equal(t, "123", config1)
+
+		config2 := vcArray.ConfigIDAtIndex(1)
+		require.Equal(t, "124", config2)
+
+		serializedVC, err := universityDegreeVC.Serialize()
+		require.NoError(t, err)
+		require.NotEmpty(t, serializedVC)
+	})
+}
