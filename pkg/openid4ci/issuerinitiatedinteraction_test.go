@@ -572,6 +572,19 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 				"A%2F%2Flocalhost%3A8075%2Fissuer%2Fbank_issuer%2Fv1.0%22%5D%2C%22type%22%3A%22openid_credential%22%7D%"+
 				"5D&client_id=clientID")
 		})
+		t.Run("Using custom Scopes", func(t *testing.T) {
+			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true, true))
+
+			authorizationURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI",
+				openid4ci.WithScopes([]string{"custom_scope"}))
+			require.NoError(t, err)
+			require.Contains(t, authorizationURL, authorizationServerURL+
+				"?authorization_details=%5B%7B%22credential_definition%22%3A%7B%22type%22%3A%5B%22VerifiableCredential"+
+				"%22%2C%22VerifiedEmployee%22%5D%7D%2C%22format%22%3A%22jwt_vc_json%22%2C%22locations%22%3A%5B%22http%3"+
+				"A%2F%2Flocalhost%3A8075%2Fissuer%2Fbank_issuer%2Fv1.0%22%5D%2C%22type%22%3A%22openid_credential%22%7D%"+
+				"5D&client_id=clientID")
+			require.Contains(t, authorizationURL, "scope=custom_scope")
+		})
 	})
 	t.Run("Issuer does not support the authorization code grant type", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{
