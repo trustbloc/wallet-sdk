@@ -27,6 +27,7 @@ import (
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/activitylogger/mem"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/metricslogger/stderr"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4ci"
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
 	goapi "github.com/trustbloc/wallet-sdk/pkg/api"
@@ -67,7 +68,7 @@ func TestNewInteraction(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		i := createIssuerInitiatedInteraction(t, kms, nil,
+		i := createIssuerInitiatedInteraction(t, kms, nil, nil,
 			createCredentialOfferIssuanceURI(t, server.URL, false),
 			nil, false)
 		require.NotEmpty(t, i.OTelTraceID())
@@ -209,7 +210,7 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		interaction := createIssuerInitiatedInteraction(t, kms, nil,
+		interaction := createIssuerInitiatedInteraction(t, kms, nil, nil,
 			createCredentialOfferIssuanceURI(t, server.URL, false),
 			nil, false)
 
@@ -224,8 +225,8 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, server.URL, true),
-			nil, false)
+		interaction := createIssuerInitiatedInteraction(t, kms, nil, nil,
+			createCredentialOfferIssuanceURI(t, server.URL, true), nil, false)
 
 		createAuthorizationURLOpts := openid4ci.NewCreateAuthorizationURLOpts().SetIssuerState("IssuerState")
 
@@ -235,6 +236,21 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 		requireErrorContains(t, err, "the credential offer already specifies "+
 			"an issuer state, and a conflicting issuer state value was provided. An issuer state should only be "+
 			"provided if required by the issuer and the credential offer does not specify one already")
+		require.Empty(t, authorizationLink)
+	})
+	t.Run("Auth URL with custom scopes", func(t *testing.T) {
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		interaction := createIssuerInitiatedInteraction(t, kms, nil, nil,
+			createCredentialOfferIssuanceURI(t, server.URL, false),
+			nil, false)
+
+		opts := openid4ci.NewCreateAuthorizationURLOpts().SetScopes(api.NewStringArray().Append("custom_scope"))
+
+		authorizationLink, err := interaction.CreateAuthorizationURL("clientID", "redirectURI", opts)
+		requireErrorContains(t, err, "INVALID_SDK_USAGE")
+		requireErrorContains(t, err, "issuer does not support the authorization code grant type")
 		require.Empty(t, authorizationLink)
 	})
 }
@@ -282,7 +298,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		interactionRequiredArgs, interactionOptionalArgs := getTestArgs(t, requestURI, kms, nil, nil, false)
+		interactionRequiredArgs, interactionOptionalArgs := getTestArgs(t, requestURI, kms, nil, nil, nil, false)
 
 		interaction, err := openid4ci.NewIssuerInitiatedInteraction(interactionRequiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)
@@ -302,6 +318,32 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, credentials)
 	})
+	t.Run("Success with jwk public key V2", func(t *testing.T) {
+		requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
+
+		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
+		require.NoError(t, err)
+
+		interactionRequiredArgs, interactionOptionalArgs := getTestArgs(t, requestURI, kms, nil, nil, nil, false)
+
+		interaction, err := openid4ci.NewIssuerInitiatedInteraction(interactionRequiredArgs, interactionOptionalArgs)
+		require.NoError(t, err)
+
+		keyHandle, err := kms.Create(arieskms.ED25519)
+		require.NoError(t, err)
+
+		verificationMethod := &api.VerificationMethod{
+			ID:   mockKeyID,
+			Type: "JsonWebKey2020",
+			Key:  models.VerificationKey{JSONWebKey: keyHandle.JWK},
+		}
+
+		credentials, err := interaction.RequestCredentialWithPreAuthV2(verificationMethod,
+			openid4ci.NewRequestCredentialWithPreAuthOpts().SetPIN("1234"))
+
+		require.NoError(t, err)
+		require.NotNil(t, credentials)
+	})
 
 	t.Run("attestation invalid VC", func(t *testing.T) {
 		requestURI := createCredentialOfferIssuanceURI(t, server.URL, false)
@@ -309,7 +351,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		interactionRequiredArgs, interactionOptionalArgs := getTestArgs(t, requestURI, kms, nil, nil, false)
+		interactionRequiredArgs, interactionOptionalArgs := getTestArgs(t, requestURI, kms, nil, nil, nil, false)
 
 		interaction, err := openid4ci.NewIssuerInitiatedInteraction(interactionRequiredArgs, interactionOptionalArgs)
 		require.NoError(t, err)
@@ -334,7 +376,7 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		interaction := createIssuerInitiatedInteraction(t, kms, nil,
+		interaction := createIssuerInitiatedInteraction(t, kms, nil, nil,
 			createCredentialOfferIssuanceURI(t, server.URL, true),
 			nil, false)
 
@@ -370,7 +412,7 @@ func TestIssuerInitiatedInteraction_GrantTypes(t *testing.T) {
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
-	interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, server.URL, false),
+	interaction := createIssuerInitiatedInteraction(t, kms, nil, nil, createCredentialOfferIssuanceURI(t, server.URL, false),
 		nil, false)
 
 	require.True(t, interaction.PreAuthorizedCodeGrantTypeSupported())
@@ -388,8 +430,8 @@ func TestIssuerInitiatedInteraction_GrantTypes(t *testing.T) {
 	requireErrorContains(t, err, "issuer does not support the authorization code grant")
 	require.Nil(t, authorizationCodeGrantParams)
 
-	interaction = createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, server.URL, true),
-		nil, false)
+	interaction = createIssuerInitiatedInteraction(t, kms, nil, nil,
+		createCredentialOfferIssuanceURI(t, server.URL, true), nil, false)
 
 	require.True(t, interaction.AuthorizationCodeGrantTypeSupported())
 
@@ -418,8 +460,8 @@ func TestIssuerInitiatedInteraction_DynamicClientRegistration(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		interaction := createIssuerInitiatedInteraction(t, kms, nil, createCredentialOfferIssuanceURI(t, server.URL, false),
-			nil, false)
+		interaction := createIssuerInitiatedInteraction(t, kms, nil, nil,
+			createCredentialOfferIssuanceURI(t, server.URL, false), nil, false)
 
 		supported, err := interaction.DynamicClientRegistrationSupported()
 		require.NoError(t, err)
@@ -441,7 +483,7 @@ func TestIssuerInitiatedInteraction_IssuerMetadata(t *testing.T) {
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		i := createIssuerInitiatedInteraction(t, kms, nil,
+		i := createIssuerInitiatedInteraction(t, kms, nil, nil,
 			createCredentialOfferIssuanceURI(t, server.URL, false),
 			nil, false)
 		require.NotEmpty(t, i.OTelTraceID())
@@ -464,11 +506,12 @@ func TestIssuerInitiatedInteraction_VerifyIssuer(t *testing.T) {
 		issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
 
 		activityLogger := mem.NewActivityLogger()
+		metricsLogger := stderr.NewMetricsLogger()
 
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
-		interaction := createIssuerInitiatedInteraction(t, kms, activityLogger,
+		interaction := createIssuerInitiatedInteraction(t, kms, activityLogger, metricsLogger,
 			createCredentialOfferIssuanceURI(t, server.URL, false),
 			nil, true)
 
@@ -490,18 +533,20 @@ func TestIssuerInitiatedInteraction_IssuerTrustInfo(t *testing.T) {
 		defer server.Close()
 
 		activityLogger := mem.NewActivityLogger()
+		metricsLogger := stderr.NewMetricsLogger()
 
 		kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 		require.NoError(t, err)
 
 		interaction := createIssuerInitiatedInteraction(t, kms, activityLogger,
-			createCredentialOfferIssuanceURI(t, server.URL, false),
+			metricsLogger, createCredentialOfferIssuanceURI(t, server.URL, false),
 			nil, true)
 
 		trustInfo, err := interaction.IssuerTrustInfo()
 		require.NoError(t, err)
-		require.Equal(t, "jwt_vc_json-ld", trustInfo.CredentialOffers[0].CredentialFormat)
-		require.Equal(t, "PermanentResidentCard", trustInfo.CredentialOffers[0].CredentialType)
+		require.Equal(t, 1, trustInfo.OfferLength())
+		require.Equal(t, "jwt_vc_json-ld", trustInfo.OfferAtIndex(0).CredentialFormat)
+		require.Equal(t, "PermanentResidentCard", trustInfo.OfferAtIndex(0).CredentialType)
 	})
 }
 
@@ -627,11 +672,12 @@ func doRequestCredentialTestExt(t *testing.T, additionalHeaders *api.Headers,
 	issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
 
 	activityLogger := mem.NewActivityLogger()
+	metricsLogger := stderr.NewMetricsLogger()
 
 	kms, err := localkms.NewKMS(localkms.NewMemKMSStore())
 	require.NoError(t, err)
 
-	interaction := createIssuerInitiatedInteraction(t, kms, activityLogger,
+	interaction := createIssuerInitiatedInteraction(t, kms, activityLogger, metricsLogger,
 		createCredentialOfferIssuanceURI(t, server.URL, false),
 		additionalHeaders,
 		disableTLSVerification)
@@ -744,11 +790,11 @@ func TestNewRequestedAcknowledgment(t *testing.T) {
 }
 
 func createIssuerInitiatedInteraction(t *testing.T, kms *localkms.KMS, activityLogger api.ActivityLogger,
-	requestURI string, additionalHeaders *api.Headers, disableTLSVerification bool,
+	metricsLogger api.MetricsLogger, requestURI string, additionalHeaders *api.Headers, disableTLSVerification bool,
 ) *openid4ci.IssuerInitiatedInteraction {
 	t.Helper()
 
-	requiredArgs, opts := getTestArgs(t, requestURI, kms, activityLogger, additionalHeaders,
+	requiredArgs, opts := getTestArgs(t, requestURI, kms, activityLogger, metricsLogger, additionalHeaders,
 		disableTLSVerification)
 
 	interaction, err := openid4ci.NewIssuerInitiatedInteraction(requiredArgs, opts)
@@ -776,7 +822,7 @@ func createIssuedInitiatedInteractionAlias(t *testing.T, kms *localkms.KMS,
 
 // getTestArgs accepts an optional activityLogger and also one optional mockVMCreator.
 func getTestArgs(t *testing.T, initiateIssuanceURI string, kms *localkms.KMS,
-	activityLogger api.ActivityLogger, additionalHeaders *api.Headers,
+	activityLogger api.ActivityLogger, metricsLogger api.MetricsLogger, additionalHeaders *api.Headers,
 	disableTLSVerification bool,
 ) (*openid4ci.IssuerInitiatedInteractionArgs, *openid4ci.InteractionOpts) {
 	t.Helper()
@@ -794,6 +840,10 @@ func getTestArgs(t *testing.T, initiateIssuanceURI string, kms *localkms.KMS,
 
 	if activityLogger != nil {
 		opts.SetActivityLogger(activityLogger)
+	}
+
+	if metricsLogger != nil {
+		opts.SetMetricsLogger(metricsLogger)
 	}
 
 	if additionalHeaders != nil {
