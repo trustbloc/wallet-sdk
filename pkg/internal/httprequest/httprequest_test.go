@@ -70,8 +70,19 @@ func Test_DoContextHTTPRequest(t *testing.T) {
 		additionalHeaders.Add("X-Header", "12345")
 
 		_, err := r.DoContext(context.Background(), http.MethodGet, "url", "test", additionalHeaders,
-			nil, "", "", nil, nil)
+			nil, "", "", []int{200, 201}, nil)
 		require.NoError(t, err)
+	})
+
+	t.Run("Failure", func(t *testing.T) {
+		r := httprequest.New(&mock.HTTPClientMock{StatusCode: 400}, noop.NewMetricsLogger())
+
+		additionalHeaders := http.Header{}
+		additionalHeaders.Add("X-Header", "12345")
+
+		_, err := r.DoContext(context.Background(), http.MethodGet, "url", "test", additionalHeaders,
+			nil, "", "", []int{200, 201}, nil)
+		require.Error(t, err)
 	})
 }
 
@@ -79,7 +90,8 @@ func Test_DoAndParseHTTPRequest(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		r := httprequest.New(&mock.HTTPClientMock{
 			StatusCode: 200,
-			Response:   `"response"`}, noop.NewMetricsLogger())
+			Response:   `"response"`},
+			noop.NewMetricsLogger())
 
 		additionalHeaders := http.Header{}
 		additionalHeaders.Add("X-Header", "12345")
