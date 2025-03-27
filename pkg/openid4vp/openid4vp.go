@@ -274,7 +274,7 @@ func (o *Interaction) PresentCredentialUnsafe(credential *verifiable.Credential,
 	)
 }
 
-// PresentCredential presents credentials to redirect uri from request object.
+// PresentCredentials presents credentials to redirect uri from request object.
 func (o *Interaction) presentCredentials( //nolint: funlen
 	credentials []*verifiable.Credential,
 	customClaims CustomClaims,
