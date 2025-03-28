@@ -41,15 +41,19 @@ var (
 type mockIssuerServerHandler struct {
 	issuerMetadata            string
 	metadataRequestShouldFail bool
+	invalidResponseObject     bool
 }
 
 func (m *mockIssuerServerHandler) ServeHTTP(writer http.ResponseWriter, _ *http.Request) {
 	var err error
 
-	if m.metadataRequestShouldFail {
+	switch {
+	case m.metadataRequestShouldFail:
 		writer.WriteHeader(http.StatusInternalServerError)
 		_, err = writer.Write([]byte("test failure"))
-	} else {
+	case m.invalidResponseObject:
+		_, err = writer.Write([]byte(`["response1","response2"]`))
+	default:
 		_, err = writer.Write([]byte(m.issuerMetadata))
 	}
 
@@ -72,7 +76,7 @@ func TestGet(t *testing.T) {
 
 			defer server.Close()
 
-			issuerMetadata, err := issuermetadata.Get(server.URL, http.DefaultClient, nil,
+			issuerMetadata, err := issuermetadata.Get(server.URL, nil, nil,
 				"", nil)
 			require.NoError(t, err)
 			require.NotNil(t, issuerMetadata)
@@ -155,6 +159,17 @@ func TestGet(t *testing.T) {
 			"", nil)
 		require.Contains(t, err.Error(), "failed to get response from the issuer's metadata endpoint: "+
 			"expected status code 200 but got status code 500 with response body test failure instead")
+		require.Nil(t, issuerMetadata)
+	})
+	t.Run("Fail to decode issuer metadata", func(t *testing.T) {
+		issuerServerHandler := &mockIssuerServerHandler{invalidResponseObject: true}
+		server := httptest.NewServer(issuerServerHandler)
+
+		defer server.Close()
+
+		issuerMetadata, err := issuermetadata.Get(server.URL, http.DefaultClient, nil,
+			"", nil)
+		require.Contains(t, err.Error(), "decode metadata")
 		require.Nil(t, issuerMetadata)
 	})
 	t.Run("Missing signature verifier", func(t *testing.T) {

@@ -103,6 +103,22 @@ func Test_DoAndParseHTTPRequest(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "response", response)
 	})
+	t.Run("Failure: unexpected status code", func(t *testing.T) {
+		r := httprequest.New(&mock.HTTPClientMock{
+			StatusCode: 400,
+			Response:   `"response"`},
+			noop.NewMetricsLogger())
+
+		additionalHeaders := http.Header{}
+		additionalHeaders.Add("X-Header", "12345")
+
+		var response string
+
+		err := r.DoAndParse(http.MethodGet, "url", "test", nil,
+			"", "", nil, &response)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "expected status code 200 but got status code 400")
+	})
 }
 
 type failingMetricsLogger struct{}
