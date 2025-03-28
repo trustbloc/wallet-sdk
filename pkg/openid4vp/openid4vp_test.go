@@ -520,6 +520,39 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.ErrorContains(t, err, "unsupported credential format")
 	})
 
+	t.Run("Success - with interaction details opts", func(t *testing.T) {
+		httpClient := &mock.HTTPClientMock{
+			StatusCode: 200,
+		}
+
+		crypto := &cryptoMock{SignVal: []byte(testSignature)}
+
+		interaction, err := NewInteraction(
+			requestObjectJWT,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockDoc},
+			crypto,
+			lddl,
+			WithHTTPClient(httpClient),
+		)
+		require.NoError(t, err)
+
+		verificationMethod := mockDoc.DIDDocument.VerificationMethod[0]
+
+		attestationSigner, err := common.NewJWSSigner(models.VerificationMethodFromDoc(&verificationMethod), crypto)
+		require.NoError(t, err)
+
+		query := interaction.GetQuery()
+		require.NotNil(t, query)
+
+		err = interaction.PresentCredential(singleCred, CustomClaims{},
+			WithAttestationVC(attestationSigner, attestationCredJWT),
+			WithInteractionDetails(map[string]interface{}{"key1": "value1", "key2": func() {}}),
+		)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "encode interaction details")
+	})
+
 	t.Run("Success - with opts, multi cred", func(t *testing.T) {
 		httpClient := &mock.HTTPClientMock{
 			StatusCode: 200,
@@ -584,6 +617,32 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 		require.Contains(t, data, "presentation_submission")
 		require.NotEmpty(t, data["presentation_submission"])
+	})
+
+	t.Run("Failure - with metrics logger error", func(t *testing.T) {
+		mockHTTPClient := &mock.HTTPClientMock{
+			StatusCode: 200,
+		}
+
+		crypto := &cryptoMock{SignVal: []byte(testSignature)}
+
+		interaction, err := NewInteraction(
+			requestObjectJWTLdpVP,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockResolution(t, mockDID, true)},
+			crypto,
+			lddl,
+			WithHTTPClient(mockHTTPClient),
+			WithMetricsLogger(&failingMetricsLogger{attemptFailNumber: 1}),
+		)
+		require.NoError(t, err)
+
+		query := interaction.GetQuery()
+		require.NotNil(t, query)
+
+		err = interaction.PresentCredential(singleCred, CustomClaims{})
+		require.Error(t, err)
+		require.ErrorContains(t, err, "failed to log event")
 	})
 
 	t.Run("Success - with ldp_vp, multi cred", func(t *testing.T) {
