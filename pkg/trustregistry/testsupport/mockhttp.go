@@ -50,7 +50,12 @@ func HandleEvaluateIssuanceRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if issuanceRequest.IssuerDID == "did:web:correct.com" {
-		writeResponse(w, &trustregistry.EvaluationResult{Allowed: true})
+		writeResponse(w, &trustregistry.EvaluationResult{
+			Allowed: true,
+			Data: &trustregistry.EvaluationData{
+				AttestationsRequired: []string{"attestation1"},
+			},
+		})
 
 		return
 	}
@@ -81,7 +86,12 @@ func HandleEvaluatePresentationRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if presentationRequest.VerifierDid == "did:web:correct.com" {
-		writeResponse(w, &trustregistry.EvaluationResult{Allowed: true})
+		writeResponse(w, &trustregistry.EvaluationResult{
+			Allowed: true,
+			Data: &trustregistry.EvaluationData{
+				AttestationsRequired: []string{"attestation1"},
+			},
+		})
 
 		return
 	}
