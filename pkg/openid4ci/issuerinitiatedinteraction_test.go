@@ -1732,7 +1732,8 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 				Transport: &mockHTTPClient{
 					DoFunc: func(req *http.Request) (*http.Response, error) {
 						return nil, errors.New("bad_request")
-					}},
+					},
+				},
 			})
 			require.Error(t, err)
 			require.ErrorContains(t, err, "send acknowledge request id ack_id1")

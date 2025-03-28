@@ -90,8 +90,10 @@ func Test_DoAndParseHTTPRequest(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		r := httprequest.New(&mock.HTTPClientMock{
 			StatusCode: 200,
-			Response:   `"response"`},
-			noop.NewMetricsLogger())
+			Response:   `"response"`,
+		},
+			noop.NewMetricsLogger(),
+		)
 
 		additionalHeaders := http.Header{}
 		additionalHeaders.Add("X-Header", "12345")
@@ -106,7 +108,8 @@ func Test_DoAndParseHTTPRequest(t *testing.T) {
 	t.Run("Failure: unexpected status code", func(t *testing.T) {
 		r := httprequest.New(&mock.HTTPClientMock{
 			StatusCode: 400,
-			Response:   `"response"`},
+			Response:   `"response"`,
+		},
 			noop.NewMetricsLogger())
 
 		additionalHeaders := http.Header{}

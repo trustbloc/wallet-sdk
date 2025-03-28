@@ -231,14 +231,14 @@ func TestResolve(t *testing.T) { //nolint:gocognit
 			})
 
 			t.Run("Credentials supported object does not have claim display info", func(t *testing.T) {
-				var issuerMetadata issuer.Metadata
+				var localIssuerMetadata issuer.Metadata
 
-				err = json.Unmarshal(issuerMetadataWithoutClaimsDisplay, &issuerMetadata)
+				err = json.Unmarshal(issuerMetadataWithoutClaimsDisplay, &localIssuerMetadata)
 				require.NoError(t, err)
 
 				resolvedDisplayData, errResolve := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-					credentialschema.WithIssuerMetadata(&issuerMetadata),
+					credentialschema.WithIssuerMetadata(&localIssuerMetadata),
 					credentialschema.WithHTTPClient(http.DefaultClient),
 					credentialschema.WithPreferredLocale("en-US"))
 				require.NoError(t, errResolve)
@@ -258,17 +258,17 @@ func TestResolve(t *testing.T) { //nolint:gocognit
 				require.Nil(t, resolvedDisplayData.CredentialDisplays[0].Claims)
 			})
 			t.Run("Issuer metadata does not have the optional issuer display info", func(t *testing.T) {
-				var issuerMetadata issuer.Metadata
+				var localIssuerMetadata issuer.Metadata
 
-				err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
+				err = json.Unmarshal(sampleIssuerMetadata, &localIssuerMetadata)
 				require.NoError(t, err)
 
-				issuerMetadata.LocalizedIssuerDisplays = nil
+				localIssuerMetadata.LocalizedIssuerDisplays = nil
 
 				resolvedDisplayData, err := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 					credentialschema.WithHTTPClient(http.DefaultClient),
-					credentialschema.WithIssuerMetadata(&issuerMetadata))
+					credentialschema.WithIssuerMetadata(&localIssuerMetadata))
 				require.NoError(t, err)
 
 				require.Nil(t, resolvedDisplayData.IssuerDisplay)
@@ -326,20 +326,20 @@ func TestResolve(t *testing.T) { //nolint:gocognit
 					"id": "",
 				}
 
-				credential, err := verifiable.ParseCredentialJSON(rawCred,
+				verifiableCredential, err := verifiable.ParseCredentialJSON(rawCred,
 					verifiable.WithCredDisableValidation(),
 					verifiable.WithDisabledProofCheck())
 				require.NoError(t, err)
 
-				var issuerMetadata issuer.Metadata
+				var localIssuerMetadata issuer.Metadata
 
-				err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
+				err = json.Unmarshal(sampleIssuerMetadata, &localIssuerMetadata)
 				require.NoError(t, err)
 
 				resolvedDisplayData, err := credentialschema.Resolve(
-					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
+					credentialschema.WithCredentials([]*verifiable.Credential{verifiableCredential}),
 					credentialschema.WithHTTPClient(http.DefaultClient),
-					credentialschema.WithIssuerMetadata(&issuerMetadata))
+					credentialschema.WithIssuerMetadata(&localIssuerMetadata))
 				require.NoError(t, err)
 
 				require.Equal(t, "Example University", resolvedDisplayData.IssuerDisplay.Name)
