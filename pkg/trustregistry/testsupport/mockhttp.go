@@ -42,6 +42,15 @@ func ParseEvaluatePresentationRequest(r *http.Request) (*trustregistry.Presentat
 
 // HandleEvaluateIssuanceRequest mocks evaluate issuance API of the trust registry.
 func HandleEvaluateIssuanceRequest(w http.ResponseWriter, r *http.Request) {
+	handleIssuanceRequest(w, r, false)
+}
+
+// HandleEvaluateIssuanceRequestWithAttestation mocks evaluate issuance API of the trust registry.
+func HandleEvaluateIssuanceRequestWithAttestation(w http.ResponseWriter, r *http.Request) {
+	handleIssuanceRequest(w, r, true)
+}
+
+func handleIssuanceRequest(w http.ResponseWriter, r *http.Request, withEvaluationData bool) {
 	issuanceRequest, err := ParseEvaluateIssuanceRequest(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -50,11 +59,16 @@ func HandleEvaluateIssuanceRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if issuanceRequest.IssuerDID == "did:web:correct.com" {
+		var evaluationData *trustregistry.EvaluationData
+		if withEvaluationData {
+			evaluationData = &trustregistry.EvaluationData{
+				AttestationsRequired: []string{"attestation1"},
+			}
+		}
+
 		writeResponse(w, &trustregistry.EvaluationResult{
 			Allowed: true,
-			Data: &trustregistry.EvaluationData{
-				AttestationsRequired: []string{"attestation1"},
-			},
+			Data:    evaluationData,
 		})
 
 		return
@@ -78,6 +92,15 @@ func HandleEvaluateIssuanceRequest(w http.ResponseWriter, r *http.Request) {
 
 // HandleEvaluatePresentationRequest mocks evaluate presentation API of the trust registry.
 func HandleEvaluatePresentationRequest(w http.ResponseWriter, r *http.Request) {
+	handlePresentationRequest(w, r, false)
+}
+
+// HandleEvaluatePresentationRequestWithAttestation mocks evaluate presentation API of the trust registry.
+func HandleEvaluatePresentationRequestWithAttestation(w http.ResponseWriter, r *http.Request) {
+	handlePresentationRequest(w, r, true)
+}
+
+func handlePresentationRequest(w http.ResponseWriter, r *http.Request, withEvaluationData bool) {
 	presentationRequest, err := ParseEvaluatePresentationRequest(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -86,11 +109,16 @@ func HandleEvaluatePresentationRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if presentationRequest.VerifierDid == "did:web:correct.com" {
+		var evaluationData *trustregistry.EvaluationData
+		if withEvaluationData {
+			evaluationData = &trustregistry.EvaluationData{
+				AttestationsRequired: []string{"attestation1"},
+			}
+		}
+
 		writeResponse(w, &trustregistry.EvaluationResult{
 			Allowed: true,
-			Data: &trustregistry.EvaluationData{
-				AttestationsRequired: []string{"attestation1"},
-			},
+			Data:    evaluationData,
 		})
 
 		return

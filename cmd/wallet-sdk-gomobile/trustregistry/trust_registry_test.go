@@ -177,13 +177,13 @@ func (m *mockTrustRegistryHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	if strings.HasSuffix(r.URL.Path, evaluateIssuanceURL) {
-		testsupport.HandleEvaluateIssuanceRequest(w, r)
+		testsupport.HandleEvaluateIssuanceRequestWithAttestation(w, r)
 
 		return
 	}
 
 	if strings.HasSuffix(r.URL.Path, evaluatePresentationURL) {
-		testsupport.HandleEvaluatePresentationRequest(w, r)
+		testsupport.HandleEvaluatePresentationRequestWithAttestation(w, r)
 
 		return
 	}
