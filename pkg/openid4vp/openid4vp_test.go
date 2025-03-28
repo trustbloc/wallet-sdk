@@ -32,6 +32,7 @@ import (
 	"github.com/trustbloc/vc-go/verifiable"
 
 	"github.com/trustbloc/wallet-sdk/internal/testutil"
+	"github.com/trustbloc/wallet-sdk/pkg/activitylogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/api"
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/internal/mock"
@@ -144,6 +145,34 @@ func TestNewInteraction(t *testing.T) {
 			)
 			require.NoError(t, err)
 			require.NotNil(t, interaction)
+		})
+		t.Run("openid4vp protocol with unsupported client id scheme", func(t *testing.T) {
+			reqObject := &requestObject{
+				ClientIDScheme: "unsupported_scheme",
+				ResponseURI:    "https://example.com/redirect?query=param",
+			}
+
+			token, err := jwt.NewUnsecured(reqObject)
+			require.NoError(t, err)
+
+			reqObjectJWT, err := token.Serialize(false)
+			require.NoError(t, err)
+
+			interaction, err := NewInteraction("openid4vp://authorize?client_id=https://example.com/redirect&"+
+				"request_uri=https://example.com/request-object",
+				&jwtSignatureVerifierMock{},
+				nil,
+				nil,
+				nil,
+				WithHTTPClient(&mock.HTTPClientMock{
+					Response:         reqObjectJWT,
+					StatusCode:       200,
+					ExpectedEndpoint: "https://example.com/request-object",
+				}),
+			)
+			require.Error(t, err)
+			require.ErrorContains(t, err, "unsupported client_id_scheme")
+			require.Nil(t, interaction)
 		})
 		t.Run("client_id mismatch between authorization request and request object", func(t *testing.T) {
 			reqObject := &requestObject{
@@ -308,6 +337,7 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			&cryptoMock{SignVal: []byte(testSignature)},
 			lddl,
 			WithHTTPClient(httpClient),
+			WithActivityLogger(noop.NewActivityLogger()),
 		)
 		require.NoError(t, err)
 
@@ -374,6 +404,9 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 			presexch.WithCredentialOptions(verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(lddl)),
 		)
 		require.NoError(t, err)
+
+		ack := interaction.Acknowledgment()
+		require.Equal(t, "test://response", ack.ResponseURI)
 	})
 
 	t.Run("Success - Unsafe", func(t *testing.T) {
@@ -454,6 +487,72 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 		require.Equal(t, map[string]interface{}{"key1": "value1", "key2": "value2"}, interactionDetails)
 	})
 
+	t.Run("Failure - with opts", func(t *testing.T) {
+		httpClient := &mock.HTTPClientMock{
+			StatusCode: 200,
+		}
+
+		crypto := &cryptoMock{SignVal: []byte(testSignature)}
+
+		interaction, err := NewInteraction(
+			requestObjectJWT,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockDoc},
+			crypto,
+			lddl,
+			WithHTTPClient(httpClient),
+		)
+		require.NoError(t, err)
+
+		verificationMethod := mockDoc.DIDDocument.VerificationMethod[0]
+
+		attestationSigner, err := common.NewJWSSigner(models.VerificationMethodFromDoc(&verificationMethod), crypto)
+		require.NoError(t, err)
+
+		query := interaction.GetQuery()
+		require.NotNil(t, query)
+
+		err = interaction.PresentCredential(singleCred, CustomClaims{},
+			WithAttestationVC(attestationSigner, "invalid_cred"),
+			WithInteractionDetails(map[string]any{"key1": "value1", "key2": "value2"}),
+		)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "unsupported credential format")
+	})
+
+	t.Run("Success - with interaction details opts", func(t *testing.T) {
+		httpClient := &mock.HTTPClientMock{
+			StatusCode: 200,
+		}
+
+		crypto := &cryptoMock{SignVal: []byte(testSignature)}
+
+		interaction, err := NewInteraction(
+			requestObjectJWT,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockDoc},
+			crypto,
+			lddl,
+			WithHTTPClient(httpClient),
+		)
+		require.NoError(t, err)
+
+		verificationMethod := mockDoc.DIDDocument.VerificationMethod[0]
+
+		attestationSigner, err := common.NewJWSSigner(models.VerificationMethodFromDoc(&verificationMethod), crypto)
+		require.NoError(t, err)
+
+		query := interaction.GetQuery()
+		require.NotNil(t, query)
+
+		err = interaction.PresentCredential(singleCred, CustomClaims{},
+			WithAttestationVC(attestationSigner, attestationCredJWT),
+			WithInteractionDetails(map[string]interface{}{"key1": "value1", "key2": func() {}}),
+		)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "encode interaction details")
+	})
+
 	t.Run("Success - with opts, multi cred", func(t *testing.T) {
 		httpClient := &mock.HTTPClientMock{
 			StatusCode: 200,
@@ -518,6 +617,32 @@ func TestOpenID4VP_PresentCredential(t *testing.T) {
 
 		require.Contains(t, data, "presentation_submission")
 		require.NotEmpty(t, data["presentation_submission"])
+	})
+
+	t.Run("Failure - with metrics logger error", func(t *testing.T) {
+		mockHTTPClient := &mock.HTTPClientMock{
+			StatusCode: 200,
+		}
+
+		crypto := &cryptoMock{SignVal: []byte(testSignature)}
+
+		interaction, err := NewInteraction(
+			requestObjectJWTLdpVP,
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockResolution(t, mockDID, true)},
+			crypto,
+			lddl,
+			WithHTTPClient(mockHTTPClient),
+			WithMetricsLogger(&failingMetricsLogger{attemptFailNumber: 1}),
+		)
+		require.NoError(t, err)
+
+		query := interaction.GetQuery()
+		require.NotNil(t, query)
+
+		err = interaction.PresentCredential(singleCred, CustomClaims{})
+		require.Error(t, err)
+		require.ErrorContains(t, err, "failed to log event")
 	})
 
 	t.Run("Success - with ldp_vp, multi cred", func(t *testing.T) {
@@ -1060,6 +1185,40 @@ func TestOpenID4VP_TrustInfo(t *testing.T) {
 		info, err := interaction.TrustInfo()
 		require.ErrorContains(t, err, "no resolver provided")
 		require.Nil(t, info)
+	})
+
+	t.Run("Failure: invalid response URI", func(t *testing.T) {
+		reqObject := &requestObject{
+			ClientIDScheme: redirectURIScheme,
+			ResponseURI:    "https://example.com/redirect",
+		}
+
+		token, err := jwt.NewUnsecured(reqObject)
+		require.NoError(t, err)
+
+		reqObjectJWT, err := token.Serialize(false)
+		require.NoError(t, err)
+
+		interaction, err := NewInteraction("openid4vp://authorize?client_id=https://example.com/redirect&"+
+			"request_uri=https://example.com/request-object",
+			&jwtSignatureVerifierMock{},
+			&didResolverMock{ResolveValue: mockResolutionWithServices(t, mockDID)},
+			&cryptoMock{SignVal: []byte(testSignature)},
+			lddl,
+			WithHTTPClient(&mock.HTTPClientMock{
+				Response:         reqObjectJWT,
+				StatusCode:       200,
+				ExpectedEndpoint: "https://example.com/request-object",
+			}),
+		)
+		require.NoError(t, err)
+
+		interaction.requestObject.ResponseURI = "http://:invalid.uri"
+
+		info, err := interaction.TrustInfo()
+		require.Error(t, err)
+		require.Nil(t, info)
+		require.ErrorContains(t, err, `parse "http://:invalid.uri"`)
 	})
 }
 

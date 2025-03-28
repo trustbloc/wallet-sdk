@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/openid4vp"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/trustregistry"
 	"github.com/trustbloc/wallet-sdk/pkg/trustregistry/testsupport"
 )
@@ -31,15 +32,33 @@ func TestRegistry_EvaluateIssuance(t *testing.T) {
 	server := httptest.NewServer(serverHandler)
 	defer server.Close()
 
-	registry := trustregistry.NewRegistry(&trustregistry.RegistryConfig{
+	registryConfig := &trustregistry.RegistryConfig{
 		EvaluateIssuanceURL:        server.URL + evaluateIssuanceURL,
 		DisableHTTPClientTLSVerify: true,
-	})
+	}
+
+	registryConfig.AddHeader(api.NewHeader("X-Trace", "request1"))
+
+	registry := trustregistry.NewRegistry(registryConfig)
 
 	t.Run("Success", func(t *testing.T) {
 		result, err := registry.EvaluateIssuance(&trustregistry.IssuanceRequest{
 			IssuerDID: "did:web:correct.com",
 		})
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.True(t, result.Allowed)
+	})
+
+	t.Run("Success: with credential offers", func(t *testing.T) {
+		issuanceRequest := &trustregistry.IssuanceRequest{
+			IssuerDID: "did:web:correct.com",
+		}
+
+		issuanceRequest.AddCredentialOffers(&trustregistry.CredentialOffer{})
+
+		result, err := registry.EvaluateIssuance(issuanceRequest)
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -96,11 +115,17 @@ func TestRegistry_EvaluatePresentation(t *testing.T) {
 			"test_id",
 			api.NewStringArray().Append("TestType"),
 			"issuer_id", 0, 0),
-		))
+		).AddCredentialClaims(&trustregistry.CredentialClaimsToCheck{
+			CredentialID:        "cred2",
+			CredentialTypes:     api.NewStringArray().Append("type2"),
+			CredentialClaimKeys: &openid4vp.CredentialClaimKeys{},
+		}))
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.True(t, result.Allowed)
+		require.Equal(t, 1, result.RequestedAttestationLength())
+		require.Equal(t, "attestation1", result.RequestedAttestationAtIndex(0))
 	})
 
 	t.Run("Forbidden", func(t *testing.T) {
@@ -152,13 +177,13 @@ func (m *mockTrustRegistryHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	if strings.HasSuffix(r.URL.Path, evaluateIssuanceURL) {
-		testsupport.HandleEvaluateIssuanceRequest(w, r)
+		testsupport.HandleEvaluateIssuanceRequestWithAttestation(w, r)
 
 		return
 	}
 
 	if strings.HasSuffix(r.URL.Path, evaluatePresentationURL) {
-		testsupport.HandleEvaluatePresentationRequest(w, r)
+		testsupport.HandleEvaluatePresentationRequestWithAttestation(w, r)
 
 		return
 	}

@@ -572,6 +572,19 @@ func TestIssuerInitiatedInteraction_CreateAuthorizationURL(t *testing.T) {
 				"A%2F%2Flocalhost%3A8075%2Fissuer%2Fbank_issuer%2Fv1.0%22%5D%2C%22type%22%3A%22openid_credential%22%7D%"+
 				"5D&client_id=clientID")
 		})
+		t.Run("Using custom Scopes", func(t *testing.T) {
+			interaction := newIssuerInitiatedInteraction(t, createCredentialOfferIssuanceURI(t, server.URL, true, true))
+
+			authorizationURL, err := interaction.CreateAuthorizationURL("clientID", "redirectURI",
+				openid4ci.WithScopes([]string{"custom_scope"}))
+			require.NoError(t, err)
+			require.Contains(t, authorizationURL, authorizationServerURL+
+				"?authorization_details=%5B%7B%22credential_definition%22%3A%7B%22type%22%3A%5B%22VerifiableCredential"+
+				"%22%2C%22VerifiedEmployee%22%5D%7D%2C%22format%22%3A%22jwt_vc_json%22%2C%22locations%22%3A%5B%22http%3"+
+				"A%2F%2Flocalhost%3A8075%2Fissuer%2Fbank_issuer%2Fv1.0%22%5D%2C%22type%22%3A%22openid_credential%22%7D%"+
+				"5D&client_id=clientID")
+			require.Contains(t, authorizationURL, "scope=custom_scope")
+		})
 	})
 	t.Run("Issuer does not support the authorization code grant type", func(t *testing.T) {
 		issuerServerHandler := &mockIssuerServerHandler{
@@ -1676,6 +1689,61 @@ func TestIssuerInitiatedInteraction_RequestCredential(t *testing.T) {
 			require.Contains(t, err.Error(), "failed to get credential response")
 			require.Nil(t, credentials)
 		})
+		t.Run("Fail batch credential endpoint", func(t *testing.T) {
+			issuerServerHandler := &mockIssuerServerHandler{
+				t:                                  t,
+				batchCredentialResponse:            sampleCredentialResponseBatch,
+				ackRequestExpectInteractionDetails: true,
+				ackRequestExpectedCalls:            2,
+			}
+
+			server := httptest.NewServer(issuerServerHandler)
+			defer server.Close()
+
+			issuerServerHandler.issuerMetadata = strings.ReplaceAll(sampleIssuerMetadata, serverURLPlaceholder, server.URL)
+
+			credentialOffer := createSampleCredentialOffer(t, false, false)
+			credentialOffer.CredentialIssuer = server.URL
+
+			credentialOffer.CredentialConfigurationIDs = append(credentialOffer.CredentialConfigurationIDs,
+				"credential_configuration_id_1")
+
+			b, err := json.Marshal(credentialOffer)
+			require.NoError(t, err)
+
+			credentialOfferURI := "openid-credential-offer://?credential_offer=" + url.QueryEscape(string(b))
+
+			interaction := newIssuerInitiatedInteraction(t, credentialOfferURI)
+
+			credentials, err := interaction.RequestCredentialWithPreAuth(&jwtSignerMock{
+				keyID: mockKeyID,
+			}, openid4ci.WithPIN("1234"))
+			require.NoError(t, err)
+			require.Len(t, credentials, 2)
+			require.NotEmpty(t, credentials[0])
+			require.NotEmpty(t, credentials[1])
+
+			requestedAcknowledgment, err := interaction.Acknowledgment()
+			require.NoError(t, err)
+			require.NotNil(t, requestedAcknowledgment)
+
+			requestedAcknowledgment.InteractionDetails = map[string]any{"key1": "value1"}
+			err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.EventStatusCredentialAccepted, &http.Client{
+				Transport: &mockHTTPClient{
+					DoFunc: func(req *http.Request) (*http.Response, error) {
+						return nil, errors.New("bad_request")
+					},
+				},
+			})
+			require.Error(t, err)
+			require.ErrorContains(t, err, "send acknowledge request id ack_id1")
+
+			requestedAcknowledgment.InteractionDetails = map[string]any{"key1": "value1", "key2": func() {}}
+
+			err = requestedAcknowledgment.AcknowledgeIssuer(openid4ci.EventStatusCredentialAccepted, &http.Client{})
+			require.Error(t, err)
+			require.ErrorContains(t, err, "fail to marshal acknowledgementRequest")
+		})
 	})
 	t.Run("Auth flow", func(t *testing.T) {
 		t.Run("Success", func(t *testing.T) {
@@ -2447,4 +2515,12 @@ func modifyCredentialMetadata(t *testing.T, metadata string, modifyFunc func(m *
 	require.NoError(t, err)
 
 	return string(b)
+}
+
+type mockHTTPClient struct {
+	DoFunc func(req *http.Request) (*http.Response, error)
+}
+
+func (m *mockHTTPClient) RoundTrip(req *http.Request) (*http.Response, error) {
+	return m.DoFunc(req)
 }

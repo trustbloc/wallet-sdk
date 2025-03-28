@@ -36,7 +36,7 @@ func TestIssuerMetadata(t *testing.T) {
 	require.NoError(t, err)
 
 	interactionRequiredArgs, interactionOptionalArgs := getTestArgs(t, requestURI, kms,
-		nil, nil, false)
+		nil, nil, nil, false)
 
 	interaction, err := openid4ci.NewIssuerInitiatedInteraction(interactionRequiredArgs, interactionOptionalArgs)
 	require.NoError(t, err)

@@ -19,6 +19,7 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/pkg/credentialschema"
 	"github.com/trustbloc/wallet-sdk/pkg/memstorage"
+	"github.com/trustbloc/wallet-sdk/pkg/metricslogger/noop"
 	"github.com/trustbloc/wallet-sdk/pkg/models/issuer"
 )
 
@@ -136,6 +137,27 @@ func TestResolve(t *testing.T) { //nolint:gocognit
 
 				checkSuccessCaseMatchedDisplayData(t, resolvedDisplayData)
 			})
+
+			t.Run("Skip non claim data", func(t *testing.T) {
+				resolvedDisplayData, errResolve := credentialschema.Resolve(
+					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
+					credentialschema.WithIssuerMetadata(&issuerMetadata),
+					credentialschema.WithSkipNonClaimData())
+				require.NoError(t, errResolve)
+
+				checkSuccessCaseMatchedDisplayData(t, resolvedDisplayData)
+			})
+
+			t.Run("Use metrics logger", func(t *testing.T) {
+				resolvedDisplayData, errResolve := credentialschema.Resolve(
+					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
+					credentialschema.WithIssuerMetadata(&issuerMetadata),
+					credentialschema.WithMetricsLogger(noop.NewMetricsLogger()))
+				require.NoError(t, errResolve)
+
+				checkSuccessCaseMatchedDisplayData(t, resolvedDisplayData)
+			})
+
 			t.Run("Credentials supported object does not contain display info for the given VC, "+
 				"resulting in the default display being used", func(t *testing.T) {
 				var metadata issuer.Metadata
@@ -209,14 +231,14 @@ func TestResolve(t *testing.T) { //nolint:gocognit
 			})
 
 			t.Run("Credentials supported object does not have claim display info", func(t *testing.T) {
-				var issuerMetadata issuer.Metadata
+				var localIssuerMetadata issuer.Metadata
 
-				err = json.Unmarshal(issuerMetadataWithoutClaimsDisplay, &issuerMetadata)
+				err = json.Unmarshal(issuerMetadataWithoutClaimsDisplay, &localIssuerMetadata)
 				require.NoError(t, err)
 
 				resolvedDisplayData, errResolve := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
-					credentialschema.WithIssuerMetadata(&issuerMetadata),
+					credentialschema.WithIssuerMetadata(&localIssuerMetadata),
 					credentialschema.WithHTTPClient(http.DefaultClient),
 					credentialschema.WithPreferredLocale("en-US"))
 				require.NoError(t, errResolve)
@@ -236,17 +258,17 @@ func TestResolve(t *testing.T) { //nolint:gocognit
 				require.Nil(t, resolvedDisplayData.CredentialDisplays[0].Claims)
 			})
 			t.Run("Issuer metadata does not have the optional issuer display info", func(t *testing.T) {
-				var issuerMetadata issuer.Metadata
+				var localIssuerMetadata issuer.Metadata
 
-				err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
+				err = json.Unmarshal(sampleIssuerMetadata, &localIssuerMetadata)
 				require.NoError(t, err)
 
-				issuerMetadata.LocalizedIssuerDisplays = nil
+				localIssuerMetadata.LocalizedIssuerDisplays = nil
 
 				resolvedDisplayData, err := credentialschema.Resolve(
 					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
 					credentialschema.WithHTTPClient(http.DefaultClient),
-					credentialschema.WithIssuerMetadata(&issuerMetadata))
+					credentialschema.WithIssuerMetadata(&localIssuerMetadata))
 				require.NoError(t, err)
 
 				require.Nil(t, resolvedDisplayData.IssuerDisplay)
@@ -304,20 +326,20 @@ func TestResolve(t *testing.T) { //nolint:gocognit
 					"id": "",
 				}
 
-				credential, err := verifiable.ParseCredentialJSON(rawCred,
+				verifiableCredential, err := verifiable.ParseCredentialJSON(rawCred,
 					verifiable.WithCredDisableValidation(),
 					verifiable.WithDisabledProofCheck())
 				require.NoError(t, err)
 
-				var issuerMetadata issuer.Metadata
+				var localIssuerMetadata issuer.Metadata
 
-				err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
+				err = json.Unmarshal(sampleIssuerMetadata, &localIssuerMetadata)
 				require.NoError(t, err)
 
 				resolvedDisplayData, err := credentialschema.Resolve(
-					credentialschema.WithCredentials([]*verifiable.Credential{credential}),
+					credentialschema.WithCredentials([]*verifiable.Credential{verifiableCredential}),
 					credentialschema.WithHTTPClient(http.DefaultClient),
-					credentialschema.WithIssuerMetadata(&issuerMetadata))
+					credentialschema.WithIssuerMetadata(&localIssuerMetadata))
 				require.NoError(t, err)
 
 				require.Equal(t, "Example University", resolvedDisplayData.IssuerDisplay.Name)
@@ -335,6 +357,16 @@ func TestResolve(t *testing.T) { //nolint:gocognit
 				require.Equal(t, "#FFFFFF", resolvedDisplayData.CredentialDisplays[0].Overview.TextColor)
 
 				require.Empty(t, resolvedDisplayData.CredentialDisplays[0].Claims)
+			})
+
+			t.Run("Credentials_without_JWT_envelop", func(t *testing.T) {
+				credential := *credential
+				resolvedDisplayData, errResolve := credentialschema.Resolve(
+					credentialschema.WithCredentials([]*verifiable.Credential{&credential}),
+					credentialschema.WithIssuerMetadata(&issuerMetadata))
+				require.NoError(t, errResolve)
+
+				checkSuccessCaseMatchedDisplayData(t, resolvedDisplayData)
 			})
 		})
 
@@ -448,6 +480,39 @@ func TestResolve(t *testing.T) { //nolint:gocognit
 			credentialschema.WithIssuerMetadata(&issuerMetadata))
 		require.EqualError(t, errResolve, "error parsing regexp: missing closing ): `(`")
 		require.Nil(t, resolvedDisplayData)
+	})
+	t.Run("Option fails", func(t *testing.T) {
+		credential, err := verifiable.ParseCredential(credentialUniversityDegree,
+			verifiable.WithCredDisableValidation(),
+			verifiable.WithDisabledProofCheck())
+		require.NoError(t, err)
+
+		var issuerMetadata issuer.Metadata
+
+		err = json.Unmarshal(sampleIssuerMetadata, &issuerMetadata)
+		require.NoError(t, err)
+
+		t.Run("Credential config not found", func(t *testing.T) {
+			resolvedDisplayData, errResolve := credentialschema.Resolve(
+				credentialschema.WithCredentials([]*verifiable.Credential{credential}, "12234"),
+				credentialschema.WithIssuerMetadata(&issuerMetadata),
+				credentialschema.WithSkipNonClaimData())
+			require.Error(t, errResolve)
+
+			require.ErrorContains(t, errResolve, "credential configuration with ID 12234 not found")
+			require.Nil(t, resolvedDisplayData)
+		})
+
+		t.Run("Mismatch credential configs", func(t *testing.T) {
+			resolvedDisplayData, errResolve := credentialschema.Resolve(
+				credentialschema.WithCredentials([]*verifiable.Credential{credential}, "12234", "1245"),
+				credentialschema.WithIssuerMetadata(&issuerMetadata),
+				credentialschema.WithSkipNonClaimData())
+			require.Error(t, errResolve)
+
+			require.ErrorContains(t, errResolve, "mismatch between the number of credentials")
+			require.Nil(t, resolvedDisplayData)
+		})
 	})
 }
 

@@ -17,7 +17,7 @@ import (
 
 func TestDIDResolver(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		opts := did.NewResolverOpts().SetHTTPTimeoutNanoseconds(0)
+		opts := did.NewResolverOpts().SetHTTPTimeoutNanoseconds(0).DisableHTTPClientTLSVerify()
 
 		didResolver, err := did.NewResolver(opts)
 		require.NoError(t, err)

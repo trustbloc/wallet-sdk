@@ -37,6 +37,9 @@ var (
 
 	//go:embed testdata/credential_university_degree.jsonld
 	credentialUniversityDegree string
+
+	//go:embed testdata/university_degree_resolved_data.json
+	universityDegreeResolvedData string
 )
 
 type mockIssuerServerHandler struct {
@@ -157,6 +160,14 @@ func TestResolve(t *testing.T) {
 
 			opts := display.NewOpts()
 			opts.SetDIDResolver(resolver)
+
+			resolvedDisplayData, err := display.Resolve(vcs, server.URL, opts)
+			require.NoError(t, err)
+			checkResolvedDisplayData(t, resolvedDisplayData)
+		})
+		t.Run("With skip non claim data", func(t *testing.T) {
+			opts := display.NewOpts()
+			opts.SkipNonClaimData()
 
 			resolvedDisplayData, err := display.Resolve(vcs, server.URL, opts)
 			require.NoError(t, err)
