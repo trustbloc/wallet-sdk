@@ -8,7 +8,6 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/pkg/common"
 	"github.com/trustbloc/wallet-sdk/pkg/memstorage/legacy"
-	"github.com/trustbloc/wallet-sdk/pkg/memstorage/legacy/mock"
 )
 
 func TestCreateJSONLDDocumentLoader(t *testing.T) {
@@ -19,7 +18,7 @@ func TestCreateJSONLDDocumentLoader(t *testing.T) {
 	})
 
 	t.Run("Fail context store", func(t *testing.T) {
-		store := mock.NewMockStoreProvider()
+		store := NewMockStoreProvider()
 		store.FailNamespace = "ldcontexts"
 
 		loader, err := common.CreateJSONLDDocumentLoader(&http.Client{}, store)
@@ -29,7 +28,7 @@ func TestCreateJSONLDDocumentLoader(t *testing.T) {
 	})
 
 	t.Run("Fail context store", func(t *testing.T) {
-		store := mock.NewMockStoreProvider()
+		store := NewMockStoreProvider()
 		store.FailNamespace = "remoteproviders"
 
 		loader, err := common.CreateJSONLDDocumentLoader(&http.Client{}, store)

@@ -1,0 +1,112 @@
+{
+   "localized_issuer": [
+     {
+       "name": "Example University",
+       "locale": "en-US",
+       "url": "https://server.example.com",
+       "logo": {
+         "uri": "https://exampleuniversity.com/public/logo.png",
+         "alt_text": "a square logo of a university"
+       },
+       "background_color": "#12107c",
+       "text_color": "#FFFFFF"
+     },
+     {
+       "name": "サンプル大学",
+       "locale": "jp-JA"
+     }
+   ],
+   "credentials": [
+     {
+       "localized_overview": [
+         {
+           "name": "University Credential",
+           "locale": "en-US",
+           "logo": {
+             "uri": "https://exampleuniversity.com/public/logo.png",
+             "alt_text": "a square logo of a university"
+           },
+           "background_color": "#12107c",
+           "text_color": "#FFFFFF"
+         }
+       ],
+       "subjects": [
+         {
+           "raw_id": "gpa",
+           "localized_labels": [
+             {
+               "name": "GPA",
+               "locale": "en-US"
+             }
+           ],
+           "value_type": "number",
+           "raw_value": "4.0",
+           "pattern": "^\\d+(\\.\\d+)?$"
+         },
+         {
+           "raw_id": "sensitive_id",
+           "localized_labels": [
+             {
+               "name": "Sensitive ID",
+               "locale": "en-US"
+             }
+           ],
+           "value_type": "string",
+           "raw_value": "123456789",
+           "value": "•••••6789",
+           "mask": "regex(^(.*).{4}$)",
+           "order": 5
+         },
+         {
+           "raw_id": "really_sensitive_id",
+           "localized_labels": [
+             {
+               "name": "Really Sensitive ID",
+               "locale": "en-US"
+             }
+           ],
+           "value_type": "string",
+           "raw_value": "abcdefg",
+           "value": "•••••••",
+           "mask": "regex((.*))"
+         },
+         {
+           "raw_id": "id",
+           "localized_labels": [
+             {
+               "name": "ID",
+               "locale": "en-US"
+             }
+           ],
+           "value_type": "string",
+           "raw_value": "1234",
+           "order": 0
+         },
+         {
+           "raw_id": "given_name",
+           "localized_labels": [
+             {
+               "name": "Given Name",
+               "locale": "en-US"
+             }
+           ],
+           "value_type": "string",
+           "raw_value": "Alice",
+           "order": 1
+         },
+         {
+           "raw_id": "surname",
+           "localized_labels": [
+             {
+               "name": "Surname",
+               "locale": "en-US"
+             }
+           ],
+           "value_type": "string",
+           "raw_value": "Bowman",
+           "order": 2
+         }
+       ]
+     }
+   ]
+ }

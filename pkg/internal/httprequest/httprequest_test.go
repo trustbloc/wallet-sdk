@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package httprequest_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -58,6 +59,68 @@ func Test_doHTTPRequest(t *testing.T) {
 		_, err := r.Do(http.MethodGet, "url", "", nil,
 			"", "", nil)
 		require.Contains(t, err.Error(), "request err")
+	})
+}
+
+func Test_DoContextHTTPRequest(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		r := httprequest.New(&mock.HTTPClientMock{StatusCode: 200}, noop.NewMetricsLogger())
+
+		additionalHeaders := http.Header{}
+		additionalHeaders.Add("X-Header", "12345")
+
+		_, err := r.DoContext(context.Background(), http.MethodGet, "url", "test", additionalHeaders,
+			nil, "", "", []int{200, 201}, nil)
+		require.NoError(t, err)
+	})
+
+	t.Run("Failure", func(t *testing.T) {
+		r := httprequest.New(&mock.HTTPClientMock{StatusCode: 400}, noop.NewMetricsLogger())
+
+		additionalHeaders := http.Header{}
+		additionalHeaders.Add("X-Header", "12345")
+
+		_, err := r.DoContext(context.Background(), http.MethodGet, "url", "test", additionalHeaders,
+			nil, "", "", []int{200, 201}, nil)
+		require.Error(t, err)
+	})
+}
+
+func Test_DoAndParseHTTPRequest(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		r := httprequest.New(&mock.HTTPClientMock{
+			StatusCode: 200,
+			Response:   `"response"`,
+		},
+			noop.NewMetricsLogger(),
+		)
+
+		additionalHeaders := http.Header{}
+		additionalHeaders.Add("X-Header", "12345")
+
+		var response string
+
+		err := r.DoAndParse(http.MethodGet, "url", "test", nil,
+			"", "", nil, &response)
+		require.NoError(t, err)
+		require.Equal(t, "response", response)
+	})
+	t.Run("Failure: unexpected status code", func(t *testing.T) {
+		r := httprequest.New(&mock.HTTPClientMock{
+			StatusCode: 400,
+			Response:   `"response"`,
+		},
+			noop.NewMetricsLogger())
+
+		additionalHeaders := http.Header{}
+		additionalHeaders.Add("X-Header", "12345")
+
+		var response string
+
+		err := r.DoAndParse(http.MethodGet, "url", "test", nil,
+			"", "", nil, &response)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "expected status code 200 but got status code 400")
 	})
 }
 
