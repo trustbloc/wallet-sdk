@@ -18,4 +18,4 @@ cd ../../demo/app
 
 flutter build ios --simulator
 cd ios
-INITIATE_ISSUANCE_URL="${INITIATE_ISSUANCE_URL}" INITIATE_VERIFICATION_URL="${INITIATE_VERIFICATION_URL}" INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW="${INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW}" xcodebuild test -workspace Runner.xcworkspace -scheme Runner  -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0.1'
+INITIATE_ISSUANCE_URL="${INITIATE_ISSUANCE_URL}" INITIATE_VERIFICATION_URL="${INITIATE_VERIFICATION_URL}" INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW="${INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW}" xcodebuild test -workspace Runner.xcworkspace -scheme Runner  -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.4' ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO
