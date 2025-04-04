@@ -1,6 +1,5 @@
 /*
 Copyright Gen Digital Inc. All Rights Reserved.
-
 SPDX-License-Identifier: Apache-2.0
 */
 
@@ -8,215 +7,236 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:app/wallet_sdk/wallet_sdk.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-void main() async {
-  print('Init Wallet SDK Plugin');
+void main() {
   final walletSDKPlugin = WalletSDK();
-  print('Init SDK');
   const didResolverURI = String.fromEnvironment('DID_RESOLVER_URI');
-  await walletSDKPlugin.initSDK(didResolverURI);
-  var didKeyType = 'ED25519';
-  testWidgets('Testing openid4vc with a single credential', (tester) async {
-    const didMethodTypes = String.fromEnvironment('WALLET_DID_METHODS');
-    var didMethodTypesList = didMethodTypes.split(' ');
+  const didKeyType = 'ED25519';
 
+  // Shared setup for all tests
+  setUpAll(() async {
+    print('Initializing Wallet SDK');
+    await walletSDKPlugin.initSDK(didResolverURI);
+  });
+
+  group('Single Credential Flow', () {
+    const didMethodTypes = String.fromEnvironment('WALLET_DID_METHODS');
+    final didMethodTypesList = didMethodTypes.split(' ');
     const issuanceURLs = String.fromEnvironment('INITIATE_ISSUANCE_URLS');
-    var issuanceURLsList = issuanceURLs.split(' ');
-
+    final issuanceURLsList = issuanceURLs.split(' ');
     const verificationURLs = String.fromEnvironment('INITIATE_VERIFICATION_URLS');
-    var verificationURLsList = verificationURLs.split(' ');
+    final verificationURLsList = verificationURLs.split(' ');
 
-    for (int i = 0; i < issuanceURLsList.length; i++) {
-      String didMethodType = didMethodTypesList[i];
-      print('wallet DID Type : $didMethodType');
-      print('wallet DID Key Type : $didKeyType');
-      var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[i], didKeyType);
-      final didContent = didDocData.did;
-      print('wallet DID : $didContent');
+    testWidgets('Test with each DID method', (tester) async {
+      for (int i = 0; i < issuanceURLsList.length; i++) {
+        final didMethodType = didMethodTypesList[i];
+        print('Testing with DID Type: $didMethodType');
 
-      String issuanceURL = issuanceURLsList[i];
-      print('issuanceURL : $issuanceURL');
+        final didDocData = await walletSDKPlugin.createDID(didMethodType, didKeyType);
+        print('Created DID: ${didDocData.did}');
 
-      var initializeResp = await walletSDKPlugin.initialize(issuanceURL, null);
-      var initializeRespEncoded = json.encode(initializeResp!);
-      Map<String, dynamic> initializeRespJson = json.decode(initializeRespEncoded);
-      var requirePIN = initializeRespJson['pinRequired'];
-      print('requirePIN: $requirePIN');
+        await _testSingleCredentialFlow(
+          walletSDKPlugin,
+          tester,
+          issuanceURLsList[i],
+          verificationURLsList[i],
+        );
+      }
+    }, timeout: Timeout(Duration(minutes: 3)));
+  });
 
-      final attestationVC = await walletSDKPlugin.getAttestationVC(
-          attestationURL: 'https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/',
-          disableTLSVerify: true,
-          attestationToken: 'token',
-          attestationPayload: '''{
-							"type": "urn:attestation:application:midy",
-							"application": {
-								"type":    "MidyWallet",
-								"name":    "Midy Wallet",
-								"version": "2.0"
-							},
-							"compliance": {
-								"type": "fcra"				
-							}
-						}''',);
+  group('Multiple Credentials Flow', () {
+    testWidgets('Test multiple credentials issuance and verification', (tester) async {
+      const didMethodTypes = String.fromEnvironment('WALLET_DID_METHODS');
+      final didMethodType = didMethodTypes.split(' ')[0];
 
-      List<String> credentials;
-      await tester.runAsync(() async {
-        credentials = (await walletSDKPlugin.requestCredential('', attestationVC: attestationVC))
-            .map((e) => e.content)
-            .toList();
-        print('credentials');
-        expect(credentials, hasLength(greaterThan(0)));
+      final didDocData = await walletSDKPlugin.createDID(didMethodType, didKeyType);
+      print('Created DID: ${didDocData.did}');
 
-        String verificationURL = verificationURLsList[i];
-        print('verificationURL : $verificationURL');
+      const issuanceURLs = String.fromEnvironment('INITIATE_ISSUANCE_URLS_MULTIPLE_CREDS');
+      const verificationURLs = String.fromEnvironment('INITIATE_VERIFICATION_URLS_MULTIPLE_CREDS');
 
-        final l = await walletSDKPlugin.processAuthorizationRequest(authorizationRequest: verificationURL);
-        print('processAuthorizationRequest --> : $l');
+      await _testMultipleCredentialsFlow(
+        walletSDKPlugin,
+        tester,
+        issuanceURLs.split(' '),
+        verificationURLs.split(' ')[0],
+      );
+    }, timeout: Timeout(Duration(minutes: 5)));
+  });
 
-        // Add another delay if needed
-        await Future.delayed(Duration(seconds: 2));
+  group('Auth Code Flow', () {
+    testWidgets('Test authorization code flow', (tester) async {
+      const didMethodTypes = String.fromEnvironment('WALLET_DID_METHODS');
+      final didMethodType = didMethodTypes.split(' ')[0];
 
-        final requirements = await walletSDKPlugin.getSubmissionRequirements(storedCredentials: credentials);
-        print('getSubmissionRequirements finished');
+      final didDocData = await walletSDKPlugin.createDID(didMethodType, didKeyType);
+      print('Created DID: ${didDocData.did}');
 
-        expect(requirements, hasLength(equals(1)));
-        expect(requirements[0].inputDescriptors, hasLength(equals(1)));
-        expect(requirements[0].inputDescriptors[0].matchedVCsID, hasLength(equals(1)));
+      const issuanceURL = String.fromEnvironment('INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW');
 
-        var customScopesList = {
-          'registration': jsonEncode({'email': 'test@example.com'}),
-        };
-        await walletSDKPlugin.presentCredential(
-            selectedCredentials: credentials, customScopeList: customScopesList, attestationVC: attestationVC);
-        print('credential presented');
-      });
-    }
-  },
-      timeout: Timeout.none );
+      await _testAuthCodeFlow(walletSDKPlugin, tester, issuanceURL);
+    }, timeout: Timeout(Duration(minutes: 5)));
+  });
+}
 
-  testWidgets('Testing openid4vc with multiple credentials', (tester) async {
-    const didMethodTypes = String.fromEnvironment('WALLET_DID_METHODS');
-    var didMethodTypesList = didMethodTypes.split(' ');
-    String didMethodType = didMethodTypesList[0];
-    print('wallet DID type : $didMethodType');
-    print('wallet DID Key type : $didKeyType');
+Future<void> _testSingleCredentialFlow(
+    WalletSDK walletSDKPlugin,
+    WidgetTester tester,
+    String issuanceURL,
+    String verificationURL,
+    ) async {
+  print('Testing issuance URL: $issuanceURL');
 
-    await Future.delayed(Duration(seconds: 2));
-    var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[0], didKeyType);
-    var didContent = didDocData.did;
-    print('wallet DID : $didContent');
+  final initializeResp = await walletSDKPlugin.initialize(issuanceURL, null);
+  final requirePIN = json.decode(json.encode(initializeResp!))['pinRequired'];
+  print('PIN required: $requirePIN');
 
-    const issuanceURLs = String.fromEnvironment('INITIATE_ISSUANCE_URLS_MULTIPLE_CREDS');
-    var issuanceURLsList = issuanceURLs.split(' ');
+  final attestationVC = await walletSDKPlugin.getAttestationVC(
+    attestationURL: 'https://localhost:8097/profiles/profileID/profileVersion/wallet/attestation/',
+    disableTLSVerify: true,
+    attestationToken: 'token',
+    attestationPayload: json.encode({
+      "type": "urn:attestation:application:midy",
+      "application": {
+        "type": "MidyWallet",
+        "name": "Midy Wallet",
+        "version": "2.0"
+      },
+      "compliance": {
+        "type": "fcra"
+      }
+    }),
+  );
 
-    List<String> credentials = [];
+  await tester.runAsync(() async {
+    final credentials = (await walletSDKPlugin.requestCredential('', attestationVC: attestationVC))
+        .map((e) => e.content)
+        .toList();
 
-    // Issue multiple credentials
-    for (int i = 0; i < issuanceURLsList.length; i++) {
-      String issuanceURL = issuanceURLsList[i];
-      print('issuanceURL : $issuanceURL');
+    expect(credentials, isNotEmpty);
+    print('Verification URL: $verificationURL');
 
-      var initializeResp = await walletSDKPlugin.initialize(issuanceURL, null);
-      var initializeRespEncoded = json.encode(initializeResp!);
-      Map<String, dynamic> initializeRespJson = json.decode(initializeRespEncoded);
-      var requirePIN = initializeRespJson['pinRequired'];
-      print('requirePIN: $requirePIN');
+    await walletSDKPlugin.processAuthorizationRequest(
+      authorizationRequest: verificationURL,
+    );
 
-      final requestdCreds = await walletSDKPlugin.requestCredential('');
+    final requirements = await walletSDKPlugin.getSubmissionRequirements(
+      storedCredentials: credentials,
+    );
 
-      expect(requestdCreds, hasLength(greaterThan(0)));
+    expect(requirements, hasLength(1));
+    expect(requirements[0].inputDescriptors, hasLength(1));
+    expect(requirements[0].inputDescriptors[0].matchedVCsID, hasLength(1));
 
-      credentials.addAll(requestdCreds.map((e) => e.content).toList());
-    }
-    print('issued credentials');
+    await walletSDKPlugin.presentCredential(
+      selectedCredentials: credentials,
+      customScopeList: {
+        'registration': jsonEncode({'email': 'test@example.com'}),
+      },
+      attestationVC: attestationVC,
+    );
+  });
+}
 
-    const verificationURLs = String.fromEnvironment('INITIATE_VERIFICATION_URLS_MULTIPLE_CREDS');
-    var verificationURLsList = verificationURLs.split(' ');
-    String verificationURL = verificationURLsList[0];
-    print('verificationURL : $verificationURL');
+Future<void> _testMultipleCredentialsFlow(
+    WalletSDK walletSDKPlugin,
+    WidgetTester tester,
+    List<String> issuanceURLs,
+    String verificationURL,
+    ) async {
+  final credentials = <String>[];
 
-    final matchedCreds = await walletSDKPlugin.processAuthorizationRequest(
-        authorizationRequest: verificationURL, storedCredentials: credentials);
+  for (final issuanceURL in issuanceURLs) {
+    print('Issuing credential from: $issuanceURL');
 
-    print('matchedCreds : $matchedCreds');
+    final initializeResp = await walletSDKPlugin.initialize(issuanceURL, null);
+    final requirePIN = json.decode(json.encode(initializeResp!))['pinRequired'];
+    print('PIN required: $requirePIN');
 
-    expect(matchedCreds, hasLength(equals(3)));
+    final requestedCreds = await walletSDKPlugin.requestCredential('');
+    expect(requestedCreds, isNotEmpty);
+    credentials.addAll(requestedCreds.map((e) => e.content).toList());
+  }
 
-    expect(matchedCreds[0], equals(credentials[0]));
-    expect(matchedCreds[1], equals(credentials[1]));
-    expect(matchedCreds[2], equals(credentials[2]));
-    var customScopesList = {
+  print('Processing verification with URL: $verificationURL');
+  final matchedCreds = await walletSDKPlugin.processAuthorizationRequest(
+    authorizationRequest: verificationURL,
+    storedCredentials: credentials,
+  );
+
+  expect(matchedCreds, hasLength(3));
+  expect(matchedCreds, [credentials[0], credentials[1], credentials[2]]);
+
+  await walletSDKPlugin.presentCredential(
+    selectedCredentials: matchedCreds,
+    customScopeList: {
       'registration': jsonEncode({'email': 'test@example.com'}),
       'testscope': jsonEncode({'data': 'testdata'}),
-    };
+    },
+  );
+}
 
-    // Add a delay before presenting credentials
-    await Future.delayed(Duration(seconds: 2));
-    await walletSDKPlugin.presentCredential(selectedCredentials: matchedCreds, customScopeList: customScopesList);
-  },       timeout: Timeout.none );
+Future<void> _testAuthCodeFlow(
+    WalletSDK walletSDKPlugin,
+    WidgetTester tester,
+    String issuanceURL,
+    ) async {
+  print('Testing auth code flow with URL: $issuanceURL');
 
-  testWidgets('Testing openid4vc with the auth code flow', (tester) async {
-    const didMethodTypes = String.fromEnvironment('WALLET_DID_METHODS');
-    var didMethodTypesList = didMethodTypes.split(' ');
-    String didMethodType = didMethodTypesList[0];
-    print('wallet DID type : $didMethodType');
-    print('wallet DID Key type : $didKeyType');
-    var didDocData = await walletSDKPlugin.createDID(didMethodTypesList[0], didKeyType);
-    print('wallet didDocData : $didDocData');
-    var didContent = didDocData.did;
-    print('wallet DID : $didContent');
+  final authCodeArgs = {
+    'scopes': ['openid', 'profile'],
+    'clientID': 'oidc4vc_client',
+    'redirectURI': 'http://127.0.0.1/callback'
+  };
 
-    const issuanceURL = String.fromEnvironment('INITIATE_ISSUANCE_URLS_AUTH_CODE_FLOW');
-    debugPrint('issuanceURLs Auth Code Flow: $issuanceURL');
+  final initializeResp = await walletSDKPlugin.initialize(issuanceURL, authCodeArgs);
+  final authorizationURLLink = json.decode(json.encode(initializeResp!))['authorizationURLLink'];
+  print('Authorization URL: $authorizationURLLink');
 
-    var authCodeArgs = {
-      'scopes': ['openid', 'profile'],
-      'clientID': 'oidc4vc_client',
-      'redirectURI': 'http://127.0.0.1/callback'
-    };
+  final redirectURI = await _followRedirects(authorizationURLLink);
+  print('Final redirect URI: $redirectURI');
 
-    var initializeResp = await walletSDKPlugin.initialize(issuanceURL, authCodeArgs);
-    var initializeRespEncoded = json.encode(initializeResp!);
-    Map<String, dynamic> initializeRespJson = json.decode(initializeRespEncoded);
-    var authorizationURLLink = initializeRespJson['authorizationURLLink'];
-    debugPrint('authorizationURLLink: $authorizationURLLink');
-    // fetching redirect uri
-    String redirectURI = '';
-    final client = HttpClient();
-    var redirectUrl = Uri.parse(authorizationURLLink);
+  final credential = await walletSDKPlugin.requestCredentialWithAuth(redirectURI);
+  expect(credential, isNotEmpty);
+}
+
+Future<String> _followRedirects(String initialUrl) async {
+  var redirectUrl = Uri.parse(initialUrl);
+  final client = HttpClient();
+  String redirectURI = '';
+
+  try {
     var request = await client.getUrl(redirectUrl);
     request.followRedirects = false;
     var response = await request.close();
+
     while (response.isRedirect) {
       response.drain();
       final location = response.headers.value(HttpHeaders.locationHeader);
-      if (location != null) {
-        redirectUrl = redirectUrl.resolve(location);
-        if (location.contains('http://127.0.0.1/callback')) {
-          redirectURI = location;
-          break;
-        }
-        if (redirectUrl.host.contains('cognito-mock.trustbloc.local')) {
-          redirectUrl = Uri.parse(redirectUrl.toString().replaceAll('cognito-mock.trustbloc.local', 'localhost'));
-          print('uri updated $redirectUrl');
-        }
-        request = await client.getUrl(redirectUrl);
-        request.followRedirects = false;
-        response = await request.close();
+
+      if (location == null) break;
+
+      redirectUrl = redirectUrl.resolve(location);
+
+      if (location.contains('http://127.0.0.1/callback')) {
+        redirectURI = location;
+        break;
       }
+
+      if (redirectUrl.host.contains('cognito-mock.trustbloc.local')) {
+        redirectUrl = Uri.parse(redirectUrl.toString().replaceAll('cognito-mock.trustbloc.local', 'localhost'));
+        print('Updated URI: $redirectUrl');
+      }
+
+      request = await client.getUrl(redirectUrl);
+      request.followRedirects = false;
+      response = await request.close();
     }
+  } finally {
+    client.close();
+  }
 
-    debugPrint('redirectURI $redirectURI');
-
-    final credential = await walletSDKPlugin.requestCredentialWithAuth(redirectURI);
-    debugPrint('content: $credential');
-    for (final p in credential.split('.')) {
-      print('----');
-      print(p);
-    }
-
-    expect(credential, hasLength(greaterThan(0)));
-  },       timeout: Timeout.none );
+  return redirectURI;
 }
