@@ -10,26 +10,29 @@ go 1.23
 toolchain go1.23.4
 
 require (
-	github.com/PaesslerAG/jsonpath v0.1.1
+	github.com/PaesslerAG/jsonpath v0.1.2-0.20240726212847-3a740cf7976f
 	github.com/google/uuid v1.6.0
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/stretchr/testify v1.10.0
 	github.com/trustbloc/bbs-signature-go v1.0.2
-	github.com/trustbloc/did-go v1.3.2
+	github.com/trustbloc/did-go v1.3.3-0.20250110150409-989a7364b77c
 	github.com/trustbloc/kms-go v1.2.1
 	github.com/trustbloc/sidetree-go v1.1.1
-	github.com/trustbloc/vc-go v1.3.1
+	github.com/trustbloc/vc-go v1.3.3-0.20250414163524-015b4c29624b
 	golang.org/x/oauth2 v0.24.0
 )
 
-require github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
+require (
+	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
+	github.com/theory/jsonpath v0.3.0 // indirect
+)
 
 require (
 	github.com/IBM/mathlib v0.0.3-0.20231011094432-44ee0eb539da // indirect
 	github.com/PaesslerAG/gval v1.2.4 // indirect
 	github.com/VictoriaMetrics/fastcache v1.12.2 // indirect
 	github.com/bits-and-blooms/bitset v1.17.0 // indirect
-	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
+	github.com/btcsuite/btcd/btcec/v2 v2.3.4
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -60,7 +63,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/pquerna/cachecontrol v0.2.0 // indirect
-	github.com/samber/lo v1.47.0 // indirect
+	github.com/samber/lo v1.47.0
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8 // indirect

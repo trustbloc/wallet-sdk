@@ -23,6 +23,7 @@ import (
 
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/api"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/attestation"
+	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/credential"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/did"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/display"
 	"github.com/trustbloc/wallet-sdk/cmd/wallet-sdk-gomobile/localkms"
@@ -510,6 +511,12 @@ func requestCredentialWithPreAuth(
 	subjectID, err := verifiable.SubjectID(vc.VC.Contents().Subject)
 	require.NoError(t, err)
 
+	statusVerifier, err := credential.NewStatusVerifierWithDIDResolver(didResolver, credential.NewStatusVerifierOpts())
+	require.NoError(t, err)
+
+	err = statusVerifier.Verify(vc)
+	require.NoError(t, err)
+
 	return subjectID
 }
 
@@ -550,6 +557,12 @@ func requestCredentialWithPreAuthV2(
 		didResolver)
 
 	subjectID, err := verifiable.SubjectID(vc.VC.Contents().Subject)
+	require.NoError(t, err)
+
+	statusVerifier, err := credential.NewStatusVerifierWithDIDResolver(didResolver, credential.NewStatusVerifierOpts())
+	require.NoError(t, err)
+
+	err = statusVerifier.Verify(vc)
 	require.NoError(t, err)
 
 	return subjectID
