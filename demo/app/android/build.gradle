@@ -17,7 +17,7 @@ buildscript {
     def walletSdkPkgTkn = localProperties.getProperty('wallet-sdk-pkg.tkn') ?: System.getenv('WALLET_SDK_TKN')
     def walletSdkPkgVer = localProperties.getProperty('wallet-sdk-pkg.ver') ?: System.getenv('WALLET_SDK_VER')
 
-    ext.kotlin_version = '1.8.0'
+    ext.kotlin_version = '1.8.22'
     repositories {
         google()
         mavenCentral()
@@ -71,7 +71,24 @@ allprojects {
             }
         }
     }
-}
+        // Add this new configuration block
+    configurations.all {
+            resolutionStrategy {
+                eachDependency { details ->
+                    if (details.requested.group == 'org.jetbrains.kotlin') {
+                        details.useVersion '1.8.22'
+                    }
+                }
+                force(
+                    "org.jetbrains.kotlin:kotlin-stdlib:1.8.22",
+                    "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22",
+                    "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22",
+                    "org.jetbrains.kotlin:kotlin-reflect:1.8.22"
+                )
+            }
+        }
+    }
+
 
 rootProject.buildDir = '../build'
 subprojects {

@@ -16,9 +16,24 @@ on:
     branches: [ main ]
 
 jobs:
+  CheckArchitecture:
+    name: Check System Architecture
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check architecture
+        run: |
+          arch_name=$(uname -m)
+          if [ "$arch_name" = "arm64" ]; then
+            echo "Unsupported architecture detected: $arch_name"
+            exit 1
+          else
+            echo "Supported architecture: $arch_name"
+          fi
+
   SemanticPullRequest:
     name: Semantic Pull Request Check
     if: github.event_name == 'pull_request'
+    needs: [CheckArchitecture]
     runs-on: ubuntu-latest
     steps:
       - uses: amannn/action-semantic-pull-request@v5
@@ -32,6 +47,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   Checks:
+    needs: [CheckArchitecture]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -50,6 +66,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   UnitTest:
+    needs: [CheckArchitecture]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -61,11 +78,13 @@ jobs:
       - name: Run unit test
         run: make unit-test
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_UPLOAD_TOKEN }}
+        run: |
+          bash <(curl https://codecov.io/bash)
+        env:
+          CODECOV_UPLOAD_TOKEN: ${{ secrets.CODECOV_UPLOAD_TOKEN }}
 
   SDKIntegrationTest:
+    needs: [CheckArchitecture]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -86,6 +105,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   BuildMockLoginConsentServer:
+    needs: [CheckArchitecture]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -109,6 +129,7 @@ jobs:
           path: /tmp/mock-login-consent.tar
 
   BuildMockSampleWebhookServer:
+    needs: [CheckArchitecture]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -132,6 +153,7 @@ jobs:
           path: /tmp/mock-sample-webhook.tar
 
   BuilMockTrustRegistryServer:
+    needs: [CheckArchitecture]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -155,6 +177,7 @@ jobs:
           path: /tmp/mock-trust-registry.tar
 
   BuilMockAttestationServer:
+    needs: [CheckArchitecture]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -179,15 +202,40 @@ jobs:
 
   iOSFlutterIntegrationTest:
     runs-on: macos-13
-    needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer, BuildMockSampleWebhookServer ]
-    timeout-minutes: 60
+    needs: [BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer, BuildMockSampleWebhookServer]
+    timeout-minutes: 120
     steps:
+      - name: Setup Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.0.app/Contents/Developer
+          sudo xcodebuild -runFirstLaunch
+
+      - name: Install CocoaPods
+        run: sudo gem install cocoapods
+
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOPATH: /Users/runner/work/wallet-sdk/go
+
+      - name: Setup Flutter SDK
+        uses: flutter-actions/setup-flutter@v2
+        with:
+          channel: stable
+          version: 3.27.4
+
+      - name: Verify Environment
+        run: |
+          xcodebuild -version
+          flutter doctor -v
+          pod --version
+
       - name: Generate and copy iOS Binding
         run: |
           echo $PATH
@@ -195,7 +243,6 @@ jobs:
           echo ${GOPATH}
           echo ${GOROOT}
           export PATH=$PATH:$GOPATH/bin
-          echo $PATH
           go install golang.org/x/mobile/cmd/gomobile@latest
           gomobile init
           NEW_VERSION=testVer GIT_REV=testRev BUILD_TIME=testTime make generate-ios-bindings copy-ios-bindings
@@ -245,7 +292,12 @@ jobs:
       - name: Run iOS Simulator
         uses: futureware-tech/simulator-action@v3
         with:
-          model: 'iPhone 15'
+          model: 'iPhone 14'
+
+      - name: Check Simulator Status
+        run: xcrun simctl list devices
+      - name: Debug Integration Test Directory
+        run: ls -lah $GITHUB_WORKSPACE/demo/app/integration_test/
       - name: Remove AppIcon contents file (Simulator build fails with this file)
         run: |
           rm -rf demo/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json
@@ -253,7 +305,7 @@ jobs:
       - name: Debug Path
         run: ls -lah $GITHUB_WORKSPACE/demo/app/integration_test/
       - name: Fix file permissions
-        run: chmod +r $GITHUB_WORKSPACE/demo/app/integration_test/openid4ci_test.dart
+        run: chmod -R u+rwx $GITHUB_WORKSPACE/demo/app/integration_test/openid4ci_test.dart
       - name: Run flutter tests on Simulator
         run: make integration-test-flutter
       - name: Run ios tests on Simulator
@@ -266,7 +318,7 @@ jobs:
 
   AndroidFlutterIntegrationTest:
     runs-on: macos-13
-    needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer, BuildMockSampleWebhookServer ]
+    needs: [BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer, BuildMockSampleWebhookServer]
     timeout-minutes: 60
     steps:
       - name: checkout
@@ -275,6 +327,12 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+      - name: Clean Gradle cache (Android)
+        run: |
+          cd demo/app
+          rm -rf android/.gradle/
+          rm -rf android/build/
+          cd ../..
       - name: Generate and copy Android Binding
         run: |
           echo $PATH
