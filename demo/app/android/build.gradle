@@ -4,43 +4,6 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-buildscript {
-    def localProperties = new Properties()
-    def localPropertiesFile = rootProject.file('local.properties')
-    if (localPropertiesFile.exists()) {
-        localPropertiesFile.withReader('UTF-8') { reader ->
-            localProperties.load(reader)
-        }
-    }
-
-    def walletSdkPkgUsr = localProperties.getProperty('wallet-sdk-pkg.usr') ?: System.getenv('WALLET_SDK_USR')
-    def walletSdkPkgTkn = localProperties.getProperty('wallet-sdk-pkg.tkn') ?: System.getenv('WALLET_SDK_TKN')
-    def walletSdkPkgVer = localProperties.getProperty('wallet-sdk-pkg.ver') ?: System.getenv('WALLET_SDK_VER')
-
-    ext.kotlin_version = '1.8.0'
-    repositories {
-        google()
-        mavenCentral()
-        if (walletSdkPkgUsr != null) {
-            maven {
-                url = 'https://maven.pkg.github.com/trustbloc-cicd/snapshot'
-                credentials {
-                    username = walletSdkPkgUsr
-                    password = walletSdkPkgTkn
-                }
-            }
-        }
-    }
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.3.1'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        if (walletSdkPkgUsr != null) {
-            classpath "dev.trustbloc:vc-wallet-sdk:$walletSdkPkgVer"
-        }
-    }
-}
-
 allprojects {
     def localProperties = new Properties()
     def localPropertiesFile = rootProject.file('local.properties')
