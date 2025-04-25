@@ -4,14 +4,70 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-include ':app'
-
+pluginManagement {
 def localPropertiesFile = new File(rootProject.projectDir, "local.properties")
 def properties = new Properties()
 
 assert localPropertiesFile.exists()
 localPropertiesFile.withReader("UTF-8") { reader -> properties.load(reader) }
-
 def flutterSdkPath = properties.getProperty("flutter.sdk")
 assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
-apply from: "$flutterSdkPath/packages/flutter_tools/gradle/app_plugin_loader.gradle"
+    def walletSdkPkgUsr = properties.getProperty('wallet-sdk-pkg.usr') ?: System.getenv('WALLET_SDK_USR')
+    def walletSdkPkgTkn = properties.getProperty('wallet-sdk-pkg.tkn') ?: System.getenv('WALLET_SDK_TKN')
+includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            url 'https://storage.googleapis.com/download.flutter.io'
+        }
+        if (walletSdkPkgUsr != null) {
+            maven {
+                url = 'https://maven.pkg.github.com/trustbloc-cicd/snapshot'
+                credentials {
+                    username = walletSdkPkgUsr
+                    password = walletSdkPkgTkn
+                }
+            }
+        } else {
+            flatDir {
+                dirs 'libs'
+            }
+        }
+        gradlePluginPortal()
+    }
+    plugins {
+        id "dev.flutter.flutter-plugin-loader" version "1.0.0"
+        id "com.android.application" version "8.1.2" apply false
+        id "org.jetbrains.kotlin.android" version "1.7.10" apply false
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            url 'https://storage.googleapis.com/download.flutter.io'
+        }
+
+        // Add this block for wallet-sdk repositories
+        def walletSdkPkgUsr = settings.ext.find('walletSdkPkgUsr') ?: System.getenv('WALLET_SDK_USR')
+        if (walletSdkPkgUsr != null) {
+            maven {
+                url 'https://maven.pkg.github.com/trustbloc-cicd/snapshot'
+                credentials {
+                    username = walletSdkPkgUsr
+                    password = settings.ext.find('walletSdkPkgTkn') ?: System.getenv('WALLET_SDK_TKN')
+                }
+            }
+        } else {
+            flatDir {
+                dirs 'libs'
+            }
+        }
+    }
+}
+include ':app'
