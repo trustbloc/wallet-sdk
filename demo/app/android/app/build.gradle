@@ -4,6 +4,14 @@ Copyright Gen Digital Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+plugins {
+    id "com.android.application"
+    id "org.jetbrains.kotlin.android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+// Keep all your existing android {} and dependencies {} blocks
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
 if (localPropertiesFile.exists()) {
@@ -30,13 +38,9 @@ if (flutterVersionName == null) {
 def walletSdkPkgUsr = localProperties.getProperty('wallet-sdk-pkg.usr') ?: System.getenv('WALLET_SDK_USR')
 def walletSdkPkgVer = localProperties.getProperty('wallet-sdk-pkg.ver') ?: System.getenv('WALLET_SDK_VER')
 
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
-
 android {
-    compileSdkVersion 34
-    ndkVersion "25.1.8937393"
+    compileSdkVersion flutter.compileSdkVersion
+    ndkVersion flutter.ndkVersion
 
     compileOptions {
         coreLibraryDesugaringEnabled true
