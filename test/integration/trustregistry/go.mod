@@ -5,9 +5,9 @@
 
 module github.com/trustbloc/wallet-sdk/test/integration/trustregistry-mock
 
-go 1.23
+go 1.23.0
 
-toolchain go1.23.4
+toolchain go1.23.6
 
 require (
 	github.com/gorilla/mux v1.8.1
@@ -26,7 +26,7 @@ require (
 	github.com/consensys/gnark-crypto v0.14.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
-	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/tink/go v1.7.0 // indirect
@@ -50,17 +50,17 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/trustbloc/bbs-signature-go v1.0.2 // indirect
-	github.com/trustbloc/did-go v1.3.3-0.20250110150409-989a7364b77c // indirect
-	github.com/trustbloc/kms-go v1.2.1 // indirect
-	github.com/trustbloc/vc-go v1.3.3-0.20250414163524-015b4c29624b // indirect
+	github.com/trustbloc/did-go v1.3.4 // indirect
+	github.com/trustbloc/kms-go v1.2.2 // indirect
+	github.com/trustbloc/vc-go v1.3.3 // indirect
 	github.com/veraison/go-cose v1.3.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
-	golang.org/x/crypto v0.30.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/crypto v0.37.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/text v0.24.0 // indirect
 	google.golang.org/protobuf v1.35.2 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
