@@ -4,7 +4,7 @@
 
 module github.com/trustbloc/wallet-sdk/test/integration/helper
 
-go 1.23
+go 1.23.0
 
 toolchain go1.23.4
 

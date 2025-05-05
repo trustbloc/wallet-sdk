@@ -17,7 +17,7 @@ buildscript {
     def walletSdkPkgTkn = localProperties.getProperty('wallet-sdk-pkg.tkn') ?: System.getenv('WALLET_SDK_TKN')
     def walletSdkPkgVer = localProperties.getProperty('wallet-sdk-pkg.ver') ?: System.getenv('WALLET_SDK_VER')
 
-    ext.kotlin_version = '1.8.0'
+    ext.kotlin_version = '2.1.0'
     repositories {
         google()
         mavenCentral()
