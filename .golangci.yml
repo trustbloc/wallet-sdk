@@ -1,8 +1,4 @@
-#
-# Copyright Avast Software. All Rights Reserved.
-#
-# SPDX-License-Identifier: Apache-2.0
-#
+version: 2
 
 run:
   concurrency: 4
@@ -13,9 +9,11 @@ run:
 
 output:
   formats:
-    - format: colored-line-number
-  print-issued-lines: true
-  print-linter-name: true
+    text:
+      path: stdout
+      print-issued-lines: true
+      print-linter-name: true
+      colors: true
 
 linters-settings:
   errcheck:
@@ -77,13 +75,11 @@ linters:
     - cyclop # TODO consider replacing gocyclo with cyclop
     - wrapcheck # TODO enable
     - forbidigo # TODO enable
-    - gci # giving spurious errors for imports of syscall/js
     - exhaustruct # Results in unneeded struct member declarations
     - ireturn # Required by aries-framework-go, a library we use
     - tagliatelle # JSON tags using camel-case required by the specs we implement
     - varnamelen # This linter prevents us from using "i" as an index variable or "vc" for a variable name for a Verifiable Credential, both of which are very common in our code
     - depguard # TODO consider enabling in the future
-    - exportloopref
     - revive
     - perfsprint
     - thelper

@@ -187,9 +187,10 @@ func TestResolve(t *testing.T) { //nolint:gocognit
 					claims := resolvedDisplayData.CredentialDisplays[0].Claims
 
 					for _, claim := range claims {
-						if claim.Label == sensitiveIDLabel {
+						switch claim.Label {
+						case sensitiveIDLabel:
 							require.Equal(t, "*****6789", *claim.Value)
-						} else if claim.Label == reallySensitiveIDLabel {
+						case reallySensitiveIDLabel:
 							require.Equal(t, "*******", *claim.Value)
 						}
 					}
@@ -204,9 +205,10 @@ func TestResolve(t *testing.T) { //nolint:gocognit
 					claims := resolvedDisplayData.CredentialDisplays[0].Claims
 
 					for _, claim := range claims {
-						if claim.Label == sensitiveIDLabel {
+						switch claim.Label {
+						case sensitiveIDLabel:
 							require.Equal(t, "+++++++++++++++6789", *claim.Value)
-						} else if claim.Label == reallySensitiveIDLabel {
+						case reallySensitiveIDLabel:
 							require.Equal(t, "+++++++++++++++++++++", *claim.Value)
 						}
 					}
@@ -221,9 +223,10 @@ func TestResolve(t *testing.T) { //nolint:gocognit
 					claims := resolvedDisplayData.CredentialDisplays[0].Claims
 
 					for _, claim := range claims {
-						if claim.Label == sensitiveIDLabel {
+						switch claim.Label {
+						case sensitiveIDLabel:
 							require.Equal(t, "6789", *claim.Value)
-						} else if claim.Label == reallySensitiveIDLabel {
+						case reallySensitiveIDLabel:
 							require.Equal(t, "", *claim.Value)
 						}
 					}
