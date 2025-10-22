@@ -7,7 +7,7 @@
 name: "wallet-sdk release"
 
 env:
-  GO_VERSION: '1.23'
+  GO_VERSION: '1.25'
 
 on:
   push:
@@ -32,7 +32,7 @@ jobs:
           cd ..
           git clone https://go.googlesource.com/go goroot
           cd goroot
-          git checkout go1.23.4
+          git checkout go1.25.1
           cp ../wallet-sdk/cmd/wallet-sdk-gomobile/gopatches/* ./
           git revert 3560cf0afb3c29300a6c88ccd98256949ca7a6f6
           cd src && ./make.bash
@@ -98,7 +98,7 @@ jobs:
           cd ..
           git clone https://go.googlesource.com/go goroot
           cd goroot
-          git checkout go1.23.4
+          git checkout go1.25.1
           cp ../wallet-sdk/cmd/wallet-sdk-gomobile/gopatches/* ./
           git revert 3560cf0afb3c29300a6c88ccd98256949ca7a6f6
           cd src && ./make.bash

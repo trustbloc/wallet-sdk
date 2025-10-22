@@ -7,7 +7,7 @@
 name: "wallet-sdk ci"
 
 env:
-  GO_VERSION: '1.23.4'
+  GO_VERSION: '1.25.1'
 
 on:
   push:
@@ -97,8 +97,8 @@ jobs:
       - name: Build docker images for test server
         run: |
           docker build -f ./images/mocks/loginconsent/Dockerfile --no-cache -t wallet-sdk/mock-login-consent:latest \
-          --build-arg GO_VER=1.23 \
-          --build-arg ALPINE_VER=3.20 .
+          --build-arg GO_VER=1.25 \
+          --build-arg ALPINE_VER=3.22 .
       - name: Save docker image as tar
         run: |
           docker save --output /tmp/mock-login-consent.tar wallet-sdk/mock-login-consent
@@ -120,8 +120,8 @@ jobs:
       - name: Build docker images for test server
         run: |
           docker build -f ./images/mocks/webhook/Dockerfile --no-cache -t wallet-sdk/sample-webhook:latest \
-          --build-arg GO_VER=1.23 \
-          --build-arg ALPINE_VER=3.20 .
+          --build-arg GO_VER=1.25 \
+          --build-arg ALPINE_VER=3.22 .
       - name: Save docker image as tar
         run: |
           docker save --output /tmp/mock-sample-webhook.tar wallet-sdk/sample-webhook
@@ -143,8 +143,8 @@ jobs:
       - name: Build docker images for test server
         run: |
           docker build -f ./images/mocks/trustregistry/Dockerfile --no-cache -t wallet-sdk/mock-trust-registry:latest \
-          --build-arg GO_VER=1.23 \
-          --build-arg ALPINE_VER=3.20 .
+          --build-arg GO_VER=1.25 \
+          --build-arg ALPINE_VER=3.22 .
       - name: Save docker image as tar
         run: |
           docker save --output /tmp/mock-trust-registry.tar wallet-sdk/mock-trust-registry
@@ -166,8 +166,8 @@ jobs:
       - name: Build docker images for test server
         run: |
           docker build -f ./images/mocks/attestation/Dockerfile --no-cache -t wallet-sdk/mock-attestation:latest \
-          --build-arg GO_VER=1.23 \
-          --build-arg ALPINE_VER=3.20 .
+          --build-arg GO_VER=1.25 \
+          --build-arg ALPINE_VER=3.22 .
       - name: Save docker image as tar
         run: |
           docker save --output /tmp/mock-attestation.tar wallet-sdk/mock-attestation
@@ -209,12 +209,17 @@ jobs:
           echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
-      - name: Install and start docker
-        uses: douglascamata/setup-docker-macos-action@v1-alpha
+      - name: Install and start Docker (Colima)
+        uses: douglascamata/setup-docker-macos-action@v1
         with:
-          upgrade-qemu: false
           lima: v1.0.4
           colima: v0.8.1
+          colima-network-address: false
+      - name: Verify Docker/Colima
+        run: |
+          docker version
+          colima status
+          docker run --rm hello-world || true
       - name: Download artifacts (Docker images) from previous workflows
         uses: actions/download-artifact@v4
       - name: Load mock-login-consent server
@@ -296,12 +301,17 @@ jobs:
           echo '127.0.0.1 vc-rest-echo.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
-      - name: Install and start docker
+      - name: Install and start Docker (Colima)
         uses: douglascamata/setup-docker-macos-action@v1-alpha
         with:
-          upgrade-qemu: false
           lima: v1.0.4
           colima: v0.8.1
+          colima-network-address: false
+      - name: Verify Docker/Colima
+        run: |
+          docker version
+          colima status
+          docker run --rm hello-world || true
       - name: Download artifacts (Docker images) from previous workflows
         uses: actions/download-artifact@v4
       - name: Load mock-login-consent server
