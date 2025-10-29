@@ -4,11 +4,11 @@
 
 module github.com/trustbloc/wallet-sdk/test/integration/webhook
 
-go 1.25.1
+go 1.25.3
 
 require (
 	github.com/gorilla/mux v1.8.1
-	github.com/trustbloc/logutil-go v1.0.0
+	github.com/trustbloc/logutil-go v1.0.1
 )
 
 require (
