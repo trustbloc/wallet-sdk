@@ -24,9 +24,9 @@ require (
 require (
 	github.com/consensys/bavard v0.1.29 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
-	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/theory/jsonpath v0.10.1 // indirect
+	lukechampine.com/blake3 v1.4.1 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
 
