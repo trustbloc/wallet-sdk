@@ -4,14 +4,14 @@
 
 module github.com/trustbloc/wallet-sdk/test/integration/helper
 
-go 1.25.1
+go 1.25.3
 
 require github.com/trustbloc/wallet-sdk/test/integration v0.0.0-20221207181956-419a3951143f
 
 require (
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/trustbloc/cmdutil-go v1.0.0 // indirect
-	github.com/trustbloc/logutil-go v1.0.0 // indirect
+	github.com/trustbloc/cmdutil-go v1.0.1 // indirect
+	github.com/trustbloc/logutil-go v1.0.1 // indirect
 	go.opentelemetry.io/otel v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
