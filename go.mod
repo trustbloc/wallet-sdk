@@ -16,15 +16,15 @@ require (
 	github.com/trustbloc/did-go v1.3.5
 	github.com/trustbloc/kms-go v1.2.3
 	github.com/trustbloc/sidetree-go v1.1.2
-	github.com/trustbloc/vc-go v1.3.3
+	github.com/trustbloc/vc-go v1.3.4
 	golang.org/x/oauth2 v0.31.0
 )
 
 require (
-	github.com/consensys/bavard v0.1.29 // indirect
+	github.com/consensys/bavard v0.2.1 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
-	github.com/theory/jsonpath v0.10.1 // indirect
+	github.com/theory/jsonpath v0.10.2 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
@@ -62,7 +62,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/pquerna/cachecontrol v0.2.0 // indirect
-	github.com/samber/lo v1.51.0
+	github.com/samber/lo v1.52.0
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8 // indirect
@@ -76,7 +76,7 @@ require (
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
-	golang.org/x/exp v0.0.0-20251002181428-27f1f14c8bb9 // indirect
+	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546 // indirect
 	golang.org/x/sys v0.37.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect

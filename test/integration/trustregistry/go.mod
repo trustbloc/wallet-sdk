@@ -10,7 +10,7 @@ go 1.25.3
 require (
 	github.com/gorilla/mux v1.8.1
 	github.com/trustbloc/wallet-sdk v0.0.0-00010101000000-000000000000
-	golang.org/x/exp v0.0.0-20251002181428-27f1f14c8bb9
+	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
 )
 
 require (
@@ -20,7 +20,7 @@ require (
 	github.com/btcsuite/btcd/btcec/v2 v2.3.6 // indirect
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/consensys/bavard v0.1.29 // indirect
+	github.com/consensys/bavard v0.2.1 // indirect
 	github.com/consensys/gnark-crypto v0.17.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
@@ -41,7 +41,7 @@ require (
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pquerna/cachecontrol v0.2.0 // indirect
-	github.com/samber/lo v1.51.0 // indirect
+	github.com/samber/lo v1.52.0 // indirect
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
@@ -50,7 +50,7 @@ require (
 	github.com/trustbloc/bbs-signature-go v1.0.3 // indirect
 	github.com/trustbloc/did-go v1.3.5 // indirect
 	github.com/trustbloc/kms-go v1.2.3 // indirect
-	github.com/trustbloc/vc-go v1.3.3 // indirect
+	github.com/trustbloc/vc-go v1.3.4 // indirect
 	github.com/veraison/go-cose v1.3.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
