@@ -11,13 +11,27 @@ import 'package:app/wallet_sdk/wallet_sdk.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-void main() async {
-  print('Init Wallet SDK Plugin');
-  final walletSDKPlugin = WalletSDK();
-  print('Init SDK');
-  const didResolverURI = String.fromEnvironment('DID_RESOLVER_URI');
-  await walletSDKPlugin.initSDK(didResolverURI);
+void main() {
+  late WalletSDK walletSDKPlugin;
   var didKeyType = 'ED25519';
+
+  setUpAll(() async {
+    print('Init Wallet SDK Plugin');
+    walletSDKPlugin = WalletSDK();
+    print('Init SDK');
+    const didResolverURI = String.fromEnvironment('DID_RESOLVER_URI');
+    print('DID_RESOLVER_URI: $didResolverURI');
+
+    await walletSDKPlugin.initSDK(didResolverURI).timeout(
+      const Duration(seconds: 30),
+      onTimeout: () {
+        throw Exception('SDK initialization timed out after 30 seconds. '
+            'DID Resolver at $didResolverURI may not be accessible.');
+      },
+    );
+    print('SDK initialized successfully');
+  });
+
   testWidgets('Testing openid4vc with a single credential', (tester) async {
     const didMethodTypes = String.fromEnvironment('WALLET_DID_METHODS');
     var didMethodTypesList = didMethodTypes.split(' ');
