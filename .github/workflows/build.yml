@@ -178,7 +178,7 @@ jobs:
           path: /tmp/mock-attestation.tar
 
   iOSFlutterIntegrationTest:
-    runs-on: macos-13
+    runs-on: macos-15-intel
     needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer, BuildMockSampleWebhookServer ]
     timeout-minutes: 60
     steps:
@@ -210,16 +210,16 @@ jobs:
           echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
       - name: Install and start Docker (Colima)
-        uses: douglascamata/setup-docker-macos-action@v1
+        uses: douglascamata/setup-docker-macos-action@v1.1.0
         with:
           lima: v1.0.4
           colima: v0.8.1
           colima-network-address: false
       - name: Verify Docker/Colima
         run: |
-          docker version
-          colima status
-          docker run --rm hello-world || true
+          set -euxo pipefail
+          colima start --runtime docker
+          docker context use colima
       - name: Download artifacts (Docker images) from previous workflows
         uses: actions/download-artifact@v4
       - name: Load mock-login-consent server
@@ -250,7 +250,7 @@ jobs:
       - name: Run iOS Simulator
         uses: futureware-tech/simulator-action@v3
         with:
-          model: 'iPhone 15'
+          model: 'iPhone 16'
       - name: Remove AppIcon contents file (Simulator build fails with this file)
         run: |
           rm -rf demo/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json
@@ -270,7 +270,7 @@ jobs:
           docker ps -a
 
   AndroidFlutterIntegrationTest:
-    runs-on: macos-13
+    runs-on: macos-15-intel
     needs: [ BuildMockLoginConsentServer, BuilMockTrustRegistryServer, BuilMockAttestationServer, BuildMockSampleWebhookServer ]
     timeout-minutes: 60
     steps:
@@ -302,16 +302,16 @@ jobs:
           echo '127.0.0.1 api-gateway.trustbloc.local' | sudo tee -a /etc/hosts
           echo '127.0.0.1 cognito-mock.trustbloc.local' | sudo tee -a /etc/hosts
       - name: Install and start Docker (Colima)
-        uses: douglascamata/setup-docker-macos-action@v1-alpha
+        uses: douglascamata/setup-docker-macos-action@v1.1.0
         with:
           lima: v1.0.4
           colima: v0.8.1
           colima-network-address: false
       - name: Verify Docker/Colima
         run: |
-          docker version
-          colima status
-          docker run --rm hello-world || true
+          set -euxo pipefail
+          colima start --runtime docker
+          docker context use colima
       - name: Download artifacts (Docker images) from previous workflows
         uses: actions/download-artifact@v4
       - name: Load mock-login-consent server
