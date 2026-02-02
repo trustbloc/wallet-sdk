@@ -56,7 +56,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        jcenter()
         if (walletSdkPkgUsr != null) {
             maven {
                 url = 'https://maven.pkg.github.com/trustbloc-cicd/snapshot'
