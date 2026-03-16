@@ -237,7 +237,7 @@ func writeResponse(w http.ResponseWriter, body interface{}) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// writeResponse writes interface value to response
+// writeResponseWithStatus writes interface value to response
 func writeResponseWithStatus(
 	rw http.ResponseWriter,
 	status int,
